@@ -1,7 +1,7 @@
 namespace Encspect.Tags.Id3;
 
 // Genre names for the ID3v1 genre byte: 0-79 from the ID3v1 specification, 80-191 the Winamp
-// extensions. Byte 255 means no genre.
+// extensions (a community list; sources and differences in docs/development.md). Byte 255 means no genre.
 internal static class Id3v1Genres
 {
     public static readonly string[] Names =
