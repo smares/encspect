@@ -11,9 +11,11 @@ samples are ancillary data.
 Some fixtures carry the MPEG-2 multichannel extension (ISO/IEC 13818-3) in the ancillary data of
 their MPEG-1 frames: the multichannel header, its CRC, the composite status information, the LFE
 allocation, the allocation and scfsi of the additional channels (which the CRC covers), then
-their prediction coefficients, scalefactors and zero samples. Dynamic crosstalk, multilingual
-channels and extension bitstreams in their full form are left to the ISO conformance streams
-(see conformance_mpeg_audio.py), which the cross-check runs too.
+their prediction coefficients, scalefactors and zero samples. Dynamic crosstalk is written for
+3/1, 2/2 and the second stereo programme (docs/design/mpeg-clean-room-rules.md, section 1), in
+the two readings of the cases the conformance streams leave open. Multilingual channels and
+extension bitstreams in their full form are left to the ISO conformance streams (see
+conformance_mpeg_audio.py), which the cross-check runs too.
 
 Manifests follow make_mpeg_fixtures.py. Per frame, "fields" lists the fields as the report shows
 them, by node path; "scale_info" holds what minimp3 reads (see minimp3_side_info.c); "mc_crc"
@@ -72,6 +74,29 @@ MC_SHAPE = {
     (3, 0): (2, 0, 0, 0),
     (3, 1): (3, 2, 1, 2),
 }
+
+# Dynamic crosstalk (docs/design/mpeg-clean-room-rules.md, section 1). The subband group of each
+# subband, and what T2 and T3 carry for each tc_allocation: L for a left or left surround channel,
+# R for the right ones, any other letter for a channel that is neither.
+MC_GROUPS = [sb if sb < 8 else 8 if sb < 10 else 9 if sb < 12 else 10 if sb < 16 else 11 for sb in range(30)]
+MC_CARRIES = {(2, 1): ["CLRCCCRL"], (1, 1): ["CLRCCL--", "SSSLRR--"], (2, 0): ["LLLL", "RRRR"], (1, 0): ["SLR-"]}
+# How each dyn_cross_mode fills T2, T3 (and T4): R read, B copy of a base channel, T0..T3 copy of
+# that channel, Z zero.
+MC_MODES_32 = ["RRR", "RR1", "R0R", "BRR", "R01", "BR1", "B0R", "B01", "RR3", "R2R", "RR2", "R21", "R02", "BR3", "R22", "ZZZ"]
+MC_MODES_31 = ["RR", "RB", "BR", "BB", "R2", "BB", "BB", "BB"]
+
+
+class Dynamic:
+    """Dynamic crosstalk of one frame: dyn_cross_LR, the mode and dyn_second_stereo of each subband group, and
+    which reading of the base channel of a copy the encoder follows ("side": the base channel on the copied
+    channel's side, "flag": the one dyn_cross_LR names, in the cases the conformance streams leave open)."""
+
+    def __init__(self, lr=0, modes=(0,) * 12, second=(0,) * 12, reading="side", differ=False):
+        assert reading in ("side", "flag") and len(modes) == 12 and len(second) == 12
+        self.lr, self.modes, self.second, self.reading = lr, list(modes), list(second), reading
+        # Whether the two readings must differ in how many channels have an allocation, so that the side
+        # information has another length under each and the frame's CRC verifies under its own reading only.
+        self.differ = differ
 
 
 def table_for(version, rate, bitrate, channels):
@@ -158,7 +183,7 @@ class Multichannel:
 
     def __init__(self, center=1, surround=2, lfe=0, audio_mix=0, dematrix=0, ml=0, ml_fs=0, ml_layer=0,
                  copyright_bit=0, copyright_start=0, n_ad_bytes=None, tc_alloc=(0,), prediction=None,
-                 lfe_alloc=0, seed=1, bad_crc=False, continues=False, declared_ad_bytes=None, empty=False):
+                 lfe_alloc=0, seed=1, bad_crc=False, continues=False, declared_ad_bytes=None, empty=False, dynamic=None):
         self.center, self.surround, self.lfe, self.audio_mix, self.dematrix = center, surround, lfe, audio_mix, dematrix
         self.ml, self.ml_fs, self.ml_layer = ml, ml_fs, ml_layer
         self.copyright_bit, self.copyright_start = copyright_bit, copyright_start
@@ -174,7 +199,63 @@ class Multichannel:
         self.declared_ad_bytes = declared_ad_bytes
         # No allocation in the additional channels, so the extension takes only a few bytes.
         self.empty = empty
-        self.channels, self.tc_bits, _, self.predictors = MC_SHAPE[(surround, center & 1)]
+        self.channels, self.tc_bits, self.dyn_bits, self.predictors = MC_SHAPE[(surround, center & 1)]
+        self.dynamic = dynamic
+        assert dynamic is None or prediction is None
+        assert dynamic is None or all(m < 1 << self.dyn_bits for m in dynamic.modes)
+        assert dynamic is None or surround == 3 or not any(dynamic.second)
+
+    def has_crosstalk_choice(self):
+        """Whether a copied channel's base channel has two readings: dynamic crosstalk in 3/1 or 2/2."""
+        return self.dynamic is not None and self.channels == 2 and self.surround in (1, 2)
+
+    def tc_of(self, group):
+        return self.tc_alloc[0] if len(self.tc_alloc) == 1 else self.tc_alloc[group]
+
+    def base_of(self, i, tc, reading):
+        """The base channel (0 for T0, 1 for T1) that additional channel i copies where its mode says so."""
+        lr = self.dynamic.lr
+        carries = MC_CARRIES.get((self.surround, self.center & 1), ["CLR-"])[i][tc]
+        undecided = lr == 1 or self.surround == 2 or (i == 1 and carries == "R")
+        if reading == "flag" and self.has_crosstalk_choice() and undecided:
+            return lr
+        return 0 if carries == "L" else 1 if carries == "R" else lr
+
+    def allocate(self, sb, base, reading, read):
+        """The allocation index of each additional channel in subband sb and whether the bitstream carries it;
+        read(ch) supplies the index of a channel that is read. base holds T0 and T1's indices."""
+        coded = self.center in (1, 3)
+        group = MC_GROUPS[sb]
+        tc = self.tc_of(group)
+        mode = self.dynamic.modes[group] if self.dynamic else 0
+        second = self.dynamic.second[group] if self.dynamic else 0
+        n = self.channels
+        if self.surround == 3:
+            copy = ("3" if coded else "2") if second else "R"
+            plan = ["B" if mode == 1 else "R", "R", copy] if coded else ["R", copy]
+        elif n == 3:
+            plan = MC_MODES_32[mode]
+        elif n == 2:
+            plan = MC_MODES_31[mode]
+        else:
+            plan = ["B" if mode == 1 else "R"] * n
+        values, carried = [], []
+        for i in range(n):
+            if i == 0 and self.center == 3 and sb >= 12:
+                value, is_read = 0, False
+            elif plan[i] == "R":
+                value, is_read = read(2 + i), True
+            else:
+                is_read = False
+                if plan[i] == "B":
+                    value = base[self.base_of(i, tc, reading)]
+                elif plan[i] == "Z":
+                    value = 0
+                else:
+                    value = (base + values)[int(plan[i])]
+            values.append(value)
+            carried.append(is_read)
+        return values, carried
 
     def configuration(self):
         front = 3 if self.center in (1, 3) else 2
@@ -185,8 +266,9 @@ class Multichannel:
             text += " + LFE"
         return text
 
-    def write(self, bits, rate, fields):
-        """Appends the extension to bits and records its fields; returns the CRC bits' position."""
+    def write(self, bits, rate, fields, base):
+        """Appends the extension to bits and records its fields; returns the CRC bits' position. base holds the
+        allocation indices of the base frame's two channels per subband."""
         table = TABLES[0 if rate == 48000 else 1]
         start = len(bits)
         header = Bits()
@@ -203,10 +285,16 @@ class Multichannel:
 
         covered = Bits()
         covered.put(1 if len(self.tc_alloc) == 1 else 0, 1)
-        covered.put(0, 1)  # dyn_cross_on
+        covered.put(1 if self.dynamic else 0, 1)  # dyn_cross_on
         covered.put(1 if self.prediction else 0, 1)
         for value in self.tc_alloc:
             covered.put(value, self.tc_bits)
+        if self.dynamic:
+            covered.put(self.dynamic.lr, 1)
+            for group in range(12):
+                covered.put(self.dynamic.modes[group], self.dyn_bits)
+                if self.surround == 3:
+                    covered.put(self.dynamic.second[group], 1)
         if self.prediction:
             for group in self.prediction:
                 covered.put(1 if group is not None else 0, 1)
@@ -216,14 +304,25 @@ class Multichannel:
                         covered.put(predsi, 2)
         if self.lfe:
             covered.put(self.lfe_alloc, 4)
-        alloc, scfsi, scalefactors = {}, {}, {}
+        alloc, read_alloc, scfsi, scalefactors = {}, {}, {}, {}
+        other_count = 0
+        reading = self.dynamic.reading if self.dynamic else "side"
         for sb in range(len(table)):
-            for ch in range(2, 2 + self.channels):
-                if self.center == 3 and sb >= 12 and ch == 2:
-                    continue
+            def read(ch):
                 index = (self.seed * 7 + sb * 3 + ch * 5) % 4 if sb < 12 and not self.empty else 0
                 covered.put(index, NBAL[len(table[sb])])
-                alloc[(ch, sb)] = index
+                read_alloc[(ch, sb)] = index
+                return index
+
+            copies = [row[sb] if sb < len(row) else 0 for row in base]
+            values, _ = self.allocate(sb, copies, reading, read)
+            for k, value in enumerate(values):
+                alloc[(2 + k, sb)] = value
+            if self.dynamic and self.dynamic.differ:
+                other = self.allocate(sb, copies, "flag" if reading == "side" else "side", lambda ch: values[ch - 2])[0]
+                other_count += sum(v != 0 for v in other)
+        assert not (self.dynamic and self.dynamic.differ) or other_count != sum(v != 0 for v in alloc.values()), \
+            "the two readings give side information of the same length"
         for sb in range(len(table)):
             for ch in range(2, 2 + self.channels):
                 if alloc.get((ch, sb)):
@@ -280,13 +379,19 @@ class Multichannel:
         fields[node + "CRC"] = f"0x{stored:04X}"
         fields[node + "CRC/Computed"] = f"0x{stored ^ (0x0001 if self.bad_crc else 0):04X}"
         fields[node + "Composite Status/Channel Allocation"] = ", ".join(map(str, self.tc_alloc))
-        fields[node + "Composite Status/HasDynamicCrosstalk"] = "false"
+        fields[node + "Composite Status/HasDynamicCrosstalk"] = "true" if self.dynamic else "false"
+        if self.dynamic:
+            fields[node + "Composite Status/IsDynamicCrosstalkFromRight"] = "true" if self.dynamic.lr else "false"
+            fields[node + "Composite Status/Dynamic Crosstalk Modes"] = ", ".join(map(str, self.dynamic.modes))
+            if self.has_crosstalk_choice():
+                fields[node + "Composite Status/Dynamic Crosstalk Modes/Base Channel Source"] = (
+                    "Named by the flag" if reading == "flag" else "On the channel's side")
         fields[node + "Composite Status/HasPrediction"] = "true" if self.prediction else "false"
         if self.prediction:
             fields[node + "Composite Status/Prediction"] = ", ".join("1" if g is not None else "0" for g in self.prediction)
         if self.lfe:
             fields[node + "LFE Allocation"] = f"{self.lfe_alloc + 1} bits" if self.lfe_alloc else "None"
-        for (ch, sb), index in alloc.items():
+        for (ch, sb), index in read_alloc.items():
             levels = table[sb][index]
             fields[f"{node}Bit Allocation/Subband {sb}/Channel {ch}"] = f"{levels} levels" if levels else "None"
         for (ch, sb), value in scfsi.items():
@@ -399,7 +504,7 @@ class Layer2Frame(Frame):
 
         mc_range = None
         if self.mc is not None:
-            mc_range = self.mc.write(bits, self.rate, fields)
+            mc_range = self.mc.write(bits, self.rate, fields, [[self.alloc(ch, sb) for sb in range(self.sblimit)] for ch in (0, 1)])
         self.payload_bits = bits
         self.offsets = (alloc_start, scfsi_end, scale_end, samples_end, mc_range)
 
@@ -827,6 +932,109 @@ def mc_chance_crc():
             del fields[key]
         fields["Ancillary Data"] = bytes_text(frame.length() - 4 - (frame.offsets[3] + 7) // 8)
     return f
+
+
+# Base allocations whose left channel has an allocation in every subband below 20 and whose right
+# channel in every third, so a copy of one has another number of scfsi fields than a copy of the other.
+UNEVEN_BASE = [[1 if sb < 20 else 0 for sb in range(27)], [1 if sb < 20 and sb % 3 == 0 else 0 for sb in range(27)]]
+
+
+def crosstalk_stream(center, surround, tc, modes, reading, lr, differ, second=lambda i, g: 0, bitrate=384, count=6):
+    return mc_stream(count, bitrate, 48000, lambda i: Multichannel(
+        center=center, surround=surround, tc_alloc=[tc(i, g) for g in range(12)], seed=i + 1,
+        dynamic=Dynamic(lr=lr(i), modes=[modes(i, g) for g in range(12)], second=[second(i, g) for g in range(12)],
+                        reading=reading, differ=differ)), allocation=UNEVEN_BASE if differ else None)
+
+
+@fixture
+def mc_31_crosstalk_decided():
+    f = Layer2Fixture(
+        "mc-3-1-crosstalk-decided",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk, dyn_cross_LR 0 and the channel "
+        "allocations 0 to 3 in the subband groups, every mode: the cases the ISO conformance streams decide, so "
+        "the multichannel CRCs hold under the one reading.",
+    )
+    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 8, "side", lambda i: 0, False))
+
+
+@fixture
+def mc_31_crosstalk_side():
+    f = Layer2Fixture(
+        "mc-3-1-crosstalk-side",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 1, written so "
+        "that a copied channel takes the base channel on its own side where the conformance streams leave the case open "
+        "(channel allocations 0 to 7, every mode). The multichannel CRCs hold under that reading.",
+    )
+    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: (g + i) % 8, lambda i, g: (g + i) % 8, "side", lambda i: 1, True))
+
+
+@fixture
+def mc_31_crosstalk_flag():
+    f = Layer2Fixture(
+        "mc-3-1-crosstalk-flag",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 1, written so "
+        "that every copied channel takes the base channel the flag names where the conformance streams leave the case "
+        "open (channel allocations 0 to 7, every mode). The multichannel CRCs hold under that reading only.",
+    )
+    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: (g + i) % 8, lambda i, g: (g + i) % 8, "flag", lambda i: 1, True))
+
+
+@fixture
+def mc_31_crosstalk_flag_right():
+    f = Layer2Fixture(
+        "mc-3-1-crosstalk-flag-right",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 0, the channel "
+        "allocations 4 and 5 (T3 carries the right channel) in the subband groups, written so that the copy takes "
+        "the left base channel the flag names. The multichannel CRCs hold under that reading only.",
+    )
+    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: 4 + (g + i) % 2, lambda i, g: (1, 3, 5)[(g + i) % 3], "flag", lambda i: 0, True))
+
+
+@fixture
+def mc_22_crosstalk_side():
+    f = Layer2Fixture(
+        "mc-2-2-crosstalk-side",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between "
+        "0 and 1, written so that a copied channel takes the base channel on its own side. No conformance stream "
+        "uses 2/2 with dynamic crosstalk. The multichannel CRCs hold under that reading.",
+    )
+    return f.add_frames(crosstalk_stream(0, 2, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 8, "side", lambda i: i % 2, True))
+
+
+@fixture
+def mc_22_crosstalk_flag():
+    f = Layer2Fixture(
+        "mc-2-2-crosstalk-flag",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between "
+        "0 and 1, written so that every copied channel takes the base channel the flag names. The multichannel CRCs "
+        "hold under that reading only.",
+    )
+    return f.add_frames(crosstalk_stream(0, 2, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 8, "flag", lambda i: i % 2, True))
+
+
+@fixture
+def mc_second_stereo_crosstalk():
+    f = Layer2Fixture(
+        "mc-second-stereo-crosstalk",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/0 + 2/0 with dynamic crosstalk: dyn_cross_mode 0 and 1 "
+        "in the subband groups and dyn_second_stereo set in some, where the second programme's right channel copies "
+        "its left.",
+    )
+    return f.add_frames(crosstalk_stream(1, 3, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 2, "side", lambda i: i % 2, False, lambda i, g: (g + i // 2) % 2))
+
+
+@fixture
+def mc_center_reserved_second_stereo():
+    f = Layer2Fixture(
+        "mc-center-reserved-second-stereo",
+        "Multichannel at 48000 Hz whose header uses the reserved center value 2 with a second stereo programme and "
+        "dyn_second_stereo set in some subband groups: read as no center, so 2/0 + 2/0, and the second programme's "
+        "right channel copies its left where the bit is set. The multichannel CRCs hold.",
+    )
+    f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(
+        center=2, surround=3, tc_alloc=(0,), seed=i + 1,
+        dynamic=Dynamic(second=[(g + i) % 2 for g in range(12)]))))
+    return f.finding("mpeg.multichannel-center-reserved", "6 frames")
 
 
 @fixture

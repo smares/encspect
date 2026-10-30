@@ -1,6 +1,6 @@
 # MPEG audio: clean-room rules
 
-Status: description for a clean-room rewrite, written on 2026-10-29 at 6da7884. A license audit found four pieces of MPEG code and test tooling that follow LGPL code (mctoolamed, mp3guessenc, FFmpeg, mpg123) or copy getID3's table closely. They are removed from the tree, and this document is what the rewrite is built from. Each section gives the problem, the inputs and outputs, the behavior the rewrite must have, where a specification covers it, and the tests that pin it.
+Status: the description for a clean-room rewrite, written on 2026-10-29 at 6da7884, and the rewrite it was written for: all four items are implemented from it on branch `feature/cleanroom-mpeg-layer2`, and section 1 gained the second reading of `dyn_cross_LR` after the independent review. A license audit found four pieces of MPEG code and test tooling that follow LGPL code (mctoolamed, mp3guessenc, FFmpeg, mpg123) or copy getID3's table closely; they were removed from the tree, and this document is what the rewrite was built from. Each section gives the problem, the inputs and outputs, the behavior the rewrite must have, where a specification covers it, and the tests that pin it.
 
 The four items:
 
@@ -133,9 +133,29 @@ The conformance streams decide only some of the cases. Every dynamic crosstalk f
 - T3 carrying S (tc 1, 2) copies T0.
 - T3 carrying L (tc 3) copies T0.
 
-T2 carrying L (tc 1), T3 carrying S under tc 0 and T3 carrying R (tc 4) are not decided: both sources give the same zero and nonzero pattern of allocations there, which is all the CRC sees.
+Every other case is undecided: the conformance streams do not settle it. Either the streams do not reach it (every dynamic crosstalk frame in them has `dyn_cross_LR` 0, and no stream uses 2/2 with dynamic crosstalk), or both sources give the same zero and nonzero pattern of allocations there, which is all the CRC sees.
 
-So the rule above is this document's reading of the standard: one rule for every configuration, and it agrees with every case the conformance streams decide. It must be confirmed against the 13818-3 text (the semantics of `dyn_cross_LR` and of `tc_allocation`) when a copy is available. The cases where it differs from the removed code:
+### Two readings of the undecided cases
+
+The rule above is this document's reading of the standard: a copy takes the base channel on the side of what the channel carries. A second reading exists, observed as the behavior of the ISO reference software: `dyn_cross_LR` 0 copies every copied channel from the left transmission channel (T0) and 1 from the right one (T1), in 3/1 and 2/2, whatever the copied channel's side. Real encoders likely follow it, so the analyzer must not fail a valid stream's multichannel CRC for the choice. The undecided cases, where the two readings can differ, are:
+
+- every copied channel under `dyn_cross_LR` 1 (in 3/1: T2 carrying L with `tc_allocation` 1 or 5, T3 carrying L with 3, and 6 and 7, which assign nothing; the readings agree where the channel carries C, S or R);
+- 3/1 T3 carrying R (`tc_allocation` 4 or 5) under `dyn_cross_LR` 0;
+- all of 2/2, under either value.
+
+The decided cases above stay on the first reading under both.
+
+Behavior of `Read` for a 3/1 or 2/2 frame with dynamic crosstalk:
+
+- It reads the frame under the first reading (the side). If the multichannel CRC holds, that is the reading.
+- If it does not hold, it reads the frame again under the second (the flag), changing only the source of the copies in the undecided cases. If that CRC holds, the frame keeps that reading.
+- If neither holds, it keeps the first and reports the mismatch as before. A mismatch that the other reading resolves is never reported.
+- Only the copies' source changes, so the same fields are read in both; what differs is which copied channels have an allocation, hence how many scfsi fields the CRC covers. A frame whose two readings have the same number of such channels reads the same under both.
+- The reading used is a node, "Base Channel Source", under "Dynamic Crosstalk Modes" in the composite status of such a frame, with the value "On the channel's side" or "Named by the flag". The parser keeps no multichannel CRC statistics, so there is nothing to count.
+
+Fixtures: `mc-3-1-crosstalk-decided` (`dyn_cross_LR` 0, decided cases only), `mc-3-1-crosstalk-side` and `mc-3-1-crosstalk-flag` (`dyn_cross_LR` 1), `mc-3-1-crosstalk-flag-right` (T3 carrying R under 0, flag reading), `mc-2-2-crosstalk-side` and `-flag` (`dyn_cross_LR` alternating), `mc-second-stereo-crosstalk` and `mc-center-reserved-second-stereo` (`dyn_second_stereo` with a coded and with a reserved center). The writer asserts that the two readings of each undecided fixture differ in the number of copied channels with an allocation, so its CRC verifies under its own reading only.
+
+It must still be confirmed against the 13818-3 text (the semantics of `dyn_cross_LR` and of `tc_allocation`) when a copy is available. The cases where the first reading differs from the removed code:
 
 | Configuration | `tc_allocation` | `dyn_cross_LR` | Channel | Removed code | This rule |
 |---|---|---|---|---|---|
@@ -147,15 +167,15 @@ So the rule above is this document's reading of the standard: one rule for every
 
 One more difference: the removed code let the reserved center value 2 count as a coded center in the second-programme copy of mode 0. With center 2 and surround 3 the shape is 2/0 + 2/0, so it never copied and read T3. This document treats center 2 as no center throughout, so T3 copies T2 when `dyn_second_stereo` is 1.
 
-Effect: no golden report, test or conformance figure changes. The fixture writer never turns dynamic crosstalk on, and the fixtures with center 2 use surround 2. A scratch model of this section reproduces the manifest's `crc_verified_frames` for all 22 multichannel conformance streams.
+Effect: no existing golden report, test or conformance figure changes; the fixtures with center 2 use surround 2, and the new fixtures above are the only ones with dynamic crosstalk. A scratch model of this section reproduces the manifest's `crc_verified_frames` for all 22 multichannel conformance streams.
 
 ### The fixture writer
 
-`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes `dyn_cross_on` 0 only. `MC_SHAPE` and `PREDICTORS` are stubbed. Rebuild them from the tables; their shape is free, so change the writer's two uses (in `Multichannel.__init__` and `write`) to fit the tables, the same way `Read` may be adapted to the C# tables that replace `Shapes`, `Predictors` and `Groups`.
+`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes dynamic crosstalk for 3/1, 2/2 and the second stereo programme (`Dynamic`, `Multichannel.allocate`), following the tables above and, for the undecided cases, either reading; without dynamic crosstalk its output is unchanged.
 
 ### Checks
 
-- Golden reports and manifests of `tests/fixtures/layer2/mc-*` (no dynamic crosstalk, prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
+- Golden reports and manifests of `tests/fixtures/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
 - The 35 ISO/IEC 13818-4 conformance streams: `python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer <encspect>` (downloads them; test08, test18, test19 and test20 use dynamic crosstalk, test09, test15 and test16 prediction, test04 and test13 phantom coding, test06 and test07 the second programme). For test18 the analyzer must verify 27 of 27 frames.
 - mctoolamed as a black box: the same script checks that it decodes every multichannel stream without a CRC error; it runs no Encspect code.
 - Record the tables' sources (13818-3 and the conformance check) in `docs/development.md`, as `CLAUDE.md` asks for format tables.
@@ -272,11 +292,13 @@ The comparison keeps the stderr lines that start with "Note: ", without that pre
 
 Run `python3 scripts/fixtures/crosscheck_mpeg_fixtures.py` (needs mpg123, ffprobe, madplay, a C compiler; the MPEG cross-check job in CI). It must report no problem on the committed fixtures, as on main.
 
-## Tests that fail until the rewrite
+## Tests that pinned the rewrite
 
-- Every Layer II fixture and golden: `TableFor` throws and the multichannel tables are empty. That covers `tests/fixtures/layer2`, the Layer II files in `tests/fixtures/stats` and `mpeg`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
+These failed while the members were stubbed and pass with the rewrite:
+
+- Every Layer II fixture and golden: `tests/fixtures/layer2`, the Layer II files in `tests/fixtures/stats` and `mpeg`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
 - The 11 goldens with "Settings Match".
-- `crosscheck_mpeg_fixtures.py`, `make_layer2_fixtures.py`, `stream_stats.py` and `conformance_mpeg_audio.py --analyzer`.
+- `make_layer2_fixtures.py`, `stream_stats.py` and `conformance_mpeg_audio.py --analyzer` (35 streams, no problem). `crosscheck_mpeg_fixtures.py` needs tools that CI installs.
 
 ## Implementer's sources
 

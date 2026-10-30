@@ -365,7 +365,7 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=True, signal="music")),
     # The other presets of LAME 3.90 to 3.92 whose tag settings differ from the encodes above; the analyzer names a
     # preset from these settings, and the Windows build of 3.91 writes some lowpasses 100 Hz higher
-    # (docs/formats/mpeg.md).
+    # (docs/development.md).
     ("external-lame390-alt-fast-extreme", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "fast", "extreme"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame390-alt-cbr", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--alt-preset", "cbr", "128"],

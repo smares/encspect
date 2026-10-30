@@ -91,17 +91,32 @@ internal sealed class Layer2Multichannel
         [B, B],
     ];
 
+    private static readonly string[] CarriesCenterSurround = ["CLRCCCRL"];
+    private static readonly string[] CarriesCenterMonoSurround = ["CLRCCL--", "SSSLRR--"];
+    private static readonly string[] CarriesStereoSurround = ["LLLL", "RRRR"];
+    private static readonly string[] CarriesMonoSurround = ["SLR-"];
+    private static readonly string[] CarriesOther = ["CLR-"];
+
     // What T2 and T3 carry for each tc_allocation (13818-3, semantics of tc_allocation): L for a left
     // or left surround channel, R for the right ones, any other letter for a channel that is neither
     // (center, surround, not assigned).
     private static string[] Carries(int surround, bool centerCoded) => (surround, centerCoded) switch
     {
-        (2, true) => ["CLRCCCRL"],
-        (1, true) => ["CLRCCL--", "SSSLRR--"],
-        (2, false) => ["LLLL", "RRRR"],
-        (1, false) => ["SLR-"],
-        _ => ["CLR-"],
+        (2, true) => CarriesCenterSurround,
+        (1, true) => CarriesCenterMonoSurround,
+        (2, false) => CarriesStereoSurround,
+        (1, false) => CarriesMonoSurround,
+        _ => CarriesOther,
     };
+
+    private static readonly Source[] PlanSecondCenterBase = [B, R, Source.T3];
+    private static readonly Source[] PlanSecondCenterRead = [R, R, Source.T3];
+    private static readonly Source[] PlanSecondCenterBaseUncopied = [B, R, R];
+    private static readonly Source[] PlanSecondCenterUncopied = [R, R, R];
+    private static readonly Source[] PlanSecondCopy = [R, Source.T2];
+    private static readonly Source[] PlanSecondUncopied = [R, R];
+    private static readonly Source[] PlanOneBase = [B];
+    private static readonly Source[] PlanOneRead = [R];
 
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _header = [];
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _status = [];
@@ -125,6 +140,13 @@ internal sealed class Layer2Multichannel
     public int Surround { get; private set; }
 
     public bool HasLfe { get; private set; }
+
+    // Whether dynamic crosstalk is on in 3/1 or 2/2, where a copied channel's base channel has two readings.
+    public bool HasCrosstalkChoice { get; private set; }
+
+    // Whether the frame reads under the flag reading, in which dyn_cross_LR names the base channel of
+    // every copy in the cases the conformance streams leave open, instead of the channel's side.
+    public bool UsesFlagReading { get; private set; }
 
     public int DematrixProcedure { get; private set; }
 
@@ -301,6 +323,43 @@ internal sealed class Layer2Multichannel
 
         int table = rate == 48000 ? 0 : 1;
         mc.AllocationStart = bits.Position;
+
+        // In 3/1 and 2/2 with dynamic crosstalk the standard's text and the ISO reference software
+        // differ in which base channel a copied channel takes in some cases that no conformance
+        // stream decides (docs/design/mpeg-clean-room-rules.md, section 1). The frame is read under
+        // the text first; if its CRC does not hold, under the flag reading, which stays only if
+        // its CRC holds.
+        mc.HasCrosstalkChoice = dynamic == 1 && channels == 2 && mc.Surround != 3;
+        void ReadAs(bool flagReading)
+        {
+            mc.UsesFlagReading = flagReading;
+            mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
+        }
+
+        ReadAs(false);
+        if (mc.HasCrosstalkChoice && mc.StoredCrc != mc.ComputedCrc)
+        {
+            ReadAs(true);
+            if (mc.StoredCrc != mc.ComputedCrc)
+            {
+                ReadAs(false);
+            }
+        }
+
+        return mc;
+    }
+
+    private void ReadAllocation(byte[] data, int start, int statusStart, int headerEnd, int table, int channels, int[] dynMode,
+        int[] secondStereo, int[] tc, int dynLeftRight, int[,] baseAllocation)
+    {
+        _allocation.Clear();
+        _scfsi.Clear();
+        var bits = new BitReader(data);
+        for (int skipped = 0; skipped < AllocationStart; skipped += 31)
+        {
+            bits.Read(Math.Min(31, AllocationStart - skipped));
+        }
+
         var allocation = new int[5, 30];
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
         {
@@ -313,32 +372,37 @@ internal sealed class Layer2Multichannel
             {
                 int bit = bits.Position;
                 int value = bits.Read(width);
-                mc._allocation.Add((sb, ch, bit, value));
+                _allocation.Add((sb, ch, bit, value));
                 return value;
             }
 
-            Allocate(mc, allocation, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
+            Allocate(this, allocation, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
         }
 
-        mc.ScfsiStart = bits.Position;
+        ScfsiStart = bits.Position;
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
         {
             for (int ch = 2; ch < 2 + channels; ch++)
             {
                 if (allocation[ch, sb] != 0)
                 {
-                    mc._scfsi.Add((sb, ch, bits.Position, bits.Read(2)));
+                    _scfsi.Add((sb, ch, bits.Position, bits.Read(2)));
                 }
             }
         }
 
-        mc.SideInfoEnd = bits.Position;
-        mc.ComputedCrc = Crc16.ComputeBits(data, statusStart, mc.SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
-        return mc;
+        SideInfoEnd = bits.Position;
+        ComputedCrc = Crc16.ComputeBits(data, statusStart, SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
     }
 
+    // Whether the channel at index i copies a base channel in a case the conformance streams leave
+    // open: any copy under dyn_cross_LR 1, 3/1 with T3 carrying R under 0, and all of 2/2.
+    private static bool IsUndecided(Layer2Multichannel mc, string[] carries, int i, int tc, int fromRight) =>
+        mc.HasCrosstalkChoice && (fromRight == 1 || mc.Surround == 2 || (i == 1 && carries[1][tc] == 'R'));
+
     // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
-    // carries in channel order; the rules are those of the clean-room description.
+    // carries in channel order; the rules are those of section 1 of
+    // docs/design/mpeg-clean-room-rules.md.
     private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int mode, int second,
         int tc, int fromRight, int left, int right, Func<int, int> transmit)
     {
@@ -347,8 +411,9 @@ internal sealed class Layer2Multichannel
         if (mc.Surround == 3)
         {
             // The second programme occupies the last two channels; its right channel may copy its left.
-            Source copy = second == 1 ? (centerCoded ? Source.T3 : Source.T2) : Source.Read;
-            plan = centerCoded ? [mode == 1 ? B : R, R, copy] : [R, copy];
+            plan = centerCoded
+                ? (second == 1 ? (mode == 1 ? PlanSecondCenterBase : PlanSecondCenterRead) : (mode == 1 ? PlanSecondCenterBaseUncopied : PlanSecondCenterUncopied))
+                : (second == 1 ? PlanSecondCopy : PlanSecondUncopied);
         }
         else if (channels == 3)
         {
@@ -360,7 +425,7 @@ internal sealed class Layer2Multichannel
         }
         else
         {
-            plan = [mode == 1 ? B : R];
+            plan = mode == 1 ? PlanOneBase : PlanOneRead;
         }
 
         string[] carries = Carries(mc.Surround, centerCoded);
@@ -376,7 +441,7 @@ internal sealed class Layer2Multichannel
                 value = plan[i] switch
                 {
                     Source.Read => transmit(2 + i),
-                    Source.Base => carries[i][tc] switch
+                    Source.Base => mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? (fromRight == 1 ? right : left) : carries[i][tc] switch
                     {
                         'L' => left,
                         'R' => right,
@@ -421,7 +486,11 @@ internal sealed class Layer2Multichannel
         Node status = node.Add(Span("Composite Status", fileOffset, CrcBit + 16, HasLfe ? LfeBit : AllocationStart, null, Explain.McStatus));
         foreach ((string name, int bit, int length, NodeValue value, string description) in _status.OrderBy(s => s.Bit))
         {
-            status.Add(Span(name, fileOffset, bit, bit + length, value, description));
+            Node field = status.Add(Span(name, fileOffset, bit, bit + length, value, description));
+            if (HasCrosstalkChoice && name == "Dynamic Crosstalk Modes")
+            {
+                field.Add(Span("Base Channel Source", fileOffset, bit, bit + length, UsesFlagReading ? "Named by the flag" : "On the channel's side", Explain.McCrosstalkSource));
+            }
         }
 
         if (HasLfe)

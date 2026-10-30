@@ -372,7 +372,7 @@ def lame_fields(lame, quality):
 # The Windows build of 3.91 and HydrogenAudio's 3.90.3 write some lowpasses 100 Hz higher, and 3.90.3 noise
 # shaping 1 for standard and extreme, so those have rows of their own.
 OLD_PRESETS = {
-    # external-lame390-alt-standard (3.90.1), external-lame392-alt-fast-standard
+    # external-lame390-alt-standard (3.90.1)
     (3, 78, None, 190, 4, 2, 3): "--alt-preset standard",
     # external-lame3903-alt-standard
     (3, 78, None, 190, 4, 1, 3): "--alt-preset standard",
