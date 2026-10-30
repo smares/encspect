@@ -17,7 +17,7 @@ internal static class Explain
     public const string StatContainerDuration = "The length of the stream as the container states it, the play duration less the preroll.";
 
     public const string Encoder = "Which program encoded the stream, as the analyzer concludes from the evidence below.";
-    public const string Confidence = "How sure the naming is: medium for a pattern of the encoder's, low when only a claim in the metadata names it.";
+    public const string Confidence = "How sure the naming is: high when the file carries the encoder's own trait, medium for a pattern of the encoder's, low when only a claim in the metadata names it.";
     public const string Evidence = "What points to the encoder: a trait of the stream, or an attribute of the file that names it, with its offset in the file where it has one.";
 
     public const string WriterEvidence = "What points to the writer: the attribute that names it or the header layout that is its habit, with its offset in the file.";

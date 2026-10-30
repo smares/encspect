@@ -144,7 +144,7 @@ public class AsfFixtureTests
     // WM/ToolName holds ffmpeg's encoder ID: an encoder claim, and no writer. A claim of ffmpeg's names the encoder only where the stream shows ffmpeg's,
     // which this stream does by the padding of its superframes.
     [Fact]
-    public void ALibavcodecToolNameNamesNeitherEncoderNorWriter()
+    public void ALibavcodecToolNameIsEncoderEvidenceAndNoWriter()
     {
         string path = Path.Combine(Fixtures.FixtureDirectory, "asf/derived-ffmpeg-wmav2-tool-name-lavc.asf");
         Report report = Analyzer.CreateDefault().Analyze(path, new MemoryStream(File.ReadAllBytes(path)));
