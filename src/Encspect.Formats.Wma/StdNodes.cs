@@ -326,7 +326,12 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
 
     private IReadOnlyList<Node> Blocks(FrameRecord frame, FrameLayout layout)
     {
-        FrameBuffer buffer = stream.BuildBuffer(frame);
+        if (!stream.HasBytes(frame))
+        {
+            return [];
+        }
+
+        FrameBuffer buffer = stream.BuildBuffer(frame, stream.StoredBytes);
         var bits = new Bits(buffer.Data, buffer.Total) { Position = buffer.Start };
         FrameState state = FrameState.Unpack(frame.State);
         var trace = new List<TraceBlock>();

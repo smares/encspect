@@ -93,6 +93,11 @@ public sealed class WmaStandardParser : ICodecParser
             findings.AddNow(Severity.Info, "wma.records-limit", StdText.RecordsLimit(stream.Skipped, MaxPackets), parent);
         }
 
+        if (stream.UndetailedSuperframes > 0)
+        {
+            findings.AddNow(Severity.Info, "wma.blocks-undetailed", StdText.BlocksUndetailed(stream.UndetailedSuperframes, StdStream.MaxStoredBytes), frames);
+        }
+
         if (stream.ValidFrames > 0 && parameters.UsesBitReservoir)
         {
             long bits = (8L * stream.FinalReservoirBytes) - stream.FinalReservoirStartBit;

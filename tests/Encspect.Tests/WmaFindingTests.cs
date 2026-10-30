@@ -46,6 +46,7 @@ public class WmaFindingTests
         ["wma.frame-filler"] = () => Header(new WmaStandardParser(), Windows, 0x0161, _ => { }),
         ["wma.reservoir-at-end"] = () => Header(new WmaStandardParser(), Windows, 0x0161, _ => { }),
         ["wma.records-limit"] = () => Std(1, 100, 0x0001, Enumerable.Repeat(new byte[100], WmaStandardParser.MaxPackets + 1)),
+        ["wma.blocks-undetailed"] = () => Std(1, 100, 0x0001, Enumerable.Repeat(new byte[100], 50_000)),
         ["wma.variable-blocks-disabled"] = () => WmaStandardStreams.Run(2, 1, 44100, 4000, 100, WmaStandardStreams.CodecData(2, 0x000D), [new byte[100]]).Findings,
         ["wma.format-unsupported"] = () => WmaStandardStreams.Run(2, 1, 8000, 1000, 0, WmaStandardStreams.CodecData(2, 1), [new byte[100]]).Findings,
         ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, _ => { }),

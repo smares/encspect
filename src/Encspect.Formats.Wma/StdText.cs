@@ -132,6 +132,9 @@ internal static class StdText
     public static string RecordsLimit(long skipped, int limit) =>
         $"The stream has more than {Number(limit)} media objects; the {Number(skipped)} after them are not read, so the statistics and the series cover the first {Number(limit)}.";
 
+    public static string BlocksUndetailed(long superframes, long bytes) =>
+        $"The bytes of the first {Number(bytes / (1 << 20))} MiB of superframes are kept to list the blocks of their frames; the {Number(superframes)} superframes after them are read for the statistics and the series, and their frames list no blocks.";
+
     public static string CodecDataSize(int version, int bytes, bool isTooShort) =>
         $"The codec-specific data of Windows Media Audio {Number(version)} is {Counts.Bytes(bytes)}; {(version == 1 ? "FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(isTooShort ? ", so it takes none here" : string.Empty)}.";
 

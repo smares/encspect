@@ -18,6 +18,13 @@ internal sealed class StdStream
     // Rebuilding the file ranges of a media object from more fragments than a store item holds is not done: it maps to the whole span.
     private const int MaxRanges = 4_000;
 
+    // The bytes of superframes kept for the nodes of their frames' blocks, up to this many; the frames of later superframes get no blocks.
+    // Reading never depends on the store: the reservoir's superframes are held in a window of their own.
+    internal const long MaxStoredBytes = 4L << 20;
+
+    private readonly Dictionary<int, byte[]> _window = [];
+    private long _stored;
+
     public StdStream(StdParameters parameters)
     {
         Parameters = parameters;
@@ -69,6 +76,32 @@ internal sealed class StdStream
 
     public int FinalReservoirStartBit { get; private set; }
 
+    // Whether the frame's blocks can be listed: the bytes of every superframe it lies in were kept.
+    public bool HasBytes(in FrameRecord frame)
+    {
+        if (Superframes[frame.Superframe].DataRef == uint.MaxValue)
+        {
+            return false;
+        }
+
+        if (!frame.IsSpanning)
+        {
+            return true;
+        }
+
+        for (int i = frame.StartSuperframe; i < frame.Superframe; i++)
+        {
+            if (Superframes[i].DataRef == uint.MaxValue && Superframes[i].State is SuperframeState.Read or SuperframeState.Middle)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public long UndetailedSuperframes { get; private set; }
+
     public long FramesRead => ValidFrames + InvalidFrames;
 
     public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, CancellationToken cancellationToken)
@@ -113,7 +146,17 @@ internal sealed class StdStream
             }
 
             packet.Span[..align].CopyTo(buffer);
-            record.DataRef = Store.Add(buffer.AsSpan(0, align));
+            if (_stored + align <= MaxStoredBytes)
+            {
+                record.DataRef = Store.Add(buffer.AsSpan(0, align));
+                _stored += align;
+            }
+            else
+            {
+                UndetailedSuperframes++;
+            }
+
+            _window[index] = buffer.AsSpan(0, align).ToArray();
 
             if (!p.UsesBitReservoir)
             {
@@ -122,6 +165,12 @@ internal sealed class StdStream
             else
             {
                 ReadWithReservoir(record, index, buffer, ref state, ref reservoir, nodes, findings);
+            }
+
+            int keepFrom = reservoir.Bytes > 0 && p.UsesBitReservoir ? reservoir.First : int.MaxValue;
+            foreach (int key in _window.Keys.Where(k => k < keepFrom).ToList())
+            {
+                _window.Remove(key);
             }
         }
 
@@ -248,7 +297,7 @@ internal sealed class StdStream
     private FrameFault ReadSpanning(int index, int first, int firstBit, ref FrameState state, StdNodes nodes, FindingCollector findings)
     {
         var frame = new FrameRecord { Superframe = index, StartSuperframe = first, StartBit = firstBit, State = state.Pack() };
-        FrameBuffer buffer = BuildBuffer(frame);
+        FrameBuffer buffer = BuildBuffer(frame, i => _window[i]);
         var bits = new Bits(buffer.Data, buffer.Total) { Position = buffer.Start };
         FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, Totals, null, out int blocks);
         frame.Blocks = blocks;
@@ -396,15 +445,18 @@ internal sealed class StdStream
         return Store.Add(bytes);
     }
 
+    // The bytes of a superframe kept in the store, for the nodes.
+    public byte[] StoredBytes(int superframe) => Store.Span(Superframes[superframe].DataRef, Parameters.BlockAlign).ToArray();
+
     // The bits a frame is read from: the superframe's bytes for a frame read in one superframe; for a frame spanning superframes
     // the reservoir from its first byte on, then the bits after the header of the superframe where the frame ends.
-    public FrameBuffer BuildBuffer(in FrameRecord frame)
+    public FrameBuffer BuildBuffer(in FrameRecord frame, Func<int, byte[]> bytesOf)
     {
         int align = Parameters.BlockAlign;
         if (!frame.IsSpanning)
         {
             byte[] single = new byte[align + 8];
-            Store.Span(Superframes[frame.Superframe].DataRef, align).CopyTo(single);
+            bytesOf(frame.Superframe).CopyTo(single, 0);
             return new FrameBuffer(single, 8 * align, frame.StartBit);
         }
 
@@ -423,18 +475,18 @@ internal sealed class StdStream
         int bitOffset = end.BitOffset;
         byte[] data = new byte[reservoir + ((bitOffset + 7) / 8) + 8];
         int at = 0;
-        Store.Span(Superframes[frame.StartSuperframe].DataRef, align)[first..].CopyTo(data);
+        bytesOf(frame.StartSuperframe).AsSpan(first).CopyTo(data);
         at += align - first;
         for (int i = frame.StartSuperframe + 1; i < frame.Superframe; i++)
         {
             if (Superframes[i].State == SuperframeState.Middle)
             {
-                Store.Span(Superframes[i].DataRef, align)[1..].CopyTo(data.AsSpan(at));
+                bytesOf(i).AsSpan(1).CopyTo(data.AsSpan(at));
                 at += align - 1;
             }
         }
 
-        AppendBits(Store.Span(end.DataRef, align), 8 + Parameters.BitOffsetBits, bitOffset, data, reservoir);
+        AppendBits(bytesOf(frame.Superframe), 8 + Parameters.BitOffsetBits, bitOffset, data, reservoir);
         return new FrameBuffer(data, (8 * reservoir) + bitOffset, frame.StartBit & 7);
     }
 
