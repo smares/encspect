@@ -215,7 +215,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
     {
         Description = StdText.FrameList,
         Topic = Topics.WmaFramesAndBlocks,
-            };
+    };
 
     private IReadOnlyList<Node> BuildSuperframes() => new BlockedChildren([], stream.Superframes.Count, Superframe);
 
