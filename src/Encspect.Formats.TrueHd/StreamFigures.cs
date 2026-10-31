@@ -49,13 +49,13 @@ internal sealed class StreamFigures(long firstRate)
     // isPartial: a run cut short by the end of the stream; it is in the series and the totals, but only
     // counts for the extremes and the distribution where no whole run came before it, since a run of one
     // unit is not what the bitrate of a run means.
-    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0)
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0)
     {
         long runRate = rate > 0 ? rate : _firstRate;
         double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
-            _points.Add(new Point(offset, bitrate, firstFrame, samples));
+            _points.Add(new Point(offset, bitrate, firstFrame, coded));
         }
 
         if (runRate != _rate && runRate > 0)

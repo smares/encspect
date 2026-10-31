@@ -53,6 +53,7 @@ internal sealed class Analysis
     private long _runSamples;
     private long _runOffset;
     private long _runFirstFrame;
+    private long _runCoded;
 
     public Analysis(AnalysisContext context)
     {
@@ -330,6 +331,9 @@ internal sealed class Analysis
 
             AddEntry(new Entry { Kind = EntryKind.Unit, Status = status, Offset = offset, Header = header }, bytes.Length);
             Units++;
+
+            // A unit that cannot be read codes nothing: it ends the run before it and trails it.
+            FlushRun();
             if (_isAfterUnsupported)
             {
                 HasGap = true;
@@ -506,7 +510,7 @@ internal sealed class Analysis
         if (_hasSynced)
         {
             long counted = isReadable ? outSamples : current?.UnitSamples ?? 0;
-            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0);
+            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0, outSamples);
         }
 
         if (AddEntry(new Entry { Kind = EntryKind.Unit, Status = overall, Offset = offset, Header = header, SyncLength = syncLength }, bytes.Length))
@@ -1111,7 +1115,8 @@ internal sealed class Analysis
         return (restart.LastChannel > restart.LastMatrixChannel, uncoded);
     }
 
-    private void Figure(long offset, int length, long samples, int available, int rate)
+    // coded: the samples the unit really codes, none for a unit that cannot be read; samples is what the bitrate counts it over.
+    private void Figure(long offset, int length, long samples, int available, int rate, int coded)
     {
         Figures ??= new StreamFigures(Records.StreamRate > 0 ? Records.StreamRate : 48000);
         if (_runUnits > 0 && rate != _runRate)
@@ -1129,9 +1134,11 @@ internal sealed class Analysis
         _runUnits++;
         _runBits += available * 8L;
         _runSamples += samples;
+        _runCoded += coded;
         ShortestUnit = Math.Min(ShortestUnit, available);
         LongestUnit = Math.Max(LongestUnit, available);
-        if (_runUnits == RunLength)
+        // A unit that codes nothing ends its run, and trails it, so within a run the samples spread over the units that carry them.
+        if (_runUnits == RunLength || coded == 0)
         {
             FlushRun();
         }
@@ -1142,11 +1149,12 @@ internal sealed class Analysis
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength, _runFirstFrame);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength, _runFirstFrame, _runCoded);
         }
 
         _runUnits = 0;
         _runBits = 0;
         _runSamples = 0;
+        _runCoded = 0;
     }
 }

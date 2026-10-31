@@ -490,8 +490,7 @@ public sealed class GraphsViewModel : ObservableObject
         if (Graph is { } graph && graph.FrameAt(index, _markedFrame) is { } offset)
         {
             _click = (graph, index, offset);
-            FramesAfterRequested = graph.FramesAfterAt(index);
-            FrameRequested?.Invoke(this, offset);
+            RequestFrame(offset, graph.FramesAfterAt(index));
         }
     }
 
@@ -511,7 +510,7 @@ public sealed class GraphsViewModel : ObservableObject
         {
             if (map.NextFrameOf(category, _markedFrame, _shownSeverities) is { } next)
             {
-                FrameRequested?.Invoke(this, next);
+                RequestFrame(next, 0);
             }
 
             return;
@@ -519,8 +518,14 @@ public sealed class GraphsViewModel : ObservableObject
 
         if (Graph is CategoryGraph graph && CategoryGraph.NextUnit(graph.Series, category, _markedFrame) is { } offset)
         {
-            FrameRequested?.Invoke(this, offset);
+            RequestFrame(offset, 0);
         }
+    }
+
+    private void RequestFrame(long offset, int framesAfter)
+    {
+        FramesAfterRequested = framesAfter;
+        FrameRequested?.Invoke(this, offset);
     }
 
     // Draws the chosen entry in another form; the choice holds for the next entry that has a form of that kind.

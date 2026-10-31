@@ -61,7 +61,7 @@ public class TrueHdRunsTests
     [AvaloniaFact]
     public void A_click_inside_a_run_selects_the_frame_in_the_tree_and_keeps_the_clicked_column()
     {
-        DetailWindow window = AudioPanelTests.Open(Path.Combine(Fixtures.Directory, "truehd", "external-truehd-51-48k-24.thd"));
+        DetailWindow window = AudioPanelTests.Open(LeadingUnits);
         window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Waveform");
         var graph = (WaveformGraph)window.Graph.Graph!;
         StreamInfo stream = window.Model.Report!.Streams[0];
@@ -69,7 +69,7 @@ public class TrueHdRunsTests
         SampleLocator locator = graph.Locator!;
         FrameRuns runs = stream.Series.First(s => s.Name == "Bitrate").Runs!;
         bool isInside = false;
-        for (int column = 1; column < graph.Columns - 1; column++)
+        for (int column = 0; column < graph.Columns; column++)
         {
             long position = graph.PositionOfColumn(column);
             int after = locator.FramesIntoRunAt(position);
@@ -97,6 +97,52 @@ public class TrueHdRunsTests
 
         // Past the end of the list the last frame is taken.
         Assert.Equal(frames[^1].Offset, window.Model.SelectFrameAt(frames[^3].Offset, 50)!.Node.Offset);
+        window.Close();
+    }
+
+    // Built-parity-mismatch had a run of 27 units of which 16 carried samples, over which a time was spread, so a click was up to 9 units early.
+    [Fact]
+    public void A_click_is_never_earlier_than_the_true_unit_though_units_that_code_nothing_trail_a_run()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", "built-parity-mismatch.thd"));
+        StreamInfo stream = report.Streams[0];
+        FrameRuns runs = stream.Series.First(s => s.Name == "Bitrate").Runs!;
+        long unit = Enumerable.Range(0, runs.FirstFrames.Length).Max(r => runs.Samples.Span[r] / runs.FramesIn(r));
+        // The units of a run that carry samples come first and carry `unit` each (the units that cannot be read trail the run), so the true
+        // unit of a position is known from the runs alone, and the click is never before it.
+        SampleLocator locator = SampleLocator.For(stream)!;
+        long start = 0;
+        for (int run = 0; run < runs.FirstFrames.Length; run++)
+        {
+            for (long position = start; position < start + runs.Samples.Span[run]; position += 7)
+            {
+                long truth = runs.FirstFrames.Span[run] + ((position - start) / unit);
+                Assert.True(locator.FrameIndexAt(position) + 1 >= truth, $"Position {position}: unit {locator.FrameIndexAt(position) + 1} before unit {truth}.");
+            }
+
+            start += runs.Samples.Span[run];
+        }
+    }
+
+    // A swatch of the Frame Map selects the frame the map names, not the frame a click on a panel had counted into its run.
+    [AvaloniaFact]
+    public void A_swatch_of_the_map_selects_the_first_frame_of_a_run_after_a_click_inside_one()
+    {
+        DetailWindow window = AudioPanelTests.Open(LeadingUnits);
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Waveform");
+        var graph = (WaveformGraph)window.Graph.Graph!;
+        SampleLocator locator = graph.Locator!;
+        int column = Enumerable.Range(0, graph.Columns).First(c => locator.FramesIntoRunAt(graph.PositionOfColumn(c)) > 0);
+        window.Model.Graphs.Activate(column);
+
+        window.Model.Graphs.Selected = window.Model.Graphs.Choices.Single(c => c.Title == "Bitrate");
+        window.Model.Graphs.SelectForm(GraphForm.Map);
+        var map = (FrameMapGraph)window.Graph.Graph!;
+        long selected = window.Model.SelectedNode!.Node.Offset;
+        long expected = map.NextFrameOf(0, selected)!.Value;
+        window.Model.Graphs.ActivateCategory(0);
+
+        Assert.Equal(expected, window.Model.SelectedNode!.Node.Offset);
         window.Close();
     }
 }
