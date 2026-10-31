@@ -106,6 +106,13 @@ internal sealed class BlockContents
 
     public int Md5Size { get; private set; }
 
+    // The same for the extra bitstream sub-block, whose CRC is the first 4 bytes of its data.
+    public int ExtraPosition { get; private set; }
+
+    public int ExtraHeaderLength { get; private set; }
+
+    public int ExtraSize { get; private set; }
+
     // libwavpack's read_metadata_buff: the sub-block at position of block, or false where the block holds no further one
     // (fewer than two bytes left, a size that runs past the block, or an odd size of 0). A sub-block that does not fit
     // ends the reading without a refusal.
@@ -202,6 +209,7 @@ internal sealed class BlockContents
         Int32SentBits = Int32Zeros = Int32Ones = Int32Dups = 0;
         Bitstream = ExtraBitstream = Dsd = (0, 0);
         ExtraCrc = 0;
+        ExtraPosition = ExtraHeaderLength = ExtraSize = 0;
         HasCorrection = false;
         ChannelInfo = null;
         SampleRate = null;
@@ -307,6 +315,7 @@ internal sealed class BlockContents
 
                 ExtraCrc = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(data);
                 ExtraBitstream = (sub.DataStart + 4, data.Length - 4);
+                (ExtraPosition, ExtraHeaderLength, ExtraSize) = (sub.DataStart - sub.HeaderLength, sub.HeaderLength, sub.Next - sub.DataStart);
                 break;
             case SubBlockIds.DsdBlock:
                 ReadDsd(header, sub, data, isMono);

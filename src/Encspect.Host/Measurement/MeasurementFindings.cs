@@ -9,7 +9,7 @@ internal static class MeasurementFindings
 {
     public delegate void AddFinding(Severity severity, string code, string message, Node? node, int count);
 
-    public static StreamMeasurements Finish(StreamMeasurer measurer, DecodeRun run, bool decodingEndedEarly, AddFinding add)
+    public static StreamMeasurements Finish(StreamMeasurer measurer, DecodeRun run, bool decodingEndedEarly, bool hasFramesNotDecoded, AddFinding add)
     {
         MeasurementStatus status = MeasurementStatus.Complete;
         string? reason = null;
@@ -38,6 +38,10 @@ internal static class MeasurementFindings
         else if (measurer.IsCanceled || decodingEndedEarly)
         {
             status = MeasurementStatus.Stopped;
+        }
+        else if (hasFramesNotDecoded)
+        {
+            status = MeasurementStatus.Incomplete;
         }
 
         if (measurer.Channels > MeasurementLimits.MaxChannels)

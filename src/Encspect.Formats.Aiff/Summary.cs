@@ -249,7 +249,7 @@ internal static class Summary
             long available = Math.Min(frames * frameBytes.Value, s.Reader.End - start);
             if (available > 0)
             {
-                PcmFeed.Run(session, s.Reader.Slice(start, available), start, frames, frameBytes.Value, sound.Node.Name);
+                PcmFeed.Run(session, s.Reader.Slice(start, available), start, frames, frameBytes.Value, sound.Node);
             }
         }
 
