@@ -59,7 +59,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         if ((long)Math.Max(n, frame.Samples) * channels > FlacDecoder.MaxSamplesPerFrame)
         {
             _isIncomplete = true;
-            _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The frame at 0x{frame.Bytes.FileStart:X} has more samples than the {FlacDecoder.MaxSamplesPerFrame} over all channels that the largest legal frame holds, so it is not decoded.");
+            _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The frame at 0x{frame.Bytes.FileStart:X} has more samples than the {FlacDecoder.MaxSamplesPerFrame} over all channels that the largest legal frame holds, so it is not decoded.", FrameNode(frame));
             return 0;
         }
 
@@ -137,6 +137,14 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The frame was not walked into buffers the session lent, so the same walk runs here, into buffers of this decoder.
+    // Equal in name, offset and length to the parser's node of the frame.
+    private static Node FrameNode(in CodedFrame frame)
+    {
+        MappedBytes bytes = frame.Bytes;
+        IReadOnlyList<ByteRange> ranges = bytes.FileRanges();
+        return new Node(frame.NodeName, bytes.FileStart, bytes.FileEnd - bytes.FileStart) { Ranges = ranges.Count > 1 ? ranges : null };
+    }
+
     private void Walk(ReadOnlySpan<byte> data, in FrameHeader header, int stride, bool needsWide)
     {
         int channels = header.Channels;

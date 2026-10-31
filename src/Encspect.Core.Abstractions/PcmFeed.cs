@@ -7,12 +7,13 @@ public static class PcmFeed
     // The most bytes of a slice, a whole number of sample frames; a single sample frame can be larger (65,535 channels).
     public const int SliceBytes = 64 * 1024;
 
-    // frames sample frames of frameBytes bytes each start at start in the reader's file. A slice is no unit of the parser's tree: NodeName is the data
-    // chunk's node. The frames the reader holds are the most that are read.
-    public static void Run(IDecodeSession session, ByteReader reader, long start, long frames, long frameBytes, string nodeName)
+    // frames sample frames of frameBytes bytes each start at start in the reader's file. A slice is no unit of the parser's tree: a finding about a slice points to
+    // node, the data chunk's. The frames the reader holds are the most that are read.
+    public static void Run(IDecodeSession session, ByteReader reader, long start, long frames, long frameBytes, Node node)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(reader);
+        ArgumentNullException.ThrowIfNull(node);
 
         if (!session.IsDecoding || frameBytes < 1 || frames < 1 || start < reader.Start || start > reader.End)
         {
@@ -34,7 +35,7 @@ public static class PcmFeed
             long at = start + (done * frameBytes);
             reader.Position = at;
             reader.Read(buffer.AsSpan(0, length));
-            session.Decode(new CodedFrame(new MappedBytes(buffer.AsMemory(0, length), at), nodeName, done, count));
+            session.Decode(new CodedFrame(new MappedBytes(buffer.AsMemory(0, length), at), node.Name, done, count) { Node = node });
             done += count;
         }
     }

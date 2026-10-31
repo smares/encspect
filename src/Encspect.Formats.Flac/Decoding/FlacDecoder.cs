@@ -18,16 +18,16 @@ public sealed class FlacDecoder : IDecoder
         ArgumentNullException.ThrowIfNull(context);
 
         MappedBytes configuration = context.Setup.Configuration
-            ?? throw new InvalidDataException("The stream has no STREAMINFO block, so the sample rate, channels and bit depth of its frames are not known.");
+            ?? throw new InvalidDataException("The stream has no STREAMINFO block, so the sample rate, channels and bit depth of its frames are not known");
         if (configuration.Length < StreamInfoBlock.Length)
         {
-            throw new InvalidDataException("The STREAMINFO block is shorter than the 34 bytes it needs.");
+            throw new InvalidDataException("The STREAMINFO block is shorter than the 34 bytes it needs");
         }
 
         StreamInfoBlock info = StreamInfoBlock.Parse(configuration.Span);
         if (info.BitsPerSample < 4)
         {
-            throw new InvalidDataException($"STREAMINFO states {info.BitsPerSample} bits per sample; the specification allows 4 to 32.");
+            throw new InvalidDataException($"STREAMINFO states {info.BitsPerSample} bits per sample; the specification allows 4 to 32");
         }
 
         return new FrameDecoder(context, info, configuration);

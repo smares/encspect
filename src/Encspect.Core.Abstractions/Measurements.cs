@@ -56,7 +56,7 @@ public enum MeasurementStatus
     Complete,
 
     // Decoding ended before the stream did (the front end's stop, the decoders' budget, the measurer's own budget, a decoder that
-    // failed, positions that went back); the figures cover what was measured.
+    // failed, positions that went back) or a frame was not decoded (a frame that failed may have written blocks first); the figures cover what was measured.
     Stopped,
 
     // Nothing, or less than asked, can be measured: no decoder, DSD, a rate of 0 Hz, a configuration the decoder refused, the

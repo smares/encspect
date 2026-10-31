@@ -196,7 +196,7 @@ internal sealed class DecodeSession : IDecodeSession
         catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
         {
             _framesNotDecoded++;
-            string why = ex is EndOfStreamException ? "the data ends inside the frame's coded audio" : ex.Message;
+            string why = ex is EndOfStreamException ? "the data ends inside the frame's coded audio" : ex.Message.TrimEnd('.');
             Add(Severity.Warning, "decode.frame-invalid", $"The {_codecId} decoder could not decode the frame at 0x{frame.Bytes.FileStart:X}: {why}.", FrameNode(frame), 1);
         }
         catch (Exception ex) when (Analyzer.IsParserBug(ex))
@@ -314,7 +314,9 @@ internal sealed class DecodeSession : IDecodeSession
             }
             catch (OperationCanceledException) when (IsCanceledByTheDecoding())
             {
+                // The host's own state explains it, and its finding ends the session.
                 results = [];
+                EndIfAsked();
             }
             catch (Exception ex) when (Analyzer.IsParserBug(ex) || (ex is OperationCanceledException && !Owner.CancellationToken.IsCancellationRequested))
             {
@@ -377,7 +379,7 @@ internal sealed class DecodeSession : IDecodeSession
         StreamMeasurements record;
         if (_sink?.Measurer is { } measurer)
         {
-            record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, Add);
+            record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _framesNotDecoded > 0 || _status != DecodeStatus.Decoded, Add);
 
             // The record stays in the report, so its share of the memory bound stays reserved until the analysis ends.
             long kept;
@@ -412,7 +414,7 @@ internal sealed class DecodeSession : IDecodeSession
         {
             record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = _notPossible?.TrimEnd('.') };
         }
-        else if (_status == DecodeStatus.Decoded && _decodedSamples > 0 && !_isFailed)
+        else if (!_isFailed && ((_setup.IsDsd && _status is DecodeStatus.Decoded or DecodeStatus.Stopped) || (_status == DecodeStatus.Decoded && _decodedSamples > 0)))
         {
             record = new StreamMeasurements { Status = MeasurementStatus.NotPossible, Reason = "the stream decodes to DSD, which is not measured" };
         }
@@ -439,12 +441,12 @@ internal sealed class DecodeSession : IDecodeSession
         else if (run.IsStopRequested)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.stopped", $"Decoding was stopped after {Counts.Of(_framesDecoded, "frame", "frames")}.", null, 1);
+            Add(Severity.Info, "decode.stopped", $"Decoding was stopped after {FramesDecoded()}.", null, 1);
         }
         else if (run.IsOutOfBudget)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.limit", $"Decoding stopped after {string.Create(CultureInfo.InvariantCulture, $"{_framesDecoded:N0}")} {(_framesDecoded == 1 ? "frame" : "frames")}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the file's size allows" : string.Empty)}.", null, 1);
+            Add(Severity.Info, "decode.limit", $"Decoding stopped after {FramesDecoded()}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the file's size allows" : string.Empty)}.", null, 1);
         }
 
         if (_isEnded && _status == DecodeStatus.Decoded)
@@ -455,6 +457,8 @@ internal sealed class DecodeSession : IDecodeSession
         return _isEnded;
     }
 
+    private string FramesDecoded() => $"{_framesDecoded.ToString("N0", CultureInfo.InvariantCulture)} {(_framesDecoded == 1 ? "frame" : "frames")}";
+
     // Called by the router for a stream whose channels or sample width cannot be decoded.
     public void RefuseSetup()
     {
@@ -464,8 +468,8 @@ internal sealed class DecodeSession : IDecodeSession
     private void NotPossible(string message)
     {
         _status = DecodeStatus.NotPossible;
-        _notPossible = message;
-        Add(Severity.Info, "decode.not-possible", $"The stream was not decoded: {message}", null, 1);
+        _notPossible = message.TrimEnd('.');
+        Add(Severity.Info, "decode.not-possible", $"The stream was not decoded: {_notPossible}.", null, 1);
     }
 
     private void Fail(string what, Exception? ex)
@@ -510,6 +514,11 @@ internal sealed class DecodeSession : IDecodeSession
 
     private static Node FrameNode(in CodedFrame frame)
     {
+        if (frame.Node is { } own)
+        {
+            return own;
+        }
+
         MappedBytes bytes = frame.Bytes;
         IReadOnlyList<ByteRange> ranges = bytes.FileRanges();
         return new Node(frame.NodeName, bytes.FileStart, bytes.FileEnd - bytes.FileStart) { Ranges = ranges.Count > 1 ? ranges : null };

@@ -21,17 +21,17 @@ public sealed class WavPackDecoder : IDecoder
 
         // The block libwavpack opens the file with: whatever it refuses to open a file for, the stream cannot be decoded.
         MappedBytes block = context.Setup.Configuration
-            ?? throw new InvalidDataException("The stream has no block with audio that passes the checks libwavpack opens a file with, so there is nothing to decode.");
+            ?? throw new InvalidDataException("The stream has no block with audio that passes the checks libwavpack opens a file with, so there is nothing to decode");
         ReadOnlySpan<byte> data = block.Span;
         if (data.Length < BlockHeader.Length || !BlockHeader.IsPlausible(data))
         {
-            throw new InvalidDataException("The first block with audio does not start with a header libwavpack takes.");
+            throw new InvalidDataException("The first block with audio does not start with a header libwavpack takes");
         }
 
         var header = new BlockHeader(data);
         if (header.Version is < BlockHeader.MinVersion or > BlockHeader.MaxVersion)
         {
-            throw new InvalidDataException($"The first block with audio has stream version 0x{header.Version:X3}, which libwavpack does not decode.");
+            throw new InvalidDataException($"The first block with audio has stream version 0x{header.Version:X3}, which libwavpack does not decode");
         }
 
         try
@@ -45,7 +45,7 @@ public sealed class WavPackDecoder : IDecoder
         }
         catch (InvalidDataException ex)
         {
-            throw new InvalidDataException($"The first block with audio cannot be decoded: {char.ToLowerInvariant(ex.Message[0])}{ex.Message[1..]}.", ex);
+            throw new InvalidDataException($"The first block with audio cannot be decoded: {char.ToLowerInvariant(ex.Message[0])}{ex.Message[1..]}", ex);
         }
 
         return new StreamDecoder(context);

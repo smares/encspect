@@ -211,7 +211,12 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         finally
         {
             _depth--;
-            EndOpenSessions(context);
+
+            // A canceled analysis leaves no report, so its sessions are not ended: no sink gets End and no measurement is built.
+            if (!context.CancellationToken.IsCancellationRequested)
+            {
+                EndOpenSessions(context);
+            }
         }
 
         foreach (Finding finding in context.Findings)

@@ -166,7 +166,7 @@ Nothing here blocks lossy decoders:
 - **No parser changes** beyond the PCM route of WAV, Wave64 and AIFF, which is a parser handing frames to a decoder as every decoded format does.
 - **Attaching the result:** the measurer is created at `OpenSink`, which only a session that declares output reaches, so the record cannot hang on the sink. The host attaches one `StreamMeasurements` to **every session of a measured analysis**, when the session closes, as decoders.md fixes it and as it sets `NodePaths`: the stream whose first node is the session's `DecodeSetup.Stream` gets it (a routed codec's stream, FLAC in Ogg, is matched the same way). Its content comes from what the session did:
   - a measurer that ran: its figures and status (`Complete`, `Stopped`, `FormatChanged`, `Failed`);
-  - a session with `DecodeStatus.NoDecoder` (TTA), `NotPossible` (a refused configuration), or one whose decoder never declared output (WavPack's DSD): status `NotPossible` with the reason as text ("no decoder for TTA", "the stream decodes to DSD"), no finding of its own;
+  - a session with `DecodeStatus.NoDecoder` (TTA), `NotPossible` (a refused configuration), or one whose decoder never declared output (WavPack's DSD, which `DecodeSetup.IsDsd` states, so also when decoding stopped before its first block): status `NotPossible` with the reason as text ("no decoder for TTA", "the stream decodes to DSD"), no finding of its own;
   - a session that decoded nothing because the stream stopped or the budget ran out before the first block, or whose frames all failed: status `Stopped`, no figures. (A stream whose setup states 0 samples and which was handed no frame, with no stop to explain it, is `NotPossible`, "the stream holds no samples"; step 3.)
   - A stream without any session (MPEG audio, AAC and the other formats whose parsers start none) gets no record at all, as it has no `Verification`. The front ends read that absence as "no decoder" (see [GUI](#gui)).
 - **Order:** the measurer gets the block before the front end's sink. Both see the same span, valid only during the call; the measurer copies what it keeps (the window's overlap).
@@ -175,6 +175,7 @@ Nothing here blocks lossy decoders:
 
 - Measuring implies decoding with the same `DecodeOptions` (stop, budget, sink). The checksums over decoded audio are compared as with `--verify`, at a cost that is small next to the measurements (FLAC's MD5 is about 28% of its decoding step, decoders.md "As built: the second speed pass").
 - So `--measure` implies `--verify`, and a measured stream always has its verdict. A decoder option to skip the checksums would change the decoder contract for a small gain; it is not proposed (decision 3).
+- A stream with a frame that was not decoded (`decode.frame-invalid`) is `Stopped` as well: a decoder may have written blocks of that frame before it failed, and the figures cover what was written, not a complete stream.
 - `decode.limit` and `decode.stopped` end the measurements with the decoding: the measurements then cover the samples decoded, status `Stopped`, and the text says how much was measured.
 - **Nothing the decoder or the verification does depends on measuring.** The checksums compared, `IsVerified` and every `decode.*` finding are equal with and without `--measure`, also when `measure.limit` stops the measurements first, because the measurer's budget is counted apart from the decoders' (decision 5) and the measurer never throws. A test holds it for every decoded fixture (see [Tests](#tests)).
 
@@ -199,7 +200,7 @@ public sealed class MeasureOptions
 
     // The measurements' work budget in work units, counted apart from the decoders' (see "The work budget"); null for
     // the default. Tests and the fuzzer lower it. An option of the call, not a setting.
-    public long? MaxWork { get; init; }
+    public long? MaxWork { get; init; } // negative: ArgumentOutOfRangeException from Analyze, as for the decoders' budget
 }
 
 [Flags]

@@ -97,6 +97,8 @@ public class DecodeRouteTests
 
         public bool IsLossy { get; init; }
 
+        public bool IsDsd { get; init; }
+
         public Func<int, CodedFrame, CodedFrame>? Shape { get; init; }
 
         public IReadOnlyList<ChecksumTally> Stored { get; init; } =
@@ -126,6 +128,7 @@ public class DecodeRouteTests
                 BitsPerSample = BitsPerSample,
                 Samples = Samples,
                 IsLossy = IsLossy,
+                IsDsd = IsDsd,
             });
 
             for (int i = 0; i < Frames; i++)
@@ -1069,6 +1072,86 @@ public class DecodeRouteTests
         Assert.Equal([(0L, 100), (100L, 100), (200L, 100), (300L, 100)], sink.Blocks);
         Assert.Equal([400L], sink.Ends);
         Assert.True(Assert.Single(report.Streams).Verification!.IsVerified);
+    }
+
+    // A frame that writes a block and then fails stays counted as not decoded, though its block reached the sink: End reports the
+    // decoded frames only, and the measurement is stopped, not complete.
+    [Fact]
+    public void AFrameThatWritesAndThenFailsLeavesTheMeasurementStopped()
+    {
+        IPcmSink? sink = null;
+        var decoder = new ScriptedDecoder
+        {
+            OnOpened = context => sink = context.DeclareOutput(new PcmFormat(44100, 2, 16, SampleFormat.Integer)),
+            OnDecode = f =>
+            {
+                sink!.Write(new PcmBlock(f.FirstSample, f.Samples, 2, f.Samples, new int[f.Samples * 2]));
+                return f.FirstSample == 100 ? throw new InvalidDataException("the second chunk is bad") : f.Samples;
+            },
+            OnFinish = _ => Md5(),
+        };
+        var recording = new RecordingSink();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions(), Output = _ => recording } };
+
+        Report report = Analyze(new FrameParser(), [decoder], options);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(300, stream.Verification!.DecodedSamples);
+        Assert.Equal([300L], recording.Ends);
+        Assert.Equal(400, recording.Blocks.Sum(b => b.Length));
+        Assert.Equal(MeasurementStatus.Stopped, stream.Measurements!.Status);
+        Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
+    }
+
+    [Fact]
+    public void ACanceledAnalysisEndsNoSinkOfAFormatParserOrOfARoutedCodecParser()
+    {
+        foreach (bool isRouted in new[] { false, true })
+        {
+            using var cts = new CancellationTokenSource();
+            IPcmSink? sink = null;
+            DecodeContext? context = null;
+            var decoder = new ScriptedDecoder
+            {
+                OnOpened = c => (context, sink) = (c, c.DeclareOutput(new PcmFormat(44100, 2, 16, SampleFormat.Integer))),
+                OnDecode = f =>
+                {
+                    sink!.Write(new PcmBlock(f.FirstSample, f.Samples, 2, f.Samples, new int[f.Samples * 2]));
+                    cts.Cancel();
+                    context!.CancellationToken.ThrowIfCancellationRequested();
+                    return f.Samples;
+                },
+            };
+            var recording = new RecordingSink();
+            var options = new AnalysisOptions { CancellationToken = cts.Token, Decoding = new DecodeOptions { Output = _ => recording } };
+            var inner = new Inner("inner", (_, _) => null);
+            IFormatParser format = isRouted ? new Container(inner) : new FrameParser();
+
+            Assert.Throws<OperationCanceledException>(() => new Analyzer([], [format], [inner], [decoder]).Analyze("sample.bin", new MemoryStream(new byte[64]), options));
+            Assert.Empty(recording.Ends);
+        }
+    }
+
+    [Fact]
+    public void ADsdStreamStoppedBeforeItsFirstBlockIsNotMeasuredBecauseOfDsd()
+    {
+        using var stop = new CancellationTokenSource();
+        stop.Cancel();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions(), Stop = stop.Token } };
+
+        Report report = Analyze(new FrameParser { IsDsd = true, BitsPerSample = 8 }, [new ScriptedDecoder()], options);
+
+        StreamMeasurements measurements = Assert.Single(report.Streams).Measurements!;
+        Assert.Equal(MeasurementStatus.NotPossible, measurements.Status);
+        Assert.Contains("DSD", measurements.Reason);
+    }
+
+    [Fact]
+    public void ANegativeMeasureBudgetIsRefusedLikeTheDecodingOne()
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions { MaxWork = -1 } } };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => Analyze(new FrameParser(), [new ScriptedDecoder()], options));
     }
 
     [Fact]
