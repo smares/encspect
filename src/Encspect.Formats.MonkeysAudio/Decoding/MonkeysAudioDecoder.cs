@@ -8,6 +8,16 @@ namespace Encspect.Formats.MonkeysAudio.Decoding;
 // Files before 3.93 use another core of the SDK (Old/UnMACOld.cpp), which OldFrameDecoder follows (docs/formats/monkeys-audio.md, "Decoding").
 public sealed class MonkeysAudioDecoder : IDecoder
 {
+    private readonly long _maxHeldSamples;
+
+    public MonkeysAudioDecoder()
+        : this(FrameDecoder.DefaultMaxHeldSamples)
+    {
+    }
+
+    // A frame of 24-bit audio larger than maxHeldSamples is decoded twice instead of held (FrameDecoder); the tests lower it to reach that path with small files.
+    internal MonkeysAudioDecoder(long maxHeldSamples) => _maxHeldSamples = maxHeldSamples;
+
     // The first file version the SDK's current decoder reads; older files use the one of Old/UnMACOld.cpp, down to the oldest the parser reads.
     private const int FirstVersion = 3930;
 
@@ -47,6 +57,10 @@ public sealed class MonkeysAudioDecoder : IDecoder
 
             header = ApeHeader.ReadDescriptor(bytes).WithHeader(bytes[ApeHeader.DescriptorLength..]);
             dataStart = header.DataOffset(configuration.FileStart);
+            if (bytes.Length >= ApeHeader.DescriptorLength + ApeHeader.HeaderLength + 4)
+            {
+                dataStart = WordStart(configuration, bytes, ApeHeader.DescriptorLength + ApeHeader.HeaderLength);
+            }
         }
         else
         {
@@ -57,6 +71,11 @@ public sealed class MonkeysAudioDecoder : IDecoder
 
             header = ApeHeader.ReadOld(bytes);
             dataStart = header.OldDataOffset(configuration.FileStart);
+            if (bytes.Length >= header.OldHeaderBytes + 4)
+            {
+                dataStart = WordStart(configuration, bytes, header.OldHeaderBytes);
+            }
+
             if (header.CompressionLevel > 4000 && version < 3950)
             {
                 throw new InvalidDataException($"The compression level {header.CompressionLevel} did not exist in files of version {ApeHeader.VersionText(version)}");
@@ -88,8 +107,13 @@ public sealed class MonkeysAudioDecoder : IDecoder
             throw new InvalidDataException($"The header states {header.BlocksPerFrame} samples in a frame; the decoder takes 1 to {header.MaximumBlocksPerFrame}");
         }
 
-        return new FrameDecoder(context, header, dataStart);
+        return new FrameDecoder(context, header, dataStart, _maxHeldSamples);
     }
+
+    // The file offset the frames' words are counted from: the first seek table entry, which the parser gives after the header and its own fields
+    // (APEDecompress.cpp, nSeekRemainder).
+    private static long WordStart(MappedBytes configuration, ReadOnlySpan<byte> bytes, int at) =>
+        System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes[at..]) + configuration.FileStart;
 
     // Files before 3.93, which the SDK reads with the decoder of Old/UnMACOld.cpp: what that decoder cannot decode is left undecoded here with its reason.
     private static OldFrameDecoder OpenOld(DecodeContext context, ApeHeader header, long dataStart, ReadOnlySpan<byte> configuration)
@@ -131,7 +155,7 @@ public sealed class MonkeysAudioDecoder : IDecoder
         if (version <= 3800)
         {
             long elements = header.SeekElementCount;
-            ReadOnlySpan<byte> table = configuration[Math.Min(configuration.Length, header.OldHeaderBytes)..];
+            ReadOnlySpan<byte> table = configuration[Math.Min(configuration.Length, header.OldHeaderBytes + 4)..];
             if (table.Length < elements)
             {
                 throw new InvalidDataException("The table of the bits the frames start at is not available");

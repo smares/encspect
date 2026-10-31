@@ -7,7 +7,7 @@ namespace Encspect.Formats.MonkeysAudio;
 internal sealed class State
 {
     // The most frames kept as entries; the rest are read, counted and checked, and listed as one stretch.
-    public const int MaxListedFrames = 1 << 20;
+    public const int DefaultMaxListedFrames = 1 << 20;
 
     // The most entries of the table of start bits of version 3.80 that the analyzer keeps.
     public const int MaxSeekBits = 1 << 20;
@@ -15,11 +15,14 @@ internal sealed class State
     // The most the analyzer reads into memory as one frame to decode it.
     public const long MaxDecodedFrameBytes = 64L << 20;
 
-    public State(ParseContext context, ByteReader reader)
+    public State(ParseContext context, ByteReader reader, int maxListedFrames = DefaultMaxListedFrames)
     {
+        MaxListedFrames = maxListedFrames;
         Context = context;
         Reader = reader;
     }
+
+    public int MaxListedFrames { get; }
 
     public ParseContext Context { get; }
 
