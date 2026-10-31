@@ -26,7 +26,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - Monkey's Audio (`.ape`), with an optional decode of files of versions 3.80 to 3.99 and 4.11 that verifies the CRC or checksum of every frame
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames
 - Dolby TrueHD and MLP (`.thd`, `.mlp`), with an optional decode that verifies the lossless checks of the audio
-- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio: Professional and Lossless frame by frame (packets, frames, subframes, no decoding), versions 1 and 2 and Voice at header level
+- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio (versions 1 and 2, Professional and Lossless frame by frame; Voice at header level)
 - WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level (PCM, floating-point, A-law and mu-law samples are decoded for `--measure`), and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples
 - Matroska and WebM (`.mka`, `.mkv`, `.webm`) with AAC, AC-3, E-AC-3, DTS, Vorbis and Opus audio read by their parsers
 
@@ -36,7 +36,7 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth), the loudness (integrated, range, maxima; ITU-R BS.1770 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Phase 2, the lossy formats, is done apart from the frames of WMA versions 1 and 2 and Voice, which were removed for their provenance and return as clean-room rewrites. Next: the lossless formats, among them the decoders of phase 3 (the frames of WMA Lossless are read).
+Phase 2, the lossy formats, is done apart from the frames of WMA Voice, which were removed for their provenance and return as a clean-room rewrite. Next: the lossless formats, among them the decoders of phase 3 (the frames of WMA Lossless are read).
 
 ## Documentation
 

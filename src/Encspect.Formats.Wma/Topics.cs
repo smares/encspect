@@ -17,4 +17,9 @@ internal static class Topics
     public const string WmaLosslessSubframes = "wma-lossless-subframes";
     public const string MidSide = "mid-side-stereo";
     public const string WastedBits = "wasted-bits";
+    public const string WmaSuperframes = "wma-superframes";
+    public const string WmaBitReservoir = "wma-bit-reservoir";
+    public const string WmaFramesAndBlocks = "wma-frames-and-blocks";
+    public const string MidSideStereo = "mid-side-stereo";
+    public const string NoiseSubstitution = "noise-substitution";
 }

@@ -1,0 +1,22 @@
+{
+  "description": "Valid ID3v2.4 tag with a TIT2 of 130 bytes (syncsafe $00 00 01 02, 258 as a plain integer). Read as plain, TIT2 jumps into the data of the PRIV frame behind it, where a TPE1 header and zero bytes make a chain that also ends exactly at the end of the tag. The syncsafe reading is consistent, so it is the one used.",
+  "length": 825,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TIT2/Text": "ttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+      },
+      "offset": 0,
+      "length": 313
+    },
+    {
+      "name": "Data",
+      "offset": 313,
+      "length": 512
+    }
+  ],
+  "findings": []
+}

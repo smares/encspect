@@ -222,7 +222,6 @@ public sealed class Id3v2TagParser : ITagParser
             long? declaredPadding = null;
             if (major >= 3 && (flags & 0x40) != 0 && FollowsDirectly(reader, bodyStart, bodyEnd))
             {
-                // Some taggers set the flag without writing an extended header (mutagen, _tags.py).
                 state.Findings.Add(new Finding(
                     Severity.Warning,
                     "id3v2.extended-header-missing",
@@ -797,7 +796,7 @@ public sealed class Id3v2TagParser : ITagParser
         int idLength = major == 2 ? 3 : 4;
         int headerLength = major == 2 ? 6 : 10;
         long framesStart = body.FilePosition;
-        state.PlainSizes = major == 4 && HasPlainFrameSizes(body.Reader, framesStart, body.End);
+        state.PlainSizes = major == 4 && HasPlainFrameSizes(body.Reader, framesStart, body.End, state.IsTruncated);
 
         while (!body.AtEnd)
         {
@@ -1336,50 +1335,106 @@ public sealed class Id3v2TagParser : ITagParser
         public List<Node> Frames { get; } = [];
     }
 
-    // The frame IDs ID3v2.3 and 2.4 declare, and those common writers add (mutagen, _frames.py).
-    private static readonly HashSet<string> FrameIds =
-    [
-        "AENC", "APIC", "ASPI", "CHAP", "COMM", "COMR", "CTOC", "ENCR", "EQU2", "EQUA", "ETCO", "GEOB", "GRID", "GRP1",
-        "IPLS", "LINK", "MCDI", "MLLT", "MVIN", "MVNM", "OWNE", "PCNT", "PCST", "POPM", "POSS", "PRIV", "RBUF", "RVA2",
-        "RVAD", "RVRB", "SEEK", "SIGN", "SYLT", "SYTC", "TALB", "TBPM", "TCAT", "TCMP", "TCOM", "TCON", "TCOP", "TDAT",
-        "TDEN", "TDES", "TDLY", "TDOR", "TDRC", "TDRL", "TDTG", "TENC", "TEXT", "TFLT", "TGID", "TIME", "TIPL", "TIT1",
-        "TIT2", "TIT3", "TKEY", "TKWD", "TLAN", "TLEN", "TMCL", "TMED", "TMOO", "TOAL", "TOFN", "TOLY", "TOPE", "TORY",
-        "TOWN", "TPE1", "TPE2", "TPE3", "TPE4", "TPOS", "TPRO", "TPUB", "TRCK", "TRDA", "TRSN", "TRSO", "TSIZ", "TSO2",
-        "TSOA", "TSOC", "TSOP", "TSOT", "TSRC", "TSSE", "TSST", "TXXX", "TYER", "UFID", "USER", "USLT", "WCOM", "WCOP",
-        "WFED", "WOAF", "WOAR", "WOAS", "WORS", "WPAY", "WPUB", "WXXX",
-    ];
-
-    private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd) =>
-        bodyEnd - bodyStart >= 4 && FrameIds.Contains(Encoding.Latin1.GetString(reader.ReadBytesAt(bodyStart, 4)));
-
-    // Old iTunes versions wrote ID3v2.4 frame sizes as plain integers. The frames are walked with
-    // both readings, counting the declared frame IDs each finds; plain wins with more of them, or
-    // with as many when the syncsafe walk overshoots the tag and the plain one does not
-    // (mutagen, _tags.py, determine_bpi).
-    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end)
+    // The header sets the extended header flag; a frame starts the body instead when its first four
+    // bytes are letters A-Z or digits (ID3v2.4 section 4 allows any such ID, such as the podcast
+    // frames and the experimental ones). No extended header starts so: its size is 6 or 10
+    // (ID3v2.3 section 3.2) or a syncsafe size of at least 6 followed by the byte $01
+    // (ID3v2.4 section 3.2), never four letters or digits.
+    private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd)
     {
-        (int syncsafeFound, long syncsafeOver) = Walk(syncsafe: true);
-        (int plainFound, long plainOver) = Walk(syncsafe: false);
-        return plainFound > syncsafeFound || (plainFound == syncsafeFound && syncsafeOver >= 1 && plainOver <= 1);
-
-        (int Found, long Overshoot) Walk(bool syncsafe)
+        if (bodyEnd - bodyStart < 10)
         {
-            int found = 0;
-            long at = start;
-            while (at < end - 10)
-            {
-                byte[] header = reader.ReadBytesAt(at, 10);
-                if (header.All(b => b == 0))
-                {
-                    return (found, -((end - at) % 10));
-                }
+            return false;
+        }
 
-                at += 10 + (syncsafe ? Syncsafe(header, 4) : BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(4)));
-                found += FrameIds.Contains(Encoding.Latin1.GetString(header, 0, 4)) ? 1 : 0;
+        string id = Encoding.Latin1.GetString(reader.ReadBytesAt(bodyStart, 4));
+        return IsFrameId(id);
+    }
+
+    private static bool IsFrameId(string id) => id.All(c => c is (>= 'A' and <= 'Z') or (>= '0' and <= '9'));
+
+    // Whether an ID3v2.4 tag stores its frame sizes as plain integers (ID3v2.3 section 3.3) instead
+    // of syncsafe ones (ID3v2.4 section 4), as old iTunes versions wrote it. Section 4's own reading
+    // wins whenever it is consistent. The plain one is chosen only when it is better explained: each
+    // reading is walked from the first frame, and a reading fits when every frame has a valid ID and
+    // lies inside the body and the frames are followed by the end of the body or by zero padding to
+    // it. In a truncated tag the end of the body is where the file was cut, so the last frame may
+    // run past it, and an end or zero padding at the cut proves no more than that; both fit less
+    // than an exact end. Plain wins only with a better fit than the syncsafe reading.
+    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end, bool truncated)
+    {
+        if (end - start < 10)
+        {
+            return false;
+        }
+
+        int syncsafe = FrameChainFit(reader, start, end, false, truncated);
+        if (syncsafe == 2)
+        {
+            return false;
+        }
+
+        int plain = FrameChainFit(reader, start, end, true, truncated);
+        return plain == 2 || (plain == 1 && syncsafe <= 0);
+    }
+
+    // 2: the chain ends exactly at the end of the body or in padding that fills the rest;
+    // 1: the same in a body cut by the end of the file, or the last frame runs past that end;
+    // 0: neither; -1: the chain reaches padding that holds bytes other than zero.
+    private static int FrameChainFit(ByteReader reader, long start, long end, bool plain, bool mayBeCut)
+    {
+        long position = start;
+        int frames = 0;
+        while (position < end)
+        {
+            if (reader.ReadBytesAt(position, 1)[0] == 0)
+            {
+                return frames == 0 ? 0 : AllZero(reader, position, end) ? (mayBeCut ? 1 : 2) : -1;
             }
 
-            return (found, at - end);
+            if (end - position < 10)
+            {
+                return 0;
+            }
+
+            byte[] header = reader.ReadBytesAt(position, 10);
+
+            if (!IsFrameId(Encoding.Latin1.GetString(header, 0, 4)))
+            {
+                return 0;
+            }
+
+            long size = plain ? BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(4)) : Syncsafe(header, 4);
+            if (!plain && (header[4] | header[5] | header[6] | header[7]) >= 0x80)
+            {
+                return 0;
+            }
+
+            frames++;
+            position += 10 + size;
+            if (position > end)
+            {
+                return mayBeCut ? 1 : 0;
+            }
         }
+
+        return frames == 0 ? 0 : mayBeCut ? 1 : 2;
+    }
+
+    private static bool AllZero(ByteReader reader, long start, long end)
+    {
+        for (long position = start; position < end;)
+        {
+            int count = (int)Math.Min(end - position, 1 << 20);
+            if (reader.ReadBytesAt(position, count).AsSpan().ContainsAnyExcept((byte)0))
+            {
+                return false;
+            }
+
+            position += count;
+        }
+
+        return true;
     }
 
     private readonly struct FrameExtras

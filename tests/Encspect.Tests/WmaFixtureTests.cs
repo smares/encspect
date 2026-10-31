@@ -5,8 +5,8 @@ namespace Encspect.Tests;
 
 // Checks the WMA fixtures the encoders wrote (make_external_asf_fixtures.py: ffmpeg's wmav1 and wmav2; the
 // external-windows-* files from Microsoft's encoders, imported by import_windows_wma_fixtures.py) against what
-// ffprobe says of them (the codec, the channels and the rate), no finding beyond information, and the writer the
-// analyzer names. The frames of these codecs are not read.
+// ffprobe says of them (the codec, the channels, the rate and for versions 1 and 2 the decoded samples), no finding beyond
+// information, and the writer the analyzer names.
 public class WmaFixtureTests
 {
     public static TheoryData<string> Names => Matching("external-*.wma");
@@ -51,8 +51,16 @@ public class WmaFixtureTests
         Assert.Equal(tools.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.NotNull(stream.ChannelLayout);
 
-        // The frames are not read, so the samples are the container's duration at the rate.
-        Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate), stream.Samples);
+        // The frames of versions 1 and 2 are read, and the samples equal the ones ffmpeg decodes; the others have the container's duration at the rate.
+        if (codec is "wmav1" or "wmav2")
+        {
+            Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), stream.Samples);
+        }
+        else
+        {
+            Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate), stream.Samples);
+        }
+
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
     }

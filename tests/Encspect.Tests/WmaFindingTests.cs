@@ -6,13 +6,14 @@ namespace Encspect.Tests;
 
 // One damaged or unusual stream for each finding the Windows Media Audio parsers emit: the media objects of a
 // fixture with a field changed, handed to the parser as an ASF file would hand them, with the configuration the
-// file states (or none, or a damaged one). The finding must come out and nothing may fail. The frames of versions
-// 1 and 2 and Voice are not read, so each of the two has one finding that says so; the frames of Professional and Lossless are, and their
-// findings come from the streams of WmaProTests and WmaLosslessTests changed the same way.
+// file states (or none, or a damaged one). The finding must come out and nothing may fail. The frames of Voice are not
+// read, so it has one finding that says so; the streams of versions 1 and 2 are built in WmaStandardStreams, and the
+// findings of Professional and Lossless come from the streams of WmaProTests and WmaLosslessTests changed the same way.
 public class WmaFindingTests
 {
     private const string FFmpeg = "asf/external-ffmpeg-wmav2-stereo-44k-128k.wma";
     private const string Pro = "asf/external-windows-wma10pro-vbr-stereo-44k-q50.wma";
+    private const string Windows = "asf/external-windows-wma92-cbr-stereo-44k-128.wma";
     private const string Lossless = "asf/external-windows-wma92lossless-stereo-44k-16.wma";
     private const string Voice = "asf/external-windows-wmavoice-cbr-mono-8k-5.wma";
 
@@ -43,9 +44,37 @@ public class WmaFindingTests
         ["wma.records-limit"] = () => FromStream(WmaStream.LoadPro(), s => (s.Format, s.Objects) = (s.Format with { BlockAlign = 64 }, [.. Enumerable.Range(0, 262_144 + 3).Select(_ => new byte[64])]), new WmaProParser()),
         ["wma.no-format"] = () => Run(new WmaProParser(), Load(Pro, 0x0162).Objects, (Stream?)null),
         ["wma.payload-not-analyzed"] = () => PayloadNotAnalyzed(),
-        ["wma.standard-not-read"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }),
+        ["wma.superframe-short"] = () => Std(1, 100, 0x0003, [new byte[40]]),
+        ["wma.superframe-long"] = () => Std(1, 100, 0x0001, [new byte[110]]),
+        ["wma.superframe-header"] = () => Std(1, 100, 0x0003, [new byte[100]]),
+        ["wma.bit-offset"] = () => Std(1, 100, 0x0003, [Filled(100, 0x02, 0xFF, 0xE0)]),
+        ["wma.reservoir-length"] = () => Std(1, 40_000, 0x0003, [Filled(40_000, 0x02)]),
+        ["wma.frame-stuffing"] = () => Header(new WmaStandardParser(), Windows, 0x0161, _ => { }),
+        ["wma.frame-filler"] = () => Header(new WmaStandardParser(), Windows, 0x0161, _ => { }),
+        ["wma.reservoir-at-end"] = () => Header(new WmaStandardParser(), Windows, 0x0161, _ => { }),
+        ["wma.blocks-undetailed"] = () => Std(1, 100, 0x0001, Enumerable.Repeat(new byte[100], 50_000)),
+        ["wma.variable-blocks-disabled"] = () => WmaStandardStreams.Run(2, 1, 44100, 4000, 100, WmaStandardStreams.CodecData(2, 0x000D), [new byte[100]]).Findings,
         ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, _ => { }),
     };
+
+    // Codes that Professional and Lossless emit as well, here from streams of versions 1 and 2.
+    private static readonly Dictionary<string, Func<IReadOnlyList<Finding>>> StandardRuns = new()
+    {
+        ["wma.frame-invalid"] = () => Std(1, 100, 0x0001, [Enumerable.Repeat((byte)0xFF, 100).ToArray()]),
+        ["wma.records-limit"] = () => Std(1, 100, 0x0001, Enumerable.Repeat(new byte[100], WmaStandardParser.MaxPackets + 1)),
+        ["wma.format-unsupported"] = () => WmaStandardStreams.Run(2, 1, 8000, 1000, 0, WmaStandardStreams.CodecData(2, 1), [new byte[100]]).Findings,
+    };
+
+    public static TheoryData<string> StandardCodes => [.. StandardRuns.Keys.Order(StringComparer.Ordinal)];
+
+    [Theory]
+    [MemberData(nameof(StandardCodes))]
+    public void StandardStreamGivesTheFinding(string code)
+    {
+        IReadOnlyList<Finding> findings = StandardRuns[code]();
+        Assert.Contains(findings, f => f.Code == code);
+        Assert.DoesNotContain(findings, f => f.Code == "parse.failed");
+    }
 
     public static TheoryData<string> Codes => [.. Runs.Keys.Order(StringComparer.Ordinal)];
 
@@ -60,17 +89,27 @@ public class WmaFindingTests
 
     // The codec data of the two codecs is shown as the container's bytes and nothing is read from it, whatever it holds.
     [Theory]
-    [InlineData(FFmpeg, 0x0161)]
     [InlineData(Voice, 0x000A)]
-    public void TheFramesOfTheTwoCodecsAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
+    public void TheFramesOfVoiceAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
     {
-        ICodecParser parser = tag switch { 0x0161 => new WmaStandardParser(), _ => new WmaVoiceParser() };
+        ICodecParser parser = new WmaVoiceParser();
         Stream s = Load(fixture, tag);
         s.Data = [];
         IReadOnlyList<Finding> findings = Run(parser, s.Objects, s);
         Assert.Single(findings, f => f.Code.EndsWith("-not-read", StringComparison.Ordinal));
         Assert.DoesNotContain(findings, f => f.Severity != Severity.Info);
     }
+
+    private static byte[] Filled(int length, params byte[] start)
+    {
+        byte[] bytes = new byte[length];
+        start.CopyTo(bytes, 0);
+        return bytes;
+    }
+
+    // Mono 8 kHz at 1,000 bytes/s: no noise substitution, a 11-bit bit offset.
+    private static IReadOnlyList<Finding> Std(int channels, int align, int options, IEnumerable<byte[]> objects) =>
+        WmaStandardStreams.Run(2, channels, 8000, 1000, align, WmaStandardStreams.CodecData(2, options), objects).Findings;
 
     private static Stream Load(string fixture, int tag)
     {
