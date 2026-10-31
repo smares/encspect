@@ -204,4 +204,39 @@ public class WavPackDecoderFixtureTests
 
         return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
     }
+
+    // One set of 1,024 mono blocks of 4,096 samples: the planes were copied again for every block (about 2 billion ints), where growing them
+    // geometrically copies a few times the set's size. Counted, so the result does not depend on the machine's speed.
+    [Fact]
+    public void TheGrowthOfASetsPlanesIsLinearInItsSize()
+    {
+        byte[] file = DecoderWorkTests.WavPackCases.WideSet(1024, 4096);
+        var sink = new HashingSink();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } } };
+        Encspect.Formats.WavPack.Decoding.StreamDecoder.PlaneCopies = 0;
+        Report report = Analyzer.CreateDefault().Analyze("wide.wv", new MemoryStream(file), options);
+        long copies = Encspect.Formats.WavPack.Decoding.StreamDecoder.PlaneCopies;
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.limit");
+        Assert.Equal(4096, sink.Samples);
+        Assert.InRange(copies, 1, 2L * 1024 * 4096);
+    }
+
+    [Fact]
+    public void TheExtraCrcFindingPointsAtTheCrcOfTheExtraBitstream()
+    {
+        (Report report, _) = Decode("wavpack/built-extra-crc-changed.wv");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.audio-crc-mismatch");
+        Node node = report.Root;
+        var names = new List<string>();
+        foreach (int index in finding.Path!)
+        {
+            node = node.Children[index];
+            names.Add(node.Name);
+        }
+
+        Assert.Equal("CRC", node.Name);
+        Assert.Equal(4, node.Length);
+        Assert.Equal("Extra Bitstream", names[^3]);
+    }
 }

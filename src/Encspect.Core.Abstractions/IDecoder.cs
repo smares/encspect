@@ -30,7 +30,8 @@ public interface IDecoder
 public interface IFrameDecoder
 {
     // Decodes one frame, checks what the frame stores about its decoded audio (a Monkey's Audio frame CRC), and returns
-    // the samples per channel by which the stream's decoded output advanced: 0 for a frame it could not decode, 0 for
+    // the samples per channel by which the stream's decoded output advanced: 0 for a frame it could not decode (blocks it had
+    // already written to the sink stay written: the host counts the frame as not decoded, and the measurement is then stopped), 0 for
     // the blocks of a WavPack group before its final block and the group's samples on that block, and for a WMA Lossless
     // packet the samples of the frames that end in it. The frame's bytes are valid only during the call. The decoder
     // charges the work of the frame through DecodeContext.AddWork before it does it; the host compares the totals with

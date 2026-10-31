@@ -67,7 +67,6 @@ public sealed class WavPackCodecParser : ICodecParser
         private BlockHeader _first;
         private bool _hasFirst;
         private int _channels;
-        private int _packetChannels;
         private uint _channelMask;
         private int _rate;
         private bool _isLossy;
@@ -149,7 +148,6 @@ public sealed class WavPackCodecParser : ICodecParser
                 _findings.Add(Severity.Warning, "wavpack.matroska-packet-invalid", () => node ?? context.Parent, _ => $"The packet at 0x{packet.FileStart:X} {message}; the blocks before it are read.", "packet");
             }
 
-            _packetChannels = blocks.Sum(b => (b.Flags & BlockHeader.MonoFlag) != 0 ? 1 : 2);
             foreach (ReducedBlock block in blocks)
             {
                 Block(packet, node, block, samples, index);
@@ -220,8 +218,9 @@ public sealed class WavPackCodecParser : ICodecParser
             if (!isPlausible)
             {
                 _invalid++;
+                string reason = ImplausibleReason(block.DataLength, rebuilt);
                 _findings.Add(Severity.Warning, "wavpack.matroska-block-invalid", () => packetNode ?? context.Parent,
-                    _ => $"The block at 0x{fileStart:X} has {(block.DataLength % 2 != 0 ? "a size that is odd" : "more than 196,607 samples or a size libwavpack refuses")}, so libwavpack's reader would not take its header for a block's.", "header");
+                    _ => $"The block at 0x{fileStart:X} has {reason}, so libwavpack's reader would not take its header for a block's.", "header");
             }
 
             if (packetNode is not null)
@@ -315,10 +314,17 @@ public sealed class WavPackCodecParser : ICodecParser
                 Stream = context.Parent,
                 Channels = _channels,
                 BitsPerSample = header.IsDsd ? 8 : header.IsFloat ? 32 : header.BytesPerSample * 8,
+                IsDsd = header.IsDsd,
                 Configuration = new MappedBytes(rebuilt.ToArray(), fileStart),
                 IsLossy = _isLossy,
             });
         }
+
+        private static string ImplausibleReason(int dataLength, ReadOnlySpan<byte> rebuilt) =>
+            dataLength % 2 != 0 ? "a size that is odd"
+            : rebuilt[9] != 4 ? $"the major version {rebuilt[9]} where libwavpack takes 4"
+            : rebuilt[22] >= 3 || rebuilt[23] != 0 ? "more than 196,607 samples"
+            : "a size libwavpack refuses (1 MiB or more)";
 
         private void AddBlockNode(MappedBytes packet, Node packetNode, in BlockHeader header, ReducedBlock block, int blockStart, ReadOnlySpan<byte> rebuilt)
         {
@@ -340,13 +346,36 @@ public sealed class WavPackCodecParser : ICodecParser
             var subBlocks = new Node("Sub-blocks", packet.OffsetOf(block.DataStart), block.DataLength, null) { Description = Explain.SubBlocksOfBlock, Topic = Topics.SubBlocks };
             int position = BlockHeader.Length;
             int listed = 0;
-            while (BlockContents.TryRead(rebuilt, position, out SubBlockSpan sub) && listed < MaxListedSubBlocks)
+            // The sub-blocks past the cap are not listed, except the last MD5 and the last extra bitstream, which the decoder's findings point at.
+            Node? lastMd5 = null;
+            Node? lastExtra = null;
+            while (BlockContents.TryRead(rebuilt, position, out SubBlockSpan sub))
             {
-                long at = packet.OffsetOf(block.DataStart + position - BlockHeader.Length);
                 int length = sub.Next - position;
-                subBlocks.Add(Nodes.SubBlockSummary(at, length, sub.Function, sub.DataLength));
+                if (listed < MaxListedSubBlocks)
+                {
+                    subBlocks.Add(Nodes.SubBlockSummary(packet.OffsetOf(block.DataStart + position - BlockHeader.Length), length, sub.Function, sub.DataLength));
+                    listed++;
+                }
+                else if (sub.Function is SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum or SubBlockIds.WvxBitstream)
+                {
+                    Node kept = Nodes.SubBlockSummary(packet.OffsetOf(block.DataStart + position - BlockHeader.Length), length, sub.Function, sub.DataLength);
+                    if (sub.Function == SubBlockIds.WvxBitstream)
+                    {
+                        lastExtra = kept;
+                    }
+                    else if (sub.DataLength == 16)
+                    {
+                        lastMd5 = kept;
+                    }
+                }
+
                 position = sub.Next;
-                listed++;
+            }
+
+            foreach (Node kept in new[] { lastMd5, lastExtra }.OfType<Node>().OrderBy(n => n.Offset))
+            {
+                subBlocks.Add(kept);
             }
 
             node.Add(subBlocks);

@@ -25,6 +25,10 @@ public sealed record DecodeSetup
     // How the samples of a PCM data chunk are laid out (WAV, Wave64, AIFF), for the decoder "pcm"; null for every other coding.
     public PcmCoding? Pcm { get; init; }
 
+    // True where the stream decodes to DSD, for which the decoder declares no PCM output; the measurements then say so, also when the
+    // decoding stopped before the first block.
+    public bool IsDsd { get; init; }
+
     // True where the stream's decoded audio is a lossy coding's output (a WavPack hybrid file without its correction
     // file); the host copies it into StreamVerification.IsLossy.
     public bool IsLossy { get; init; }
@@ -50,6 +54,10 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
     // The parser's walk stored the frame's warm-up samples and residuals in the buffers the session lent (Lend), so the
     // decoder does not read them again: it takes them from DecodeContext.LentBuffers.
     public bool IsWalked { get; init; }
+
+    // The node a finding about the unit points to, where the unit is no node of the tree (a slice of a PCM data chunk); null where
+    // NodeName with the range of Bytes names the parser's node.
+    public Node? Node { get; init; }
 
     // The parser could not read the unit at all (its syntax breaks) and reported that itself. The host counts it as not decoded, so the
     // stream is incomplete, and reports nothing more; the decoder is not called for it, and the next unit it is given has FollowsGap set, so a

@@ -141,7 +141,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         {
             ReadOnlySpan<byte> data = frame.Bytes.Span;
             _storedMd5 = data.Slice(md5.Start, 16).ToArray();
-            long at = frame.Bytes.OffsetOf(_contents.Md5Position);
+            long at = frame.Bytes.IsOpaque ? Nodes.OffsetInOpaque(frame.Bytes, _contents.Md5Position) : frame.Bytes.OffsetOf(_contents.Md5Position);
             _md5Node = new Node(SubBlockIds.Name(md5.IsAlternate ? SubBlockIds.AltMd5Checksum : SubBlockIds.Md5Checksum), at, _contents.Md5HeaderLength + _contents.Md5Size);
         }
 
@@ -181,7 +181,8 @@ internal sealed class StreamDecoder : IFrameDecoder
         }
         else if (!_inSet)
         {
-            // libwavpack reads on to the next block that starts a set.
+            // libwavpack reads on to the next block that starts a set; the samples it skips are missing from the MD5.
+            _isDigestIncomplete = true;
             return 0;
         }
 
@@ -265,7 +266,7 @@ internal sealed class StreamDecoder : IFrameDecoder
                 _extraFailed++;
                 _context.AddFinding(Severity.Warning, "wavpack.audio-crc-mismatch",
                     $"The extra bits of the block at 0x{frame.Bytes.FileStart:X} do not have the CRC their bitstream stores.",
-                    Nodes.BlockCrc(frame.Bytes, blockCrc));
+                    Nodes.ExtraCrc(frame.Bytes, _contents));
             }
         }
 
@@ -288,7 +289,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     // as it is decoded, the blocks of a set that never completes included, so the budget bounds them.
     //   - the fixed work of each sample of each channel the block outputs, a muted block's too;
     //   - 16 a byte of the bitstream sub-blocks it reads (the main one, the extra one of floats and of integers above 24 bits, the DSD data);
-    //   - 8 a decorrelation pass for each sample of each channel the passes run on;
+    //   - 11 a decorrelation pass for each sample of each channel the passes run on;
     //   - DSD: 16 more a byte of each channel in the fast mode and 64 in the high mode, and the setup of the block's tables.
     private void Charge(ReadOnlySpan<byte> data, in BlockHeader header, bool isMuted, int blockChannels, int width, int samples)
     {
@@ -325,14 +326,21 @@ internal sealed class StreamDecoder : IFrameDecoder
         return _muted.AsSpan(0, count);
     }
 
+    // The ints the planes' growth copied on this thread, for the test that holds the growth to linear in the set's size.
+    [ThreadStatic]
+    internal static long PlaneCopies;
+
     // Puts the block's channels into the set's planes.
     private void Keep(ReadOnlySpan<int> decoded, int width, int blockChannels, int samples, in BlockHeader header)
     {
         int needed = (_setChannels + blockChannels) * samples;
         if (_planes.Length < needed)
         {
-            int[] grown = new int[needed];
+            // Grown geometrically, up to what the whole set holds, so the copies of a set of many blocks add up to a few times its size.
+            int whole = (int)Math.Min(MaxSetSamples, (long)_channels * samples);
+            int[] grown = new int[Math.Max(needed, (int)Math.Min(whole, (long)_planes.Length * 2))];
             _planes.AsSpan(0, _setChannels * samples).CopyTo(grown);
+            PlaneCopies += _setChannels * (long)samples;
             _planes = grown;
         }
 

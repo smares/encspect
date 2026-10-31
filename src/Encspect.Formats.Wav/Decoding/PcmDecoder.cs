@@ -17,38 +17,38 @@ public sealed class PcmDecoder : IDecoder
         ArgumentNullException.ThrowIfNull(context);
 
         DecodeSetup setup = context.Setup;
-        PcmCoding coding = setup.Pcm ?? throw new InvalidDataException("The stream does not state how its samples are laid out.");
+        PcmCoding coding = setup.Pcm ?? throw new InvalidDataException("The stream does not state how its samples are laid out");
         int bits = coding.ContainerBits;
         switch (coding.Encoding)
         {
             case PcmEncoding.SignedInteger or PcmEncoding.UnsignedInteger:
                 if (bits > 32)
                 {
-                    throw new InvalidDataException($"Integer samples stored in {bits} bits are wider than the 32 bits the decoder's output holds.");
+                    throw new InvalidDataException($"Integer samples stored in {bits} bits are wider than the 32 bits the decoder's output holds");
                 }
 
                 if (bits is not (8 or 16 or 24 or 32))
                 {
-                    throw new InvalidDataException($"Integer samples stored in {bits} bits are not a width of 8, 16, 24 or 32 bits.");
+                    throw new InvalidDataException($"Integer samples stored in {bits} bits are not a width of 8, 16, 24 or 32 bits");
                 }
 
                 break;
             case PcmEncoding.Float:
                 if (bits is not (32 or 64))
                 {
-                    throw new InvalidDataException($"Floating-point samples of {bits} bits are not of 32 or 64 bits.");
+                    throw new InvalidDataException($"Floating-point samples of {bits} bits are not of 32 or 64 bits");
                 }
 
                 break;
             case PcmEncoding.ALaw or PcmEncoding.MuLaw:
                 if (bits != 8)
                 {
-                    throw new InvalidDataException($"Companded samples of {bits} bits are not of 8 bits.");
+                    throw new InvalidDataException($"Companded samples of {bits} bits are not of 8 bits");
                 }
 
                 break;
             default:
-                throw new InvalidDataException("The sample encoding is not one the decoder knows.");
+                throw new InvalidDataException("The sample encoding is not one the decoder knows");
         }
 
         return new Unpacker(context, coding);
@@ -94,13 +94,13 @@ public sealed class PcmDecoder : IDecoder
             ReadOnlySpan<byte> bytes = frame.Bytes.Span;
             if ((long)count * _frameBytes > bytes.Length)
             {
-                throw new InvalidDataException($"The slice holds {Counts.Of(bytes.Length, "byte", "bytes")}, fewer than the {Counts.Of(count, "sample frame", "sample frames")} it states take.");
+                throw new InvalidDataException($"The slice holds {Counts.Of(bytes.Length, "byte", "bytes")}, fewer than the {Counts.Of(count, "sample frame", "sample frames")} it states take");
             }
 
             long total = (long)count * _channels;
             if (total > MaxSamplesPerSlice)
             {
-                throw new InvalidDataException($"The slice holds {Counts.Of(total, "sample", "samples")} over all channels, more than the {MaxSamplesPerSlice} the decoder takes at once.");
+                throw new InvalidDataException($"The slice holds {Counts.Of(total, "sample", "samples")} over all channels, more than the {MaxSamplesPerSlice} the decoder takes at once");
             }
 
             _context.AddWork(DecodeWork.ForSample(_outputBytes) * _channels * count);

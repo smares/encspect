@@ -333,6 +333,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("wavpack-hybrid-error-limit-search", () => new Case("wavpack-hybrid-error-limit-search", WavPackCases.HybridSearch()));
         Add("wavpack-floats-shift-31-exponent-255", () => new Case("wavpack-floats-shift-31-exponent-255", WavPackCases.CraftedFloats()));
         Add("wavpack-muted-blocks", () => new Case("wavpack-muted-blocks", WavPackCases.MutedBlocks()));
+        Add("wavpack-wide-set", () => new Case("wavpack-wide-set", WavPackCases.WideSet()));
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
         Add("wavpack-many-small-dsd-blocks", () => new Case("wavpack-many-small-dsd-blocks", WavPackCases.SmallDsdBlocks()));
         Add("wavpack-dsd-fast-5-history-bits", () => new Case("wavpack-dsd-fast-5-history-bits", WavPackCases.DsdFast()));
@@ -901,6 +902,29 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
                 parts.AddRange([Terms([17], 16), EntropyVariables(1, 0), WavPackBuilder.Sub(0x0A, ZeroRun(samples))]);
                 all.Add(Block(Flags(1), samples, i * (long)samples, [.. parts]));
+            }
+
+            return WavPackBuilder.Concat(all);
+        }
+
+        // One set of 1,024 mono blocks of 8,192 samples each (2^23 samples over all channels, within the ceiling of a set): the decoder keeps the planes
+        // of the set, which must not be copied again for every block. Each sample is charged 16 and 24 units, no passes.
+        public static byte[] WideSet(int channels = 1024, uint samples = 8192)
+        {
+            int last = channels - 1;
+            byte[] info = [(byte)last, (byte)last, (byte)(((last >> 8) & 0xF) | (((last >> 8) & 0xF) << 4)), 0, 0, 0];
+            var all = new List<byte[]>();
+            for (int i = 0; i < channels; i++)
+            {
+                uint flags = (BaseFlags & ~0x1800u) | (i == 0 ? 0x800u : 0) | (i == channels - 1 ? 0x1000u : 0);
+                var parts = new List<byte[]>();
+                if (i == 0)
+                {
+                    parts.Add(WavPackBuilder.Sub(0x0D, info));
+                }
+
+                parts.AddRange([EntropyVariables(1, 0), WavPackBuilder.Sub(0x0A, ZeroRun(samples))]);
+                all.Add(Block(flags, samples, 0, [.. parts]));
             }
 
             return WavPackBuilder.Concat(all);
