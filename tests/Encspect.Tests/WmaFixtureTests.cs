@@ -5,20 +5,13 @@ namespace Encspect.Tests;
 
 // Checks the WMA fixtures the encoders wrote (make_external_asf_fixtures.py: ffmpeg's wmav1 and wmav2; the
 // external-windows-* files from Microsoft's encoders, imported by import_windows_wma_fixtures.py) against what
-// ffprobe and ffmpeg's decoder say of them: the samples a decoder outputs, the channels and the rate, no finding
-// beyond information, and the encoder the analyzer names. For ffmpeg's files the structure of the superframes
-// too: each holds one frame and is padded with 'N' bytes.
+// ffprobe says of them (the codec, the channels and the rate), no finding beyond information, and the writer the
+// analyzer names. The frames of these codecs are not read.
 public class WmaFixtureTests
 {
     public static TheoryData<string> Names => Matching("external-*.wma");
 
-    public static TheoryData<string> FFmpegNames => Matching("external-ffmpeg-*.wma");
-
     public static TheoryData<string> MicrosoftNames => Matching("external-windows-*.wma");
-
-    public static TheoryData<string> StandardNames => Matching("external-windows-wma92-*.wma");
-
-    public static TheoryData<string> ProNames => Matching("external-windows-wma10pro-*.wma");
 
     private static TheoryData<string> Matching(string pattern)
     {
@@ -32,8 +25,6 @@ public class WmaFixtureTests
     }
 
     private static Node Child(Node parent, string name) => parent.Children.Single(c => c.Name == name);
-
-    private static long Integer(Node parent, string name) => Child(parent, name).Value!.AsInteger()!.Value;
 
     private static string CodecName(string ffprobe) => ffprobe switch
     {
@@ -60,88 +51,10 @@ public class WmaFixtureTests
         Assert.Equal(tools.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.NotNull(stream.ChannelLayout);
 
-        // The samples a decoder outputs, as ffmpeg decodes them.
-        Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), stream.Samples);
+        // The frames are not read, so the samples are the container's duration at the rate.
+        Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate), stream.Samples);
         Assert.DoesNotContain(report.Findings, f => f.Severity != Severity.Info);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
-        Assert.DoesNotContain(report.Findings, f => f.Code == "wma.frame-invalid");
-    }
-
-    [Theory]
-    [MemberData(nameof(FFmpegNames))]
-    public void FFmpegSuperframesAreFramesPaddedWithN(string name)
-    {
-        JsonElement tools = Fixtures.LoadMpegManifest(name).GetProperty("ffprobe");
-        Report report = Fixtures.AnalyzeMpeg(name);
-        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
-        StreamInfo stream = report.Streams[0];
-        Node node = stream.Nodes[0];
-        Node statistics = Child(node, "Statistics");
-        long packets = tools.GetProperty("packets").GetInt64();
-        long blockAlign = tools.GetProperty("packet_sizes").EnumerateArray().Single().GetInt64();
-        Assert.Equal(packets, Integer(statistics, "Superframes"));
-        Assert.Equal(packets, Integer(statistics, "Frames"));
-        Assert.Equal(packets, Integer(statistics, "Blocks"));
-        Assert.Equal(blockAlign, Integer(statistics, "Block Alignment"));
-        Assert.False(Child(statistics, "Uses Bit Reservoir").Value!.AsBoolean()!.Value);
-        Assert.False(Child(statistics, "Uses Variable Block Length").Value!.AsBoolean()!.Value);
-
-        Node superframes = Child(node, "Superframes");
-        Assert.Equal(packets, superframes.Children.Count);
-        foreach (Node superframe in superframes.Children)
-        {
-            Assert.Equal(blockAlign, superframe.Length);
-            Assert.Equal("1 frame", superframe.Value!.ToString());
-            Node? padding = superframe.Children.FirstOrDefault(c => c.Name == "Padding");
-            if (padding is not null)
-            {
-                Assert.Equal(superframe.End, padding.End);
-                Assert.All(file.AsSpan((int)padding.Offset, (int)padding.Length).ToArray(), b => Assert.Equal((byte)'N', b));
-            }
-
-            Node data = Child(superframe, "Frame Data");
-            Assert.Equal(superframe.Offset, data.Offset);
-            Assert.True(padding is null || data.End <= padding.Offset + 1);
-        }
-
-        Assert.Equal($"FFmpeg (wmav{(tools.GetProperty("codec").GetString() == "wmav1" ? 1 : 2)} encoder)", stream.Encoder);
-        Assert.Equal(Confidence.High, stream.EncoderConfidence);
-    }
-
-    // Microsoft's encoders write the bit reservoir and variable block lengths; the analyzer reads every frame to its
-    // end and finds the straddling ones where the superframe headers say.
-    [Theory]
-    [MemberData(nameof(StandardNames))]
-    public void MicrosoftStandardStreamsUseTheReservoir(string name)
-    {
-        Report report = Fixtures.AnalyzeMpeg(name);
-        Node statistics = Child(report.Streams[0].Nodes[0], "Statistics");
-        Assert.True(Child(statistics, "Uses Bit Reservoir").Value!.AsBoolean()!.Value);
-        Assert.True(Child(statistics, "Uses Variable Block Length").Value!.AsBoolean()!.Value);
-        Assert.True(Integer(statistics, "Frames Spanning Superframes") > 0);
-        Assert.DoesNotContain(statistics.Children, c => c.Name == "Invalid Frames");
-    }
-
-    // Professional: every frame's length prefix is where the analyzer finds the frame to end, which checks the
-    // reading of the tile header, subframes, scale factors and coefficient codes down to the bit.
-    [Theory]
-    [MemberData(nameof(ProNames))]
-    public void ProfessionalFramesEndWhereTheirLengthPrefixSays(string name)
-    {
-        JsonElement tools = Fixtures.LoadMpegManifest(name).GetProperty("ffprobe");
-        Report report = Fixtures.AnalyzeMpeg(name);
-        Node node = report.Streams[0].Nodes[0];
-        Node statistics = Child(node, "Statistics");
-        Assert.DoesNotContain(statistics.Children, c => c.Name == "Invalid Frames");
-        Assert.True(Child(statistics, "Has Length Prefix").Value!.AsBoolean()!.Value);
-        Assert.Equal(tools.GetProperty("packets").GetInt64(), Integer(statistics, "Packets"));
-        Assert.Equal(0, report.Findings.Count(f => f.Code is "wma.frame-invalid" or "wma.packet-sequence"));
-        Assert.Equal(Integer(statistics, "Frames"), Child(node, "Frames").Children.Count);
-        foreach (Node frame in Child(node, "Frames").Children)
-        {
-            Assert.StartsWith("Frame", frame.Name, StringComparison.Ordinal);
-            Assert.Equal("More Frames", frame.Children[^1].Name);
-        }
     }
 
     [Theory]
@@ -218,31 +131,6 @@ public class WmaFixtureTests
         Assert.Contains(report.Findings, f => f.Code == "wma.writer-claim-differs");
     }
 
-    // The statements of the wma-bit-reservoir article about the Windows Media Audio 9.2 files: which have bits after a frame that spans
-    // superframes up to the next one's bit offset, zero (wma.frame-stuffing) or not (wma.frame-filler). The article names the exceptions.
-    [Theory]
-    [InlineData("external-windows-wma92-cbr-mono-44k-48", true, false)]
-    [InlineData("external-windows-wma92-cbr-stereo-22k-20-sdk", false, false)]
-    [InlineData("external-windows-wma92-cbr-stereo-22k-32", false, false)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-128-sdk", true, true)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-128", true, true)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-192", true, true)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-32-sdk", false, false)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-48-sdk", false, false)]
-    [InlineData("external-windows-wma92-cbr-stereo-44k-64", true, true)]
-    [InlineData("external-windows-wma92-cbr-stereo-48k-128", true, true)]
-    [InlineData("external-windows-wma92-vbr-stereo-44k-q10", false, false)]
-    [InlineData("external-windows-wma92-vbr-stereo-44k-q25", true, false)]
-    [InlineData("external-windows-wma92-vbr-stereo-44k-q75-tagged", false, false)]
-    [InlineData("external-windows-wma92-vbr-stereo-44k-q75", false, false)]
-    [InlineData("external-windows-wma92-vbr-stereo-44k-q90", false, false)]
-    public void FillerAfterStraddlingFramesIsInTheFilesTheArticleNames(string name, bool stuffing, bool filler)
-    {
-        Report report = Fixtures.AnalyzeMpeg($"asf/{name}.wma");
-        Assert.Equal(stuffing, report.Findings.Any(f => f.Code == "wma.frame-stuffing"));
-        Assert.Equal(filler, report.Findings.Any(f => f.Code == "wma.frame-filler"));
-    }
-
     // The Evidence nodes of a stream lie in the container's header or in the codec data; the nodes cover the stream, and the text says where.
     [Fact]
     public void WriterEvidenceDescriptionDoesNotClaimTheNodesBytes()
@@ -254,38 +142,6 @@ public class WmaFixtureTests
     }
 
     private static Node? Find(Node node, string name) => node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null);
-
-    // Low rates make the SDK's encoder code noise bands, whose gains use the high-band gain codebook's negative
-    // symbols (the review found them misread): most blocks have such bands, and every frame is still read to its end.
-    [Theory]
-    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-32-sdk.wma", 100, 900)]
-    [InlineData("asf/external-windows-wma92-cbr-stereo-22k-20-sdk.wma", 60, 250)]
-    public void LowRateFilesCodeNoiseBands(string name, int minimumBlocks, int minimumBands)
-    {
-        Report report = Fixtures.AnalyzeMpeg(name);
-        Node statistics = Child(Assert.Single(report.Streams).Nodes[0], "Statistics");
-        Assert.True(Child(statistics, "Uses Noise Substitution").Value?.AsBoolean());
-        string blocks = Child(statistics, "Noise-Substituted Blocks").Value!.AsText()!;
-        Assert.True(int.Parse(blocks.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture) >= minimumBlocks, blocks);
-
-        int bands = 0;
-        void Count(Node node)
-        {
-            if (node.Name == "Noise Substitution" && node.Value?.AsText() is { } text)
-            {
-                bands += int.Parse(text.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            foreach (Node child in node.Children)
-            {
-                Count(child);
-            }
-        }
-
-        Count(report.Streams[0].Nodes[0]);
-        Assert.True(bands >= minimumBands, $"{bands} noise-coded bands");
-        Assert.DoesNotContain(report.Findings, f => f.Code == "wma.frame-invalid");
-    }
 
     [Theory]
     [MemberData(nameof(Names))]

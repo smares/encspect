@@ -5,11 +5,10 @@ stereo, at 22.05, 32 and 44.1 kHz and from 24 to 128 kbit/s. ffmpeg's encoder wr
 the container's block alignment with no bit reservoir and no variable block lengths, pads them with
 'N' bytes and sets the encode options to 1 (exponent VLC), so its files do not reach the reservoir,
 or the variable block sizes; Microsoft's encoder files (external-windows-*, see
-import_windows_wma_fixtures.py) and the hand-built ones do. No fixture uses the LSP
-exponents: every external golden report that shows Exponent Coding says scale factor codes.
+import_windows_wma_fixtures.py) and the hand-built ones do.
 
 Each external-*.expected.json holds what the tools say of the file: ffprobe's stream and packet count
-and ffmpeg's decoded sample count, which the tests hold the analyzer's frame count to, plus the
+and ffmpeg's decoded sample count, plus the
 encoder, its version and the command.
 
     python3 scripts/fixtures/make_external_asf_fixtures.py --manifests-only

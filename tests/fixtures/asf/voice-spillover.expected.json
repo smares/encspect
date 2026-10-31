@@ -364,24 +364,8 @@
  },
  "findings": [
   {
-   "code": "wma.voice-spillover-orphan",
-   "contains": "spillover bits (9)"
-  },
-  {
-   "code": "wma.voice-superframe-padding",
-   "contains": "16 bits"
-  },
-  {
-   "code": "wma.voice-superframe-overrun",
-   "contains": "more bits than the packets give"
-  },
-  {
-   "code": "wma.voice-music",
-   "contains": "first bit is clear"
-  },
-  {
-   "code": "wma.voice-spillover-after-music",
-   "contains": "lost to a superframe of music"
+   "code": "wma.voice-not-read",
+   "contains": "Windows Media Audio Voice are not read"
   }
  ],
  "crosscheck": {
