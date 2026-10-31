@@ -106,7 +106,7 @@ internal static class Summary
 
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, end - start, value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", start, end - start) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-        int rate = sync.SampleRate;
+        int rate = followed.SampleRate;
         double duration = a.Duration;
         int top = read - 1;
         Speaker[]? layout = Presentation.Resolve(followed, top, followed.SubstreamCount, channels);
@@ -126,7 +126,7 @@ internal static class Summary
             statistics.Add(Cover("Channel Layout", ChannelLayouts.Describe(layout), Explain.StatLayout, Topics.ChannelLayouts));
         }
 
-        statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(sync.BitDepth, "bits"), Explain.StatBits));
+        statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(followed.BitDepth, "bits"), Explain.StatBits));
         statistics.Add(Cover("Substreams", NodeValue.Integer(followed.SubstreamCount, "substreams", "substream"), Explain.StatSubstreams, Topics.Substreams));
         statistics.Add(Cover("Presentations", string.Join(", ", a.PresentationChannels.Take(read).Where(c => c > 0).Select(c => $"{c} {(c == 1 ? "channel" : "channels")}")), Explain.StatPresentations, Topics.Substreams));
         statistics.Add(Cover("SignalsAtmos", NodeValue.Boolean(a.SignalsAtmos), Explain.StatSignalsAtmos, Topics.Substreams));
@@ -176,12 +176,12 @@ internal static class Summary
         return new StreamInfo
         {
             Nodes = [a.Stream],
-            Codec = sync.IsTrueHd ? "Dolby TrueHD" : "MLP",
+            Codec = followed.IsTrueHd ? "Dolby TrueHD" : "MLP",
             SampleRate = rate,
             Channels = channels,
             ChannelMode = mode,
             ChannelLayout = layout,
-            BitsPerSample = sync.BitDepth,
+            BitsPerSample = followed.BitDepth,
             Samples = a.Samples,
             Duration = duration,
             AverageBitrate = a.Figures?.AverageBitrate,

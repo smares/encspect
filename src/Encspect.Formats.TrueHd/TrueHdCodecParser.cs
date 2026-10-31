@@ -27,59 +27,60 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
         List<Node> leading = analysis.Leading;
         Node parent = context.Parent;
         IEnumerator<MappedBytes>? enumerator = null;
-        var buffered = new List<MappedBytes>();
-        bool isMismatch = false;
-        if (context.Payload is { } found)
+        try
         {
-            long at = Locator.FindSyncUnit(new Source(found), found.Start, Math.Min(found.End, found.Start + Locator.SearchLimit), out MajorSync first);
-            if (at >= 0 && first.IsTrueHd == isMlp)
+            var buffered = new List<MappedBytes>();
+            long payloadFirst = -1;
+            bool isMismatch = false;
+            if (context.Payload is { } found)
             {
-                isMismatch = true;
-                isMlp = !isMlp;
-            }
-        }
-        else if (context.Packets is { } all)
-        {
-            // The stream type the first usable major sync states names the stream; the container's ID only where none shows in the first packets.
-            enumerator = all.GetEnumerator();
-            while (buffered.Count < LookAhead && enumerator.MoveNext())
-            {
-                MappedBytes packet = enumerator.Current;
-                buffered.Add(packet);
-                if (packet.Length > 4 && MajorSync.Read(packet.Span[4..]) is { IsUsable: true } sync)
+                payloadFirst = Locator.FindSyncUnit(new Source(found), found.Start, Math.Min(found.End, found.Start + Locator.SearchLimit), out MajorSync firstSync);
+                if (payloadFirst >= 0 && firstSync.IsTrueHd == isMlp)
                 {
-                    isMismatch = sync.IsTrueHd == isMlp;
-                    isMlp = !sync.IsTrueHd;
-                    break;
+                    isMismatch = true;
+                    isMlp = !isMlp;
                 }
             }
-        }
+            else if (context.Packets is { } all)
+            {
+                // The stream type the first usable major sync states names the stream; the container's ID only where none shows in the first packets.
+                enumerator = all.GetEnumerator();
+                long bytes = 0;
+                while (buffered.Count < LookAhead && bytes <= LookAheadBytes && enumerator.MoveNext())
+                {
+                    MappedBytes packet = enumerator.Current;
+                    buffered.Add(packet);
+                    bytes += packet.Length;
+                    if (packet.Length > 4 && MajorSync.Read(packet.Span[4..]) is { IsUsable: true } sync)
+                    {
+                        isMismatch = sync.IsTrueHd == isMlp;
+                        isMlp = !sync.IsTrueHd;
+                        break;
+                    }
+                }
+            }
 
-        Node stream = new(isMlp ? "MLP" : "Dolby TrueHD", parent.Offset, parent.Length, null, () => new BlockedChildren(leading, records.Entries.Count, i => Nodes.Entry(records, i)))
-        {
-            Kind = NodeKind.Stream,
-            Description = isMlp ? Explain.MlpStream : Explain.TrueHdStream,
-            Topic = Topics.AccessUnits,
-        };
-        analysis.Stream = stream;
-        parent.Add(stream);
-        if (isMismatch)
-        {
-            string stated = isMlp ? "MLP" : "Dolby TrueHD";
-            string claimed = isMlp ? "Dolby TrueHD" : "MLP";
-            analysis.Findings.AddNow(Severity.Warning, "truehd.codec-id-mismatch",
-                $"The container's codec ID names {claimed}, but the first major sync states the stream type {stated}; the stream is read as {stated}.", stream);
-        }
+            Node stream = new(isMlp ? "MLP" : "Dolby TrueHD", parent.Offset, parent.Length, null, () => new BlockedChildren(leading, records.Entries.Count, i => Nodes.Entry(records, i)))
+            {
+                Kind = NodeKind.Stream,
+                Description = isMlp ? Explain.MlpStream : Explain.TrueHdStream,
+                Topic = Topics.AccessUnits,
+            };
+            analysis.Stream = stream;
+            parent.Add(stream);
+            if (isMismatch)
+            {
+                string stated = isMlp ? "MLP" : "Dolby TrueHD";
+                string claimed = isMlp ? "Dolby TrueHD" : "MLP";
+                analysis.Findings.AddNow(Severity.Warning, "truehd.codec-id-mismatch",
+                    $"The container's codec ID names {claimed}, but the first major sync states the stream type {stated}; the stream is read as {stated}.", stream);
+            }
 
-        if (context.Payload is { } payload)
-        {
-            var source = new Source(payload);
-            long first = Locator.FindSyncUnit(source, payload.Start, Math.Min(payload.End, payload.Start + Locator.SearchLimit), out _);
-            TrueHdParser.Run(analysis, source, first, context.CancellationToken);
-        }
-        else if (enumerator is not null)
-        {
-            using (enumerator)
+            if (context.Payload is { } payload)
+            {
+                TrueHdParser.Run(analysis, new Source(payload), payloadFirst, context.CancellationToken);
+            }
+            else if (enumerator is not null)
             {
                 int index = 0;
                 foreach (MappedBytes packet in buffered)
@@ -88,6 +89,8 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
                     index++;
                 }
 
+                buffered.Clear();
+                buffered.TrimExcess();
                 while (enumerator.MoveNext())
                 {
                     if (index++ % 1024 == 0)
@@ -99,11 +102,17 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
                 }
             }
         }
+        finally
+        {
+            enumerator?.Dispose();
+        }
 
         Summary.Finish(analysis, parent.Offset, parent.End, context);
     }
 
+    // The look-ahead for the first major sync: packets, and bytes (about the longest unit each) held until the stream is named.
     private const int LookAhead = 64;
+    private const long LookAheadBytes = LookAhead * 8190L;
 
     private static void AddPacket(Analysis analysis, MappedBytes packet)
     {

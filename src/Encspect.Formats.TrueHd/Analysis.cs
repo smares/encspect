@@ -579,8 +579,13 @@ internal sealed class Analysis
             }
             else
             {
+                string effect = _sessionSync is not { } opened
+                    ? "the decoder has not started, and opens at the first unit it can read from there on"
+                    : opened.RateCode != sync.RateCode || opened.SubstreamCount != sync.SubstreamCount || opened.IsTrueHd != sync.IsTrueHd
+                        ? "the decoder does not follow such a change, so the audio of the stretch from this sync on is not decoded"
+                        : "the decoder was opened with these parameters and goes on";
                 Findings.Add(Severity.Info, "truehd.stream-parameters-change", () => Nodes.MajorSyncOf(records, index), count =>
-                    $"The major sync at 0x{offset + 4:X} changes the stream's format, sampling rate or substream count from the earlier ones{(count > 1 ? $"; {count - 1} more major syncs change the stream's parameters" : string.Empty)}; the decoder does not follow such a change, so the audio of the stretch from this sync on is not decoded, and the duration counts each stretch at its own sampling rate.", "format");
+                    $"The major sync at 0x{offset + 4:X} changes the stream's format, sampling rate or substream count from the earlier ones{(count > 1 ? $"; {count - 1} more major syncs change the stream's parameters" : string.Empty)}; {effect}, and the duration counts each stretch at its own sampling rate.", "format");
             }
         }
 
