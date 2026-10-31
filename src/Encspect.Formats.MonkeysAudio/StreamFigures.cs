@@ -11,10 +11,15 @@ internal sealed class StreamFigures(long sampleRate)
     private const int BinWidth = 32;
     private const int LastBin = 1000;
 
+    // The graph of bitrate over time keeps at most this many entries, whatever the sample rate and the length: when a stream outgrows it, neighboring
+    // entries merge and each covers twice the time. A stated rate of 1 Hz would otherwise add an entry for every frame.
+    internal const int MaxSeconds = 1 << 17;
+
     private readonly ChunkedList<Point> _points = new();
     // Only the seconds a unit starts in, in order: a block may declare far more samples than its bytes
     // hold, so the seconds it spans are not kept.
-    private readonly ChunkedList<(long Second, long Bits, long Samples)> _seconds = new();
+    private readonly List<(long Second, long Bits, long Samples)> _seconds = [];
+    private long _span = 1;
     private readonly SortedDictionary<int, int> _bins = [];
 
     public int Count => _points.Count;
@@ -49,15 +54,19 @@ internal sealed class StreamFigures(long sampleRate)
         Units++;
         if (sampleRate > 0)
         {
-            long second = CodedSamples / sampleRate;
-            if (_seconds.Count > 0 && _seconds[_seconds.Count - 1].Second == second)
+            long second = CodedSamples / sampleRate / _span * _span;
+            if (_seconds.Count > 0 && _seconds[^1].Second == second)
             {
-                (long _, long b, long counted) = _seconds[_seconds.Count - 1];
-                _seconds.SetLast((second, b + bits, counted + samples));
+                (long _, long b, long counted) = _seconds[^1];
+                _seconds[^1] = (second, b + bits, counted + samples);
             }
             else
             {
                 _seconds.Add((second, bits, samples));
+                if (_seconds.Count > MaxSeconds)
+                {
+                    Merge();
+                }
             }
         }
 
@@ -69,6 +78,31 @@ internal sealed class StreamFigures(long sampleRate)
         LargestBits = Math.Max(LargestBits, bits);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
+    }
+
+    private void Merge()
+    {
+        while (_seconds.Count > MaxSeconds)
+        {
+            _span *= 2;
+            int kept = 0;
+            for (int i = 0; i < _seconds.Count; i++)
+            {
+                (long second, long bits, long samples) = _seconds[i];
+                second = second / _span * _span;
+                if (kept > 0 && _seconds[kept - 1].Second == second)
+                {
+                    (long _, long b, long counted) = _seconds[kept - 1];
+                    _seconds[kept - 1] = (second, b + bits, counted + samples);
+                }
+                else
+                {
+                    _seconds[kept++] = (second, bits, samples);
+                }
+            }
+
+            _seconds.RemoveRange(kept, _seconds.Count - kept);
+        }
     }
 
     // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the

@@ -193,11 +193,14 @@ def parse(data):
         a.seek.append(add + current)
         previous = current
     count = min(a.total_frames, entries)
-    span = a.data_end - a.data_start
+    # The SDK takes only the phase of the 32-bit words of the frames from the first seek entry ((seek[n] - seek[0]) % 4, APEDecompress.cpp), so the words
+    # start at the first byte at or after the descriptor's data start that has that phase.
+    a.word_start = a.data_start + (a.seek[0] + j - a.data_start) % 4 if count > 0 else a.data_start
+    span = a.data_end - a.word_start
     a.frames = []
     for f in range(count):
-        s = a.seek[f] + j - a.data_start
-        e = a.seek[f + 1] + j - a.data_start if f + 1 < count else span
+        s = a.seek[f] + j - a.word_start
+        e = a.seek[f + 1] + j - a.word_start if f + 1 < count else span
         blocks = a.final_blocks if f == a.total_frames - 1 else a.blocks_per_frame
         a.frames.append({"start": s, "end": e, "blocks": blocks})
     a.header_data = data[a.header_data_at:a.data_start]
@@ -208,7 +211,7 @@ def parse(data):
 def frame_data(data, a, f):
     """The stream bytes of frame f, as the encoder wrote them."""
     frame = a.frames[f]
-    return stream_bytes(data, a.data_start, frame["start"], frame["end"])
+    return stream_bytes(data, a.word_start, frame["start"], frame["end"])
 
 
 def compute_md5(data, a):
@@ -223,7 +226,7 @@ def compute_md5(data, a):
 def start_fields(data, a, f, version_has_special=True):
     """(stored CRC of 31 bits, special codes or None) of frame f."""
     frame = a.frames[f]
-    first = stream_bytes(data, a.data_start, frame["start"], frame["start"] + 8)
+    first = stream_bytes(data, a.word_start, frame["start"], frame["start"] + 8)
     if len(first) < 4:
         return None, None
     word = struct.unpack(">I", first[:4])[0]
@@ -310,11 +313,11 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
     if stored_crcs is None:
         stored_crcs = n
     placed = len(a.frames) if placed is None else placed
-    avail = max(0, min(len(data), a.data_end) - a.data_start) // 4 * 4
+    avail = max(0, min(len(data), a.data_end) - a.word_start) // 4 * 4
     entries = []
     for index, frame in enumerate(a.frames[:min(frame_limit, placed)]):
         end = min(frame["end"], avail)
-        rs = ranges(a.data_start, min(frame["start"], end), end)
+        rs = ranges(a.word_start, min(frame["start"], end), end)
         offset, length = extent(rs) if rs else (min(a.data_start, len(data)), 0)
         crc, special = start_fields(data, a, index)
         entries.append({"index": index, "offset": offset, "length": length, "samples": frame["blocks"], "crc": None if crc is None else f"0x{crc:08X}",
@@ -415,10 +418,11 @@ def parse_old(data):
     seek = [u32(data, a.seek_at + 4 * i) for i in range(elements)]
     bits_at = a.seek_at + 4 * elements
     a.start_bits = list(data[bits_at:bits_at + elements]) if a.version <= 3800 else [0] * elements
+    a.word_start = a.data_start + (seek[0] - a.data_start) % 4 if a.total_frames > 0 and elements > 0 else a.data_start
     a.frames = []
     for f in range(a.total_frames):
-        start = seek[f] - a.data_start
-        end = seek[f + 1] - a.data_start if f + 1 < a.total_frames else a.data_end - a.data_start
+        start = seek[f] - a.word_start
+        end = seek[f + 1] - a.word_start if f + 1 < a.total_frames else a.data_end - a.word_start
         a.frames.append({"start": start, "end": end, "blocks": a.final_blocks if f == a.total_frames - 1 else a.blocks_per_frame})
     return a
 
@@ -428,13 +432,13 @@ def old_frame_entries(data, a):
     32 bits are the CRC up to version 3.82, and a file without the CRC flag has a Rice-coded checksum instead, which the analyzer does not read). In a file of
     version 3.80 a frame starts at a bit of the word its seek entry names."""
     entries = []
-    available = max(0, min(len(data), a.data_end) - a.data_start) // 4 * 4
+    available = max(0, min(len(data), a.data_end) - a.word_start) // 4 * 4
     for index, frame in enumerate(a.frames):
-        rs = ranges(a.data_start, frame["start"], min(frame["end"], available))
+        rs = ranges(a.word_start, frame["start"], min(frame["end"], available))
         offset, length = extent(rs)
         crc = special = None
         bit = a.start_bits[index] if index < len(a.start_bits) else 0
-        first = stream_bytes(data, a.data_start, frame["start"], frame["start"] + 12)
+        first = stream_bytes(data, a.word_start, frame["start"], frame["start"] + 12)
         if a.has_crc and len(first) >= 4:
             window = int.from_bytes(first.ljust(12, b"\0"), "big")
             word = (window >> (96 - bit - 32)) & 0xFFFFFFFF

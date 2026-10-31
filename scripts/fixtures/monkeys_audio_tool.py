@@ -11,7 +11,7 @@
 - The encoder writes the current format only (file version 3.99, descriptor and header), so the fixtures of older versions come from
   monkeys_audio_legacy.py, whose files `mac -V` verifies (docs/formats/monkeys-audio.md, "Decoding").
 - build_interim_mac builds a second mac from the same source with one line of the encoder changed, so that it writes 24-bit files the way the encoders
-  of Monkey's Audio 5.01 to 8.51 did (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
+  of Monkey's Audio did from the addition of 32-bit audio to version 8.50, in the SDK's words (their predictor summed the first stage in 64 bits, which the decoder's "interim mode" undoes,
   Interim.cpp). The unchanged mac verifies and decodes those files through that mode; no unchanged encoder can write one.
 - SDK 13.44 fixed two bugs that matter here: its Wave64 reader works on 64-bit Linux and macOS (13.42 and 13.43 declared the first field of its GUID
   structure as an unsigned long, 64 bits there, and refused every Wave64 file), and it codes the seventh channel of a seven-channel file (before 13.44 the

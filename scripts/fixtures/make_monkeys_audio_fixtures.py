@@ -132,6 +132,9 @@ add("seek-table-long", rebuild(MONO, MONO_A, frames, seek=[v + 8 for v in [*MONO
 first_off = list(MONO_A.seek)
 first_off[0] += 4  # data stays where it is; only the first entry lies
 add("seek-first-entry-off", rebuild(MONO, MONO_A, frames, seek=first_off))
+# The descriptor states 2 bytes less of WAV header data than the file holds, so the descriptor puts the first frame 2 bytes before the seek table's first
+# entry, which is not a multiple of 4: the SDK takes the phase of the words of the frames from the entry (APEDecompress.cpp, nSeekRemainder) and so must the analyzer.
+add("seek-first-entry-off-by-two", rebuild(MONO, MONO_A, frames, header_data_bytes=len(MONO_A.header_data) - 2))
 add("seek-table-bytes-odd", rebuild(MONO, MONO_A, frames, seek_pad=1))
 
 # --- the descriptor
@@ -247,6 +250,9 @@ EXPECT = {
     "seek-table-short": {"findings": ["monkeys-audio.seek-table-size"], "decode": ("decoded", 2, 0, 147456, []), "complete": False},
     "seek-table-long": {"findings": ["monkeys-audio.seek-table-size"]},
     "seek-first-entry-off": {"findings": ["monkeys-audio.seek-table-start"], "decode": ("decoded", 2, 0, 86272, ["decode.frame-invalid"])},
+    # The descriptor's frame data ends 2 bytes before the file's, which cuts the last frame to the last whole word and leaves 2 bytes after it; the frames' CRCs all pass.
+    "seek-first-entry-off-by-two": {"findings": ["monkeys-audio.md5-mismatch", "monkeys-audio.seek-table-start", "monkeys-audio.frame-cut", "monkeys-audio.trailing-data"],
+                                    "complete": False},
     "seek-table-bytes-odd": {"findings": ["monkeys-audio.seek-table-size"]},
     "descriptor-bytes-larger": {"findings": ["monkeys-audio.descriptor-size"]},
     "descriptor-bytes-smaller": {"findings": ["monkeys-audio.descriptor-size"]},

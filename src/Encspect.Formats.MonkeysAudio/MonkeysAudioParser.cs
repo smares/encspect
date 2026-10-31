@@ -7,6 +7,16 @@ namespace Encspect.Formats.MonkeysAudio;
 // ID3v1) are the host's; an ID3v2 tag before it too. The coded samples are decoded only with decoding on (docs/formats/monkeys-audio.md).
 public sealed class MonkeysAudioParser : IFormatParser
 {
+    private readonly int _maxListedFrames;
+
+    public MonkeysAudioParser()
+        : this(State.DefaultMaxListedFrames)
+    {
+    }
+
+    // The tests lower the number of frames the tree lists to reach the stretch of further frames with small files.
+    internal MonkeysAudioParser(int maxListedFrames) => _maxListedFrames = maxListedFrames;
+
     public string Name => "Monkey's Audio";
 
     // The signature at the start of the data with a header the SDK would take is certain (class 100); the signature with a header that holds
@@ -81,7 +91,7 @@ public sealed class MonkeysAudioParser : IFormatParser
         ByteReader window = context.Reader;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        var state = new State(context, reader);
+        var state = new State(context, reader, _maxListedFrames);
         Reader.Run(state);
 
         long position = reader.End;

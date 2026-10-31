@@ -65,7 +65,13 @@ internal static class Explain
     public const string TerminatingData = "The bytes that followed the audio in the compressed file, kept so that a decoder can give them back after the samples.";
     public const string TrailingData = "Bytes after the terminating data that no tag claims. The descriptor does not count them.";
 
+    public const string FrameRiceCoded = "One frame: its stored CRC, special frame codes where it has them, and its Rice-coded samples. Frames follow one another byte by byte in 32-bit words whose bytes are stored in reverse order, so a frame's node covers the words its bytes lie in, and the word at either end may be shared with the frame next to it (Old/UnMACOld.cpp, SeekToFrame).";
+
+    public const string FrameBitwise = "One frame: its stored CRC and its Rice-coded samples. Frames follow one another bit by bit in 32-bit words whose bytes are stored in reverse order, from the bit the file's table of start bits gives, so a frame's node covers the bytes its bits touch, and the bytes at either end may be shared with the frame next to it (Old/UnMACOld.cpp, SeekToFrame).";
+
     public const string Frame = "One frame: its stored CRC, special frame codes where it has them, and its range-coded samples. Frames follow one another byte by byte in 32-bit words whose bytes are stored in reverse order, so a frame's node covers the words its bytes lie in, and the word at either end may be shared with the frame next to it (APECompressCreate.cpp, FixupFrame).";
+    public const string FrameCrcUnshifted = "The CRC-32 of the frame's decoded audio in WAV layout, inverted and stored in all 32 bits. Files of this version have no special frame codes. It covers decoded audio, so the analyzer compares it only when the stream is decoded (Old/UnMACOld.cpp, DecompressFrame).";
+
     public const string FrameCrc = "The CRC-32 of the frame's decoded audio in WAV layout, inverted and shifted right by one so that it takes 31 bits; bit 31 of the word flags special frame codes after it (APEDecompressCore.cpp, StartFrame and EndFrame). It covers decoded audio, so the analyzer compares it only when the stream is decoded.";
     public const string SpecialCodes = "Flags for a frame the encoder stores without coding every sample: 1 the left channel is silent (the only channel of a mono file, where no other code counts), 2 the right channel is silent, 4 the right channel repeats the left (Prepare.h). Files of more than two channels ignore them.";
     public const string RangeCodedData = "The frame's samples: a dummy byte, then what the predictors left of each sample, written with a range coder (UnBitArray.cpp, BitArray.cpp).";
@@ -83,7 +89,7 @@ internal static class Explain
     public const string StatLevel = "The compression level, from the header.";
     public const string StatSilentFrames = "The frames flagged as silent in every channel they code (both channels of a stereo file, the only channel of a mono file), which hold no coded samples.";
     public const string StatPseudoStereoFrames = "The frames flagged as pseudo-stereo, which code one channel and repeat it in the other.";
-    public const string StatStoredChecksums = "The frames of a file without frame CRCs, each of which starts with a checksum of 30 bits that the analyzer does not read or compare (Old/UnMACOld.cpp, DecompressFrame).";
+    public const string StatStoredChecksums = "The frames of a file without frame CRCs, each of which starts with a checksum of 30 bits, the sum of the absolute values of its samples, which is no CRC (Old/UnMACOld.cpp, DecompressFrame). The parser does not read it from the frame; the decoder compares it with the audio it decodes, except in files of 3.90 to 3.92, whose checksum the SDK does not read.";
     public const string StatStoredCrcs = "The frames that store a CRC of their decoded audio. The analyzer compares them only when the stream is decoded.";
     public const string StatMd5 = "Whether the MD5 of the coded data that the descriptor stores equals the one computed from the file.";
     public const string AverageBitrate = "The bits of the frames over the time their samples last.";
@@ -95,7 +101,7 @@ internal static class Explain
     public const string Distribution = "How many frames fall in each bitrate range of 32 kbps.";
     public const string DistributionBin = "The frames whose bitrate falls in this range, and their share.";
     public const string BitrateSeries = "The bitrate of each frame: its bits over the time its samples last.";
-    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last.";
+    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last. A stream with more than 131,072 such entries is shown in wider steps, each entry covering twice the time of the step before.";
 
     public const string Encoder = "The program that wrote the file, as the descriptor and the format version show it, with the evidence and the confidence in it.";
     public const string ConfidenceHigh = "High: the descriptor states the version of the program that wrote the file.";
