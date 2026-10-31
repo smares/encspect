@@ -44,13 +44,22 @@ jobs:
         shell: bash
         run: dotnet publish scripts/fixtures/windows/WmaDecodeProbe -c Release -o probe-bin
 
+      - name: Smoke test on one file
+        shell: bash
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          mkdir -p smoke-out
+          ./probe-bin/wma-decode-probe.exe --out smoke-out --timeout 30 tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.wma
+          head -c 3000 smoke-out/records/*.json
+
       - name: Decode every fixture two ways
         shell: bash
         env:
           EXTRA_PATHS: ${{ github.event.inputs.paths }}
         run: |
           mkdir -p decode-out
-          args=(--out decode-out --timeout 120)
+          args=(--out decode-out --timeout 30)
           if [ -n "$EXTRA_PATHS" ]; then args+=(--list "$EXTRA_PATHS"); fi
           ./probe-bin/wma-decode-probe.exe "${args[@]}" tests/fixtures/asf 2>&1 | tee decode-out/log.txt
 
