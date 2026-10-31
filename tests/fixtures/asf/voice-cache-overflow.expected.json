@@ -202,8 +202,16 @@
  },
  "findings": [
   {
-   "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "code": "wma.voice-cache-overflow",
+   "contains": "does not fit the 256 bytes"
+  },
+  {
+   "code": "wma.voice-music",
+   "contains": "first bit is clear"
+  },
+  {
+   "code": "wma.voice-spillover-after-music",
+   "contains": "lost to a superframe of music"
   }
  ],
  "crosscheck": {

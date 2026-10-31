@@ -638,9 +638,10 @@ jobs:
           python3 scripts/fixtures/make_truehd_fixtures.py
           python3 scripts/fixtures/make_external_truehd_fixtures.py --manifests-only
 
-      - name: Regenerate the hand-built ASF fixtures and the encoder-made WMA ones' manifests
+      - name: Regenerate the hand-built ASF and WMA Voice fixtures and the encoder-made WMA ones' manifests
         run: |
           python3 scripts/fixtures/make_asf_fixtures.py
+          python3 scripts/fixtures/make_voice_fixtures.py
           python3 scripts/fixtures/make_external_asf_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built Matroska and WebM fixtures and the encoder-made ones' manifests

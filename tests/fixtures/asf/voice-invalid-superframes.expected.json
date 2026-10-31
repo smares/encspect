@@ -526,8 +526,32 @@
  },
  "findings": [
   {
-   "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "code": "wma.voice-music",
+   "contains": "first bit is clear"
+  },
+  {
+   "code": "wma.voice-sample-count",
+   "contains": "more samples than the 480"
+  },
+  {
+   "code": "wma.voice-frame-type",
+   "contains": "gives no type"
+  },
+  {
+   "code": "wma.voice-packet-sequence",
+   "contains": "follow the packet before"
+  },
+  {
+   "code": "wma.voice-spillover-orphan",
+   "contains": "spillover bits"
+  },
+  {
+   "code": "wma.voice-spillover-after-music",
+   "contains": "lost to a superframe of music"
+  },
+  {
+   "code": "wma.voice-superframe-padding",
+   "contains": "ends before the bits the packets give it"
   }
  ],
  "crosscheck": {

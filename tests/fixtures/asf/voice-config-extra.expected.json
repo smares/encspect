@@ -148,8 +148,12 @@
  },
  "findings": [
   {
+   "code": "wma.codec-data-size",
+   "contains": "is 50 bytes"
+  },
+  {
    "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "contains": "rejects the stream's configuration"
   }
  ],
  "crosscheck": {

@@ -426,8 +426,8 @@
    "contains": "extends past the packet's end"
   },
   {
-   "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "code": "wma.voice-unfinished",
+   "contains": "no packet follows"
   }
  ],
  "crosscheck": {
@@ -436,8 +436,7 @@
   "decode": "errors",
   "messages": [],
   "ffmpeg": {
-   "samples": 10760,
-   "superframes": 23
+   "samples": 10760
   }
  }
 }

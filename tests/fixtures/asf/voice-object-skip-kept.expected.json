@@ -175,8 +175,28 @@
  },
  "findings": [
   {
-   "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "code": "wma.voice-packet-header",
+   "contains": "past the packet"
+  },
+  {
+   "code": "wma.packet-short",
+   "contains": "fewer bytes than the block alignment"
+  },
+  {
+   "code": "wma.voice-music",
+   "contains": "first bit is clear"
+  },
+  {
+   "code": "wma.voice-packet-sequence",
+   "contains": "follow the packet before"
+  },
+  {
+   "code": "wma.voice-cache-overflow",
+   "contains": "does not fit the 256 bytes"
+  },
+  {
+   "code": "wma.voice-superframe-padding",
+   "contains": "553 bits"
   }
  ],
  "crosscheck": {
