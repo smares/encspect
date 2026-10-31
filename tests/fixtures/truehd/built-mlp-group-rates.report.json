@@ -169,14 +169,14 @@
                 },
                 {
                   "name": "Smallest Run",
-                  "value": 4888,
+                  "value": 520,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 20222
                 },
                 {
                   "name": "Largest Run",
-                  "value": 5628,
+                  "value": 5178,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 20222
@@ -190,7 +190,7 @@
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 3376.8,
+                  "value": 5299.2,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 20222
@@ -202,13 +202,25 @@
                   "children": [
                     {
                       "name": "2912 to 2943 kbps",
-                      "value": "1 run (50.0%)",
+                      "value": "1 run (25.0%)",
                       "offset": 0,
                       "length": 20222
                     },
                     {
-                      "name": "3360 to 3391 kbps",
-                      "value": "1 run (50.0%)",
+                      "name": "3104 to 3135 kbps",
+                      "value": "1 run (25.0%)",
+                      "offset": 0,
+                      "length": 20222
+                    },
+                    {
+                      "name": "4992 to 5023 kbps",
+                      "value": "1 run (25.0%)",
+                      "offset": 0,
+                      "length": 20222
+                    },
+                    {
+                      "name": "5280 to 5311 kbps",
+                      "value": "1 run (25.0%)",
                       "offset": 0,
                       "length": 20222
                     }
@@ -308,24 +320,28 @@
               "firstFrames": [
                 1,
                 17,
-                63
+                33,
+                49
               ],
               "frameCount": 64,
               "samples": [
                 640,
-                640,
-                80
+                0,
+                0,
+                640
               ]
             },
             "x": [
               0,
               4888,
-              19600
+              9822,
+              15044
             ],
             "values": [
               2932.8,
-              3376.8,
-              2985.6
+              4992,
+              5299.2,
+              3106.8
             ]
           },
           {
