@@ -11,4 +11,4 @@ references: Encspect's format description docs/design/wma-pro-format.md
 
 **Run-level codes.** The rest of the spectrum is coded as pairs of a run of zeros and a level, each with a sign bit, until an end code. An escape gives a large value and a run of its own. The end code may be left out when the codes reach the end of the spectrum.
 
-**What you see in a file.** Encspect shows, for each channel of a subframe, how many coefficients are not 0, how many are coded with an escape, and which codebook is used, and sums them. In Encspect's test files a code that breaks the syntax does not occur.
+**What you see in a file.** Encspect shows, for each channel of a subframe, how many coefficients are not 0, how many run-level codes are escape codes, and which codebook is used, and sums them. In Encspect's test files a code that breaks the syntax does not occur.

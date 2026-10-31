@@ -95,7 +95,7 @@ internal static class ProExplain
     public const string StatSmallestStep = "The smallest quantization step of a subframe that sends coefficients.";
     public const string StatLargestStep = "The largest quantization step of a subframe that sends coefficients.";
     public const string StatNonZero = "How many coefficients are not 0.";
-    public const string StatEscapes = "How many coefficients are coded with an escape for a large value.";
+    public const string StatEscapes = "How many run-level codes are escape codes, which carry a level and a run in a field of their own; the escapes of the vector codes are not counted.";
     public const string StatDamaged = "How many channels of subframes have a coefficient code that breaks the syntax.";
     public const string StatLowFrequencyChannel = "The channel the channel mask names as low-frequency, counted from 1.";
 

@@ -625,7 +625,7 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
 
             if (!isStopped)
             {
-                sum += last >= 0 ? last : Math.Abs(value);
+                sum += last >= 0 ? last : value;
             }
 
             step += value > 0 ? sum : -sum;

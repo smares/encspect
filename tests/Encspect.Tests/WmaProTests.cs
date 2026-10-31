@@ -69,6 +69,26 @@ public class WmaProTests
         Assert.Equal(1L, WmaStream.Child(frame, "Frame Padding").Value!.AsInteger());
     }
 
+    // A quantization step of -32 in its 6 bits sends escape groups while more than 5 bits are left before the frame's end. With none left the
+    // step is the start value: the escape subtracts the 6-bit value, -32, which cancels the -32 added before it (docs/design/wma-pro-format.md,
+    // "Quantization step"). Frame 1 of the stereo fixture is cut right after its step field by a shorter length prefix.
+    [Fact]
+    public void AStepOfMinus32WithNoRoomForAGroupStaysAtTheStartValue()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        Node frame = Assert.Single(Count(WmaStream.StreamNode(stream.RunPro()), "Frames")).Children[1];
+        Node step = WmaStream.Child(WmaStream.Child(frame, "Subframe"), "Quantization Step");
+        Assert.Equal(83L, step.Value!.AsInteger());
+        int Bit(Node n) => (int)((n.Offset - 200) * 8) + (n.BitOffset ?? 0);
+        int stepStart = Bit(step);
+        int frameStart = Bit(WmaStream.Child(frame, "Frame Length"));
+        WmaStream.SetBits(stream.Objects[0], stepStart, 6, 0b100000);
+        WmaStream.SetBits(stream.Objects[0], frameStart, 16, (uint)(stepStart + 6 + 2 - frameStart));
+        CodecContext context = stream.RunPro();
+        Node changed = Assert.Single(Count(WmaStream.StreamNode(context), "Frames")).Children[1];
+        Assert.Equal(90L, WmaStream.Child(WmaStream.Child(changed, "Subframe"), "Quantization Step").Value!.AsInteger());
+    }
+
     // The sequence number of packet 2 changed: the packet and the one after it show a gap, and a decoder drops the frame that crosses into each
     // (frames 12 and 17), so two frames of 2,048 samples are gone.
     [Fact]
