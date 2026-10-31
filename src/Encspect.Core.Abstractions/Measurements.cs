@@ -59,6 +59,10 @@ public enum MeasurementStatus
     // failed, positions that went back); the figures cover what was measured.
     Stopped,
 
+    // The stream was measured to its end, but frames were not decoded or were delivered in part (a frame that failed may have written
+    // blocks first); the figures cover what the decoder delivered, which Reason counts against the samples decoded.
+    Incomplete,
+
     // Nothing, or less than asked, can be measured: no decoder, DSD, a rate of 0 Hz, a configuration the decoder refused, the
     // memory bound of the measurements.
     NotPossible,

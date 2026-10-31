@@ -113,7 +113,9 @@ internal sealed class PcmBlockDecoder
         var extra = new LsbBitCursor(hasExtra ? block.Slice(contents.ExtraBitstream.Start, contents.ExtraBitstream.Length) : []);
         Fixup(buffer, header, contents, hasExtra, ref extra, ref extraCrc);
         bool isExtraValid = !hasExtra || (extraCrc == contents.ExtraCrc && !extra.IsOverrun);
-        return new BlockOutcome(!isComplete, crc == header.Crc, hasExtra, isExtraValid);
+        // libwavpack compares the CRC the muted block was left with, which in its stereo path runs to the end of the chunk where the mute hit, so it
+        // reports an error only when that is before the block's last chunk. The analyzer deliberately counts every muted block as failed.
+        return new BlockOutcome(!isComplete, isComplete && crc == header.Crc, hasExtra, isExtraValid);
     }
 
     // get_words_lossless and the loop of get_word: the residuals of every sample, the channels alternating.

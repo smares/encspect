@@ -210,8 +210,12 @@ internal sealed class DecodeRun : IDisposable
 
         public PcmFormat? Format { get; init; }
 
+        // The samples per channel the decoder wrote, whatever became of the frame they belonged to.
+        public long Received { get; private set; }
+
         public void Write(PcmBlock block)
         {
+            Received += block.Length;
             _measurer?.Write(block);
             if (target is null || run.HasSinkFailure)
             {
