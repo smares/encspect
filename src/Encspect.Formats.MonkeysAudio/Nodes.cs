@@ -63,13 +63,13 @@ internal static class Nodes
 
     // The CRC field of the frame whose bytes are given, equal to the node the parser builds, for a finding of the decoder. wordStart is the file offset the frames' words
     // are counted from (Records.WordStart).
-    public static Node CrcOfFrame(MappedBytes frame, long wordStart, uint crc, int bit = 0)
+    public static Node CrcOfFrame(MappedBytes frame, long wordStart, uint crc, int bit = 0, bool hasSpecialFrames = true)
     {
         ByteRange first = frame.FileRanges()[0];
         long groupEnd = Math.Min(first.End, wordStart + ((((first.Offset - wordStart) >> 2) + 1) << 2));
         long firstByte = groupEnd - 1;
         long start = (((firstByte - wordStart) >> 2) << 2) + (3 - ((firstByte - wordStart) & 3));
-        return Field("Frame CRC", wordStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, NodeValue.Hex(crc, 8), Explain.FrameCrc, Topics.Frames);
+        return Field("Frame CRC", wordStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, NodeValue.Hex(crc, 8), CrcDescription(hasSpecialFrames), Topics.Frames);
     }
 
     private static IReadOnlyList<Node> FrameChildren(Records r, int index)

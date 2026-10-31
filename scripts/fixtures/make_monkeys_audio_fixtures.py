@@ -133,7 +133,7 @@ first_off = list(MONO_A.seek)
 first_off[0] += 4  # data stays where it is; only the first entry lies
 add("seek-first-entry-off", rebuild(MONO, MONO_A, frames, seek=first_off))
 # The descriptor states 2 bytes less of WAV header data than the file holds, so the descriptor puts the first frame 2 bytes before the seek table's first
-# entry, which is not a multiple of 4: the SDK counts the words of the frames from the entry (APEDecompress.cpp, nSeekRemainder) and so must the analyzer.
+# entry, which is not a multiple of 4: the SDK takes the phase of the words of the frames from the entry (APEDecompress.cpp, nSeekRemainder) and so must the analyzer.
 add("seek-first-entry-off-by-two", rebuild(MONO, MONO_A, frames, header_data_bytes=len(MONO_A.header_data) - 2))
 add("seek-table-bytes-odd", rebuild(MONO, MONO_A, frames, seek_pad=1))
 
@@ -257,10 +257,8 @@ EXPECT = {
     "descriptor-bytes-larger": {"findings": ["monkeys-audio.descriptor-size"]},
     "descriptor-bytes-smaller": {"findings": ["monkeys-audio.descriptor-size"]},
     "header-bytes-larger": {"findings": ["monkeys-audio.descriptor-size"]},
-    # The frames are found by the seek table, whose words the SDK counts from its first entry, so they are all read and their CRCs pass; the last one is cut by the
-    # end of the data the descriptor states, which lies far beyond the file.
     "header-data-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.header-data-size", "monkeys-audio.md5-not-compared", "monkeys-audio.seek-table-start",
-                                           "monkeys-audio.frame-cut"], "complete": False},
+                                           "monkeys-audio.frame-misplaced"], "decode": ("decoded", 0, 0, 0, []), "complete": False, "crcs": 0, "listed": 0, "rated": 0},
     "frame-data-bytes-too-large": {"findings": ["monkeys-audio.data-cut", "monkeys-audio.md5-not-compared", "monkeys-audio.frame-cut"], "complete": False},
     "frame-data-bytes-too-small": {"findings": ["monkeys-audio.md5-mismatch", "monkeys-audio.frame-cut", "monkeys-audio.frame-too-short", "monkeys-audio.trailing-data"],
                                    "decode": ("decoded", 2, 0, 147456, []), "complete": False, "crcs": 2, "listed": 2},

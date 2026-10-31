@@ -16,17 +16,14 @@ public class MonkeysAudioReviewFixTests
 
     // monkeys-audio-1: the SDK counts the words of the frames from the first seek table entry, not from where the descriptor's sizes put the first frame.
     [Theory]
-    [InlineData(-3)]
-    [InlineData(-2)]
-    [InlineData(-1)]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
-    public void WordsAreCountedFromTheFirstSeekEntryWhenTheDescriptorDiffersByLessThanAWord(int difference)
+    public void WordsAreCountedFromTheFirstSeekEntryWhenTheDescriptorPutsTheFramesEarlier(int difference)
     {
         byte[] file = File.ReadAllBytes(MonkeysAudioBuilder.FixturePath(Stereo));
         uint headerData = BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(20));
-        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(20), (uint)(headerData + difference));
+        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(20), (uint)(headerData - difference));
 
         Report report = Verify(file);
 
@@ -39,33 +36,56 @@ public class MonkeysAudioReviewFixTests
         Assert.Equal(0, crc.Failed);
     }
 
-    // monkeys-audio-2: findings about frames after the first 1,048,576 point at the node that stands for them.
-    [Fact]
-    public void FindingsOfFramesTheReportDoesNotListPointToFurtherFrames()
+    // Only the phase of the words comes from the first entry (APEDecompress.cpp, nSeekRemainder): a first entry that is wrong by more does not move the frames (it only misplaces the first one if it lies before the layout's data).
+    [Theory]
+    [InlineData(16)]
+    [InlineData(-16)]
+    public void ADamagedFirstSeekEntryDoesNotMisplaceTheOtherFrames(int added)
     {
-        (byte[] header, byte[] headerData, _) = MonkeysAudioBuilder.Take(Stereo);
-        const int count = (1 << 20) + 6;
+        byte[] file = File.ReadAllBytes(MonkeysAudioBuilder.FixturePath("external-frames-normal-16-mono.ape"));
+        int at = MonkeysAudioBuilder.DescriptorLength + MonkeysAudioBuilder.HeaderLength;
+        BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(at), BinaryPrimitives.ReadUInt32LittleEndian(file.AsSpan(at)) + (uint)added);
+
+        Report report = Verify(file);
+
+        Finding? misplaced = report.Findings.SingleOrDefault(f => f.Code == "monkeys-audio.frame-misplaced");
+        Assert.True(misplaced is null || misplaced.Count == 1);
+        ChecksumTally crc = report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "frame CRC-32");
+        Assert.True(crc.Checked >= 2);
+        Assert.True(crc.Failed <= 1);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // monkeys-audio-2: findings about frames the tree does not list resolve to a node of the tree. The cap on listed frames is lowered to 4.
+    [Fact]
+    public void FindingsOfFramesTheReportDoesNotListPointToNodesOfTheTree()
+    {
+        (byte[] header, byte[] headerData, List<byte[]> real) = MonkeysAudioBuilder.Take(Stereo);
+        const int count = 14;
         byte[] silent = MonkeysAudioBuilder.SilentFrame(64);
         byte[] damaged = [.. silent];
         damaged[3] ^= 1;
+        byte[] coded = [.. real[0]];
+        coded[coded.Length / 2] ^= 0x55;
         var frames = new List<byte[]>(count);
         for (int i = 0; i < count; i++)
         {
-            frames.Add(i == count - 3 ? damaged : silent);
+            frames.Add(i == count - 5 ? damaged : i == count - 4 ? coded : silent);
         }
 
         byte[] file = MonkeysAudioBuilder.Build(header, headerData, frames, 64, 64);
         // The seek entry of the last frame puts it far outside the data.
         int seekAt = MonkeysAudioBuilder.DescriptorLength + MonkeysAudioBuilder.HeaderLength + (4 * (count - 1));
         BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(seekAt), 0x7FFFFFF0);
+        IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is MonkeysAudioParser ? new MonkeysAudioParser(4) : p);
+        var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, DefaultParsers.Decoders);
 
-        Report report = Verify(file);
+        Report report = Verify(file, analyzer);
 
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frames-not-listed");
         Finding misplaced = Assert.Single(report.Findings, f => f.Code == "monkeys-audio.frame-misplaced");
-        Assert.NotNull(misplaced.Path);
-        Assert.Equal("Further Frames", NodeAt(report, misplaced.Path).Name);
-        Finding crc = Assert.Single(report.Findings, f => f.Code == "monkeys-audio.frame-crc-mismatch");
-        Assert.NotNull(crc.Path);
+        Assert.Equal("Further Frames", NodeAt(report, misplaced.Path!).Name);
+        Assert.Contains(report.Findings, f => f.Code == "monkeys-audio.frame-crc-mismatch");
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 

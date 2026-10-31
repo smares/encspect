@@ -193,9 +193,9 @@ def parse(data):
         a.seek.append(add + current)
         previous = current
     count = min(a.total_frames, entries)
-    # The SDK counts the 32-bit words of the frames from the first seek entry, not from where the descriptor's sizes put the first frame
-    # (APEDecompress.cpp, nSeekRemainder).
-    a.word_start = a.seek[0] + j if count > 0 else a.data_start
+    # The SDK takes only the phase of the 32-bit words of the frames from the first seek entry ((seek[n] - seek[0]) % 4, APEDecompress.cpp), so the words
+    # start at the first byte at or after the descriptor's data start that has that phase.
+    a.word_start = a.data_start + (a.seek[0] + j - a.data_start) % 4 if count > 0 else a.data_start
     span = a.data_end - a.word_start
     a.frames = []
     for f in range(count):
@@ -418,7 +418,7 @@ def parse_old(data):
     seek = [u32(data, a.seek_at + 4 * i) for i in range(elements)]
     bits_at = a.seek_at + 4 * elements
     a.start_bits = list(data[bits_at:bits_at + elements]) if a.version <= 3800 else [0] * elements
-    a.word_start = seek[0] if a.total_frames > 0 and elements > 0 else a.data_start
+    a.word_start = a.data_start + (seek[0] - a.data_start) % 4 if a.total_frames > 0 and elements > 0 else a.data_start
     a.frames = []
     for f in range(a.total_frames):
         start = seek[f] - a.word_start

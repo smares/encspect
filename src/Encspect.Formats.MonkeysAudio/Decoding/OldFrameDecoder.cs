@@ -210,13 +210,13 @@ internal sealed class OldFrameDecoder : IFrameDecoder
             {
                 _context.AddFinding(Severity.Warning, "monkeys-audio.frame-crc-mismatch",
                     $"The CRC of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is 0x{computed:X8}, but the frame stores 0x{stored:X8}: the decoded samples differ from what the encoder read.",
-                    frame.NodeName == Nodes.UnlistedName ? _context.Setup.Stream : Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored, (int)startBit));
+                    frame.Node ?? Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored, (int)startBit, _hasSpecial));
             }
             else
             {
                 _context.AddFinding(Severity.Warning, "monkeys-audio.frame-checksum-mismatch",
                     $"The checksum of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is {computed}, but the frame stores {stored}: the decoded samples differ from what the encoder read.",
-                    frame.NodeName == Nodes.UnlistedName ? _context.Setup.Stream : FrameNode(frame));
+                    frame.Node ?? FrameNode(frame));
             }
         }
 

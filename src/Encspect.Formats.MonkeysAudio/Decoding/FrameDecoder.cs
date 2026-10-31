@@ -167,7 +167,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             _failed++;
             _context.AddFinding(Severity.Warning, "monkeys-audio.frame-crc-mismatch",
                 $"The CRC of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is 0x{computed:X8}, but the frame stores 0x{stored:X8}: the decoded samples differ from what the encoder read.",
-                frame.NodeName == Nodes.UnlistedName ? _context.Setup.Stream : Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored));
+                frame.Node ?? Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored));
         }
 
         return blocks;
@@ -426,9 +426,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             switch (mode)
             {
-                case Mode.BothSilent:
-                    values.Clear();
-                    break;
                 case Mode.PseudoStereo:
                     values.Clear();
                     values[0] = Predict(0, _range.DecodeValue(ref _states[0]), 0);

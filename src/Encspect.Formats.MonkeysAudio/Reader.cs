@@ -380,7 +380,10 @@ internal static class Reader
         long frameCount = Math.Min(h.TotalFrames, present);
         var seek = new SeekReader(reader, s.SeekTableAt, present);
         long next = frameCount > 0 ? seek.Next() : 0;
-        long wordStart = frameCount > 0 ? next + s.Junk : s.DataStart;
+        // The SDK takes only the phase of the words from the first entry ((seek[n] - seek[0]) % 4, APEDecompress.cpp), so the origin is the first byte at or after the
+        // end of the structures before the frames that has that phase. A first entry that is wrong by more than the phase moves no frame.
+        long phase = frameCount > 0 ? ((next + s.Junk - s.DataStart) % 4 + 4) % 4 : 0;
+        long wordStart = s.DataStart + phase;
         records.WordStart = wordStart;
         long dataSpan = s.FrameDataEnd - wordStart;
         long available = Nodes.Available(records);
@@ -390,7 +393,7 @@ internal static class Reader
         long previousEnd = -1;
         bool followsGap = false;
         byte[] seekBits = s.SeekBits;
-        if (frameCount > 0 && wordStart != s.DataStart)
+        if (frameCount > 0 && next + s.Junk != s.DataStart)
         {
             long first = next + s.Junk;
             long expected = s.DataStart;
@@ -473,7 +476,7 @@ internal static class Reader
             previousEnd = end;
             var entry = new Entry { Start = start, End = end, Blocks = blocks, Crc = crc, Special = special, Status = status, StartBit = (byte)startBit };
             int index = records.Entries.Count;
-            if (index < State.MaxListedFrames)
+            if (index < s.MaxListedFrames)
             {
                 records.Entries.Add(entry);
             }
@@ -488,19 +491,19 @@ internal static class Reader
                 records.UnlistedEnd = Math.Max(records.UnlistedEnd, end);
             }
 
-            s.Findings.Redirect = index < State.MaxListedFrames ? null : () => Nodes.Unlisted(records);
+            s.Findings.Redirect = index < s.MaxListedFrames ? null : () => Nodes.Unlisted(records);
             Notice(s, status, start, f);
             s.Findings.Redirect = null;
             s.Frames++;
             s.Samples += blocks;
             if ((status & EntryStatus.Misplaced) == 0)
             {
-                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, index < State.MaxListedFrames);
+                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, index < s.MaxListedFrames);
             }
 
             if (session is { IsDecoding: true })
             {
-                followsGap = Feed(s, session, entry, index < State.MaxListedFrames ? index : -1, f, followsGap);
+                followsGap = Feed(s, session, entry, index < s.MaxListedFrames ? index : -1, f, followsGap);
             }
             else if ((status & (EntryStatus.Misplaced | EntryStatus.NoStartFields)) != 0)
             {
@@ -588,7 +591,7 @@ internal static class Reader
         Records records = s.Records;
         long first = frame * s.Header.BlocksPerFrame;
         long held = Math.Min(e.End, Nodes.Available(records)) - e.Start;
-        string name = index >= 0 ? "Frame" : Nodes.UnlistedName;
+        const string name = "Frame";
         bool isTooLarge = held > State.MaxDecodedFrameBytes;
         bool isUnreadable = (e.Status & (EntryStatus.Misplaced | EntryStatus.NoStartFields)) != 0 || isTooLarge || e.End <= e.Start;
         if (isTooLarge && (e.Status & EntryStatus.Misplaced) == 0)
@@ -601,7 +604,7 @@ internal static class Reader
 
         if (isUnreadable)
         {
-            session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, records.WordStart), name, first, (int)Math.Min(e.Blocks, int.MaxValue)) { IsUnreadable = true, FollowsGap = followsGap });
+            session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, records.WordStart), name, first, (int)Math.Min(e.Blocks, int.MaxValue)) { Node = index >= 0 ? null : s.Stream, IsUnreadable = true, FollowsGap = followsGap });
             return true;
         }
 
@@ -609,6 +612,7 @@ internal static class Reader
         MappedBytes bytes = MappedBytes.Read(s.Reader, ranges);
         session.Decode(new CodedFrame(bytes, name, first, (int)Math.Min(e.Blocks, int.MaxValue))
         {
+            Node = index >= 0 ? null : s.Stream,
             IsDamaged = (e.Status & EntryStatus.Cut) != 0,
             FollowsGap = followsGap,
             Following = Following(s, records, e),
@@ -801,7 +805,7 @@ internal static class Reader
         {
             long unlisted = s.Records.UnlistedFrames;
             s.Findings.Add(Severity.Info, "monkeys-audio.frames-not-listed", () => Nodes.Unlisted(s.Records), _ =>
-                $"The report lists the first {State.MaxListedFrames} frames one by one; the {Counts.Of(unlisted, "frame", "frames")} after them are read and checked and shown as one stretch.");
+                $"The report lists the first {s.MaxListedFrames} frames one by one; the {Counts.Of(unlisted, "frame", "frames")} after them are read and checked and shown as one stretch.");
         }
 
         Summary.Finish(s);
