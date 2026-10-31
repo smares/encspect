@@ -164,10 +164,11 @@ public static class SourceReaderProbe
 
             if (hr < 0 || (flags & ErrorFlag) != 0)
             {
-                if (++errors >= 5)
-                {
-                    break;
-                }
+                // After a failed read the reader is not read again: in the first run a ReadSample issued after
+                // an E_FAIL on a damaged Voice file never returned.
+                errors++;
+                record["stoppedBy"] = "the first failed read, " + Format.Hr(hr);
+                break;
             }
 
             if ((flags & EndOfStreamFlag) != 0)
