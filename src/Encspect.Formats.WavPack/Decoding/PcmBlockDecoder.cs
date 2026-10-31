@@ -113,7 +113,8 @@ internal sealed class PcmBlockDecoder
         var extra = new LsbBitCursor(hasExtra ? block.Slice(contents.ExtraBitstream.Start, contents.ExtraBitstream.Length) : []);
         Fixup(buffer, header, contents, hasExtra, ref extra, ref extraCrc);
         bool isExtraValid = !hasExtra || (extraCrc == contents.ExtraCrc && !extra.IsOverrun);
-        // A muted block never verifies: libwavpack's check_crc_error counts its CRC as wrong whatever the partial CRC is.
+        // libwavpack compares the CRC the muted block was left with, which in its stereo path runs to the end of the chunk where the mute hit, so it
+        // reports an error only when that is before the block's last chunk. The analyzer deliberately counts every muted block as failed.
         return new BlockOutcome(!isComplete, isComplete && crc == header.Crc, hasExtra, isExtraValid);
     }
 

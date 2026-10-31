@@ -205,21 +205,21 @@ public class WavPackDecoderFixtureTests
         return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
     }
 
-    // One set of 4,096 mono blocks of 4,096 samples (the ceiling of a set): the planes were copied again for every block, so the decoding took
-    // minutes where it takes seconds.
+    // One set of 1,024 mono blocks of 4,096 samples: the planes were copied again for every block (about 2 billion ints), where growing them
+    // geometrically copies a few times the set's size. Counted, so the result does not depend on the machine's speed.
     [Fact]
-    public void ASetOfManyBlocksIsDecodedInTimeLinearInItsSize()
+    public void TheGrowthOfASetsPlanesIsLinearInItsSize()
     {
-        byte[] file = DecoderWorkTests.WavPackCases.WideSet(4096, 4096);
+        byte[] file = DecoderWorkTests.WavPackCases.WideSet(1024, 4096);
         var sink = new HashingSink();
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } } };
-        var timer = System.Diagnostics.Stopwatch.StartNew();
+        Encspect.Formats.WavPack.Decoding.StreamDecoder.PlaneCopies = 0;
         Report report = Analyzer.CreateDefault().Analyze("wide.wv", new MemoryStream(file), options);
-        timer.Stop();
+        long copies = Encspect.Formats.WavPack.Decoding.StreamDecoder.PlaneCopies;
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.limit");
         Assert.Equal(4096, sink.Samples);
-        Assert.True(timer.Elapsed < TimeSpan.FromSeconds(40), $"The set took {timer.Elapsed.TotalSeconds:F1} s.");
+        Assert.InRange(copies, 1, 2L * 1024 * 4096);
     }
 
     [Fact]

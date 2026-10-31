@@ -345,13 +345,36 @@ public sealed class WavPackCodecParser : ICodecParser
             var subBlocks = new Node("Sub-blocks", packet.OffsetOf(block.DataStart), block.DataLength, null) { Description = Explain.SubBlocksOfBlock, Topic = Topics.SubBlocks };
             int position = BlockHeader.Length;
             int listed = 0;
-            while (BlockContents.TryRead(rebuilt, position, out SubBlockSpan sub) && listed < MaxListedSubBlocks)
+            // The sub-blocks past the cap are not listed, except the last MD5 and the last extra bitstream, which the decoder's findings point at.
+            Node? lastMd5 = null;
+            Node? lastExtra = null;
+            while (BlockContents.TryRead(rebuilt, position, out SubBlockSpan sub))
             {
-                long at = packet.OffsetOf(block.DataStart + position - BlockHeader.Length);
                 int length = sub.Next - position;
-                subBlocks.Add(Nodes.SubBlockSummary(at, length, sub.Function, sub.DataLength));
+                if (listed < MaxListedSubBlocks)
+                {
+                    subBlocks.Add(Nodes.SubBlockSummary(packet.OffsetOf(block.DataStart + position - BlockHeader.Length), length, sub.Function, sub.DataLength));
+                    listed++;
+                }
+                else if (sub.Function is SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum or SubBlockIds.WvxBitstream)
+                {
+                    Node kept = Nodes.SubBlockSummary(packet.OffsetOf(block.DataStart + position - BlockHeader.Length), length, sub.Function, sub.DataLength);
+                    if (sub.Function == SubBlockIds.WvxBitstream)
+                    {
+                        lastExtra = kept;
+                    }
+                    else if (sub.DataLength == 16)
+                    {
+                        lastMd5 = kept;
+                    }
+                }
+
                 position = sub.Next;
-                listed++;
+            }
+
+            foreach (Node kept in new[] { lastMd5, lastExtra }.OfType<Node>().OrderBy(n => n.Offset))
+            {
+                subBlocks.Add(kept);
             }
 
             node.Add(subBlocks);

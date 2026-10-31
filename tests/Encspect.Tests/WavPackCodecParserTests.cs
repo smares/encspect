@@ -305,9 +305,11 @@ public class WavPackCodecParserTests
     }
 
     [Theory]
-    [InlineData("built-md5-digest-changed.wv", "wavpack.md5-mismatch")]
-    [InlineData("built-extra-crc-changed.wv", "wavpack.audio-crc-mismatch")]
-    public void TheFindingsOfTheDecoderPointAtANodeOfThePacketsTree(string name, string code)
+    [InlineData("built-md5-digest-changed.wv", "wavpack.md5-mismatch", 0)]
+    [InlineData("built-extra-crc-changed.wv", "wavpack.audio-crc-mismatch", 0)]
+    [InlineData("built-md5-digest-changed.wv", "wavpack.md5-mismatch", 70)]
+    [InlineData("built-extra-crc-changed.wv", "wavpack.audio-crc-mismatch", 70)]
+    public void TheFindingsOfTheDecoderPointAtANodeOfThePacketsTree(string name, string code, int unlistedBefore)
     {
         List<byte[]> blocks = WavPackBuilder.Blocks(name);
 
@@ -319,6 +321,18 @@ public class WavPackCodecParserTests
             List<byte[]> parts = WavPackBuilder.Parts(audio);
             parts.Insert(parts.Count - 1, md5);
             blocks[^2] = WavPackBuilder.Join(audio, parts);
+        }
+
+        // Optional sub-blocks libwavpack skips, ahead of the ones the findings point at, past what the parser lists.
+        for (int i = 0; i < blocks.Count && unlistedBefore > 0; i++)
+        {
+            List<byte[]> parts = WavPackBuilder.Parts(blocks[i]);
+            int at = parts.FindIndex(p => WavPackBuilder.Function(p) is 0x26 or 0x0C);
+            if (at >= 0)
+            {
+                parts.InsertRange(at, Enumerable.Repeat(WavPackBuilder.Sub(0x3E, new byte[2]), unlistedBefore));
+                blocks[i] = WavPackBuilder.Join(blocks[i], parts);
+            }
         }
 
         (Report report, _) = Decode(Container(Packets(blocks)));

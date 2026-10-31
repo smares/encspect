@@ -326,6 +326,10 @@ internal sealed class StreamDecoder : IFrameDecoder
         return _muted.AsSpan(0, count);
     }
 
+    // The ints the planes' growth copied on this thread, for the test that holds the growth to linear in the set's size.
+    [ThreadStatic]
+    internal static long PlaneCopies;
+
     // Puts the block's channels into the set's planes.
     private void Keep(ReadOnlySpan<int> decoded, int width, int blockChannels, int samples, in BlockHeader header)
     {
@@ -336,6 +340,7 @@ internal sealed class StreamDecoder : IFrameDecoder
             int whole = (int)Math.Min(MaxSetSamples, (long)_channels * samples);
             int[] grown = new int[Math.Max(needed, (int)Math.Min(whole, (long)_planes.Length * 2))];
             _planes.AsSpan(0, _setChannels * samples).CopyTo(grown);
+            PlaneCopies += _setChannels * (long)samples;
             _planes = grown;
         }
 

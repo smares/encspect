@@ -1441,7 +1441,8 @@ class Run:
                 crc_ok = crc == h["crc"]
             else:
                 decoded, muted_now, crc, extra_crc = unpack_pcm(block, h, c, sample_count)
-                # check_crc_error counts a block muted by the mute limit or by the end of its data as wrong whatever the CRC it was left with
+                # libwavpack compares the CRC the muted block was left with (in its stereo path up to the end of the chunk where the mute hit, so it errs only
+                # when that is before the block's last chunk); the analyzer deliberately counts every muted block as failed
                 crc_ok = not muted_now and crc == h["crc"]
                 has_extra = c.extra is not None and not muted_now
                 extra_ok = extra_crc == c.extra_crc if has_extra else True
