@@ -896,7 +896,11 @@ public sealed class Analyzer
             failures.Add(new Failure(parser.Name, "parsing the data", ex));
         }
 
-        router.EndOpenSessions(context);
+        // A canceled analysis leaves no report, so its sessions are not ended (as in ParserRouter).
+        if (!context.CancellationToken.IsCancellationRequested)
+        {
+            router.EndOpenSessions(context);
+        }
 
         // The front end's exception traveled through none of the parsers; it reaches the caller now, without a report.
         decoding?.ThrowIfSinkFailed();

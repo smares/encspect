@@ -1075,9 +1075,9 @@ public class DecodeRouteTests
     }
 
     // A frame that writes a block and then fails stays counted as not decoded, though its block reached the sink: End reports the
-    // decoded frames only, and the measurement is stopped, not complete.
+    // decoded frames only, and the measurement is incomplete, not complete, with both counts in its reason.
     [Fact]
-    public void AFrameThatWritesAndThenFailsLeavesTheMeasurementStopped()
+    public void AFrameThatWritesAndThenFailsLeavesTheMeasurementIncomplete()
     {
         IPcmSink? sink = null;
         var decoder = new ScriptedDecoder
@@ -1099,7 +1099,8 @@ public class DecodeRouteTests
         Assert.Equal(300, stream.Verification!.DecodedSamples);
         Assert.Equal([300L], recording.Ends);
         Assert.Equal(400, recording.Blocks.Sum(b => b.Length));
-        Assert.Equal(MeasurementStatus.Stopped, stream.Measurements!.Status);
+        Assert.Equal(MeasurementStatus.Incomplete, stream.Measurements!.Status);
+        Assert.Equal("1 frame was not decoded, and the decoder delivered 400 samples against the 300 it counted as decoded", stream.Measurements.Reason);
         Assert.Contains(report.Findings, f => f.Code == "decode.frame-invalid");
     }
 

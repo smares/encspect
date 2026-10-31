@@ -136,7 +136,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         return n;
     }
 
-    // The frame was not walked into buffers the session lent, so the same walk runs here, into buffers of this decoder.
     // Equal in name, offset and length to the parser's node of the frame.
     private static Node FrameNode(in CodedFrame frame)
     {
@@ -145,6 +144,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         return new Node(frame.NodeName, bytes.FileStart, bytes.FileEnd - bytes.FileStart) { Ranges = ranges.Count > 1 ? ranges : null };
     }
 
+    // The frame was not walked into buffers the session lent, so the same walk runs here, into buffers of this decoder.
     private void Walk(ReadOnlySpan<byte> data, in FrameHeader header, int stride, bool needsWide)
     {
         int channels = header.Channels;

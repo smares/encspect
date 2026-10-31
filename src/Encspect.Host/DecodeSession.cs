@@ -78,7 +78,7 @@ internal sealed class DecodeSession : IDecodeSession
         }
         catch (EndOfStreamException)
         {
-            NotPossible("The configuration ends in the middle of a structure.");
+            NotPossible("The configuration ends in the middle of a structure");
         }
         catch (OperationCanceledException) when (IsCanceledByTheDecoding())
         {
@@ -379,7 +379,12 @@ internal sealed class DecodeSession : IDecodeSession
         StreamMeasurements record;
         if (_sink?.Measurer is { } measurer)
         {
-            record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _framesNotDecoded > 0 || _status != DecodeStatus.Decoded, Add);
+            record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, _framesNotDecoded > 0, Add);
+
+            if (record.Status == MeasurementStatus.Incomplete)
+            {
+                record = record with { Reason = $"{Counts.Of(_framesNotDecoded, "frame was", "frames were")} not decoded, and the decoder delivered {_sink.Received.ToString("N0", CultureInfo.InvariantCulture)} samples against the {_decodedSamples.ToString("N0", CultureInfo.InvariantCulture)} it counted as decoded" };
+            }
 
             // The record stays in the report, so its share of the memory bound stays reserved until the analysis ends.
             long kept;
@@ -462,7 +467,7 @@ internal sealed class DecodeSession : IDecodeSession
     // Called by the router for a stream whose channels or sample width cannot be decoded.
     public void RefuseSetup()
     {
-        NotPossible($"it declares {Counts.Of(_setup.Channels, "channel", "channels")} of {Counts.Of(_setup.BitsPerSample, "bit", "bits")}.");
+        NotPossible($"it declares {Counts.Of(_setup.Channels, "channel", "channels")} of {Counts.Of(_setup.BitsPerSample, "bit", "bits")}");
     }
 
     private void NotPossible(string message)
