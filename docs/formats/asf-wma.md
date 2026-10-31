@@ -1,8 +1,8 @@
 # ASF and WMA
 
-The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs, all of them at header level: the frames of versions 1 and 2, Professional, Lossless and Voice are not read yet.
+The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs: Voice frame by frame, the others at header level (the frames of versions 1 and 2, Professional and Lossless are not read yet).
 
-Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmalosslessdec.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely; clean-room rewrites are to bring them back (see [the plan](../PLAN.md), phase 2).
+Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmalosslessdec.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely; clean-room rewrites are to bring them back (see [the plan](../PLAN.md), phase 2). Voice is back: it is written from [a description of the bitstream](../design/wma-voice-format.md), and ffmpeg and ffprobe serve only as black-box cross-checks.
 
 ## ASF: what is read
 
@@ -54,20 +54,19 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 - **Broadcast files:** a Data Object of size 0 runs to the end of the file, so what is at its end is the Data Object's, not a tag.
 - The packets are read twice: the first pass keeps a compact record per packet and payload (the first 65,536 packets are detailed, the rest counted), and builds nodes on demand; the second pass puts media objects together as they are needed.
 
-## WMA versions 1 and 2, Professional and Voice
+## WMA versions 1 and 2 and Professional
 
-Format tags 0x0160 and 0x0161 (the codec "wma"), 0x0162 ("wma-pro") and 0x000A ("wma-voice"). Header level until the clean-room rewrites, as Lossless is:
+Format tags 0x0160 and 0x0161 (the codec "wma") and 0x0162 ("wma-pro"). Header level until the clean-room rewrites, as Lossless is:
 
 - The codec-specific data (the type-specific data after the WAVEFORMATEX):
   - **Version 2** (0x0161): the three fields of the ASF specification's section 11.1.1 are shown as plain values: Samples Per Block, Encode Options (as a 16-bit value, since the specification gives its bits no meaning) and Super Block Align. Bytes after them are an Extra Data node.
   - **Version 1** (0x0160): the specification has no layout for it, so its bytes stay the container's bytes.
   - **Professional:** the 18 bytes are shown the way Lossless's are (below).
-  - **Voice:** the bytes stay the container's bytes; its channel mask is read from them (see "Channel layout").
 - The packets are counted, with their total, smallest and largest size, the block alignment, the nominal bitrate the container states and the average bitrate.
 - The length comes from the container (the play duration less the preroll), and the stream's samples are that length at the sample rate.
 - The stream's average bitrate is the bytes of the packets over that length. The nominal bitrate (the WAVEFORMATEX's nAvgBytesPerSec) is shown apart in the statistics, since it can differ much for a variable bitrate stream. Where the stream starts with a preroll, the packets cover the preroll as well and the figure is a little high. A stream with encrypted samples counts no packets and reports the nominal bitrate.
 - The channel mode is Mono for one channel and Stereo for two, and has no value for other counts.
-- One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2), `wma.pro-not-read` and `wma.voice-not-read`.
+- One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2) and `wma.pro-not-read`.
 - The encoder and writer are named from the file's metadata and layout only (see below); a stream's frames name no encoder.
 - A stream whose samples are encrypted is shown as "frames not read: encrypted", with no finding of its own.
 
@@ -79,9 +78,49 @@ Format tag 0x0163, routed as the codec "wma-lossless".
 - The 18 bytes of codec data (the sample size of 16 or 24 bits, the channel mask, the decode flags) are shown, the packets are counted, and the length is the container's. The frames are not read yet; a finding says so.
 - The length comes from the container (the play duration less the preroll) and the average bitrate is the packets' bytes over it, as for the other codecs above.
 
+## WMA Voice
+
+Format tag 0x000A, routed as the codec "wma-voice". The stream is read down to the sizes of everything that decides where a frame ends and to the fields that name a frame; the audio is not rebuilt. Microsoft has published no specification, so the rules come from [a description of the bitstream](../design/wma-voice-format.md), which was checked against the committed fixtures, Microsoft-encoded files and ffmpeg run as a black box. The analysis follows FFmpeg's decoder where that decides how many samples a file holds, so its sample counts equal ffmpeg's.
+
+**Codec data (46 bytes).**
+
+- Bytes 0 to 17 are laid out as Professional's, for the music superframes inside Voice that FFmpeg does not decode; shown as one node, since the decoder does not read them.
+- The flags (bytes 18 to 21, little-endian): postfilter (bit 0), denoise strength (bits 2 to 5; 12 and more are rejected), tilt correction (bit 6), DC level (bits 7 to 10), 16 line spectral pairs (LSPs) instead of 10 (bit 12), the quantizer mode (bit 13) and the default mode (bit 14). Only bit 12 changes where anything ends.
+- The frame type table (from byte 22): 17 groups of 3 bits, one for each frame type, which give the type's code a length (2 bits for group 0 up to 14 for groups 6 and 7). A type that no code reaches shows "no code".
+- Anything FFmpeg rejects is a warning, and the stream is described by the container's figures only, with the packets counted (`wma.voice-not-read`): a size other than 46 (`wma.codec-data-size`), a block alignment outside 1 to 4,194,304 (`wma.voice-block-alignment`), a denoise strength of 12 or more (`wma.voice-denoise-strength`), five or more types in one group of the table (`wma.voice-frame-type-table`), a sample rate outside 7,990 to 22,097 Hz (`wma.voice-sample-rate`). FFmpeg checks nothing else: not the channels, not the bitrate, not the unread bits.
+- The sample rates that FFmpeg accepts follow from its checks, worked out for every rate: below 322 Hz a pitch is less than one sample, below 7,990 Hz the step within which the pitch of a block is coded as a difference from the one before is 0, and above 22,097 Hz the longest pitch plus 8 samples exceeds the 416 samples of signal history. The rate decides the width of the pitch fields.
+- Informational: a fourth type in a group (`wma.voice-frame-type-overlap`), types that no code reaches (`wma.voice-frame-type-unreachable`), and a container that states other than one channel (`wma.voice-channels`; the decoder outputs mono).
+
+**Packets.** A media object holds packets of the block alignment's size (the low bitrate files hold two to a media object). FFmpeg's decoder cuts a media object from its end: the bytes before the whole packets are taken for the rest of a packet that has no header (`wma.packet-long`; a media object shorter than a packet is all of it, `wma.packet-short`), which drops the start of the superframe that the packet before ended in. The analysis does the same. A packet with a header starts with a 4-bit sequence number, a flag for residual LSPs, the count of superframes that begin in it (6-bit values, each 63 saying that another follows) and the spillover: how many bits after the header finish the superframe the packet before ended in, in 3 + ceil(log2(block alignment)) bits.
+
+- The superframes follow one another bit by bit. The last of the counted ones goes on to the end of the packet and is kept until the next header arrives; the next packet's spillover bits finish it, and it is read with that header's flag for residual LSPs (`wma.voice-lsp-flag-changes` if it differs from the packet before). At the end of the stream the last one is read from its packet's bits alone.
+- A superframe states no size: it is read from the bits and ends where its last frame and its additional data end. One that ends before the bits the packets give it leaves bits that are ignored (`wma.voice-superframe-padding`); one that needs more is dropped (`wma.voice-superframe-overrun`); one that the stream ends in is `wma.voice-unfinished`.
+- Spillover bits with no start to finish are skipped (`wma.voice-spillover-orphan`). FFmpeg does not read the sequence number; a break is an info finding (`wma.voice-packet-sequence`). A header that runs past its packet is `wma.voice-packet-header`.
+- After a superframe in a packet fails, or a header runs past its packet, FFmpeg drops the rest of the media object, the packets after it included (they show as "not read"), and so does the analysis. The start of the superframe the dropped packet would have ended in is not kept, so the spillover of the next packet has no start to finish: an info finding where the cause is a superframe of music (`wma.voice-spillover-after-music`), a warning otherwise. After a superframe finished from the packet before fails, FFmpeg goes on with the packet's own superframes, resuming a little later than the spillover ends; the analysis does the same, and the fixtures `voice-spillover` and `voice-invalid-superframes` decode to the same number of samples in both.
+- FFmpeg keeps the start of a superframe in a buffer of 256 bytes. It copies the bits it is asked for all or not at all: none if the start is longer than the buffer, none of the spillover if it does not fit after the start or runs past the packet. The decoder then reads the old bytes of the buffer, which the analysis does too (`wma.voice-cache-overflow`); the fields read from them have a value and no bytes. Two real files have it, in their last superframe: the 8 kbit/s speech file and the archive's `streaming_CBR-19K-timecomp.wma`, where FFmpeg and the analysis both decode a superframe of 480 samples.
+- The bits to skip at the start of the next packet that a superframe leaves when it ends in the byte after its packet are kept until a header is accepted (`voice-object-skip-kept`).
+
+**Superframes.** A speech bit (clear: music, Windows Media Audio Professional data inside the superframe, which FFmpeg does not decode, `wma.voice-music`), a flag and 12 bits for the sample count (at most 480, else `wma.voice-sample-count`), the LSPs of all three frames once (48 bits for 10 LSPs, 60 for 16) when the packet's flag says residual, three frames, and a flag with an optional 4-bit count and that many plus one groups of 10 bits of additional data, which FFmpeg skips.
+
+**Frames.** Per frame: its own LSPs (24 or 34 bits) unless the superframe sends them once, the frame type (a code of 2 to 14 bits whose slot the table maps to one of 17 types, `wma.voice-frame-type` where it maps to none), then fields that depend on the type:
+
+- The type sets the blocks (1, 2, 4 or 8), the adaptive codebook (none, a pitch for the frame, a pitch for each block) and the fixed codebook (silence, hardcoded, pitch-adaptive window pulses, pulse sets with 0, 2 or 5 of the 5 vectors holding a pair).
+- A pitch per frame is a field of ceil(log2(range)) bits, the range following from the sample rate. A pitch per block is an absolute value for the first block and a difference for the others. The pitch carries from frame to frame, and the analysis keeps it as FFmpeg does, also across a failed superframe.
+- Pitch-adaptive window frames read 6 or 8 bits for the position of the first pulse, which with the pitch decides how the frame's bits divide between its two blocks. That is the one place where the sizes inside a frame depend on earlier frames; the frame's own size does not.
+- Every block's pulse positions, signs and gains are skipped, not reported; silence frames read an 8-bit gain index. No LSP value, gain or pulse position is reported, and no audio is built.
+
+**Reported.**
+
+- Nodes: the packets (header fields, the end of the superframe before, the superframes that lie in the packet, the start of the one that goes on, padding and unread bits) and the superframes (header, LSPs, frames with type, pitch and block sizes, additional data). A superframe across two packets lies in the bytes of both.
+- Statistics: packets, superframes, frames, samples (the superframes' sample counts, 480 unless they state fewer, which is what FFmpeg decodes), duration, average bitrate (the packets' bytes over that time, as for the other codecs), average superframe bitrate (the superframes' bits over it), nominal bitrate, smallest and largest superframe and the minimum and maximum superframe bitrate, superframes spanning packets, the flags that matter, bits ignored or left at the end, and the frames by type, by fixed and adaptive codebook and by number of blocks. The types are named by their codebooks, written out ("pulse sets, 4 blocks, pitch per frame, 5 pulse pairs"); the file's own table does not say what sound a type stands for, so none is called voiced or unvoiced.
+- Series: the bitrate of each superframe and of each second.
+- Memory: a fixed record is kept for each packet and superframe, and the nodes are built when read; at most 524,288 superframes and 262,144 packets are described (`wma.records-limit`).
+
+**Not covered.** Music superframes (Professional data inside Voice) are not read, and the rest of the media object with them; the values of the LSPs, gains and pulses are not decoded; audio is not rebuilt. After a superframe that read past its bits, the pitch state may differ from FFmpeg's, which takes the bits past the end from its buffer where the analysis reads zeros; only the split of a later pitch-adaptive window frame into its two blocks can show it.
+
 ## Channel layout
 
-- The speakers come from the channel mask of the WAVEFORMATEXTENSIBLE or, for Professional, Lossless and Voice with 18 bytes or more of codec data, from its bytes 2 to 5 (where they keep it; versions 1 and 2 have other fields there, section 11.1.1 of the ASF specification), in the order of the mask's bits, so a mask of 0x3F is 5.1 (front left and right, center, low-frequency, back left and right). The mask counts only where it names as many speakers as the stream has channels.
+- The speakers come from the channel mask of the WAVEFORMATEXTENSIBLE or, for Professional and Lossless (and for a Voice stream that is not read) with 18 bytes or more of codec data, from its bytes 2 to 5 (where they keep it; versions 1 and 2 have other fields there, section 11.1.1 of the ASF specification), in the order of the mask's bits, so a mask of 0x3F is 5.1 (front left and right, center, low-frequency, back left and right). The mask counts only where it names as many speakers as the stream has channels. A Voice stream that is read is mono or stereo by its channel count, whatever the mask says.
 - Without a usable mask, one channel is mono and two are stereo (left and right); other counts have no layout.
 
 ## Encoder detection
@@ -90,9 +129,9 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ### Encoder
 
-- The frames of versions 1 and 2, Professional and Voice are not read, so no trait of the stream names an encoder. Before 2026-10-29 the analyzer named ffmpeg's wmav1 and wmav2 encoders from the 'N' padding of their superframes (high) and Microsoft's from the codec data of version 2 (medium); both went with the frame-level readers and may return with the rewrites.
+- The frames of versions 1 and 2 and Professional are not read, and those of Voice name no encoder, so no trait of the stream names one. Before 2026-10-29 the analyzer named ffmpeg's wmav1 and wmav2 encoders from the 'N' padding of their superframes (high) and Microsoft's from the codec data of version 2 (medium); both went with the frame-level readers and may return with the rewrites.
 - A claim of the encoder role names the encoder (low) unless it names FFmpeg: a `Lavc…` ID in an attribute counts only where the stream itself shows ffmpeg's, which no stream does now, so such a claim is not listed.
-- Professional, Lossless and Voice have no trait of their own.
+- Professional, Lossless and Voice have no trait of their own: their codec data and frames name no encoder, so only the writer is named.
 
 ### Writer
 
@@ -111,10 +150,19 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 ## Observed in Microsoft's files
 
 - The Simple Index Object of a file whose index is empty states an interval of 0, which is no finding.
+- Voice, from the six Windows Media Format SDK files (tones at 8 kHz, 5 kbit/s and 16 kHz, 16 kbit/s; a speech-like signal at 4, 5 and 8 kbit/s and 8 kHz and 16 kbit/s and 16 kHz) and the 11 files of the FFmpeg sample archive (`check_wmavoice_samples.py`):
+  - Every packet of every file sets the flag for residual LSPs, and every sequence number follows the one before.
+  - The Windows files state no sample count. The archive's files state one in the last superframe only (the samples that remain), except the broken one.
+  - The files have 10 LSPs at 8 kHz and 16 at 16 kHz. Superframe counts are 0 to 24 per packet, and a count of 0 occurs in the last packet of several files, which then holds only the end of the superframe before.
+  - Two packets to a media object: the 4 kbit/s Windows file and the three 7K archive files (packets of 150 bytes).
+  - Superframes finished by the spillover that leave bits unused: the 16 kbit/s speech Windows file (2,289 bits in all) and the 19K archive files (161 and 370 bits).
+  - The last tail of the 8 kbit/s speech Windows file (2,266 bits) and of `streaming_CBR-19K-timecomp.wma` (2,396 bits) is longer than FFmpeg's buffer.
+  - The archive's `wmav_8.wma` has 24 superframes of music, and the packets after them state spillover with no start to finish (6,090 bits in all); its codec data bytes 0 to 17 are text ("indows Media C...").
+  - The frame type tables: five occur, and every one gives groups 0 to 4 three types each and group 5 two, so no real file uses a code of 14 bits.
 
 ## Not yet covered
 
-- The frames of WMA versions 1 and 2, Professional and Voice, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2), and those of WMA Lossless (phase 3, with the checksum-verifying decoders).
+- The frames of WMA versions 1 and 2 and Professional, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2), and those of WMA Lossless (phase 3, with the checksum-verifying decoders).
 - The audio of any codec (no decoder is built).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 - The contents of script commands and markers beyond their fields (planned: later, a separate item).
