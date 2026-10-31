@@ -19,7 +19,8 @@ internal sealed record SoundChunk(Node Node, long Start, long Length, uint Offse
 // mantissa whose leading bit is explicit (Apple Numerics Manual; the AIFF-C specification calls it "extended").
 internal static class Extended
 {
-    // The value of the ten bytes, or null for one that is no finite number.
+    // The value of the ten bytes, or null for one that is no finite number (an exponent of 0x7FFF); a finite value past what a double holds is returned as infinity.
+    // .
     public static double? Decode(ReadOnlySpan<byte> bytes)
     {
         bool isNegative = (bytes[0] & 0x80) != 0;

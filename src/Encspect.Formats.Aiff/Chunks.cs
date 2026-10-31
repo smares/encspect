@@ -70,6 +70,7 @@ internal static class Chunks
         double? rate = Extended.Decode(ten);
         bool isRateValid = rate is >= 1 and <= int.MaxValue;
         NodeValue shown = rate is null ? NodeValue.Text("not a finite number")
+            : double.IsInfinity(rate.Value) ? NodeValue.Text("too large for a double (not a possible sample rate)")
             : !isRateValid ? NodeValue.Text($"{rate.Value.ToString("R", CultureInfo.InvariantCulture)} (not a possible sample rate)")
             : rate == Math.Floor(rate.Value) ? NodeValue.Integer((long)rate.Value, "Hz") : NodeValue.Decimal(rate.Value, 4, "Hz");
         Node rateNode = f.Node.Add("Sample Rate", rateAt, 10, shown, Explain.CommRate, Topics.ExtendedRate);
@@ -87,7 +88,13 @@ internal static class Chunks
                 long textAt = f.Position;
                 if (count > f.Remaining)
                 {
-                    throw new EndOfStreamException();
+                    // The name is cut by the end of the chunk: what is there is read and the stream is kept.
+                    long stated = count;
+                    long held = f.Remaining;
+                    long chunkStart = chunk.Offset;
+                    s.Findings.Add(Severity.Warning, "aiff.chunk-too-short", chunk, _ =>
+                        $"The Common Chunk at 0x{chunkStart:X} states a compression name of {Counts.Of(stated, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the chunk.");
+                    count = (int)held;
                 }
 
                 name = Fields.Clean(Encoding.Latin1.GetString(f.Reader.ReadBytes(count)));
