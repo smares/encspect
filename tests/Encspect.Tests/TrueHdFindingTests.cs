@@ -32,7 +32,6 @@ public class TrueHdFindingTests
             return data;
         },
         ["truehd.no-units"] = () => new byte[100],
-        // The finding of the codec parser: see CodecIdOfOtherTypeThanTheMajorSyncIsReported.
         // The end of stream marker of the last unit drops all it can: more samples than the unit holds.
         ["truehd.unit-short"] = () =>
         {
@@ -129,21 +128,28 @@ public class TrueHdFindingTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
     }
 
+    // The first major sync is usable but none of its units can be read; the decoder opens at the later 96 kHz sync, and every field of the stream info
+    // (rate, duration basis, bit depth) is that sync's.
+    [Fact]
+    public void AStreamWhoseFirstUnitsCannotBeReadReportsTheParametersOfTheSyncTheDecoderOpenedWith()
+    {
+        byte[] first = ZeroLengthSubstream(Fixture(Tiny), 0);
+        byte[] data = [.. first, .. Fixture("external-truehd-stereo-96k-24.thd")];
+
+        Report report = Analyzer.CreateDefault().Analyze("rate.thd", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(96000, stream.SampleRate);
+        Assert.Equal(stream.Samples / 96000.0, stream.Duration, 6);
+        Assert.Equal(24, stream.BitsPerSample);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
     // A substream that states check data but is shorter than the two bytes of it has one finding, not a second about its empty content.
     [Fact]
     public void ASubstreamTooShortForItsCheckDataHasOneFinding()
     {
-        byte[] data = Fixture(Tiny);
-        (int offset, _) = Units(data)[2];
-        data[offset + 5] = 0;
-        data[offset] &= 0x0F;
-        int x = 0;
-        foreach (byte b in data.AsSpan(offset, 6).ToArray())
-        {
-            x ^= b;
-        }
-
-        data[offset] |= (byte)((((x >> 4) ^ (x & 0xF)) ^ 0xF) << 4);
+        byte[] data = ZeroLengthSubstream(Fixture(Tiny), 2);
 
         Report report = Analyzer.CreateDefault().Analyze("zero.thd", new MemoryStream(data), new AnalysisOptions { ForcedFormat = "thd" });
 
@@ -211,6 +217,31 @@ public class TrueHdFindingTests
         Assert.Equal(Units(data)[32].Offset, failed.Node.Offset);
         Assert.Equal(Units(data)[32].Length, failed.Node.Length);
         Assert.Equal(whole.Findings.Count, limited.Findings.Count);
+    }
+
+    // The unit's directory states the first substream ends at 0, with the parity nibble worked out again.
+    private static byte[] ZeroLengthSubstream(byte[] data, int unit)
+    {
+        (int offset, _) = Units(data)[unit];
+        bool hasSync = data[offset + 4] == 0xF8;
+        int directory = offset + 4 + (hasSync ? 28 : 0);
+        data[directory + 1] = 0;
+        if (hasSync)
+        {
+            ushort crc = Checks.MajorSync(data.AsSpan(offset + 4, 28));
+            data[offset + 4 + 26] = (byte)(crc >> 8);
+            data[offset + 4 + 27] = (byte)crc;
+        }
+
+        data[offset] &= 0x0F;
+        int x = 0;
+        foreach (byte b in data.AsSpan(offset, 4).ToArray().Concat(data.AsSpan(directory, 2).ToArray()))
+        {
+            x ^= b;
+        }
+
+        data[offset] |= (byte)((((x >> 4) ^ (x & 0xF)) ^ 0xF) << 4);
+        return data;
     }
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", name));

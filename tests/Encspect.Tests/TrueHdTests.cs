@@ -320,7 +320,7 @@ public class TrueHdTests
     private static SniffResult Sniff(TrueHdParser parser, byte[] data) => parser.Sniff(new SniffContext(new ByteReader(new MemoryStream(data))));
 
     // A test-only container: "PKTS", then each packet as a 32-bit length and its bytes, with the codec ID in the first line.
-    private sealed class PacketContainer(string codecId, int gapBefore = -1) : IFormatParser
+    private sealed class PacketContainer(string codecId, int gapBefore = -1, bool asPayload = false) : IFormatParser
     {
         public string Name => "Packets";
 
@@ -351,6 +351,13 @@ public class TrueHdTests
 
             var node = new Node("Packets", 0, all.Length);
             context.Root.Add(node);
+            if (asPayload)
+            {
+                byte[] joined = [.. packets.SelectMany(p => p.Data.ToArray())];
+                context.ParseStream(codecId, node, new ByteReader(new MemoryStream(joined)));
+                return;
+            }
+
             context.ParsePackets(codecId, node, packets, null);
         }
     }
@@ -459,6 +466,18 @@ public class TrueHdTests
         Assert.Equal("MLP", Assert.Single(report.Streams).Codec);
         Assert.Contains(report.Root.Children.SelectMany(c => c.Children), n => n.Kind == NodeKind.Stream && n.Name == "MLP");
         Assert.NotNull(Assert.Single(report.Findings, f => f.Code == "truehd.codec-id-mismatch").Path);
+    }
+
+    [Fact]
+    public void AMajorSyncOfOtherKindThanTheCodecIdOfAPayloadIsReported()
+    {
+        var analyzer = new Analyzer([], [new PacketContainer("truehd", asPayload: true)], DefaultParsers.Codecs, DefaultParsers.Decoders);
+
+        Report report = analyzer.Analyze("payload.bin", new MemoryStream(Container(Units("external-mlp-stereo-48k-24.mlp"))));
+
+        Assert.Equal("MLP", Assert.Single(report.Streams).Codec);
+        Assert.Single(report.Findings, f => f.Code == "truehd.codec-id-mismatch");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
     }
 
     [Fact]
