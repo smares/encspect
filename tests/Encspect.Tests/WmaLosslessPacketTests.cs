@@ -253,6 +253,91 @@ public class WmaLosslessPacketTests
         return LosslessBuilder.Run([packet], 1, blockAlignment, flags: 0x0041).Streams[0].Samples;
     }
 
+    // Channel 0 has two cascaded filters and channel 1 one: the figure shows the range, not the floor of the average.
+    [Fact]
+    public void CascadedFiltersPerChannelShowTheRange()
+    {
+        var probe = new LosslessBits();
+        LosslessBuilder.SeekableFrame(probe, 2, filters: [2, 1]);
+        long bits = probe.Count + 1;
+        List<byte[]> objects = LosslessBuilder.Pack(200, 1, _ => bits, (w, _) => LosslessBuilder.SeekableFrame(w, 2, filters: [2, 1]));
+        CodecContext context = LosslessBuilder.Run(objects, 2, 200);
+        Assert.Equal("1 to 2", WmaStream.Statistic(WmaStream.StreamNode(context), "Cascaded Filters per Channel"));
+    }
+
+    // The codec data's first byte is the sample size; the second is shown apart and not read.
+    [Fact]
+    public void TheSampleSizeNodeIsTheLowByte()
+    {
+        WmaStream stream = WmaStream.LoadLossless();
+        stream.Data[1] = 0x01;
+        CodecContext context = stream.RunLossless();
+        Node size = Find(context.Parent, "Bits Per Sample");
+        Assert.Equal(16L, size.Value!.AsInteger());
+        Assert.Equal(1, size.Length);
+        Node high = Find(context.Parent, "Sample Size High Byte");
+        Assert.Equal(size.Offset + 1, high.Offset);
+        Assert.Equal(1, high.Length);
+    }
+
+    // An object that is incomplete because the fragments that would finish it never arrive is dropped, as the ASF demuxer drops it; only one
+    // that the file ends inside is handed over.
+    [Fact]
+    public void AnObjectWhoseFragmentsNeverArriveIsDropped()
+    {
+        (byte[] properties, _) = AsfBuilder.Take(WmaStream.Lossless, 0x0163);
+        List<byte[]> objects = AsfBuilder.Objects(WmaStream.Lossless, 0x0163);
+        int size = 23 + objects[0].Length;
+        var packets = new List<byte[]>();
+        for (int i = 0; i < objects.Count; i++)
+        {
+            uint stated = (uint)objects[i].Length + (i == objects.Count - 1 ? 500u : 0);
+            byte[] packet = AsfBuilder.Packet(size, 1, i & 0xFF, 0, stated, (uint)(i * 46));
+            objects[i].CopyTo(packet, 23);
+            packets.Add(packet);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("never.wma", new MemoryStream(AsfBuilder.Assemble(properties, size, packets)));
+        Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
+        Assert.Equal(86_016, Assert.Single(report.Streams).Samples);
+    }
+
+    private static Node Find(Node node, string name)
+    {
+        if (node.Name == name)
+        {
+            return node;
+        }
+
+        foreach (Node child in node.Children)
+        {
+            if (child.Name is "Frames" or "Packets")
+            {
+                continue;
+            }
+
+            Node? found = FindOrNull(child, name);
+            if (found is not null)
+            {
+                return found;
+            }
+        }
+
+        throw new InvalidOperationException(name);
+    }
+
+    private static Node? FindOrNull(Node node, string name)
+    {
+        try
+        {
+            return Find(node, name);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
     private static void PrefixFrame(LosslessBits w, int width, int delta, bool more)
     {
         var body = new LosslessBits();

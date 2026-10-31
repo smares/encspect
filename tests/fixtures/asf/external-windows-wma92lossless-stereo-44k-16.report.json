@@ -1332,7 +1332,13 @@
                               "value": 16,
                               "unit": "bits",
                               "offset": 4933,
-                              "length": 2
+                              "length": 1
+                            },
+                            {
+                              "name": "Sample Size High Byte",
+                              "value": 0,
+                              "offset": 4934,
+                              "length": 1
                             },
                             {
                               "name": "Channel Mask",
@@ -6253,7 +6259,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": true,
                               "offset": 5068,
                               "length": 1,
@@ -6261,7 +6267,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 5068,
                               "length": 1,
@@ -6319,7 +6325,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 18474,
                               "length": 1,
@@ -6327,7 +6333,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 18474,
                               "length": 1,
@@ -6394,7 +6400,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 31880,
                               "length": 1,
@@ -6402,7 +6408,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 31880,
                               "length": 1,
@@ -6469,7 +6475,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": true,
                               "offset": 45286,
                               "length": 1,
@@ -6477,7 +6483,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 45286,
                               "length": 1,
@@ -6544,7 +6550,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 58692,
                               "length": 1,
@@ -6552,7 +6558,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 58692,
                               "length": 1,
@@ -6619,7 +6625,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 72098,
                               "length": 1,
@@ -6627,7 +6633,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 72098,
                               "length": 1,
@@ -6694,7 +6700,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": true,
                               "offset": 85504,
                               "length": 1,
@@ -6702,7 +6708,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 85504,
                               "length": 1,
@@ -6769,7 +6775,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 98910,
                               "length": 1,
@@ -6777,7 +6783,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 98910,
                               "length": 1,
@@ -6844,7 +6850,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 112316,
                               "length": 1,
@@ -6852,7 +6858,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 112316,
                               "length": 1,
@@ -6919,7 +6925,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 125722,
                               "length": 1,
@@ -6927,7 +6933,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 125722,
                               "length": 1,
@@ -6994,7 +7000,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": true,
                               "offset": 139128,
                               "length": 1,
@@ -7002,7 +7008,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 139128,
                               "length": 1,
@@ -7065,7 +7071,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 152534,
                               "length": 1,
@@ -7073,7 +7079,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 152534,
                               "length": 1,
@@ -7138,7 +7144,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 165940,
                               "length": 1,
@@ -7146,7 +7152,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 165940,
                               "length": 1,
@@ -7213,7 +7219,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": true,
                               "offset": 179346,
                               "length": 1,
@@ -7221,7 +7227,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 179346,
                               "length": 1,
@@ -7288,7 +7294,7 @@
                               "bitLength": 4
                             },
                             {
-                              "name": "Seekable Frame in Packet",
+                              "name": "Has Seekable Frame in Packet",
                               "value": false,
                               "offset": 192752,
                               "length": 1,
@@ -7296,7 +7302,7 @@
                               "bitLength": 1
                             },
                             {
-                              "name": "Spliced",
+                              "name": "Is Spliced",
                               "value": false,
                               "offset": 192752,
                               "length": 1,
@@ -7408,7 +7414,7 @@
                               "length": 4686,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": true,
                                   "offset": 5072,
                                   "length": 1,
@@ -7416,7 +7422,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Arithmetic Coding",
+                                  "name": "Uses Arithmetic Coding",
                                   "value": false,
                                   "offset": 5073,
                                   "length": 1,
@@ -7424,7 +7430,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Recursive Filter",
+                                  "name": "Has Recursive Filter",
                                   "value": true,
                                   "offset": 5073,
                                   "length": 1,
@@ -7432,7 +7438,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Mid/Side Stereo",
+                                  "name": "Uses Mid/Side Stereo",
                                   "value": true,
                                   "offset": 5073,
                                   "length": 1,
@@ -7440,7 +7446,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Multichannel Filter",
+                                  "name": "Has Multichannel Filter",
                                   "value": false,
                                   "offset": 5073,
                                   "length": 1,
@@ -7480,7 +7486,7 @@
                                   "bitLength": 8
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 5080,
                                   "length": 1,
@@ -7531,7 +7537,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 9757,
                               "length": 1,
@@ -7592,7 +7598,7 @@
                               "length": 4603,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 9759,
                                   "length": 1,
@@ -7600,7 +7606,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 9759,
                                   "length": 1,
@@ -7651,7 +7657,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 14361,
                               "length": 1,
@@ -7732,7 +7738,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 14363,
                                   "length": 1,
@@ -7740,7 +7746,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 14363,
                                   "length": 1,
@@ -7799,7 +7805,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 18980,
                               "length": 1,
@@ -7860,7 +7866,7 @@
                               "length": 4567,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 18982,
                                   "length": 1,
@@ -7868,7 +7874,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 18982,
                                   "length": 1,
@@ -7919,7 +7925,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 23548,
                               "length": 1,
@@ -7980,7 +7986,7 @@
                               "length": 4541,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 23550,
                                   "length": 1,
@@ -7988,7 +7994,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 23550,
                                   "length": 1,
@@ -8039,7 +8045,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 28090,
                               "length": 1,
@@ -8120,7 +8126,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 28092,
                                   "length": 1,
@@ -8128,7 +8134,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 28092,
                                   "length": 1,
@@ -8187,7 +8193,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 32655,
                               "length": 1,
@@ -8248,7 +8254,7 @@
                               "length": 4521,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 32657,
                                   "length": 1,
@@ -8256,7 +8262,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 32657,
                                   "length": 1,
@@ -8307,7 +8313,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 37177,
                               "length": 1,
@@ -8368,7 +8374,7 @@
                               "length": 4518,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 37179,
                                   "length": 1,
@@ -8376,7 +8382,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 37179,
                                   "length": 1,
@@ -8425,7 +8431,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 41696,
                               "length": 1,
@@ -8506,7 +8512,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 41698,
                                   "length": 1,
@@ -8514,7 +8520,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 41698,
                                   "length": 1,
@@ -8573,7 +8579,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 46240,
                               "length": 1,
@@ -8634,7 +8640,7 @@
                               "length": 4684,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": true,
                                   "offset": 46242,
                                   "length": 1,
@@ -8642,7 +8648,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Arithmetic Coding",
+                                  "name": "Uses Arithmetic Coding",
                                   "value": false,
                                   "offset": 46242,
                                   "length": 1,
@@ -8650,7 +8656,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Recursive Filter",
+                                  "name": "Has Recursive Filter",
                                   "value": true,
                                   "offset": 46242,
                                   "length": 1,
@@ -8658,7 +8664,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Mid/Side Stereo",
+                                  "name": "Uses Mid/Side Stereo",
                                   "value": true,
                                   "offset": 46242,
                                   "length": 1,
@@ -8666,7 +8672,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Multichannel Filter",
+                                  "name": "Has Multichannel Filter",
                                   "value": false,
                                   "offset": 46243,
                                   "length": 1,
@@ -8706,7 +8712,7 @@
                                   "bitLength": 8
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 46249,
                                   "length": 1,
@@ -8757,7 +8763,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 50925,
                               "length": 1,
@@ -8818,7 +8824,7 @@
                               "length": 4600,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 50927,
                                   "length": 1,
@@ -8826,7 +8832,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 50927,
                                   "length": 1,
@@ -8877,7 +8883,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 55526,
                               "length": 1,
@@ -8958,7 +8964,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 55528,
                                   "length": 1,
@@ -8966,7 +8972,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 55528,
                                   "length": 1,
@@ -9025,7 +9031,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 60144,
                               "length": 1,
@@ -9086,7 +9092,7 @@
                               "length": 4558,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 60146,
                                   "length": 1,
@@ -9094,7 +9100,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 60147,
                                   "length": 1,
@@ -9145,7 +9151,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 64703,
                               "length": 1,
@@ -9206,7 +9212,7 @@
                               "length": 4545,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 64705,
                                   "length": 1,
@@ -9214,7 +9220,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 64705,
                                   "length": 1,
@@ -9265,7 +9271,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 69249,
                               "length": 1,
@@ -9346,7 +9352,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 69251,
                                   "length": 1,
@@ -9354,7 +9360,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 69251,
                                   "length": 1,
@@ -9413,7 +9419,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 73817,
                               "length": 1,
@@ -9474,7 +9480,7 @@
                               "length": 4519,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 73819,
                                   "length": 1,
@@ -9482,7 +9488,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 73819,
                                   "length": 1,
@@ -9533,7 +9539,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 78337,
                               "length": 1,
@@ -9594,7 +9600,7 @@
                               "length": 4501,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 78339,
                                   "length": 1,
@@ -9602,7 +9608,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 78339,
                                   "length": 1,
@@ -9653,7 +9659,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 82839,
                               "length": 1,
@@ -9734,7 +9740,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 82841,
                                   "length": 1,
@@ -9742,7 +9748,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 82841,
                                   "length": 1,
@@ -9801,7 +9807,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 87381,
                               "length": 1,
@@ -9862,7 +9868,7 @@
                               "length": 4676,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": true,
                                   "offset": 87383,
                                   "length": 1,
@@ -9870,7 +9876,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Arithmetic Coding",
+                                  "name": "Uses Arithmetic Coding",
                                   "value": false,
                                   "offset": 87383,
                                   "length": 1,
@@ -9878,7 +9884,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Recursive Filter",
+                                  "name": "Has Recursive Filter",
                                   "value": true,
                                   "offset": 87384,
                                   "length": 1,
@@ -9886,7 +9892,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Mid/Side Stereo",
+                                  "name": "Uses Mid/Side Stereo",
                                   "value": true,
                                   "offset": 87384,
                                   "length": 1,
@@ -9894,7 +9900,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Multichannel Filter",
+                                  "name": "Has Multichannel Filter",
                                   "value": false,
                                   "offset": 87384,
                                   "length": 1,
@@ -9934,7 +9940,7 @@
                                   "bitLength": 8
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 87391,
                                   "length": 1,
@@ -9985,7 +9991,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 92058,
                               "length": 1,
@@ -10046,7 +10052,7 @@
                               "length": 4609,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 92061,
                                   "length": 1,
@@ -10054,7 +10060,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 92061,
                                   "length": 1,
@@ -10105,7 +10111,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 96669,
                               "length": 1,
@@ -10186,7 +10192,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 96671,
                                   "length": 1,
@@ -10194,7 +10200,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 96671,
                                   "length": 1,
@@ -10253,7 +10259,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 101290,
                               "length": 1,
@@ -10314,7 +10320,7 @@
                               "length": 4561,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 101292,
                                   "length": 1,
@@ -10322,7 +10328,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 101292,
                                   "length": 1,
@@ -10373,7 +10379,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 105852,
                               "length": 1,
@@ -10434,7 +10440,7 @@
                               "length": 4547,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 105854,
                                   "length": 1,
@@ -10442,7 +10448,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 105854,
                                   "length": 1,
@@ -10493,7 +10499,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 110400,
                               "length": 1,
@@ -10574,7 +10580,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 110402,
                                   "length": 1,
@@ -10582,7 +10588,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 110402,
                                   "length": 1,
@@ -10641,7 +10647,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 114960,
                               "length": 1,
@@ -10702,7 +10708,7 @@
                               "length": 4532,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 114962,
                                   "length": 1,
@@ -10710,7 +10716,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 114962,
                                   "length": 1,
@@ -10761,7 +10767,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 119493,
                               "length": 1,
@@ -10822,7 +10828,7 @@
                               "length": 4521,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 119496,
                                   "length": 1,
@@ -10830,7 +10836,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 119496,
                                   "length": 1,
@@ -10881,7 +10887,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 124017,
                               "length": 1,
@@ -10960,7 +10966,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 124019,
                                   "length": 1,
@@ -10968,7 +10974,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 124019,
                                   "length": 1,
@@ -11027,7 +11033,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 128547,
                               "length": 1,
@@ -11088,7 +11094,7 @@
                               "length": 4490,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 128549,
                                   "length": 1,
@@ -11096,7 +11102,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 128549,
                                   "length": 1,
@@ -11147,7 +11153,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 133038,
                               "length": 1,
@@ -11208,7 +11214,7 @@
                               "length": 4503,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 133040,
                                   "length": 1,
@@ -11216,7 +11222,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 133040,
                                   "length": 1,
@@ -11267,7 +11273,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 137542,
                               "length": 1,
@@ -11348,7 +11354,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 137544,
                                   "length": 1,
@@ -11356,7 +11362,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 137544,
                                   "length": 1,
@@ -11415,7 +11421,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 142054,
                               "length": 1,
@@ -11476,7 +11482,7 @@
                               "length": 4672,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": true,
                                   "offset": 142056,
                                   "length": 1,
@@ -11484,7 +11490,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Arithmetic Coding",
+                                  "name": "Uses Arithmetic Coding",
                                   "value": false,
                                   "offset": 142056,
                                   "length": 1,
@@ -11492,7 +11498,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Recursive Filter",
+                                  "name": "Has Recursive Filter",
                                   "value": true,
                                   "offset": 142056,
                                   "length": 1,
@@ -11500,7 +11506,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Mid/Side Stereo",
+                                  "name": "Uses Mid/Side Stereo",
                                   "value": true,
                                   "offset": 142056,
                                   "length": 1,
@@ -11508,7 +11514,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Multichannel Filter",
+                                  "name": "Has Multichannel Filter",
                                   "value": false,
                                   "offset": 142057,
                                   "length": 1,
@@ -11548,7 +11554,7 @@
                                   "bitLength": 8
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 142063,
                                   "length": 1,
@@ -11599,7 +11605,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 146727,
                               "length": 1,
@@ -11660,7 +11666,7 @@
                               "length": 4598,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 146730,
                                   "length": 1,
@@ -11668,7 +11674,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 146730,
                                   "length": 1,
@@ -11719,7 +11725,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 151327,
                               "length": 1,
@@ -11800,7 +11806,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 151330,
                                   "length": 1,
@@ -11808,7 +11814,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 151330,
                                   "length": 1,
@@ -11867,7 +11873,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 155941,
                               "length": 1,
@@ -11928,7 +11934,7 @@
                               "length": 4561,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 155943,
                                   "length": 1,
@@ -11936,7 +11942,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 155943,
                                   "length": 1,
@@ -11987,7 +11993,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 160503,
                               "length": 1,
@@ -12048,7 +12054,7 @@
                               "length": 4537,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 160505,
                                   "length": 1,
@@ -12056,7 +12062,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 160505,
                                   "length": 1,
@@ -12107,7 +12113,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 165041,
                               "length": 1,
@@ -12188,7 +12194,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 165044,
                                   "length": 1,
@@ -12196,7 +12202,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 165044,
                                   "length": 1,
@@ -12255,7 +12261,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 169621,
                               "length": 1,
@@ -12316,7 +12322,7 @@
                               "length": 4517,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 169623,
                                   "length": 1,
@@ -12324,7 +12330,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 169623,
                                   "length": 1,
@@ -12375,7 +12381,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 174140,
                               "length": 1,
@@ -12434,7 +12440,7 @@
                               "length": 4515,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 174142,
                                   "length": 1,
@@ -12442,7 +12448,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 174142,
                                   "length": 1,
@@ -12493,7 +12499,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 178656,
                               "length": 1,
@@ -12574,7 +12580,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 178658,
                                   "length": 1,
@@ -12582,7 +12588,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 178658,
                                   "length": 1,
@@ -12641,7 +12647,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 183201,
                               "length": 1,
@@ -12702,7 +12708,7 @@
                               "length": 4666,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": true,
                                   "offset": 183203,
                                   "length": 1,
@@ -12710,7 +12716,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Arithmetic Coding",
+                                  "name": "Uses Arithmetic Coding",
                                   "value": false,
                                   "offset": 183203,
                                   "length": 1,
@@ -12718,7 +12724,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Recursive Filter",
+                                  "name": "Has Recursive Filter",
                                   "value": true,
                                   "offset": 183203,
                                   "length": 1,
@@ -12726,7 +12732,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Mid/Side Stereo",
+                                  "name": "Uses Mid/Side Stereo",
                                   "value": true,
                                   "offset": 183203,
                                   "length": 1,
@@ -12734,7 +12740,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Multichannel Filter",
+                                  "name": "Has Multichannel Filter",
                                   "value": false,
                                   "offset": 183204,
                                   "length": 1,
@@ -12774,7 +12780,7 @@
                                   "bitLength": 8
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 183210,
                                   "length": 1,
@@ -12825,7 +12831,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 187868,
                               "length": 1,
@@ -12886,7 +12892,7 @@
                               "length": 4616,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 187870,
                                   "length": 1,
@@ -12894,7 +12900,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 187870,
                                   "length": 1,
@@ -12945,7 +12951,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 192485,
                               "length": 1,
@@ -13026,7 +13032,7 @@
                               ],
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 192487,
                                   "length": 1,
@@ -13034,7 +13040,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 192487,
                                   "length": 1,
@@ -13093,7 +13099,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 197097,
                               "length": 1,
@@ -13154,7 +13160,7 @@
                               "length": 4552,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 197099,
                                   "length": 1,
@@ -13162,7 +13168,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 197099,
                                   "length": 1,
@@ -13213,7 +13219,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": true,
                               "offset": 201651,
                               "length": 1,
@@ -13272,7 +13278,7 @@
                               "length": 927,
                               "children": [
                                 {
-                                  "name": "Seekable Subframe",
+                                  "name": "Is Seekable Subframe",
                                   "value": false,
                                   "offset": 201654,
                                   "length": 1,
@@ -13280,7 +13286,7 @@
                                   "bitLength": 1
                                 },
                                 {
-                                  "name": "Raw PCM Subframe",
+                                  "name": "Is Raw PCM Subframe",
                                   "value": false,
                                   "offset": 201655,
                                   "length": 1,
@@ -13331,7 +13337,7 @@
                               ]
                             },
                             {
-                              "name": "More Frames",
+                              "name": "Has More Frames",
                               "value": false,
                               "offset": 202580,
                               "length": 1,

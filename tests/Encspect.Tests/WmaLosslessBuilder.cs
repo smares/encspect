@@ -80,7 +80,7 @@ internal static class LosslessBuilder
     }
 
     // A seekable subframe of one frame without a coded channel and without a trailer bit: one cascaded filter of the smallest order per channel.
-    public static void SeekableFrame(LosslessBits w, int channels, int endTrim = -1)
+    public static void SeekableFrame(LosslessBits w, int channels, int endTrim = -1, int[]? filters = null)
     {
         w.Put(1, 1);
         if (endTrim >= 0)
@@ -101,9 +101,17 @@ internal static class LosslessBuilder
         w.Put(1, 0);
         for (int c = 0; c < channels; c++)
         {
-            w.Put(3, 0);
-            w.Put(7, 0);
-            w.Put(4, 0);
+            int n = filters?[c] ?? 1;
+            w.Put(3, (ulong)(n - 1));
+            for (int i = 0; i < n; i++)
+            {
+                w.Put(7, 0);
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                w.Put(4, 0);
+            }
         }
 
         w.Put(3, 0);

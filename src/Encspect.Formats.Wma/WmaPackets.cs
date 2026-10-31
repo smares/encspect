@@ -28,6 +28,11 @@ internal sealed class WmaPacketReader
     private byte[] _savedBuffer = new byte[64];
     private readonly List<FramePart> _saved = [];
     private int _savedBits;
+
+    // The bit offset (0 to 7) of the last saved tail in its first byte: a decoder keeps it, also after the run is dropped, and starts reading
+    // the next bits it appends to an empty buffer there. _savedOff is the part of it the current run counts against the buffer.
+    private int _savedOff;
+    private int _lastOff;
     private int _previousSequence;
     private bool _hasSequence;
     private bool _isLoss = true;
@@ -78,7 +83,7 @@ internal sealed class WmaPacketReader
 
         return (LosslessFault)fault switch
         {
-            LosslessFault.TrimTooLarge => "a decoder rejects it without a loss and reads on from the bit where its trim ended, as if a frame started there",
+            LosslessFault.TrimTooLarge => "a decoder rejects it without a loss and reads on from the bit where its trim ended, as if a frame started there, except in the flush after the last packet, where the reading ends",
             LosslessFault.NeedsMoreBits => "a decoder does not detect it: it reads what lies past the bits it kept, outputs the frame whole and reads no more frames from them",
             _ => "a decoder drops the rest of its run and, where it is not the first frame of the run, the start of the packet that arrived with it",
         };
@@ -461,19 +466,31 @@ internal sealed class WmaPacketReader
     // joined by the first bits of the next packets, and the frames in the run are read when a packet arrives that does not only continue it.
     private void ReadRun(int packet, int end, int payloadStart, int count, bool isCovering, bool isDropped)
     {
-        // Bits that finish a frame when no run is kept for it (its start was lost, or no frame was started) are read as a frame all the same.
+        // Bits that finish a frame when no run is kept for it (its start was lost, or no frame was started) are read as a frame all the same,
+        // from the bit offset the last save left.
         bool isLostStart = !isDropped && count > 0 && _savedBits == 0;
+        int taken = 0;
+        bool isRefused = false;
         if (isDropped)
         {
             ClearSaved();
+            taken = count;
         }
         else if (count > 0)
         {
-            // A refusal here drops the run and nothing more: the loss it sets is cleared in the same header handling.
-            Append(packet, payloadStart, count);
+            // A refused append drops the run and clears the loss in the same header handling, but the count bits are not passed: the packet's
+            // payload is saved from its first bit as the next run, and the next packet's header call reads it.
+            if (Append(packet, payloadStart, count))
+            {
+                taken = count;
+            }
+            else
+            {
+                isRefused = true;
+            }
         }
 
-        if (isCovering)
+        if (isCovering && !isRefused)
         {
             ref PacketRecord own = ref Record(packet);
             own.TailStart = 0;
@@ -481,9 +498,9 @@ internal sealed class WmaPacketReader
             return;
         }
 
-        bool isRestDropped = !DecodeRun(false, count > 0 && !isDropped, isLostStart);
+        bool isRestDropped = !isCovering && !DecodeRun(false, taken > 0 && !isDropped, isLostStart);
         ClearSaved();
-        int start = payloadStart + count;
+        int start = payloadStart + taken;
         int tail = Math.Max(0, end - start);
         ref PacketRecord record = ref Record(packet);
         record.TailStart = start;
@@ -515,7 +532,7 @@ internal sealed class WmaPacketReader
 
         var parts = new List<FramePart>(_saved);
         var joined = new Bits(_savedBuffer, total);
-        int position = 0;
+        int position = isLostStart ? Math.Min(_lastOff, total) : 0;
         bool isFirst = true;
         bool isOk = true;
         bool isTrailerOne = false;
@@ -597,7 +614,7 @@ internal sealed class WmaPacketReader
     private bool Append(int packet, int startBit, int bits)
     {
         int total = _savedBits + bits;
-        if (((total + 8) / 8) > _bufferBytes)
+        if ((((_isLossless ? _savedOff : 0) + total + 8) / 8) > _bufferBytes)
         {
             ClearSaved();
             RefuseRun(packet);
@@ -639,17 +656,25 @@ internal sealed class WmaPacketReader
 
         _saved.Clear();
         _savedBits = 0;
+        _savedOff = 0;
     }
 
     private void Save(int packet, int startBit, int bits)
     {
         ClearSaved();
-        if ((((startBit & 7) + bits + 7) / 8) > _bufferBytes)
+        if (_isLossless)
+        {
+            _lastOff = startBit & 7;
+        }
+
+        if ((((startBit & 7) + bits + (_isLossless ? 8 : 7)) / 8) > _bufferBytes)
         {
             RefuseRun(packet);
             _isLoss = true;
             return;
         }
+
+        _savedOff = _isLossless ? startBit & 7 : 0;
 
         int bytes = ((bits + 7) / 8) + 16;
         if (_savedBuffer.Length < bytes)

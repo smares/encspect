@@ -9,7 +9,8 @@ internal static class LosslessExplain
     public const string NotAnalyzedStream = ProExplain.NotAnalyzedStream;
 
     public const string HasLpcFlags = "Set if each subframe that is not raw PCM carries a flag for an LPC filter. This changes where the update speed of the cascaded filters is applied.";
-    public const string SampleSize = "The sample size of the audio in bits, 16 or 24 (the low byte of the first two bytes of the codec-specific data).";
+    public const string SampleSizeHighByte = "The second byte of the sample size field, which a decoder does not read: the sample size is the low byte.";
+    public const string SampleSize = "The sample size of the audio in bits, 16 or 24 (the first byte of the codec-specific data; the second is not read).";
 
     public const string SeekableFrameInPacket = "Whether a frame that starts in this packet begins with a seekable subframe or a raw PCM subframe, as in every test file.";
     public const string Spliced = "A bit that a decoder asks for a sample file for when it is set; it reads 0 in every test file.";

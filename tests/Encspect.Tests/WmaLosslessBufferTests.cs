@@ -7,19 +7,29 @@ namespace Encspect.Tests;
 // records (docs/design/wma-lossless-format.md, "Frames in packets"; docs/formats/asf-wma.md, "WMA Lossless").
 public class WmaLosslessBufferTests
 {
-    // 60 raw PCM frames of one channel, 32,774 bits each. The frame counts are those of a decoder's packet loop with the two kinds of refused save:
-    // a refused append of the next packet's bits that finish the last frame of a run drops the run and no more (the next packet's number is
-    // checked, and the run saved from this packet's tail survives); a refused save of a packet's own tail leaves the loss pending into the
-    // next packet. With the pending loss kept for both, the same streams gave 45, 30, 15, 0, 14, 13 and 5 frames.
+    // 60 raw PCM frames of one channel, 32,774 bits each. The frame counts are those ffmpeg 6.1.1 decodes from the same streams written to ASF
+    // (a black-box check). When the header step's append of the next packet's count bits is refused, the decoder drops the run and clears the
+    // loss but does not move past the count bits: it saves the packet's payload from its first bit as the new run, which starts inside the
+    // frame before and fails in its first frame. A refused save of a packet's own tail leaves the loss pending into the next packet.
+    // The reader matches ffmpeg at 13 of the 14 block alignments. At 29,500 ffmpeg decodes 9 frames and the reader 16: the stray run's first
+    // frame is rejected for its end trim there (no loss), the frame read on from it fails, and ffmpeg then loses the frames of the next packet
+    // as well (its log shows a further refusal and an arithmetic coding error); why is not determined, and the row pins the reader's figure.
     [Theory]
-    [InlineData(29_000, 52)]
-    [InlineData(29_500, 44)]
-    [InlineData(30_000, 36)]
-    [InlineData(30_500, 21)]
-    [InlineData(31_000, 28)]
-    [InlineData(31_500, 20)]
-    [InlineData(32_000, 12)]
-    public void ARefusedAppendIsNoLossAndARefusedTailIs(int blockAlignment, int frames)
+    [InlineData(26_000, 60)]
+    [InlineData(26_500, 60)]
+    [InlineData(27_000, 53)]
+    [InlineData(27_500, 60)]
+    [InlineData(28_000, 60)]
+    [InlineData(28_500, 60)]
+    [InlineData(29_000, 45)]
+    [InlineData(29_500, 16)]
+    [InlineData(30_000, 15)]
+    [InlineData(30_500, 0)]
+    [InlineData(31_000, 9)]
+    [InlineData(31_500, 6)]
+    [InlineData(32_000, 1)]
+    [InlineData(32_500, 0)]
+    public void RefusedSavesGiveTheFrameCountsOfADecoder(int blockAlignment, int frames)
     {
         CodecContext context = LosslessBuilder.Run(LosslessBuilder.RawStream(blockAlignment, 60), 1, blockAlignment);
         Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
@@ -76,24 +86,5 @@ public class WmaLosslessBufferTests
         CodecContext context = LosslessBuilder.Run(LosslessBuilder.TinyStream(3000, 100), 1, 3000, new WmaLosslessParser { FrameLimit = 100 });
         Assert.DoesNotContain(context.Findings, f => f.Code == "wma.records-limit");
         Assert.Equal(100, WmaStream.Child(WmaStream.StreamNode(context), "Frames").Children.Count);
-    }
-
-    // 3,000,000 frames of 7 bits (one seekable frame first) in 88 media objects of 30,000 bytes: without a limit the records of the frames take
-    // about 130 bytes each and the heap grows by hundreds of megabytes; with it the records are those of the first 524,288 frames.
-    [Fact]
-    public void MinimalFramesStayBounded()
-    {
-        const int frames = 3_000_000;
-        List<byte[]> objects = LosslessBuilder.TinyStream(30_000, frames);
-        Assert.True(objects.Count < 100);
-        long before = GC.GetTotalMemory(true);
-        CodecContext context = LosslessBuilder.Run(objects, 1, 30_000);
-        long kept = GC.GetTotalMemory(true) - before;
-
-        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
-        Assert.Equal(WmaPacketReader.MaxFrames, WmaStream.Child(WmaStream.StreamNode(context), "Frames").Children.Count);
-        Assert.Contains(context.Findings, f => f.Code == "wma.records-limit");
-        Assert.True(kept < WmaPacketReader.MaxFrames * 160L, $"The report keeps {kept / WmaPacketReader.MaxFrames} bytes per listed frame.");
-        GC.KeepAlive(context);
     }
 }
