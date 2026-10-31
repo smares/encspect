@@ -161,6 +161,9 @@ internal sealed class Analysis
     // The substreams the decoding session was opened for, those of the sync of the first unit that could be read; 0 where none was opened.
     public int SessionSubstreams { get; private set; }
 
+    // The sync the decoding session was opened with; null where none was opened.
+    public MajorSync? SessionSync => _sessionSync;
+
     public bool IsMlp => _isMlp;
 
     // The seconds of audio the readable units hold, each at the sampling rate it was read with.
@@ -171,9 +174,6 @@ internal sealed class Analysis
     public int[] PresentationChannels => _presentationChannels;
 
     public long FirstSample { get; private set; }
-
-    // The first restart header of each substream in a unit that could be read: its channel count names the presentation.
-    public IReadOnlyList<int> NamedChannels => _presentationChannels;
 
     private Records R => Records;
 
@@ -230,6 +230,19 @@ internal sealed class Analysis
             long skipped = part;
             Findings.Add(Severity.Warning, "truehd.data-skipped", () => Nodes.Skipped(records, index), count =>
                 $"{Counts.Of(skipped, "byte", "bytes")} at 0x{at:X} {Counts.Agree(skipped, "holds", "hold")} no access unit that checks out{(count > 1 ? $", and {count - 1} more stretches do" : string.Empty)}; the stream is read again from the next major sync that checks out.");
+        }
+
+        _isAfterUnsupported = false;
+        Desync();
+    }
+
+    // Bytes before the next unit were lost where no skipped stretch can be shown, as a container reports it: the stream is read again from the next major sync.
+    public void MarkGap()
+    {
+        if (_hasSynced)
+        {
+            HasGap = true;
+            _isGapPending = true;
         }
 
         _isAfterUnsupported = false;
@@ -675,6 +688,11 @@ internal sealed class Analysis
                         isReadable = false;
                         hasDamageFault = true;
                         SubstreamFaultFinding(index, k, offset, SubstreamFault.CheckData);
+                        _walks[k] = null;
+                        verdicts[k] = verdict;
+                        _states[k].Forget();
+                        _isIntervalOpen[k] = false;
+                        continue;
                     }
                 }
                 else if (k < ParsedSubstreams)
@@ -792,7 +810,9 @@ internal sealed class Analysis
         if (isReadable)
         {
             // The first restart header of a unit that could be read names a presentation, as the decoder's first does.
-            for (int k = 0; k < read; k++)
+            // Only those of the substreams the stream info follows: a later sync with more substreams adds none.
+            int named = Math.Min(read, SessionSubstreams > 0 ? SessionSubstreams : Math.Min(_firstSync?.SubstreamCount ?? 0, ParsedSubstreams));
+            for (int k = 0; k < named; k++)
             {
                 if (_presentationChannels[k] == 0)
                 {
