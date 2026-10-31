@@ -295,7 +295,12 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
-            "framesPerPoint": 16,
+            "frameRuns": {
+              "firstFrames": [
+                1
+              ],
+              "frameCount": 3
+            },
             "x": [
               0
             ],
