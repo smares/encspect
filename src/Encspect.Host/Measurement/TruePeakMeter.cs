@@ -177,7 +177,25 @@ internal sealed class TruePeakMeter
             }
             else
             {
-                for (int n = start + History; n < start + History + count; n++)
+                // Two samples at a time: one sum is a chain of 12 dependent additions, and a single chain makes this loop as slow per sample as the
+                // four phases' two chains; each output keeps its own sum in the order of the taps.
+                int end = start + History + count;
+                int n = start + History;
+                for (; n + 1 < end; n += 2)
+                {
+                    Vector128<double> a = Vector128<double>.Zero;
+                    Vector128<double> b = Vector128<double>.Zero;
+                    for (int k = 0; k < Taps; k++)
+                    {
+                        Vector128<double> pair = Pair02[k];
+                        a += pair * Vector128.Create(x[n - k]);
+                        b += pair * Vector128.Create(x[n + 1 - k]);
+                    }
+
+                    maximum = Vector128.Max(maximum, Vector128.Max(Vector128.Abs(a), Vector128.Abs(b)));
+                }
+
+                for (; n < end; n++)
                 {
                     Vector128<double> a = Vector128<double>.Zero;
                     for (int k = 0; k < Taps; k++)

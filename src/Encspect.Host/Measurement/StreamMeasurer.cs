@@ -21,11 +21,12 @@ internal sealed class StreamMeasurer
 
     private const int FloatLevelsWeight = 14;
 
-    // The work per sample of a measured channel for loudness (the K-weighting and the squares, about 5 ns) and for the true peak by oversampling
-    // (4, 2 and none: the sample peak, whose weight is the conversion to doubles and the scan).
+    // The work per sample of a measured channel for loudness (the K-weighting and the squares) and for the true peak by oversampling (4, 2 and
+    // none: the sample peak, whose weight is the conversion to doubles and the scan). The measurements are in docs/design/spectral-analysis.md,
+    // step 5, "Measured" (true peak alone).
     private const int LoudnessWeight = 8;
 
-    private static readonly int[] TruePeakWeights = [4, 22, 38];
+    private static readonly int[] TruePeakWeights = [4, 30, 38];
 
     private const double SmallestSample = 1e-30;
 
