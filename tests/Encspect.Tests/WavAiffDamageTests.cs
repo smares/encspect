@@ -110,12 +110,12 @@ public class WavAiffDamageTests
     }
 
     [Fact]
-    public void ASampleRateBeyondADoubleIsNotAFiniteNumber()
+    public void ASampleRateBeyondADoubleIsNamedSo()
     {
         byte[] comm = [0, 2, 0, 0, 0, 100, 0, 16, 0x7F, 0xFE, 0x80, 0, 0, 0, 0, 0, 0, 0];
         byte[] body = [.. "AIFF"u8, .. Chunk("COMM", comm, true), .. Chunk("SSND", [.. new byte[8], .. new byte[400]], true)];
         Report report = Analyze([.. "FORM"u8, .. U32((uint)body.Length, true), .. body], "rate.aiff");
-        Assert.Equal("not a finite number", Fixtures.Resolve(report.Root, "FORM/Common Chunk/Sample Rate").Single().Value?.ToString());
+        Assert.Equal("too large for a double (not a possible sample rate)", Fixtures.Resolve(report.Root, "FORM/Common Chunk/Sample Rate").Single().Value?.ToString());
         Assert.NotNull(Find(report, "aiff.sample-rate-invalid"));
     }
 
@@ -195,5 +195,34 @@ public class WavAiffDamageTests
         Report report = Analyze(Riff(Fmt(), Chunk("data", Bursts(5, 1152, 200, 4))));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(NodeKind.Stream, stream.Nodes[0].Kind);
+    }
+
+    // The search for an early burst asks the window for no more than it needs: a read per burst, as a refill of the window at every burst makes, would
+    // be 2,000 or more.
+    [Fact]
+    public void ReadsOfTheSearchForEarlyBurstsFollowTheWindow()
+    {
+        byte[] file = Riff(Fmt(), Chunk("data", Bursts(1, 1536, 100, 2000)));
+        var stream = new CountingStream(file);
+        Report report = Analyzer.CreateDefault().Analyze("bursts.wav", stream);
+        Assert.Null(Find(report, "wav.iec61937-burst-spacing"));
+        Assert.True(stream.Reads < 1400, $"{stream.Reads} reads for {file.Length} bytes");
+    }
+
+    private sealed class CountingStream(byte[] data) : MemoryStream(data)
+    {
+        public int Reads { get; private set; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            Reads++;
+            return base.Read(buffer, offset, count);
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            Reads++;
+            return base.Read(buffer);
+        }
     }
 }

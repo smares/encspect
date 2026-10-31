@@ -70,6 +70,7 @@ internal static class Chunks
         double? rate = Extended.Decode(ten);
         bool isRateValid = rate is >= 1 and <= int.MaxValue;
         NodeValue shown = rate is null ? NodeValue.Text("not a finite number")
+            : double.IsInfinity(rate.Value) ? NodeValue.Text("too large for a double (not a possible sample rate)")
             : !isRateValid ? NodeValue.Text($"{rate.Value.ToString("R", CultureInfo.InvariantCulture)} (not a possible sample rate)")
             : rate == Math.Floor(rate.Value) ? NodeValue.Integer((long)rate.Value, "Hz") : NodeValue.Decimal(rate.Value, 4, "Hz");
         Node rateNode = f.Node.Add("Sample Rate", rateAt, 10, shown, Explain.CommRate, Topics.ExtendedRate);

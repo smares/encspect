@@ -92,8 +92,8 @@ internal sealed class Fields(ByteReader reader, Node node, bool isBigEndian)
     }
 
     // A Windows GUID as WAVEFORMATEXTENSIBLE stores its SubFormat: the first three groups little-endian, in a RIFX file too. Microsoft's documents
-    // say nothing of RIFX, and the format tag in the first four bytes is read little-endian whatever the file's byte order (FFmpeg's riffdec.c does
-    // the same).
+    // say nothing of RIFX, so this byte order, and the little-endian reading of the format tag in the first four bytes whatever the file's byte
+    // order, are the analyzer's choice.
     public Guid Guid(string name, string description, Func<Guid, string?>? known = null)
     {
         long at = reader.Position;

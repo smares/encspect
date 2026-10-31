@@ -172,7 +172,8 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
         long end = data.End;
         while (position < limit && position + Iec61937.PreambleLength <= end)
         {
-            ReadOnlySpan<byte> block = window.At(position, Block);
+            // A request past the window refills it, so a search up to a limit asks for no more than the limit and a preamble.
+            ReadOnlySpan<byte> block = window.At(position, (int)Math.Min(Block, limit - position + Iec61937.PreambleLength));
             int length = block.Length;
             for (int i = 0; i + Iec61937.PreambleLength <= length && position + i < limit; i += Iec61937.FrameLength)
             {

@@ -117,7 +117,7 @@ public sealed class WavParser : IFormatParser
             {
                 string stated = header.Size == 0 ? "0" : header.Size == uint.MaxValue ? "0xFFFFFFFF" : $"{header.Size}, too small to hold the form type";
                 string why = header.Is64Bit
-                    ? header.Size == uint.MaxValue ? $"which stands for the size in the ds64 chunk, {Ds64Unusable(state, held)}" : "which is no size an RF64 or BW64 chunk can have (0xFFFFFFFF stands for the size in the ds64 chunk)"
+                    ? header.Size == uint.MaxValue ? $"which stands for the size in the ds64 chunk, {Ds64Unusable(state, held)}" : $"which is no size {form} chunk can have (0xFFFFFFFF stands for the size in the ds64 chunk)"
                     : $"which is no size {form} chunk can have; a writer leaves it when it cannot go back and fill it in";
                 return $"The {header.Magic} chunk's size is {stated}, {why}. The file is read to its end, {Counts.Of(held, "byte", "bytes")} after the size field.";
             });
