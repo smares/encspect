@@ -1111,6 +1111,43 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // An Ogg FLAC stream with many header packets lists the first 1,024 metadata blocks as a native file does and counts the rest (4-byte
+    // padding blocks, 255 to a page, were 1.6 GB for 5 MB of file); bytes after each frame cost one node and a count, not a node for each.
+    [Fact]
+    public void ManyOggFlacHeaderPacketsAndTrailingBytesStayCompact()
+    {
+        const int headers = 60_000;
+        const int frames = 20_000;
+        byte[] Build(int headerCount, int frameCount)
+        {
+            const uint serial = 7;
+            var ogg = new OggBuilder();
+            byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096L * frameCount));
+            ogg.Page(serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
+            for (int at = 0; at < headerCount; at += 255)
+            {
+                int count = Math.Min(255, headerCount - at);
+                ogg.Page(serial, 0, 0, [.. Enumerable.Range(at, count).Select(i => FlacBuilder.Block(1, [], isLast: i == headerCount - 1))]);
+            }
+
+            byte[] frame = [.. FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16), 1];
+            for (int at = 0; at < frameCount; at += 100)
+            {
+                int count = Math.Min(100, frameCount - at);
+                ogg.Page(serial, 4096L * (at + count), (byte)(at + count == frameCount ? 4 : 0), [.. Enumerable.Repeat(frame, count)]);
+            }
+
+            return ogg.Bytes;
+        }
+
+        (Report report, long kept, long peak) = Measure("headers.oga", Build(headers, frames), Build(300, 100));
+
+        output.WriteLine($"{kept} bytes kept and {peak} bytes peak for {headers} header packets and {frames} frames with trailing bytes");
+        Assert.True(kept < 8_000_000, $"The report keeps {kept} bytes.");
+        Assert.True(peak < 14_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
     // A WAVE file's samples are never read: the report of a file with 40 MiB of them is as large as that of one with 4 KiB, nothing the analysis
     // allocates depends on their size, and what it holds while it runs (the blocks the format sniffs of MPEG audio and DTS read from the start
     // of the data, about 1 MiB) stays below a bound far under the 40 MiB.

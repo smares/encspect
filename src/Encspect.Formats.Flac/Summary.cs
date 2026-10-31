@@ -256,7 +256,7 @@ internal static partial class Summary
         long stereo = s.AssignmentFrames.Sum();
         if (channels == 2 && stereo > 0)
         {
-            string[] names = ["Independent Frames", "Left/Side Frames", "Right/Side Frames", "Mid/Side Frames"];
+            string[] names = ["Independent Frames", "Left/Side Frames", "Side/Right Frames", "Mid/Side Frames"];
             string[] descriptions = [Explain.StatIndependent, Explain.StatLeftSide, Explain.StatSideRight, Explain.StatMidSide];
             for (int i = 0; i < 4; i++)
             {

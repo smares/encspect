@@ -18,16 +18,16 @@ internal enum HeaderFault : byte
     // The data ends inside the header.
     Truncated,
 
-    // The 14-bit sync code is not there.
+    // The 15-bit sync code (RFC 9639, section 9.1) is not there.
     Sync,
 
-    // A reserved bit is set.
+    // The reserved bit after the sample size is set.
     ReservedBit,
 
     // The reserved block size code 0, or a block of 65,536 samples, which the 16-bit field could state but no stream can hold.
     BlockSize,
 
-    // The forbidden sample rate code 15, or a stated rate of 0.
+    // The forbidden sample rate code 15. A stated rate of 0 is accepted (section 9.1.7).
     SampleRate,
 
     // A reserved channel assignment.
@@ -97,7 +97,7 @@ internal readonly record struct FrameHeader
         _ => false,
     };
 
-    public static bool HasSync(ReadOnlySpan<byte> data) => data.Length >= 2 && data[0] == 0xFF && (data[1] & 0xFC) == 0xF8;
+    public static bool HasSync(ReadOnlySpan<byte> data) => data.Length >= 2 && data[0] == 0xFF && (data[1] & 0xFE) == 0xF8;
 
     private static readonly long[] Smallest = [0, 0, 0x80, 0x800, 0x10000, 0x200000, 0x4000000, 0x80000000];
 
@@ -117,7 +117,7 @@ internal readonly record struct FrameHeader
             return HeaderFault.Truncated;
         }
 
-        if ((data[1] & 2) != 0 || (data[3] & 1) != 0)
+        if ((data[3] & 1) != 0)
         {
             return HeaderFault.ReservedBit;
         }

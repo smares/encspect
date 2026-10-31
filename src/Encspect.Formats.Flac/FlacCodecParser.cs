@@ -48,6 +48,12 @@ public sealed class FlacCodecParser : ICodecParser
         private bool _inHeaders = true;
         private bool _isBroken;
         private int _blocks;
+        private Node? _firstTrailingFrame;
+        private Node? _firstTrailingBlock;
+        private long _moreStart = -1;
+        private long _moreEnd;
+        private int _more;
+        private Node? _further;
         private long? _granuleBase;
         private long _granuleMismatches;
         private Node? _firstMismatch;
@@ -75,6 +81,7 @@ public sealed class FlacCodecParser : ICodecParser
                 {
                     s.Findings.Add(Severity.Warning, "flac.metadata-no-last-block", s.Stream, _ => $"A frame begins at 0x{packet.FileStart:X} but no metadata block has the last-block flag; the metadata ends there.");
                     _inHeaders = false;
+                    AddFurther();
                     s.StartSession();
                     Frame(packet);
                 }
@@ -91,6 +98,7 @@ public sealed class FlacCodecParser : ICodecParser
 
         public void Finish()
         {
+            AddFurther();
             if (_inHeaders && _blocks > 0 && !_isBroken)
             {
                 s.Findings.Add(Severity.Warning, "flac.metadata-no-last-block", s.Stream, _ => "The stream's header packets end without a metadata block that has the last-block flag.");
@@ -174,18 +182,35 @@ public sealed class FlacCodecParser : ICodecParser
             bool isTruncated = length > available;
             int present = Math.Min(available, length);
             MappedBytes whole = block.Slice(0, 4 + Math.Min(present, Encspect.Formats.Flac.Metadata.MaxBodyBytes));
+            IReadOnlyList<ByteRange> ranges = block.FileRanges(0, 4 + present);
             bool paddingIsZero = type != BlockTypes.Padding || !block.Span[4..(4 + present)].ContainsAnyExcept((byte)0);
-            Func<Node, Node?>? comment = type == BlockTypes.VorbisComment && !isTruncated
+            bool isListed = index < Encspect.Formats.Flac.Metadata.MaxListedBlocks;
+            s.Findings.Redirect = isListed ? null : () => _further!;
+            Func<Node, Node?>? comment = type == BlockTypes.VorbisComment && !isTruncated && isListed
                 ? parent => s.Context.ParseTag("Vorbis Comment", block.Slice(4, length), parent)
                 : null;
-            Node node = Encspect.Formats.Flac.Metadata.Read(s, whole, isLast, type, length, present, index, paddingIsZero, comment);
+            Node node = Encspect.Formats.Flac.Metadata.Read(s, whole, isLast, type, length, present, index, paddingIsZero, comment, ranges);
             s.MetadataBlocks++;
             _blocks++;
-            s.AddLeading(node);
+            if (isListed)
+            {
+                s.AddLeading(node);
+            }
+            else
+            {
+                _moreStart = _moreStart < 0 ? node.Offset : _moreStart;
+                _moreEnd = node.Offset + node.Length;
+                _more++;
+            }
+
             if (isTruncated)
             {
                 int declared = length;
                 s.Findings.Add(Severity.Warning, "flac.metadata-truncated", node, _ => $"The packet ends inside the metadata block at 0x{block.FileStart:X}, which states {Counts.Of(declared, "byte", "bytes")}.");
+            }
+            else if (available > length)
+            {
+                Trailing(block, 4 + length, "metadata block", ref _firstTrailingBlock);
             }
 
             if (type is BlockTypes.SeekTable or BlockTypes.VorbisComment or BlockTypes.CueSheet && s.Seen(type) > 1)
@@ -194,9 +219,11 @@ public sealed class FlacCodecParser : ICodecParser
                 s.Findings.Add(Severity.Warning, "flac.metadata-block-repeated", node, _ => $"The stream has more than one {name} block; the specification allows one.", name);
             }
 
+            s.Findings.Redirect = null;
             if (isLast)
             {
                 _inHeaders = false;
+                AddFurther();
                 if (s.Info is null)
                 {
                     s.Findings.Add(Severity.Warning, "flac.no-streaminfo", s.Stream, _ => "The stream has no STREAMINFO block as its first metadata block, so the sample rate, bit depth and the MD5 of the audio are not known.");
@@ -204,6 +231,36 @@ public sealed class FlacCodecParser : ICodecParser
 
                 s.StartSession();
             }
+        }
+
+        // The blocks past the listed ones are counted, as in a native file, and their findings point to the node that stands for them.
+        private void AddFurther()
+        {
+            if (_more == 0 || _further is not null)
+            {
+                return;
+            }
+
+            _further = new Node("Further Metadata Blocks", _moreStart, _moreEnd - _moreStart, NodeValue.Integer(_more, "blocks", "block")) { Description = Explain.FurtherMetadataBlocks, Topic = Topics.MetadataBlocks };
+            s.AddLeading(_further);
+            int count = _more;
+            s.Findings.Add(Severity.Info, "flac.metadata-blocks-not-listed", s.Stream, _ => $"The report lists the first {Encspect.Formats.Flac.Metadata.MaxListedBlocks} metadata blocks; {Counts.Of(count, "more", "more")} {Counts.Agree(count, "is", "are")} read but not listed.");
+        }
+
+        // Bytes in a packet after the frame or metadata block it carries: the first case gets a node, the rest are counted in the finding.
+        private void Trailing(MappedBytes packet, int from, string what, ref Node? first)
+        {
+            int rest = packet.Length - from;
+            if (first is null)
+            {
+                first = Node.FromMapped("Trailing Data", packet, from, packet.Length, NodeValue.Integer(rest, "bytes"), description: Explain.TrailingPacketData);
+                s.AddLeading(first);
+            }
+
+            long at = packet.FileStart;
+            Node node = first;
+            s.Findings.Add(Severity.Warning, "flac.ogg-packet-trailing", node, count =>
+                $"The {what} in the packet at 0x{at:X} ends {Counts.Of(rest, "byte", "bytes")} before the packet does{(count > 1 ? $"; {Counts.Of(count - 1, "more packet", "more packets")} {Counts.Agree(count - 1, "has", "have")} bytes after {(what == "frame" ? "its frame" : "its metadata block")}" : string.Empty)}.", what);
         }
 
         private void Frame(MappedBytes packet)
@@ -231,14 +288,11 @@ public sealed class FlacCodecParser : ICodecParser
             {
                 if (walk.Length < data.Length)
                 {
-                    int rest = data.Length - walk.Length;
                     bytes = packet.Slice(0, walk.Length);
-                    Node trailing = Node.FromMapped("Trailing Data", packet, walk.Length, packet.Length, NodeValue.Integer(rest, "bytes"), description: Explain.TrailingPacketData);
-                    s.AddLeading(trailing);
-                    s.Findings.Add(Severity.Warning, "flac.ogg-packet-trailing", trailing, _ => $"The frame in the packet at 0x{packet.FileStart:X} ends {Counts.Of(rest, "byte", "bytes")} before the packet does.");
+                    Trailing(packet, walk.Length, "frame", ref _firstTrailingFrame);
                 }
             }
-            else if (walk.IsCut)
+            else if (walk.IsCut && walk.Fault == SubframeFault.None)
             {
                 status = EntryStatus.Cut;
             }

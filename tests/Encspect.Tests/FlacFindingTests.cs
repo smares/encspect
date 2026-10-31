@@ -223,4 +223,185 @@ public class FlacFindingTests
         Assert.Contains(report.Findings, f => f.Code == "flac.data-skipped");
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
+
+    private static Node OggFlacStream(Node root) => Find(root) ?? throw new InvalidOperationException("No FLAC stream in the tree.");
+
+    private static Node? Find(Node node)
+    {
+        if (node.Children.Any(c => c.Name == "Mapping Header"))
+        {
+            return node;
+        }
+
+        return node.Children.Select(Find).FirstOrDefault(n => n is not null);
+    }
+
+    // A constant frame whose first subframe header says verbatim instead: the frame's header is intact, its subframes read past the end of the data.
+    private static byte[] Overrunning(long number)
+    {
+        byte[] frame = FlacBuilder.ConstantFrame(number, 4096, 44100, 2, 16);
+        frame[10] = 0x02;
+        return frame;
+    }
+
+    // A damaged frame whose walk runs past the end of the file must not take the frames after it: they are found by searching.
+    [Fact]
+    public void ADamagedFrameThatRunsPastTheEndOfTheFileKeepsTheFramesAfterIt()
+    {
+        byte[] file = FlacBuilder.Concat(FlacBuilder.Marker, FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 6), isLast: true),
+            FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16), FlacBuilder.ConstantFrame(1, 4096, 44100, 2, 16), Overrunning(2),
+            FlacBuilder.ConstantFrame(3, 4096, 44100, 2, 16), FlacBuilder.ConstantFrame(4, 4096, 44100, 2, 16), FlacBuilder.ConstantFrame(5, 4096, 44100, 2, 16));
+
+        Report report = Analyzer.CreateDefault().Analyze("swallow.flac", new MemoryStream(file));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "flac.frame-cut" or "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "flac.subframe-invalid");
+        Assert.Contains(report.Findings, f => f.Code == "flac.crc16-mismatch");
+        Assert.Equal(4096L * 6, report.Streams.Single().Samples);
+    }
+
+    [Fact]
+    public void AFrameThatReallyIsCutByTheEndOfTheFileStaysCut()
+    {
+        byte[] file = FlacBuilder.Concat(FlacBuilder.Marker, FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 2), isLast: true),
+            FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16), Overrunning(1));
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.flac", new MemoryStream(file));
+
+        Assert.Contains(report.Findings, f => f.Code == "flac.frame-cut");
+    }
+
+    // RFC 9639, section 10.1: a packet is one frame, so a walk that overruns its packet is damaged syntax and the CRC-16 at the packet's end is compared.
+    [Fact]
+    public void AnOggPacketWhoseFrameOverrunsItIsUnreadableAndItsCrcIsCompared()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("overrun.oga", new MemoryStream(OggFlac(frames:
+            [FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16), Overrunning(1), FlacBuilder.ConstantFrame(2, 4096, 44100, 2, 16)])));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "flac.frame-cut" or "parse.failed");
+        Assert.Contains(report.Findings, f => f.Code == "flac.subframe-invalid");
+        Assert.Contains(report.Findings, f => f.Code == "flac.crc16-mismatch");
+    }
+
+    // The header packets past the 1,024th block are counted under one node, as in a native file, whatever their number.
+    [Fact]
+    public void OggHeaderPacketsPastTheCapAreCountedAndNotListed()
+    {
+        const int Headers = 3000;
+        byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 2), isLast: false);
+        var ogg = new OggBuilder();
+        ogg.Page(Serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
+        for (int at = 0; at < Headers; at += 200)
+        {
+            int count = Math.Min(200, Headers - at);
+            ogg.Page(Serial, 0, 0, [.. Enumerable.Range(at, count).Select(i => FlacBuilder.Block(1, [], isLast: i == Headers - 1))]);
+        }
+
+        ogg.Page(Serial, 4096, 0, FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16));
+        ogg.Page(Serial, 8192, 4, FlacBuilder.ConstantFrame(1, 4096, 44100, 2, 16));
+
+        Report report = Analyzer.CreateDefault().Analyze("headers.oga", new MemoryStream(ogg.Bytes));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Node stream = OggFlacStream(report.Root);
+        Node further = Assert.Single(stream.Children, c => c.Name == "Further Metadata Blocks");
+        Assert.Equal(NodeValue.Integer(Headers + 1 - Encspect.Formats.Flac.Metadata.MaxListedBlocks, "blocks", "block"), further.Value);
+        Assert.Equal(Encspect.Formats.Flac.Metadata.MaxListedBlocks, stream.Children.Count(c => c.Name == "Metadata Block"));
+        Assert.Contains(report.Findings, f => f.Code == "flac.metadata-blocks-not-listed");
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // Bytes after a frame in a packet are one finding with a count and one node, not a node for each packet.
+    [Fact]
+    public void TrailingBytesInManyOggPacketsAreOneFindingAndOneNode()
+    {
+        byte[][] frames = [.. Enumerable.Range(0, 300).Select(i => (byte[])[.. FlacBuilder.ConstantFrame(i, 4096, 44100, 2, 16), 1])];
+        var ogg = new OggBuilder();
+        byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096L * frames.Length), isLast: true);
+        ogg.Page(Serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
+        for (int at = 0; at < frames.Length; at += 100)
+        {
+            ogg.Page(Serial, 4096L * (at + 100), (byte)(at + 100 == frames.Length ? 4 : 0), frames[at..(at + 100)]);
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("trailing.oga", new MemoryStream(ogg.Bytes));
+
+        Node stream = OggFlacStream(report.Root);
+        Assert.Single(stream.Children, c => c.Name == "Trailing Data");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.ogg-packet-trailing");
+        Assert.Equal(300, finding.Count);
+        Assert.Equal("Trailing Data", finding.Node!.Name);
+    }
+
+    // Bytes after a metadata block in a header packet, the mapping packet's included, are reported as after a frame.
+    [Fact]
+    public void BytesAfterAMetadataBlockInAHeaderPacketAreAFinding()
+    {
+        byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 2), isLast: false);
+        foreach (bool inMapping in new[] { true, false })
+        {
+            var ogg = new OggBuilder();
+            ogg.Page(Serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info, .. inMapping ? new byte[] { 9, 9, 9 } : []]);
+            ogg.Page(Serial, 0, 0, [.. FlacBuilder.Block(1, [0, 0], isLast: true), .. inMapping ? [] : new byte[] { 7 }]);
+            ogg.Page(Serial, 4096, 0, FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16));
+            ogg.Page(Serial, 8192, 4, FlacBuilder.ConstantFrame(1, 4096, 44100, 2, 16));
+
+            Report report = Analyzer.CreateDefault().Analyze("block.oga", new MemoryStream(ogg.Bytes));
+
+            Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.ogg-packet-trailing");
+            Assert.Contains("metadata block", finding.Message, StringComparison.Ordinal);
+            Assert.NotNull(finding.Path);
+        }
+    }
+
+    // A metadata block over the 1 MiB that is read, in a packet that spans pages, is a node over the whole block.
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(3, true)]
+    public void AnOggMetadataBlockOverOneMebibyteIsOneNodeOverAllOfIt(int type, bool isComment)
+    {
+        byte[] body = isComment ? [.. new byte[4], .. BitConverter.GetBytes(0), .. new byte[(1 << 20) + 5000]] : new byte[(1 << 20) + 5000];
+        byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 2), isLast: false);
+        var ogg = new OggBuilder();
+        ogg.Page(Serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
+        ogg.SpanningPacket(Serial, FlacBuilder.Block(type, body, isLast: true), 0);
+        ogg.Page(Serial, 4096, 0, FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16));
+        ogg.Page(Serial, 8192, 4, FlacBuilder.ConstantFrame(1, 4096, 44100, 2, 16));
+
+        Report report = Analyzer.CreateDefault().Analyze("big.oga", new MemoryStream(ogg.Bytes));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Node stream = OggFlacStream(report.Root);
+        Node block = stream.Children.Where(c => c.Name == "Metadata Block").ElementAt(1);
+        Assert.True(block.Length > body.Length);
+        Assert.NotNull(block.Ranges);
+        Assert.Equal(block.Offset + block.Length, block.Ranges![^1].End);
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // Pages the Ogg layer lost before the first frame are named as a cause of its starting above sample 0.
+    [Fact]
+    public void AFirstFrameAfterLostPagesIsNamedForBothCauses()
+    {
+        byte[] file = OggFlac();
+        int page = 0;
+        int at = -1;
+        for (int i = 0; i + 4 <= file.Length && page < 2; i++)
+        {
+            if (file.AsSpan(i, 4).SequenceEqual("OggS"u8))
+            {
+                page++;
+                at = i;
+            }
+        }
+
+        file[at + 28] ^= 0xFF;
+
+        Report report = Analyzer.CreateDefault().Analyze("lost.oga", new MemoryStream(file));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.first-sample-not-zero");
+        Assert.Contains("lost", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("cut out", finding.Message, StringComparison.Ordinal);
+    }
 }

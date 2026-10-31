@@ -233,7 +233,7 @@ internal sealed class State
                 followsGap = true;
                 HasGap = true;
                 Findings.Add(Severity.Info, "flac.first-sample-not-zero", () => Nodes.Frame(records, index), _ =>
-                    $"The first frame, at 0x{offset:X}, starts at sample {first} instead of 0, as in a stream cut out of a longer one.");
+                    $"The first frame, at 0x{offset:X}, starts at sample {first} instead of 0{(followsLoss ? ": the container lost data before it, or the stream was cut out of a longer one" : ", as in a stream cut out of a longer one")}.");
             }
         }
         else if (first != NextSample)

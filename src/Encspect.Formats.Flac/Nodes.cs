@@ -76,8 +76,7 @@ internal static class Nodes
     private static Node Header(Records r, in Entry e, FieldMap map, int length)
     {
         Node header = map.Bytes("Frame Header", 0, length, null, Explain.FrameHeader, Topics.Frames);
-        header.Add(map.Bits("Sync Code", 0, 14, NodeValue.Hex(0x3FFE, 4), Explain.SyncCode, Topics.Frames));
-        header.Add(map.Bits("Reserved Bit", 14, 15, NodeValue.Integer(0), Explain.ReservedBit, Topics.Frames));
+        header.Add(map.Bits("Sync Code", 0, 15, NodeValue.Hex(0x7FFC, 4), Explain.SyncCode, Topics.Frames));
         header.Add(map.Bits("Blocking Strategy", 15, 16, e.IsVariable ? "variable" : "fixed", e.IsVariable ? Explain.StrategyVariable : Explain.StrategyFixed, Topics.BlockingStrategy));
         header.Add(map.Bits("Block Size", 16, 20, NodeValue.Integer(e.BlockSize, "samples"), BlockSizeDescription(e.BlockSizeCode), Topics.Frames));
         int rate = r.RateOf(e);

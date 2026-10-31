@@ -106,7 +106,7 @@ internal static class Explain
 
     public const string Frame = "One frame: a header, a subframe for each channel and a CRC-16, holding the same number of samples of every channel (RFC 9639, section 9).";
     public const string FrameHeader = "The frame header: the sync code, blocking strategy, block size, sample rate, channel assignment, sample size, the frame or sample number and a CRC-8 (RFC 9639, section 9.1).";
-    public const string SyncCode = "The 14-bit sync code 0b11111111111110 that starts every frame (RFC 9639, section 9.1).";
+    public const string SyncCode = "The 15-bit sync code 0b111111111111100 that starts every frame (RFC 9639, section 9.1); the blocking strategy bit follows it.";
     public const string ReservedBit = "A bit the specification reserves; it is 0.";
     public const string StrategyFixed = "The stream uses one block size, so the header counts frames (RFC 9639, section 9.1).";
     public const string StrategyVariable = "The stream uses blocks of different sizes, so the header counts samples (RFC 9639, section 9.1).";
