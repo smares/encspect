@@ -229,20 +229,8 @@
  },
  "findings": [
   {
-   "code": "wma.packet-long",
-   "contains": "10 bytes before its whole blocks"
-  },
-  {
-   "code": "wma.voice-packet-sequence",
-   "contains": "follow the packet before"
-  },
-  {
-   "code": "wma.voice-spillover-orphan",
-   "contains": "no start is left"
-  },
-  {
-   "code": "wma.voice-frame-type",
-   "contains": "gives no type"
+   "code": "wma.voice-not-read",
+   "contains": "Windows Media Audio Voice are not read"
   }
  ],
  "crosscheck": {

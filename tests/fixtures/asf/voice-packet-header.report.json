@@ -331,285 +331,7 @@
                           "value": 46,
                           "unit": "bytes",
                           "offset": 230,
-                          "length": 46,
-                          "children": [
-                            {
-                              "name": "Professional Header",
-                              "value": 18,
-                              "unit": "bytes",
-                              "offset": 230,
-                              "length": 18
-                            },
-                            {
-                              "name": "Flags",
-                              "value": 1173,
-                              "offset": 248,
-                              "length": 4,
-                              "children": [
-                                {
-                                  "name": "Uses Postfilter",
-                                  "value": true,
-                                  "offset": 248,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Unread Flag",
-                                  "value": 0,
-                                  "offset": 248,
-                                  "length": 1,
-                                  "bitOffset": 1,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Denoise Strength",
-                                  "value": 5,
-                                  "offset": 248,
-                                  "length": 1,
-                                  "bitOffset": 2,
-                                  "bitLength": 4,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Uses Denoise Tilt Correction",
-                                  "value": false,
-                                  "offset": 248,
-                                  "length": 1,
-                                  "bitOffset": 6,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "DC Level",
-                                  "value": 9,
-                                  "offset": 248,
-                                  "length": 2,
-                                  "bitOffset": 7,
-                                  "bitLength": 4,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Unread Flag",
-                                  "value": 0,
-                                  "offset": 249,
-                                  "length": 1,
-                                  "bitOffset": 3,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "LSP Count",
-                                  "value": 10,
-                                  "offset": 249,
-                                  "length": 1,
-                                  "bitOffset": 4,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "LSP Quantizer Mode",
-                                  "value": 0,
-                                  "offset": 249,
-                                  "length": 1,
-                                  "bitOffset": 5,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "LSP Default Mode",
-                                  "value": 0,
-                                  "offset": 249,
-                                  "length": 1,
-                                  "bitOffset": 6,
-                                  "bitLength": 1,
-                                  "bitOrder": "leastSignificantFirst"
-                                },
-                                {
-                                  "name": "Other Flags",
-                                  "value": 0,
-                                  "offset": 249,
-                                  "length": 3,
-                                  "bitOffset": 7,
-                                  "bitLength": 17,
-                                  "bitOrder": "leastSignificantFirst"
-                                }
-                              ]
-                            },
-                            {
-                              "name": "Frame Type Table",
-                              "value": 17,
-                              "unit": "frame types",
-                              "offset": 252,
-                              "length": 24,
-                              "children": [
-                                {
-                                  "name": "Frame Type 0",
-                                  "value": 4,
-                                  "unit": "bits",
-                                  "offset": 252,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 1",
-                                  "value": 4,
-                                  "unit": "bits",
-                                  "offset": 252,
-                                  "length": 1,
-                                  "bitOffset": 3,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 2",
-                                  "value": 2,
-                                  "unit": "bits",
-                                  "offset": 252,
-                                  "length": 2,
-                                  "bitOffset": 6,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 3",
-                                  "value": 2,
-                                  "unit": "bits",
-                                  "offset": 253,
-                                  "length": 1,
-                                  "bitOffset": 1,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 4",
-                                  "value": 2,
-                                  "unit": "bits",
-                                  "offset": 253,
-                                  "length": 1,
-                                  "bitOffset": 4,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 5",
-                                  "value": 4,
-                                  "unit": "bits",
-                                  "offset": 253,
-                                  "length": 2,
-                                  "bitOffset": 7,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 6",
-                                  "value": 6,
-                                  "unit": "bits",
-                                  "offset": 254,
-                                  "length": 1,
-                                  "bitOffset": 2,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 7",
-                                  "value": 6,
-                                  "unit": "bits",
-                                  "offset": 254,
-                                  "length": 1,
-                                  "bitOffset": 5,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 8",
-                                  "value": 10,
-                                  "unit": "bits",
-                                  "offset": 255,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 9",
-                                  "value": 10,
-                                  "unit": "bits",
-                                  "offset": 255,
-                                  "length": 1,
-                                  "bitOffset": 3,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 10",
-                                  "value": 12,
-                                  "unit": "bits",
-                                  "offset": 255,
-                                  "length": 2,
-                                  "bitOffset": 6,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 11",
-                                  "value": 6,
-                                  "unit": "bits",
-                                  "offset": 256,
-                                  "length": 1,
-                                  "bitOffset": 1,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 12",
-                                  "value": 8,
-                                  "unit": "bits",
-                                  "offset": 256,
-                                  "length": 1,
-                                  "bitOffset": 4,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 13",
-                                  "value": 8,
-                                  "unit": "bits",
-                                  "offset": 256,
-                                  "length": 2,
-                                  "bitOffset": 7,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 14",
-                                  "value": 12,
-                                  "unit": "bits",
-                                  "offset": 257,
-                                  "length": 1,
-                                  "bitOffset": 2,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 15",
-                                  "value": 8,
-                                  "unit": "bits",
-                                  "offset": 257,
-                                  "length": 1,
-                                  "bitOffset": 5,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Frame Type 16",
-                                  "value": 10,
-                                  "unit": "bits",
-                                  "offset": 258,
-                                  "length": 1,
-                                  "bitOffset": 0,
-                                  "bitLength": 3
-                                },
-                                {
-                                  "name": "Unused",
-                                  "value": 141,
-                                  "unit": "bits",
-                                  "offset": 258,
-                                  "length": 18,
-                                  "bitOffset": 3,
-                                  "bitLength": 141
-                                }
-                              ]
-                            }
-                          ]
+                          "length": 46
                         }
                       ]
                     },
@@ -1856,67 +1578,20 @@
                 {
                   "name": "Windows Media Audio Voice",
                   "kind": "Stream",
-                  "value": "0 superframes",
+                  "value": "frames not read",
                   "offset": 330,
                   "length": 200,
                   "children": [
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "0 superframes, 0.000 s",
+                      "value": "3 packets",
                       "offset": 330,
                       "length": 200,
                       "children": [
                         {
                           "name": "Packets",
                           "value": 3,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Superframes",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Frames",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Frame Length",
-                          "value": 160,
-                          "unit": "samples",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Samples",
-                          "value": 0,
-                          "unit": "samples",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Duration",
-                          "value": 0,
-                          "unit": "s",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Container Duration",
-                          "value": 0.5,
-                          "unit": "s",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Block Alignment",
-                          "value": 2,
-                          "unit": "bytes",
                           "offset": 330,
                           "length": 200
                         },
@@ -1928,6 +1603,34 @@
                           "length": 200
                         },
                         {
+                          "name": "Block Alignment",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 330,
+                          "length": 200
+                        },
+                        {
+                          "name": "Smallest Packet",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 330,
+                          "length": 200
+                        },
+                        {
+                          "name": "Largest Packet",
+                          "value": 2,
+                          "unit": "bytes",
+                          "offset": 330,
+                          "length": 200
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.5,
+                          "unit": "s",
+                          "offset": 330,
+                          "length": 200
+                        },
+                        {
                           "name": "Nominal Bitrate",
                           "value": 8,
                           "unit": "kbps",
@@ -1935,177 +1638,13 @@
                           "length": 200
                         },
                         {
-                          "name": "Superframes Spanning Packets",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Most Superframes in a Packet",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Spillover Field",
-                          "value": 4,
-                          "unit": "bits",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Superframes with a Sample Count",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "LSPs per Frame",
-                          "value": 10,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Superframes with Residual LSPs",
-                          "value": "0 superframes (0.0%)",
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Superframes with Additional Data",
-                          "value": 0,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Uses Postfilter",
-                          "value": true,
-                          "offset": 330,
-                          "length": 200
-                        },
-                        {
-                          "name": "Pitch Range",
-                          "value": "20 to 147 samples",
+                          "name": "Average Bitrate",
+                          "value": 0.096,
+                          "unit": "kbps",
                           "offset": 330,
                           "length": 200
                         }
                       ]
-                    },
-                    {
-                      "name": "Packets",
-                      "value": "3 packets",
-                      "offset": 330,
-                      "length": 200,
-                      "children": [
-                        {
-                          "name": "Packet",
-                          "kind": "Frame",
-                          "value": "invalid header",
-                          "offset": 411,
-                          "length": 2,
-                          "children": [
-                            {
-                              "name": "Packet Sequence Number",
-                              "value": 0,
-                              "offset": 411,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 4
-                            },
-                            {
-                              "name": "Has Residual LSPs",
-                              "value": false,
-                              "offset": 411,
-                              "length": 1,
-                              "bitOffset": 4,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "Unread Bits",
-                              "value": 11,
-                              "unit": "bits",
-                              "offset": 411,
-                              "length": 2,
-                              "bitOffset": 5,
-                              "bitLength": 11
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Packet",
-                          "kind": "Frame",
-                          "value": "invalid header",
-                          "offset": 461,
-                          "length": 2,
-                          "children": [
-                            {
-                              "name": "Packet Sequence Number",
-                              "value": 0,
-                              "offset": 461,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 4
-                            },
-                            {
-                              "name": "Has Residual LSPs",
-                              "value": false,
-                              "offset": 461,
-                              "length": 1,
-                              "bitOffset": 4,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "Unread Bits",
-                              "value": 11,
-                              "unit": "bits",
-                              "offset": 461,
-                              "length": 2,
-                              "bitOffset": 5,
-                              "bitLength": 11
-                            }
-                          ]
-                        },
-                        {
-                          "name": "Packet",
-                          "kind": "Frame",
-                          "value": "invalid header",
-                          "offset": 511,
-                          "length": 2,
-                          "children": [
-                            {
-                              "name": "Packet Sequence Number",
-                              "value": 0,
-                              "offset": 511,
-                              "length": 1,
-                              "bitOffset": 0,
-                              "bitLength": 4
-                            },
-                            {
-                              "name": "Has Residual LSPs",
-                              "value": false,
-                              "offset": 511,
-                              "length": 1,
-                              "bitOffset": 4,
-                              "bitLength": 1
-                            },
-                            {
-                              "name": "Unread Bits",
-                              "value": 11,
-                              "unit": "bits",
-                              "offset": 511,
-                              "length": 2,
-                              "bitOffset": 5,
-                              "bitLength": 11
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Superframes",
-                      "value": "0 superframes",
-                      "offset": 330,
-                      "length": 200
                     }
                   ]
                 }
@@ -2127,12 +1666,14 @@
         "codec": "Windows Media Audio Voice",
         "sampleRate": 8000,
         "channels": 1,
+        "channelMode": "Mono",
         "channelLayout": [
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 0,
-        "duration": 0,
+        "samples": 4000,
+        "duration": 0.5,
+        "averageBitrate": 0.096,
         "isVbr": false,
         "playbackGroup": 1,
         "series": []
@@ -2140,34 +1681,17 @@
     ],
     "findings": [
       {
-        "severity": "Warning",
-        "code": "wma.voice-packet-header",
-        "message": "3 packets' headers run past the packet; a decoder rejects them and drops the rest of the media object.",
-        "offset": 411,
-        "length": 2,
-        "path": [
-          0,
-          1,
-          7,
-          1,
-          0
-        ],
-        "count": 3
-      },
-      {
         "severity": "Info",
-        "code": "wma.voice-packet-sequence",
-        "message": "2 packets' sequence numbers do not follow the packet before (the first is 0 for 1); a packet may be missing. FFmpeg's decoder does not read the number.",
-        "offset": 461,
-        "length": 2,
+        "code": "wma.voice-not-read",
+        "message": "The frames of Windows Media Audio Voice are not read: the stream is described by what the container states, and its packets are counted.",
+        "offset": 330,
+        "length": 200,
         "path": [
           0,
           1,
-          7,
-          1,
-          1
+          7
         ],
-        "count": 2
+        "count": 1
       }
     ]
   }

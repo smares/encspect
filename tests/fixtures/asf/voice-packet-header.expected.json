@@ -148,17 +148,17 @@
  },
  "findings": [
   {
-   "code": "wma.voice-packet-header",
-   "contains": "run past the packet"
-  },
-  {
-   "code": "wma.voice-packet-sequence",
-   "contains": "follow the packet before"
+   "code": "wma.voice-not-read",
+   "contains": "Windows Media Audio Voice are not read"
   }
  ],
  "crosscheck": {
   "ffprobe": true,
   "decode": "errors",
-  "messages": []
+  "messages": [],
+  "ffmpeg": {
+   "samples": 0,
+   "superframes": 0
+  }
  }
 }
