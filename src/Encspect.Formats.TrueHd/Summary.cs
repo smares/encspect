@@ -95,7 +95,9 @@ internal static class Summary
             return null;
         }
 
-        int read = Math.Min(a.SubstreamCount, Analysis.ParsedSubstreams);
+        // The substreams and the layout are those of the sync the decoder was opened with, as the channels and the verification are.
+        MajorSync followed = a.SessionSync ?? sync;
+        int read = a.SessionSubstreams > 0 ? a.SessionSubstreams : Math.Min(sync.SubstreamCount, Analysis.ParsedSubstreams);
         int channels = a.PresentationChannels.Take(read).LastOrDefault(c => c > 0);
         if (channels == 0)
         {
@@ -104,10 +106,10 @@ internal static class Summary
 
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, end - start, value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", start, end - start) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-        int rate = sync.SampleRate;
+        int rate = followed.SampleRate;
         double duration = a.Duration;
         int top = read - 1;
-        Speaker[]? layout = Presentation.Resolve(sync, top, a.SubstreamCount, channels);
+        Speaker[]? layout = Presentation.Resolve(followed, top, followed.SubstreamCount, channels);
         statistics.Add(Cover("Access Units", NodeValue.Integer(a.Units - a.LeadingUnits, "units", "unit"), Explain.StatUnits, Topics.AccessUnits));
         statistics.Add(Cover("Major Syncs", NodeValue.Integer(a.SyncUnits, "syncs", "sync"), Explain.StatMajorSyncs, Topics.AccessUnits));
         if (a.LeadingUnits > 0)
@@ -124,8 +126,8 @@ internal static class Summary
             statistics.Add(Cover("Channel Layout", ChannelLayouts.Describe(layout), Explain.StatLayout, Topics.ChannelLayouts));
         }
 
-        statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(sync.BitDepth, "bits"), Explain.StatBits));
-        statistics.Add(Cover("Substreams", NodeValue.Integer(a.SubstreamCount, "substreams", "substream"), Explain.StatSubstreams, Topics.Substreams));
+        statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(followed.BitDepth, "bits"), Explain.StatBits));
+        statistics.Add(Cover("Substreams", NodeValue.Integer(followed.SubstreamCount, "substreams", "substream"), Explain.StatSubstreams, Topics.Substreams));
         statistics.Add(Cover("Presentations", string.Join(", ", a.PresentationChannels.Take(read).Where(c => c > 0).Select(c => $"{c} {(c == 1 ? "channel" : "channels")}")), Explain.StatPresentations, Topics.Substreams));
         statistics.Add(Cover("SignalsAtmos", NodeValue.Boolean(a.SignalsAtmos), Explain.StatSignalsAtmos, Topics.Substreams));
         statistics.Add(Cover("Restart Headers", NodeValue.Integer(a.RestartHeaders, "headers", "header"), Explain.StatRestartHeaders, Topics.RestartHeader));
@@ -174,12 +176,12 @@ internal static class Summary
         return new StreamInfo
         {
             Nodes = [a.Stream],
-            Codec = sync.IsTrueHd ? "Dolby TrueHD" : "MLP",
+            Codec = followed.IsTrueHd ? "Dolby TrueHD" : "MLP",
             SampleRate = rate,
             Channels = channels,
             ChannelMode = mode,
             ChannelLayout = layout,
-            BitsPerSample = sync.BitDepth,
+            BitsPerSample = followed.BitDepth,
             Samples = a.Samples,
             Duration = duration,
             AverageBitrate = a.Figures?.AverageBitrate,
