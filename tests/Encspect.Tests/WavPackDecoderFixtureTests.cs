@@ -204,4 +204,39 @@ public class WavPackDecoderFixtureTests
 
         return Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
     }
+
+    // One set of 4,096 mono blocks of 4,096 samples (the ceiling of a set): the planes were copied again for every block, so the decoding took
+    // minutes where it takes seconds.
+    [Fact]
+    public void ASetOfManyBlocksIsDecodedInTimeLinearInItsSize()
+    {
+        byte[] file = DecoderWorkTests.WavPackCases.WideSet(4096, 4096);
+        var sink = new HashingSink();
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } } };
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("wide.wv", new MemoryStream(file), options);
+        timer.Stop();
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.limit");
+        Assert.Equal(4096, sink.Samples);
+        Assert.True(timer.Elapsed < TimeSpan.FromSeconds(40), $"The set took {timer.Elapsed.TotalSeconds:F1} s.");
+    }
+
+    [Fact]
+    public void TheExtraCrcFindingPointsAtTheCrcOfTheExtraBitstream()
+    {
+        (Report report, _) = Decode("wavpack/built-extra-crc-changed.wv");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.audio-crc-mismatch");
+        Node node = report.Root;
+        var names = new List<string>();
+        foreach (int index in finding.Path!)
+        {
+            node = node.Children[index];
+            names.Add(node.Name);
+        }
+
+        Assert.Equal("CRC", node.Name);
+        Assert.Equal(4, node.Length);
+        Assert.Equal("Extra Bitstream", names[^3]);
+    }
 }

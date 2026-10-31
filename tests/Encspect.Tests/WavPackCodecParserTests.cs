@@ -84,11 +84,13 @@ public class WavPackCodecParserTests
     }
 
     // The packets of a file: one for each set of blocks (from the initial block to the final), without the 32-byte headers.
-    internal static List<byte[]> Packets(string name, bool withChecksum = true)
+    internal static List<byte[]> Packets(string name, bool withChecksum = true) => Packets(WavPackBuilder.Blocks(name));
+
+    internal static List<byte[]> Packets(IEnumerable<byte[]> blocks)
     {
         var packets = new List<byte[]>();
         var current = new List<byte[]>();
-        foreach (byte[] block in WavPackBuilder.Blocks(name))
+        foreach (byte[] block in blocks)
         {
             uint flags = BinaryPrimitives.ReadUInt32LittleEndian(block.AsSpan(24));
             uint samples = BinaryPrimitives.ReadUInt32LittleEndian(block.AsSpan(20));
@@ -300,6 +302,38 @@ public class WavPackCodecParserTests
         Assert.Equal(total - BinaryPrimitives.ReadUInt32LittleEndian(packets[1]), verification.DecodedSamples);
         Assert.Equal(verification.DecodedSamples, sink.Samples);
         Assert.NotEqual(true, verification.IsVerified);
+    }
+
+    [Theory]
+    [InlineData("built-md5-digest-changed.wv", "wavpack.md5-mismatch")]
+    [InlineData("built-extra-crc-changed.wv", "wavpack.audio-crc-mismatch")]
+    public void TheFindingsOfTheDecoderPointAtANodeOfThePacketsTree(string name, string code)
+    {
+        List<byte[]> blocks = WavPackBuilder.Blocks(name);
+
+        // Matroska carries no block without samples, so the MD5 sub-block of the last block goes into the last block with audio.
+        byte[] md5 = WavPackBuilder.Parts(blocks[^1]).SingleOrDefault(p => WavPackBuilder.Function(p) == 0x26) ?? [];
+        if (md5.Length > 0)
+        {
+            byte[] audio = blocks[^2];
+            List<byte[]> parts = WavPackBuilder.Parts(audio);
+            parts.Insert(parts.Count - 1, md5);
+            blocks[^2] = WavPackBuilder.Join(audio, parts);
+        }
+
+        (Report report, _) = Decode(Container(Packets(blocks)));
+        Finding finding = Assert.Single(report.Findings, f => f.Code == code);
+        Assert.NotNull(finding.Path);
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    [Fact]
+    public void ABlockOfAnotherMajorVersionIsRefusedForThatReason()
+    {
+        (Report report, _) = Decode(Container(Packets("external-lossless-16-mono.wv"), version: 0x510));
+        Finding finding = report.Findings.First(f => f.Code == "wavpack.matroska-block-invalid");
+        Assert.Contains("major version 5", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("196,607", finding.Message, StringComparison.Ordinal);
     }
 
     [Fact]

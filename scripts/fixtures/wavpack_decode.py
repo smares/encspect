@@ -1408,6 +1408,7 @@ class Run:
             self.streams = {"index": h["index"], "samples_to_unpack": h["samples"], "offset": 0, "current_stream": 0, "failed": False,
                             "too_large": False, "planes": []}
         elif self.streams is None:
+            self.digest_incomplete = True
             return
         wpc = self.streams
         num_channels = self.channels
@@ -1440,7 +1441,8 @@ class Run:
                 crc_ok = crc == h["crc"]
             else:
                 decoded, muted_now, crc, extra_crc = unpack_pcm(block, h, c, sample_count)
-                crc_ok = crc == h["crc"]
+                # check_crc_error counts a block muted by the mute limit or by the end of its data as wrong whatever the CRC it was left with
+                crc_ok = not muted_now and crc == h["crc"]
                 has_extra = c.extra is not None and not muted_now
                 extra_ok = extra_crc == c.extra_crc if has_extra else True
         except Refused:
