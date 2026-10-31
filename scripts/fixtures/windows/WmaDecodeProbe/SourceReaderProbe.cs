@@ -8,16 +8,19 @@ public static class SourceReaderProbe
     private const uint ErrorFlag = 0x1, EndOfStreamFlag = 0x2;
     private const uint NativeChanged = 0x10, CurrentChanged = 0x20;
 
-    public static Dictionary<string, object?> Run(string path)
+    // Everything the loop writes to the record is written under Gate, so the child can save a consistent
+    // copy of what was seen when a call into Windows does not return.
+    public static readonly object Gate = new();
+
+    public static void Run(string path, Dictionary<string, object?> record)
     {
-        var record = new Dictionary<string, object?>();
         var reads = new List<Dictionary<string, object?>>();
         record["reads"] = reads;
         int hr = Native.MFStartup(Native.MfVersion, 0);
         if (hr < 0)
         {
             record["startupHresult"] = Format.Hr(hr);
-            return record;
+            return;
         }
 
         hr = Native.MFCreateSourceReaderFromURL(Path.GetFullPath(path), IntPtr.Zero, out var reader);
@@ -25,7 +28,7 @@ public static class SourceReaderProbe
         if (hr < 0 || reader == null)
         {
             record["opened"] = false;
-            return record;
+            return;
         }
 
         record["opened"] = true;
@@ -63,7 +66,7 @@ public static class SourceReaderProbe
         record["outputSet"] = set;
         if (!set)
         {
-            return record;
+            return;
         }
 
         int blockAlign = 0;
@@ -85,9 +88,19 @@ public static class SourceReaderProbe
         int errors = 0, samples = 0, calls = 0;
         bool ended = false;
         var timer = System.Diagnostics.Stopwatch.StartNew();
-        while (calls < 2_000_000)
+        long lastTimestamp = long.MinValue;
+        int sameTimestamp = 0;
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        while (calls < 200_000)
         {
             calls++;
+            lock (Gate)
+            {
+                record["calls"] = calls;
+                record["inReadSample"] = true;
+                record["readStartedAtMs"] = started.ElapsedMilliseconds;
+            }
+
             hr = reader.ReadSample(Native.FirstAudioStream, 0, out uint actual, out uint flags, out long timestamp, out var sample);
             var read = new Dictionary<string, object?>
             {
@@ -122,7 +135,28 @@ public static class SourceReaderProbe
                 Marshal.ReleaseComObject(sample);
             }
 
-            reads.Add(read);
+            lock (Gate)
+            {
+                reads.Add(read);
+                record["inReadSample"] = false;
+                record["sampleCount"] = samples;
+                record["totalSamples"] = totalFrames;
+                record["lastTimestamp"] = timestamp;
+                record["lastHresult"] = Format.Hr(hr);
+            }
+
+            if (sample != null || timestamp != 0)
+            {
+                sameTimestamp = timestamp == lastTimestamp ? sameTimestamp + 1 : 0;
+                lastTimestamp = timestamp;
+            }
+
+            if (sameTimestamp >= 1000)
+            {
+                record["stoppedBy"] = "1000 reads at the same timestamp " + timestamp;
+                break;
+            }
+
             if ((flags & (NativeChanged | CurrentChanged)) != 0)
             {
                 ReadOutputType();
@@ -143,6 +177,11 @@ public static class SourceReaderProbe
             }
         }
 
+        if (calls >= 200_000)
+        {
+            record["stoppedBy"] = "200000 ReadSample calls without the end of the stream";
+        }
+
         record["calls"] = calls;
         record["sampleCount"] = samples;
         record["errorCount"] = errors;
@@ -150,7 +189,6 @@ public static class SourceReaderProbe
         record["totalBytes"] = totalBytes;
         record["totalSamples"] = totalFrames;
         record["elapsedMs"] = timer.ElapsedMilliseconds;
-        return record;
     }
 
     private static string[] FlagNames(uint flags)

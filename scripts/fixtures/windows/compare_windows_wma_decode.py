@@ -178,6 +178,8 @@ def main():
             reader_text = f"crashed {reader.get('exitCode')}"
         elif reader.get("timedOut"):
             reader_text = "timed out"
+        elif reader.get("stalled"):
+            reader_text = "stalled"
         elif not reader.get("opened"):
             reader_text = f"not opened {reader.get('openHresult', '')}".strip()
         elif not reader.get("outputSet"):
@@ -206,6 +208,14 @@ def main():
             notes.append("; ".join("=".join(g) for g in groups.values()) + " differ")
         elif known:
             notes.append("agree")
+        if reader.get("stalled"):
+            notes.append(f"reader stalled after {reader.get('calls')} ReadSample calls, {reader.get('sampleCount')} samples, last timestamp {reader.get('lastTimestamp')}, "
+                         f"{'inside ReadSample since ' + str(reader.get('readStartedAtMs')) + ' ms' if reader.get('inReadSample') else 'between calls'}")
+        if reader.get("stoppedBy"):
+            notes.append("reader stopped by the probe: " + reader["stoppedBy"])
+        nots = record.get("directWithoutTimestamps") or {}
+        if "totalSamples" in nots and nots["totalSamples"] != direct_total:
+            notes.append(f"decoder without timestamps: {nots['totalSamples']}")
         events = reader_events(reader) if reader.get("opened") else {}
         if events and any(events.values()):
             notes.append("reader " + ", ".join(f"{v} {k}" for k, v in events.items() if v))

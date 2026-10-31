@@ -15,17 +15,17 @@ public static class DmoProbe
 
     private static Guid SubtypeOf(int tag) => new($"{tag:x8}-0000-0010-8000-00AA00389B71");
 
-    public static Dictionary<string, object?> Run(string path)
+    public static void Run(string path, Dictionary<string, object?> record, bool withTimestamps = true)
     {
-        var record = new Dictionary<string, object?>();
         var asf = AsfReader.Read(path);
         record["asf"] = asf;
+        record["withTimestamps"] = withTimestamps;
         record["objects"] = asf.Objects;
         var objects = new List<Dictionary<string, object?>>();
         record["inputs"] = objects;
         if (asf.Error != null || asf.FormatBlock.Length == 0)
         {
-            return record;
+            return;
         }
 
         var candidates = new List<Dictionary<string, object?>>();
@@ -61,7 +61,7 @@ public static class DmoProbe
 
         if (dmo == null)
         {
-            return record;
+            return;
         }
 
         var offered = new List<Dictionary<string, object?>>();
@@ -86,7 +86,7 @@ public static class DmoProbe
         if (chosen == null)
         {
             record["error"] = "the decoder offers no 16-bit PCM output type";
-            return record;
+            return;
         }
 
         var output = chosen.Value;
@@ -115,11 +115,15 @@ public static class DmoProbe
                 ["isComplete"] = obj.IsComplete,
                 ["presentationTimeMs"] = obj.PresentationTimeMs,
             };
-            objects.Add(entry);
+            lock (SourceReaderProbe.Gate)
+            {
+                objects.Add(entry);
+                record["inObject"] = obj.Index;
+            }
             var input = new NativeMediaBuffer((uint)obj.Data.Length, obj.Data);
             buffers.Add(input);
-            uint flags = 0x1 | 0x2;
-            long time = obj.PresentationTimeMs * 10000;
+            uint flags = withTimestamps ? 0x1u | 0x2u : 0x1u;
+            long time = withTimestamps ? obj.PresentationTimeMs * 10000 : 0;
             int hr = dmo.ProcessInput(0, input, flags, time, 0);
             entry["processInputHresult"] = Format.Hr(hr);
             var outputs = new List<Dictionary<string, object?>>();
@@ -152,7 +156,6 @@ public static class DmoProbe
             b.Dispose();
         }
 
-        return record;
     }
 
     // Calls ProcessOutput until the decoder has nothing more for what it was given.

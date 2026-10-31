@@ -198,6 +198,13 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 - What the writer says about its settings is added to that evidence, as its statement and not as something read from the audio: the Codec List Object's name and description ("Windows Media Audio 9.2", "VBR Quality 75, 44 kHz, stereo 1-pass VBR") and the IsVBR attribute. The stream's `isVbr` follows IsVBR. Media Foundation's files carry IsVBR but no Codec List.
 - Not used as evidence: `WMFSDKNeeded` and `DeviceConformanceTemplate`, which the SDK writes with fixed values.
 
+## Reference for sample counts
+
+- **Microsoft's decoder is the reference** for the number of samples and the duration of a WMA stream: the figure of Media Foundation's Source Reader where it gives one, else that of the WMA decoder DMO fed the media objects directly. Both are recorded on a Windows runner by `.github/workflows/windows-wma-decode.yml` (see "WMA decoding by Microsoft's decoder" in [development.md](../development.md)).
+- **FFmpeg is the second cross-check.** Where its count differs from Microsoft's, the difference is listed per file in the run's `comparison.txt` and in the notes of the tests that pin the analyzer's counts, not hidden by agreement with the analyzer.
+- Damaged-input behavior (refused buffers, dropped runs, cut files) is derived from black-box runs of Microsoft's decoder, not from FFmpeg's.
+- The analyzer's counts have not been changed to the reference yet: the runs show where they differ (see the development notes).
+
 ## Observed in Microsoft's files
 
 - A frame that begins in one superframe and ends in the next may be followed by bits up to the bit offset the next superframe states: zero bits, or more coded data. A decoder skips them; they are info findings (`wma.frame-stuffing`, `wma.frame-filler`), and the statistics count them. Each finding points to the frame it describes, in the superframe its message names.

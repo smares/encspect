@@ -24,9 +24,9 @@ public static class Program
 
     public static int Main(string[] args)
     {
-        if (args.Length >= 4 && args[0] == "--child")
+        if (args.Length >= 5 && args[0] == "--child")
         {
-            return Child(args[1], args[2], args[3]);
+            return Child(args[1], args[2], args[3], int.Parse(args[4]));
         }
 
         string? outDir = null, list = null;
@@ -104,6 +104,7 @@ public static class Program
                 ["sha256"] = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant(),
                 ["sourceReader"] = RunChild("sr", file, timeout, modules),
                 ["direct"] = RunChild("dmo", file, timeout, modules),
+                ["directWithoutTimestamps"] = RunChild("dmo-nots", file, timeout, modules),
             };
             var direct = record["direct"]?["decoder"];
             if (direct != null)
@@ -134,6 +135,11 @@ public static class Program
             if (node["crashed"] != null)
             {
                 return "crashed " + node["exitCode"];
+            }
+
+            if (node["stalled"] != null)
+            {
+                return $"stalled after {node["calls"]} reads (last timestamp {node["lastTimestamp"]}, in ReadSample {node["inReadSample"]})";
             }
 
             if (node["timedOut"] != null)
@@ -169,7 +175,7 @@ public static class Program
             psi.ArgumentList.Add(typeof(Program).Assembly.Location);
         }
 
-        foreach (var a in new[] { "--child", mode, file, json })
+        foreach (var a in new[] { "--child", mode, file, json, Math.Max(5, timeoutSeconds - 10).ToString() })
         {
             psi.ArgumentList.Add(a);
         }
@@ -223,20 +229,63 @@ public static class Program
         };
     }
 
-    private static int Child(string mode, string file, string jsonPath)
+    // Runs the probe on a thread of its own and waits for the budget: a call into Windows that does not
+    // return leaves a record of what was seen up to then (calls, last timestamp, whether it is inside
+    // ReadSample and since when) instead of a bare time-out.
+    private static int Child(string mode, string file, string jsonPath, int budgetSeconds)
     {
-        Dictionary<string, object?> record;
-        try
+        var record = new Dictionary<string, object?>();
+        var worker = new Thread(() =>
         {
-            record = mode == "sr" ? SourceReaderProbe.Run(file) : DmoProbe.Run(file);
-        }
-        catch (Exception e)
+            try
+            {
+                if (mode == "sr")
+                {
+                    SourceReaderProbe.Run(file, record);
+                }
+                else
+                {
+                    DmoProbe.Run(file, record, withTimestamps: mode != "dmo-nots");
+                }
+            }
+            catch (Exception e)
+            {
+                lock (SourceReaderProbe.Gate)
+                {
+                    record["exception"] = e.GetType().Name + ": " + e.Message;
+                    record["trace"] = e.ToString();
+                }
+            }
+        }) { IsBackground = true };
+        worker.Start();
+        var waited = Stopwatch.StartNew();
+        bool finished = worker.Join(budgetSeconds * 1000);
+        string json;
+        lock (SourceReaderProbe.Gate)
         {
-            record = new Dictionary<string, object?> { ["exception"] = e.GetType().Name + ": " + e.Message, ["trace"] = e.ToString() };
+            if (!finished)
+            {
+                record["stalled"] = true;
+                record["stalledAfterMs"] = waited.ElapsedMilliseconds;
+            }
+
+            record["modules"] = Versions.LoadedModules();
+            json = "";
+            for (int attempt = 0; attempt < 5 && json.Length == 0; attempt++)
+            {
+                try
+                {
+                    json = JsonSerializer.Serialize(record, Options);
+                }
+                catch (InvalidOperationException)
+                {
+                    // The stalled worker changed a collection while it was written; try again.
+                    Thread.Sleep(50);
+                }
+            }
         }
 
-        record["modules"] = Versions.LoadedModules();
-        File.WriteAllText(jsonPath, JsonSerializer.Serialize(record, Options), new UTF8Encoding(false));
+        File.WriteAllText(jsonPath, json, new UTF8Encoding(false));
         // The decoders and Media Foundation may keep threads alive; the record is written, so leave now.
         Environment.Exit(0);
         return 0;
