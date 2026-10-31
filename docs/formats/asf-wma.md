@@ -1,8 +1,8 @@
 # ASF and WMA
 
-The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs, all of them at header level: the frames of versions 1 and 2, Professional, Lossless and Voice are not read yet.
+The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs: versions 1 and 2 down to the end of every frame's coefficients, Professional, Lossless and Voice at header level.
 
-Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmalosslessdec.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely; clean-room rewrites are to bring them back (see [the plan](../PLAN.md), phase 2).
+Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmalosslessdec.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely. The reader of versions 1 and 2 is back as a clean-room rewrite from [the description](../design/wma-standard-format.md); Professional and Voice are still to come (see [the plan](../PLAN.md), phase 2).
 
 ## ASF: what is read
 
@@ -54,21 +54,54 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 - **Broadcast files:** a Data Object of size 0 runs to the end of the file, so what is at its end is the Data Object's, not a tag.
 - The packets are read twice: the first pass keeps a compact record per packet and payload (the first 65,536 packets are detailed, the rest counted), and builds nodes on demand; the second pass puts media objects together as they are needed.
 
-## WMA versions 1 and 2, Professional and Voice
+## WMA versions 1 and 2
 
-Format tags 0x0160 and 0x0161 (the codec "wma"), 0x0162 ("wma-pro") and 0x000A ("wma-voice"). Header level until the clean-room rewrites, as Lossless is:
+Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is described in [wma-standard-format.md](../design/wma-standard-format.md); no audio is rebuilt.
+
+### What is read
+
+- **Codec data:** the encode options (exponent coding, bit reservoir, variable block lengths, block size count code), Samples Per Block and Super Block Align of version 2, each at its bytes. Findings for a size other than 4 (version 1) or 10 bytes (version 2) and for the options 0x000D that turn variable block lengths off.
+- **Parameters:** the frame length (512, 1,024 or 2,048 samples), the block sizes, the width of the bit offset, noise substitution and its high bands, the exponent bands and the codebook pair, derived from the sampling rate, the channels, the bitrate and the options.
+- **Superframes:** one per media object. With the bit reservoir the header (index, frame count, bit offset), the frame that spans from the superframe before, the frames that begin here, and the reservoir left; without it one frame and its padding.
+- **Memory:** the bytes of the first 4 MiB of superframes are kept to list the blocks of their frames when asked; the records, statistics and series cover every superframe up to the limit.
+- **Frames and blocks:** block sizes, mid/side flag, coded flags, total gain, noise substitution flags and levels, exponents sent, the exponents (scale factor codes or line spectral pairs, walked to the end of the block) and the run-level coefficients, each field at its bits. A frame has no length field, so reading the syntax is the only way to find where it ends.
+
+### What is reported
+
+- **Statistics:** superframes, frames, samples, duration, average bitrate, the smallest and largest frame, the reservoir figures, the filler between a spanning frame and the bit offset, and counts over all blocks (sizes, mid/side, noise-substituted, reusing exponents, gains, non-zero and escape-coded coefficients).
+- **Series:** the bitrate of each frame, the bitrate over time, and with the bit reservoir the bytes each superframe leaves.
+- **Samples and duration:** the valid frames less one, times the frame length. For every fixture this equals the samples ffmpeg decodes.
+- **Findings:** media objects shorter or longer than the block alignment, a frame count that leaves no frame to end in a superframe, a bit offset past the superframe, a reservoir over 32,768 bytes, invalid frames (`wma.frame-invalid`, with the rule that broke), stuffing and filler between a spanning frame and the bit offset (info), the bits left in the reservoir at the end (info), configurations the decoders do not open (`wma.format-unsupported`), more than 262,144 media objects (`wma.records-limit`) and, past the first 4 MiB of superframes, frames that list no blocks (`wma.blocks-undetailed`, info).
+- **Encrypted media objects** are not read; the stream is shown as "frames not read: encrypted".
+
+### Channel layout
+
+- One channel is mono and two are stereo (left and right); other counts are not decoded.
+
+### Encoder detection
+
+- ffmpeg's wmav1 and wmav2 encoders pad each superframe with 'N' bytes after the frame, with no bit reservoir and no variable block lengths; with two or more padded superframes the encoder is named with high confidence, with one with medium.
+- Microsoft's encoders: version 2, a Samples Per Block of 17 frames, the bit reservoir and variable block lengths name "Microsoft's Windows Media Audio encoder" with medium confidence.
+
+### What is not covered
+
+- The values of exponents, coefficients and noise levels, and any reconstruction of audio.
+- Version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above, where the format description leaves the band lists open (no file at hand).
+- FFmpeg's handling of a frame that spans a superframe inside a frame, short media objects and partial end checks differs from this analysis in places; the description lists each.
+
+## WMA Professional and Voice
+
+Format tags 0x0162 ("wma-pro") and 0x000A ("wma-voice"). Header level until the clean-room rewrites, as Lossless is:
 
 - The codec-specific data (the type-specific data after the WAVEFORMATEX):
-  - **Version 2** (0x0161): the three fields of the ASF specification's section 11.1.1 are shown as plain values: Samples Per Block, Encode Options (as a 16-bit value, since the specification gives its bits no meaning) and Super Block Align. Bytes after them are an Extra Data node.
-  - **Version 1** (0x0160): the specification has no layout for it, so its bytes stay the container's bytes.
   - **Professional:** the 18 bytes are shown the way Lossless's are (below).
   - **Voice:** the bytes stay the container's bytes; its channel mask is read from them (see "Channel layout").
 - The packets are counted, with their total, smallest and largest size, the block alignment, the nominal bitrate the container states and the average bitrate.
 - The length comes from the container (the play duration less the preroll), and the stream's samples are that length at the sample rate.
 - The stream's average bitrate is the bytes of the packets over that length. The nominal bitrate (the WAVEFORMATEX's nAvgBytesPerSec) is shown apart in the statistics, since it can differ much for a variable bitrate stream. Where the stream starts with a preroll, the packets cover the preroll as well and the figure is a little high. A stream with encrypted samples counts no packets and reports the nominal bitrate.
 - The channel mode is Mono for one channel and Stereo for two, and has no value for other counts.
-- One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2), `wma.pro-not-read` and `wma.voice-not-read`.
-- The encoder and writer are named from the file's metadata and layout only (see below); a stream's frames name no encoder.
+- One info finding per stream says the frames are not read: `wma.pro-not-read` and `wma.voice-not-read`.
+- The encoder and writer are named from the file's metadata and layout only (see below).
 - A stream whose samples are encrypted is shown as "frames not read: encrypted", with no finding of its own.
 
 
@@ -90,8 +123,8 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ### Encoder
 
-- The frames of versions 1 and 2, Professional and Voice are not read, so no trait of the stream names an encoder. Before 2026-10-29 the analyzer named ffmpeg's wmav1 and wmav2 encoders from the 'N' padding of their superframes (high) and Microsoft's from the codec data of version 2 (medium); both went with the frame-level readers and may return with the rewrites.
-- A claim of the encoder role names the encoder (low) unless it names FFmpeg: a `Lavc…` ID in an attribute counts only where the stream itself shows ffmpeg's, which no stream does now, so such a claim is not listed.
+- **Versions 1 and 2:** the stream's own traits name the encoder, ffmpeg's wmav1 and wmav2 from the 'N' padding of their superframes (high with two or more padded superframes) and Microsoft's from the codec data of version 2 (medium); see above.
+- A claim of the encoder role names the encoder (low) unless it names FFmpeg: a `Lavc…` ID in an attribute counts only where the stream itself shows ffmpeg's, as the padding of ffmpeg's encoders does.
 - Professional, Lossless and Voice have no trait of their own.
 
 ### Writer
@@ -110,11 +143,16 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ## Observed in Microsoft's files
 
+- A frame that begins in one superframe and ends in the next may be followed by bits up to the bit offset the next superframe states: zero bits, or more coded data. A decoder skips them; they are info findings (`wma.frame-stuffing`, `wma.frame-filler`), and the statistics count them. Each finding points to the frame it describes, in the superframe its message names.
+  - In the 15 Windows Media Audio 9.2 fixtures (wmvcore 12.0.26100) seven have such bits: all seven have zero bits, and five of them also bits that are not zero. Eight have none: `-22k-20-sdk`, `-22k-32`, `-44k-32-sdk`, `-44k-48-sdk`, and the variable bitrate files at quality 10, 75 (with and without tags) and 90.
+  - The analyzer does not use them to name the encoder or the writer.
+- Every file ends with bits in the reservoir that no frame uses (`wma.reservoir-at-end`), and they are not all zero. The files at quality 25 and 90 end with a superframe inside a frame.
+- The superframe's frame count field counts the frames that begin in the superframe, the last one included where it goes on in the next. The first superframe of a stream, and the one after an error, has no frame in progress, so the bits before its bit offset belong to a frame that is lost and one frame fewer than the field says is read.
 - The Simple Index Object of a file whose index is empty states an interval of 0, which is no finding.
 
 ## Not yet covered
 
-- The frames of WMA versions 1 and 2, Professional and Voice, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2), and those of WMA Lossless (phase 3, with the checksum-verifying decoders).
+- The frames of WMA Professional and Voice, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2), and those of WMA Lossless (phase 3, with the checksum-verifying decoders).
 - The audio of any codec (no decoder is built).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 - The contents of script commands and markers beyond their fields (planned: later, a separate item).

@@ -14,7 +14,11 @@ For every manifest in tests/fixtures/asf:
   for its provenance) are held to their manifests: where ffmpeg must print the errors the manifest
   names (a configuration it rejects, a music superframe, a frame type code or a sample count it
   refuses), and the samples and frames it decodes. The analyzer reads Voice at header level, so its
-  report is not compared with the decoder's samples.
+  report is not compared with the decoder's samples. For Windows Media Audio versions 1 and 2, whose
+  frames the analyzer reads, the decoded samples per channel equal the golden report's, and its
+  frame statistics are consistent with them (the valid frames less the first, times the frame
+  length); the hand-built damaged streams (writer-stamp-*, fragments-in-two-streams) must make
+  ffmpeg print the messages the superframes' damage causes and decode no samples.
 - MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
@@ -39,8 +43,11 @@ Disagreements fail the run (exit status 1).
 
 The second form rewrites the ffmpeg pins (superframes and samples) of the voice-* manifests from the installed tools; the first checks them.
 
-The frames of WMA versions 1 and 2, Professional and Voice are not read by the analyzer (header level
-until clean-room rewrites), so nothing here compares the analyzer's frame boundaries with a decoder's.
+What no tool at hand gives: the frame boundaries inside a WMA superframe. ffmpeg's decoder does not
+expose them and no other decoder is available, so they rest on the encoder's own padding (ffmpeg's
+fills each superframe with 'N' bytes, which the encoder trait uses) and, for Microsoft's files, on the
+decoder reading every superframe without error and outputting exactly the analyzer's samples, which
+count the frames the analyzer read. The frames of Professional and Voice are not read by the analyzer.
 """
 
 import json
@@ -91,6 +98,52 @@ def decode(path, fmt="s16le", level="error"):
         # The raw PCM muxer warns about timestamps of the decoder's packets for some Lossless files; the samples are what is checked.
         lines += [l for l in result.stderr.decode("utf-8", "replace").splitlines() if "non monotonically increasing dts" not in l]
     return code, pcm, "\n".join(lines).strip()
+
+
+def report_stream(report):
+    """The Windows Media Audio version 1 or 2 stream nodes of a golden report."""
+    return [n for n in nodes_of(report["root"]) if n["name"] in ("Windows Media Audio 1", "Windows Media Audio 2")] if report else []
+
+
+def statistic_of(stream_node, name):
+    stats = next((c for c in stream_node["children"] if c["name"] == "Statistics"), None)
+    return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
+
+
+def check_standard_frames(path, samples, problems):
+    """For a stream of Windows Media Audio version 1 or 2 the analyzer reads the frames: the samples ffmpeg decodes (per channel) equal the
+    golden report's, and the frame statistics give them: the valid frames less the first, times the frame length."""
+    report = golden_report(path)
+    streams = report_stream(report)
+    if not streams or len(report["streams"]) != 1:
+        return
+    analyzed = report["streams"][0]["samples"]
+    if analyzed != samples:
+        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    frames, invalid, length = (statistic_of(streams[0], n) for n in ("Frames", "Invalid Frames", "Frame Length"))
+    if frames is not None and not invalid and length and (frames - 1) * length != samples:
+        problems.append(f"the golden report has {frames} frames of {length} samples, ffmpeg decodes {samples} samples")
+
+
+# What ffmpeg's decoder says of the hand-built Windows Media Audio streams that are damaged on purpose, in the order of the superframes (the media
+# objects are constant bytes, not encoder output), and the samples it decodes: none. The analyzer's golden report has the same: a superframe inside a
+# frame, an invalid frame, and a bit offset past the superframe.
+DAMAGED_WMA = {
+    "writer-stamp-last": ["nb_frames is 0 bits left 792", "overflow (117 > 116) in spectral RLE, ignoring"],
+    "writer-stamp-not-last": ["nb_frames is 0 bits left 792", "overflow (117 > 116) in spectral RLE, ignoring"],
+    "fragments-in-two-streams": ["nb_frames is 0 bits left 792", "overflow (117 > 116) in spectral RLE, ignoring", "Invalid last frame bit offset 1092 > buf size 779 (100)"],
+}
+
+
+def check_damaged_wma(name, path, problems):
+    code, pcm, errors = decode(path, level="warning")
+    for message in DAMAGED_WMA[name]:
+        if message not in errors:
+            problems.append(f"ffmpeg does not report {message!r}; it says {errors.splitlines()[:3]}")
+    report = golden_report(path)
+    analyzed = sum(s["samples"] for s in report["streams"] if s["codec"].startswith("Windows Media Audio ")) if report else None
+    if pcm or analyzed != 0:
+        problems.append(f"ffmpeg decodes {len(pcm) // 4} samples, the analyzer's golden report has {analyzed}")
 
 
 def measure_voice(path, mode):
@@ -212,6 +265,8 @@ def check_hand_built(name, manifest, path, problems):
     check_protection(name, manifest, path, problems)
     if "voice" in manifest or crosscheck.get("decode"):
         check_voice_decode(name, manifest, path, problems)
+    if name in DAMAGED_WMA:
+        check_damaged_wma(name, path, problems)
     if not crosscheck.get("ffprobe"):
         skip(name, "ffprobe" if crosscheck.get("decode") else "ffprobe and ffmpeg", crosscheck.get("reason", "the fixture is damaged on purpose"))
         return
@@ -246,6 +301,16 @@ def check_hand_built(name, manifest, path, problems):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")
+    if audio and len(audio) == 1 and audio[0]["tag"] in (0x0160, 0x0161):
+        # Only a fixture derived from ffmpeg's encoder holds real superframes; the others carry placeholder media objects.
+        if "derived" not in manifest:
+            skip(name, "ffmpeg decoding", "the media objects are not Windows Media Audio superframes")
+        else:
+            code, pcm, errors = decode(path)
+            if code != 0 or errors:
+                problems.append(f"ffmpeg decoding: {errors or code}")
+            else:
+                check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
     if audio and all(s["tag"] == 0x000A for s in audio):
         check_mediainfo(name, path, data["streams"][0], problems, golden_report(path), count_samples=crosscheck.get("decode") == "ok")
 
@@ -270,6 +335,8 @@ def check_external_ffmpeg(name, manifest, path, problems, with_mediainfo=True):
         problems.append(f"ffmpeg decoding: {errors or code}")
     if samples != expected["decoded_samples"]:
         problems.append(f"ffmpeg decodes {samples} samples, the manifest {expected['decoded_samples']}")
+    if expected["codec"] in ("wmav1", "wmav2"):
+        check_standard_frames(path, samples, problems)
     if with_mediainfo:
         check_mediainfo(name, path, stream, problems, golden_report(path))
 

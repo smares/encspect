@@ -344,11 +344,59 @@
                               "name": "Encode Options",
                               "value": 15,
                               "offset": 234,
-                              "length": 2
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Uses Exponent VLC",
+                                  "value": true,
+                                  "offset": 234,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Bit Reservoir",
+                                  "value": true,
+                                  "offset": 234,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Variable Block Length",
+                                  "value": true,
+                                  "offset": 234,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Block Size Count Code",
+                                  "value": 1,
+                                  "offset": 234,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Other Options",
+                                  "value": 0,
+                                  "offset": 234,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 11,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
                             },
                             {
                               "name": "Super Block Align",
                               "value": 0,
+                              "unit": "bytes",
                               "offset": 236,
                               "length": 4
                             }
@@ -523,11 +571,59 @@
                               "name": "Encode Options",
                               "value": 15,
                               "offset": 340,
-                              "length": 2
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Uses Exponent VLC",
+                                  "value": true,
+                                  "offset": 340,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Bit Reservoir",
+                                  "value": true,
+                                  "offset": 340,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Uses Variable Block Length",
+                                  "value": true,
+                                  "offset": 340,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Block Size Count Code",
+                                  "value": 1,
+                                  "offset": 340,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2,
+                                  "bitOrder": "leastSignificantFirst"
+                                },
+                                {
+                                  "name": "Other Options",
+                                  "value": 0,
+                                  "offset": 340,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 11,
+                                  "bitOrder": "leastSignificantFirst"
+                                }
+                              ]
                             },
                             {
                               "name": "Super Block Align",
                               "value": 0,
+                              "unit": "bytes",
                               "offset": 342,
                               "length": 4
                             }
@@ -2080,27 +2176,73 @@
                 {
                   "name": "Windows Media Audio 2",
                   "kind": "Stream",
-                  "value": "frames not read",
+                  "value": "0 frames",
                   "offset": 392,
                   "length": 1586,
                   "children": [
                     {
-                      "name": "Statistics",
-                      "kind": "Statistics",
-                      "value": "2 packets",
+                      "name": "Encoder",
+                      "value": "Microsoft's Windows Media Audio encoder",
                       "offset": 392,
                       "length": 1586,
                       "children": [
                         {
-                          "name": "Packets",
+                          "name": "Confidence",
+                          "value": "Medium",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "The codec data states 34816 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
+                          "offset": 392,
+                          "length": 1586
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "value": "1 frame, 0.000 s",
+                      "offset": 392,
+                      "length": 1586,
+                      "children": [
+                        {
+                          "name": "Superframes",
                           "value": 2,
                           "offset": 392,
                           "length": 1586
                         },
                         {
-                          "name": "Packet Bytes",
-                          "value": 200,
-                          "unit": "bytes",
+                          "name": "Frames",
+                          "value": 1,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Invalid Frames",
+                          "value": 1,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Frame Length",
+                          "value": 2048,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0,
+                          "unit": "s",
                           "offset": 392,
                           "length": 1586
                         },
@@ -2112,39 +2254,306 @@
                           "length": 1586
                         },
                         {
-                          "name": "Smallest Packet",
-                          "value": 100,
-                          "unit": "bytes",
+                          "name": "Uses Bit Reservoir",
+                          "value": true,
                           "offset": 392,
                           "length": 1586
                         },
                         {
-                          "name": "Largest Packet",
-                          "value": 100,
-                          "unit": "bytes",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Duration",
+                          "name": "Frames per Superframe",
                           "value": 1,
-                          "unit": "s",
                           "offset": 392,
                           "length": 1586
                         },
                         {
-                          "name": "Nominal Bitrate",
-                          "value": 128,
-                          "unit": "kbps",
+                          "name": "Frames Spanning Superframes",
+                          "value": 1,
                           "offset": 392,
                           "length": 1586
                         },
                         {
-                          "name": "Average Bitrate",
-                          "value": 1.6,
-                          "unit": "kbps",
+                          "name": "Largest Bit Reservoir",
+                          "value": 99,
+                          "unit": "bytes",
                           "offset": 392,
                           "length": 1586
+                        },
+                        {
+                          "name": "Average Bit Reservoir",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Superframes Inside a Frame",
+                          "value": 1,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Exponent Coding",
+                          "value": "scale factor codes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Uses Variable Block Length",
+                          "value": true,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Uses Noise Substitution",
+                          "value": false,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks",
+                          "value": 1,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Block Sizes",
+                          "value": 1,
+                          "unit": "sizes",
+                          "offset": 392,
+                          "length": 1586,
+                          "children": [
+                            {
+                              "name": "128 samples",
+                              "value": "1 block (100.0%)",
+                              "offset": 392,
+                              "length": 1586
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Mid/Side Blocks",
+                          "value": "0 blocks (0.0%)",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks without Coded Channels",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks Reusing Exponents",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Smallest Total Gain",
+                          "value": 9,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Largest Total Gain",
+                          "value": 9,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Non-Zero Coefficients",
+                          "value": 59,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Escape-Coded Coefficients",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Superframes",
+                      "value": "2 superframes",
+                      "offset": 392,
+                      "length": 1586,
+                      "children": [
+                        {
+                          "name": "Superframe",
+                          "kind": "Frame",
+                          "value": "middle of a frame",
+                          "offset": 473,
+                          "length": 100,
+                          "children": [
+                            {
+                              "name": "Superframe Index",
+                              "value": 1,
+                              "offset": 473,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Frames in Superframe",
+                              "value": 1,
+                              "offset": 473,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Frame Middle",
+                              "value": 792,
+                              "unit": "bits",
+                              "offset": 474,
+                              "length": 99
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Superframe",
+                          "kind": "Frame",
+                          "value": "1 frame",
+                          "offset": 1554,
+                          "length": 100,
+                          "children": [
+                            {
+                              "name": "Superframe Index",
+                              "value": 1,
+                              "offset": 1554,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Frames in Superframe",
+                              "value": 1,
+                              "offset": 1554,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Last Frame Bit Offset",
+                              "value": 546,
+                              "unit": "bits",
+                              "offset": 1555,
+                              "length": 2,
+                              "bitOffset": 0,
+                              "bitLength": 13
+                            },
+                            {
+                              "name": "Frame End",
+                              "value": 546,
+                              "unit": "bits",
+                              "offset": 1556,
+                              "length": 69,
+                              "bitOffset": 5,
+                              "bitLength": 546
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames",
+                      "value": "1 frame",
+                      "offset": 392,
+                      "length": 1586,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "kind": "Frame",
+                          "value": "invalid: coefficients run past the end of the block",
+                          "offset": 474,
+                          "length": 35,
+                          "children": [
+                            {
+                              "name": "Block",
+                              "value": "128 samples, invalid",
+                              "offset": 474,
+                              "length": 35,
+                              "children": [
+                                {
+                                  "name": "Previous Block Size",
+                                  "value": 2048,
+                                  "unit": "samples",
+                                  "offset": 474,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Block Size",
+                                  "value": 128,
+                                  "unit": "samples",
+                                  "offset": 474,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Next Block Size",
+                                  "value": 512,
+                                  "unit": "samples",
+                                  "offset": 474,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Mid/Side Stereo",
+                                  "value": false,
+                                  "offset": 475,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Channel 1 Coded",
+                                  "value": false,
+                                  "offset": 475,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Channel 2 Coded",
+                                  "value": true,
+                                  "offset": 475,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Total Gain",
+                                  "value": 9,
+                                  "offset": 475,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Exponents Sent",
+                                  "value": true,
+                                  "offset": 476,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Exponents (channel 2)",
+                                  "value": "scale factor codes",
+                                  "offset": 476,
+                                  "length": 4,
+                                  "bitOffset": 4,
+                                  "bitLength": 22
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -2153,73 +2562,77 @@
                 {
                   "name": "Windows Media Audio 2",
                   "kind": "Stream",
-                  "value": "frames not read",
+                  "value": "0 frames",
                   "offset": 392,
                   "length": 1586,
                   "children": [
                     {
-                      "name": "Statistics",
-                      "kind": "Statistics",
-                      "value": "1 packet",
+                      "name": "Encoder",
+                      "value": "Microsoft's Windows Media Audio encoder",
                       "offset": 392,
                       "length": 1586,
                       "children": [
                         {
-                          "name": "Packets",
-                          "value": 1,
+                          "name": "Confidence",
+                          "value": "Medium",
                           "offset": 392,
                           "length": 1586
                         },
                         {
-                          "name": "Packet Bytes",
-                          "value": 100,
-                          "unit": "bytes",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Block Alignment",
-                          "value": 100,
-                          "unit": "bytes",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Smallest Packet",
-                          "value": 100,
-                          "unit": "bytes",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Largest Packet",
-                          "value": 100,
-                          "unit": "bytes",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Duration",
-                          "value": 1,
-                          "unit": "s",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Nominal Bitrate",
-                          "value": 128,
-                          "unit": "kbps",
-                          "offset": 392,
-                          "length": 1586
-                        },
-                        {
-                          "name": "Average Bitrate",
-                          "value": 0.8,
-                          "unit": "kbps",
+                          "name": "Evidence",
+                          "value": "The codec data states 34816 samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them",
                           "offset": 392,
                           "length": 1586
                         }
                       ]
+                    },
+                    {
+                      "name": "Superframes",
+                      "value": "1 superframe",
+                      "offset": 392,
+                      "length": 1586,
+                      "children": [
+                        {
+                          "name": "Superframe",
+                          "kind": "Frame",
+                          "value": "0 frames",
+                          "offset": 590,
+                          "length": 100,
+                          "children": [
+                            {
+                              "name": "Superframe Index",
+                              "value": 2,
+                              "offset": 590,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Frames in Superframe",
+                              "value": 2,
+                              "offset": 590,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Last Frame Bit Offset",
+                              "value": 1092,
+                              "unit": "bits",
+                              "offset": 591,
+                              "length": 2,
+                              "bitOffset": 0,
+                              "bitLength": 13
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames",
+                      "value": "0 frames",
+                      "offset": 392,
+                      "length": 1586
                     }
                   ]
                 }
@@ -2247,12 +2660,38 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 44100,
-        "duration": 1,
-        "averageBitrate": 1.6,
+        "samples": 0,
+        "duration": 0,
         "isVbr": false,
         "playbackGroup": 1,
-        "series": []
+        "encoder": "Microsoft's Windows Media Audio encoder",
+        "encoderConfidence": "Medium",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              474
+            ],
+            "values": [
+              0
+            ]
+          },
+          {
+            "name": "Bit Reservoir",
+            "unit": "bytes",
+            "axis": "frameOffset",
+            "x": [
+              473,
+              1554
+            ],
+            "values": [
+              99,
+              0
+            ]
+          }
+        ]
       },
       {
         "nodes": [
@@ -2271,41 +2710,16 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 44100,
-        "duration": 1,
-        "averageBitrate": 0.8,
+        "samples": 0,
+        "duration": 0,
         "isVbr": false,
         "playbackGroup": 1,
+        "encoder": "Microsoft's Windows Media Audio encoder",
+        "encoderConfidence": "Medium",
         "series": []
       }
     ],
     "findings": [
-      {
-        "severity": "Info",
-        "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
-        "offset": 392,
-        "length": 1586,
-        "path": [
-          0,
-          1,
-          7
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "wma.standard-not-read",
-        "message": "The frames of Windows Media Audio versions 1 and 2 are not read: the stream is described by what the container and the type-specific data state, and its packets are counted.",
-        "offset": 392,
-        "length": 1586,
-        "path": [
-          0,
-          1,
-          8
-        ],
-        "count": 1
-      },
       {
         "severity": "Warning",
         "code": "asf.fragment-order",
@@ -2329,6 +2743,36 @@
           1
         ],
         "count": 2
+      },
+      {
+        "severity": "Warning",
+        "code": "wma.frame-invalid",
+        "message": "A frame is invalid: coefficients run past the end of the block; a decoder drops the superframe and its bit reservoir. The first is at 0x612.",
+        "offset": 474,
+        "length": 35,
+        "path": [
+          0,
+          1,
+          7,
+          3,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "wma.bit-offset",
+        "message": "A superframe gives a last frame bit offset past its end; a decoder rejects it. The first is at 0x24E.",
+        "offset": 590,
+        "length": 100,
+        "path": [
+          0,
+          1,
+          8,
+          1,
+          0
+        ],
+        "count": 1
       }
     ]
   }
