@@ -256,17 +256,17 @@
  },
  "findings": [
   {
-   "code": "wma.voice-not-read",
-   "contains": "Windows Media Audio Voice are not read"
+   "code": "wma.voice-frame-type-overlap",
+   "contains": "four frame types in group 0"
+  },
+  {
+   "code": "wma.voice-frame-type-unreachable",
+   "contains": "type 3"
   }
  ],
  "crosscheck": {
   "ffprobe": true,
-  "decode": "ok",
-  "ffmpeg": {
-   "samples": 5760,
-   "superframes": 12
-  }
+  "decode": "ok"
  },
  "voice": {
   "superframes": [

@@ -8,6 +8,8 @@ internal static class Topics
     public const string WmaPro = "wma-pro";
     public const string WmaLossless = "wma-lossless";
     public const string WmaVoice = "wma-voice";
+    public const string WmaVoiceSuperframes = "wma-voice-superframes";
+    public const string WmaVoiceFrames = "wma-voice-frames";
     public const string ChannelLayouts = "channel-layouts";
     public const string WmaPackets = "wma-packets";
     public const string WmaSubframes = "wma-subframes";

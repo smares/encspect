@@ -208,9 +208,11 @@ class ChangesTests(unittest.TestCase):
         self.assertFalse(manifest & {"mpeg-crosscheck", "dts-crosscheck", "flac-crosscheck"})
 
     def test_the_wma_voice_scripts_manifests_and_samples_belong_to_the_asf_job(self):
-        for path in ("scripts/fixtures/check_wmavoice_samples.py", "scripts/fixtures/wma_tables.py", "scripts/fixtures/crosscheck_asf_fixtures.py"):
+        for path in ("scripts/fixtures/voice_model.py", "scripts/fixtures/make_voice_fixtures.py", "scripts/fixtures/check_wmavoice_samples.py",
+                     "scripts/fixtures/wma_tables.py", "scripts/fixtures/crosscheck_asf_fixtures.py"):
             self.assertIn("asf-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/check_wmavoice_samples.py"), {"fixtures", "asf-crosscheck"})
+        self.assertEqual(run("scripts/fixtures/voice_model.py"), {"fixtures", "asf-crosscheck"})
         manifest = run("tests/conformance/wmavoice-samples.json")
         self.assertIn("asf-crosscheck", manifest)
         self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "ac3-crosscheck", "dts-crosscheck"})
