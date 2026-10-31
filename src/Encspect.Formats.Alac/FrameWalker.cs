@@ -161,13 +161,20 @@ internal static class FrameWalker
             var element = new ElementRecord { Tag = (byte)tag, Start = start, AreReservedBitsZero = true };
             WalkFault fault = tag switch
             {
-                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, frameSamples, channels < cookie.Channels, ref element, store, cancellation),
+                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, frameSamples, channels + (tag == ElementTags.ChannelPair ? 2 : 1) <= cookie.Channels, ref element, store, cancellation),
                 ElementTags.DataStream => DataStream(data, total, ref position, ref element),
                 ElementTags.Fill => Fill(data, total, ref position, ref element),
                 ElementTags.End => WalkFault.None,
                 _ => WalkFault.UnknownElement,
             };
             element.End = fault == WalkFault.UnknownElement ? start + 3 : Math.Min(position, total);
+            if (fault == WalkFault.Truncated && channelsBefore >= cookie.Channels && total - start < 8)
+            {
+                // Padding to the byte boundary after the last channel: the reference decoder stops there and never reads a tag from it.
+                result.IsEndMissing = true;
+                break;
+            }
+
             if (element.IsHeaderRead)
             {
                 if (!element.AreReservedBitsZero && result.ReservedElement < 0)
@@ -197,7 +204,8 @@ internal static class FrameWalker
             if (fault != WalkFault.None)
             {
                 Fail(result, fault, index - 1, fault == WalkFault.UnknownElement ? start : element.End);
-                result.FaultChannelsBefore = channelsBefore;
+                // A pair that does not fit the cookie's channels is skipped by the reference decoder (ID_CPE, NoMoreChannels), like any element after the last channel.
+                result.FaultChannelsBefore = tag == ElementTags.ChannelPair && channelsBefore + 2 > cookie.Channels ? Math.Max(channelsBefore, cookie.Channels) : channelsBefore;
                 result.FaultTag = tag;
                 break;
             }

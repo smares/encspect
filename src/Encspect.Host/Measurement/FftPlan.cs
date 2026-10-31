@@ -91,8 +91,10 @@ internal sealed class FftPlan
             _reverse[i] = r;
         }
 
-        // A full-scale sine centered on a bin reads 1 (0 dB) once the window's coherent gain is taken out: |X| = N / 4 for it, and the
-        // transform here is twice X; a row averages its bins. A power of two, so the factor is exact.
+        // The bin a full-scale sine is centered on reads 1 (0 dB) once the window's coherent gain is taken out: |X| = N / 4 for it, and the
+        // transform here is twice X; a row averages its bins, so the sine, whose Hann main lobe holds 1.5 times the center bin's power in
+        // three bins, reads 1.5 / BinsPerRow in its row (-4.3 dB at 4 bins, -7.3 at 8, -10.3 at 16; 1.25 where a neighbor is in the next row). Kept so that noise reads as a mean power
+        // per bin; docs/design/spectral-analysis.md. A power of two, so the factor is exact.
         _scale = 4.0 / ((double)size * size * BinsPerRow);
     }
 
@@ -114,7 +116,7 @@ internal sealed class FftPlan
     public double[] NewScratch() => new double[Half];
 
     // Windows N samples, transforms them and writes the 512 rows of mean power, each normalized as the average of its bins relative to
-    // a full-scale sine centered on a bin. samples holds N values; re and im each N / 2 of scratch.
+    // the bin a full-scale sine is centered on. samples holds N values; re and im each N / 2 of scratch.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Rows(ReadOnlySpan<double> samples, double[] re, double[] im, Span<double> rows)
     {

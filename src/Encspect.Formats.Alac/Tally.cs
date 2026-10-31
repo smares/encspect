@@ -4,7 +4,7 @@ namespace Encspect.Formats.Alac;
 
 // The coding statistics of a stream's frames, counted while they are read, so nothing is kept per frame: elements by tag, how audio elements are
 // coded, the prediction parameters of every compressed channel, the bytes shifted out of samples, and the runs and long codes of the residuals.
-// Count is called from the walk, once for each element it reads, so the statistics and the coding series equal each other whatever the records keep.
+// Count is called from the walk, once for each element it reads, so the statistics count every element read. The coding series leave out the frames past MaxEntries and the frames with no samples, whose elements the tally also counts (State.cs).
 internal sealed class CodingTally
 {
     public long[] Elements { get; } = new long[8];
@@ -17,7 +17,8 @@ internal sealed class CodingTally
     // Channel pair elements, those that mix their channels (mixResolution not 0) and those that do not, uncompressed pairs included.
     public long Pairs { get; private set; }
 
-    public long MixedPairs { get; private set; }
+    // Channel pairs by their code (CodingCategories.StereoCodings).
+    public long[] PairCodings { get; } = new long[CodingCategories.StereoCodings.Length];
 
     // The channels of compressed elements, by the fields of their parameters.
     public long Channels { get; private set; }
@@ -89,9 +90,9 @@ internal sealed class CodingTally
         if (isPair)
         {
             Pairs++;
-            bool isMixed = !element.IsUncompressed && element.MixResolution != 0;
-            MixedPairs += isMixed ? 1 : 0;
-            PairCodes.Add(isMixed ? CodingCategories.CodeMidSide : CodingCategories.CodeLeftRight);
+            byte code = CodingCategories.PairCode(element.IsUncompressed, element.MixBits, element.MixResolution);
+            PairCodings[code]++;
+            PairCodes.Add(code);
         }
     }
 

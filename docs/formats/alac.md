@@ -15,14 +15,14 @@ Sources: Apple's ALAC reference implementation (https://github.com/macosforge/al
   - the header flags: a partial frame's sample count, the bytes shifted out of every sample, and the escape flag (samples stored uncompressed);
   - for a compressed element, `mixBits` and `mixRes`, and for each channel the prediction type, the filter shift, the adaptation factor and the coefficients;
   - the residuals, walked with the adaptive Golomb code of `ag_dec.c` (`Residuals` in `FrameWalker.cs`) to find where each element ends: the long prefix (a value stored whole) and the zero runs are counted. The walk must consume exactly the packet's bytes; the reference decoder stops after the cookie's channels and needs no end tag.
-- Limits: the report keeps at most 2,097,152 frames as records (`Records.MaxEntries`), 4,096 of them with their elements as nodes and 64 elements to a frame; the rest are counted (`alac.entries-limit`) and still walked. Large files use compact records, not one node per field.
+- Limits: the report keeps at most 2,097,152 frames as records (`Records.MaxEntries`), 4,096 of them with their elements as nodes and 64 elements to a frame, 8 of them fill or data stream elements (`Records.MaxDetailedFillElements`; the rest of such a frame is one Further Elements node); the rest are counted (`alac.entries-limit`) and still walked. Large files use compact records, not one node per field.
 
 ## Reported
 
 - Nodes: the cookie and its fields (with the layout the tag names), then each frame with its elements and their fields as nodes with bit positions, each with a description and, where one exists, a background article (`alac`, `alac-prediction`, `alac-adaptive-golomb`, `mid-side-stereo`, `wasted-bits`, `channel-layouts`).
 - Stream: codec "Apple Lossless", sample rate, channels (with the layout where the cookie states one), bits per sample, samples (the sum of the frames' samples), duration, average and per-frame bitrate with its distribution, and the bitrate mode (variable where the frame bitrates differ, `IsVbr`).
-- Statistics: the frames, partial and uncompressed frames, the elements by kind, channel pairs and the pairs that are mixed, and tallies of the prediction types, filter orders, predictor shifts, weight factors and shifted bytes, the zero runs and long prefixes, and the bytes of fill and data stream elements.
-- Series: the bitrate per frame and per second, and category series of the element coding (compressed or uncompressed) and of the pair coding (mixed or not) per frame, each category named by the tally entry it counts.
+- Statistics: the frames, partial and uncompressed frames, the elements by kind, channel pairs by their stereo coding (left/right, left/side, mid/side or a weighted mix, by `mixBits` and `mixRes` as `matrix_dec.c` reconstructs them), and tallies of the prediction types, filter orders, predictor shifts, weight factors and shifted bytes, the zero runs and long prefixes, and the bytes of fill and data stream elements.
+- Series: the bitrate per frame and per second, and category series of the element coding (compressed or uncompressed) and of the pair coding (the same four codings) per frame, each category named by the tally entry it counts.
 
 ## Verification
 
@@ -41,12 +41,13 @@ ALAC stores no checksum and has no decoder, so no figure is compared. The stream
 
 ## Damage
 
-- The cookie: shorter than the configuration (`alac.cookie-too-short`), a compatible version other than 0 (`alac.compatible-version`), a frame length of 0 or above 1,048,576 samples (`alac.frame-length-invalid`), a bit depth other than 16, 20, 24 and 32 (`alac.bit-depth-invalid`), channels outside 1 to 8 (`alac.channels-invalid`), a layout of another channel count (`alac.channel-layout-differs`), bytes after what the description defines (`alac.cookie-extra`, Info), no cookie in Matroska (`alac.cookie-missing`). Where a field makes a frame unreadable the report says so and does not read the frames.
+- The cookie: shorter than the configuration (`alac.cookie-too-short`), a compatible version other than 0 (`alac.compatible-version`), a frame length of 0 or above 1,048,576 samples (`alac.frame-length-invalid`), a bit depth other than 16, 20, 24 and 32 (`alac.bit-depth-invalid`), channels outside 1 to 8 (`alac.channels-invalid`), a sample rate of 0 (`alac.sample-rate-zero`), a layout of another channel count (`alac.channel-layout-differs`), bytes after what the description defines (`alac.cookie-extra`, Info), no cookie in Matroska (`alac.cookie-missing`). Where a field makes a frame unreadable the report says so and does not read the frames.
 - The frames:
   - the walk runs out of the packet (`alac.frame-overrun`) or stops before its end (`alac.frame-underrun`), or the last channel has no end tag (`alac.end-missing`);
   - an element tag with no syntax (`alac.element-unknown`: the program and coupling channel elements), a header the decoder refuses (`alac.element-invalid`: 3 shifted bytes or a sample width of no bits or above 32), reserved header bits that are not 0 (`alac.element-reserved-bits`: the reference decoder refuses the frame, so it is unreadable with no samples; in an element after the cookie's channels, which the decoder does not read, the walk goes on), a compressed element with a maximum Golomb parameter `kb` that defines no code (`alac.tuning-invalid`), a run of zeros past the element's samples (`alac.residual-invalid`);
   - more or fewer channels than the cookie states (`alac.channels-exceed`, `alac.channels-missing`), elements of one frame with different sample counts (`alac.element-samples-differ`), a partial frame longer than the frame length (`alac.partial-frame-too-long`);
   - an uncompressed element that also states shifted bytes, which the decoder ignores (`alac.escape-shifted`, Info).
+  - a frame larger than the maximum frame size the cookie states (`alac.frame-larger-than-stated`).
 - Anything the reference decoder refuses ends the walk of that frame; the rest of the file is read. Findings carry a count and point to the first element they occurred in.
 - No input throws: the walk stops with a fault and the finding says where.
 

@@ -109,10 +109,17 @@ internal static class Nodes
         };
     }
 
-    // The node of an element of a detailed frame, or the frame's node where the records keep no such element.
+    // The node of an element of a detailed frame; an element past the ones the records keep lies in the Further Elements node, and the frame's node
+    // stands for one the records do not place.
     public static Node Element(Records r, int frame, int element)
     {
         Node node = Frame(r, frame);
+        int detail = r.Frames[frame].Detail;
+        if (detail >= 0 && element >= r.Details[detail].Elements.Length)
+        {
+            return node.Children.FirstOrDefault(c => c.Name == "Further Elements") ?? node;
+        }
+
         IReadOnlyList<Node> children = node.Children;
         return element >= 0 && element < children.Count ? children[element] : node;
     }
