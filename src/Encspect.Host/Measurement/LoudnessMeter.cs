@@ -37,7 +37,7 @@ internal sealed class LoudnessMeter
     private const double Flush = 1e-30;
 
     // Bin b holds the loudness from -70 + b / 100 to -70 + (b + 1) / 100 LUFS: floor(1000 log10(z) + 6930.9) for an energy z. The last bin
-    // (+79.99 LUFS and up) takes anything louder; the largest sample the measurer lets through gives about +75 LUFS in the most weighted layout.
+    // (+79.99 LUFS and up) takes anything louder; the largest sample the measurer lets through, in 32 channels at the most weighted position, gives about +78.7 LUFS.
     private const double BinOffset = 6930.9;
 
     private readonly int _measured;
@@ -351,7 +351,15 @@ internal sealed class LoudnessMeter
 
     // The work charged, once, when the first block is made: the histograms and the sort of up to MaxExact short-term values at the end, a few
     // milliseconds.
-    public const long AllocationUnits = 1 << 23;
+    public const long AllocationUnits = HistogramUnits + SortUnits;
+
+    private const long HistogramUnits = 1 << 18;
+
+    // The sort of MaxExact short-term values at the end of the stream (measured by MeasurementWorkTests at the reference's time per unit).
+    internal const long SortUnits = 1 << 25;
+
+    // The one sort the percentiles need; its cost is SortUnits.
+    internal static void SortEnergies(double[] energies, int count) => Array.Sort(energies, 0, count);
 
     public bool HasAllocated => _blockCounts.Length > 0;
 
@@ -451,7 +459,7 @@ internal sealed class LoudnessMeter
         if (_isExact)
         {
             // The values are sorted in place; the passing ones are the tail above the gate.
-            Array.Sort(_shortEnergies, 0, _shortEnergyCount);
+            SortEnergies(_shortEnergies, _shortEnergyCount);
             int first = 0;
             while (_shortEnergies[first] <= gate)
             {

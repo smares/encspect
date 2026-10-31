@@ -31,6 +31,19 @@ public class MeasurementFixtureTests
         return Analyzer.CreateDefault().Analyze(name + ".flac", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure, MaxWork = maxWork } });
     }
 
+    // Many blocks sit in the one 0.01 LU bin of the relative gate: a histogram that takes the bin whole reads -16.9 (all 105 blocks) or -10.6 (the
+    // loud tone's 20); BS.1770-5 equation 7 keeps the 56 blocks above the gate: -14.9 LUFS.
+    [Fact]
+    public void ManyBlocksInTheBinOfTheRelativeGateAreGatedOneByOne()
+    {
+        LoudnessFigures l = Analyze("synthetic-loudness-gate-straddle-8000", new MeasureOptions()).Streams.Single().Measurements!.Loudness!;
+
+        Assert.True(l.IsGatedExactly);
+        Assert.Equal(105, l.BlocksAboveAbsoluteGate);
+        Assert.Equal(56, l.BlocksAboveRelativeGate);
+        Assert.Equal(-149, l.IntegratedTenths);
+    }
+
     private static JsonElement Manifest(string name) => JsonDocument.Parse(File.ReadAllText(Path.Combine(Directory_, name + ".expected.json"))).RootElement;
 
     [Theory]
@@ -102,8 +115,8 @@ public class MeasurementFixtureTests
         }
     }
 
-    // The model works the loudness out from the definitions on the whole lists of blocks in doubles; the analyzer keeps histograms of 0.01 LU, so a figure may
-    // differ by a tenth where the model's value lies at a rounding boundary.
+    // The model works the loudness out from the definitions on the whole lists of blocks in doubles; the analyzer gates every block and value on its own as well
+    // (histograms only beyond 131,072 values), so a figure may differ by a tenth where the model's value lies at a rounding boundary.
     private static void AssertFigure(JsonElement expected, int tenths, LoudnessAbsence absence, string what)
     {
         JsonElement value = expected.GetProperty("tenths");

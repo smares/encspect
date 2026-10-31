@@ -241,7 +241,7 @@ public class LoudnessMeterTests
     private static double Loudness(double energy) => -0.691 + (10 * Math.Log10(energy));
 
     // Many blocks sit in the one 0.01 LU bin that holds the relative gate, some just above it and some just below: BS.1770-5 equation 7 keeps
-    // the first and drops the second, one by one. A histogram that takes the bin whole reads about 2 LU low here. A loud tone, then two quiet
+    // the first and drops the second, one by one. A histogram that takes the bin whole read 5.8 LU high here. A loud tone, then two quiet
     // tones 0.0009 dB apart, set by bisection so that the gate falls between them.
     [Fact]
     public void ManyBlocksInTheBinOfTheRelativeGateAreGatedOneByOne()

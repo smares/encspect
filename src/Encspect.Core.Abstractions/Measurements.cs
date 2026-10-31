@@ -179,7 +179,7 @@ public sealed record SpectrumFigures
     public int BinsPerRow => FftSize / (MeasurementLimits.Rows * 2);
 
     // The average level of each of the 512 rows (0 Hz to Nyquist) in tenths of a dB relative to the power of one bin for a
-    // full-scale sine centered on it (a row is the mean of its BinsPerRow bins, so that sine reads 10 log10(1.5 / BinsPerRow) dB), combined (all channels but the LFE) and per channel. A row with no power at all holds MeasurementLimits.NoPower.
+    // full-scale sine centered on it (a row is the mean of its BinsPerRow bins and the window spreads the sine over the bin and its two neighbors in the ratio 1 : 0.25 : 0.25, so that sine reads 10 log10(f / BinsPerRow) dB in its row, f from 1.25 to 1.5, and 0 dB where a row is one bin), combined (all channels but the LFE) and per channel. A row with no power at all holds MeasurementLimits.NoPower.
     public required ReadOnlyMemory<short> Combined { get; init; }
 
     public required IReadOnlyList<ReadOnlyMemory<short>> PerChannel { get; init; }

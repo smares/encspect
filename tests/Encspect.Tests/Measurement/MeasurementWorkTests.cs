@@ -44,22 +44,45 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     [MemberData(nameof(Cases))]
     public void ATimePerUnitWithinTwiceTheFlacReferenceForEveryFftSizeAndChannelCount(int rate, int channels)
     {
-        // A weight that is too low stays above the bound in every attempt (the ratios at 352.8 kHz stereo are 1.1 to 1.25 over nine runs under
-        // the shared lock, a single 2.56 on a machine without it); a busy moment of the machine does not, so the lowest of up to three
-        // attempts decides.
         (double ratio, double perUnit, double perSample) = Compare(rate, channels, Signal.Noise);
-        for (int attempt = 1; attempt < 3 && ratio > Factor; attempt++)
+        output.WriteLine($"{rate} Hz, {FftPlan.SizeFor(rate)} points, {channels} channel(s): {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
+    }
+
+    // The sort of the loudness range's short-term values, the most it ever sorts, against the units it is charged (LoudnessMeter.SortUnits) at
+    // the reference's time per unit of the same round.
+    [Fact]
+    public void TheSortOfTheLoudnessRangeTakesNoMoreThanItsCharge()
+    {
+        double[] source = new double[LoudnessMeter.MaxExact];
+        uint state = 12345;
+        for (int i = 0; i < source.Length; i++)
         {
-            output.WriteLine($"attempt {attempt}: ratio {ratio:F2}, measuring again");
-            (double again, double perUnitAgain, double perSampleAgain) = Compare(rate, channels, Signal.Noise);
-            if (again < ratio)
+            state = (state * 1664525) + 1013904223;
+            source[i] = 1e-7 + (state / (double)uint.MaxValue);
+        }
+
+        double[] work = new double[source.Length];
+        DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+        var ratios = new List<double>();
+        var times = new List<double>();
+        for (int round = 0; round < Rounds + 1; round++)
+        {
+            double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+            source.CopyTo(work, 0);
+            long start = Stopwatch.GetTimestamp();
+            LoudnessMeter.SortEnergies(work, work.Length);
+            double nanoseconds = Stopwatch.GetElapsedTime(start).TotalSeconds * 1e9;
+            if (round > 0)
             {
-                (ratio, perUnit, perSample) = (again, perUnitAgain, perSampleAgain);
+                ratios.Add(nanoseconds / LoudnessMeter.SortUnits / reference);
+                times.Add(nanoseconds / 1e6);
             }
         }
 
-        output.WriteLine($"{rate} Hz, {FftPlan.SizeFor(rate)} points, {channels} channel(s): {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
-        Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
+        DecoderWorkTests.ReleaseReference();
+        output.WriteLine($"sorting {work.Length} values: {Median(times):F1} ms, ratio to its charge at the reference's time per unit {Median(ratios):F2}");
+        Assert.True(Median(ratios) <= Factor, $"The sort takes {Median(ratios):F2} times its charge, at most {Factor} are allowed.");
     }
 
     // The two cases alternate for five rounds and each is taken at its fastest, so that the first round's warm-up and a busy moment of the machine
