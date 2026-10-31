@@ -134,7 +134,6 @@ internal sealed class VoiceStream
             sf.Start = _tailStart;
             sf.TailBits = _tailCopied ? count : 0;
             sf.SpillPacket = -1;
-            sf.Offset = TailOffset();
             int index = AddSuperframe(ref sf);
             if (_tailPacket >= 0)
             {
@@ -170,34 +169,6 @@ internal sealed class VoiceStream
         catch (LimitReached)
         {
         }
-    }
-
-    private long TailOffset()
-    {
-        if (_tailPacket < 0)
-        {
-            return 0;
-        }
-
-        VoicePacket packet = PacketRecords[_tailPacket];
-        return OffsetOfByte(packet, _tailStart >> 3);
-    }
-
-    private long OffsetOfByte(in VoicePacket packet, int index)
-    {
-        int rest = index;
-        for (int i = 0; i < packet.RangeCount; i++)
-        {
-            ByteRange range = Ranges[packet.RangeStart + i];
-            if (rest < range.Length)
-            {
-                return range.Offset + rest;
-            }
-
-            rest -= (int)range.Length;
-        }
-
-        return packet.RangeCount > 0 ? Ranges[packet.RangeStart + packet.RangeCount - 1].End : 0;
     }
 
     private enum Disposition
@@ -243,6 +214,28 @@ internal sealed class VoiceStream
             return;
         }
 
+        try
+        {
+            ReadPacket(ref packet, index, mediaObject, start, length, hasHeader);
+        }
+        catch (LimitReached)
+        {
+            // The packet counts as one that was not read.
+            packet.Kind = VoicePacketKind.NotRead;
+            packet.Lead = VoiceLead.None;
+            packet.Tail = VoiceTail.None;
+            packet.OwnCount = 0;
+            if (PacketRecords.Count == index)
+            {
+                PacketRecords.Add(packet);
+            }
+
+            throw;
+        }
+    }
+
+    private void ReadPacket(ref VoicePacket packet, int index, MappedBytes mediaObject, int start, int length, bool hasHeader)
+    {
         ReadOnlySpan<byte> data = mediaObject.Span.Slice(start, length);
         int bits = length * 8;
         if (_pending >= 0)
@@ -400,7 +393,7 @@ internal sealed class VoiceStream
         if (rejected)
         {
             packet.Kind = VoicePacketKind.InvalidHeader;
-            packet.ValueCount = (byte)Math.Min(values, 255);
+            packet.ValueCount = values;
             packet.HeaderBits = 5;
             packet.BodyStart = 5;
             _dropped = true;
@@ -415,7 +408,7 @@ internal sealed class VoiceStream
         int spillover = (int)src.Read(spillBits);
         int headerEnd = src.Position;
         packet.Kind = VoicePacketKind.Header;
-        packet.ValueCount = (byte)Math.Min(values, 255);
+        packet.ValueCount = values;
         packet.Spillover = spillover;
         packet.HeaderBits = headerEnd;
         packet.Count = total;
@@ -455,7 +448,6 @@ internal sealed class VoiceStream
             sf.SpillStart = headerEnd;
             sf.SpillBits = (ushort)(copy ? g : 0);
             sf.SpillAt = (ushort)at;
-            sf.Offset = TailOffset();
             _cached = 0;
             int finished = AddSuperframe(ref sf);
             packet.Finished = finished;
@@ -560,7 +552,6 @@ internal sealed class VoiceStream
                 VoiceSuperframe sf = ReadSuperframe(data, position, bits, _residual);
                 sf.Packet = index;
                 sf.Start = position;
-                sf.Offset = OffsetOfByte(packet, position >> 3);
                 int added = AddSuperframe(ref sf);
                 packet.OwnCount++;
                 packet.Begun++;

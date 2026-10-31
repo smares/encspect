@@ -646,6 +646,46 @@ public class MemoryTests(ITestOutputHelper output)
     private const long AsfWmaKeptBound = 200;
     private const long AsfWmaPeakBound = 250;
 
+    // Voice keeps a fixed record per packet and per superframe, and builds the nodes when they are read: a Microsoft-encoded media object of
+    // 187 bytes with 4 counted superframes, repeated, gives a packet and 3 to 4 superframes for each repetition, none of them kept as nodes.
+    // The bounds leave about twice what linux-x64 measures, and are far below what a node for each superframe would cost.
+    [Fact]
+    public void ManyVoicePacketsStayCompact()
+    {
+        const int packets = 20_000;
+        (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-windows-wmavoice-cbr-mono-8k-5.wma", 0x000A);
+        byte[] data = AsfBuilder.Build(properties, mediaObject, packets, 60);
+
+        (Report report, long kept, long peak) = Measure("packets-voice.wma", data, data[..4096]);
+
+        Assert.Equal("Windows Media Audio Voice", Assert.Single(report.Streams).Codec);
+        Assert.True(Assert.Single(report.Streams).Samples > 0);
+        output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
+        Assert.True(kept < packets * VoiceKeptBound, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * VoicePeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    private const long VoiceKeptBound = 900;
+    private const long VoicePeakBound = 1_200;
+
+    // Packets of 2 bytes, whose header runs past the packet: no superframe is read and a record is kept for each packet.
+    [Fact]
+    public void ManyTinyVoiceBlocksAreBounded()
+    {
+        const int blocks = 400_000;
+        (byte[] properties, _) = AsfBuilder.Take("asf/voice-packet-header.asf", 0x000A);
+        byte[] mediaObject = new byte[2 * 1_000];
+        for (int block = 0; block < 1_000; block++)
+        {
+            mediaObject[block * 2] = 0x07;
+            mediaObject[(block * 2) + 1] = 0xE0;
+        }
+
+        byte[] data = AsfBuilder.Build(properties, mediaObject, blocks / 1_000, 10);
+        Bounded("tiny-voice.asf", data, 300_000_000, "wma.voice-packet-header");
+    }
+
     // Objects that state millions of entries, in files of tens of megabytes: each list becomes nodes only up to a
     // count, so the heap stays a small fraction of what a node for every entry would take (gigabytes).
     [Fact]

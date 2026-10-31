@@ -103,7 +103,7 @@ internal struct VoicePacket
     public VoiceLead Lead;
     public VoiceTail Tail;
     public byte Sequence;
-    public byte ValueCount;
+    public int ValueCount;
     public bool HasResidualLsps;
 
     // The sum of the header's superframe counts.
@@ -185,9 +185,6 @@ internal struct VoiceSuperframe
     public int SpillStart;
     public ushort SpillBits;
     public ushort SpillAt;
-
-    // The file offset of the first byte, for the series.
-    public long Offset;
 
     public VoiceFrame Frame0;
     public VoiceFrame Frame1;
