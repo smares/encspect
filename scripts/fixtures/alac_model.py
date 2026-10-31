@@ -1,13 +1,15 @@
 """A model of ALAC streams for the fixtures, written apart from the analyzer from Apple's ALAC reference implementation (macosforge/alac at the commit
 alac_tool.py pins: ALACMagicCookieDescription.txt, ALACDecoder.cpp, ag_dec.c, ag_enc.c, dp_dec.c, matrix_enc.c), Apache License 2.0, Copyright (c) 2011
-Apple Inc. (THIRD-PARTY-NOTICES.md). It has three parts:
+Apple Inc. (THIRD-PARTY-NOTICES.md). The walker and the writer follow that source closely and carry its notice. It has three parts:
 
 - A writer: a cookie, the elements of a frame (a single channel, LFE or channel pair element, compressed or uncompressed, with the shifted bytes of 24 and
   32-bit samples, a mixing of a pair, a partial frame, data stream and fill elements) and a frame, whose residuals are coded as ag_enc.c's dyn_comp codes them.
   The predictor is the decoder's loop run on the known samples (dp_dec.c, unpc_block, in the direction that gives the residual), so a frame it writes from
   samples decodes to them; the fixtures that Apple's alacconvert and FFmpeg decode back to their input show it.
-- A walker: the reading of a frame by ALACDecoder.cpp and dyn_decomp, as a plain Python loop, which says for each frame what its elements are and where they
-  end, or what is wrong with it. The analyzer's walk is checked against it.
+- A walker: ALACDecoder.cpp's Decode and ag_dec.c's dyn_decomp as a plain Python loop, written from Apple's source alone, which says for each frame what
+  its elements are and where they end, or what is wrong with it: numSamples starts at the cookie's frame length, a partial element replaces it and later
+  elements keep it, and the decoder stops once the cookie's channels are decoded. The walker goes on after that stop only to report (the end tag, an
+  element beyond the channels). The analyzer's walk is checked against it. Tests: scripts/ci/test_alac_model.py.
 - The manifest of a file (an MP4 file with an alac track, or a Matroska file with an A_ALAC track): the cookie, every frame, the stream's figures and the
   findings, in the form the tests read.
 
@@ -404,281 +406,259 @@ def frame(planes, bit_depth, frame_length=4096, layout=None, options=None):
 # --- The walker --------------------------------------------------------------------------------------------------------------------------------------
 
 
-class Reader:
-    def __init__(self, data):
-        self.data = data
-        self.total = len(data) * 8
-
-    def peek(self, position, count):
-        value = 0
-        for i in range(count):
-            at = position + i
-            bit = (self.data[at >> 3] >> (7 - (at & 7))) & 1 if at < self.total else 0
-            value = (value << 1) | bit
-        return value
+class Fault(Exception):
+    """A frame the walk cannot go on with; the argument is the status: "truncated", "unknown", "invalid", "reserved", "tuning" or "zero-run"."""
 
 
-def walk_residuals(reader, position, samples, max_bits, config_):
-    """ag_dec.c, dyn_decomp: (new position, zero runs, long codes, fault) for the residuals of a channel; fault is None, "truncated" or "zero-run"."""
-    total = reader.total
-    mb = config_["mb"]
-    pb = config_["weight"]
-    kb = config_["kb"]
-    wb = (1 << kb) - 1
+def bits_at(data, position, count):
+    """count bits (0 to 40) of data from the bit position, as a number; bits past the end of data read as 0."""
+    if count == 0:
+        return 0
+    first = position >> 3
+    span = (position & 7) + count
+    size = (span + 7) >> 3
+    chunk = data[first:first + size]
+    value = int.from_bytes(chunk, "big") << ((size - len(chunk)) * 8)
+    return (value >> (size * 8 - span)) & ((1 << count) - 1)
+
+
+def window32(data, position):
+    """The 32-bit word the decoder holds at a bit position: four bytes from the byte, shifted left by the bit within it (ag_dec.c, read32bit)."""
+    return (bits_at(data, position & ~7, 32) << (position & 7)) & M32
+
+
+def dyn_decomp(data, position, samples, max_bits, mb, pb, kb):
+    """ag_dec.c, dyn_decomp, for the residuals of one channel starting at the bit position, without computing the values: returns the position after
+    them, the zero runs, the codes that use the long prefix (dyn_get_32bit's "result >= MAX_PREFIX_32" branch) and the fault, None, "truncated" or
+    "zero-run" (the run does not fit in the samples left, where the position is the one after the run's length)."""
+    total = len(data) * 8
+    wb = ((1 << kb) - 1) & M32
     zmode = 0
     c = 0
     runs = longs = 0
     while c < samples:
         if position >= total:
-            return total + 1, runs, longs, "truncated"
-        m = mb >> QBSHIFT
-        k = min(lg3a(m), kb)
+            return position, runs, longs, "truncated"
+        k = min(lg3a(mb >> QBSHIFT), kb)
         m = (1 << k) - 1
-        window = reader.peek(position, 32)
-        prefix = lead(~window & M32)
+        stream = window32(data, position)
+        prefix = lead(~stream & M32)
         if prefix >= MAX_PREFIX:
-            n = reader.peek(position + MAX_PREFIX, max_bits)
+            n = bits_at(data, position + MAX_PREFIX, max_bits)
             position += MAX_PREFIX + max_bits
             longs += 1
         else:
             position += prefix + 1
+            n = prefix
             if k != 1:
-                v = (window << (prefix + 1) & M32) >> (32 - k)
+                v = ((stream << (prefix + 1)) & M32) >> (32 - k)
                 position += k - 1
                 n = prefix * m
                 if v >= 2:
                     n += v - 1
                     position += 1
-            else:
-                n = prefix
+            n &= M32
+        if position > total:
+            return position, runs, longs, "truncated"
         c += 1
-        mb = (pb * (n + zmode) + mb - ((pb * mb) >> QBSHIFT)) & M32
+        mb = (pb * (n + zmode) + mb - (((pb * mb) & M32) >> QBSHIFT)) & M32
         if n > MEAN_CLAMP:
             mb = MEAN_CLAMP
         zmode = 0
         if ((mb << MMULSHIFT) & M32) < QB and c < samples:
             zmode = 1
-            k = lead(mb) - BITOFF + ((mb + MOFF) >> MDENSHIFT)
+            k = (lead(mb) - BITOFF + ((mb + MOFF) >> MDENSHIFT)) & M32
             mz = ((1 << k) - 1) & wb
-            window = reader.peek(position, 32)
-            prefix = lead(~window & M32)
+            stream = window32(data, position)
+            prefix = lead(~stream & M32)
             if prefix >= MAX_PREFIX:
-                run = reader.peek(position + MAX_PREFIX, MAX_RUN_BITS)
-                position += MAX_PREFIX + MAX_RUN_BITS
+                position += MAX_PREFIX
+                n = bits_at(data, position, 16)
+                position += 16
             else:
                 position += prefix + 1
-                v = (window << (prefix + 1) & M32) >> (32 - k)
+                v = ((stream << (prefix + 1)) & M32) >> (32 - k)
                 position += k
-                run = prefix * mz + v - 1
+                n = prefix * mz + v - 1
                 if v < 2:
-                    run -= v - 1
+                    n -= v - 1
                     position -= 1
-            if c + run > samples:
+            if position > total:
+                return position, runs, longs, "truncated"
+            if c + n > samples:
                 return position, runs, longs, "zero-run"
-            c += run
             runs += 1
-            if run >= 65535:
+            c += n
+            if n >= 65535:
                 zmode = 0
             mb = 0
-        if position > total:
-            return position, runs, longs, "truncated"
     return position, runs, longs, None
 
 
 def walk_frame(data, cookie_):
-    """ALACDecoder.cpp, Decode, followed to the end of the frame: what the frame holds and how it ends, as a dict.
+    """ALACDecoder.cpp, Decode, over one packet: what the frame holds and how it ends, as a dict.
 
-    "status" is "ok" (an end tag), "end-missing" (the channels of the cookie are read and the packet ends), or the fault; "walked" is the bytes through the
-    end tag's padding; "elements" lists every element read with its bit positions."""
-    reader = Reader(data)
-    total = reader.total
-    position = 0
-    channels = 0
+    The loop is the decoder's. numSamples starts at the cookie's frame length; a partial element replaces it and every later element of the frame keeps it;
+    the frame's sample count is the value the last element decoded left (outNumSamples). A channel pair that does not fit in the channels left, and the
+    cookie's channels all decoded, stop the decoder (NoMoreChannels; the `channelIndex >= numChannels` break), which then reads nothing more. The model
+    goes on from there only to report: it reads the elements that follow as it reads the others, to find the end tag and what lies beyond the channels,
+    and they no longer change the frame's sample count. The decoder reads a data stream or fill element whenever it meets one.
+
+    "status" is "ok" (an end tag), "end-missing" (the cookie's channels are decoded and the packet is used up), or the fault; "walked" is the bytes through
+    the end tag's padding; "elements" lists every element with its bit positions; "exceeding", "reserved", "shifted_escape", "differing" and "too_long"
+    are the index of the first element with that property, or None."""
+    total = len(data) * 8
+    cookie_samples = cookie_["frame_length"]
+    depth = cookie_["bit_depth"]
+    wanted = cookie_["channels"]
     elements = []
-    frame_samples = None
-    out = {"elements": elements, "status": None, "walked": 0, "samples": 0, "channels": 0, "flags": {}}
-    differing = reserved = shifted_escape = too_long = exceeding = None
+    out = {"elements": elements, "status": None, "walked": 0, "samples": 0, "channels": 0, "flags": {}, "exceeding": None, "reserved": None,
+           "shifted_escape": None, "differing": None, "too_long": None}
+    position = 0
+    num_samples = cookie_samples
+    previous = None
+    stopped = False
+
+    def take(count):
+        nonlocal position
+        if position + count > total:
+            position = total
+            raise Fault("truncated")
+        value = bits_at(data, position, count)
+        position += count
+        return value
+
+    def skip(count):
+        nonlocal position
+        if position + count > total:
+            position = total
+            raise Fault("truncated")
+        position += count
+
     while True:
-        index = len(elements)
-        if position + 3 > total:
-            out["status"] = "end-missing" if channels >= cookie_["channels"] else "truncated"
-            out["fault_element"] = index
+        if total - position < 3:
+            out["status"] = "end-missing" if stopped else "truncated"
             break
-        start = position
-        tag = reader.peek(position, 3)
-        position += 3
-        element = {"tag": tag, "name": TAGS[tag], "start": start}
+        element = {"start": position}
         elements.append(element)
-        fault = None
-        if tag in (SCE, LFE, CPE):
-            pair = tag == CPE
-            used = 2 if pair else 1
-            if position + 20 > total:
-                position = total + 1
-                fault = "truncated"
-            else:
-                element["instance"] = reader.peek(position, 4)
-                element["reserved_zero"] = reader.peek(position + 4, 12) == 0
-                header = reader.peek(position + 16, 4)
-                position += 20
-                partial = (header >> 3) & 1
-                shifted = (header >> 1) & 3
-                escape = header & 1
-                element.update(partial=bool(partial), shifted=shifted, uncompressed=bool(escape))
+        index = len(elements) - 1
+        try:
+            tag = bits_at(data, position, 3)
+            element["tag"] = tag
+            element["name"] = TAGS[tag]
+            take(3)
+            if tag in (SCE, LFE, CPE):
+                pair = tag == CPE
+                used = 2 if pair else 1
+                if out["channels"] + used > wanted:
+                    stopped = True
+                    if out["exceeding"] is None:
+                        out["exceeding"] = index
+                element["instance"] = take(4)
+                reserved = take(12)
+                element["reserved_zero"] = reserved == 0
+                if reserved != 0:
+                    out["reserved"] = index
+                    raise Fault("reserved")
+                flags = take(4)
+                shifted = (flags >> 1) & 3
+                escape = flags & 1
+                element.update(partial=bool(flags >> 3), shifted=shifted, uncompressed=bool(escape))
                 if shifted == 3:
-                    fault = "invalid"
+                    raise Fault("invalid")
+                # The width of a sample as the element codes it: the pair's channels are one bit wider after mixing; an uncompressed single channel element
+                # drops the shifted bytes, and an uncompressed pair ignores them.
+                width = depth - shifted * 8 + (1 if pair else 0)
+                if escape:
+                    width = depth if pair else depth - shifted * 8
+                if not 1 <= width <= 32:
+                    raise Fault("invalid")
+                if flags >> 3:
+                    num_samples = take(32)
+                    if num_samples > cookie_samples and out["too_long"] is None:
+                        out["too_long"] = index
+                element["samples"] = num_samples
+                if previous is not None and previous != num_samples and out["differing"] is None:
+                    out["differing"] = index
+                previous = num_samples
+                element["header_read"] = True
+                out["channels"] += used
+                if not stopped:
+                    out["samples"] = num_samples
+                if escape:
+                    element["channels"] = []
+                    if shifted:
+                        out["shifted_escape"] = index
+                    position_after = position + used * num_samples * width
+                    if position_after > total:
+                        position = total
+                        raise Fault("truncated")
+                    position = position_after
                 else:
-                    samples = cookie_["frame_length"]
-                    if partial:
-                        if position + 32 > total:
-                            position = total + 1
-                            fault = "truncated"
-                        else:
-                            samples = reader.peek(position, 32)
-                            position += 32
-                    if fault is None:
-                        element["samples"] = samples
-                        element["header_read"] = True
-                        if frame_samples is None:
-                            frame_samples = samples
-                        elif samples != frame_samples and differing is None:
-                            differing = index
-                        if not element["reserved_zero"] and reserved is None:
-                            reserved = index
-                        if partial and samples > cookie_["frame_length"] and too_long is None:
-                            too_long = (index, samples)
-                        if escape and shifted and shifted_escape is None:
-                            shifted_escape = index
-                        width = cookie_["bit_depth"] - shifted * 8 + (1 if pair else 0)
-                        if escape:
-                            bits = cookie_["bit_depth"] if pair else cookie_["bit_depth"] - shifted * 8
-                            if bits < 1 or bits > 32:
-                                fault = "invalid"
-                            else:
-                                position += samples * bits * used
-                                if position > total:
-                                    fault = "truncated"
-                            element["channels"] = []
-                        elif width < 1 or width > 32:
-                            fault = "invalid"
-                        elif cookie_["kb"] == 0 or cookie_["kb"] > 31:
-                            fault = "tuning"
-                            element["channels"] = []
-                        else:
-                            fault = walk_compressed(reader, element, position, samples, used, shifted, width, cookie_)
-                            position = element.pop("_position")
-                        channels += used
-                        if channels > cookie_["channels"] and exceeding is None:
-                            exceeding = index
-        elif tag == DSE:
-            if position + 13 > total:
-                position = total + 1
-                fault = "truncated"
-            else:
-                element["instance"] = reader.peek(position, 4)
-                element["aligned"] = bool(reader.peek(position + 4, 1))
-                count = reader.peek(position + 5, 8)
-                position += 13
+                    channels = []
+                    element["channels"] = channels
+                    if cookie_["kb"] == 0:
+                        raise Fault("tuning")
+                    element["mix_bits"] = take(8)
+                    element["mix_res"] = wrap(take(8), 8)
+                    for _ in range(used):
+                        mode_shift = take(8)
+                        weight_order = take(8)
+                        channel = {"type": mode_shift >> 4, "shift": mode_shift & 15, "weight": weight_order >> 5, "order": weight_order & 31,
+                                   "coefficients": [], "zero_runs": 0, "long_codes": 0, "residual_end": None, "complete": False}
+                        for _ in range(weight_order & 31):
+                            channel["coefficients"].append(wrap(take(16), 16))
+                        channels.append(channel)
+                    position += shifted * 8 * used * num_samples
+                    if position > total:
+                        position = total
+                        raise Fault("truncated")
+                    for channel in channels:
+                        position, runs, longs, fault = dyn_decomp(data, position, num_samples, width, cookie_["mb"],
+                                                                  cookie_["pb"] * channel["weight"] // 4, cookie_["kb"])
+                        if fault == "truncated":
+                            position = total
+                        channel["zero_runs"] = runs
+                        channel["long_codes"] = longs
+                        channel["residual_end"] = position
+                        if fault == "truncated":
+                            raise Fault("truncated")
+                        if fault:
+                            raise Fault(fault)
+                        channel["complete"] = True
+                element["end"] = position
+                if out["channels"] >= wanted:
+                    stopped = True
+            elif tag == DSE:
+                element["instance"] = take(4)
+                element["aligned"] = bool(take(1))
+                count = take(8)
                 if count == 255:
-                    if position + 8 > total:
-                        position = total + 1
-                        fault = "truncated"
-                    else:
-                        count += reader.peek(position, 8)
-                        position += 8
-                if fault is None:
-                    if element["aligned"]:
-                        position = (position + 7) // 8 * 8
-                    element["bytes"] = count
-                    position += count * 8
-                    if position > total:
-                        fault = "truncated"
-        elif tag == FIL:
-            if position + 4 > total:
-                position = total + 1
-                fault = "truncated"
-            else:
-                count = reader.peek(position, 4)
-                position += 4
+                    count += take(8)
+                if element["aligned"]:
+                    position = (position + 7) & ~7
+                element["bytes"] = count
+                skip(count * 8)
+                element["end"] = position
+            elif tag == FIL:
+                count = take(4)
                 if count == 15:
-                    if position + 8 > total:
-                        position = total + 1
-                        fault = "truncated"
-                    else:
-                        count += reader.peek(position, 8) - 1
-                        position += 8
-                if fault is None:
-                    element["bytes"] = count
-                    position += count * 8
-                    if position > total:
-                        fault = "truncated"
-        elif tag == END:
-            pass
-        else:
-            fault = "unknown"
-        element["end"] = start + 3 if fault == "unknown" else min(position, total)
-        if fault:
-            out["status"] = fault
-            out["fault_element"] = index
+                    count += take(8) - 1
+                element["bytes"] = count
+                skip(count * 8)
+                element["end"] = position
+            elif tag == END:
+                element["end"] = position
+                out["status"] = "ok"
+                out["walked"] = (position + 7) >> 3
+                break
+            else:
+                raise Fault("unknown")
+        except Fault as fault:
+            element["end"] = position
+            out["status"] = fault.args[0]
             break
-        if tag == END:
-            out["status"] = "ok"
-            out["walked"] = (position + 7) // 8
-            break
-    out["samples"] = frame_samples or 0
-    out["channels"] = channels
-    out["differing"] = differing
-    out["reserved"] = reserved
-    out["shifted_escape"] = shifted_escape
-    out["too_long"] = too_long
-    out["exceeding"] = exceeding
     return out
-
-
-def walk_compressed(reader, element, position, samples, used, shifted, width, cookie_):
-    """The parameters, shifted bits and residuals of a compressed element, from the bit at position; returns the fault and leaves the position in
-    element["_position"]."""
-    total = reader.total
-    element["channels"] = []
-    if position + 16 > total:
-        element["_position"] = total + 1
-        return "truncated"
-    element["mix_bits"] = reader.peek(position, 8)
-    mix_res = reader.peek(position + 8, 8)
-    element["mix_res"] = mix_res - 256 if mix_res >= 128 else mix_res
-    position += 16
-    parameters = []
-    for _ in range(used):
-        if position + 16 > total:
-            element["_position"] = total + 1
-            return "truncated"
-        first = reader.peek(position, 8)
-        second = reader.peek(position + 8, 8)
-        position += 16
-        order = second & 31
-        if position + order * 16 > total:
-            element["_position"] = total + 1
-            return "truncated"
-        coefficients = [wrap(reader.peek(position + 16 * i, 16), 16) for i in range(order)]
-        position += order * 16
-        parameters.append({"type": first >> 4, "shift": first & 15, "weight": second >> 5, "order": order, "coefficients": coefficients})
-    position += shifted * 8 * samples * used
-    if position > total:
-        element["_position"] = total + 1
-        return "truncated"
-    for params in parameters:
-        weight = cookie_["pb"] * params["weight"] // 4
-        position, runs, longs, fault = walk_residuals(reader, position, samples, width, dict(mb=cookie_["mb"], kb=cookie_["kb"], weight=weight))
-        params["zero_runs"] = runs
-        params["long_codes"] = longs
-        params["residual_end"] = min(position, total)
-        params["complete"] = fault is None
-        element["channels"].append(params)
-        if fault:
-            element["_position"] = position
-            return "truncated" if fault == "truncated" else "zero-run"
-    element["_position"] = position
-    return None
 
 
 # --- Containers --------------------------------------------------------------------------------------------------------------------------------------
@@ -826,7 +806,7 @@ def cookie_findings(c):
 
 
 FAULT_CODES = {"truncated": "alac.frame-overrun", "unknown": "alac.element-unknown", "invalid": "alac.element-invalid", "zero-run": "alac.residual-invalid",
-               "tuning": "alac.tuning-invalid"}
+               "tuning": "alac.tuning-invalid", "reserved": "alac.element-reserved-bits"}
 
 
 def element_record(e):
@@ -902,8 +882,6 @@ def manifest(data, kind, extra=None):
             add("alac.channels-exceed")
         elif status == "ok" and w["channels"] < c["channels"]:
             add("alac.channels-missing")
-        if w["reserved"] is not None:
-            add("alac.element-reserved-bits")
         if w["shifted_escape"] is not None:
             add("alac.escape-shifted")
         if w["differing"] is not None:
