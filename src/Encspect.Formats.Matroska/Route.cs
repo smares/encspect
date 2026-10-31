@@ -208,10 +208,10 @@ internal sealed partial class FileReader
         MappedBytes? privateData = null;
         bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
 
-        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS and A_ALAC (whose private data is ALAC's magic cookie) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
+        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
         // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
-        if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" || codecId == "A_AAC"))
+        if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" || codecId == "A_AAC"))
         {
             _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
                 $"{label} ({codecId}) has a CodecPrivate, which the codec mapping does not define for it (draft-ietf-cellar-codec, section 3.4), so it is not handed to the codec parser.",
@@ -299,6 +299,17 @@ internal sealed partial class FileReader
         {
             AddContainerStream(segment, track, null, plan.Protection);
             return;
+        }
+
+        // A TTA frame carries no figures of its own: the mapping takes them from the TrackEntry (SamplingFrequency, Channels and BitDepth), whether or
+        // not a CodecPrivate holds the header too. Muxers write none (FFmpeg's, mkvmerge), so the figures also stand in for it.
+        if (codec == "tta" && track.SamplingFrequency is { } ttaRate && Codecs.IsRate(ttaRate) && ttaRate <= int.MaxValue
+            && track.Channels is > 0 and <= int.MaxValue && track.BitDepth is > 0 and <= int.MaxValue)
+        {
+            var format = new AudioFormat(0, (int)track.Channels.Value, (int)ttaRate, 0, 0, (int)track.BitDepth.Value);
+            configuration = configuration is not null
+                ? configuration with { Format = format }
+                : new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, track.Node.Offset, track.Node.Offset), track.Node) { Format = format };
         }
 
         string prefix = _segments.Count > 1 ? $"Segment {segment.Number} " : string.Empty;

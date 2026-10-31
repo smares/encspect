@@ -209,7 +209,11 @@ public class TtaCodecParserTests
         Report report = Analyze(frames, node => Header(node, header));
 
         Assert.Contains(report.Findings, f => f.Code == "tta.frame-too-small");
-        Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
+        StreamVerification verification = report.Streams.Single().Verification!;
+        Assert.NotEqual(true, verification.IsVerified);
+        ChecksumTally frameCrc = verification.Checksums.Single(c => c.Name == "frame CRC-32");
+        Assert.Equal(2, frameCrc.Stored);
+        Assert.Equal(0, frameCrc.Failed);
     }
 
     [Fact]

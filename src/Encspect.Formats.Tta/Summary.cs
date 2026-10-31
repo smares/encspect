@@ -150,9 +150,10 @@ internal static class Summary
             Name = ChecksumNames.FrameCrc32,
             Covers = ChecksumCoverage.CodedData,
             CoversAllAudio = coversAll,
-            Stored = s.Frames + s.CutFrames + s.TooSmallFrames,
-            Checked = s.Frames + s.TooSmallFrames,
-            Failed = s.CrcFailures + s.TooSmallFrames,
+            // A frame shorter than its CRC-32 stores none: it is neither stored nor compared (tta.frame-too-small), and CoversAllAudio stays false.
+            Stored = s.Frames + s.CutFrames,
+            Checked = s.Frames,
+            Failed = s.CrcFailures,
         });
 
         // No decoder exists for TTA, so the session decodes nothing and its Finish says so.

@@ -229,32 +229,6 @@
                       "unit": "ticks",
                       "offset": 282,
                       "length": 11
-                    },
-                    {
-                      "name": "Writer",
-                      "value": "FFmpeg (Lavf60.16.100)",
-                      "offset": 213,
-                      "length": 80,
-                      "children": [
-                        {
-                          "name": "Confidence",
-                          "value": "Low",
-                          "offset": 213,
-                          "length": 80
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment WritingApp element at 0xF7 names \"Lavf60.16.100\"",
-                          "offset": 247,
-                          "length": 16
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment MuxingApp element at 0xE7 names \"Lavf60.16.100\"",
-                          "offset": 231,
-                          "length": 16
-                        }
-                      ]
                     }
                   ]
                 },
@@ -656,6 +630,136 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": 1,
+              "unit": "frames",
+              "offset": 543,
+              "length": 20499,
+              "children": [
+                {
+                  "name": "Writer",
+                  "value": "FFmpeg (Lavf60.16.100)",
+                  "offset": 543,
+                  "length": 20499,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0xF7 names \"Lavf60.16.100\"",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0xE7 names \"Lavf60.16.100\"",
+                      "offset": 543,
+                      "length": 20499
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 543,
+                  "length": 20499,
+                  "children": [
+                    {
+                      "name": "Frames",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Frame Length",
+                      "value": 46080,
+                      "unit": "samples",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Verified Frame Checksums",
+                      "value": 1,
+                      "unit": "frames",
+                      "offset": 543,
+                      "length": 20499
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames",
+                  "kind": "Stream",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 543,
+                  "length": 20499,
+                  "children": [
+                    {
+                      "name": "Frame",
+                      "kind": "Frame",
+                      "value": 20499,
+                      "unit": "bytes",
+                      "offset": 543,
+                      "length": 20499,
+                      "children": [
+                        {
+                          "name": "Frame Data",
+                          "value": 20495,
+                          "unit": "bytes",
+                          "offset": 543,
+                          "length": 20495
+                        },
+                        {
+                          "name": "CRC-32",
+                          "value": 148391324,
+                          "offset": 21038,
+                          "length": 4
+                        },
+                        {
+                          "name": "Computed CRC-32",
+                          "value": 148391324,
+                          "offset": 21038,
+                          "length": 4
+                        },
+                        {
+                          "name": "IsCrc32Valid",
+                          "value": true,
+                          "offset": 21038,
+                          "length": 4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -666,40 +770,37 @@
         "nodes": [
           [
             0,
-            1,
-            3,
-            1
+            2
           ]
         ],
         "codec": "TTA",
         "sampleRate": 44100,
         "channels": 1,
+        "channelMode": "Mono",
+        "bitsPerSample": 16,
         "samples": 0,
-        "duration": 1.044897959,
-        "averageBitrate": 156.94546877758808,
+        "duration": 0,
         "isVbr": false,
         "playbackGroup": 1,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            }
+          ]
+        },
         "writer": "FFmpeg (Lavf60.16.100)",
         "writerConfidence": "Low",
         "series": []
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 1 is coded as TTA (A_TTA1), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 340,
-        "length": 8,
-        "path": [
-          0,
-          1,
-          3,
-          1,
-          5
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

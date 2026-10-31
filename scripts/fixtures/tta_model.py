@@ -208,7 +208,7 @@ class Stream:
         missing = sum("missing" in x["status"] for x in self.frames)
         bad = sum(x["status"] == ["crc"] for x in self.frames)
         covers_all = h["crc"] == h["computed"] and h["samples"] > 0 and h["rate"] > 0 and done == frame_count(h["rate"], h["samples"]) and not cut and not small and not missing
-        checksums.append({"name": "frame CRC-32", "covers": "codedData", "coversAllAudio": covers_all, "stored": done + cut + small, "checked": done + small, "failed": bad + small})
+        checksums.append({"name": "frame CRC-32", "covers": "codedData", "coversAllAudio": covers_all, "stored": done + cut, "checked": done, "failed": bad})
         failed = any(c["failed"] for c in checksums)
         unchecked = any(c["stored"] != c["checked"] for c in checksums)
         verified = False if failed else None if unchecked else True if any(c["coversAllAudio"] and c["checked"] > 0 for c in checksums) else None
