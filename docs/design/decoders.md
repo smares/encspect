@@ -992,6 +992,8 @@ The project lead changed decision 8 on 2026-10-23: the work budget counts the wo
 - **Which finding:** the budget and Stop cancel one token, so the exception cannot say which it was. The session decides from the host's own state, as `EndIfAsked` does now and in its order: a sink failure, then `DecodeRun.IsStopRequested` (`decode.stopped`), then `IsOutOfBudget` (`decode.limit`). A frame that both a Stop and the budget interrupted reports the stop.
 - **Lifetime:** `DecodeRun` creates the linked source (`CancellationTokenSource.CreateLinkedTokenSource` of the analysis's token and `DecodeOptions.Stop`) when the analysis starts decoding, and disposes it in the `finally` of `Analyze` after the last session has ended and its `Finish` has run, also when `Analyze` throws. Without that, a library caller that reuses one long-lived token keeps every analysis's linked source registered on it; `MemoryTests` and `InputReleaseTests` get a case that analyzes many files with one token and checks that the registrations do not accumulate.
 - **Latency:** `AddWork` cancels synchronously, before the work it charged. A decoder that checks the token only between frames (FLAC) therefore finishes the frame it has charged: at most 2^27 units, about 80 ms, past the point where the budget was crossed. That frame counts in `FramesNotDecoded` only if it fails to finish; one that completes counts as decoded, and the session ends after it.
+- A frame that fails (`decode.frame-invalid`) may already have written blocks, as Monkey's Audio writes each chunk of 4,096 samples as it decodes it. The sink and the measurer receive them; `DecodedSamples` and the samples `End` reports count decoded frames only, so a sink may hold more. The host does not take the blocks back: the measurement of a stream with a frame not decoded has status `Incomplete` (never `Complete`), whose figures cover what was written and whose reason counts the samples delivered against the samples decoded.
+- A canceled analysis (its own token) ends no session and no sink, whether the format parser or a routed codec parser opened it; it leaves no report.
 - After a frame the stop interrupted, the host calls `Finish` with `IsComplete` false; a decoder's `Finish` must not assume its last frame completed. The front end's sink may have received blocks of that frame beyond the samples `End` reports, as a stopped stream's PCM is incomplete anyway.
 - Work charged inside a frame that then fails (`decode.frame-invalid`) counts.
 - **The floor of the charge:** compared on totals, not per call. After each `Decode`, a session whose decoder has charged, over the whole stream so far, less than `DecodeWork.ForSample(bytes)` times `Setup.Channels` times the samples it has returned so far (`DecodedSamples`) ends with `decode.failed`: a decoder that forgets to charge is a bug, and no fixture passes with it.
@@ -1187,7 +1189,9 @@ public interface IPcmSink
     // On the analysis thread, in stream order; a sink copies what it keeps.
     void Write(PcmBlock block);
 
-    // Called once by the host when the stream's decoding ends, with the samples per channel decoded; a decoder never calls it.
+    // Called once by the host when the stream's decoding ends, with the samples per channel of the frames that were decoded. A frame
+    // that failed midway or that a stop interrupted does not count there, though the blocks it had written reached Write. A canceled
+    // analysis does not end its sinks. A decoder never calls it.
     void End(long samples);
 }
 ```
@@ -1323,6 +1327,7 @@ What the contract pull request implements, and where it differs from the signatu
 - **Output:** `VerificationText.Describe` is the text of the verification for the text tree and for a front end; the text tree prints "Verified: …" under the stream's first node, one level deeper. `ReportSummary.IsVerified` holds the verdict of the audio streams, and the GUI's summary cache stores it (format 6); the detail window shows it from step 2.
 - **CSV:** `ReportCsvWriter.Write(reports, writer, isVerifying)` fills `Is Verified` only when `isVerifying` is true.
 - **Sink:** the host alone ends the PCM sink (`IPcmSink.End`, once, with the samples it counted; also for a session ended without `Finish`); the sink a decoder gets ignores `End`, so a front end never sees two. A sink that throws only in `End` is rethrown like any other.
+- **Messages of `decode.not-possible`:** the decoder's `Open` message states the reason without a final period; the host adds it. A frame's `decode.frame-invalid` message is built the same way.
 - **Setup figures:** a stream that states fewer than 1 channel, or a sample width outside 1 to 64 bits, is not decoded: `decode.not-possible` (status `NotPossible`) when decoding was asked for, nothing otherwise. A crafted file can state these, so a parser may pass them as they are; a null setup or stream is the parser's bug.
 - **Tallies:** a parser's tallies are checked in `Finish`: no negative count, `Checked` at most `Stored`, `Failed` at most `Checked`, no `CoversAllAudio` on a header checksum, and no two of one name. A violation is a parser bug and throws `ArgumentException` (`parse.failed`), not `decode.failed`, which is for decoders.
 - **Lent buffers:** `DecodeContext.LentBuffers` is empty unless the frame being decoded has `IsWalked`.

@@ -46,7 +46,7 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "tta", "alac", "truehd", "wav", "aiff" })
+        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "tta", "alac", "truehd", "wavpack", "wav", "aiff" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
                 .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
@@ -69,11 +69,17 @@ internal static class CorruptFiles
     // decoded too, and at the highest levels the budget ends the decoding of a variant early.
     private const long MonkeysAudioBudget = 1L << 28;
 
+    // WavPack, TrueHD and MLP (the truehd folder) decode a block or a unit at the cost of a few hundred FLAC frames, so they are decoded like Monkey's Audio
+    // (the same selection of variants and the same budget). FLAC includes the Ogg FLAC files of its folder.
+    private static bool IsCostlyDecoder(string name) =>
+        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal);
+
     private static bool IsDecoded(string name) =>
-        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal) || name.StartsWith("aiff/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal);
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal) || name.StartsWith("aiff/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal)
+        || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal);
 
     private static bool IsDecoded(string name, VariantKind kind, int number) =>
-        IsDecoded(name) && (!name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || kind switch
+        IsDecoded(name) && (!IsCostlyDecoder(name) || kind switch
         {
             VariantKind.Change => number % 3 == 0,
             VariantKind.Prefix => true,
@@ -95,7 +101,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), name.StartsWith("monkeys-audio/", StringComparison.Ordinal) ? MonkeysAudioBudget : 1L << 30);
+                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), IsCostlyDecoder(name) ? MonkeysAudioBudget : 1L << 30);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
