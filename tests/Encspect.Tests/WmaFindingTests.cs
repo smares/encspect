@@ -7,7 +7,7 @@ namespace Encspect.Tests;
 // One damaged or unusual stream for each finding the Windows Media Audio parsers emit: the media objects of a
 // fixture with a field changed, handed to the parser as an ASF file would hand them, with the configuration the
 // file states (or none, or a damaged one). The finding must come out and nothing may fail. The frames of versions
-// 1 and 2, Professional and Voice are not read, so each of the three has one finding that says so.
+// 1 and 2 and Professional are not read, so each has one finding that says so; Voice is read, and a rejected configuration says so.
 public class WmaFindingTests
 {
     private const string FFmpeg = "asf/external-ffmpeg-wmav2-stereo-44k-128k.wma";
@@ -36,7 +36,9 @@ public class WmaFindingTests
         ["wma.payload-not-analyzed"] = () => PayloadNotAnalyzed(),
         ["wma.pro-not-read"] = () => Header(new WmaProParser(), Pro, 0x0162, _ => { }),
         ["wma.standard-not-read"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }),
-        ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, _ => { }),
+        ["wma.voice-channels"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, s => s.Format = s.Format with { Channels = 2 }),
+        ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, s => s.Data = s.Data[..10]),
+        ["wma.records-limit"] = () => RecordsLimit(),
     };
 
     public static TheoryData<string> Codes => [.. Runs.Keys.Order(StringComparer.Ordinal)];
@@ -54,10 +56,9 @@ public class WmaFindingTests
     [Theory]
     [InlineData(FFmpeg, 0x0161)]
     [InlineData(Pro, 0x0162)]
-    [InlineData(Voice, 0x000A)]
-    public void TheFramesOfTheThreeCodecsAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
+    public void TheFramesOfTheTwoCodecsAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
     {
-        ICodecParser parser = tag switch { 0x0161 => new WmaStandardParser(), 0x0162 => new WmaProParser(), _ => new WmaVoiceParser() };
+        ICodecParser parser = tag switch { 0x0161 => new WmaStandardParser(), _ => new WmaProParser() };
         Stream s = Load(fixture, tag);
         s.Data = [];
         IReadOnlyList<Finding> findings = Run(parser, s.Objects, s);
@@ -94,6 +95,18 @@ public class WmaFindingTests
         Stream s = Load(fixture, tag);
         change(s);
         return Run(parser, s.Objects, s, claims);
+    }
+
+    // More media objects than the Voice reader reads: tiny ones, so the walk costs nothing.
+    private static IReadOnlyList<Finding> RecordsLimit()
+    {
+        Stream s = Load(Voice, 0x000A);
+        var parent = new Node("Stream", 0, 1_000_000);
+        byte[] tiny = new byte[4];
+        IEnumerable<MappedBytes> packets = Enumerable.Range(0, WmaVoiceParser.MaxPackets + 5).Select(i => new MappedBytes(tiny, 200 + (i * 8L)));
+        var context = new CodecContext(parent, packets, CancellationToken.None, null, null, Configuration(s, parent));
+        new WmaVoiceParser().Parse(context);
+        return context.Findings;
     }
 
     private static IReadOnlyList<Finding> PayloadNotAnalyzed()
