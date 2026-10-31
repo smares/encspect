@@ -162,5 +162,5 @@ internal static class FlacBuilder
         return [.. Marker, .. Block(0, StreamInfo(4096, 44100, 2, 16, 4096L * frames, md5), isLast: more.Length == 0), .. more.SelectMany(b => b), .. built.SelectMany(f => f)];
     }
 
-    public static byte[] Concat(params byte[][] parts) => [.. parts.SelectMany(p => p)];
+    public static byte[] Concat(params byte[][] parts) => Unpooled.Join(parts);
 }

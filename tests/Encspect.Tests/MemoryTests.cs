@@ -21,8 +21,16 @@ public class MemoryCollection;
 // to 125 and 161. The MPEG bounds are far below what the parser took when it kept an array per
 // frame and listed every frame for each pass (490 bytes kept and 2.8 KB of heap).
 [Collection(nameof(MemoryTests))]
-public class MemoryTests(ITestOutputHelper output)
+public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 {
+    private readonly SharedPoolGuard _pools = new();
+
+    public void Dispose()
+    {
+        _pools.Dispose();
+        _pools.Check();
+    }
+
     private const int Frames = 100_000;
 
     private const int SampleInterval = 2;
@@ -122,7 +130,7 @@ public class MemoryTests(ITestOutputHelper output)
         const int perChunk = 10_000;
         byte[] unit = Mp4Builder.AacUnit();
         byte[] data = Mp4Builder.FileWithMoov(at => Mp4Builder.Trak(1, Mp4Builder.AacEntry(), Mp4Builder.Stts((long)chunks * perChunk, 1024), Mp4Builder.Stsc(perChunk),
-            Mp4Builder.ConstantSizes(unit.Length, (long)chunks * perChunk), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, chunks))), [.. Enumerable.Repeat(unit, 600).SelectMany(u => u)]);
+            Mp4Builder.ConstantSizes(unit.Length, (long)chunks * perChunk), Mp4Builder.ChunkOffsets(Enumerable.Repeat(at, chunks))), Unpooled.Repeat(unit, 600));
 
         (Report report, long kept, long peak) = Measure("overlap.m4a", data);
 
@@ -448,8 +456,8 @@ public class MemoryTests(ITestOutputHelper output)
         const int frames = 3_125 * perCopy;
         byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "external-ffmpeg-stereo-192k.ac3"));
 
-        (Report few, long fewerKept) = MeasureKept("few.ac3", Repeated(source, fewer / perCopy), source);
-        (Report many, long kept) = MeasureKept("many.ac3", Repeated(source, frames / perCopy), source);
+        (Report few, long fewerKept) = MeasureKept("few.ac3", Unpooled.Repeat(source, fewer / perCopy), source);
+        (Report many, long kept) = MeasureKept("many.ac3", Unpooled.Repeat(source, frames / perCopy), source);
 
         CheckAc3CodingGrowth(few, many, fewer, frames, ["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing"], categoryBytes: 18, numericBytes: 8);
         double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
@@ -469,8 +477,8 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "coding-eac3-dependent.eac3"));
         int perCopy = 4;
 
-        (Report few, long fewerKept) = MeasureKept("few.eac3", Repeated(source, fewer / perCopy), source);
-        (Report many, long kept) = MeasureKept("many.eac3", Repeated(source, units / perCopy), source);
+        (Report few, long fewerKept) = MeasureKept("few.eac3", Unpooled.Repeat(source, fewer / perCopy), source);
+        (Report many, long kept) = MeasureKept("many.eac3", Unpooled.Repeat(source, units / perCopy), source);
 
         // The budget of this stream, from its own units: for each of the four series the values of every unit and its count byte (a fixed copy of the
         // fixture's 31 blocks in 4 units is 35 bytes a unit), not the worst case of 12 values, which would let 17 bytes a unit of regression pass.
@@ -485,17 +493,6 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.True(keptPerUnit < 190, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
         GC.KeepAlive(few);
         GC.KeepAlive(many);
-    }
-
-    private static byte[] Repeated(byte[] source, int copies)
-    {
-        byte[] data = new byte[source.Length * copies];
-        for (int at = 0; at < data.Length; at += source.Length)
-        {
-            source.CopyTo(data, at);
-        }
-
-        return data;
     }
 
     // What the further units add to the coding series, from the series' own sizes: the codes and count bytes of the category series and 8
@@ -607,7 +604,7 @@ public class MemoryTests(ITestOutputHelper output)
         int crc = Encspect.Formats.Ac3.Crc16.Compute(frame.AsSpan(2, 8));
         frame[10] = (byte)(crc >> 8);
         frame[11] = (byte)crc;
-        byte[] data = [.. Enumerable.Repeat(frame, frames).SelectMany(b => b)];
+        byte[] data = Unpooled.Repeat(frame, frames);
 
         (Report report, long kept, long peak) = Measure("tiny.eac3", data);
 
@@ -1743,7 +1740,7 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] block = WavPackTinyBlocks(1);
         List<byte[]> parts = WavPackBuilder.Parts(block);
         byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(WavPackBuilder.Sub(0, []), 1023)).Concat(parts.Skip(1)));
-        byte[] data = [.. Enumerable.Repeat(full, 4096).SelectMany(b => b)];
+        byte[] data = Unpooled.Repeat(full, 4096);
 
         Report report = Bounded("budget.wv", data, 15_000_000, "wavpack.block-index-overlap");
 
@@ -1761,7 +1758,7 @@ public class MemoryTests(ITestOutputHelper output)
         List<byte[]> parts = WavPackBuilder.Parts(block);
         byte[] big = WavPackBuilder.Sub(0x3E, new byte[State.MaxStoredPerSubBlock]);
         byte[] full = WavPackBuilder.Join(block, parts.Take(1).Concat(Enumerable.Repeat(big, 16)).Concat(parts.Skip(1)));
-        byte[] data = [.. Enumerable.Repeat(full, 700).SelectMany(b => b)];
+        byte[] data = Unpooled.Repeat(full, 700);
 
         Report report = Bounded("stored.wv", data, 30_000_000, "wavpack.optional-subblock-unknown");
 
@@ -1777,7 +1774,7 @@ public class MemoryTests(ITestOutputHelper output)
         byte[] header = WavPackBuilder.Join(WavPackTinyBlocks(1), []);
         Assert.Equal(32, header.Length);
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(20), 0);
-        byte[] data = [.. Enumerable.Repeat(header, 2_000_000).SelectMany(b => b)];
+        byte[] data = Unpooled.Repeat(header, 2_000_000);
         Bounded("empty.wv", data, 100_000_000, "wavpack.no-audio");
     }
 
@@ -2155,6 +2152,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     private sealed class ProbeStream(byte[] data) : MemoryStream(data)
     {
+        private readonly byte[] _data = data;
+
         // Prime numerators of 137: irregular, fixed fractions of the input.
         public static readonly int[] Places =
             [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131];
@@ -2241,9 +2240,13 @@ public class MemoryTests(ITestOutputHelper output)
             return read;
         }
 
+        // Not base.Read(buffer): a MemoryStream of a derived type reads a span through Stream.Read(Span), which rents an array of the span's size
+        // from the shared pool and leaves it there (SharedPoolGuard).
         public override int Read(Span<byte> buffer)
         {
-            int read = base.Read(buffer);
+            int read = (int)Math.Clamp(Length - Position, 0, buffer.Length);
+            _data.AsSpan((int)Position, read).CopyTo(buffer);
+            Position += read;
             Probe();
             return read;
         }
@@ -2410,7 +2413,7 @@ public class MemoryTests(ITestOutputHelper output)
         config ??= [0x12, 0x10];
         static byte[] Box(string type, params byte[][] parts)
         {
-            byte[] payload = parts.SelectMany(p => p).ToArray();
+            byte[] payload = Unpooled.Join(parts);
             return [.. BigEndian(8 + payload.Length), .. System.Text.Encoding.ASCII.GetBytes(type), .. payload];
         }
 
@@ -2422,7 +2425,7 @@ public class MemoryTests(ITestOutputHelper output)
             byte[] esds = Box("esds", [0, 0, 0, 0, 0x03, (byte)(20 + config.Length), 0, 1, 0, 0x04, (byte)(15 + config.Length), 0x40, 0x15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0x05, (byte)config.Length, .. config, 0x06, 1, 2]);
             byte[] mp4a = Box("mp4a", new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xAC, 0x44, 0, 0], esds);
-            byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Enumerable.Range(0, count).SelectMany(_ => BigEndian(unit.Length)).ToArray());
+            byte[] stsz = Box("stsz", [0, 0, 0, 0], BigEndian(0), BigEndian(count), Unpooled.Repeat(BigEndian(unit.Length), count));
             byte[] stbl = Box("stbl",
                 Box("stsd", [0, 0, 0, 0], BigEndian(1), mp4a),
                 Box("stts", [0, 0, 0, 0], BigEndian(1), BigEndian(count), BigEndian(1024)),
@@ -2525,7 +2528,7 @@ public class MemoryTests(ITestOutputHelper output)
     private static byte[] Layer3Frames(int count)
     {
         byte[] frame = [0xFF, 0xFB, 0x10, 0x00, 0x00, 0x00, 0x01, 0x90, .. new byte[96]];
-        return Enumerable.Repeat(frame, count).SelectMany(b => b).ToArray();
+        return Unpooled.Repeat(frame, count);
     }
 
     // MPEG-1 Layer II stereo frames at 128 kbps and 44100 Hz, 417 bytes each, with 3 in the first allocation field: subband 0 of
@@ -2533,7 +2536,7 @@ public class MemoryTests(ITestOutputHelper output)
     private static byte[] Layer2Frames(int count)
     {
         byte[] frame = [0xFF, 0xFD, 0x80, 0x00, 0x30, .. new byte[412]];
-        return Enumerable.Repeat(frame, count).SelectMany(b => b).ToArray();
+        return Unpooled.Repeat(frame, count);
     }
 
     private const long MusepackKeptBound = 90;
@@ -2576,7 +2579,7 @@ public class MemoryTests(ITestOutputHelper output)
         }
 
         Write(0, 11);
-        return words.SelectMany(BitConverter.GetBytes).ToArray()[..(int)(((bit + 31) >> 5) << 2)];
+        return System.Runtime.InteropServices.MemoryMarshal.AsBytes(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(words))[..(int)(((bit + 31) >> 5) << 2)].ToArray();
     }
 
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
