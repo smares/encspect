@@ -796,7 +796,7 @@ public sealed class Id3v2TagParser : ITagParser
         int idLength = major == 2 ? 3 : 4;
         int headerLength = major == 2 ? 6 : 10;
         long framesStart = body.FilePosition;
-        state.PlainSizes = major == 4 && HasPlainFrameSizes(body.Reader, framesStart, body.End);
+        state.PlainSizes = major == 4 && HasPlainFrameSizes(body.Reader, framesStart, body.End, state.IsTruncated);
 
         while (!body.AtEnd)
         {
@@ -1335,16 +1335,11 @@ public sealed class Id3v2TagParser : ITagParser
         public List<Node> Frames { get; } = [];
     }
 
-    // Declared frames of ID3v2.3.0 section 4 and ID3v2.4.0 native frames section 4, plus the
-    // chapter frames of the ID3v2 Chapter Frame Addendum 1.0 and the frames iTunes writes (see
-    // Id3v2FrameTexts).
-    private static readonly HashSet<string> FrameIds = new(
-        "AENC APIC COMM COMR ENCR EQUA ETCO GEOB GRID IPLS LINK MCDI MLLT OWNE PRIV PCNT POPM POSS RBUF RVAD RVRB SYLT SYTC TALB TBPM TCOM TCON TCOP TDAT TDLY TENC TEXT TFLT TIME TIT1 TIT2 TIT3 TKEY TLAN TLEN TMED TOAL TOFN TOLY TOPE TORY TOWN TPE1 TPE2 TPE3 TPE4 TPOS TPUB TRCK TRDA TRSN TRSO TSIZ TSRC TSSE TYER TXXX UFID USER USLT WCOM WCOP WOAF WOAR WOAS WORS WPAY WPUB WXXX ASPI EQU2 RVA2 SEEK SIGN TDEN TDOR TDRC TDRL TDTG TIPL TMCL TMOO TPRO TSOA TSOP TSOT TSST CHAP CTOC TCMP TSO2 TSOC GRP1 MVNM MVIN".Split(' '), StringComparer.Ordinal);
-
-    // The header sets the extended header flag; a frame starts the body instead when its four
-    // bytes are a declared ID or an experimental one (X, Y or Z first, ID3v2.4 section 4). No
-    // extended header starts so: its size is 6 or 10 (ID3v2.3 section 3.2) or a synchsafe size of
-    // at least 6 followed by the byte $01 (ID3v2.4 section 3.2), never four letters or digits.
+    // The header sets the extended header flag; a frame starts the body instead when its first four
+    // bytes are letters A-Z or digits (ID3v2.4 section 4 allows any such ID, such as the podcast
+    // frames and the experimental ones). No extended header starts so: its size is 6 or 10
+    // (ID3v2.3 section 3.2) or a syncsafe size of at least 6 followed by the byte $01
+    // (ID3v2.4 section 3.2), never four letters or digits.
     private static bool FollowsDirectly(ByteReader reader, long bodyStart, long bodyEnd)
     {
         if (bodyEnd - bodyStart < 10)
@@ -1353,39 +1348,39 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         string id = Encoding.Latin1.GetString(reader.ReadBytesAt(bodyStart, 4));
-        return IsFrameId(id) && (FrameIds.Contains(id) || id[0] is 'X' or 'Y' or 'Z');
+        return IsFrameId(id);
     }
 
     private static bool IsFrameId(string id) => id.All(c => c is (>= 'A' and <= 'Z') or (>= '0' and <= '9'));
 
     // Whether an ID3v2.4 tag stores its frame sizes as plain integers (ID3v2.3 section 3.3) instead
-    // of synchsafe ones (ID3v2.4 section 4), as old iTunes versions wrote it. Section 4's own reading
+    // of syncsafe ones (ID3v2.4 section 4), as old iTunes versions wrote it. Section 4's own reading
     // wins whenever it is consistent. The plain one is chosen only when it is better explained: each
     // reading is walked from the first frame, and a reading fits when every frame has a valid ID and
     // lies inside the body and the frames are followed by the end of the body or by zero padding to
-    // it. A body that ends at the end of the file may also cut the last frame; that fits less than
-    // an exact end. Plain wins only with a better fit than the synchsafe reading.
-    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end)
+    // it. In a truncated tag the end of the body is where the file was cut, so the last frame may
+    // run past it, and an end or zero padding at the cut proves no more than that; both fit less
+    // than an exact end. Plain wins only with a better fit than the syncsafe reading.
+    private static bool HasPlainFrameSizes(ByteReader reader, long start, long end, bool truncated)
     {
         if (end - start < 10)
         {
             return false;
         }
 
-        bool mayBeCut = end >= reader.End;
-        int synchsafe = FrameChainFit(reader, start, end, false, mayBeCut);
-        if (synchsafe == 2)
+        int syncsafe = FrameChainFit(reader, start, end, false, truncated);
+        if (syncsafe == 2)
         {
             return false;
         }
 
-        int plain = FrameChainFit(reader, start, end, true, mayBeCut);
-        return plain == 2 || (plain == 1 && synchsafe == 0);
+        int plain = FrameChainFit(reader, start, end, true, truncated);
+        return plain == 2 || (plain == 1 && syncsafe <= 0);
     }
 
     // 2: the chain ends exactly at the end of the body or in padding that fills the rest;
-    // 1: the last frame runs past the end of a body cut by the end of the file; 0: neither;
-    // -1: the chain reaches padding that holds bytes other than zero.
+    // 1: the same in a body cut by the end of the file, or the last frame runs past that end;
+    // 0: neither; -1: the chain reaches padding that holds bytes other than zero.
     private static int FrameChainFit(ByteReader reader, long start, long end, bool plain, bool mayBeCut)
     {
         long position = start;
@@ -1394,7 +1389,7 @@ public sealed class Id3v2TagParser : ITagParser
         {
             if (reader.ReadBytesAt(position, 1)[0] == 0)
             {
-                return frames == 0 ? 0 : AllZero(reader, position, end) ? 2 : -1;
+                return frames == 0 ? 0 : AllZero(reader, position, end) ? (mayBeCut ? 1 : 2) : -1;
             }
 
             if (end - position < 10)
@@ -1423,15 +1418,15 @@ public sealed class Id3v2TagParser : ITagParser
             }
         }
 
-        return frames > 0 ? 2 : 0;
+        return frames == 0 ? 0 : mayBeCut ? 1 : 2;
     }
 
     private static bool AllZero(ByteReader reader, long start, long end)
     {
         for (long position = start; position < end;)
         {
-            int count = (int)Math.Min(end - position, 4096);
-            if (reader.ReadBytesAt(position, count).Any(b => b != 0))
+            int count = (int)Math.Min(end - position, 1 << 20);
+            if (reader.ReadBytesAt(position, count).AsSpan().ContainsAnyExcept((byte)0))
             {
                 return false;
             }

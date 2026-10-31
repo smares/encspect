@@ -584,7 +584,7 @@ Every cross-check script also compares each fixture's golden report with MediaIn
   - Musepack: a crash (SIGFPE) on a reserved SV8 sample rate code.
   - MP4 and AAC: a `crc_check` read in unprotected ADTS frames of several raw data blocks; parametric stereo read in a channel pair, which FFmpeg and faad2 do not apply there.
   - MP4 user data text: a movie's `©nam` atom is read as a version and flags (the size and language of the first item) and one UTF-8 text to the end of the atom (`File_Mpeg4_Elements.cpp`, `moov_udta_xxxx`, `Method_String3`), so `quicktime-udta-text`, whose title has a Macintosh-encoded first item and a second item, gives no title; its other text atoms (`©ART`, `©alb`, `©swr`, `©cpy`, `©day`, `©xyz`) are read item by item, the first non-empty text counting, and `crosscheck_mp4_fixtures.py` compares the artist, album and encoding application with the analyzer's.
-- **Tags:** of the 145 tag fixtures, MediaInfo reads the title, artist and album of 5 (written by ffmpeg and mutagen). It reads no tag of the 119 whose audio it does not recognize, and the other 21 hold none of these fields; both are asserted empty.
+- **Tags:** of the 149 tag fixtures, MediaInfo reads the title, artist and album of 5 (written by ffmpeg and mutagen). It reads no tag of the 123 whose audio it does not recognize, and the other 21 hold none of these fields; both are asserted empty.
 - **Version:** `mediainfo_tool.require()` reads `MediaInfoLib - v26.01` from `mediainfo --Version` and stops the script with a message on another version (a patch release of 26.01 passes, 26.010 does not). The assertions and skips were written for 24.01 and are adapted to 26.01 job by job.
 
 ### Tool versions
