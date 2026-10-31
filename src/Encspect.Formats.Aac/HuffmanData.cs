@@ -2,9 +2,9 @@ namespace Encspect.Formats.Aac;
 
 // The tables of ISO/IEC 14496-3 that the raw data block parser reads with: the Huffman codebooks of Annex 4.A (Tables 4.A.1 to 4.A.12)
 // and of SBR, as codewords and their lengths in the specification's index order, and the scalefactor band offsets (Tables 4.129 to
-// 4.147): specification data. The specification is not freely available, so scripts/fixtures/check_aac_tables.py checks this file against
-// scripts/fixtures/aac_tables.py and, in independent implementations, every codeword through faad2 2.11.1's decoding tables, the band
-// tables against fdk-aac 2.0.2 and the codebooks, band counts and SBR offsets against FFmpeg 6.1.1 (docs/development.md, "Tables").
+// 4.147): specification data, transcribed through FFmpeg 6.1.1's aactab.c and aacsbrdata.h (scripts/fixtures/aac_tables.py), since the
+// specification is not freely available. scripts/fixtures/check_aac_tables.py checks this file against aac_tables.py and, in independent
+// implementations, every codeword through faad2 2.11.1's decoding tables and the band tables against fdk-aac 2.0.2 (docs/development.md, "Tables").
 internal static class HuffmanData
 {
     public static readonly ushort[] Codes1 = [

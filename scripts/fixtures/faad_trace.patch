@@ -1,0 +1,166 @@
+This is a modification of faad2 2.11.1 (commit 216f00e8ddba6f2c64caf481a04f1ddd78b93e78) and is distributed under the same license as faad2:
+the GNU General Public License, version 2 or (at your option) any later version.
+
+faad2 is Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com. The "appropriate copyright message" faad2's license names
+(section 2c of the GPLv2) is: "Code from FAAD2 is copyright (c) Nero AG, www.nero.com".
+
+The changes add fprintf calls to libfaad/syntax.c, libfaad/ms.c and libfaad/sbr_syntax.c that print what the parser reads, each line starting with "@@"
+on standard error (see scripts/fixtures/faad_trace_tool.py). The patch is applied by that tool to a build of faad2 for checking this project's
+fixtures. It is a test tool: it is in neither the command line build nor the GUI build (docs/development.md), but this repository carries the patch and so distributes it.
+
+The license of faad2 is in its COPYING: https://github.com/knik0/faad2/blob/216f00e8ddba6f2c64caf481a04f1ddd78b93e78/COPYING (GPL-2.0-or-later).
+Date of the change (section 2a of the GPLv2): 2026-10-29, the day this patch was added to the repository.
+
+diff --git a/libfaad/ms.c b/libfaad/ms.c
+index eb4d266..811c2b2 100644
+--- a/libfaad/ms.c
++++ b/libfaad/ms.c
+@@ -1,3 +1,4 @@
++#include <stdio.h>
+ /*
+ ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+ ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+@@ -48,6 +49,7 @@ void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+ 
+     if (ics->ms_mask_present >= 1)
+     {
++        fprintf(stderr, "@@MS %u ", ics->ms_mask_present);
+         for (g = 0; g < ics->num_window_groups; g++)
+         {
+             for (b = 0; b < ics->window_group_length[g]; b++)
+@@ -58,6 +60,8 @@ void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+                        for a particular scalefactor band, no M/S stereo decoding
+                        is carried out.
+                      */
++                    if (b == 0)
++                        fprintf(stderr, "%u", (ics->ms_used[g][sfb] || ics->ms_mask_present == 2) && !is_intensity(icsr, g, sfb) && !is_noise(ics, g, sfb));
+                     if ((ics->ms_used[g][sfb] || ics->ms_mask_present == 2) &&
+                         !is_intensity(icsr, g, sfb) && !is_noise(ics, g, sfb))
+                     {
+@@ -73,5 +77,6 @@ void ms_decode(ic_stream *ics, ic_stream *icsr, real_t *l_spec, real_t *r_spec,
+                 group++;
+             }
+         }
++        fprintf(stderr, "\n");
+     }
+ }
+diff --git a/libfaad/sbr_syntax.c b/libfaad/sbr_syntax.c
+index e27980f..75abaee 100644
+--- a/libfaad/sbr_syntax.c
++++ b/libfaad/sbr_syntax.c
+@@ -1,3 +1,4 @@
++#include <stdio.h>
+ /*
+ ** FAAD2 - Freeware Advanced Audio (AAC) Decoder including SBR decoding
+ ** Copyright (C) 2003-2005 M. Bakker, Nero AG, http://www.nero.com
+@@ -283,6 +284,7 @@ static void sbr_header(bitfile *ld, sbr_info *sbr)
+         DEBUGVAR(1,205,"sbr_header(): bs_stop_freq"));
+     sbr->bs_xover_band = (uint8_t)faad_getbits(ld, 3
+         DEBUGVAR(1,206,"sbr_header(): bs_xover_band"));
++    fprintf(stderr, "@@SBRHDR %u %u %u\n", sbr->bs_start_freq, sbr->bs_stop_freq, sbr->bs_xover_band);
+     faad_getbits(ld, 2
+         DEBUGVAR(1,207,"sbr_header(): bs_reserved_bits_hdr"));
+     bs_header_extra_1 = (uint8_t)faad_get1bit(ld
+@@ -435,6 +437,7 @@ static uint8_t sbr_single_channel_element(bitfile *ld, sbr_info *sbr)
+ 
+             sbr->bs_extension_id = (uint8_t)faad_getbits(ld, 2
+                 DEBUGVAR(1,227,"sbr_single_channel_element(): bs_extension_id"));
++            fprintf(stderr, "@@SBREXT %u\n", sbr->bs_extension_id);
+             tmp_nr_bits += 2;
+ 
+             /* allow only 1 PS extension element per extension data */
+diff --git a/libfaad/syntax.c b/libfaad/syntax.c
+index 56ae310..e5fe31d 100644
+--- a/libfaad/syntax.c
++++ b/libfaad/syntax.c
+@@ -456,6 +456,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
+     hDecoder->fr_ch_ele = 0;
+     hDecoder->first_syn_ele = 25;
+     hDecoder->has_lfe = 0;
++    fprintf(stderr, "@@AU %u\n", faad_get_processed_bits(ld));
+ 
+ #ifdef ERROR_RESILIENCE
+     if (hDecoder->object_type < ER_OBJECT_START)
+@@ -465,6 +466,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
+         while ((id_syn_ele = (uint8_t)faad_getbits(ld, LEN_SE_ID
+             DEBUGVAR(1,4,"NeAACDecDecode(): id_syn_ele"))) != ID_END)
+         {
++            fprintf(stderr, "@@EL %u %u\n", id_syn_ele, faad_get_processed_bits(ld) - 3);
+             switch (id_syn_ele) {
+             case ID_SCE:
+                 ele_this_frame++;
+@@ -643,6 +645,7 @@ void raw_data_block(NeAACDecStruct *hDecoder, NeAACDecFrameInfo *hInfo,
+     {
+         faad_byte_align(ld);
+     }
++    fprintf(stderr, "@@END %u\n", faad_get_processed_bits(ld));
+ 
+     return;
+ }
+@@ -677,6 +680,7 @@ static uint8_t single_lfe_channel_element(NeAACDecStruct *hDecoder, bitfile *ld,
+     /* if so, read it now so SBR decoding can be done in case of a file with SBR */
+     if (faad_showbits(ld, LEN_SE_ID) == ID_FIL)
+     {
++        fprintf(stderr, "@@EL 6 %u\n", faad_get_processed_bits(ld));
+         faad_flushbits(ld, LEN_SE_ID);
+ 
+         /* one sbr_info describes a channel_element not a channel! */
+@@ -765,6 +769,15 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
+     } else {
+         ics1->ms_mask_present = 0;
+     }
++    {
++        uint8_t g, sfb;
++        fprintf(stderr, "@@CPE %u %u ", cpe.common_window, ics1->ms_mask_present);
++        if (ics1->ms_mask_present == 1)
++            for (g = 0; g < ics1->num_window_groups; g++)
++                for (sfb = 0; sfb < ics1->max_sfb; sfb++)
++                    fprintf(stderr, "%u", ics1->ms_used[g][sfb]);
++        fprintf(stderr, "\n");
++    }
+ 
+     if ((result = individual_channel_stream(hDecoder, &cpe, ld, ics1,
+         0, spec_data1)) > 0)
+@@ -805,6 +818,7 @@ static uint8_t channel_pair_element(NeAACDecStruct *hDecoder, bitfile *ld,
+     /* if so, read it now so SBR decoding can be done in case of a file with SBR */
+     if (faad_showbits(ld, LEN_SE_ID) == ID_FIL)
+     {
++        fprintf(stderr, "@@EL 6 %u\n", faad_get_processed_bits(ld));
+         faad_flushbits(ld, LEN_SE_ID);
+ 
+         /* one sbr_info describes a channel_element not a channel! */
+@@ -1130,6 +1144,8 @@ static uint8_t fill_element(NeAACDecStruct *hDecoder, bitfile *ld, drc_info *drc
+     {
+ #ifdef SBR_DEC
+         bs_extension_type = (uint8_t)faad_showbits(ld, 4);
++        if (bs_extension_type == EXT_SBR_DATA || bs_extension_type == EXT_SBR_DATA_CRC)
++            fprintf(stderr, "@@EXT %u\n", bs_extension_type);
+ 
+         if ((bs_extension_type == EXT_SBR_DATA) ||
+             (bs_extension_type == EXT_SBR_DATA_CRC))
+@@ -1724,6 +1740,17 @@ static uint8_t individual_channel_stream(NeAACDecStruct *hDecoder, element *ele,
+         }
+     }
+ 
++    {
++        uint8_t g, sfb, w, filters = 0;
++        for (w = 0; w < ics->num_windows; w++)
++            filters += ics->tns_data_present ? ics->tns.n_filt[w] : 0;
++        fprintf(stderr, "@@ICS %u %u %u %u %u %u %u %u %u %u ", ics->window_sequence, ics->window_shape, ics->max_sfb, ics->num_window_groups,
++            ics->global_gain, ics->pulse_data_present, ics->tns_data_present, ics->gain_control_data_present, ics->predictor_data_present, filters);
++        for (g = 0; g < ics->num_window_groups; g++)
++            for (sfb = 0; sfb < ics->max_sfb; sfb++)
++                fprintf(stderr, "%x", ics->sfb_cb[g][sfb]);
++        fprintf(stderr, "\n");
++    }
+     return 0;
+ }
+ 
+@@ -2245,6 +2272,7 @@ static uint16_t extension_payload(bitfile *ld, drc_info *drc, uint16_t count)
+ 
+     uint8_t extension_type = (uint8_t)faad_getbits(ld, 4
+         DEBUGVAR(1,87,"extension_payload(): extension_type"));
++    fprintf(stderr, "@@EXT %u\n", extension_type);
+ 
+     switch (extension_type)
+     {

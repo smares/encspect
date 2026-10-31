@@ -8,7 +8,8 @@ namespace Encspect.Formats.Wav.Decoding;
 internal static class PcmUnpack
 {
     // The 16-bit sample of a companded byte: the A-law and mu-law expansions as the segment formulas of G.711 give them (a sign, a 3-bit segment and a
-    // 4-bit step), in a 16-bit scale. Format data built from the formulas, no table copied; the expansion of all
+    // 4-bit step), in a 16-bit scale. ALawValue and MuLawValue follow alaw2linear and ulaw2linear of Sun Microsystems' public g711.c, which carries
+    // no copyright restriction ("unrestricted use"); no table is copied. The expansion of all
     // 256 codes of each is confirmed as a black box against the MD5 of FFmpeg's decoded output (no code of it was read) (built-alaw-all-codes.wav, built-mulaw-all-codes.wav, docs/development.md).
     private static readonly short[] ALawTable = BuildTable(ALawValue);
 
