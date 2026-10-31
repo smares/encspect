@@ -11,7 +11,7 @@ references: ITU-R BS.1770-5 Annex 1 and Annex 3; EBU R 128; EBU Tech 3341
 
 - **K-weighting:** a high-shelf filter, which models the effect of the head and raises the level above about 2 kHz by 4 dB, and a highpass filter at about 38 Hz. The Recommendation gives its coefficients for 48 kHz; at other rates the analyzer derives coefficients that give the same response, and measures loudness from 8,000 Hz.
 - **Blocks:** the mean square of each channel over 400 ms, a block every 100 ms. The channels are weighted by their loudspeaker positions (1.00 for the front channels, 1.41 for the surround channels, the LFE left out) and summed. Loudness is -0.691 + 10 log10 of that sum, in LUFS (BS.1770 writes LKFS), one unit for each dB.
-- **Gating:** a block counts only if it is above -70 LUFS, and then only if it is above a level 10 LU below the loudness of the blocks that passed the first gate, so silence and quiet passages do not pull a program down.
+- **Gating:** a block counts only if it is above -70 LUFS, and then only if it is above a level 10 LU below the loudness of the blocks that passed the first gate, so silence and quiet passages do not pull a program down. Each block is compared with the gate on its own; a block exactly at the gate level is not above it. Only for a stream of more than about 3.6 hours does the analyzer group blocks in bins of 0.01 LU for this step, which can misjudge a gate that many blocks sit at by up to -10 log10(1 - p) LU, p being the share of the passing blocks in the gate's bin; the report then says so.
 
 EBU R 128 names three scales: momentary (400 ms), short-term (3 s) and integrated (the whole program, gated), and asks for -23 LUFS.
 

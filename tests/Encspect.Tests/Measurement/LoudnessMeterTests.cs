@@ -212,25 +212,132 @@ public class LoudnessMeterTests
         Assert.True(Math.Abs((l.MaximumShortTermTenths / 10.0) - shortTerm) <= 0.06, $"S {l.MaximumShortTermTenths / 10.0} against {shortTerm:F3}");
     }
 
-    // The gate's own bin is taken whole or left out: at most 4.34 p LU (the share p of the passing blocks in that bin) from the exact figure.
-    [Fact]
-    public void BlocksStraddlingTheRelativeGateChangeTheIntegratedLoudnessByLessThanTheBound()
+    // The gating blocks of a signal (400 ms every 100 ms, K-weighted, mono) as the Recommendation defines them, in energy.
+    private static double[] BlockEnergies(double[] x)
     {
-        // 60 s at a level with 20 s of noise 10 LU lower, whose blocks sit around the gate, then the reference tells the exact figure.
-        int length = 48000 * 80;
-        double[] noise = MeasurementSignals.Noise(length, 5);
-        double[] wiggle = MeasurementSignals.Noise(length / 4800 + 1, 6);
-        var signal = new double[length];
+        KWeighting k = KWeighting.At48000;
+        double s1 = 0, s2 = 0, t1 = 0, t2 = 0;
+        var prefix = new double[x.Length + 1];
+        for (int i = 0; i < x.Length; i++)
+        {
+            double y = (k.B0 * x[i]) + s1;
+            s1 = (k.B1 * x[i]) - (k.A1 * y) + s2;
+            s2 = (k.B2 * x[i]) - (k.A2 * y);
+            double z = y + t1;
+            t1 = (-2 * y) - (k.HighpassA1 * z) + t2;
+            t2 = y - (k.HighpassA2 * z);
+            prefix[i + 1] = prefix[i] + (z * z);
+        }
+
+        var blocks = new List<double>();
+        for (int from = 0; from + 19200 <= x.Length; from += 4800)
+        {
+            blocks.Add((prefix[from + 19200] - prefix[from]) / 19200);
+        }
+
+        return [.. blocks];
+    }
+
+    private static double Loudness(double energy) => -0.691 + (10 * Math.Log10(energy));
+
+    // Many blocks sit in the one 0.01 LU bin that holds the relative gate, some just above it and some just below: BS.1770-5 equation 7 keeps
+    // the first and drops the second, one by one. A histogram that takes the bin whole reads about 2 LU low here. A loud tone, then two quiet
+    // tones 0.0009 dB apart, set by bisection so that the gate falls between them.
+    [Fact]
+    public void ManyBlocksInTheBinOfTheRelativeGateAreGatedOneByOne()
+    {
+        double[] Segment(double seconds, double amplitude, int lead) => [.. new double[lead * 48000], .. Tone(48000, seconds, 20 * Math.Log10(amplitude)), .. new double[48000]];
+        double[] a = Segment(10, 1, 0);
+        double[] b1 = Segment(30, 1, 11);
+        double[] b2 = Segment(30, 1, 42);
+        int length = 73 * 48000;
+        double[] Pad(double[] x) => [.. x, .. new double[length - x.Length]];
+        double[] za = BlockEnergies(Pad(a));
+        double[] zb1 = BlockEnergies(Pad(b1));
+        double[] zb2 = BlockEnergies(Pad(b2));
+        const double Delta = 1e-4;
+        double absolute = Math.Pow(10, (-70 + 0.691) / 10);
+
+        (double Gate, double Level, double Exact, double Whole) At(double amplitude)
+        {
+            double u = amplitude * amplitude;
+            double[] blocks = new double[za.Length];
+            for (int i = 0; i < blocks.Length; i++)
+            {
+                blocks[i] = za[i] + (u * (1 + Delta) * (1 + Delta) * zb1[i]) + (u * (1 - Delta) * (1 - Delta) * zb2[i]);
+            }
+
+            double[] above = [.. blocks.Where(e => e > absolute)];
+            double gate = above.Sum() / above.Length / 10;
+            double[] kept = [.. above.Where(e => e > gate)];
+            return (gate, u * zb1.Max(), Loudness(kept.Sum() / kept.Length), Loudness(above.Sum() / above.Length));
+        }
+
+        double low = 0.0001, high = 0.2;
+        for (int i = 0; i < 80; i++)
+        {
+            double mid = (low + high) / 2;
+            (double gate, double level, _, _) = At(mid);
+            if (gate > level)
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid;
+            }
+        }
+
+        double amplitude = (low + high) / 2;
+        (double g, _, double exact, double all) = At(amplitude);
+        Assert.True(Math.Abs(exact - all) > 1.5, $"the case does not straddle: exact {exact:F3}, all in {all:F3}");
+
+        double[] pa = Pad(a), p1 = Pad(b1), p2 = Pad(b2);
+        double[] signal = new double[length];
         for (int i = 0; i < length; i++)
         {
-            double level = i < 48000 * 60 ? -23 : -33.2 + (0.05 * wiggle[i / 4800]);
-            signal[i] = noise[i] * Amplitude(level);
+            signal[i] = pa[i] + (amplitude * (1 + Delta) * p1[i]) + (amplitude * (1 - Delta) * p2[i]);
         }
 
         LoudnessFigures l = Measure([signal], 48000, kinds: MeasurementKinds.Loudness).Loudness!;
-        (double integrated, _, _, _) = Reference([signal], [100]);
-        double p = (double)(l.Blocks - 600) / Math.Max(1, l.BlocksAboveRelativeGate);
-        Assert.True(Math.Abs((l.IntegratedTenths / 10.0) - integrated) <= (4.34 * Math.Min(1, p)) + 0.06, $"{l.IntegratedTenths / 10.0} against {integrated:F3}, p {p:F3}");
+        Assert.True(l.IsGatedExactly);
+        Assert.True(Math.Abs((l.IntegratedTenths / 10.0) - exact) <= 0.06, $"{l.IntegratedTenths / 10.0} against the exact {exact:F3} (gate {g:E3})");
+    }
+
+    // A relative gate above +30 LUFS: the first version's histogram ended there and read +42.2 for a stream at +45.0.
+    [Fact]
+    public void AGateAbove30LufsIsAppliedLikeAnyOther()
+    {
+        double[] signal = [.. Tone(48000, 10, 48, 997), .. Tone(48000, 10, 35, 997)];
+        LoudnessFigures l = Measure([signal], 48000, kinds: MeasurementKinds.Loudness).Loudness!;
+        (double integrated, double range, _, _) = Reference([signal], [100]);
+        Assert.True(integrated > 40);
+        Assert.True(Math.Abs((l.IntegratedTenths / 10.0) - integrated) <= 0.06, $"{l.IntegratedTenths / 10.0} against {integrated:F3}");
+        Assert.True(Math.Abs((l.RangeTenths / 10.0) - range) <= 0.12, $"{l.RangeTenths / 10.0} against {range:F3}");
+    }
+
+    // The most values kept: past it the histograms decide, and the figure says so. The loudness is still close, for blocks of one level.
+    [Fact]
+    public void AStreamBeyondTheKeptValuesFallsBackToTheHistogramAndSaysSo()
+    {
+        double[] tone = Tone(48000, 30, -23, 997);
+        var meter = new LoudnessMeter(48000, [100], maxExact: 50);
+        meter.Start(0);
+        for (int from = 0; from < tone.Length; from += LoudnessMeter.MaxPiece)
+        {
+            int count = Math.Min(LoudnessMeter.MaxPiece, tone.Length - from);
+            meter.AddChannel(0, tone.AsSpan(from, count));
+            meter.EndPiece(count);
+        }
+
+        LoudnessFigures l = meter.Build([100]);
+        Assert.False(l.IsGatedExactly);
+        Assert.True(Math.Abs((l.IntegratedTenths / 10.0) - (-26.0)) <= 0.1, $"{l.IntegratedTenths / 10.0}");
+
+        StreamMeasurements m = Measure([tone], 48000, kinds: MeasurementKinds.Loudness) with { Loudness = l };
+        Assert.Contains("gated on a histogram of 0.01 LU steps", LineText(m, "Integrated Loudness"));
+        Assert.Contains("gated on a histogram of 0.01 LU steps", LineText(m, "Loudness Range"));
+        Assert.True(Measure([tone], 48000, kinds: MeasurementKinds.Loudness).Loudness!.IsGatedExactly);
     }
 
     [Fact]
@@ -327,14 +434,22 @@ public class LoudnessMeterTests
     }
 
     [Fact]
-    public void AnInputAboveThe30LufsTopOfTheHistogramReadsThatTopInThePercentilesAndTheDescriptionSaysSo()
+    public void ASamplePeakAboveFullScaleIsSignedLikeATruePeak()
+    {
+        StreamMeasurements m = Measure([Tone(48000, 1, 3.5)], 48000, kinds: MeasurementKinds.Levels | MeasurementKinds.TruePeak);
+        Assert.StartsWith("+3.5 dBFS", LineText(m, "Sample Peak"));
+        Assert.StartsWith("+3.5 dBTP", LineText(m, "Maximum True Peak Level"));
+        Assert.Contains("the analyzer's step", MeasurementText.MaximumMomentaryLoudnessDescription);
+    }
+
+    [Fact]
+    public void AnInputAbove30LufsReadsItsOwnLevelInTheRangeToo()
     {
         LoudnessFigures l = Measure([Tone(48000, 5, 40)], 48000, kinds: MeasurementKinds.Loudness).Loudness!;
         Assert.True(l.IntegratedTenths > 300);
-        Assert.Equal(300, l.RangeLowTenths);
-        Assert.Equal(300, l.RangeHighTenths);
+        Assert.Equal(l.IntegratedTenths, l.RangeLowTenths);
+        Assert.Equal(l.IntegratedTenths, l.RangeHighTenths);
         Assert.Equal(0, l.RangeTenths);
-        Assert.Contains("above +30 LUFS counts as +30 LUFS", MeasurementText.LoudnessRangeDescription);
     }
 
     [Fact]

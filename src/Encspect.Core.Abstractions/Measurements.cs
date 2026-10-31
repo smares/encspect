@@ -174,8 +174,8 @@ public sealed record SpectrumFigures
     // The bins that make up one row: FftSize / 1,024.
     public int BinsPerRow => FftSize / (MeasurementLimits.Rows * 2);
 
-    // The average level of each of the 512 rows (0 Hz to Nyquist) in tenths of a dB relative to a full-scale sine centered on a
-    // bin, combined (all channels but the LFE) and per channel. A row with no power at all holds MeasurementLimits.NoPower.
+    // The average level of each of the 512 rows (0 Hz to Nyquist) in tenths of a dB relative to the power of one bin for a
+    // full-scale sine centered on it (a row is the mean of its BinsPerRow bins, so that sine reads 10 log10(1.5 / BinsPerRow) dB), combined (all channels but the LFE) and per channel. A row with no power at all holds MeasurementLimits.NoPower.
     public required ReadOnlyMemory<short> Combined { get; init; }
 
     public required IReadOnlyList<ReadOnlyMemory<short>> PerChannel { get; init; }
@@ -292,6 +292,12 @@ public sealed record LoudnessFigures
     public long BlocksAboveAbsoluteGate { get; init; }
 
     public long BlocksAboveRelativeGate { get; init; }
+
+    // Whether the integrated loudness and the loudness range gate each block and each short-term value on its own (BS.1770-5 equation 7,
+    // Tech 3342). False for a stream with more than 131,072 of either above the absolute gate (about 3.6 hours), where the gates work on a
+    // histogram of 0.01 LU bins and the integrated loudness can be off by up to -10 log10(1 - p) LU, p being the share of the passing blocks
+    // in the gate's bin.
+    public bool IsGatedExactly { get; init; } = true;
 
     // The short-term loudness over the stream in LUFS at most MaxSeriesPoints points (x: seconds since the first measured sample at the
     // end of the 3 s window of the first value a point covers; adjacent values are averaged in energy as the stream grows); null where none.

@@ -45,7 +45,7 @@ internal static class LoudnessWeights
     }
 
     // BackLeft and BackRight are the rear pair of a 7.1 (M+-135, weight 1.00) beside a side pair, otherwise the surround pair
-    // (M+-110, 1.41). The wide pair's azimuth is not read from ISO/IEC 23091-3 here; it is weighted 1.00.
+    // (M+-110, 1.41). The wide pair's azimuth could not be checked against a source (BS.1770-5 Table 5 has M+-060 at 1.41 only in configuration H, without naming them wide), so it is weighted 1.00 as an assumption; if it sits at +-60 degrees Table 4 gives 1.41.
     private static int Weight(Speaker speaker, bool hasSides) => speaker switch
     {
         Speaker.LowFrequency or Speaker.LowFrequency2 => 0,

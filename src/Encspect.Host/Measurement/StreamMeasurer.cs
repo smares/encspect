@@ -520,6 +520,7 @@ internal sealed class StreamMeasurer
     // Scales a channel's samples to full scale +-1 in doubles, with the minimum and maximum. Non-finite floats are 0 and counted, floats
     // beyond 1,024 times full scale are clamped, before anything reaches the arithmetic. Floats under 1e-30 are kept in the target, where the levels read
     // them as samples that are not 0; the minimum and maximum (the waveform) read them as 0, and the spectrum's buffers are flushed after the levels.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Convert(PcmBlock block, int channel, int start, int count, Span<double> target, out double low, out double high)
     {
         low = double.MaxValue;
@@ -588,6 +589,7 @@ internal sealed class StreamMeasurer
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private double Sanitize(double v)
     {
         double magnitude = Math.Abs(v);
@@ -692,6 +694,7 @@ internal sealed class StreamMeasurer
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private bool ProcessFrame()
     {
         if (_cells.Length == 0 && !Allocate())

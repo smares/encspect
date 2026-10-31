@@ -19,13 +19,13 @@ public static class MeasurementText
 
     public const string SpectralCutoffTopic = Topics.SpectralCutoff;
 
-    public const string SpectrogramDescription = "The average power over time and frequency of the decoded audio: 512 rows from 0 Hz to Nyquist and up to 1,024 columns of the FFT hops, with 0 dB the level of a full-scale sine centered on a bin.";
+    public const string SpectrogramDescription = "The average power over time and frequency of the decoded audio: 512 rows from 0 Hz to Nyquist and up to 1,024 columns of the FFT hops, with 0 dB the power of the bin a full-scale sine is centered on. A row is the mean of its bins (4 at 4,096 points, 8 at 8,192, 16 at 16,384), so that sine reads about 10 log10(1.5 / bins) dB in its row: -4.3, -7.3 and -10.3 dB.";
 
     public const string SpectrogramTopic = Topics.Spectrogram;
 
     public const string WaveformDescription = "The smallest and largest sample of each channel in each column of the spectrogram's time axis, in 16-bit sample codes.";
 
-    public const string SpectrumDescription = "The average level of each of 512 rows from 0 Hz to Nyquist over all frames, in tenths of a dB relative to a full-scale sine centered on a bin, for the channels together (all but the LFE) and for each channel.";
+    public const string SpectrumDescription = "The average level of each of 512 rows from 0 Hz to Nyquist over all frames, in tenths of a dB relative to the power of the bin a full-scale sine is centered on (a row is the mean of its bins, so that sine reads 10 log10(1.5 / bins) dB in its row: -4.3 dB at 4 bins a row, -7.3 at 8, -10.3 at 16), for the channels together (all but the LFE) and for each channel.";
 
     public const string SamplePeakDescription = "The largest sample magnitude of each channel in decibels relative to full scale, where the most negative integer code counts as full scale; the stream's figure is the highest of the channels. A channel whose samples are all 0 has no peak.";
 
@@ -47,11 +47,11 @@ public static class MeasurementText
 
     public const string LoudnessDescription = "The loudness of the decoded audio as ITU-R BS.1770-5 defines it: the signal is K-weighted, its mean square taken over blocks of 400 ms and summed over the channels with their weights, and the blocks are gated. It is computed from the decoded audio; a loudness the file states is another figure.";
 
-    public const string IntegratedLoudnessDescription = "The loudness of the whole stream (BS.1770-5 equation 5): blocks of 400 ms every 100 ms, K-weighted and channel-weighted, keeping those above -70 LUFS and above a gate 10 LU below the average loudness of those. It is computed from the decoded audio, not written by the file's creator.";
+    public const string IntegratedLoudnessDescription = "The loudness of the whole stream (BS.1770-5 equation 5): blocks of 400 ms every 100 ms, K-weighted and channel-weighted, keeping those above -70 LUFS and above a gate 10 LU below the average loudness of those, each block on its own. A stream with more than 131,072 such blocks (about 3.6 hours) is gated on a histogram of 0.01 LU steps instead, which the figure then states. It is computed from the decoded audio, not written by the file's creator.";
 
-    public const string LoudnessRangeDescription = "The spread of the short-term loudness (3 s windows every 100 ms) between its 10th and its 95th percentile, after gating at -70 LUFS and 20 LU below the average, as EBU Tech 3342 defines it. A short-term loudness above +30 LUFS counts as +30 LUFS in the percentiles. It is computed from the decoded audio, not written by the file's creator.";
+    public const string LoudnessRangeDescription = "The spread of the short-term loudness (3 s windows every 100 ms) between its 10th and its 95th percentile, after gating at -70 LUFS and 20 LU below the average, as EBU Tech 3342 defines it. A stream with more than 131,072 such values (about 3.6 hours) is gated on a histogram of 0.01 LU steps instead, which the figure then states. It is computed from the decoded audio, not written by the file's creator.";
 
-    public const string MaximumMomentaryLoudnessDescription = "The highest momentary loudness: the loudness of 400 ms blocks, rectangular, taken every 20 ms (EBU R 128). It is computed from the decoded audio, not written by the file's creator.";
+    public const string MaximumMomentaryLoudnessDescription = "The highest momentary loudness: the loudness of 400 ms blocks, rectangular, taken every 20 ms (the analyzer's step; EBU Tech 3341 test 13 needs a window that can start at any multiple of 20 ms). It is computed from the decoded audio, not written by the file's creator.";
 
     public const string MaximumShortTermLoudnessDescription = "The highest short-term loudness: the loudness of 3 s windows taken every 100 ms (EBU R 128). It is computed from the decoded audio, not written by the file's creator.";
 
@@ -125,8 +125,8 @@ public static class MeasurementText
         string window = ShortStretch(m, "3 s");
         if (!isMaxima)
         {
-            lines.Add(new MeasurementLine("Integrated Loudness", Loudness(l.IntegratedTenths, l.IntegratedAbsence, "LUFS", block), IntegratedLoudnessDescription, LoudnessTopic));
-            lines.Add(new MeasurementLine("Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window, "short-term value"), LoudnessRangeDescription, LoudnessRangeTopic));
+            lines.Add(new MeasurementLine("Integrated Loudness", Loudness(l.IntegratedTenths, l.IntegratedAbsence, "LUFS", block) + GatingBasis(l), IntegratedLoudnessDescription, LoudnessTopic));
+            lines.Add(new MeasurementLine("Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window, "short-term value") + GatingBasis(l), LoudnessRangeDescription, LoudnessRangeTopic));
             return;
         }
 
@@ -159,6 +159,8 @@ public static class MeasurementText
         : m.Status == MeasurementStatus.Complete ? $"the stream is shorter than {length}"
         : $"the part of the stream that was measured is shorter than {length}";
 
+    private static string GatingBasis(LoudnessFigures l) => l.IsGatedExactly ? string.Empty : "; gated on a histogram of 0.01 LU steps, as the stream has more than 131,072 values to gate";
+
     private static string Loudness(int tenths, LoudnessAbsence absence, string unit, string shortReason, string values = "block") => absence switch
     {
         LoudnessAbsence.TooShort => $"none ({shortReason})",
@@ -176,7 +178,7 @@ public static class MeasurementText
         List<string> names = ChannelNames(m, channels.Count);
         bool isFloat = levels.Format != SampleFormat.Integer;
 
-        lines.Add(new MeasurementLine("Sample Peak", $"{Tenths(stream.SamplePeakTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.SamplePeakTenths)))}", SamplePeakDescription, LevelsTopic));
+        lines.Add(new MeasurementLine("Sample Peak", $"{SignedTenths(stream.SamplePeakTenths)} dBFS{PerChannel(names, channels.Select(c => SignedTenths(c.SamplePeakTenths)))}", SamplePeakDescription, LevelsTopic));
         lines.Add(new MeasurementLine("RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
         lines.Add(new MeasurementLine("DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
 
