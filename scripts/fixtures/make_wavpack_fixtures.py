@@ -266,6 +266,8 @@ DECODES = {
     "md5-file-cut": (17512, 0),
     "md5-layout-differs": (24000, 0),
     "set-channels-missing": (24000, 3),
+    "stereo-mute-limit": (24000, 1),
+    "leading-block-without-set-md5": (24000, 1),
 }
 
 
@@ -517,6 +519,15 @@ def build():
                                  [("wavpack.channel-count-mismatch", "first set of blocks holds 5 channels"), ("wavpack.format-changes", "holds 6 channels, but the first holds 5 channels")], False)
     b["inner-block-index-md5"] = ("The block index of the second block of the first set of a 5.1 file with an MD5 changed from 0 to 5, its checksum worked out again: libwavpack takes the index of each block of a set from the block itself (open_utils.c 357) and decodes the audio, whose MD5 holds.",
                                   aa([sixteen[0], patch(sixteen[1], index=5), *sixteen[2:]]), [("wavpack.block-set-broken", "begins at sample 5")], False)
+    stereo_md5 = blocks(base("lossless-16-stereo-md5"))
+    b["stereo-mute-limit"] = ("The magnitude field of the first block's flags changed from 15 to 8 and its checksum worked out again: samples of the block pass libwavpack's mute limit, so the block is muted and its CRC fails.",
+                              aa([patch(stereo_md5[0], flags=(flags(stereo_md5[0]) & ~(0x1F << 18)) | (8 << 18)), *stereo_md5[1:]]),
+                              [], False)
+    leading = [patch(x, total=0xFFFFFFFF) for x in stereo_md5]
+    first_audio = next(i for i, x in enumerate(leading) if struct.unpack_from("<I", x, 20)[0])
+    leading[first_audio] = with_flags(leading[first_audio], 0x800)
+    b["leading-block-without-set-md5"] = ("The total samples unknown in every block and the initial flag cleared in the first audio block: libwavpack reads on to the next block that starts a set, so the audio before it is missing and the MD5 is not compared.",
+                                          aa(leading), [("wavpack.total-samples-unknown", "does not say how many"), ("wavpack.block-set-broken", "without the initial block flag")], False)
     return b
 
 

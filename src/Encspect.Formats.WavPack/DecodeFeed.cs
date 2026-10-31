@@ -110,6 +110,7 @@ internal sealed class DecodeFeed
             Stream = s.Stream,
             Channels = s.ChannelInfo?.Value.Channels ?? (first.IsMono ? 1 : 2),
             BitsPerSample = isDsd ? 8 : isFloat ? 32 : first.BytesPerSample * 8,
+            IsDsd = isDsd,
             Samples = s.DeclaredTotal,
             Configuration = new MappedBytes(bytes.ToArray(), offset),
             IsLossy = first.IsHybrid || s.HasLossyBlocks,
