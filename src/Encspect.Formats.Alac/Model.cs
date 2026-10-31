@@ -143,7 +143,7 @@ internal readonly struct FrameRecord
 
     public int Length { get; init; }
 
-    // The samples of each channel the frame codes, from its first audio element; 0 where the walk read no audio element.
+    // The samples of each channel the frame codes, from its last audio element; 0 where the walk read no audio element.
     public uint Samples { get; init; }
 
     public FrameFlags Flags { get; init; }
@@ -208,6 +208,7 @@ internal static class Topics
     public const string AdaptiveGolomb = "alac-adaptive-golomb";
     public const string Prediction = "alac-prediction";
     public const string MidSide = "mid-side-stereo";
+    public const string LeftSide = "left-side-stereo";
     public const string ChannelLayouts = "channel-layouts";
     public const string WastedBits = "wasted-bits";
     public const string Verification = "verification";

@@ -159,6 +159,53 @@ public class AlacCodecParserTests
     }
 
     [Fact]
+    public void ZeroPaddingAfterTheLastChannelIsAMissingEndTagAndNotAnOverrun()
+    {
+        // 75 bits: a partial mono element of one 20-bit sample, then 5 zero bits, which the reference decoder never reads as a tag.
+        byte[] frame = AlacBuilder.Frame((0, 3), (0, 4), (0, 12), (1, 1), (0, 2), (1, 1), (1, 32), (5, 20));
+        Report report = Analyze([frame], node => Cookie(node, AlacBuilder.Cookie(bits: 20, channels: 1)));
+
+        Assert.Contains(report.Findings, f => f.Code == "alac.end-missing");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "alac.frame-overrun");
+    }
+
+    [Fact]
+    public void AChannelPairBeyondTheCookiesChannelsIsNotReadForItsReservedBits()
+    {
+        List<(long, int)> fields = [(0, 3), (0, 4), (0, 12), (1, 4)];
+        fields.AddRange(Enumerable.Repeat((0L, 16), 64));
+        fields.AddRange([(1, 3), (0, 4), (1, 12), (1, 4)]);
+        fields.AddRange(Enumerable.Repeat((0L, 16), 128));
+        fields.Add((7, 3));
+        Report report = Analyze([AlacBuilder.Frame([.. fields])], node => Cookie(node, AlacBuilder.Cookie(channels: 2)));
+
+        // The pair is not read by the reference decoder, so its reserved bits are no fault that ends the frame's walk.
+        Finding reserved = Assert.Single(report.Findings, f => f.Code == "alac.element-reserved-bits");
+        Assert.Contains("does not read past", reserved.Message);
+        Assert.DoesNotContain("refuses", reserved.Message);
+        Assert.Contains(report.Findings, f => f.Code == "alac.channels-exceed");
+    }
+
+    [Fact]
+    public void AFindingOnAnElementPastTheKeptOnesPointsToTheFurtherElementsNode()
+    {
+        List<(long, int)> fields = [];
+        for (int i = 0; i < 9; i++)
+        {
+            fields.AddRange([(6, 3), (0, 4)]);
+        }
+
+        fields.Add((5, 3));
+        Report report = Analyze([AlacBuilder.Frame([.. fields])], node => Cookie(node, AlacBuilder.Cookie()));
+
+        Node frameNode = Find(report.Root, n => n.Name == "Frame") ?? throw new InvalidOperationException("No frame node.");
+        Node further = frameNode.Children.Single(c => c.Name == "Further Elements");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "alac.element-unknown");
+        Assert.Equal(further.Offset, finding.Node?.Offset);
+        Assert.Equal(further.Length, finding.Node?.Length);
+    }
+
+    [Fact]
     public void AClaimOfAnotherFormatsWriterAndOfADifferentWriterAreNamed()
     {
         List<byte[]> frames = Frames(2, 16, 64, 64);

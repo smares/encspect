@@ -292,6 +292,18 @@ class Channel:
         self.mode = mode
 
 
+def pair_code(uncompressed, mix_bits, mix_res):
+    """The code of a channel pair by what matrix_dec.c reconstructs: 0 left/right, 1 left/side, 2 mid/side, 3 a weighted mix."""
+    if uncompressed or mix_res == 0:
+        return 0
+    if mix_bits < 8:
+        if mix_res == 1 << mix_bits:
+            return 1
+        if mix_bits > 0 and mix_res == 1 << (mix_bits - 1):
+            return 2
+    return 3
+
+
 def write_audio(w, tag, instance, channels, bit_depth, frame_length=4096, partial=None, count=None, shifted=0, escape=False, mix_bits=2, mix_res=0,
                 parameters=None, reserved=0, pb=40, mb=10, kb=14, shift_flags=None):
     """One single channel, LFE or channel pair element: the tag, the header, and the parameters, shifted bytes and residuals or the samples as they are.
@@ -848,7 +860,7 @@ def manifest(data, kind, extra=None):
             add(code)
         result["cookie"] = c
     frames = []
-    tally = {"elements": [0] * 8, "compressed": 0, "uncompressed": 0, "pairs": 0, "mixed_pairs": 0, "channels": 0, "types": [0] * 16, "orders": [0] * 32,
+    tally = {"elements": [0] * 8, "compressed": 0, "uncompressed": 0, "pairs": 0, "pair_codings": [0] * 4, "channels": 0, "types": [0] * 16, "orders": [0] * 32,
              "shifts": [0] * 16, "weights": [0] * 8, "bytes_shifted": [0] * 3, "zero_runs": 0, "long_codes": 0, "fill_bytes": 0, "data_stream_bytes": 0}
     partial_frames = uncompressed_frames = unreadable_frames = 0
     total_samples = 0
@@ -922,9 +934,9 @@ def manifest(data, kind, extra=None):
                         tally["long_codes"] += ch["long_codes"]
             if e["tag"] == CPE:
                 tally["pairs"] += 1
-                mixed = (not e["uncompressed"]) and e.get("mix_res", 0) != 0
-                tally["mixed_pairs"] += 1 if mixed else 0
-                frame_pairs.append(1 if mixed else 0)
+                code = pair_code(e["uncompressed"], e.get("mix_bits", 0), e.get("mix_res", 0))
+                tally["pair_codings"][code] += 1
+                frame_pairs.append(code)
         samples = w["samples"]
         total_samples += samples
         if samples > 0 and index < MAX_ENTRIES:
