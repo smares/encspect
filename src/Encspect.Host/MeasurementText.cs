@@ -6,7 +6,29 @@ namespace Encspect.Host;
 // One line of a stream's measurements in the text output and the front ends: the figure's name (the names the BWF bext chunk uses
 // for the loudness values it states, where the figure is the same kind), its value text, and the description and topic that --explain
 // and the GUI's hover text show, as a node's have. Constant strings, never built per stream.
-public sealed record MeasurementLine(string Name, string Text, string Description, string? Topic);
+// The figure a line shows, which front ends select lines by instead of the display name.
+public enum MeasurementFigure
+{
+    Measured,
+    SpectralCutoff,
+    Loudness,
+    IntegratedLoudness,
+    LoudnessRange,
+    MaximumMomentaryLoudness,
+    MaximumShortTermLoudness,
+    MaximumTruePeakLevel,
+    SamplePeak,
+    RMSLevel,
+    DCOffset,
+    Clipping,
+    DigitalSilence,
+    ZeroSamples,
+    HasOnly16BitValues,
+    HasOnly24BitValues,
+    LowBitsUnused,
+}
+
+public sealed record MeasurementLine(MeasurementFigure Figure, string Name, string Text, string Description, string? Topic);
 
 // How measurements read: the lines under a stream's "Verified:" line, and the units of the integers the model holds.
 public static class MeasurementText
@@ -82,10 +104,10 @@ public static class MeasurementText
     {
         ArgumentNullException.ThrowIfNull(m);
 
-        var lines = new List<MeasurementLine> { new("Measured", Header(m, isLossy), MeasuredDescription, MeasuredTopic) };
+        var lines = new List<MeasurementLine> { new(MeasurementFigure.Measured, "Measured", Header(m, isLossy), MeasuredDescription, MeasuredTopic) };
         if (m.Spectrum is { } spectrum && m.Status != MeasurementStatus.Failed)
         {
-            lines.Add(new MeasurementLine("Spectral Cutoff", Cutoff(spectrum.Cutoff), SpectralCutoffDescription, SpectralCutoffTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.SpectralCutoff, "Spectral Cutoff", Cutoff(spectrum.Cutoff), SpectralCutoffDescription, SpectralCutoffTopic));
         }
 
         if (m.Levels is { } levels && m.Status != MeasurementStatus.Failed)
@@ -117,7 +139,7 @@ public static class MeasurementText
     {
         if (l.NotMeasured is { } reason)
         {
-            lines.Add(new MeasurementLine("Loudness", $"not measured ({reason})", LoudnessDescription, LoudnessTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.Loudness, "Loudness", $"not measured ({reason})", LoudnessDescription, LoudnessTopic));
             return;
         }
 
@@ -125,20 +147,20 @@ public static class MeasurementText
         string window = ShortStretch(m, "3 s");
         if (!isMaxima)
         {
-            lines.Add(new MeasurementLine("Integrated Loudness", Loudness(l.IntegratedTenths, l.IntegratedAbsence, "LUFS", block), IntegratedLoudnessDescription, LoudnessTopic));
-            lines.Add(new MeasurementLine("Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window, "short-term value"), LoudnessRangeDescription, LoudnessRangeTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.IntegratedLoudness, "Integrated Loudness", Loudness(l.IntegratedTenths, l.IntegratedAbsence, "LUFS", block), IntegratedLoudnessDescription, LoudnessTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.LoudnessRange, "Loudness Range", Loudness(l.RangeTenths, l.RangeAbsence, "LU", window, "short-term value"), LoudnessRangeDescription, LoudnessRangeTopic));
             return;
         }
 
-        lines.Add(new MeasurementLine("Maximum Momentary Loudness", Loudness(l.MaximumMomentaryTenths, l.MomentaryAbsence, "LUFS", block), MaximumMomentaryLoudnessDescription, LoudnessTopic));
-        lines.Add(new MeasurementLine("Maximum Short-Term Loudness", Loudness(l.MaximumShortTermTenths, l.ShortTermAbsence, "LUFS", window), MaximumShortTermLoudnessDescription, LoudnessTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.MaximumMomentaryLoudness, "Maximum Momentary Loudness", Loudness(l.MaximumMomentaryTenths, l.MomentaryAbsence, "LUFS", block), MaximumMomentaryLoudnessDescription, LoudnessTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.MaximumShortTermLoudness, "Maximum Short-Term Loudness", Loudness(l.MaximumShortTermTenths, l.ShortTermAbsence, "LUFS", window), MaximumShortTermLoudnessDescription, LoudnessTopic));
     }
 
     private static void AddTruePeak(List<MeasurementLine> lines, StreamMeasurements m, TruePeakFigures t)
     {
         if (t.NotMeasured is { } reason)
         {
-            lines.Add(new MeasurementLine("Maximum True Peak Level", $"not measured ({reason})", TruePeakDescription, TruePeakTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.MaximumTruePeakLevel, "Maximum True Peak Level", $"not measured ({reason})", TruePeakDescription, TruePeakTopic));
             return;
         }
 
@@ -149,7 +171,7 @@ public static class MeasurementText
             2 => "; oversampled 2 times",
             _ => "; the sample peak, as the rate is 192,000 Hz or more",
         };
-        lines.Add(new MeasurementLine("Maximum True Peak Level", $"{SignedTenths(t.StreamTenths)} dBTP{PerChannel(names, t.ChannelTenths.Select(SignedTenths))}{basis}", TruePeakDescription, TruePeakTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.MaximumTruePeakLevel, "Maximum True Peak Level", $"{SignedTenths(t.StreamTenths)} dBTP{PerChannel(names, t.ChannelTenths.Select(SignedTenths))}{basis}", TruePeakDescription, TruePeakTopic));
     }
 
     // Why a stream has no block: no stretch between gaps lasts the block, or what was measured does (the stream itself, or the part of it
@@ -176,28 +198,28 @@ public static class MeasurementText
         List<string> names = ChannelNames(m, channels.Count);
         bool isFloat = levels.Format != SampleFormat.Integer;
 
-        lines.Add(new MeasurementLine("Sample Peak", $"{Tenths(stream.SamplePeakTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.SamplePeakTenths)))}", SamplePeakDescription, LevelsTopic));
-        lines.Add(new MeasurementLine("RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
-        lines.Add(new MeasurementLine("DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.SamplePeak, "Sample Peak", $"{Tenths(stream.SamplePeakTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.SamplePeakTenths)))}", SamplePeakDescription, LevelsTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.RMSLevel, "RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.DCOffset, "DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
 
         string what = isFloat ? "at or beyond full scale" : "at full scale";
         string clipping = stream.ClippingRuns == 0
             ? "none"
             : $"{Plural(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Plural(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Plural(c.ClippingRuns, "run", "runs")))}";
-        lines.Add(new MeasurementLine("Clipping", clipping, ClippingDescription, ClippingTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.Clipping, "Clipping", clipping, ClippingDescription, ClippingTopic));
 
         string silence = stream.SilentAtStart == 0 && stream.SilentAtEnd == 0
             ? "none"
             : $"{(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end";
-        lines.Add(new MeasurementLine("Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.DigitalSilence, "Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
 
-        string zeros = $"{Plural(stream.ZeroSamples, "sample", "samples")}{PerChannel(names, channels.Select(c => Plural(c.ZeroSamples, "sample", "samples")))}";
-        lines.Add(new MeasurementLine("Zero Samples", zeros, ZeroSamplesDescription, DigitalSilenceTopic));
+        string zeros = $"{Plural(stream.ZeroSamples, "sample", "samples")}{(channels.Any(c => c.ZeroSamples != channels[0].ZeroSamples) ? PerChannel(names, channels.Select(c => Plural(c.ZeroSamples, "sample", "samples"))) : string.Empty)}";
+        lines.Add(new MeasurementLine(MeasurementFigure.ZeroSamples, "Zero Samples", zeros, ZeroSamplesDescription, DigitalSilenceTopic));
 
         if (isFloat)
         {
-            lines.Add(new MeasurementLine("Has Only 16-Bit Values", YesNo(stream.HasOnly16BitValues, channels.Select(c => c.HasOnly16BitValues), names), HasOnly16BitValuesDescription, BitDepthUsageTopic));
-            lines.Add(new MeasurementLine("Has Only 24-Bit Values", YesNo(stream.HasOnly24BitValues, channels.Select(c => c.HasOnly24BitValues), names), HasOnly24BitValuesDescription, BitDepthUsageTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.HasOnly16BitValues, "Has Only 16-Bit Values", YesNo(stream.HasOnly16BitValues, channels.Select(c => c.HasOnly16BitValues), names), HasOnly16BitValuesDescription, BitDepthUsageTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.HasOnly24BitValues, "Has Only 24-Bit Values", YesNo(stream.HasOnly24BitValues, channels.Select(c => c.HasOnly24BitValues), names), HasOnly24BitValuesDescription, BitDepthUsageTopic));
             return;
         }
 
@@ -209,7 +231,7 @@ public static class MeasurementText
             bits += $"; by channel: {string.Join(", ", names.Select((n, i) => $"{n} {channels[i].LowBitsUnused?.ToString(CultureInfo.InvariantCulture) ?? "none"}"))}";
         }
 
-        lines.Add(new MeasurementLine("Low Bits Unused", bits, LowBitsUnusedDescription, BitDepthUsageTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.LowBitsUnused, "Low Bits Unused", bits, LowBitsUnusedDescription, BitDepthUsageTopic));
     }
 
     // The channels' names: their speakers where the stream states distinct ones, otherwise "channel 1", "channel 2".

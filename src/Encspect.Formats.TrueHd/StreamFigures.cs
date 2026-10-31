@@ -125,7 +125,7 @@ internal sealed class StreamFigures(long firstRate)
 
         if (Count > 0)
         {
-            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries });
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, FramesPerPoint = 16 });
         }
 
         if (_seconds.Count > 0)

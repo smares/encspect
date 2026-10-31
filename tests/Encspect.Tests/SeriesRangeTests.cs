@@ -101,4 +101,26 @@ public class SeriesRangeTests
 
         Assert.Equal(Text(null), Text(ValueRange.OfSteps([32, 128, 160])));
     }
+
+    [Fact]
+    public void The_json_writes_frames_per_point_only_above_one_and_a_point_covers_at_least_one_frame()
+    {
+        double[] x = [0, 10];
+        double[] values = [128, 160];
+        Series[] series =
+        [
+            new("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { FramesPerPoint = 16 },
+            new("Frames", "kbps", SeriesAxis.FrameOffset, x, values),
+        ];
+        Report report = new("a.bin", new Node("File", 0, 20), [], [new StreamInfo { Nodes = [], Codec = "Test", Series = series }]);
+        using var output = new MemoryStream();
+        ReportJsonWriter.Write([report], output);
+        using JsonDocument document = JsonDocument.Parse(output.ToArray());
+        JsonElement[] written = document.RootElement[0].GetProperty("streams")[0].GetProperty("series").EnumerateArray().ToArray();
+
+        Assert.Equal(16, written[0].GetProperty("framesPerPoint").GetInt32());
+        Assert.False(written[1].TryGetProperty("framesPerPoint", out _));
+        Assert.Equal(1, series[1].FramesPerPoint);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Series("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { FramesPerPoint = 0 });
+    }
 }

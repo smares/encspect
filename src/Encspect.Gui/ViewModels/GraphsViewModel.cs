@@ -400,7 +400,7 @@ public sealed class GraphsViewModel : ObservableObject
     }
 
     private static GraphFormChoice MapForm(FrameMapGraph graph) =>
-        new(GraphForm.Map, "Frame Map", "Every frame as a square, in rows like text", graph);
+        new(GraphForm.Map, "Frame Map", graph.RunLength > 1 ? $"Every run of {graph.RunLength} frames as a square, in rows like text" : "Every frame as a square, in rows like text", graph);
 
     private static GraphChoice Entry(List<Series> quantity, ReadOnlyMemory<double> frameOffsets, double duration, IReadOnlyList<MapFinding>? findings)
     {
@@ -410,7 +410,7 @@ public sealed class GraphsViewModel : ObservableObject
         var forms = new List<GraphFormChoice>();
         if (perFrame is not null)
         {
-            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
+            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", perFrame.FramesPerPoint > 1 ? $"One point for every run of {perFrame.FramesPerPoint} frames" : "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
         }
 
         if (perSecond is not null)
@@ -425,7 +425,7 @@ public sealed class GraphsViewModel : ObservableObject
         // The bitrate is the series in kbps, whatever a format names it.
         if (perFrame is { Unit: "kbps" })
         {
-            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", "How many frames have each value", new DistributionGraph(perFrame)));
+            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", perFrame.FramesPerPoint > 1 ? $"How many runs of {perFrame.FramesPerPoint} frames have each value" : "How many frames have each value", new DistributionGraph(perFrame)));
         }
 
         if (perFrame is not null)

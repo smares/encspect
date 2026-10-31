@@ -405,4 +405,29 @@ public class FrameMapGraphTests
         Assert.Equal("no category", skipping.Describe(1).Split(" · ")[^1]);
         Assert.Equal("no value", skipping.Describe(2).Split(" · ")[^1]);
     }
+
+    [Fact]
+    public void A_series_of_runs_of_frames_names_rings_and_marks_the_run_that_holds_a_frame()
+    {
+        // 5 runs of 16 frames of 100 bytes each, starting at 1,000.
+        double[] x = [.. Enumerable.Range(0, 5).Select(i => 1000.0 + (i * 1600))];
+        Series runs = new("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 100, 200, 100, 200, 100 }) { FramesPerPoint = 16 };
+        MapFinding[] findings = [new(1000 + (1600 * 2) + (100 * 5), Severity.Error, "damaged", 1), new(1000 + 1600 + 50, Severity.Warning, "not a run start", 1)];
+        FrameMapGraph map = Map(runs, findings: findings);
+
+        Assert.Equal(16, map.RunLength);
+        Assert.Equal("One square per run of 16 frames", map.Caption);
+        Assert.Equal([1, 2], map.FindingSquares());
+        Assert.Equal(2, map.IndexOfFrame(1000 + (1600 * 2) + (100 * 5)));
+        Assert.StartsWith("Frames 33 to 48 · ", map.Describe(2), StringComparison.Ordinal);
+        Assert.StartsWith("From frame 65 · ", map.Describe(4), StringComparison.Ordinal);
+        Assert.Contains("Error: damaged", map.Describe(2), StringComparison.Ordinal);
+
+        var line = new LineGraph(runs, x.AsMemory(), 10);
+        Assert.Equal(3, line.IndexOfFrame(1000 + (1600 * 3) + 1500));
+        Assert.StartsWith("Frames 17 to 32 · ", line.Describe(1), StringComparison.Ordinal);
+
+        var locator = SampleLocator.Of(x.AsMemory(), 5 * 16 * 40, isRuns: true);
+        Assert.Equal(2 * 16 * 40, locator.PositionOfFrame(1000 + (1600 * 2) + (100 * 5)));
+    }
 }

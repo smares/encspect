@@ -162,6 +162,17 @@ public sealed class Series
 
     // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
     public GraphConcept Concept { get; init; }
+
+    private readonly int _framesPerPoint = 1;
+
+    // How many frames each point of a series over frames covers: 1 where a point is a frame, more where it is a run of that many
+    // consecutive frames (the last run may hold fewer), starting at the frame at the point's offset and ending before the next
+    // point's. A front end names, marks and finds a frame by the point whose run holds it. Meaningless for a series over seconds.
+    public int FramesPerPoint
+    {
+        get => _framesPerPoint;
+        init => _framesPerPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "A point covers at least one frame.");
+    }
 }
 
 // The range a series declares for its values, in the series' unit: either the steps its format allows or a fixed minimum and

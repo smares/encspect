@@ -79,6 +79,14 @@ public class CommandLineTests
     }
 
     [Fact]
+    public void Measure_grids_with_kinds_that_leave_out_the_spectrum_is_wrong_usage()
+    {
+        (int code, _, string errors) = Run("--json", "--measure-grids", "--measure", "levels", Tagged);
+        Assert.Equal(CommandLine.UsageError, code);
+        Assert.Contains("spectrum", errors, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ExplainIsNotForCsv()
     {
         (int code, _, string errors) = Run("--csv", "--explain", Tagged);

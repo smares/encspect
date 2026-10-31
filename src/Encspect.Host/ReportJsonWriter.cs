@@ -382,6 +382,11 @@ public static class ReportJsonWriter
                 WriteDeclaredRange(writer, range);
             }
 
+            if (series.FramesPerPoint > 1)
+            {
+                writer.WriteNumber("framesPerPoint", series.FramesPerPoint);
+            }
+
             if (explain && series.Description is { } description)
             {
                 writer.WriteString("description", description);

@@ -60,6 +60,7 @@ public partial class DetailWindow : Window
         Shortcuts.Bind(this, new KeyGesture(Key.Escape), Close);
         Shortcuts.Bind(this, new KeyGesture(Key.F1), OnTopicsKey);
         NativeMenu.SetMenu(this, CreateMenu());
+        UpdateDecodeItems();
 
         string modifier = OperatingSystem.IsMacOS() ? "⌘" : "Ctrl+";
         ToolTip.SetTip(PreviousButton, $"Previous file ({modifier}Up)");
@@ -154,12 +155,26 @@ public partial class DetailWindow : Window
         return new ExportTarget(file.TryGetLocalPath(), file, format);
     }
 
+    private NativeMenuItem? _decodeMenuItem;
+    private NativeMenuItem? _stopMenuItem;
+
+    private NativeMenuItem DecodeItem => _decodeMenuItem ??= Shortcuts.Item(this, "Decode Audio", null, () => _ = Model.DecodeAudioAsync());
+
+    private NativeMenuItem StopDecodingItem => _stopMenuItem ??= Shortcuts.Item(this, "Stop Decoding", null, Model.StopDecoding);
+
+    private void UpdateDecodeItems()
+    {
+        DecodeItem.IsEnabled = Model.CanDecodeAudio;
+        StopDecodingItem.IsEnabled = Model.IsDecoding;
+    }
+
     private NativeMenu CreateMenu() =>
     [
         Shortcuts.Submenu(
             "File",
             Shortcuts.Item(this, "Export Report…", Shortcuts.WithCommand(Key.S), () => _ = ExportAsync()),
-            Shortcuts.Item(this, "Decode Audio", null, () => _ = Model.DecodeAudioAsync()),
+            DecodeItem,
+            StopDecodingItem,
             Shortcuts.Submenu("Analyze as", [Shortcuts.Item(this, "Detect Automatically", null, () => _ = Model.AnalyzeAsAsync(null)), new NativeMenuItemSeparator(), .. Model.FormatNames.Select(name => Shortcuts.Item(this, name, null, () => _ = Model.AnalyzeAsAsync(name)))]),
             new NativeMenuItemSeparator(),
             Shortcuts.Item(this, "Close", Shortcuts.WithCommand(Key.W), Close)),
@@ -271,6 +286,11 @@ public partial class DetailWindow : Window
 
     private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(DetailViewModel.CanDecodeAudio) or nameof(DetailViewModel.IsDecoding) or null)
+        {
+            UpdateDecodeItems();
+        }
+
         if (e.PropertyName == nameof(DetailViewModel.IsTopicOpen))
         {
             ShowTopicPane();

@@ -53,6 +53,45 @@ public abstract class Graph
         return unit.Length > 0 ? number + " " + unit : number;
     }
 
+    // The index of the run that holds an offset among the sorted start offsets of runs of frames: the last start at or before it,
+    // or -1 before the first.
+    private protected static int RunIndex(ReadOnlySpan<double> starts, long offset)
+    {
+        int low = 0;
+        int high = starts.Length - 1;
+        int found = -1;
+        while (low <= high)
+        {
+            int middle = (low + high) >>> 1;
+            if (starts[middle] <= offset)
+            {
+                found = middle;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return found;
+    }
+
+    // The text for a point's frames: "Frame 3", or "Frames 33 to 48" for a point that covers a run of them (the last run's end is
+    // not known to the series, so it says where the run starts).
+    private protected static string FramesText(int index, int count, int perPoint)
+    {
+        if (perPoint <= 1)
+        {
+            return $"Frame {(index + 1).ToString("N0", CultureInfo.InvariantCulture)}";
+        }
+
+        long first = ((long)index * perPoint) + 1;
+        return index + 1 < count
+            ? $"Frames {first.ToString("N0", CultureInfo.InvariantCulture)} to {(first + perPoint - 1).ToString("N0", CultureInfo.InvariantCulture)}"
+            : $"From frame {first.ToString("N0", CultureInfo.InvariantCulture)}";
+    }
+
     // The frame index of an offset among sorted frame offsets, or -1.
     private protected static int FrameIndex(ReadOnlySpan<double> offsets, long offset)
     {
@@ -114,7 +153,7 @@ public sealed class LineGraph : Graph
         double x = Series.X.Span[index];
         string value = FormatValue(ValueAt(index), Unit);
         return Axis == SeriesAxis.FrameOffset
-            ? $"Frame {(index + 1).ToString("N0", CultureInfo.InvariantCulture)} · {Format.Hex((long)x)} · {value}"
+            ? $"{FramesText(index, Count, Series.FramesPerPoint)} · {Format.Hex((long)x)} · {value}"
             : $"{Format.Clock(x)} · {value}";
     }
 
@@ -146,7 +185,7 @@ public sealed class LineGraph : Graph
     {
         if (Axis == SeriesAxis.FrameOffset)
         {
-            int found = FrameIndex(Series.X.Span, offset);
+            int found = Series.FramesPerPoint > 1 ? RunIndex(Series.X.Span, offset) : FrameIndex(Series.X.Span, offset);
             return found >= 0 ? found : null;
         }
 
@@ -207,6 +246,7 @@ public sealed class DistributionGraph : Graph
     private readonly Series _series;
     private readonly Bar[] _bars;
     private readonly int _total;
+    private readonly string _unitWord;
 
     public override string? Description { get; }
 
@@ -216,7 +256,9 @@ public sealed class DistributionGraph : Graph
         ArgumentNullException.ThrowIfNull(series);
 
         _series = series;
-        Description = series.Description is { } description ? "How many frames have each value. " + description : "How many frames have each value.";
+        _unitWord = series.FramesPerPoint > 1 ? "run" : "frame";
+        string what = series.FramesPerPoint > 1 ? $"How many runs of {series.FramesPerPoint} frames have each value." : "How many frames have each value.";
+        Description = series.Description is { } description ? what + " " + description : what;
         ReadOnlySpan<double> values = series.Values.Span;
         var counts = new SortedDictionary<double, int>();
         foreach (double value in values)
@@ -257,7 +299,7 @@ public sealed class DistributionGraph : Graph
         Bar bar = _bars[index];
         string value = bar.IsRange ? $"{Label(index)} {Unit}".TrimEnd() : FormatValue(bar.Low, Unit);
         double share = _total > 0 ? 100.0 * bar.Count / _total : 0;
-        return $"{value} · {Format.Count(bar.Count, "frame", "frames")} · {share.ToString("0.0", CultureInfo.InvariantCulture)}%";
+        return $"{value} · {Format.Count(bar.Count, _unitWord, _unitWord + "s")} · {share.ToString("0.0", CultureInfo.InvariantCulture)}%";
     }
 
     public override long? FrameAt(int index, long? selected)
@@ -291,7 +333,7 @@ public sealed class DistributionGraph : Graph
 
     public override int? IndexOfFrame(long offset)
     {
-        int frame = FrameIndex(_series.X.Span, offset);
+        int frame = _series.FramesPerPoint > 1 ? RunIndex(_series.X.Span, offset) : FrameIndex(_series.X.Span, offset);
         return frame >= 0 && BarOf(_series.Values.Span[frame]) is var bar and >= 0 ? bar : null;
     }
 
