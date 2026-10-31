@@ -352,12 +352,14 @@ internal sealed partial class FileReader
             foreach (StreamInfo stream in added)
             {
                 StreamInfo updated = stream with { Protection = plan.Protection ?? stream.Protection };
-                if (areFramesEncrypted && stream.Duration <= 0 && seconds > 0)
+                // TTA frames without the header (no CodecPrivate) state no sample count, so the container's timing stands in for it.
+                double timed = areFramesEncrypted ? seconds : codec == "tta" ? ContainerDuration(segment, track) : 0;
+                if ((areFramesEncrypted || codec == "tta") && stream.Duration <= 0 && timed > 0)
                 {
                     updated = updated with
                     {
-                        Duration = seconds,
-                        Samples = (long)Math.Round(seconds * stream.SampleRate),
+                        Duration = timed,
+                        Samples = (long)Math.Round(timed * stream.SampleRate),
                         AverageBitrate = statistics.Bytes * 8 / ContainerDuration(segment, track) / 1000,
                     };
                 }

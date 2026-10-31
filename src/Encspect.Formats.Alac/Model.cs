@@ -208,7 +208,7 @@ internal static class Topics
     public const string AdaptiveGolomb = "alac-adaptive-golomb";
     public const string Prediction = "alac-prediction";
     public const string MidSide = "mid-side-stereo";
-    public const string ChannelAssignment = "flac-channel-assignment";
+    public const string LeftSide = "left-side-stereo";
     public const string ChannelLayouts = "channel-layouts";
     public const string WastedBits = "wasted-bits";
     public const string Verification = "verification";

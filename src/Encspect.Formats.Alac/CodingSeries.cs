@@ -46,7 +46,7 @@ internal static class CodingCategories
     public static readonly Category[] StereoCodings =
     [
         new("Left/right stereo", Explain.CodingLeftRight) { Topic = Topics.Prediction },
-        new("Left/side stereo", Explain.CodingLeftSide) { Topic = Topics.ChannelAssignment },
+        new("Left/side stereo", Explain.CodingLeftSide) { Topic = Topics.LeftSide },
         new("Mid/side stereo", Explain.CodingMidSide) { Topic = Topics.MidSide },
         new("Weighted mix", Explain.CodingWeightedMix) { Topic = Topics.Prediction },
     ];

@@ -201,6 +201,20 @@ public class TtaCodecParserTests
         Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
     }
 
+    [Theory]
+    [InlineData("matroska/external-ffmpeg-tta.mka")]
+    [InlineData("matroska/external-mkvmerge-tta.mka")]
+    public void TtaInMatroskaWithoutAHeaderTakesItsTimingFromTheContainer(string name)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+        StreamInfo stream = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), new MemoryStream(data)).Streams.Single();
+
+        Assert.Equal("TTA", stream.Codec);
+        Assert.True(stream.Duration > 0.5);
+        Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate), stream.Samples);
+        Assert.True(stream.AverageBitrate > 10);
+    }
+
     [Fact]
     public void APacketShorterThanACrcIsAFinding()
     {
