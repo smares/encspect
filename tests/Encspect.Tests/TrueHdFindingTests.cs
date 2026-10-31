@@ -108,6 +108,64 @@ public class TrueHdFindingTests
         Assert.Contains(report.Streams.Single().Verification!.Checksums, c => c.Name == "lossless check, substream 0");
     }
 
+    // A later major sync with another substream count is not followed by the decoder, so the stream info keeps the channels, layout and substream count
+    // of the first one, as the decoder session does.
+    [Theory]
+    [InlineData("built-tiny-truehd-51.thd", "built-tiny-truehd-stereo.thd", 6)]
+    [InlineData("built-tiny-truehd-stereo.thd", "built-tiny-truehd-51.thd", 2)]
+    public void AStreamThatChangesItsSubstreamCountReportsTheFirstSyncsChannels(string first, string second, int channels)
+    {
+        byte[] data = [.. Fixture(first), .. Fixture(second)];
+
+        Report report = Analyzer.CreateDefault().Analyze("splice.thd", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(channels, stream.Channels);
+        Assert.NotNull(stream.ChannelLayout);
+        Assert.Equal(channels, stream.ChannelLayout!.Count);
+        Assert.Equal(channels == 2 ? "Stereo" : "Multichannel", stream.ChannelMode);
+        Assert.Contains(report.Findings, f => f.Code == "truehd.stream-parameters-change");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // The first major sync is usable but none of its units can be read; the decoder opens at the later 96 kHz sync, and every field of the stream info
+    // (rate, duration basis, bit depth) is that sync's.
+    [Fact]
+    public void AStreamWhoseFirstUnitsCannotBeReadReportsTheParametersOfTheSyncTheDecoderOpenedWith()
+    {
+        byte[] first = ZeroLengthSubstream(Fixture(Tiny), 0);
+        byte[] data = [.. first, .. Fixture("external-truehd-stereo-96k-24.thd")];
+
+        Report report = Analyzer.CreateDefault().Analyze("rate.thd", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(96000, stream.SampleRate);
+        Assert.Equal(stream.Samples / 96000.0, stream.Duration, 6);
+        Assert.Equal(24, stream.BitsPerSample);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // A substream that states check data but is shorter than the two bytes of it has one finding, not a second about its empty content.
+    [Fact]
+    public void ASubstreamTooShortForItsCheckDataHasOneFinding()
+    {
+        byte[] data = ZeroLengthSubstream(Fixture(Tiny), 2);
+
+        Report report = Analyzer.CreateDefault().Analyze("zero.thd", new MemoryStream(data), new AnalysisOptions { ForcedFormat = "thd" });
+
+        Assert.Single(report.Findings, f => f.Code == "truehd.substream-end-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "truehd.block-invalid");
+    }
+
+    // "truehd.codec-id-mismatch": an MLP stream handed over as "truehd" (the codec parser's finding, which a raw file cannot raise).
+    [Fact]
+    public void CodecIdOfOtherTypeThanTheMajorSyncIsReported()
+    {
+        Report report = TrueHdTests.MlpAsTrueHd();
+
+        Assert.Contains(report.Findings, f => f.Code == "truehd.codec-id-mismatch");
+    }
+
     private static Analyzer With(Func<TrueHdParser> parser) =>
         new(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? parser() : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
 
@@ -159,6 +217,31 @@ public class TrueHdFindingTests
         Assert.Equal(Units(data)[32].Offset, failed.Node.Offset);
         Assert.Equal(Units(data)[32].Length, failed.Node.Length);
         Assert.Equal(whole.Findings.Count, limited.Findings.Count);
+    }
+
+    // The unit's directory states the first substream ends at 0, with the parity nibble worked out again.
+    private static byte[] ZeroLengthSubstream(byte[] data, int unit)
+    {
+        (int offset, _) = Units(data)[unit];
+        bool hasSync = data[offset + 4] == 0xF8;
+        int directory = offset + 4 + (hasSync ? 28 : 0);
+        data[directory + 1] = 0;
+        if (hasSync)
+        {
+            ushort crc = Checks.MajorSync(data.AsSpan(offset + 4, 28));
+            data[offset + 4 + 26] = (byte)(crc >> 8);
+            data[offset + 4 + 27] = (byte)crc;
+        }
+
+        data[offset] &= 0x0F;
+        int x = 0;
+        foreach (byte b in data.AsSpan(offset, 4).ToArray().Concat(data.AsSpan(directory, 2).ToArray()))
+        {
+            x ^= b;
+        }
+
+        data[offset] |= (byte)((((x >> 4) ^ (x & 0xF)) ^ 0xF) << 4);
+        return data;
     }
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "truehd", name));

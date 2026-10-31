@@ -35,7 +35,7 @@ internal struct BlockInfo
 }
 
 // What follows the last block of a substream.
-internal readonly record struct SubstreamTail(bool HasEndOfStream, int DroppedSamples, bool HasPaddingBitsSet, bool HasFinalWordFlags);
+internal readonly record struct SubstreamTail(bool HasEndOfStream, int DroppedSamples, bool HasPaddingBitsSet);
 
 // Reads the syntax of one substream of one access unit (docs/design/truehd-format.md, "Substream syntax"), block by block, updating the
 // substream's state. The parser's walk and the decoder use this one reader: a walk stores the residuals and the bypassed bits in the planes it
@@ -908,7 +908,6 @@ internal ref struct SubstreamReader
         long left = _bits.Length - _bits.Position + (hasCheckData ? 16 : 0);
         bool hasEnd = false;
         int dropped = 0;
-        bool flags = false;
         if (left >= 32)
         {
             int markerAt = _bits.Position;
@@ -927,7 +926,6 @@ internal ref struct SubstreamReader
             }
             else
             {
-                flags = (second & 0xE000) == 0xE000;
                 if ((second & 0x2000) != 0)
                 {
                     dropped = (int)(second & 0x1FFF);
@@ -948,7 +946,7 @@ internal ref struct SubstreamReader
             return Fail(SubstreamFault.LengthMismatch);
         }
 
-        tail = new SubstreamTail(hasEnd, dropped, paddingSet, flags);
+        tail = new SubstreamTail(hasEnd, dropped, paddingSet);
         return true;
     }
 }
