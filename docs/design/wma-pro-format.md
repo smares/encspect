@@ -1,8 +1,10 @@
 # Windows Media Audio Professional: format description
 
-**Status:** written on 2026-10-29 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL WMA Professional decoder (listed under [Sources](#sources)) and Encspect's current reader of the format, and checked this text against Microsoft-encoded files. It contains no code. Whoever reimplements the WMA Professional reader must read neither FFmpeg's `wmaprodec.c` nor the files that [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check (decision 10 in [decoders.md](decoders.md#decisions)).
+**Status:** written on 2026-10-29 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL WMA Professional decoder (listed under [Sources](#sources)) and Encspect's former reader of the format, and checked this text against Microsoft-encoded files. It contains no code. Whoever reimplements the WMA Professional reader must read neither FFmpeg's `wmaprodec.c` nor the files that [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check (decision 10 in [decoders.md](decoders.md#decisions)).
 
-This is the clean-room description that decision 10 of [decoders.md](decoders.md) asks for where LGPL code is the only detailed source. It describes the bitstream as FFmpeg reads it, states FFmpeg's checks as format rules, marks what no source settles, and says what Encspect's current reader reports, so that a reader written from this text alone reproduces the golden reports. The plan's scope is in [PLAN.md, "Phase 2: ASF and WMA"](../PLAN.md#phase-2-asf-and-wma); the user-facing summary is in [asf-wma.md](../formats/asf-wma.md#wma-professional). The description of WMA Lossless (`docs/design/wma-lossless-format.md`, on its own branch) shares the packet layer and is written in the same terms.
+**Status note (2026-10-31):** the former reader this text was written beside was removed on 2026-10-29. The new clean-room reader implements this description and reproduces the former reader's golden reports. Where this text says what "the former reader" or "the old reader" did, that is history kept for the goldens it pinned; the rules and the report layout are the required behavior.
+
+This is the clean-room description that decision 10 of [decoders.md](decoders.md) asks for where LGPL code is the only detailed source. It describes the bitstream as FFmpeg reads it, states FFmpeg's checks as format rules, marks what no source settles, and says what Encspect's reports contain, so that a reader written from this text alone reproduces the golden reports. The plan's scope is in [PLAN.md, "Phase 2: ASF and WMA"](../PLAN.md#phase-2-asf-and-wma); the user-facing summary is in [asf-wma.md](../formats/asf-wma.md#wma-professional). The description of WMA Lossless (`docs/design/wma-lossless-format.md`, on its own branch) shares the packet layer and is written in the same terms.
 
 ## Sources
 
@@ -18,7 +20,7 @@ This is the clean-room description that decision 10 of [decoders.md](decoders.md
 
 **FFmpeg 8.0.1** (the release CI uses): its `wmaprodec.c` differs from 6.1.1's in how the code tables are declared, in where the block alignment is checked (before the codec data, with the same effect), in dropping the check of a sampling rate of 0, and in the declared capabilities; the reading of the bitstream is the same. No 8.0.1 build with this decoder was at hand, so the files below were decoded with 6.1.1 only.
 
-**Encspect** (read to say what it reports): `src/Encspect.Formats.Wma/WmaProParser.cs`, `ProParameters.cs`, `ProStream.cs`, `ProDecoder.cs`, `ProNodes.cs`, `ProRecords.cs`, `ProReport.cs`, `ProExplain.cs`, and the shared `Bits.cs`, `Vlc.cs`, `PartsMap.cs`, `FindingCollector.cs` and `WmaStandardParser.cs` (the stream it adds for a stream it does not read).
+**Encspect's former reader** (read to say what it reports; removed since): `src/Encspect.Formats.Wma/WmaProParser.cs`, `ProParameters.cs`, `ProStream.cs`, `ProDecoder.cs`, `ProNodes.cs`, `ProRecords.cs`, `ProReport.cs`, `ProExplain.cs`, and the shared `Bits.cs`, `Vlc.cs`, `PartsMap.cs`, `FindingCollector.cs` and `WmaStandardParser.cs` (the stream it adds for a stream it does not read).
 
 **Committed test files** (Microsoft's encoders on a Windows runner, see their `.provenance.json`; all at 2 s of the signal of `wma_signals.py`, with the decode flags 0x00E0):
 
@@ -72,7 +74,7 @@ The stereo files have 66 frames of 2,048 samples and decode to 131,788 samples; 
 
 - On the 11 committed Microsoft files and the 21 public files with the length prefix, it found the same packets and frames, every frame's length, subframe count and end, every subframe's position, length and channels, every channel group, transform and band count, every quantization step, scale factor mode and step, and every channel's non-zero and escape counts, as the names and values of every node under Packets and Frames; the byte offsets and lengths of every packet, frame and subframe node and of every packet field; and every figure of the Statistics node, the stream's sample count and its frame count.
 - The cut public files end with a short media object that ffmpeg's ASF demuxer returns and Encspect's ASF parser does not hand over (`asf.object-incomplete`); FFmpeg's decoder rejects it as too small, so the walker was given the media objects the report lists.
-- On the 3 public files without the length prefix, which the current reader does not read, its reading of [Frames without the length prefix](#frames-without-the-length-prefix) decoded 4,080, 4,069 and 4,446 frames, and the samples that [Samples and duration](#samples-and-duration) derives from them equal ffmpeg's decoded sample count.
+- On the 3 public files without the length prefix, which the former reader did not read, the walker, reading them by [Frames without the length prefix](#frames-without-the-length-prefix), decoded 4,080, 4,069 and 4,446 frames, and the samples that [Samples and duration](#samples-and-duration) derives from them equal ffmpeg's decoded sample count.
 - The samples ffmpeg 6.1.1 decodes equal what this description predicts for every file and for 68 damaged copies: 30 targeted changes to three committed files (a sequence number; the length prefix of a frame inside a packet, of a crossing frame and of the first frame; the reserved bit of such frames), 36 random single-bit flips in three committed files, and 2 changes to `Classical_44_16_6_256000_0_20.wma`, which has no length prefix.
 
 ## Conventions
@@ -197,11 +199,11 @@ The header is 6 + W bits (18 to 24 in the test files); the rest of the packet is
   - After a frame whose trailer bit is 0, they are padding: zero in most packets, nonzero in some (see [Observations](#observations-on-the-test-files)). FFmpeg keeps them anyway, and would read them as the start of a frame if the next packet stated bits for one; no test file does.
 - **A frame that crosses packets** is the bits from its start to the end of the first packet's payload and the first count bits of the next packet's payload. The packet header lies between the two pieces.
 - **The buffer limit:** FFmpeg's buffer for a frame holds 32,768 bytes, counted from the byte that holds the frame's first bit. A frame that does not fit, or a saved run that would not, is not read ("Too small input buffer") and counts as a loss. A frame cannot exceed 2^W − 1 bits, that is just under 2 × 2^floor(log2(block alignment)) bytes, so only block alignments of 16,384 bytes and more can reach the limit; no frame of the test files comes near it.
-- **A crossing frame that overflows the buffer** is not read and is not skipped either: its bits stay where they are, FFmpeg clears the loss when the packet's start is handled, and it then reads the frames that start in the packet from the bit right after the header, that is, inside the crossing frame's bits. The current reader skips those bits and reads the frames after them. No test file has one.
+- **A crossing frame that overflows the buffer** is not read and is not skipped either: its bits stay where they are, FFmpeg clears the loss when the packet's start is handled, and it then reads the frames that start in the packet from the bit right after the header, that is, inside the crossing frame's bits. Encspect's reports skip those bits and read the frames after them: the bits are the end of a frame that was not read, so this is a choice of Encspect's, not FFmpeg's behavior. No test file has one.
 
 ### Frames without the length prefix
 
-FFmpeg reads such streams one packet late, and the current Encspect reader does not read their frames at all (`wma.no-length-prefix`); a future reader must do the following.
+FFmpeg reads such streams one packet late. The former reader did not read their frames (it reported `wma.no-length-prefix`, which no longer exists); the new reader does, and must do the following.
 
 - The frames that start in packet k (after its count of bits that finish the frame before) are read when packet k + 1 arrives: the saved run (the rest of packet k's payload) with packet k + 1's first count bits added is a buffer of whole frames, read from its start.
 - A frame's end is found only by reading it to the end of its last subframe; then bits are read up to and including the first 1 bit (or to the buffer's end), and the bit after that is the trailer bit.
@@ -209,7 +211,6 @@ FFmpeg reads such streams one packet late, and the current Encspect reader does 
 - Then the rest of packet k + 1's payload becomes the new saved run.
 - **A count of 0 does not drop the saved run.** Where packet k + 1 states 0 bits that finish the frame before, the saved run alone is the buffer of whole frames and is read all the same (with the length prefix a count of 0 drops it). `Classical_44_16_6_256000_0_20.wma` has 27 such packets, and a reader reaches ffmpeg's 8,353,792 samples for it only by decoding them.
 - **A count that covers the packet's whole payload** is cut to the payload's length, as with the length prefix: the whole payload is added to the saved run, which is read at once. No test file has such a packet, and the case was not checked.- The frames that start in the last packet are never read, since no packet follows (FFmpeg's decoder has no call that would flush them).
-- Encspect shows the packets of such a stream with their header fields only (see [Nodes](#nodes)).
 
 ### Sequence numbers, errors and loss
 
@@ -346,7 +347,7 @@ One bit per channel of the subframe, in channel order: 1 where the channel sends
 - The start value is (90 × B) >> 4: 90 for 16-bit and 135 for 24-bit streams.
 - s(6) is added.
 - **Escape:** where the 6-bit value is 31 or −32, groups of u(5) follow, each read only while more than 5 bits are left before the frame's end; reading stops after a group that is not 31. The sum of 31 for each group of 31 and the last group's value is added to the step for 31, or subtracted for −32.
-  - Where reading stops because the bits ran out, FFmpeg counts the last value it read once more in the sum: the last 31, or, where no group was read, the magnitude of the 6-bit value itself (31 for the value 31 and 32 for −32), applied in the escape's direction. Only a damaged frame can reach this.
+  - Where reading stops because the bits ran out, FFmpeg counts the last value it read once more in the sum: the last 31, or, where no group was read, the 6-bit value itself. For the value 31 the step rises by 31 and then by 31 again (62 in all). For −32 the escape subtracts the 6-bit value, −32, from the step, which adds 32 and cancels the −32 added before it, so the step stays at its start value (before the modifiers). Only a damaged frame can reach this.
 - A negative step is allowed (FFmpeg logs "negative quant step").
 - **Modifiers:** where the subframe has more than one channel, u(3) = k, and then for each channel u(1); where it is 1, the channel's step is the subframe's plus u(k) + 1 (plus 1 where k = 0). A subframe of one channel has no modifiers.
 - Encspect's reports show the subframe's step, before the modifiers.
@@ -397,7 +398,7 @@ For each channel of the subframe that sends coefficients, in channel order, whil
 - the escape `1 1 1` after a large value (above), and
 - a run that takes the position p past L.
 
-FFmpeg ignores both and goes on with the next channel at the bit where the codes stopped. The current reader marks the channel's coefficient codes as damaged (", damaged" on the node, counted in "Damaged Coefficient Codes") and goes on in the same way. The frame's length check is then likely to fail; neither behavior is pinned by a golden.
+FFmpeg ignores both and goes on with the next channel at the bit where the codes stopped. Encspect marks the channel's coefficient codes as damaged (", damaged" on the node, counted in "Damaged Coefficient Codes") and goes on in the same way. The frame's length check is then likely to fail; neither behavior is pinned by a golden.
 
 ### Codes
 
@@ -415,7 +416,7 @@ Read from the source and checked with ffmpeg 6.1.1 on the files above and their 
 - **Trims:** each frame's trims apply to that frame only; a flag of 0 means a trim of 0. Of an output frame, the trim at the start is cut first (a trim of F or more removes the frame), then the trim at the end from what is left (the same). FFmpeg keeps the two values between frames and clears them after each frame it hands on, after the frame that crosses into a packet whatever its outcome, and, after a frame that fails inside a packet, when it reads the next packet's header; so the trims of a failed frame never reach another frame. (No damaged copy had a failing frame with a trim, so this clearing was read from the source only.)
 - **A frame that fails only its length check** is output where it is the frame that crosses into its packet, or the first frame the decoder returns for its media object (both observed with ffmpeg 6.1.1, an effect of how `decode.c` hands a packet's first frame back), and not otherwise.
   - **The crossing frame is output with its trims applied:** FFmpeg clears the loss before it applies them. Checked on `external-windows-wma10pro-cbr-stereo-44k-64.wma`: frame 65 crosses into packet 10 and states an end trim of 1,332; with its length prefix raised by 2 it fails the length check, and ffmpeg decodes 131,788 samples in all (133,120 if it were untrimmed).
-  - **The first frame of a media object that fails inside its packet is output untrimmed,** since FFmpeg returns before it applies the trims. A frame whose last subframe runs past the frame's end is such a frame for FFmpeg ("would have to skip" with a negative count), though the current reader names it "it needs more bits than it has".
+  - **The first frame of a media object that fails inside its packet is output untrimmed,** since FFmpeg returns before it applies the trims. A frame whose last subframe runs past the frame's end is such a frame for FFmpeg ("would have to skip" with a negative count), though Encspect names it "it needs more bits than it has".
 - **A frame that fails before the end of its subframes** outputs nothing.
 - **At the end of the stream** nothing more is output: the overlap of the last frame is dropped, and without the length prefix the frames of the last packet are not read.
 - In every test file with the length prefix the first frame states a trim of F samples at the start and, where the file is not cut, the last frame a trim at the end (1,332 samples in the stereo committed files, 1,408 in the 5.1 ones), so the trims cut the stream to its source's length: 66 × 2,048 − 2,048 − 1,332 = 131,788.
@@ -424,7 +425,7 @@ Read from the source and checked with ffmpeg 6.1.1 on the files above and their 
 
 - **Samples** = (frames read without error × F) − the sum of their trims at the start and the end, and 0 where that is negative. The first frame is not subtracted as such; its trim of F does it. This equals FFmpeg's count on every test file. It differs where the first frame states a trim below F or where frames fail; a reader that follows FFmpeg's rules instead changes no golden.
 - **Duration** = Samples / sampling rate.
-- A stream without the length prefix reports 0 samples.
+- A stream without the length prefix has the samples its frames give by the same rule (the former reader reported 0 for it because it did not read the frames).
 
 ## State and resets
 
@@ -445,7 +446,7 @@ What a reader keeps, and when it starts over:
 
 ## Nodes
 
-What the current reader adds to the report. Bit ranges of frames are positions in the frame's bits (its pieces in the packets one after another); a node over bits of one packet gets that packet's byte offset and length and, where the bits do not start or end on a byte, a bit offset and bit length (the shared `PartsMap` and `Node.FromBits` do this); a node over bits of two packets gets the file ranges of both pieces.
+What Encspect adds to the report. Bit ranges of frames are positions in the frame's bits (its pieces in the packets one after another); a node over bits of one packet gets that packet's byte offset and length and, where the bits do not start or end on a byte, a bit offset and bit length (the shared `PartsMap` and `Node.FromBits` do this); a node over bits of two packets gets the file ranges of both pieces.
 
 ### Codec data
 
@@ -469,13 +470,13 @@ The children of "Decode Flags" are bit fields counted from the least significant
 
 ### Packets
 
-Each media object is a "Packet" node over its first block alignment's bytes (its file ranges, where it lies in several), value "not read" for a packet shorter than the block alignment or of a stream without the length prefix, else "N frames" for the frames that start in it. Its children, at their bits:
+Each media object is a "Packet" node over its first block alignment's bytes (its file ranges, where it lies in several), value "not read" for a packet shorter than the block alignment (the former reader also gave it to every packet of a stream without the length prefix, whose frames it did not read), else "N frames" for the frames that start in it. Its children, at their bits:
 
 | Node | Bits | Value |
 | --- | --- | --- |
 | "Packet Sequence Number" | 0–3 | the number (0 for a short packet, which is not read) |
-| "Unused" | 4–5 | 0, always: the current reader does not read the two bits, though they are `10` in nearly every packet (a reader that shows them changes the goldens) |
-| "Bits of Previous Frame" | 6 to 6 + W | the count after it is cut to the payload's length (23,763, not 23,784, in the last packet of the 44k-64 file), and 0 for a stream without the length prefix |
+| "Unused" | 4–5 | 0, always: Encspect does not read the two bits, though they are `10` in nearly every packet (a reader that shows them changes the goldens) |
+| "Bits of Previous Frame" | 6 to 6 + W | the count after it is cut to the payload's length (23,763, not 23,784, in the last packet of the 44k-64 file), and 0 for a short packet (the former reader also wrote 0 for a stream without the length prefix) |
 | "Frame End" | after the header, the count's bits | where the count is not 0: the count, unit "bits" |
 | "Frame Data" | a frame that lies in the packet | "N subframes", or "invalid" |
 | "Frame Start" | a frame that starts here and ends in the next packet, to the packet's end | as above |
@@ -519,7 +520,7 @@ A frame that fails in its tile header has only "Frame Length" and "Tile Header" 
 | "Coefficients (channel c)" | "K non-zero, E escapes, codebook 0" ("1 escape"; ", damaged" added where a code was damaged) |
 
 - The scale factor and coefficient nodes come channel by channel (scale factors of channel 1, its coefficients, then channel 2's), although all scale factors precede all coefficients in the bits.
-- K counts the non-zero vector values and every run-level code that sets a coefficient (escapes included); E counts the escapes.
+- K counts the non-zero vector values and every run-level code that sets a coefficient (escapes included); E counts the run-level escape codes (symbol 0 of the selected codebook) only. The escapes of the vector codes (symbol 0 of the vector tables) and the large values they or a single value add are not counted, and neither is any other code.
 - A subframe that fails stops its children where the failure is:
   - after "Extended Header" for the fill bits, after "Reserved Bit" for that bit, after "Channel Transform" for a transform;
   - after "Vector Coefficients" (the last child) for a vector count above L;
@@ -573,7 +574,7 @@ The "Statistics" node (value "N frames, D s", N every frame record, D the durati
   - "Samples" and "Trimmed Samples" have the unit "samples" ("1 sample"), "Subframe Sizes" the unit "sizes" ("1 size"), the per-size children are named "L samples" ("1 sample" is never reached).
   - "Block Alignment" is in bytes. "Smallest Frame" and "Largest Frame" are in bytes with one decimal (the bits over 8), "Average Bitrate", "Minimum Frame Bitrate" and "Maximum Frame Bitrate" in kbps with one decimal, "Duration" in seconds with three decimals.
   - "Channels per Subframe" is the raw ratio (channels of all subframes over the subframes), shown with two decimals and no unit.
-- Without any frame record (a stream without the length prefix, or only short packets) there is no Statistics node and no series.
+- Without any frame record (only short packets, or frames none of which could be read) there is no Statistics node and no series.
 
 **Series:** "Bitrate" (kbps over the frames' file offsets): each frame's bits × rate / F / 1,000, 0 for an invalid frame; "Bitrate Over Time" (kbps per second of audio): for second s, the frames whose index × F / rate rounds down to s (invalid ones left out), their bits × rate / (their count × F) / 1,000, rounded to one decimal, halves to even. A second without a frame read without error gets 0, and the series ends at the second of the last frame read without error.
 
@@ -589,7 +590,6 @@ Every finding of one code is reported once per stream with a count, pointing at 
 | `wma.no-format` | Info, once | no WAVEFORMATEX | the same |
 | `wma.codec-data-size` | Warning, once | fewer than 18 bytes of codec data | the codec data |
 | `wma.format-unsupported` | Warning, once | a check of [Derived values and checks](#derived-values-and-checks) fails ("The stream is not analyzed: …" and the reason) | the codec data |
-| `wma.no-length-prefix` | Info, once | the decode flags lack the length prefix | the codec data |
 | `wma.packet-short` | Warning | a media object shorter than the block alignment | its packet |
 | `wma.packet-long` | Info | a media object longer than the block alignment | its packet |
 | `wma.packet-sequence` | Warning | a sequence number that does not follow | its packet |
@@ -610,17 +610,17 @@ The reasons of `wma.frame-invalid` and of the "invalid: …" values:
 | "it needs more bits than it has" | the reading passed the frame's end, checked at the end of each subframe and after the trailer bit |
 | "its length prefix is not where its data ends" | the length check |
 
-- The current reader reads past a frame's end as zero bits and checks for that at the end of each subframe and of the frame; FFmpeg's reader runs on over whatever its buffer holds and then fails the length check. Both make the frame invalid.
-- A reason "a channel has more subframes than its tile header lays out" ("broken subframe") exists in both readers but cannot occur after a valid tile header.
+- Encspect reads past a frame's end as zero bits and checks for that at the end of each subframe and of the frame; FFmpeg's reader runs on over whatever its buffer holds and then fails the length check. Both make the frame invalid.
+- A reason "a channel has more subframes than its tile header lays out" ("broken subframe") exists in both FFmpeg's decoder and Encspect's reader but cannot occur after a valid tile header.
 
 ### Finding messages
 
-The texts are Encspect's own prose, so they are quoted here; `{...}` is a figure, written as plain digits without separators. Whoever may not read the old reader needs them for goldens that stay as they are.
+The texts are Encspect's own prose, so they are quoted here; `{...}` is a figure, written as plain digits without separators. Whoever may not read the removed reader needs them for goldens that stay as they are.
 
 - **Collection:** `wma.packet-short`, `wma.packet-long`, `wma.packet-sequence` and `wma.frame-invalid` are reported once per stream, at the first case, with the number of cases as the finding's count; the message has the singular form for one case and the plural form for more, with the first case's figures. The others are reported once, immediately, and end with a period. Immediate findings come first, then the collected ones in the order of their first case.
 - **Function names:** no current text names an FFmpeg function. `wma.packet-short` cites the file `wmaprodec.c` and the others say "FFmpeg's decoder" or "a decoder"; they are kept as they are, and the implementer changes no golden's message for this reason. Were a text to name a function, the implementer would drop the name, keep the file name and update the messages of the affected goldens only.
 - **Counts of things:** "{n bytes}", "{n bits}", "{n channels}" and the like follow the singular rule ("1 byte").
-- **Nodes:** `wma.codec-data-size`, `wma.format-unsupported` and `wma.no-length-prefix` point to the container's "Codec Specific Data" node; `wma.payload-not-analyzed`, `wma.no-format` and `wma.records-limit` to the container's node for the stream; the packet findings to the "Packet" node of the first case; `wma.frame-invalid` to its "Frame" node; `wma.frame-unfinished` to the "Frames" node.
+- **Nodes:** `wma.codec-data-size` and `wma.format-unsupported` point to the container's "Codec Specific Data" node; `wma.payload-not-analyzed`, `wma.no-format` and `wma.records-limit` to the container's node for the stream; the packet findings to the "Packet" node of the first case; `wma.frame-invalid` to its "Frame" node; `wma.frame-unfinished` to the "Frames" node.
 - **Order and exclusions:** for a stream with encrypted samples only `wma.codec-data-size` can be reported (before the stream node is added); a stream that fails a check gets `wma.codec-data-size` where the data is short, `wma.format-unsupported`, and nothing about packets, frames or the length prefix.
 
 Findings of the stream (Info unless stated):
@@ -631,7 +631,6 @@ Findings of the stream (Info unless stated):
 | `wma.no-format` | The container states no WAVEFORMATEX for the stream, so its Windows Media Audio is not analyzed. |
 | `wma.codec-data-size` (Warning) | The codec-specific data of Windows Media Audio Professional is {n bytes}; FFmpeg's decoder needs 18 and refuses fewer. |
 | `wma.format-unsupported` (Warning) | The stream is not analyzed: {reason}. |
-| `wma.no-length-prefix` | The decode flags do not set the length prefix of frames, so the frames of the packets cannot be told apart without reading them all across packets, which this parser does not do; the packets are listed and their frames are not read. |
 | `wma.frame-unfinished` | The last packet ends with {n bits} after a frame whose trailer bit says another frame follows, and no packet follows to finish one; a decoder drops them. ({n} is the bits left after that frame in the last packet read.) |
 | `wma.records-limit` | The stream has more than 262144 media objects; the {n} after them are not read, so the statistics and the series cover the first 262144. |
 
@@ -685,7 +684,7 @@ Encspect's: at most 262,144 media objects read; at most 8 channels and 32 subfra
 
 ## Validity rules and damage
 
-What FFmpeg does with each broken rule ("frame invalid" and "loss" as in [Sequence numbers, errors and loss](#sequence-numbers-errors-and-loss)) and what the current reader reports:
+What FFmpeg does with each broken rule ("frame invalid" and "loss" as in [Sequence numbers, errors and loss](#sequence-numbers-errors-and-loss)) and what Encspect reports:
 
 | Rule broken | FFmpeg | Encspect |
 | --- | --- | --- |
@@ -791,7 +790,7 @@ Whether each WMA-Professional-related file in the repository is safe for the imp
 
 **Not safe** (they encode the bitstream as FFmpeg's code does, or are the code being replaced):
 
-- `src/Encspect.Formats.Wma/WmaProParser.cs`, `ProParameters.cs`, `ProStream.cs`, `ProDecoder.cs`, `ProRecords.cs`, `ProNodes.cs`, `ProReport.cs`: the current reader. `ProDecoder.cs`, `ProStream.cs` and `ProParameters.cs` follow `wmaprodec.c`'s structure and checks closely; `ProNodes.cs` and `ProReport.cs` are described under [Nodes](#nodes) and [Statistics](#statistics) instead.
+- `src/Encspect.Formats.Wma/WmaProParser.cs`, `ProParameters.cs`, `ProStream.cs`, `ProDecoder.cs`, `ProRecords.cs`, `ProNodes.cs`, `ProReport.cs`: the removed reader's files, listed because older revisions hold them; they follow `wmaprodec.c`'s structure and checks closely (`ProDecoder.cs`, `ProStream.cs` and `ProParameters.cs`); the report code of `ProNodes.cs` and `ProReport.cs` is described under [Nodes](#nodes) and [Statistics](#statistics) instead.
 - `src/Encspect.Formats.Wma/ProExplain.cs`: node descriptions written while reading `wmaprodec.c`, naming its variables; the new reader writes its own from this document.
 - `src/Encspect.Formats.Wma/WmaStandardParser.cs` and the other `Standard*.cs` files: WMA versions 1 and 2, under their own review; the Professional reader uses only the stream that `AddBasicStream` adds for a stream it does not read, which [Stream](#stream) describes.
 - `src/Encspect.Host/Topics/wma-pro.md`: the background article. Its sentences paraphrase the file comment at the top of `wmaprodec.c` one by one, so it counts as derived from FFmpeg's source: the implementer does not read it, and writes the article again from this document.
