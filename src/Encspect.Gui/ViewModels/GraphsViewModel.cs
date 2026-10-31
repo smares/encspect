@@ -495,6 +495,15 @@ public sealed class GraphsViewModel : ObservableObject
         }
     }
 
+    // The frame a click on a run really selected (see Graph.FramesAfterAt): the click keeps its column.
+    public void ClickLandedAt(long offset)
+    {
+        if (_click is { } click)
+        {
+            _click = click with { Offset = offset };
+        }
+    }
+
     // A click on a legend entry of a category series: selects the next frame after the selected one that holds the category.
     public void ActivateCategory(int category)
     {

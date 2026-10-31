@@ -57,8 +57,8 @@ public abstract class Graph
         return unit.Length > 0 ? number + " " + unit : number;
     }
 
-    // The index of the run that holds an offset among the sorted start offsets of runs of frames: the last start at or before it,
-    // or -1 before the first.
+    // The index of the run that holds an offset among the sorted start offsets of runs of frames: the last start at or before it; the
+    // first run for the frames before it.
     private protected static int RunIndex(ReadOnlySpan<double> starts, long offset)
     {
         int low = 0;
@@ -78,7 +78,7 @@ public abstract class Graph
             }
         }
 
-        return found;
+        return Math.Max(0, found);
     }
 
     // The text for a point's frames: "Frame 3", or "Frames 33 to 48" for a point that stands for a run of them.

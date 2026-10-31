@@ -411,7 +411,7 @@ public class FrameMapGraphTests
     {
         // Runs of 16, 27, 16, 1 and 10 frames: the stream has 70.
         double[] x = [1000, 2600, 5300, 6900, 7000];
-        var frameRuns = new FrameRuns(new long[] { 1, 17, 44, 60, 61 }, 70);
+        var frameRuns = new FrameRuns(new long[] { 1, 17, 44, 60, 61 }, 70, new long[] { 640, 1080, 640, 40, 400 });
         Series runs = new("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 100, 200, 100, 200, 100 }) { Runs = frameRuns };
         MapFinding[] findings = [new(5300 + 500, Severity.Error, "damaged", 1), new(2600 + 50, Severity.Warning, "not a run start", 1)];
         FrameMapGraph map = Map(runs, findings: findings);
@@ -429,7 +429,7 @@ public class FrameMapGraphTests
         Assert.Equal(3, line.IndexOfFrame(6950));
         Assert.StartsWith("Frames 17 to 43 · ", line.Describe(1), StringComparison.Ordinal);
 
-        // 70 frames of 40 samples: sample 44 * 40 + 5 is in frame 45 (index 44), the second of run 3, which starts at frame 44.
+        // 70 frames of 40 samples, each run coding its frames' worth: sample 44 * 40 + 5 is in frame 45 (index 44), the second of run 3, which starts at frame 44.
         var locator = SampleLocator.Of(x.AsMemory(), 70 * 40, runs: frameRuns);
         Assert.Equal(5300, locator.FrameOffsetAt((43 * 40) + 5));
         Assert.Equal(0, locator.FramesIntoRunAt((43 * 40) + 5));
@@ -437,10 +437,12 @@ public class FrameMapGraphTests
         Assert.Equal(43 * 40, locator.PositionOfFrame(5800));
     }
 
-    [Fact]
-    public void The_runs_of_a_truehd_stream_hold_the_frames_of_the_tree_and_ring_its_findings()
+    [Theory]
+    [InlineData("built-parity-mismatch.thd")]
+    [InlineData("built-leading-units.thd")]
+    public void The_runs_of_a_truehd_stream_hold_the_frames_of_the_tree_and_ring_its_findings(string file)
     {
-        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", "built-parity-mismatch.thd"));
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", file));
         StreamInfo stream = report.Streams[0];
         Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
         FrameRuns runs = bitrate.Runs!;
@@ -472,7 +474,9 @@ public class FrameMapGraphTests
         for (int n = 0; n < frames.Count; n++)
         {
             int run = map.IndexOfFrame(frames[n].Offset)!.Value;
-            Assert.InRange(n + 1, runs.FirstFrames.Span[run], runs.FirstFrames.Span[run] + runs.FramesIn(run) - 1);
+
+            // The frames before the first run (units before the first major sync) belong to the first.
+            Assert.True(n + 1 < runs.FirstFrames.Span[0] ? run == 0 : n + 1 >= runs.FirstFrames.Span[run] && n + 1 < runs.FirstFrames.Span[run] + runs.FramesIn(run));
         }
 
         Assert.NotEmpty(findings);

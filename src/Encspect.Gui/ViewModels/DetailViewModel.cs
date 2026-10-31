@@ -609,6 +609,17 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
             if (tree.Reveal([.. start, .. below]) is { } row)
             {
+                if (framesAfter > 0)
+                {
+                    Node landed = node;
+                    foreach (int index in below)
+                    {
+                        landed = landed.Children[index];
+                    }
+
+                    Graphs.ClickLandedAt(landed.Offset);
+                }
+
                 SelectedNode = row;
                 return row;
             }

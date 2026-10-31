@@ -443,12 +443,13 @@ public class FrameMapViewTests
 
     // ---- Speed and memory
 
-    // What a map of many units may allocate beyond a map of few, while it is shown, drawn at 12 scroll positions and resized. The retained heap is
-    // no measure: it moved by several MB between runs with the same map, from the platform's own surfaces. The bytes allocated on this thread
-    // are exact, and a per-unit array would add 1 byte, 4 or 8 for each of the 1,970,000 units more (above all of the bound).
+    // What the model of a map of many units may allocate beyond one of few when asked its classes, count and empty squares (no renderer in
+    // the count). The retained heap is no measure: it moved by several MB between runs with the same map, from the platform's own surfaces.
+    // The bytes allocated on this thread are exact, and a per-unit array would add 1 byte, 4 or 8 for each of the 1,970,000 units more
+    // (above all of the bound).
     private const long AllocationBound = 512L << 10;
 
-    // What one frame of the map may allocate on this thread (an invalidation, a render and a capture of the frame): the figures measured on
+    // What one frame of the map may allocate on this thread (an invalidation, a render and a capture of the frame, the least over 12 positions and 3 rounds, with the frame buffer of the window's size made before the count): the figures measured on
     // this machine were 94 to 95 KB for the numeric map and 145 to 149 KB for the split squares over four runs, whatever the number of
     // units, and the bounds are about a third above them. The comparison above cancels what is allocated for each square drawn, since both
     // maps draw the same squares, so this bound is what catches it: a double[4] for each square drawn adds about 215 KB to a frame.
@@ -458,9 +459,7 @@ public class FrameMapViewTests
     [AvaloniaFact]
     public void Two_million_numeric_units_draw_while_scrolling_and_resizing_in_the_time_of_a_screenful_and_without_a_per_unit_array()
     {
-        FrameMapGraph few = Numbers(30_000, i => 32 + (i * 7 % 23 * 16));
-        FrameMapGraph many = Numbers(2_000_000, i => 32 + (i * 7 % 23 * 16));
-        (Measured baseline, Measured run) = MeasureInterleaved(few, many);
+        (Measured baseline, Measured run) = MeasureInterleaved(() => Numbers(30_000, i => 32 + (i * 7 % 23 * 16)), () => Numbers(2_000_000, i => 32 + (i * 7 % 23 * 16)), out FrameMapGraph many);
 
         long extra = run.Allocated - baseline.Allocated;
         Assert.Equal(8, many.ClassCount);
@@ -475,9 +474,7 @@ public class FrameMapViewTests
     [AvaloniaFact]
     public void Two_hundred_thousand_units_of_four_values_draw_as_split_squares_in_the_same_bounds()
     {
-        FrameMapGraph few = Split(20_000);
-        FrameMapGraph many = Split(200_000);
-        (Measured baseline, Measured run) = MeasureInterleaved(few, many);
+        (Measured baseline, Measured run) = MeasureInterleaved(() => Split(20_000), () => Split(200_000), out _);
 
         long extra = run.Allocated - baseline.Allocated;
         Assert.True(run.Times.Average() < 500, $"{run.Times.Average()} ms a frame.");
@@ -506,17 +503,21 @@ public class FrameMapViewTests
     // renderer allocates one frame-sized buffer in some frames and reuses it in others.
     private readonly record struct Measured(long Allocated, double[] Times, int MostRectangles, int SquaresOnScreen, long BytesPerFrame);
 
-    private static (Measured Few, Measured Many) MeasureInterleaved(FrameMapGraph few, FrameMapGraph many)
+    // Each round builds both maps afresh, since a map resolves lazily and keeps what it resolved, so a second measure of the same map
+    // allocates nothing; the least of the rounds is compared, since the renderer's own buffers make a round allocate more or less.
+    private static (Measured Few, Measured Many) MeasureInterleaved(Func<FrameMapGraph> few, Func<FrameMapGraph> many, out FrameMapGraph lastMany)
     {
-        _ = Measure(few);
-        Measured fewBest = Measure(few);
-        Measured manyBest = Measure(many);
-        for (int round = 0; round < 2; round++)
+        _ = Measure(few());
+        Measured fewBest = default;
+        Measured manyBest = default;
+        lastMany = many();
+        for (int round = 0; round < 3; round++)
         {
-            Measured f = Measure(few);
-            Measured m = Measure(many);
-            fewBest = fewBest with { Allocated = Math.Min(fewBest.Allocated, f.Allocated), BytesPerFrame = Math.Min(fewBest.BytesPerFrame, f.BytesPerFrame) };
-            manyBest = manyBest with { Allocated = Math.Min(manyBest.Allocated, m.Allocated), BytesPerFrame = Math.Min(manyBest.BytesPerFrame, m.BytesPerFrame), Times = m.Times };
+            Measured f = Measure(few());
+            lastMany = many();
+            Measured m = Measure(lastMany);
+            fewBest = round == 0 ? f : fewBest with { Allocated = Math.Min(fewBest.Allocated, f.Allocated), BytesPerFrame = Math.Min(fewBest.BytesPerFrame, f.BytesPerFrame) };
+            manyBest = round == 0 ? m : manyBest with { Allocated = Math.Min(manyBest.Allocated, m.Allocated), BytesPerFrame = Math.Min(manyBest.BytesPerFrame, m.BytesPerFrame), Times = m.Times };
         }
 
         return (fewBest, manyBest);
@@ -547,12 +548,16 @@ public class FrameMapViewTests
             double target = view.MapScroll!.Value.Maximum * step / 11;
             window.MouseWheel(at, new Vector(0, -(target - view.MapScroll!.Value.Offset) / (12 * 3)));
             UiPump.Until(() => true);
+
+            // The frame buffer of the new size is made here, outside the count; the frame counted below reuses it.
+            AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+            Assert.NotNull(window.CaptureRenderedFrame());
             var clock = Stopwatch.StartNew();
             long before = GC.GetAllocatedBytesForCurrentThread();
             view.InvalidateVisual();
             AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-            leastDrawn = Math.Min(leastDrawn, GC.GetAllocatedBytesForCurrentThread() - before);
             Assert.NotNull(window.CaptureRenderedFrame());
+            leastDrawn = Math.Min(leastDrawn, GC.GetAllocatedBytesForCurrentThread() - before);
             times.Add(clock.Elapsed.TotalMilliseconds);
 
             int columns = view.MapColumns!.Value;

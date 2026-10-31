@@ -109,7 +109,7 @@ public class SeriesRangeTests
         double[] values = [128, 160, 140];
         Series[] series =
         [
-            new("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { Runs = new FrameRuns(new long[] { 1, 17, 44 }, 50) },
+            new("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { Runs = new FrameRuns(new long[] { 1, 17, 44 }, 50, new long[] { 640, 1080, 240 }) },
             new("Frames", "kbps", SeriesAxis.FrameOffset, x, values),
         ];
         Report report = new("a.bin", new Node("File", 0, 20), [], [new StreamInfo { Nodes = [], Codec = "Test", Series = series }]);
@@ -121,6 +121,7 @@ public class SeriesRangeTests
         JsonElement runs = written[0].GetProperty("frameRuns");
         Assert.Equal([1L, 17L, 44L], runs.GetProperty("firstFrames").EnumerateArray().Select(v => v.GetInt64()));
         Assert.Equal(50, runs.GetProperty("frameCount").GetInt64());
+        Assert.Equal([640L, 1080L, 240L], runs.GetProperty("samples").EnumerateArray().Select(v => v.GetInt64()));
         Assert.False(written[1].TryGetProperty("frameRuns", out _));
         Assert.Equal(27, series[0].Runs!.FramesIn(1));
         Assert.Equal(1, series[0].Runs!.RunOf(17));
@@ -133,6 +134,8 @@ public class SeriesRangeTests
         Assert.Throws<ArgumentException>(() => new FrameRuns(new long[] { 1, 1 }, 5));
         Assert.Throws<ArgumentException>(() => new FrameRuns(new long[] { 0, 2 }, 5));
         Assert.Throws<ArgumentException>(() => new FrameRuns(ReadOnlyMemory<long>.Empty, 5));
+        Assert.Throws<ArgumentException>(() => new FrameRuns(new long[] { 1, 2 }, 5, new long[] { 1 }));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new FrameRuns(new long[] { 1, 2 }, 5, new long[] { 1, -1 }));
         Assert.Throws<ArgumentOutOfRangeException>(() => new FrameRuns(new long[] { 1, 9 }, 5));
         Assert.Throws<ArgumentException>(() => new Series("Runs", "kbps", SeriesAxis.FrameOffset, new double[] { 0, 10 }, new double[] { 1, 2 }) { Runs = new FrameRuns(new long[] { 1 }, 5) });
     }

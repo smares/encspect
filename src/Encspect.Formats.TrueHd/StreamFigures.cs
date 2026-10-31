@@ -55,7 +55,7 @@ internal sealed class StreamFigures(long firstRate)
         double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
-            _points.Add(new Point(offset, bitrate, firstFrame));
+            _points.Add(new Point(offset, bitrate, firstFrame, samples));
         }
 
         if (runRate != _rate && runRate > 0)
@@ -113,6 +113,7 @@ internal sealed class StreamFigures(long firstRate)
         var offsets = new double[Count];
         var bitrates = new double[Count];
         var firstFrames = new long[Count];
+        var runSamples = new long[Count];
         for (int i = 0; i < Count; i++)
         {
             if (i % 4096 == 0)
@@ -123,11 +124,12 @@ internal sealed class StreamFigures(long firstRate)
             offsets[i] = _points[i].Offset;
             bitrates[i] = _points[i].Bitrate;
             firstFrames[i] = _points[i].FirstFrame;
+            runSamples[i] = _points[i].Samples;
         }
 
         if (Count > 0)
         {
-            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Runs = new FrameRuns(firstFrames, frameCount) });
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
         }
 
         if (_seconds.Count > 0)
@@ -182,5 +184,5 @@ internal sealed class StreamFigures(long firstRate)
     public static string Share(long count, long total) =>
         total > 0 ? (Math.Round(count * 1000.0 / total, MidpointRounding.ToEven) / 10).ToString("F1", CultureInfo.InvariantCulture) + "%" : "0.0%";
 
-    private readonly record struct Point(long Offset, double Bitrate, long FirstFrame);
+    private readonly record struct Point(long Offset, double Bitrate, long FirstFrame, long Samples);
 }

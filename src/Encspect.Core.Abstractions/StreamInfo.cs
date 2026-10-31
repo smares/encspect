@@ -178,12 +178,29 @@ public sealed class Series
 }
 
 // The frames that the points of a series cover, where a point is a run of frames: the number of the frame each run starts at, in
-// the numbering of the stream's frame nodes (counted from 1, in file order). A run ends where the next starts, and the last at
-// the stream's last frame.
+// the numbering of the stream's frames (counted from 1, in file order; the numbering of its frame nodes, except past the limit of
+// recorded frames, where frames are counted but have no node). A run ends where the next starts, and the last at the stream's last
+// frame. Frames before the first run belong to none; a front end takes them for the first run's.
+//
+// Samples, where given, are the samples per channel that the frames of each run code. A frame of a run can carry none (a frame the
+// stream cannot read), so a front end that places a time in the stream spreads the samples over the runs by them, not over the frames.
 public sealed class FrameRuns
 {
-    public FrameRuns(ReadOnlyMemory<long> firstFrames, long frameCount)
+    public FrameRuns(ReadOnlyMemory<long> firstFrames, long frameCount, ReadOnlyMemory<long> samples = default)
     {
+        if (!samples.IsEmpty && samples.Length != firstFrames.Length)
+        {
+            throw new ArgumentException("Runs need a sample count for each run, or none.", nameof(samples));
+        }
+
+        foreach (long count in samples.Span)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(samples), "A run codes no fewer than 0 samples.");
+            }
+        }
+
         if (firstFrames.IsEmpty)
         {
             throw new ArgumentException("Runs need at least one first frame.", nameof(firstFrames));
@@ -205,7 +222,11 @@ public sealed class FrameRuns
 
         FirstFrames = firstFrames;
         FrameCount = frameCount;
+        Samples = samples;
     }
+
+    // The samples per channel of each run, or empty where the series does not state them.
+    public ReadOnlyMemory<long> Samples { get; }
 
     public ReadOnlyMemory<long> FirstFrames { get; }
 

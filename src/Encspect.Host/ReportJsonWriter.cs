@@ -397,6 +397,21 @@ public static class ReportJsonWriter
 
                 writer.WriteEndArray();
                 writer.WriteNumber("frameCount", runs.FrameCount);
+                if (!runs.Samples.IsEmpty)
+                {
+                    writer.WriteStartArray("samples");
+                    foreach (long count in runs.Samples.Span)
+                    {
+                        writer.WriteNumberValue(count);
+                        if (writer.BytesPending > FlushThreshold)
+                        {
+                            writer.Flush();
+                        }
+                    }
+
+                    writer.WriteEndArray();
+                }
+
                 writer.WriteEndObject();
             }
 
