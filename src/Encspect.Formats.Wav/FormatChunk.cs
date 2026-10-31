@@ -284,7 +284,7 @@ internal static class FormatChunk
                     $"The block alignment is {Counts.Of(stated, "byte", "bytes")}, but {Counts.Of(format.Channels, "channel", "channels")} of {Counts.Of(format.Bits, "bit", "bits")} take {Counts.Of(expectedAlign, "byte", "bytes")} per sample frame.");
             }
 
-            long expectedRate = format.SampleRate * format.Channels * format.Bits / 8;
+            Int128 expectedRate = (Int128)format.SampleRate * format.Channels * format.Bits / 8;
             if (format.BytesPerSecond != expectedRate)
             {
                 long stated = format.BytesPerSecond;
@@ -314,9 +314,9 @@ internal static class FormatChunk
                 $"The valid bits per sample ({valid}) are more than the {Counts.Of(bits, "bit", "bits")} of the container.");
         }
 
-        if (format.IsExtensible && format.ChannelMask is { } mask && mask != 0 && (mask & 0x80000000) == 0 && BitOperations.PopCount(mask) != format.Channels)
+        if (format.IsExtensible && format.ChannelMask is { } mask && (mask & 0x7FFFFFFF) != 0 && BitOperations.PopCount(mask & 0x7FFFFFFF) != format.Channels)
         {
-            int positions = BitOperations.PopCount(mask);
+            int positions = BitOperations.PopCount(mask & 0x7FFFFFFF);
             int channels = format.Channels;
             bool isMore = positions > channels;
             s.Findings.Add(Severity.Info, "wav.channel-mask-mismatch", At("Channel Mask"), _ => isMore

@@ -7,7 +7,7 @@ Sources:
 - Apple's "Audio Interchange File Format: AIFF, version 1.3" (1989) and the "Audio Interchange File Format AIFF-C" draft of 8/26/91 (`FVER`, the compression types of section 4.0 and the sample frames of the compressed codings in its appendix C).
 - For the `CHAN` chunk: Apple's Core Audio Format Specification, "Channel Layout Chunk", "Channel Layout Tags", "Channel Bitmaps", "Channel Description" and "Label Codes for Channel Layouts" (<https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_spec/CAF_spec.html>), which gives the structure for CAF files. No Apple document read says that an AIFF file holds the same structure in a `CHAN` chunk; the analyzer reads it so because FFmpeg 6.1.1's muxer writes it (12 bytes: tag, bitmap, a count of 0 descriptions) and QuickTime's `chan` atom holds the same structure. Files written by Apple's own tools were not available, so their `CHAN` chunks (with descriptions, say) are not checked against a real file.
 - For the compression types the drafts do not list (`sowt`, `in24`, `in32`, `raw `, `fl32`, `fl64`, `alaw`, `ulaw`, `ima4`): Apple's QuickTime File Format Specification (2001-03-01), "Sound Codec Formats Supported" (Table 3-3), whose sound sample description codes AIFF-C files use, and for the packet of `ima4` (64 samples in 34 bytes for each channel) Apple's Core Audio Format Specification, "Audio Description Chunk".
-- `GSM `: no Apple document read lists it; it is a code FFmpeg 6.1.1's `aiff.c` reads. FFmpeg 6.1.1 wrote `sowt`, `raw `, `fl32`, `fl64`, `alaw`, `ulaw` and `ima4` into the fixtures; FFmpeg and MediaInfo are cross-checks, not sources of the format.
+- `GSM `: no Apple document read lists it; the analyzer names it GSM 6.10 as its own choice, with a built fixture only, no file of an encoder. FFmpeg 6.1.1 wrote `sowt`, `raw `, `fl32`, `fl64`, `alaw`, `ulaw` and `ima4` into the fixtures; FFmpeg and MediaInfo are cross-checks, not sources of the format.
 
 ## What is read
 
@@ -31,7 +31,7 @@ Sources:
 
 - A FORM size of 0 or `0xFFFFFFFF` is the placeholder of a writer that could not seek back (`aiff.form-size-placeholder`); a `SSND` size of `0xFFFFFFFF` is the same for the sound data (`aiff.sound-size-placeholder`). The chunk then runs to the end of the file.
 - `DeclaredEnd` is the FORM chunk's own end. A tag after it is the host's; the `ID3 ` chunk that taggers write last lies inside it.
-- Bytes after the FORM chunk are `aiff.trailing-bytes`; a chunk after it `aiff.data-after-form`. A cut file is `aiff.truncated`; a chunk that runs past the end `aiff.chunk-past-end`.
+- Bytes inside the FORM chunk after its last chunk, too few for another, are `aiff.trailing-bytes`; any bytes after the end the FORM chunk states are `aiff.data-after-form` (whether they look like a chunk is not checked). A cut file is `aiff.truncated`; a chunk that runs past the end `aiff.chunk-past-end`.
 - Pad bytes: `aiff.pad-byte-missing` and `aiff.pad-byte-not-zero`.
 - A chunk ID outside printable ASCII is `aiff.chunk-id-invalid`; a chunk that has to be shorter than its fixed fields is `aiff.chunk-too-short`; a chunk of a kind the specification allows once, repeated, is `aiff.chunk-repeated`.
 

@@ -165,14 +165,15 @@ internal static class Chunks
         uint count = f.Dword("Table Length", Explain.Ds64TableLength, "entries", topic);
         Node? entries = null;
         long fit = f.Remaining / 12;
-        long read = Math.Min(count, fit);
+        long held64 = Math.Min(count, fit);
+        long read = Math.Min(held64, MaxListed);
         if (count > 0)
         {
-            entries = f.Node.Add(new Node("Table", f.Position, read * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = topic });
+            entries = f.Node.Add(new Node("Table", f.Position, held64 * 12, NodeValue.Integer(count, "entries", "entry")) { Description = Explain.Ds64Table, Topic = topic });
         }
 
-        // Only a top-level chunk can use an entry, by its ID; an entry whose ID is no ID, or past the first MaxListed, can name no chunk the
-        // walk reads, so a table of millions of entries costs no more than one of a thousand.
+        // Only a top-level chunk can use an entry, by its ID; the first MaxListed entries are read and the rest can name no chunk the walk
+        // reads, so a table of millions of entries costs no more than one of a thousand.
         for (long i = 0; i < read; i++)
         {
             long at = f.Position;
@@ -181,16 +182,15 @@ internal static class Chunks
             uint high = f.ReadDword();
             ulong size = ((ulong)high << 32) | low;
             bool isId = Walker.IsFourCc(idBytes);
-            if (i < MaxListed)
+            string id = System.Text.Encoding.Latin1.GetString(idBytes);
+            entries!.Add(new Node($"Entry {i}", at, 12, $"{Fields.Clean(id)}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = topic });
+            if (isId)
             {
-                string id = System.Text.Encoding.Latin1.GetString(idBytes);
-                entries!.Add(new Node($"Entry {i}", at, 12, $"{Fields.Clean(id)}, {size.ToString(CultureInfo.InvariantCulture)} bytes") { Description = Explain.Ds64Entry, Topic = topic });
-                if (isId)
-                {
-                    table.TryAdd(id, size);
-                }
+                table.TryAdd(id, size);
             }
         }
+
+        f.Reader.Position = f.Position + ((held64 - read) * 12);
 
         if (count > fit)
         {
