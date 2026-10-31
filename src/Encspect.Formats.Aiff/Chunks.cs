@@ -87,7 +87,13 @@ internal static class Chunks
                 long textAt = f.Position;
                 if (count > f.Remaining)
                 {
-                    throw new EndOfStreamException();
+                    // The name is cut by the end of the chunk: what is there is read and the stream is kept.
+                    long stated = count;
+                    long held = f.Remaining;
+                    long chunkStart = chunk.Offset;
+                    s.Findings.Add(Severity.Warning, "aiff.chunk-too-short", chunk, _ =>
+                        $"The Common Chunk at 0x{chunkStart:X} states a compression name of {Counts.Of(stated, "byte", "bytes")}, but only {Counts.Of(held, "byte", "bytes")} are left in the chunk.");
+                    count = (int)held;
                 }
 
                 name = Fields.Clean(Encoding.Latin1.GetString(f.Reader.ReadBytes(count)));

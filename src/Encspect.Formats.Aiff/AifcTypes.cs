@@ -9,7 +9,7 @@ namespace Encspect.Formats.Aiff;
 // - raw, twos, sowt, in24, in32, fl32, fl64, ulaw, alaw and ima4: Apple's QuickTime File Format Specification (2001-03-01), "Sound Codec Formats
 //   Supported" (Table 3-3), whose sound sample description codes AIFF-C files use; ima4's packet of 64 samples in 34 bytes for each channel:
 //   Apple's Core Audio Format Specification, "Audio Description Chunk";
-// - GSM : no Apple document read lists it; it is a code FFmpeg 6.1.1's aiff.c reads, and the size of its blocks is not stated by a source read.
+// - GSM : no Apple document read lists it; the analyzer names it as its own choice, and the size of its blocks is not stated by a source read.
 internal sealed record AifcType(string Id, string Codec, bool IsLinear = false, int? FixedBits = null, int? BytesPerSample = null, bool IsFloat = false, bool IsLittleEndian = false, bool IsUnsigned = false,
     int PacketBytesPerChannel = 0, int PacketSamples = 0)
 {
