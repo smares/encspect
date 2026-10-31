@@ -1,5 +1,5 @@
 {
- "description": "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute added that holds ffmpeg's libavcodec encoder ID: the ID counts as encoder evidence only where the stream shows ffmpeg, as it does here, so it is listed under the encoder the stream names and the attribute names no writer.",
+ "description": "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma, whose superframes are padded with 'N' bytes, with a WM/ToolName attribute added that holds ffmpeg's libavcodec encoder ID: the frames are not read, so the stream shows no encoder, the ID names none and the attribute names no writer.",
  "format": "ASF",
  "length": 16540,
  "objects": [
@@ -1072,7 +1072,12 @@
   "from": "external-ffmpeg-wmav2-mono-44k-48k.wma",
   "note": "Not an encoder's output: the source file with one attribute added to its header."
  },
- "findings": [],
+ "findings": [
+  {
+   "code": "wma.standard-not-read",
+   "contains": "Windows Media Audio versions 1 and 2 are not read"
+  }
+ ],
  "crosscheck": {
   "ffprobe": true
  }
