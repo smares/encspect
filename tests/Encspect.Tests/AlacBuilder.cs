@@ -58,6 +58,18 @@ internal static class AlacBuilder
         public byte[] Bytes => [.. _bytes];
     }
 
+    // A frame of the given fields written most significant bit first, padded with zero bits to a whole byte.
+    public static byte[] Frame(params (long Value, int Count)[] fields)
+    {
+        var w = new Bits();
+        foreach ((long value, int count) in fields)
+        {
+            w.Write(value, count);
+        }
+
+        return w.Bytes;
+    }
+
     // A frame of one element holding `samples` samples of every channel uncompressed: a single channel element for one channel, a channel pair for two,
     // and the end tag. The samples are a ramp of the given seed, so frames differ.
     public static byte[] EscapeFrame(int channels, int bits, int samples, int frameLength, int seed = 0, bool endTag = true)
