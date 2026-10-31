@@ -21,6 +21,11 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 
     private const double Factor = 2.0;
 
+    // The least a timed run of Compare lasts, in seconds, and the most times it feeds the signal to get there.
+    private const double MinimumRun = 0.15;
+
+    private const int MaxPasses = 16;
+
     public static TheoryData<int, int> Cases()
     {
         var data = new TheoryData<int, int>();
@@ -251,10 +256,15 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 
         // Three runs before the timed rounds: the library's vector routines (the scan for samples that are not 0) start as precompiled code and are
         // compiled again once they are hot, which the first two tests of a process would otherwise time.
+        double warmSeconds = 0;
         for (int warm = 0; warm < 3; warm++)
         {
-            RunOnce(rate, channels, data, kinds, bits);
+            warmSeconds = RunOnce(rate, channels, data, kinds, bits).Seconds;
         }
+
+        // A run of a few milliseconds (the levels) is decided by one scheduler hiccup or a collection, so each timed run covers the signal as
+        // many times as it takes to last MinimumRun, by the last warm-up run's time.
+        int passes = (int)Math.Clamp(Math.Ceiling(MinimumRun / warmSeconds), 1, MaxPasses);
 
         var ratios = new List<double>();
         var perUnits = new List<double>();
@@ -262,7 +272,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int round = 0; round < Rounds; round++)
         {
             double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits);
+            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits, passes);
             double perUnit = seconds * 1e9 / units;
             ratios.Add(perUnit / reference);
             perUnits.Add(perUnit);
@@ -279,7 +289,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         return sorted[sorted.Length / 2];
     }
 
-    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16)
+    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16, int passes = 1)
     {
         long units = 0;
         var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer);
@@ -290,14 +300,17 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         });
         int[] planar = new int[channels * 4096];
         long start = Stopwatch.GetTimestamp();
-        for (int at = 0; at < Length; at += 4096)
+        for (int pass = 0; pass < passes; pass++)
         {
-            for (int c = 0; c < channels; c++)
+            for (int at = 0; at < Length; at += 4096)
             {
-                data[c].AsSpan(at, 4096).CopyTo(planar.AsSpan(c * 4096, 4096));
-            }
+                for (int c = 0; c < channels; c++)
+                {
+                    data[c].AsSpan(at, 4096).CopyTo(planar.AsSpan(c * 4096, 4096));
+                }
 
-            measurer.Write(new PcmBlock(at, 4096, channels, 4096, planar));
+                measurer.Write(new PcmBlock((long)pass * Length + at, 4096, channels, 4096, planar));
+            }
         }
 
         double seconds = Stopwatch.GetElapsedTime(start).TotalSeconds;
@@ -307,7 +320,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.Null(measurer.Failure);
         Assert.True(kinds is null || (kinds & MeasurementKinds.Spectrum) == 0 || result.Spectrum!.Frames > 0);
         Assert.True(kinds is null || (kinds & MeasurementKinds.Levels) == 0 || result.Levels is not null);
-        return (seconds, units, (long)Length * channels);
+        return (seconds, units, (long)Length * channels * passes);
     }
 
     private static int[] Impulse(int length)

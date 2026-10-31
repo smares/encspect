@@ -22,10 +22,11 @@ internal sealed class StreamMeasurer
     private const int FloatLevelsWeight = 14;
 
     // The work per sample of a measured channel for loudness (the K-weighting and the squares, about 5 ns) and for the true peak by oversampling
-    // (4, 2 and none: the sample peak, whose weight is the conversion to doubles and the scan).
+    // (4, 2 and none: the sample peak, whose weight is the conversion to doubles and the scan). At 2 times the filter costs 8.3 to 8.7 ns a sample
+    // against 11.3 to 12.3 at 4 times, not half of it, so 22 gave ratios of 1.0 to 1.4 to the reference (2.11 on a CI machine) and 30 gives about 0.65.
     private const int LoudnessWeight = 8;
 
-    private static readonly int[] TruePeakWeights = [4, 22, 38];
+    private static readonly int[] TruePeakWeights = [4, 30, 38];
 
     private const double SmallestSample = 1e-30;
 
