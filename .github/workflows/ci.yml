@@ -105,10 +105,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           # The golden is the real report test_golden_additions.py checks the script against; the conformance
-          # lists are what test_sources_plan.py lists the addresses of.
+          # lists are what test_sources_plan.py lists the addresses of; the Matroska element table is what
+          # matroska_model.py, which test_alac_model.py imports, reads its schema from.
           sparse-checkout: |
             /docs/
             /scripts/
+            /src/Encspect.Formats.Matroska/Elements.cs
             /README.md
             /CLAUDE.md
             /tests/fixtures/mpeg/channel-mode-change.report.json
