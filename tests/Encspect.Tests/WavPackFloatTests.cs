@@ -1,3 +1,6 @@
+// The loop below is copied from libwavpack 5.6.0 (unpack_floats.c), Copyright (c) 1998 - 2022 David Bryant, under the BSD 3-clause license.
+// The license text is in THIRD-PARTY-NOTICES.md.
+
 using Encspect.Formats.WavPack.Decoding;
 
 namespace Encspect.Tests;

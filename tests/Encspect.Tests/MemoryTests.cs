@@ -623,9 +623,8 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
     // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
-    // a Windows Media Audio stream of ffmpeg's encoder, a 185-byte superframe repeated (the frames are not read), and
-    // over PCM payloads: 94 bytes kept and 94 peak per packet on linux-x64, so the bounds leave about twice that and
-    // more for the peak (macOS on arm64), and are far below what keeping each media object's bytes or nodes would cost.
+    // a Windows Media Audio stream of ffmpeg's encoder (its frames read), a 743-byte superframe repeated, and over PCM payloads: the
+    // bounds are far below what keeping each media object's bytes or nodes would cost.
     [Fact]
     public void ManyAsfPacketsStayCompact()
     {
@@ -635,16 +634,19 @@ public class MemoryTests(ITestOutputHelper output)
 
         (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
 
-        Assert.Equal("Windows Media Audio 2", Assert.Single(report.Streams).Codec);
-        Assert.Contains(report.Findings, f => f.Code == "wma.standard-not-read");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio 2", stream.Codec);
+        // One frame of 2,048 samples per superframe (the fixture's golden report: 44 superframes, 88,064 samples); the last frame adds none.
+        Assert.Equal((packets - 1) * 2048L, stream.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * AsfWmaKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * AsfWmaPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
-    private const long AsfWmaKeptBound = 200;
-    private const long AsfWmaPeakBound = 250;
+    private const long AsfWmaKeptBound = 550;
+    private const long AsfWmaPeakBound = 550;
 
     // Voice keeps a fixed record per packet and per superframe, and builds the nodes when they are read: a Microsoft-encoded media object of
     // 187 bytes with 4 counted superframes, repeated, gives a packet and 3 to 4 superframes for each repetition, none of them kept as nodes.

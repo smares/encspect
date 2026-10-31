@@ -764,12 +764,12 @@ jobs:
         run: echo "name=$ImageOS" >> "$GITHUB_OUTPUT"
 
       # The faad2 build with the trace patches. Its key holds faad_trace_tool.py, which holds the pinned
-      # commit and the patches, and the runner image, whose compiler built it.
+      # commit, faad_trace.patch, which holds the patches, and the runner image, whose compiler built it.
       - name: Cache the traced faad2 build
         uses: actions/cache@v6
         with:
           path: .cache/tools/faad2-trace
-          key: faad2-trace-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/faad_trace_tool.py') }}
+          key: faad2-trace-${{ steps.image.outputs.name }}-${{ runner.arch }}-${{ hashFiles('scripts/fixtures/faad_trace_tool.py', 'scripts/fixtures/faad_trace.patch') }}
 
       # ffmpeg 8.0.1, faad2 2.11.2 and MediaInfo 26.01 from Ubuntu 26.04, which does not package GPAC.
       - name: Install ffmpeg, faad and mediainfo

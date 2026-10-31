@@ -45,6 +45,7 @@ import mctoolamed_tool
 import monkeys_audio_tool
 import musepack_tool
 import old_lame_tool
+import speex_tool
 import wavpack_tool
 import xing_tool
 
@@ -94,6 +95,7 @@ def sources():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
+    yield from speex_tool.sources()
     yield from monkeys_audio_tool.sources()
     yield from libtta_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES

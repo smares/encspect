@@ -83,9 +83,9 @@ internal sealed class Layer2AudioData
 
     public static int SubbandCount(int table) => Tables[table].Length;
 
-    // ISO/IEC 11172-3 2.4.3.3.1: the table follows from the bitrate per channel and the sample rate.
-    // The captions of Tables 3-B.2a and 3-B.2b assign free format to B.2a at 48 kHz and to B.2b at
-    // the other rates, whatever the frame length; libmad does the same.
+    // The frame does not name its table: the sampling frequency and the bitrate per channel select it
+    // (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables 3-B.2a to 3-B.2d). The classes extend the
+    // captions to the bitrate and mode combinations the standard does not allow.
     public static int TableFor(MpegHeader header)
     {
         if (!header.IsMpeg1)
@@ -93,23 +93,24 @@ internal sealed class Layer2AudioData
             return 4;
         }
 
+        int rate = header.SampleRate;
         if (header.IsFreeFormat)
         {
-            return header.SampleRate == 48000 ? 0 : 1;
+            return rate == 48000 ? 0 : 1;
         }
 
         int perChannel = header.Bitrate / (header.IsMono ? 1 : 2);
-        if ((header.SampleRate == 48000 && perChannel >= 56) || (perChannel >= 56 && perChannel <= 80))
+        if (perChannel <= 48)
+        {
+            return rate == 32000 ? 3 : 2;
+        }
+
+        if (perChannel <= 80 || rate == 48000)
         {
             return 0;
         }
 
-        if (header.SampleRate != 48000 && perChannel >= 96)
-        {
-            return 1;
-        }
-
-        return header.SampleRate != 32000 && perChannel <= 48 ? 2 : 3;
+        return 1;
     }
 
     // Bits of three samples: one codeword for 3, 5 or 9 levels, three otherwise.
