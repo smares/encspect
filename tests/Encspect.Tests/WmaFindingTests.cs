@@ -7,7 +7,8 @@ namespace Encspect.Tests;
 // One damaged or unusual stream for each finding the Windows Media Audio parsers emit: the media objects of a
 // fixture with a field changed, handed to the parser as an ASF file would hand them, with the configuration the
 // file states (or none, or a damaged one). The finding must come out and nothing may fail. The frames of versions
-// 1 and 2, Professional and Voice are not read, so each of the three has one finding that says so.
+// 1 and 2 and Voice are not read, so each of the two has one finding that says so; the frames of Professional and Lossless are, and their
+// findings come from the streams of WmaProTests and WmaLosslessTests changed the same way.
 public class WmaFindingTests
 {
     private const string FFmpeg = "asf/external-ffmpeg-wmav2-stereo-44k-128k.wma";
@@ -30,11 +31,18 @@ public class WmaFindingTests
         ["wma.writer-claim-differs"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }, [new EncoderClaim("Windows Media Format SDK 12", new Node("Claim", 0, 1), "test layout", ClaimRole.Writer) { Confidence = Confidence.Medium, IsLayout = true }, new EncoderClaim("Foo Muxer 1.0", new Node("Claim", 0, 1), "test claim", ClaimRole.Writer)]),
         ["wma.writer-other-format"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim", ClaimRole.Writer)]),
         ["wma.encoder-claim-differs"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }, [new EncoderClaim("LAME 3.100", new Node("Claim", 0, 1), "test claim", ClaimRole.Encoder), new EncoderClaim("Windows Media Audio 9.2", new Node("Claim", 0, 1), "test claim", ClaimRole.Encoder)]),
-        ["wma.lossless-bit-depth"] = () => Header(new WmaLosslessParser(), Lossless, 0x0163, s => BinaryPrimitives.WriteUInt16LittleEndian(s.Data, 12)),
-        ["wma.lossless-not-read"] = () => Header(new WmaLosslessParser(), Lossless, 0x0163, _ => { }),
+        ["wma.format-unsupported"] = () => Header(new WmaLosslessParser(), Lossless, 0x0163, s => BinaryPrimitives.WriteUInt16LittleEndian(s.Data, 12)),
+        ["wma.frame-boundary"] = () => FromStream(WmaStream.LoadLossless(), s => WmaStream.SetBits(s.Objects[1], 6, 17, 4036), new WmaLosslessParser()),
+        ["wma.frame-invalid"] = () => FromStream(WmaStream.LoadPro(), s => WmaStream.SetBits(s.Objects[0], 22, 16, WmaStream.GetBits(s.Objects[0], 22, 16) + 1), new WmaProParser()),
+        ["wma.frame-unfinished"] = () => FromStream(WmaStream.LoadPro(), s => s.Objects.RemoveAt(s.Objects.Count - 1), new WmaProParser()),
+        ["wma.lossless-channel-count"] = () => FromStream(WmaStream.LoadLossless(), s => s.Format = s.Format with { Channels = 6 }, new WmaLosslessParser()),
+        ["wma.lossless-spliced"] = () => FromStream(WmaStream.LoadLossless(), s => s.Objects[3][0] |= 0x04, new WmaLosslessParser()),
+        ["wma.packet-long"] = () => FromStream(WmaStream.LoadPro(), s => s.Objects[1] = [.. s.Objects[1], .. new byte[50]], new WmaProParser()),
+        ["wma.packet-sequence"] = () => FromStream(WmaStream.LoadPro(), s => s.Objects[2][0] = (byte)((s.Objects[2][0] & 0x0F) | 0xA0), new WmaProParser()),
+        ["wma.packet-short"] = () => FromStream(WmaStream.LoadPro(), s => s.Objects[2] = s.Objects[2][..100], new WmaProParser()),
+        ["wma.records-limit"] = () => FromStream(WmaStream.LoadPro(), s => (s.Format, s.Objects) = (s.Format with { BlockAlign = 64 }, [.. Enumerable.Range(0, 262_144 + 3).Select(_ => new byte[64])]), new WmaProParser()),
         ["wma.no-format"] = () => Run(new WmaProParser(), Load(Pro, 0x0162).Objects, (Stream?)null),
         ["wma.payload-not-analyzed"] = () => PayloadNotAnalyzed(),
-        ["wma.pro-not-read"] = () => Header(new WmaProParser(), Pro, 0x0162, _ => { }),
         ["wma.standard-not-read"] = () => Header(new WmaStandardParser(), FFmpeg, 0x0161, _ => { }),
         ["wma.voice-not-read"] = () => Header(new WmaVoiceParser(), Voice, 0x000A, _ => { }),
     };
@@ -50,14 +58,13 @@ public class WmaFindingTests
         Assert.DoesNotContain(findings, f => f.Code == "parse.failed");
     }
 
-    // The codec data of the three codecs is shown as the container's bytes and nothing is read from it, whatever it holds.
+    // The codec data of the two codecs is shown as the container's bytes and nothing is read from it, whatever it holds.
     [Theory]
     [InlineData(FFmpeg, 0x0161)]
-    [InlineData(Pro, 0x0162)]
     [InlineData(Voice, 0x000A)]
-    public void TheFramesOfTheThreeCodecsAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
+    public void TheFramesOfTheTwoCodecsAreNotReadWhateverTheCodecDataHolds(string fixture, int tag)
     {
-        ICodecParser parser = tag switch { 0x0161 => new WmaStandardParser(), 0x0162 => new WmaProParser(), _ => new WmaVoiceParser() };
+        ICodecParser parser = tag switch { 0x0161 => new WmaStandardParser(), _ => new WmaVoiceParser() };
         Stream s = Load(fixture, tag);
         s.Data = [];
         IReadOnlyList<Finding> findings = Run(parser, s.Objects, s);
@@ -94,6 +101,12 @@ public class WmaFindingTests
         Stream s = Load(fixture, tag);
         change(s);
         return Run(parser, s.Objects, s, claims);
+    }
+
+    private static IReadOnlyList<Finding> FromStream(WmaStream stream, Action<WmaStream> change, ICodecParser parser)
+    {
+        change(stream);
+        return stream.Run(parser).Findings;
     }
 
     private static IReadOnlyList<Finding> PayloadNotAnalyzed()
