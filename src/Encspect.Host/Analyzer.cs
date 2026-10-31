@@ -178,7 +178,7 @@ public sealed class Analyzer
     // exception from any parser becomes a parse.failed error (decode.failed, for a decoder). Only cancellation, running out of
     // memory and an exception from a front end's PCM sink or DecodeOptions.Output, which is rethrown once the format parser
     // has returned and leaves no report, escape. Throws ArgumentException (paramName "options") when options.ForcedFormat names
-    // no format or several, and ArgumentOutOfRangeException when options.Decoding.MaxWork is negative.
+    // no format or several, and ArgumentOutOfRangeException when options.Decoding.MaxWork or options.Decoding.Measure.MaxWork is negative.
     public Report Analyze(string source, Stream stream, AnalysisOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -187,6 +187,7 @@ public sealed class Analyzer
         options.CancellationToken.ThrowIfCancellationRequested();
         IFormatParser? forced = options.ForcedFormat is { } wanted ? ForcedParser(wanted) : null;
         ArgumentOutOfRangeException.ThrowIfNegative(options.Decoding?.MaxWork ?? 0, "options");
+        ArgumentOutOfRangeException.ThrowIfNegative(options.Decoding?.Measure?.MaxWork ?? 0, "options");
 
         if (!stream.CanRead)
         {
@@ -895,7 +896,11 @@ public sealed class Analyzer
             failures.Add(new Failure(parser.Name, "parsing the data", ex));
         }
 
-        router.EndOpenSessions(context);
+        // A canceled analysis leaves no report, so its sessions are not ended (as in ParserRouter).
+        if (!context.CancellationToken.IsCancellationRequested)
+        {
+            router.EndOpenSessions(context);
+        }
 
         // The front end's exception traveled through none of the parsers; it reaches the caller now, without a report.
         decoding?.ThrowIfSinkFailed();
