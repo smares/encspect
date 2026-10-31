@@ -83,7 +83,7 @@ internal static class Wave64Walker
             {
                 Description = spec.Description,
                 Topic = spec.Topic,
-                Kind = isFirstData && s.Format!.CodecId is null && carried is null ? NodeKind.Stream : NodeKind.Detail,
+                Kind = isFirstData && (s.Burst is { Type.Codec: null } || (s.Format!.CodecId is null && carried is null)) ? NodeKind.Stream : NodeKind.Detail,
             };
             if (isFirstData)
             {

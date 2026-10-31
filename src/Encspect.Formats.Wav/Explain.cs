@@ -26,7 +26,7 @@ internal static class Explain
     public const string ChunkId = "The ID of the chunk: four ASCII characters, padded on the right with blanks (RIFF specification, \"Chunks\").";
     public const string ChunkSize = "The size of the chunk's data in bytes, not counting the ID, this field or the pad byte (RIFF specification, \"Chunks\").";
     public const string ChunkSizeRf64 = "The size of the chunk's data in bytes. In an RF64 file 0xFFFFFFFF means the size is in the ds64 chunk (EBU Tech 3306-2009, section 3.4).";
-    public const string ChunkSizeBw64 = "The size of the chunk's data in bytes. In a BW64 file 0xFFFFFFFF means the size is in the ds64 chunk (ITU-R BS.2088, section 2.4); the BW64 chunk's own size is always 0xFFFFFFFF.";
+    public const string ChunkSizeBw64 = "The size of the chunk's data in bytes. In a BW64 file 0xFFFFFFFF means the size is in the ds64 chunk (ITU-R BS.2088, section 2.4); the BW64 chunk's own size is 0xFFFFFFFF, and another value is reported.";
     public const string Wave64Container = "The riff chunk that holds the whole file in Wave64: a GUID, a 64-bit size that counts the whole file, and the GUID of the form wave, followed by the chunks. Wave64 is the layout of a RIFF file with GUIDs for IDs and 64-bit sizes.";
     public const string Wave64Id = "The GUID of the riff chunk, which starts every Wave64 file; the characters riff are in its first bytes.";
     public const string Wave64Size = "The size of the riff chunk in bytes. It counts the whole file, the 40 bytes of the header included.";
@@ -103,7 +103,7 @@ internal static class Explain
     public const string StatBitrate = "The average bitrate of the data chunk: its bytes times 8 over the length of the audio.";
 
     public const string Ds64Chunk = "The ds64 chunk of an RF64 file: the 64-bit sizes of the RIFF chunk, of the data chunk and of the fact chunk's sample count, and the sizes of other large chunks. It comes first after the RF64 header (EBU Tech 3306-2009, section 3.4).";
-    public const string Ds64ChunkBw64 = "The ds64 chunk of a BW64 file: the 64-bit sizes of the BW64 chunk and of the data chunk, two dummy values, and the sizes of other large chunks. It comes first after the BW64 header (ITU-R BS.2088, section 4).";
+    public const string Ds64ChunkBw64 = "The ds64 chunk of a BW64 file: the 64-bit sizes of the BW64 chunk and of the data chunk, a dummy value, and the sizes of other large chunks. It comes first after the BW64 header (ITU-R BS.2088, section 4).";
     public const string Ds64Bw64Size = "The size of the BW64 chunk in bytes, replacing the 32-bit size field of the header.";
     public const string Ds64Dummy = "A dummy value, which a reader ignores and a writer sets to zero; it holds the sample count of the fact chunk in an RF64 file, and a BW64 file has no fact chunk to count (ITU-R BS.2088, section 4.2).";
     public const string Ds64RiffSize = "The size of the RF64 chunk in bytes, replacing the 32-bit size field of the header.";

@@ -112,9 +112,15 @@ public sealed class WavParser : IFormatParser
         if (isPlaceholder)
         {
             long held = reader.End - reader.Start - 8;
-            string stated = header.Is64Bit ? "0xFFFFFFFF and the ds64 chunk does not give a size" : header.Size == 0 ? "0" : header.Size == uint.MaxValue ? "0xFFFFFFFF" : $"{header.Size}, too small to hold the form type";
+            string form = header.IsBw64 ? "a BW64" : header.IsRf64 ? "an RF64" : $"a {header.Magic}";
             state.Findings.Add(Severity.Warning, "wav.riff-size-placeholder", size, _ =>
-                $"The {header.Magic} chunk's size is {stated}, which is no size a {header.Magic} chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, {Counts.Of(held, "byte", "bytes")} after the size field.");
+            {
+                string stated = header.Size == 0 ? "0" : header.Size == uint.MaxValue ? "0xFFFFFFFF" : $"{header.Size}, too small to hold the form type";
+                string why = header.Is64Bit
+                    ? header.Size == uint.MaxValue ? $"which stands for the size in the ds64 chunk, {Ds64Unusable(state, held)}" : "which is no size an RF64 or BW64 chunk can have (0xFFFFFFFF stands for the size in the ds64 chunk)"
+                    : $"which is no size {form} chunk can have; a writer leaves it when it cannot go back and fill it in";
+                return $"The {header.Magic} chunk's size is {stated}, {why}. The file is read to its end, {Counts.Of(held, "byte", "bytes")} after the size field.";
+            });
         }
         else if (declared > reader.End)
         {
@@ -150,6 +156,22 @@ public sealed class WavParser : IFormatParser
 
         state.Findings.Flush(context);
         return end;
+    }
+
+    // Why the ds64 chunk gives no size to read the RIFF chunk by. A ds64 chunk that is not first is read all the same, and its size is compared
+    // with what the file holds.
+    private static string Ds64Unusable(State state, long held)
+    {
+        if (state.Ds64 is not { } ds64)
+        {
+            return "but the file holds no ds64 chunk with the three sizes right after the header";
+        }
+
+        string compared = ds64.RiffSize == (ulong)held ? "which is the number of bytes the file holds after the size field" : $"which is not the {Counts.Of(held, "byte", "bytes")} the file holds after the size field";
+        bool isFirst = state.Container.Children.FirstOrDefault(c => c.Name is not ("Chunk ID" or "Chunk Size" or "Form Type"))?.Name == "Data Size 64 Chunk";
+        return isFirst
+            ? $"but the ds64 chunk states {ds64.RiffSize}, which no RIFF chunk's size can be"
+            : $"but the ds64 chunk does not come first after the header, where the size is read; it states {ds64.RiffSize}, {compared}";
     }
 
     private static void Finish(State state, RiffHeader header, Node size)

@@ -135,7 +135,8 @@ internal static class Walker
 
             // A data chunk whose size is a placeholder (0xFFFFFFFF, or 0 with no chunk after it) runs to the end of what holds it: a writer that
             // could not go back and fill in the size left it.
-            bool isData = id == "data";
+            // Only the data chunk of the RIFF chunk or of a wavl list is the audio; a chunk of that name in INFO, adtl or another list is not.
+            bool isData = id == "data" && (listType is null or "wavl");
             bool isPlaceholder = isData && !isDs64Size && !isUnresolved && (size32 == uint.MaxValue || (size32 == 0 && remaining > 0 && !IsChunkHeaderAt(s, bodyStart, end)));
             long length;
             bool isPastEnd = false;
@@ -187,7 +188,7 @@ internal static class Walker
             {
                 Description = spec.Description,
                 Topic = spec.Topic,
-                Kind = isFirstData && s.Format!.CodecId is null && carried is null ? NodeKind.Stream : NodeKind.Detail,
+                Kind = isFirstData && (s.Burst is { Type.Codec: null } || (s.Format!.CodecId is null && carried is null)) ? NodeKind.Stream : NodeKind.Detail,
             };
             if (isFirstData)
             {
