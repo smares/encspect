@@ -302,11 +302,15 @@ def check_hand_built(name, manifest, path, problems):
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")
     if audio and len(audio) == 1 and audio[0]["tag"] in (0x0160, 0x0161):
-        code, pcm, errors = decode(path)
-        if code != 0 or errors:
-            problems.append(f"ffmpeg decoding: {errors or code}")
+        # Only a fixture derived from ffmpeg's encoder holds real superframes; the others carry placeholder media objects.
+        if "derived" not in manifest:
+            skip(name, "ffmpeg decoding", "the media objects are not Windows Media Audio superframes")
         else:
-            check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
+            code, pcm, errors = decode(path)
+            if code != 0 or errors:
+                problems.append(f"ffmpeg decoding: {errors or code}")
+            else:
+                check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
     if audio and all(s["tag"] == 0x000A for s in audio):
         check_mediainfo(name, path, data["streams"][0], problems, golden_report(path), count_samples=crosscheck.get("decode") == "ok")
 

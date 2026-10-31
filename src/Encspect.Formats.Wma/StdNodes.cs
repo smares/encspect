@@ -157,8 +157,17 @@ internal sealed class FrameLayout
 
         if (pieces.Count == 0)
         {
-            (int start, _, int superframe, int superframeBit) = _segments[^1];
-            pieces.Add((superframe, superframeBit + Math.Max(0, a - start), superframeBit + Math.Max(0, a - start)));
+            // A field with no bits left in the buffer sits where the last bits end, in the last segment that holds any, so it stays
+            // inside the block that ends there.
+            int last = _segments.Count - 1;
+            while (last > 0 && _segments[last].End <= _segments[last].Start)
+            {
+                last--;
+            }
+
+            (int start, int end, int superframe, int superframeBit) = _segments[last];
+            int at = superframeBit + Math.Clamp(a - start, 0, Math.Max(0, end - start));
+            pieces.Add((superframe, at, at));
         }
 
         var ranges = new List<ByteRange>();
