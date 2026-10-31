@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Downloads libdca 0.0.7's source release (the DTS decoder behind dcadec, dtsdec and extract_dca), pinned
-by its SHA-256, into a directory outside the repository, and extracts the files the DTS work is written
-from:
+by its SHA-256, into a directory outside the repository, and extracts the files that serve the DTS work as a cross-check and a reference
+for behavior. No DTS code of Encspect follows them (libdca is GPL 2 or later); the parser and the fixtures are written from ETSI TS 102 114, and these
+files say what a widely used decoder does where the specification is silent or a form differs:
 
     python3 scripts/fixtures/libdca_source.py [directory]
 
-- libdca/parse.c and dca_internal.h: the core frame header, the audio header and the subframes as libdca
-  reads them, and the frame size of the 14-bit forms, which ETSI TS 102 114 does not describe.
+- libdca/parse.c and dca_internal.h: how libdca reads the core frame header, the audio header and the subframes, and the frame size of the 14-bit
+  forms, which ETSI TS 102 114 does not describe (compared with, not copied).
 - libdca/bitstream.c and bitstream.h: how the four forms of the stream are put in order for the bit reader.
 - include/dca.h: the decoder's flags and the arrangements it reports.
 

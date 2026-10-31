@@ -1,5 +1,5 @@
 {
-  "description": "ID3v2.4 tag whose frame sizes are all plain integers, as old iTunes versions wrote them, with no byte that rules out syncsafe: TIT2's 300 bytes are $00 00 01 2C. Walking the frames both ways, as mutagen does, only the plain reading finds TPE1; read as syncsafe, TIT2 would end after 172 bytes.",
+  "description": "ID3v2.4 tag whose frame sizes are all plain integers, as old iTunes versions wrote them, with no byte that rules out syncsafe: TIT2's 300 bytes are $00 00 01 2C. Only the plain reading leads from TIT2 to TPE1 and on to the padding; read as syncsafe, TIT2 would end after 172 bytes, inside its text.",
   "length": 869,
   "regions": [
     {

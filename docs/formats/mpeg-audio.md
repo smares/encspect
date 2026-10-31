@@ -11,6 +11,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
   - It is the value of the stream's "Bitrate" series at that frame, from the same function. Frames with a fixed bitrate have no such node, and neither has a truncated frame, whose length is not the frame's.
 - **Layer III:** the side information of every granule and the bit reservoir. Each frame's bytes are split into its own main data, other frames' main data and ancillary data.
 - **Layer II:** the bit allocation, scfsi and scalefactors, and the MPEG-2 multichannel extension in the ancillary data.
+  - **Dynamic crosstalk in 3/1 and 2/2:** which base channel a copied channel takes its allocation from has two readings in cases the ISO conformance streams do not decide: the base channel on the copied channel's side (the description's rule), or the one `dyn_cross_LR` names (the behavior observed of the ISO reference software). The analyzer reads a frame the first way and, only where its multichannel CRC then fails and holds the second way, the second. The "Base Channel Source" node under "Dynamic Crosstalk Modes" says which was used, and a CRC mismatch that the other reading resolves is not reported. The cases are listed in `docs/design/mpeg-clean-room-rules.md`, section 1.
 - **VBR headers:** Xing, Info, LAME and VBRI. The LAME tag's CRC and its music CRC are verified.
 - **mp3PRO and MP3 Surround:** detected from the signature their encoders put into the ancillary data of every frame.
 - **Fraunhofer's Original File Length block.**
@@ -65,7 +66,7 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
 
 ## Ancillary data
 
-The rules by which the analyzer finds the ancillary data of each frame, counts it and recognizes the mp3PRO and MP3 Surround signatures. No specification is public for these; the rules give the same results as mp3guessenc 0.27.6, which the MPEG cross-check confirms on the fixtures. They are written as rules, and the code follows them, not mp3guessenc's code.
+The rules by which the analyzer finds the ancillary data of each frame, counts it and recognizes the mp3PRO and MP3 Surround signatures. No specification is public for these; the rules give the same results as mp3guessenc 0.27.6, which the MPEG cross-check confirms on the fixtures. They are written as rules, and the code follows them, not mp3guessenc's code. The code is not a clean-room rewrite as a whole: only `Segment()` and the Layer I and II count were rewritten from a description of the rules, and the rest of the scan (adding and closing areas, the skip logic) is Encspect's own earlier code, written with its own position arithmetic.
 
 ### Terms
 

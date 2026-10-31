@@ -144,6 +144,7 @@ internal static class Explain
     public const string McHasPrediction = "mc_prediction_on: whether the added channels are predicted from the base channels, so only the difference is coded.";
     public const string McChannelAllocation = "tc_allocation: which channels the transmission channels after the base pair carry, for all 12 subband groups at once or for each.";
     public const string McFromRight = "dyn_cross_LR: whether reused subbands come from the right base channel instead of the left.";
+    public const string McCrosstalkSource = "Which base channel a copied channel takes its allocation from in 3/1 and 2/2, where the specification's text and the reference encoder differ in some cases: the one on the copied channel's own side, or the one dyn_cross_LR names for every copy. The analyzer reads the frame the first way and, where the multichannel CRC then fails and holds the second way, the second.";
     public const string McDynamicModes = "dyn_cross_mode of each subband group: which channels share their samples with which.";
     public const string McPrediction = "mc_prediction of each subband group: whether prediction is used in it.";
     public const string McLfeAllocation = "The bit allocation of the LFE channel, which has one subband, or None.";

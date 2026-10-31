@@ -365,43 +365,58 @@ def lame_fields(lame, quality):
     return fields
 
 
-# The settings each preset of LAME 3.90 to 3.92 and HydrogenAudio's 3.90.3 writes, as encodes with
-# 3.90 and 3.92 built from source and the Windows builds of 3.91 and 3.90.3 show them: (bitrate field,
-# None for VBR; Xing quality; VBR method; noise shaping; stereo mode; ATH type; lowpass in 100 Hz).
+# The settings LAME 3.90 to 3.92 write for their presets while the tag's preset field is 0, each from a
+# committed encode of the "music" signal of make_external_mpeg_fixtures.py at 44.1 kHz stereo. The key
+# is the VBR method, the Xing quality, the bitrate field (None for the VBR methods 3 and 4, where it
+# follows -b and not the preset), the lowpass in 100 Hz, the ATH type, the noise shaping and the stereo mode.
+# The Windows build of 3.91 and HydrogenAudio's 3.90.3 write some lowpasses 100 Hz higher, and 3.90.3 noise
+# shaping 1 for standard and extreme, so those have rows of their own.
 OLD_PRESETS = {
-    (None, 78, 3, 2, 3, 4, 190): "--alt-preset standard", (None, 78, 3, 1, 3, 4, 190): "--alt-preset standard",
-    (None, 78, 4, 2, 3, 4, 190): "--alt-preset fast standard",
-    (None, 78, 3, 2, 3, 2, 195): "--alt-preset extreme", (None, 78, 3, 2, 3, 2, 196): "--alt-preset extreme",
-    (None, 78, 3, 1, 3, 2, 196): "--alt-preset extreme",
-    (None, 78, 4, 2, 3, 2, 195): "--alt-preset fast extreme", (None, 78, 4, 2, 3, 2, 196): "--alt-preset fast extreme",
-    (255, 58, 1, 1, 3, 2, 205): "--alt-preset insane", (255, 58, 1, 1, 3, 2, 206): "--alt-preset insane",
-    (None, 88, 4, 1, 3, 3, 195): "--r3mix", (None, 88, 4, 1, 3, 3, 196): "--r3mix",
-    (255, 99, 1, 1, 1, 2, 0): "--preset studio", (192, 88, 1, 1, 1, 2, 0): "--preset cd", (160, 78, 1, 1, 3, 2, 180): "--preset hifi",
-    (128, 67, 1, 1, 3, 2, 180): "--preset tape", (128, 67, 1, 1, 3, 2, 150): "--preset radio", (112, 67, 1, 1, 3, 2, 150): "--preset fm",
-    (40, 65, 1, 1, 0, 2, 75): "--preset mw-us", (40, 65, 1, 1, 0, 2, 76): "--preset mw-us",
+    # external-lame390-alt-standard (3.90.1)
+    (3, 78, None, 190, 4, 2, 3): "--alt-preset standard",
+    # external-lame3903-alt-standard
+    (3, 78, None, 190, 4, 1, 3): "--alt-preset standard",
+    # external-lame390-alt-extreme (48 kHz), external-lame391w-alt-extreme
+    (3, 78, None, 195, 2, 2, 3): "--alt-preset extreme",
+    (3, 78, None, 196, 2, 2, 3): "--alt-preset extreme",
+    # external-lame3903-alt-extreme
+    (3, 78, None, 196, 2, 1, 3): "--alt-preset extreme",
+    # external-lame390-alt-insane, external-lame3903-alt-insane
+    (1, 58, 255, 205, 2, 1, 3): "--alt-preset insane",
+    (1, 58, 255, 206, 2, 1, 3): "--alt-preset insane",
+    # external-lame392-alt-fast-standard
+    (4, 78, None, 190, 4, 2, 3): "--alt-preset fast standard",
+    # external-lame390-alt-fast-extreme, external-lame391w-alt-fast-extreme
+    (4, 78, None, 195, 2, 2, 3): "--alt-preset fast extreme",
+    (4, 78, None, 196, 2, 2, 3): "--alt-preset fast extreme",
+    # external-lame390-r3mix, external-lame391w-r3mix
+    (4, 88, None, 195, 3, 1, 3): "--r3mix",
+    (4, 88, None, 196, 3, 1, 3): "--r3mix",
+    # external-lame390-preset-mw-us, external-lame391w-preset-mw-us
+    (1, 65, 40, 75, 2, 1, 0): "--preset mw-us",
+    (1, 65, 40, 76, 2, 1, 0): "--preset mw-us",
+    # external-lame390-preset-fm, -radio, -tape, -hifi, -cd, -studio
+    (1, 67, 112, 150, 2, 1, 3): "--preset fm",
+    (1, 67, 128, 150, 2, 1, 3): "--preset radio",
+    (1, 67, 128, 180, 2, 1, 3): "--preset tape",
+    (1, 78, 160, 180, 2, 1, 3): "--preset hifi",
+    (1, 88, 192, 0, 2, 1, 1): "--preset cd",
+    (1, 99, 255, 0, 2, 1, 1): "--preset studio",
 }
+OLD_PRESET_ENCODERS = ("LAME3.90", "LAME3.90.", "LAME3.91", "LAME3.92")
 
 
 def old_preset(lame, quality):
-    """The preset of LAME 3.90 to 3.92 whose settings the tag holds, or None."""
-    if lame["encoder"].rstrip(" ") not in ("LAME3.90", "LAME3.90.", "LAME3.91", "LAME3.92") or quality is None:
+    """The preset whose settings the tag of LAME 3.90 to 3.92 holds, or None. The ABR and CBR alt-presets
+    name a bitrate, so a rule stands in for a row each (external-lame390-alt-abr, external-lame390-alt-cbr)."""
+    if lame["encoder"].rstrip(" ") not in OLD_PRESET_ENCODERS or quality is None:
         return None
-    method, bitrate, misc, ath = lame["method"], lame["bitrate"], lame["misc"], lame["flags"] & 15
-    key = (None if method in (3, 4) else bitrate, quality, method, misc & 3, (misc >> 2) & 7, ath, lame["lowpass"])
-    if key in OLD_PRESETS:
-        return OLD_PRESETS[key]
-    if (quality, misc & 3, (misc >> 2) & 7, ath) == (58, 2, 3, 2) and 0 < bitrate < 255 and method in (1, 2):
-        return f"--alt-preset {'cbr ' if method == 1 else ''}{bitrate}"
-    return None
-    safe_joint = bool(flags & 0x20)
-    vbr = {(3, 190, 4): "standard", (4, 190, 4): "fast standard", (3, 195, 2): "extreme", (4, 195, 2): "fast extreme"}
-    if safe_joint and (method, lowpass, flags & 15) in vbr:
-        return f"--alt-preset {vbr[method, lowpass, flags & 15]}"
-    if safe_joint and (method, lowpass, flags & 15, bitrate) == (1, 205, 2, 255):
-        return "--alt-preset insane"
-    if flags & 15 == 2 and 0 < bitrate < 255 and method in (1, 2):
-        return f"--alt-preset {'cbr ' if method == 1 else ''}{bitrate}"
-    return None
+    method, bitrate, misc = lame["method"], lame["bitrate"], lame["misc"]
+    noise_shaping, stereo = misc & 3, (misc >> 2) & 7
+    if method in (1, 2) and quality == 58 and noise_shaping == 2 and stereo == 3 and lame["flags"] & 15 == 2 and 1 <= bitrate <= 254:
+        return f"--alt-preset {bitrate}" if method == 2 else f"--alt-preset cbr {bitrate}"
+    key = (method, quality, None if method in (3, 4) else bitrate, lame["lowpass"], lame["flags"] & 15, noise_shaping, stereo)
+    return OLD_PRESETS.get(key)
 
 
 def findings(tag, frame_offset, cut=True):

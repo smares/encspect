@@ -17,8 +17,8 @@ With --sources (or when .cache/tools holds them), against independent implementa
 - the scalefactor band offsets and counts for 1024, 128, 960 and 120 lines match fdk-aac 2.0.2's sfbOffsetTables (libAACdec/src/aac_rom.cpp),
   and PRED_SFB_MAX for AAC Main matches faad2's pred_sfb_max (libfaad/common.c);
 - every spectral, scalefactor and SBR codebook (codewords and lengths), the band counts, PRED_SFB_MAX and the SBR offsets match FFmpeg 6.1.1's
-  (libavcodec/aactab.c, aacsbrdata.h), the release scripts/fixtures/ffmpeg_sources.py pins by SHA-256. FFmpeg is one cross-check next to
-  faad2, not the source of the tables: the specification is.
+  (libavcodec/aactab.c, aacsbrdata.h), the release scripts/fixtures/ffmpeg_sources.py pins by SHA-256. The tables were transcribed through those
+  files (aac_tables.py), so this comparison finds transcription errors only; faad2 and fdk-aac are the independent checks.
 
 faad2 is under the GPL, FFmpeg's files under the LGPL and fdk-aac under its own license; their sources are read here, at check time, and
 nothing of them is copied.
