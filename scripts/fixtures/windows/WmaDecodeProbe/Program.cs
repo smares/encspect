@@ -264,7 +264,8 @@ public static class Program
                     record["trace"] = e.ToString();
                 }
             }
-        }) { IsBackground = true };
+        })
+        { IsBackground = true };
         worker.Start();
         var waited = Stopwatch.StartNew();
         bool finished = worker.Join(budgetSeconds * 1000);
