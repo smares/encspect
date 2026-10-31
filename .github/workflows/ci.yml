@@ -130,6 +130,7 @@ jobs:
           python3 scripts/ci/test_tool_versions.py
           python3 scripts/ci/test_golden_additions.py
           python3 scripts/ci/test_sources_plan.py
+          python3 scripts/ci/test_alac_model.py
 
   build-test:
     name: build and test (${{ matrix.os }})

@@ -312,7 +312,7 @@ def build():
     too_long = custom(lambda w: m.write_audio(w, m.CPE, 0, longer, 16, 4096, parameters=STEREO, mix_res=2), m.write_end)
     damaged("partial-frame-too-long", "The second packet states 5,000 samples, more than the frame length of 4,096 in the cookie.", [packets[0], too_long, packets[2]])
     reserved = custom(lambda w: m.write_audio(w, m.CPE, 0, part, 16, 4096, parameters=STEREO, mix_res=2, reserved=1), m.write_end)
-    damaged("element-reserved-bits", "The 12 reserved bits of the first element of the second packet hold 1.", [packets[0], reserved, packets[2]])
+    damaged("element-reserved-bits", "The 12 reserved bits of the first element of the second packet hold 1, which the reference decoder refuses: the frame is not read further.", [packets[0], reserved, packets[2]])
     invalid = custom(lambda w: m.write_audio(w, m.CPE, 0, part, 16, 4096, parameters=STEREO, mix_res=2, shift_flags=3), m.write_end)
     damaged("element-invalid-shift", "The first element of the second packet states 3 bytes shifted, which the reference decoder refuses.", [packets[0], invalid, packets[2]])
     mono24, mono24_data = stream(1, 24, 48000, 10000, MONO, shifted=1, per_frame={1: {0: {"escape": True, "shifted": 1}}})
