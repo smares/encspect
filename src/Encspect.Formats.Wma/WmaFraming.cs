@@ -100,11 +100,15 @@ internal static class BitNodes
         long firstBit = 0;
         long lastBit = 0;
         int firstPacket = -1;
-        if (end <= start)
+        // Bits a damaged frame was read past lie outside the parts: a field there is cut off, and one wholly there is empty at the end.
+        long total = 0;
+        foreach (FramePart part in parts)
         {
-            end = start;
+            total += part.Bits;
         }
 
+        start = Math.Min(start, total);
+        end = Math.Max(start, Math.Min(end, total));
         foreach (FramePart part in parts)
         {
             long partStart = position;
@@ -149,8 +153,14 @@ internal static class BitNodes
 
         if (ranges.Count == 0)
         {
-            ByteRange whole = table.Count > 0 && parts.Length > 0 ? table.Whole(parts[0].Packet) : new ByteRange(0, 0);
-            return new Node(name, whole.Offset, 0, value) { Kind = kind, Description = description, Topic = topic };
+            long at = 0;
+            if (parts.Length > 0)
+            {
+                FramePart last = parts[^1];
+                at = table.OffsetOf(last.Packet, (int)((last.StartBit + last.Bits) / 8));
+            }
+
+            return new Node(name, at, 0, value) { Kind = kind, Description = description, Topic = topic };
         }
 
         if (ranges.Count == 1)
@@ -236,4 +246,56 @@ internal static class WmaText
     }
 
     public static string Hex(long offset) => offset.ToString("X", CultureInfo.InvariantCulture);
+}
+
+// What the packet layer needs of a stream's parameters, whichever codec states them.
+internal interface IStreamParameters
+{
+    int BlockAlignment { get; }
+
+    int CountWidth { get; }
+
+    int HeaderBits { get; }
+
+    int PacketBits { get; }
+
+    int SampleRate { get; }
+
+    int FrameLength { get; }
+
+    bool HasLengthPrefix { get; }
+
+    bool HasDynamicRange { get; }
+}
+
+// What reading one frame came to, for either codec.
+internal struct FrameOutcome
+{
+    // 0 for a frame read without error; else the codec's fault number.
+    public int Fault;
+
+    public int Bits;
+
+    public bool Trailer;
+
+    // Whether the frame got to the end of its last subframe.
+    public bool AreSubframesRead;
+
+    public bool HasPostprocessing;
+
+    public int TrimStart;
+
+    public int TrimEnd;
+
+    // The samples of the subframes read to their end that hold channel 0 (the samples a decoder outputs before the one that failed).
+    public int CompletedSamples;
+
+    public readonly bool IsValid => Fault == 0;
+}
+
+internal interface IFrameSyntax
+{
+    int SubframesRead { get; }
+
+    FrameOutcome Read(Bits bits, int start, int limit, int declaredLength, TraceWriter trace);
 }

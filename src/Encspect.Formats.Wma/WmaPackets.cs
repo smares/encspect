@@ -4,17 +4,21 @@ namespace Encspect.Formats.Wma;
 
 // Reads the packets of a Professional stream and the frames in them (docs/design/wma-pro-format.md, "Packets" and "Sequence numbers, errors
 // and loss"), and keeps what the statistics, the series and the nodes need.
-internal sealed class ProStreamReader
+internal sealed class WmaPacketReader
 {
     public const int MaxPackets = 262_144;
 
     // A frame's buffer holds this many bytes, counted from the byte that holds its first bit.
     private const int BufferBytes = 32_768;
 
-    private readonly ProParameters _p;
+    private readonly IStreamParameters _p;
     private readonly CodecContext _context;
     private readonly FindingCollector _findings;
-    private readonly ProFrameReader _reader;
+    private readonly IFrameSyntax _reader;
+    private readonly bool _isLossless;
+    private readonly Func<int, string> _reason;
+    private readonly int _bufferBytes;
+    private bool _isFirstOfRun;
     private readonly TraceWriter _trace = new();
     private readonly byte[] _packetBuffer;
     private byte[] _savedBuffer = new byte[64];
@@ -30,17 +34,26 @@ internal sealed class ProStreamReader
     private readonly List<int> _secondFrames = [];
     private int _lastValidSecond = -1;
 
-    public ProStreamReader(ProParameters parameters, CodecContext context, FindingCollector findings, ProTally tally)
+    public WmaPacketReader(IStreamParameters parameters, IFrameSyntax syntax, bool isLossless, int channels, Func<int, string> reason, CodecContext context, FindingCollector findings)
     {
         _p = parameters;
         _context = context;
         _findings = findings;
-        _reader = new ProFrameReader(parameters, tally);
-        Data = new ProData(parameters);
+        _reader = syntax;
+        _isLossless = isLossless;
+        _reason = reason;
+        _bufferBytes = isLossless ? BufferBytes * channels : BufferBytes;
+        Data = new StreamData();
         _packetBuffer = new byte[parameters.BlockAlignment + 16];
     }
 
-    public ProData Data { get; }
+    public StreamData Data { get; }
+
+    private string Dropped => _isLossless && !_p.HasLengthPrefix
+        ? "Encspect reads no more frames from the bits kept with it"
+        : "a decoder drops it and the frame that crosses into the next packet";
+
+    private string DecoderFile => _isLossless ? "wmalosslessdec.c" : "wmaprodec.c";
 
     // Set by the node builders, so a finding can point at the node of its first case once the nodes exist.
     public Func<int, Node> PacketNode { get; set; } = _ => throw new InvalidOperationException();
@@ -109,12 +122,17 @@ internal sealed class ProStreamReader
             ReadPacket(packet);
         }
 
+        if (_isLossless && !_p.HasLengthPrefix)
+        {
+            DecodeRun(true);
+        }
+
         Packets = Data.Packets.Count;
     }
 
     private void ReadPacket(MappedBytes packet)
     {
-        ProParameters p = _p;
+        IStreamParameters p = _p;
         int index = Data.Packets.Count;
         _currentPacket = index;
         int length = Math.Min(packet.Length, p.BlockAlignment);
@@ -131,8 +149,8 @@ internal sealed class ProStreamReader
             long firstOffset = packet.FileStart;
             _findings.Add(Severity.Warning, "wma.packet-short", () => PacketNode(index), count =>
                 count == 1
-                    ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects (wmaprodec.c); the first is at 0x{WmaText.Hex(firstOffset)}."
-                    : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects (wmaprodec.c); the first is at 0x{WmaText.Hex(firstOffset)}.");
+                    ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}."
+                    : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}.");
             _isLoss = true;
             return;
         }
@@ -151,15 +169,29 @@ internal sealed class ProStreamReader
         var bits = new Bits(_packetBuffer, p.PacketBits);
 
         int sequence = (int)bits.Read(4);
-        bits.Skip(2);
+        bool isSeekable = false;
+        bool isSpliced = false;
+        if (_isLossless)
+        {
+            isSeekable = bits.ReadBit() != 0;
+            isSpliced = bits.ReadBit() != 0;
+        }
+        else
+        {
+            bits.Skip(2);
+        }
+
         int stated = (int)bits.Read(p.CountWidth);
         int payloadStart = p.HeaderBits;
-        int payloadBits = p.PacketBits - payloadStart;
+        int payloadBits = Math.Max(0, p.PacketBits - payloadStart);
         int count = Math.Min(stated, payloadBits);
-        record.Kind = p.HasLengthPrefix ? PacketKind.Read : PacketKind.HeaderOnly;
+        bool isListed = p.HasLengthPrefix || _isLossless;
+        record.Kind = isListed ? PacketKind.Read : PacketKind.HeaderOnly;
         record.HasHeader = true;
         record.Sequence = (byte)sequence;
-        record.Count = p.HasLengthPrefix ? count : 0;
+        record.IsSeekable = isSeekable;
+        record.IsSpliced = isSpliced;
+        record.Count = isListed ? count : 0;
 
         bool isGap = !_isLoss && _hasSequence && sequence != ((_previousSequence + 1) & 15);
         if (isGap)
@@ -177,10 +209,22 @@ internal sealed class ProStreamReader
         bool isDropped = _isLoss || isGap;
         _isLoss = false;
 
+        if (isSpliced)
+        {
+            _findings.Add(Severity.Info, "wma.lossless-spliced", () => PacketNode(index), n =>
+                n == 1
+                    ? "A packet sets the spliced bit of its header, which a decoder does not support (it asks for a sample file); Encspect reads the packet as it does the others."
+                    : $"{n} packets set the spliced bit of their headers, which a decoder does not support (it asks for a sample file); Encspect reads them as it does the others.");
+        }
+
         Data.Packets.Add(record);
         if (p.HasLengthPrefix)
         {
             ReadWithPrefix(bits, index, payloadStart, count, isDropped);
+        }
+        else if (_isLossless)
+        {
+            ReadRun(index, payloadStart, count, stated >= payloadBits, isDropped);
         }
         else
         {
@@ -194,7 +238,7 @@ internal sealed class ProStreamReader
 
     private void ReadWithPrefix(Bits bits, int packet, int payloadStart, int count, bool isDropped)
     {
-        ProParameters p = _p;
+        IStreamParameters p = _p;
         int end = p.PacketBits;
         int position = payloadStart;
         if (isDropped)
@@ -210,7 +254,7 @@ internal sealed class ProStreamReader
         {
             int total = _savedBits + count;
             var parts = new List<FramePart>(_saved) { new(packet, payloadStart, count) };
-            if (((total + 7) / 8) > BufferBytes)
+            if (((total + 7) / 8) > _bufferBytes)
             {
                 ClearSaved();
                 _isLoss = true;
@@ -247,13 +291,13 @@ internal sealed class ProStreamReader
                 break;
             }
 
-            if ((((position & 7) + declared + 7) / 8) > BufferBytes)
+            if ((((position & 7) + declared + 7) / 8) > _bufferBytes)
             {
                 _isLoss = true;
                 break;
             }
 
-            ProFrameResult result = ReadOne(bits, position, position + declared, declared, [new FramePart(packet, position, declared)]);
+            FrameOutcome result = ReadOne(bits, position, position + declared, declared, [new FramePart(packet, position, declared)]);
             position += declared;
             if (!result.IsValid)
             {
@@ -270,7 +314,7 @@ internal sealed class ProStreamReader
             }
         }
 
-        int tail = end - position;
+        int tail = Math.Max(0, end - position);
         ref PacketRecord own = ref Record(packet);
         own.TailStart = position;
         own.TailBits = tail;
@@ -289,7 +333,7 @@ internal sealed class ProStreamReader
 
     private void ReadWithoutPrefix(int packet, int payloadStart, int count, bool isDropped)
     {
-        ProParameters p = _p;
+        IStreamParameters p = _p;
         int end = p.PacketBits;
         if (isDropped)
         {
@@ -318,7 +362,7 @@ internal sealed class ProStreamReader
             while (position < total)
             {
                 _context.CancellationToken.ThrowIfCancellationRequested();
-                ProFrameResult result = ReadOne(joined, position, total, 0, [], parts, position);
+                FrameOutcome result = ReadOne(joined, position, total, 0, [], parts, position);
                 position += Math.Max(result.Bits, 1);
                 if (!result.IsValid)
                 {
@@ -336,15 +380,145 @@ internal sealed class ProStreamReader
 
         ClearSaved();
         int position2 = payloadStart + count;
-        int tail = end - position2;
+        int tail = Math.Max(0, end - position2);
         if (!isError && tail > 0)
         {
             Save(packet, position2, tail);
         }
     }
 
+    // Lossless without the length prefix: the bits from the first frame that starts in a packet to the end of its payload are kept as a run,
+    // joined by the first bits of the next packets, and the frames in the run are read when a packet arrives that does not only continue it.
+    private void ReadRun(int packet, int payloadStart, int count, bool isCovering, bool isDropped)
+    {
+        int end = _p.PacketBits;
+        if (isDropped)
+        {
+            ClearSaved();
+        }
+        else if (count > 0)
+        {
+            Append(packet, payloadStart, count);
+        }
+
+        if (isCovering)
+        {
+            ref PacketRecord own = ref Record(packet);
+            own.TailStart = 0;
+            own.TailBits = 0;
+            return;
+        }
+
+        bool isRestDropped = !DecodeRun(false);
+        ClearSaved();
+        int start = payloadStart + count;
+        int tail = Math.Max(0, end - start);
+        ref PacketRecord record = ref Record(packet);
+        record.TailStart = start;
+        record.TailBits = tail;
+        record.IsTailUnfinished = true;
+        if (isRestDropped)
+        {
+            _isLoss = true;
+        }
+        else if (tail > 0)
+        {
+            Save(packet, start, tail);
+        }
+    }
+
+    // Reads the frames of the run from its start until a frame says no other follows, or the bits are used up. Returns false where a frame
+    // after the first of the run fails: a decoder then drops the rest of the packet that arrived as well.
+    private bool DecodeRun(bool isFlush)
+    {
+        int total = _savedBits;
+        if (total <= 0)
+        {
+            return true;
+        }
+
+        var parts = new List<FramePart>(_saved);
+        var joined = new Bits(_savedBuffer, total);
+        int position = 0;
+        bool isFirst = true;
+        bool isOk = true;
+        bool isTrailerOne = false;
+        while (position < total)
+        {
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            _isFirstOfRun = isFirst;
+            FrameOutcome result = ReadOne(joined, position, total, 0, [], parts, position);
+            if (!result.IsValid)
+            {
+                isOk = isFirst;
+                position = total;
+                isTrailerOne = false;
+                break;
+            }
+
+            position += Math.Max(result.Bits, 1);
+            isFirst = false;
+            isTrailerOne = result.Trailer;
+            if (!result.Trailer)
+            {
+                break;
+            }
+        }
+
+        if (!isFlush && isOk && !isTrailerOne && position != total && position > 0)
+        {
+            int frame = (int)Data.Frames.Count - 1;
+            int before = total - position;
+            _findings.Add(Severity.Warning, "wma.frame-boundary", () => FrameNode(frame), n =>
+                n == 1
+                    ? $"The last frame that starts in a packet ends {Counts.Bits(before)} before the place the next packet's count of bits that finish the frame before gives; a decoder does not check this."
+                    : $"{n} packets' last frames end at other places than the next packet's count of bits that finish the frame before gives (the first {Counts.Bits(before)} before it); a decoder does not check this.");
+        }
+
+        FramePart owner = parts[0];
+        ref PacketRecord record = ref Record(owner.Packet);
+        if (isOk && position < owner.Bits)
+        {
+            record.TailStart = owner.StartBit + position;
+            record.TailBits = owner.Bits - position;
+            record.IsTailUnfinished = isTrailerOne;
+        }
+        else if (isOk)
+        {
+            record.TailBits = 0;
+        }
+
+        return isOk;
+    }
+
+    private void Append(int packet, int startBit, int bits)
+    {
+        int total = _savedBits + bits;
+        if (((total + 8) / 8) > _bufferBytes)
+        {
+            ClearSaved();
+            _isLoss = true;
+            return;
+        }
+
+        int bytes = ((total + 7) / 8) + 16;
+        if (_savedBuffer.Length < bytes)
+        {
+            Array.Resize(ref _savedBuffer, bytes);
+        }
+
+        BitCopy.Copy(_packetBuffer, startBit, _savedBuffer, _savedBits, bits);
+        _saved.Add(new FramePart(packet, startBit, bits));
+        _savedBits = total;
+    }
+
     private void ClearSaved()
     {
+        if (_savedBits > 0)
+        {
+            Array.Clear(_savedBuffer, 0, Math.Min(_savedBuffer.Length, ((_savedBits + 7) / 8) + 16));
+        }
+
         _saved.Clear();
         _savedBits = 0;
     }
@@ -352,7 +526,7 @@ internal sealed class ProStreamReader
     private void Save(int packet, int startBit, int bits)
     {
         ClearSaved();
-        if ((((startBit & 7) + bits + 7) / 8) > BufferBytes)
+        if ((((startBit & 7) + bits + 7) / 8) > _bufferBytes)
         {
             _isLoss = true;
             return;
@@ -363,10 +537,6 @@ internal sealed class ProStreamReader
         {
             _savedBuffer = new byte[bytes];
         }
-        else
-        {
-            Array.Clear(_savedBuffer, 0, bytes);
-        }
 
         BitCopy.Copy(_packetBuffer, startBit, _savedBuffer, 0, bits);
         _saved.Add(new FramePart(packet, startBit, bits));
@@ -375,9 +545,9 @@ internal sealed class ProStreamReader
 
     // Reads one frame whose bits are parts, one after another, and records it. startPacket is the packet the frame is listed under. For
     // frames read from a joined buffer of several frames, source holds the parts of the whole buffer and the frame starts at position.
-    private ProFrameResult ReadOne(Bits bits, int start, int limit, int declared, IReadOnlyList<FramePart> parts, List<FramePart>? source = null, int position = 0)
+    private FrameOutcome ReadOne(Bits bits, int start, int limit, int declared, IReadOnlyList<FramePart> parts, List<FramePart>? source = null, int position = 0)
     {
-        ProFrameResult result = _reader.Read(bits, start, limit, declared, _trace);
+        FrameOutcome result = _reader.Read(bits, start, limit, declared, _trace);
         if (source is not null)
         {
             parts = Slice(source, position, Math.Max(result.Bits, 1));
@@ -404,7 +574,7 @@ internal sealed class ProStreamReader
         });
 
         _framesInCall++;
-        if (_p.HasLengthPrefix && parts.Count > 0)
+        if ((_p.HasLengthPrefix || _isLossless) && parts.Count > 0)
         {
             ref PacketRecord owner = ref Record(parts[0].Packet);
             if (owner.FrameCount == 0)
@@ -413,7 +583,7 @@ internal sealed class ProStreamReader
             }
 
             owner.FrameCount++;
-            if (parts[0].Packet != _currentPacket)
+            if (_p.HasLengthPrefix && parts[0].Packet != _currentPacket)
             {
                 // The bits left at the end of that packet were the start of this frame.
                 owner.TailBits = 0;
@@ -424,7 +594,7 @@ internal sealed class ProStreamReader
         return result;
     }
 
-    public static double RateOf(long bits, ProParameters p) => bits * (p.SampleRate / 1000.0) / p.FrameLength;
+    public static double RateOf(long bits, IStreamParameters p) => bits * (p.SampleRate / 1000.0) / p.FrameLength;
 
     private static List<FramePart> Slice(List<FramePart> source, int from, int bits)
     {
@@ -452,9 +622,9 @@ internal sealed class ProStreamReader
         return result;
     }
 
-    private void Account(ProFrameResult result, int index, IReadOnlyList<FramePart> parts)
+    private void Account(FrameOutcome result, int index, IReadOnlyList<FramePart> parts)
     {
-        ProParameters p = _p;
+        IStreamParameters p = _p;
         double rate = 0;
         if (parts.Count > 1 && parts[0].Packet != parts[^1].Packet)
         {
@@ -465,11 +635,11 @@ internal sealed class ProStreamReader
         if (!result.IsValid)
         {
             InvalidFrames++;
-            ProFault fault = result.Fault;
+            int fault = result.Fault;
             _findings.Add(Severity.Warning, "wma.frame-invalid", () => FrameNode(index), count =>
                 count == 1
-                    ? $"A frame is invalid: {ProExplain.Reason(fault)}; a decoder drops it and the frame that crosses into the next packet. The first is at 0x{WmaText.Hex(offset)}."
-                    : $"{count} frames are invalid: {ProExplain.Reason(fault)}; a decoder drops it and the frame that crosses into the next packet. The first is at 0x{WmaText.Hex(offset)}.");
+                    ? $"A frame is invalid: {_reason(fault)}; {Dropped}. The first is at 0x{WmaText.Hex(offset)}."
+                    : $"{count} frames are invalid: {_reason(fault)}; {Dropped}. The first is at 0x{WmaText.Hex(offset)}.");
         }
         else
         {
@@ -479,7 +649,21 @@ internal sealed class ProStreamReader
         BitrateX.Add(offset);
         BitrateY.Add(rate);
 
-        if (result.AreSubframesRead)
+        if (_isLossless)
+        {
+            long output = 0;
+            if (result.IsValid || result.Fault == (int)LosslessFault.NeedsMoreBits)
+            {
+                output = result.TrimEnd >= p.FrameLength ? 0 : p.FrameLength - result.TrimEnd;
+            }
+            else if (_isFirstOfRun || p.HasLengthPrefix)
+            {
+                output = result.CompletedSamples;
+            }
+
+            Samples += output;
+        }
+        else if (result.AreSubframesRead)
         {
             if (!_isFirstSeen)
             {
@@ -505,7 +689,7 @@ internal sealed class ProStreamReader
         if (result.TrimStart != 0 || result.TrimEnd != 0)
         {
             TrimmedFrames++;
-            TrimmedSamples += result.TrimStart + (long)result.TrimEnd;
+            TrimmedSamples += _isLossless ? result.TrimEnd : result.TrimStart + (long)result.TrimEnd;
         }
 
         if (result.HasPostprocessing)

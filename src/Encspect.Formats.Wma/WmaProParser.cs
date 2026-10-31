@@ -69,10 +69,11 @@ public sealed class WmaProParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new ProTally();
-        var reader = new ProStreamReader(p, context, findings, tally);
+        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings);
         reader.Run(packets);
 
-        var nodes = new ProNodes(reader.Data);
+        var nodes = new ProNodes(reader.Data, p);
+        var packetNodes = new PacketNodes(reader.Data, p, false);
         long frameCount = reader.Data.Frames.Count;
         double duration = reader.Samples / (double)p.SampleRate;
         Node? statistics = frameCount > 0 ? ProReport.Statistics(p, reader, tally, parent, duration) : null;
@@ -81,8 +82,8 @@ public sealed class WmaProParser : ICodecParser
             stream.Add(statistics);
         }
 
-        Node packetsNode = stream.Add(nodes.PacketList(parent.Offset, parent.Length));
-        Node framesNode = stream.Add(nodes.FrameList(parent.Offset, parent.Length));
+        Node packetsNode = stream.Add(packetNodes.PacketList(parent.Offset, parent.Length));
+        Node framesNode = stream.Add(packetNodes.FrameList(parent.Offset, parent.Length, nodes.Frame, Topics.WmaPro));
         stream.Value = NodeValue.Text(Counts.Of(reader.ValidFrames, "frame", "frames"));
         reader.PacketNode = i => packetsNode.Children[i];
         reader.FrameNode = i => framesNode.Children[i];
@@ -90,7 +91,7 @@ public sealed class WmaProParser : ICodecParser
         if (reader.Skipped > 0)
         {
             findings.AddNow(Severity.Info, "wma.records-limit",
-                $"The stream has more than {ProStreamReader.MaxPackets} media objects; the {reader.Skipped} after them are not read, so the statistics and the series cover the first {ProStreamReader.MaxPackets}.", parent);
+                $"The stream has more than {WmaPacketReader.MaxPackets} media objects; the {reader.Skipped} after them are not read, so the statistics and the series cover the first {WmaPacketReader.MaxPackets}.", parent);
         }
 
         if (reader.UnfinishedBits > 0 && reader.ValidFrames > 0)

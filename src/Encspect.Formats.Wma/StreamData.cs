@@ -29,6 +29,8 @@ internal struct PacketRecord
     public int TailStart;
     public int TailBits;
     public bool IsTailUnfinished;
+    public bool IsSeekable;
+    public bool IsSpliced;
 }
 
 internal struct FrameRecord
@@ -38,15 +40,13 @@ internal struct FrameRecord
     public uint Trace;
     public int TraceLength;
     public int Bits;
-    public ProFault Fault;
+    public int Fault;
     public int Subframes;
 }
 
 // Everything a Professional stream's reading keeps for the nodes: where the packets lie, the parts of the frames, and each frame's trace.
-internal sealed class ProData(ProParameters parameters)
+internal sealed class StreamData
 {
-    public ProParameters Parameters { get; } = parameters;
-
     public PacketTable Table { get; } = new();
 
     public List<PacketRecord> Packets { get; } = [];

@@ -6,7 +6,7 @@ namespace Encspect.Formats.Wma;
 
 // What the container's WAVEFORMATEX and the 18 bytes of codec data state about a Windows Media Audio Professional stream, and the
 // values derived from them (docs/design/wma-pro-format.md, "Codec data").
-internal sealed class ProParameters
+internal sealed class ProParameters : IStreamParameters
 {
     public const int DataSize = 18;
     public const int MaxChannels = 8;

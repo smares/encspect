@@ -6,7 +6,7 @@ namespace Encspect.Formats.Wma;
 // The figures over a Professional stream (docs/design/wma-pro-format.md, "Statistics"): the Statistics node and the series.
 internal static class ProReport
 {
-    public static Node Statistics(ProParameters p, ProStreamReader reader, ProTally tally, Node parent, double duration)
+    public static Node Statistics(ProParameters p, WmaPacketReader reader, ProTally tally, Node parent, double duration)
     {
         long frames = reader.Data.Frames.Count;
         string value = string.Create(CultureInfo.InvariantCulture, $"{Counts.Of(frames, "frame", "frames")}, {duration:0.000} s");
@@ -45,8 +45,8 @@ internal static class ProReport
         {
             Add("Smallest Frame", NodeValue.Decimal(reader.SmallestBits / 8.0, 1, "bytes"), ProExplain.StatSmallestFrame);
             Add("Largest Frame", NodeValue.Decimal(reader.LargestBits / 8.0, 1, "bytes"), ProExplain.StatLargestFrame);
-            Add("Minimum Frame Bitrate", NodeValue.Decimal(ProStreamReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
-            Add("Maximum Frame Bitrate", NodeValue.Decimal(ProStreamReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
+            Add("Minimum Frame Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
+            Add("Maximum Frame Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
         }
 
         Add("Frames Spanning Packets", NodeValue.Integer(reader.SpanningFrames), ProExplain.StatFramesSpanningPackets, Topics.WmaPackets);
@@ -114,7 +114,7 @@ internal static class ProReport
         return statistics;
     }
 
-    public static List<Series> Series(ProParameters p, ProStreamReader reader, Node anchor)
+    public static List<Series> Series(ProParameters p, WmaPacketReader reader, Node anchor)
     {
         var series = new List<Series>
         {

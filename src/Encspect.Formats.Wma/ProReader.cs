@@ -29,27 +29,6 @@ internal enum ProFault
     LengthPrefix,
 }
 
-internal struct ProFrameResult
-{
-    public ProFault Fault;
-
-    // The frame's length in bits, the length field and the trailer bit included.
-    public int Bits;
-
-    public bool Trailer;
-
-    // Whether the frame got to the end of its last subframe.
-    public bool AreSubframesRead;
-
-    public bool HasPostprocessing;
-
-    public int TrimStart;
-
-    public int TrimEnd;
-
-    public bool IsValid => Fault == ProFault.None;
-}
-
 // Figures over the subframes read, which the statistics sum up: every subframe counts, also those of frames that turn out invalid.
 internal sealed class ProTally
 {
@@ -75,7 +54,7 @@ internal sealed class ProTally
 
 // Reads the syntax of one frame (docs/design/wma-pro-format.md, "Frame" and "Subframe"): it finds where every field ends, which is all the
 // layout needs, and keeps what the nodes show.
-internal sealed class ProFrameReader(ProParameters parameters, ProTally tally)
+internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) : IFrameSyntax
 {
     private const int MaxPerChannel = 32;
 
@@ -97,14 +76,14 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally)
     // The subframes read so far, for the statistics of the frame level (the number is also in the trace).
     public int SubframesRead { get; private set; }
 
-    public ProFrameResult Read(Bits bits, int start, int limit, int declaredLength, TraceWriter trace)
+    public FrameOutcome Read(Bits bits, int start, int limit, int declaredLength, TraceWriter trace)
     {
         _bits = bits;
         _limit = limit;
         _trace = trace;
         trace.Clear();
         SubframesRead = 0;
-        var result = new ProFrameResult();
+        var result = new FrameOutcome();
         bits.Position = start;
         ProParameters p = parameters;
 
@@ -218,9 +197,9 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally)
         return Finish(ref result, ProFault.None, start);
     }
 
-    private ProFrameResult Finish(ref ProFrameResult result, ProFault fault, int start)
+    private FrameOutcome Finish(ref FrameOutcome result, ProFault fault, int start)
     {
-        result.Fault = fault;
+        result.Fault = (int)fault;
         result.Bits = _bits.Position - start;
         _trace.Put(Tag.End);
         return result;
