@@ -125,6 +125,7 @@ internal sealed class ProNodes(StreamData data, ProParameters parameters)
                         }
                     }
 
+                    // A zero-bit precise node is 0 bytes long, an imprecise one takes a byte: an empty tile's children must be precise to stay inside it.
                     tile.Add(At($"Channel {c + 1} Subframes", tileStart, tileBits, NodeValue.Text(string.Join(", ", lengths)), ProExplain.ChannelSubframes, null, tileBits == 0));
                 }
             }
