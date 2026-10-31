@@ -222,12 +222,13 @@ public class DecoderChargeTests
     [Fact]
     public void MonkeysAudioChargesAFlaggedSilentFrameItsSamplesAndTheirZeroFillAndNothingElse()
     {
-        // 73,728 samples of 2 channels at 16 units and 40 for the zero fill, whatever the level the header states.
+        // 73,728 samples of 2 channels at 16 units, whatever the level the header states: the decoder fills a silent chunk in one go and measures (DecoderWorkTests) at
+        // about three quarters of the reference's time per unit at that charge.
         byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-silent-stereo.ape", 1L << 24, level: 5000);
 
         long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
 
-        Assert.Equal(MonkeysAudioFrames(file) * 73728 * 2 * (16 + MonkeysAudioFrameDecoder.SilentUnits), units);
+        Assert.Equal(MonkeysAudioFrames(file) * 73728 * 2 * 16, units);
     }
 
     [Fact]
