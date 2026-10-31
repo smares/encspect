@@ -213,7 +213,7 @@ internal static class RawReader
                     if (scanner.FindNext(position + 1, position + FrameWalker.MaxFrameBytes) is var after and >= 0)
                     {
                         length = after - position;
-                        status = walk.Fault != SubframeFault.None ? EntryStatus.Unreadable | EntryStatus.ExtentFound : EntryStatus.ExtentFound;
+                        status = EntryStatus.Unreadable | EntryStatus.ExtentFound;
                     }
                     else
                     {

@@ -357,11 +357,19 @@ public class FlacFindingTests
 
     // A metadata block over the 1 MiB that is read, in a packet that spans pages, is a node over the whole block.
     [Theory]
-    [InlineData(1, false)]
-    [InlineData(3, true)]
-    public void AnOggMetadataBlockOverOneMebibyteIsOneNodeOverAllOfIt(int type, bool isComment)
+    [InlineData(1, "padding")]
+    [InlineData(3, "comment")]
+    [InlineData(6, "picture")]
+    public void AnOggMetadataBlockOverOneMebibyteIsOneNodeOverAllOfIt(int type, string kind)
     {
-        byte[] body = isComment ? [.. new byte[4], .. BitConverter.GetBytes(0), .. new byte[(1 << 20) + 5000]] : new byte[(1 << 20) + 5000];
+        byte[] data = new byte[(1 << 20) + 5000];
+        byte[] body = kind switch
+        {
+            "comment" => [.. new byte[4], .. BitConverter.GetBytes(0), .. data],
+            // Picture type 3, no MIME type, no description, 1x1, 8 bits, no palette, then the data.
+            "picture" => [0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 8, 0, 0, 0, 0, .. BitConverter.GetBytes(data.Length).Reverse(), .. data],
+            _ => data,
+        };
         byte[] info = FlacBuilder.Block(0, FlacBuilder.StreamInfo(4096, 44100, 2, 16, 4096 * 2), isLast: false);
         var ogg = new OggBuilder();
         ogg.Page(Serial, 0, 2, [0x7F, .. "FLAC"u8, 1, 0, 0, 0, .. "fLaC"u8, .. info]);
@@ -403,5 +411,44 @@ public class FlacFindingTests
         Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.first-sample-not-zero");
         Assert.Contains("lost", finding.Message, StringComparison.Ordinal);
         Assert.Contains("cut out", finding.Message, StringComparison.Ordinal);
+    }
+
+    // A frame packet that lacks only its CRC-16 bytes is damaged syntax in Ogg, where the pages that would cut a packet are dropped with it.
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void AnOggPacketThatLacksItsCrcIsUnreadableNotCut(int missing)
+    {
+        byte[] frame = FlacBuilder.ConstantFrame(1, 4096, 44100, 2, 16);
+        Report report = Analyzer.CreateDefault().Analyze("short.oga", new MemoryStream(OggFlac(frames:
+            [FlacBuilder.ConstantFrame(0, 4096, 44100, 2, 16), frame[..^missing], FlacBuilder.ConstantFrame(2, 4096, 44100, 2, 16)])));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "flac.frame-cut" or "parse.failed");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.subframe-invalid");
+        Assert.Contains("before the CRC-16", finding.Message, StringComparison.Ordinal);
+    }
+
+    // A frame whose subframes read but whose data ends before the CRC-16, with a chained frame inside its bytes: unreadable, as one that breaks the syntax.
+    [Fact]
+    public void ANativeFrameThatEndsBeforeItsCrcWithAFrameInsideItIsUnreadable()
+    {
+        byte[] inner = FlacBuilder.ConstantFrame(1, 16, 44100, 1, 16);
+        byte[] outer = FlacBuilder.Frame(0, 16, 44100, 1, 16, false, body =>
+        {
+            FlacBuilder.Bits(body, 0, 1);
+            FlacBuilder.Bits(body, 1, 6);
+            FlacBuilder.Bits(body, 0, 1);
+            foreach (byte b in new byte[32 - inner.Length].Concat(inner))
+            {
+                FlacBuilder.Bits(body, b, 8);
+            }
+        })[..^2];
+        byte[] file = FlacBuilder.Concat(FlacBuilder.Marker, FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 32), isLast: true), outer);
+
+        Report report = Analyzer.CreateDefault().Analyze("early.flac", new MemoryStream(file));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "flac.frame-cut" or "parse.failed");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "flac.subframe-invalid");
+        Assert.Contains("before the CRC-16", finding.Message, StringComparison.Ordinal);
     }
 }

@@ -260,7 +260,7 @@ public sealed class FlacCodecParser : ICodecParser
             long at = packet.FileStart;
             Node node = first;
             s.Findings.Add(Severity.Warning, "flac.ogg-packet-trailing", node, count =>
-                $"The {what} in the packet at 0x{at:X} ends {Counts.Of(rest, "byte", "bytes")} before the packet does{(count > 1 ? $"; {Counts.Of(count - 1, "more packet", "more packets")} {Counts.Agree(count - 1, "has", "have")} bytes after {(what == "frame" ? "its frame" : "its metadata block")}" : string.Empty)}.", what);
+                $"The {what} in the packet at 0x{at:X} ends {Counts.Of(rest, "byte", "bytes")} before the packet does{(count > 1 ? $"; {Counts.Of(count - 1, "more packet", "more packets")} {Counts.Agree(count - 1, "has", "have")} bytes after {(what == "frame" ? (count == 2 ? "its frame" : "their frames") : (count == 2 ? "its metadata block" : "their metadata blocks"))}" : string.Empty)}.", what);
         }
 
         private void Frame(MappedBytes packet)
@@ -291,10 +291,6 @@ public sealed class FlacCodecParser : ICodecParser
                     bytes = packet.Slice(0, walk.Length);
                     Trailing(packet, walk.Length, "frame", ref _firstTrailingFrame);
                 }
-            }
-            else if (walk.IsCut && walk.Fault == SubframeFault.None)
-            {
-                status = EntryStatus.Cut;
             }
             else
             {

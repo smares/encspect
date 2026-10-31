@@ -412,7 +412,7 @@ internal sealed class State
         }
     }
 
-    public static string Describe(SubframeFault fault, int channel) => $"the subframe of channel {channel + 1} {fault switch
+    public static string Describe(SubframeFault fault, int channel) => fault == SubframeFault.EndsBeforeCrc ? "the data ends before the CRC-16 of the frame" : $"the subframe of channel {channel + 1} {fault switch
     {
         SubframeFault.Overrun => "runs past the data",
         SubframeFault.ReservedBit => "starts with a bit the specification reserves as 0",
