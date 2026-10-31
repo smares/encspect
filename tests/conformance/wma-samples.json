@@ -687,7 +687,7 @@
    "ffmpeg_errors": [],
    "samples": 430080,
    "frames": 209,
-   "packets": 78,
+   "packets": 79,
    "findings": [
     "asf.file-size",
     "asf.index-missing",
@@ -697,7 +697,9 @@
     "asf.packet-truncated",
     "wma.frame-invalid"
    ],
-   "info_findings": []
+   "info_findings": [
+    "wma.packet-short"
+   ]
   },
   {
    "file": "master_audio_2.0_24bit.wma",
