@@ -322,6 +322,8 @@ TRUE_PEAK_PHASES = [
 ]
 
 
+# The analog filter parameters and the bilinear transform for rates other than 48 kHz follow libebur128 v1.2.6 (ebur128_init_filter), Copyright (c) 2011 Jan Kokemüller,
+# under the MIT license. The license text is in THIRD-PARTY-NOTICES.md.
 def kweighting(rate):
     """(b0, b1, b2, a1, a2, h1, h2): the two sections; BS.1770-5 Tables 1 and 2 at 48 kHz, else the same analog filters at the rate."""
     if rate == 48000:

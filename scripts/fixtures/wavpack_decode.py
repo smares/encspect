@@ -1,3 +1,5 @@
+# Derived from libwavpack 5.6.0 (unpack.c, read_words.c, entropy_utils.c, decorr_utils.c, open_utils.c, unpack_floats.c, unpack_dsd.c), Copyright (c) 1998 - 2022 David Bryant,
+# under the BSD 3-clause license. The license text is in THIRD-PARTY-NOTICES.md.
 """A WavPack decoder worked out from libwavpack 5.6.0's source (unpack.c, read_words.c, entropy_utils.c, decorr_utils.c, open_utils.c,
 unpack_floats.c, unpack_dsd.c, unpack_utils.c and cli/wvunpack.c), apart from the analyzer: the decoded samples and the verdicts of the
 checks over them that the manifests of tests/fixtures/wavpack hold (decoded_samples, decoded_pcm_md5, verification), which the C# decoder

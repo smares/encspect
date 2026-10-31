@@ -65,7 +65,7 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
 
 ## Ancillary data
 
-The rules by which the analyzer finds the ancillary data of each frame, counts it and recognizes the mp3PRO and MP3 Surround signatures. No specification is public for these; the rules give the same results as mp3guessenc 0.27.6, which the MPEG cross-check confirms on the fixtures. They are written as rules, and the code follows them, not mp3guessenc's code.
+The rules by which the analyzer finds the ancillary data of each frame, counts it and recognizes the mp3PRO and MP3 Surround signatures. No specification is public for these; the rules give the same results as mp3guessenc 0.27.6, which the MPEG cross-check confirms on the fixtures. They are written as rules, and the code follows them, not mp3guessenc's code. The code is not a clean-room rewrite as a whole: only `Segment()` and the Layer I and II count were rewritten from a description of the rules, and the rest of the scan (adding and closing areas, the skip logic) is Encspect's own earlier code, written with its own position arithmetic.
 
 ### Terms
 

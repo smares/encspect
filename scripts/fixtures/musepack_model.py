@@ -1,3 +1,5 @@
+# Follows libmpcdec r495 and 1.2.6 (the frame header and stream info readers of SV4 to SV7), Copyright (c) 2005-2009 The Musepack Development Team,
+# under the BSD 3-clause license. The license text is in THIRD-PARTY-NOTICES.md.
 """Reads Musepack streams the way the fixtures' manifests describe them, from the sources the parser
 cites: the SV8 specification for packets, libmpcdec r495 for SV7 headers, frames and sample counts,
 libmpcdec 1.2.6 for versions 4 to 6. Written apart from the analyzer, so the tests compare two

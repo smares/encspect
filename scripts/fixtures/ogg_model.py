@@ -281,6 +281,9 @@ def speex_header_fields(header):
     }
 
 
+# walk() follows libspeex 1.2.1 (nb_decode and wb_skip_table of nb_celp.c, sb_decode of sb_celp.c, speex_inband_handler of speex_callbacks.c), and NB_BITS, WB_BITS, UWB_BITS and
+# INBAND_BITS are its tables (modes.c, modes_wb.c, speex_callbacks.c), Copyright (c) 2002-2008 Jean-Marc Valin and
+# Xiph.org Foundation and the other holders named in its COPYING, under the BSD 3-clause license. The license text is in THIRD-PARTY-NOTICES.md.
 def walk(packet, mode, max_frames):
     """The frames libspeex decodes from a packet: [(prefix bits, nb, wb, uwb)], wb and uwb None where
     the frame has no such layer, then why the walk stopped ("end", "terminator", "limit",
