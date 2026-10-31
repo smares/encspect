@@ -15,29 +15,108 @@ internal sealed class Layer2Multichannel
     private static readonly string[] CenterNames = ["None", "Present", "Reserved", "Phantom"];
     private static readonly string[] SurroundNames = ["None", "Mono", "Stereo", "Second stereo programme"];
 
-    // [surround][center present]: additional channels, tc_allocation bits, dyn_cross_mode bits and
-    // the row of the predictor table.
+    // By surround, then whether a center is coded: the additional channels, the bits of
+    // tc_allocation and of dyn_cross_mode, and the row of Predictors (ISO/IEC 13818-3, the syntax
+    // of mc_composite_status_info). The tables below follow the standard and the conformance
+    // streams of ISO/IEC 13818-4; docs/development.md names the check.
     private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes =
     [
-        [(0, 0, 0, 5), (1, 2, 1, 2)],
-        [(1, 2, 1, 4), (2, 3, 3, 1)],
-        [(2, 2, 3, 3), (3, 3, 4, 0)],
-        [(2, 0, 0, 5), (3, 2, 1, 2)],
+        [(0, 0, 0, 3), (1, 2, 1, 2)],
+        [(1, 2, 1, 2), (2, 3, 3, 1)],
+        [(2, 2, 3, 1), (3, 3, 4, 0)],
+        [(2, 0, 0, 3), (3, 2, 1, 2)],
     ];
 
-    // Predictors per subband group, by predictor table row and dynamic crosstalk mode.
+    // The number of 2-bit predsi fields of a subband group with prediction, by dyn_cross_mode: rows
+    // for 3/2, for 3/1 and 2/2, for 3/0, 2/1 and 3/0 + 2/0, and for 2/0 and 2/0 + 2/0.
     private static readonly int[][] Predictors =
     [
         [6, 4, 4, 4, 2, 2, 2, 0, 2, 2, 2, 0, 0, 0, 0, 0],
-        [4, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [4, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [4, 2, 2, 0, 0, 0, 0, 0],
+        [2, 0],
+        [0],
     ];
 
-    // Subband to subband group.
-    private static readonly int[] Groups = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11];
+    // The subband group of each subband: 0 to 7 alone, 8 and 9, 10 and 11, 12 to 15, then 16 and above.
+    private static readonly int[] Groups =
+        [.. Enumerable.Range(0, 30).Select(sb => sb < 8 ? sb : sb < 10 ? 8 : sb < 12 ? 9 : sb < 16 ? 10 : 11)];
+
+    // How a mode fills an additional channel: read from the bitstream, copied from a base channel
+    // chosen by what the channel carries, copied from T0, T1, T2 or T3, or zero.
+    private enum Source
+    {
+        Read,
+        Base,
+        T0,
+        T1,
+        T2,
+        T3,
+        Zero,
+    }
+
+    private const Source R = Source.Read;
+    private const Source B = Source.Base;
+
+    // 3/2, by dyn_cross_mode: T2, T3, T4.
+    private static readonly Source[][] Modes32 =
+    [
+        [R, R, R],
+        [R, R, Source.T1],
+        [R, Source.T0, R],
+        [B, R, R],
+        [R, Source.T0, Source.T1],
+        [B, R, Source.T1],
+        [B, Source.T0, R],
+        [B, Source.T0, Source.T1],
+        [R, R, Source.T3],
+        [R, Source.T2, R],
+        [R, R, Source.T2],
+        [R, Source.T2, Source.T1],
+        [R, Source.T0, Source.T2],
+        [B, R, Source.T3],
+        [R, Source.T2, Source.T2],
+        [Source.Zero, Source.Zero, Source.Zero],
+    ];
+
+    // 3/1 and 2/2, by dyn_cross_mode: T2, T3.
+    private static readonly Source[][] Modes31 =
+    [
+        [R, R],
+        [R, B],
+        [B, R],
+        [B, B],
+        [R, Source.T2],
+        [B, B],
+        [B, B],
+        [B, B],
+    ];
+
+    private static readonly string[] CarriesCenterSurround = ["CLRCCCRL"];
+    private static readonly string[] CarriesCenterMonoSurround = ["CLRCCL--", "SSSLRR--"];
+    private static readonly string[] CarriesStereoSurround = ["LLLL", "RRRR"];
+    private static readonly string[] CarriesMonoSurround = ["SLR-"];
+    private static readonly string[] CarriesOther = ["CLR-"];
+
+    // What T2 and T3 carry for each tc_allocation (13818-3, semantics of tc_allocation): L for a left
+    // or left surround channel, R for the right ones, any other letter for a channel that is neither
+    // (center, surround, not assigned).
+    private static string[] Carries(int surround, bool centerCoded) => (surround, centerCoded) switch
+    {
+        (2, true) => CarriesCenterSurround,
+        (1, true) => CarriesCenterMonoSurround,
+        (2, false) => CarriesStereoSurround,
+        (1, false) => CarriesMonoSurround,
+        _ => CarriesOther,
+    };
+
+    private static readonly Source[] PlanSecondCenterBase = [B, R, Source.T3];
+    private static readonly Source[] PlanSecondCenterRead = [R, R, Source.T3];
+    private static readonly Source[] PlanSecondCenterBaseUncopied = [B, R, R];
+    private static readonly Source[] PlanSecondCenterUncopied = [R, R, R];
+    private static readonly Source[] PlanSecondCopy = [R, Source.T2];
+    private static readonly Source[] PlanSecondUncopied = [R, R];
+    private static readonly Source[] PlanOneBase = [B];
+    private static readonly Source[] PlanOneRead = [R];
 
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _header = [];
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _status = [];
@@ -61,6 +140,13 @@ internal sealed class Layer2Multichannel
     public int Surround { get; private set; }
 
     public bool HasLfe { get; private set; }
+
+    // Whether dynamic crosstalk is on in 3/1 or 2/2, where a copied channel's base channel has two readings.
+    public bool HasCrosstalkChoice { get; private set; }
+
+    // Whether the frame reads under the flag reading, in which dyn_cross_LR names the base channel of
+    // every copy in the cases the conformance streams leave open, instead of the channel's side.
+    public bool UsesFlagReading { get; private set; }
 
     public int DematrixProcedure { get; private set; }
 
@@ -237,6 +323,43 @@ internal sealed class Layer2Multichannel
 
         int table = rate == 48000 ? 0 : 1;
         mc.AllocationStart = bits.Position;
+
+        // In 3/1 and 2/2 with dynamic crosstalk the standard's text and the ISO reference software
+        // differ in which base channel a copied channel takes in some cases that no conformance
+        // stream decides (docs/design/mpeg-clean-room-rules.md, section 1). The frame is read under
+        // the text first; if its CRC does not hold, under the flag reading, which stays only if
+        // its CRC holds.
+        mc.HasCrosstalkChoice = dynamic == 1 && channels == 2 && mc.Surround != 3;
+        void ReadAs(bool flagReading)
+        {
+            mc.UsesFlagReading = flagReading;
+            mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
+        }
+
+        ReadAs(false);
+        if (mc.HasCrosstalkChoice && mc.StoredCrc != mc.ComputedCrc)
+        {
+            ReadAs(true);
+            if (mc.StoredCrc != mc.ComputedCrc)
+            {
+                ReadAs(false);
+            }
+        }
+
+        return mc;
+    }
+
+    private void ReadAllocation(byte[] data, int start, int statusStart, int headerEnd, int table, int channels, int[] dynMode,
+        int[] secondStereo, int[] tc, int dynLeftRight, int[,] baseAllocation)
+    {
+        _allocation.Clear();
+        _scfsi.Clear();
+        var bits = new BitReader(data);
+        for (int skipped = 0; skipped < AllocationStart; skipped += 31)
+        {
+            bits.Read(Math.Min(31, AllocationStart - skipped));
+        }
+
         var allocation = new int[5, 30];
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
         {
@@ -249,87 +372,90 @@ internal sealed class Layer2Multichannel
             {
                 int bit = bits.Position;
                 int value = bits.Read(width);
-                mc._allocation.Add((sb, ch, bit, value));
+                _allocation.Add((sb, ch, bit, value));
                 return value;
             }
 
-            Allocate(mc, allocation, sb, channels, dynBits, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
+            Allocate(this, allocation, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
         }
 
-        mc.ScfsiStart = bits.Position;
+        ScfsiStart = bits.Position;
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
         {
             for (int ch = 2; ch < 2 + channels; ch++)
             {
                 if (allocation[ch, sb] != 0)
                 {
-                    mc._scfsi.Add((sb, ch, bits.Position, bits.Read(2)));
+                    _scfsi.Add((sb, ch, bits.Position, bits.Read(2)));
                 }
             }
         }
 
-        mc.SideInfoEnd = bits.Position;
-        mc.ComputedCrc = Crc16.ComputeBits(data, statusStart, mc.SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
-        return mc;
+        SideInfoEnd = bits.Position;
+        ComputedCrc = Crc16.ComputeBits(data, statusStart, SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
     }
 
-    // ISO/IEC 13818-3: which allocations of T2 to T4 a subband transmits, which it copies from the
-    // base channels or another additional channel under dynamic crosstalk, and which are absent
-    // (the center above subband 11 with phantom coding).
-    private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int dynBits, int mode, int second,
+    // Whether the channel at index i copies a base channel in a case the conformance streams leave
+    // open: any copy under dyn_cross_LR 1, 3/1 with T3 carrying R under 0, and all of 2/2.
+    private static bool IsUndecided(Layer2Multichannel mc, string[] carries, int i, int tc, int fromRight) =>
+        mc.HasCrosstalkChoice && (fromRight == 1 || mc.Surround == 2 || (i == 1 && carries[1][tc] == 'R'));
+
+    // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
+    // carries in channel order; the rules are those of section 1 of
+    // docs/design/mpeg-clean-room-rules.md.
+    private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int mode, int second,
         int tc, int fromRight, int left, int right, Func<int, int> transmit)
     {
-        bool phantomHigh = mc.Center == 3 && sb >= 12;
-        if (mode == 0)
+        bool centerCoded = mc.Center is 1 or 3;
+        Source[] plan;
+        if (mc.Surround == 3)
         {
-            for (int ch = 2; ch < 2 + channels; ch++)
-            {
-                bool shared = mc.Surround == 3 && second == 1 && ((mc.Center != 0 && ch == 4) || (mc.Center == 0 && ch == 3));
-                a[ch, sb] = phantomHigh && ch == 2 ? 0 : shared ? a[ch - 1, sb] : transmit(ch);
-            }
-
-            return;
+            // The second programme occupies the last two channels; its right channel may copy its left.
+            plan = centerCoded
+                ? (second == 1 ? (mode == 1 ? PlanSecondCenterBase : PlanSecondCenterRead) : (mode == 1 ? PlanSecondCenterBaseUncopied : PlanSecondCenterUncopied))
+                : (second == 1 ? PlanSecondCopy : PlanSecondUncopied);
+        }
+        else if (channels == 3)
+        {
+            plan = Modes32[mode];
+        }
+        else if (channels == 2)
+        {
+            plan = Modes31[mode];
+        }
+        else
+        {
+            plan = mode == 1 ? PlanOneBase : PlanOneRead;
         }
 
-        switch (dynBits)
+        string[] carries = Carries(mc.Surround, centerCoded);
+        for (int i = 0; i < channels; i++)
         {
-            case 1:
-                a[2, sb] = phantomHigh ? 0 : tc == 1 ? left : tc == 2 || fromRight == 1 ? right : left;
-                if (mc.Surround == 3)
+            int value;
+            if (i == 0 && mc.Center == 3 && sb >= 12)
+            {
+                value = 0;
+            }
+            else
+            {
+                value = plan[i] switch
                 {
-                    a[3, sb] = transmit(3);
-                    a[4, sb] = second == 1 ? a[3, sb] : transmit(4);
-                }
+                    Source.Read => transmit(2 + i),
+                    Source.Base => mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? (fromRight == 1 ? right : left) : carries[i][tc] switch
+                    {
+                        'L' => left,
+                        'R' => right,
+                        _ => fromRight == 1 ? right : left,
+                    },
+                    Source.T0 => left,
+                    Source.T1 => right,
+                    Source.T2 => a[2, sb],
+                    Source.T3 => a[3, sb],
+                    _ => 0,
+                };
+            }
 
-                break;
-            case 3:
-                a[2, sb] = phantomHigh ? 0 : mode is 1 or 4 ? transmit(2) : (mc.Surround == 2 || tc != 2) && fromRight == 0 ? left : right;
-                a[3, sb] = mode == 2 ? transmit(3) : mode == 4 ? a[2, sb]
-                    : (mc.Surround == 2 || tc is 4 or 5 || tc < 3) && fromRight == 1 ? right : left;
-                break;
-            case 4:
-                a[2, sb] = phantomHigh ? 0 : mode switch
-                {
-                    1 or 2 or 4 or 8 or 9 or 10 or 11 or 12 or 14 => transmit(2),
-                    3 or 5 or 6 or 7 or 13 => tc is 1 or 7 ? left : tc is 2 or 6 || fromRight == 1 ? right : left,
-                    _ => 0,
-                };
-                a[3, sb] = mode switch
-                {
-                    1 or 3 or 5 or 8 or 10 or 13 => transmit(3),
-                    2 or 4 or 6 or 7 or 12 => left,
-                    9 or 11 or 14 => a[2, sb],
-                    _ => 0,
-                };
-                a[4, sb] = mode switch
-                {
-                    2 or 3 or 6 or 9 => transmit(4),
-                    1 or 4 or 5 or 7 or 11 => right,
-                    10 or 12 or 14 => a[2, sb],
-                    8 or 13 => a[3, sb],
-                    _ => 0,
-                };
-                break;
+            a[2 + i, sb] = value;
         }
     }
 
@@ -360,7 +486,11 @@ internal sealed class Layer2Multichannel
         Node status = node.Add(Span("Composite Status", fileOffset, CrcBit + 16, HasLfe ? LfeBit : AllocationStart, null, Explain.McStatus));
         foreach ((string name, int bit, int length, NodeValue value, string description) in _status.OrderBy(s => s.Bit))
         {
-            status.Add(Span(name, fileOffset, bit, bit + length, value, description));
+            Node field = status.Add(Span(name, fileOffset, bit, bit + length, value, description));
+            if (HasCrosstalkChoice && name == "Dynamic Crosstalk Modes")
+            {
+                field.Add(Span("Base Channel Source", fileOffset, bit, bit + length, UsesFlagReading ? "Named by the flag" : "On the channel's side", Explain.McCrosstalkSource));
+            }
         }
 
         if (HasLfe)

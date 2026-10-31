@@ -27,30 +27,6 @@ internal sealed class VbrHeader
     private const int VbriFixedSize = 26;
     private const uint GogoQuality = 0x474F474F;
 
-    private static readonly Dictionary<(int? Bitrate, uint Quality, int Method, int NoiseShaping, int StereoMode, int Ath, int Lowpass), string> OldPresets = new()
-    {
-        [(null, 78, 3, 2, 3, 4, 190)] = "--alt-preset standard",
-        [(null, 78, 3, 1, 3, 4, 190)] = "--alt-preset standard",
-        [(null, 78, 4, 2, 3, 4, 190)] = "--alt-preset fast standard",
-        [(null, 78, 3, 2, 3, 2, 195)] = "--alt-preset extreme",
-        [(null, 78, 3, 2, 3, 2, 196)] = "--alt-preset extreme",
-        [(null, 78, 3, 1, 3, 2, 196)] = "--alt-preset extreme",
-        [(null, 78, 4, 2, 3, 2, 195)] = "--alt-preset fast extreme",
-        [(null, 78, 4, 2, 3, 2, 196)] = "--alt-preset fast extreme",
-        [(255, 58, 1, 1, 3, 2, 205)] = "--alt-preset insane",
-        [(255, 58, 1, 1, 3, 2, 206)] = "--alt-preset insane",
-        [(null, 88, 4, 1, 3, 3, 195)] = "--r3mix",
-        [(null, 88, 4, 1, 3, 3, 196)] = "--r3mix",
-        [(255, 99, 1, 1, 1, 2, 0)] = "--preset studio",
-        [(192, 88, 1, 1, 1, 2, 0)] = "--preset cd",
-        [(160, 78, 1, 1, 3, 2, 180)] = "--preset hifi",
-        [(128, 67, 1, 1, 3, 2, 180)] = "--preset tape",
-        [(128, 67, 1, 1, 3, 2, 150)] = "--preset radio",
-        [(112, 67, 1, 1, 3, 2, 150)] = "--preset fm",
-        [(40, 65, 1, 1, 0, 2, 75)] = "--preset mw-us",
-        [(40, 65, 1, 1, 0, 2, 76)] = "--preset mw-us",
-    };
-
     private static readonly string[] VbrMethods = ["Unknown", "CBR", "ABR", "VBR method 1 (rh)", "VBR method 2 (mtrh)", "VBR method 3 (mt)", "VBR method 4",
         "Reserved (7)", "CBR, two-pass", "ABR, two-pass"];
 
@@ -623,13 +599,54 @@ internal sealed class VbrHeader
             new(name, frameOffset + p + offset, length, value) { Description = description, Topic = topic };
     }
 
-    // The preset whose settings LAME 3.90 to 3.92 wrote, where the tag holds no preset (3.93 added
-    // it), keyed as getID3 keys them (module.audio.mp3.php, GuessEncoderOptions): VBR method, Xing
-    // quality, noise shaping, stereo mode, ATH type and lowpass, and the bitrate field but for VBR,
-    // where -b sets it. Every entry comes from encodes with 3.90 and 3.92 built from source and the
-    // Windows builds of 3.91 and of HydrogenAudio's 3.90.3; those two write some lowpasses 100 Hz
-    // higher, and 3.90.3 shapes noise differently in standard and extreme. The ABR and CBR
-    // alt-presets, which getID3 does not name, share Xing quality 58, noise shaping 2 and ATH type 2.
+    // The settings LAME 3.90 to 3.92 write for their presets while the tag's preset field is 0. Each row
+    // comes from a committed encode of the "music" signal of make_external_mpeg_fixtures.py at 44.1 kHz
+    // stereo (the fixtures named per row); a preset no encode backs has no row. The Windows build of 3.91
+    // and HydrogenAudio's 3.90.3 write some lowpasses 100 Hz higher, and 3.90.3 noise shaping 1 for
+    // standard and extreme, so those have rows of their own. A bitrate of -1 stays out of the key: the
+    // VBR methods 3 and 4 hold -b there, not the preset's.
+    private static readonly (int Method, uint Quality, int Bitrate, int Lowpass, int AthType, int NoiseShaping, int StereoMode, string Name)[] OldPresets =
+    [
+        // external-lame390-alt-standard, external-lame3903-alt-standard
+        (3, 78, -1, 190, 4, 2, 3, "--alt-preset standard"),
+        (3, 78, -1, 190, 4, 1, 3, "--alt-preset standard"),
+
+        // external-lame392-alt-fast-standard
+        (4, 78, -1, 190, 4, 2, 3, "--alt-preset fast standard"),
+
+        // external-lame390-alt-extreme (48 kHz), external-lame391w-alt-extreme, external-lame3903-alt-extreme
+        (3, 78, -1, 195, 2, 2, 3, "--alt-preset extreme"),
+        (3, 78, -1, 196, 2, 2, 3, "--alt-preset extreme"),
+        (3, 78, -1, 196, 2, 1, 3, "--alt-preset extreme"),
+
+        // external-lame390-alt-fast-extreme, external-lame391w-alt-fast-extreme
+        (4, 78, -1, 195, 2, 2, 3, "--alt-preset fast extreme"),
+        (4, 78, -1, 196, 2, 2, 3, "--alt-preset fast extreme"),
+
+        // external-lame390-alt-insane, external-lame3903-alt-insane
+        (1, 58, 255, 205, 2, 1, 3, "--alt-preset insane"),
+        (1, 58, 255, 206, 2, 1, 3, "--alt-preset insane"),
+
+        // external-lame390-r3mix, external-lame391w-r3mix
+        (4, 88, -1, 195, 3, 1, 3, "--r3mix"),
+        (4, 88, -1, 196, 3, 1, 3, "--r3mix"),
+
+        // external-lame390-preset-mw-us, external-lame391w-preset-mw-us
+        (1, 65, 40, 75, 2, 1, 0, "--preset mw-us"),
+        (1, 65, 40, 76, 2, 1, 0, "--preset mw-us"),
+
+        // external-lame390-preset-fm, -radio, -tape, -hifi, -cd and -studio
+        (1, 67, 112, 150, 2, 1, 3, "--preset fm"),
+        (1, 67, 128, 150, 2, 1, 3, "--preset radio"),
+        (1, 67, 128, 180, 2, 1, 3, "--preset tape"),
+        (1, 78, 160, 180, 2, 1, 3, "--preset hifi"),
+        (1, 88, 192, 0, 2, 1, 1, "--preset cd"),
+        (1, 99, 255, 0, 2, 1, 1, "--preset studio"),
+    ];
+
+    // The preset whose settings the tag holds, for the encoders that leave the preset field out. The ABR
+    // and CBR alt-presets name a bitrate, so a rule stands in for a row each (external-lame390-alt-abr
+    // and external-lame390-alt-cbr).
     private string? OldPreset(int method, byte lowpass, byte flags, byte bitrate, byte misc)
     {
         if (LameEncoder.TrimEnd(' ') is not ("LAME3.90" or "LAME3.90." or "LAME3.91" or "LAME3.92") || Quality is not { } quality)
@@ -637,21 +654,24 @@ internal sealed class VbrHeader
             return null;
         }
 
+        int athType = flags & 15;
         int noiseShaping = misc & 3;
         int stereoMode = (misc >> 2) & 7;
-        int ath = flags & 15;
-        bool vbr = method is 3 or 4;
-        if (OldPresets.TryGetValue((vbr ? null : bitrate, quality, method, noiseShaping, stereoMode, ath, lowpass), out string? preset))
+        if (method is 1 or 2 && quality == 58 && noiseShaping == 2 && stereoMode == 3 && athType == 2 && bitrate is >= 1 and <= 254)
         {
-            return preset;
+            return $"--alt-preset {(method == 2 ? string.Empty : "cbr ")}{Number(bitrate)}";
         }
 
-        return (method, quality, noiseShaping, stereoMode, ath) switch
+        foreach (var row in OldPresets)
         {
-            (2, 58, 2, 3, 2) when bitrate is > 0 and < 255 => $"--alt-preset {Number(bitrate)}",
-            (1, 58, 2, 3, 2) when bitrate is > 0 and < 255 => $"--alt-preset cbr {Number(bitrate)}",
-            _ => null,
-        };
+            if (row.Method == method && row.Quality == quality && (row.Bitrate == -1 ? method is 3 or 4 : row.Bitrate == bitrate)
+                && row.Lowpass == lowpass && row.AthType == athType && row.NoiseShaping == noiseShaping && row.StereoMode == stereoMode)
+            {
+                return row.Name;
+            }
+        }
+
+        return null;
     }
 
     private static NodeValue PresetName(int value) => value switch
