@@ -58,6 +58,11 @@ internal sealed class Records
 
     public long DataStart { get; set; }
 
+    // The file offset that the 32-bit words of the frames are counted from: the first seek table entry (plus the junk), as in the SDK, which reads
+    // each frame from the word its offset lies in, counted from the first frame's offset (APEDecompress.cpp, nSeekRemainder). DataStart where the
+    // table holds no entry.
+    public long WordStart { get; set; }
+
     // The offset the seek table's offsets count from: the junk before the descriptor.
     public long Junk { get; set; }
 
@@ -70,6 +75,9 @@ internal sealed class Records
     public bool HasFrameFields { get; set; }
 
     public int Channels { get; set; }
+
+    // The file version as the header stores it (3.99 is 3990), which the descriptions of the frame and its CRC depend on.
+    public int FileVersion { get; set; }
 
     // Whether the frames' coded data is range-coded (3.91 and later) and not Rice-coded.
     public bool HasRangeCoder { get; set; }

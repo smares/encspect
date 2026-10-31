@@ -291,7 +291,7 @@
                 },
                 {
                   "name": "Stored Frame CRCs",
-                  "value": 0,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 136268
@@ -304,9 +304,69 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": "none",
+                  "value": 21109.073579999997,
+                  "unit": "kbps",
                   "offset": 0,
                   "length": 136268
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 27290,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 9459779,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 130.5869140625,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 266056.284375,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 136268
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 136268,
+                  "children": [
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    },
+                    {
+                      "name": "384 to 415 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    },
+                    {
+                      "name": "32000 kbps and more",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 136268
+                    }
+                  ]
                 }
               ]
             },
@@ -315,24 +375,157 @@
               "kind": "Frame",
               "value": 73728,
               "unit": "samples",
-              "offset": 136268,
-              "length": 0
+              "offset": 132,
+              "length": 27292,
+              "ranges": [
+                {
+                  "offset": 132,
+                  "length": 27288
+                },
+                {
+                  "offset": 27422,
+                  "length": 2
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 150738619,
+                  "offset": 132,
+                  "length": 4
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 27286,
+                  "unit": "bytes",
+                  "offset": 136,
+                  "length": 27288,
+                  "ranges": [
+                    {
+                      "offset": 136,
+                      "length": 27284
+                    },
+                    {
+                      "offset": 27422,
+                      "length": 2
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Frame",
               "kind": "Frame",
               "value": 73728,
               "unit": "samples",
-              "offset": 136268,
-              "length": 0
+              "offset": 27420,
+              "length": 86212,
+              "ranges": [
+                {
+                  "offset": 27420,
+                  "length": 2
+                },
+                {
+                  "offset": 27424,
+                  "length": 86204
+                },
+                {
+                  "offset": 113631,
+                  "length": 1
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 47077872,
+                  "offset": 27420,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 27420,
+                      "length": 2
+                    },
+                    {
+                      "offset": 27426,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 86203,
+                  "unit": "bytes",
+                  "offset": 27424,
+                  "length": 86208,
+                  "ranges": [
+                    {
+                      "offset": 27424,
+                      "length": 2
+                    },
+                    {
+                      "offset": 27428,
+                      "length": 86200
+                    },
+                    {
+                      "offset": 113631,
+                      "length": 1
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Frame",
               "kind": "Frame",
               "value": 12544,
               "unit": "samples",
-              "offset": 136268,
-              "length": 0
+              "offset": 113628,
+              "length": 22640,
+              "ranges": [
+                {
+                  "offset": 113628,
+                  "length": 3
+                },
+                {
+                  "offset": 113632,
+                  "length": 22636
+                }
+              ],
+              "children": [
+                {
+                  "name": "Frame CRC",
+                  "value": 2077290378,
+                  "offset": 113628,
+                  "length": 8,
+                  "ranges": [
+                    {
+                      "offset": 113628,
+                      "length": 3
+                    },
+                    {
+                      "offset": 113635,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Range-Coded Data",
+                  "value": 22635,
+                  "unit": "bytes",
+                  "offset": 113632,
+                  "length": 22636,
+                  "ranges": [
+                    {
+                      "offset": 113632,
+                      "length": 3
+                    },
+                    {
+                      "offset": 113636,
+                      "length": 22632
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
@@ -356,7 +549,8 @@
         "bitsPerSample": 16,
         "samples": 160000,
         "duration": 3.6281179138321997,
-        "isVbr": false,
+        "averageBitrate": 21109.073579999997,
+        "isVbr": true,
         "verification": {
           "decoding": "notRequested",
           "decodedSamples": 0,
@@ -373,7 +567,7 @@
               "name": "frame CRC-32",
               "covers": "decodedAudio",
               "coversAllAudio": false,
-              "stored": 0,
+              "stored": 3,
               "checked": 0,
               "failed": 0
             }
@@ -381,7 +575,38 @@
         },
         "encoder": "Monkey's Audio 13.42",
         "encoderConfidence": "High",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              132,
+              27422,
+              113629
+            ],
+            "values": [
+              130.5869140625,
+              412.51396484375,
+              266056.284375
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1,
+              3
+            ],
+            "values": [
+              131,
+              413,
+              266056
+            ]
+          }
+        ]
       }
     ],
     "findings": [
@@ -437,15 +662,15 @@
       },
       {
         "severity": "Warning",
-        "code": "monkeys-audio.frame-misplaced",
-        "message": "The seek table puts frame 0 at 0x84, outside the frame data or before the frame it follows, so its bytes cannot be told; 2 more frames are placed the same way.",
-        "offset": 136268,
-        "length": 0,
+        "code": "monkeys-audio.frame-cut",
+        "message": "The frame data ends inside frame 2; a frame is read only as far as the file holds whole words of it.",
+        "offset": 113628,
+        "length": 22640,
         "path": [
           0,
-          6
+          8
         ],
-        "count": 3
+        "count": 1
       }
     ]
   }

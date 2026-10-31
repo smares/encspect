@@ -20,11 +20,16 @@ internal static class Nodes
             : new Node(name, ranges[0].Offset, ranges[^1].End - ranges[0].Offset, value) { Description = description, Topic = topic, Kind = kind, Ranges = ranges };
 
     // The end of the stream bytes the file holds, in whole words: a frame is read only as far as these go.
-    public static long Available(Records r) => Math.Max(0, (r.DataLimit - r.DataStart) >> 2 << 2);
+    public static long Available(Records r) => Math.Max(0, (r.DataLimit - r.WordStart) >> 2 << 2);
 
     // The bytes of the frame that the file holds and the node covers.
     public static List<ByteRange> FrameRanges(Records r, in Entry e) =>
-        e.End <= e.Start || (e.Status & EntryStatus.Misplaced) != 0 ? [] : WordOrder.Ranges(r.DataStart, e.Start, Math.Min(e.End, Available(r)));
+        e.End <= e.Start || (e.Status & EntryStatus.Misplaced) != 0 ? [] : WordOrder.Ranges(r.WordStart, e.Start, Math.Min(e.End, Available(r)));
+
+    private static string FrameDescription(Records r) =>
+        r.HasRangeCoder ? Explain.Frame : r.FileVersion <= 3800 ? Explain.FrameBitwise : Explain.FrameRiceCoded;
+
+    private static string CrcDescription(bool hasSpecialFrames) => hasSpecialFrames ? Explain.FrameCrc : Explain.FrameCrcUnshifted;
 
     public static Node Entry(Records r, int index) => Frame(r, index);
 
@@ -35,13 +40,13 @@ internal static class Nodes
         NodeValue samples = NodeValue.Integer(e.Blocks, "samples", "sample");
         if (ranges.Count == 0)
         {
-            return new Node("Frame", Math.Min(r.DataStart, r.DataLimit), 0, samples) { Kind = NodeKind.Frame, Description = Explain.Frame, Topic = Topics.Frames };
+            return new Node("Frame", Math.Min(r.DataStart, r.DataLimit), 0, samples) { Kind = NodeKind.Frame, Description = FrameDescription(r), Topic = Topics.Frames };
         }
 
         return new Node("Frame", ranges[0].Offset, ranges[^1].End - ranges[0].Offset, samples, () => FrameChildren(r, index))
         {
             Kind = NodeKind.Frame,
-            Description = Explain.Frame,
+            Description = FrameDescription(r),
             Topic = Topics.Frames,
             Ranges = ranges,
         };
@@ -53,18 +58,18 @@ internal static class Nodes
     public static Node CrcField(Records r, int index)
     {
         Entry e = r.Entries[index];
-        return Field("Frame CRC", r.DataStart, e.Start + (e.StartBit >> 3), e.Start + ((e.StartBit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames);
+        return Field("Frame CRC", r.WordStart, e.Start + (e.StartBit >> 3), e.Start + ((e.StartBit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), CrcDescription(r.HasSpecialFrames), Topics.Frames);
     }
 
-    // The CRC field of the frame whose bytes are given, equal to the node the parser builds, for a finding of the decoder. dataStart is the file offset of
-    // the first frame's first byte.
-    public static Node CrcOfFrame(MappedBytes frame, long dataStart, uint crc, int bit = 0)
+    // The CRC field of the frame whose bytes are given, equal to the node the parser builds, for a finding of the decoder. wordStart is the file offset the frames' words
+    // are counted from (Records.WordStart).
+    public static Node CrcOfFrame(MappedBytes frame, long wordStart, uint crc, int bit = 0)
     {
         ByteRange first = frame.FileRanges()[0];
-        long groupEnd = Math.Min(first.End, dataStart + ((((first.Offset - dataStart) >> 2) + 1) << 2));
+        long groupEnd = Math.Min(first.End, wordStart + ((((first.Offset - wordStart) >> 2) + 1) << 2));
         long firstByte = groupEnd - 1;
-        long start = (((firstByte - dataStart) >> 2) << 2) + (3 - ((firstByte - dataStart) & 3));
-        return Field("Frame CRC", dataStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, NodeValue.Hex(crc, 8), Explain.FrameCrc, Topics.Frames);
+        long start = (((firstByte - wordStart) >> 2) << 2) + (3 - ((firstByte - wordStart) & 3));
+        return Field("Frame CRC", wordStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, NodeValue.Hex(crc, 8), Explain.FrameCrc, Topics.Frames);
     }
 
     private static IReadOnlyList<Node> FrameChildren(Records r, int index)
@@ -78,11 +83,11 @@ internal static class Nodes
         {
             // In a file of version 3.80 a frame may start inside a byte, so a field is over the bytes its bits touch; the other versions start on a byte.
             int bit = e.StartBit;
-            children.Add(Field("Frame CRC", r.DataStart, at + (bit >> 3), at + ((bit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), Explain.FrameCrc, Topics.Frames));
+            children.Add(Field("Frame CRC", r.WordStart, at + (bit >> 3), at + ((bit + 31) >> 3) + 1, NodeValue.Hex(e.Crc, 8), CrcDescription(r.HasSpecialFrames), Topics.Frames));
             bit += 32;
             if ((e.Status & EntryStatus.HasSpecialCodes) != 0 && start + ((bit + 31) >> 3) < end)
             {
-                children.Add(Field("Special Frame Codes", r.DataStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, SpecialCodes(e.Special, r.Channels), Explain.SpecialCodes, Topics.Frames));
+                children.Add(Field("Special Frame Codes", r.WordStart, start + (bit >> 3), start + ((bit + 31) >> 3) + 1, SpecialCodes(e.Special, r.Channels), Explain.SpecialCodes, Topics.Frames));
                 bit += 32;
             }
 
@@ -92,7 +97,7 @@ internal static class Nodes
         if (end > at)
         {
             bool isRange = r.HasRangeCoder && r.HasFrameFields;
-            children.Add(Field(isRange ? "Range-Coded Data" : "Coded Data", r.DataStart, at, end, NodeValue.Integer(end - at, "bytes"), isRange ? Explain.RangeCodedData : Explain.CodedData, isRange ? Topics.RangeCoding : Topics.Frames));
+            children.Add(Field(isRange ? "Range-Coded Data" : "Coded Data", r.WordStart, at, end, NodeValue.Integer(end - at, "bytes"), isRange ? Explain.RangeCodedData : Explain.CodedData, isRange ? Topics.RangeCoding : Topics.Frames));
         }
 
         return children;
@@ -131,17 +136,19 @@ internal static class Nodes
         return names.Count == 0 ? "none" : string.Join(", ", names);
     }
 
+    public const string UnlistedName = "Further Frames";
+
     // The frames past the ones the report lists, as one node over their bytes.
     public static Node Unlisted(Records r)
     {
-        List<ByteRange> ranges = WordOrder.Ranges(r.DataStart, Math.Max(0, r.UnlistedStart), Math.Min(Math.Max(r.UnlistedEnd, r.UnlistedStart), Available(r)));
-        return Over("Further Frames", ranges, NodeValue.Integer(r.UnlistedFrames, "frames", "frame"), Explain.Unlisted, Topics.Frames, NodeKind.Frame);
+        List<ByteRange> ranges = WordOrder.Ranges(r.WordStart, Math.Max(0, r.UnlistedStart), Math.Min(Math.Max(r.UnlistedEnd, r.UnlistedStart), Available(r)));
+        return Over(UnlistedName, ranges, NodeValue.Integer(r.UnlistedFrames, "frames", "frame"), Explain.Unlisted, Topics.Frames, NodeKind.Frame);
     }
 
     public static Node SeekEntry(Records r, int index)
     {
         Entry e = r.Entries[index];
-        long raw = e.Start + r.DataStart - r.Junk;
+        long raw = e.Start + r.WordStart - r.Junk;
         return new Node("Frame Offset", r.SeekTableAt + (4L * index), 4, NodeValue.Integer((uint)raw, "bytes", "byte")) { Description = Explain.SeekEntry, Topic = Topics.SeekTable };
     }
 
@@ -228,7 +235,7 @@ internal static class Nodes
         node.Add("Format Flags Set", at + 8, 2, FlagNames(h.Flags), Explain.FormatFlagNames, Topics.File);
         node.Add("Channels", at + 10, 2, NodeValue.Integer(h.Channels, "channels", "channel"), Explain.Channels, Topics.MidSideStereo);
         node.Add("Sample Rate", at + 12, 4, NodeValue.Integer(h.SampleRate, "Hz"), Explain.SampleRate);
-        node.Add("WAV Header Data Bytes", at + 16, 4, NodeValue.Integer(h.HeaderDataBytes, "bytes", "byte"), Explain.HeaderDataBytes, Topics.File);
+        node.Add("WAV Header Data Bytes", at + 16, 4, NodeValue.Integer(h.StoredHeaderDataBytes, "bytes", "byte"), Explain.HeaderDataBytes, Topics.File);
         node.Add("WAV Terminating Data Bytes", at + 20, 4, NodeValue.Integer(h.TerminatingBytes, "bytes", "byte"), Explain.TerminatingBytes, Topics.File);
         node.Add("Total Frames", at + 24, 4, NodeValue.Integer(h.TotalFrames, "frames", "frame"), Explain.TotalFrames, Topics.Frames);
         node.Add("Final Frame Blocks", at + 28, 4, NodeValue.Integer(h.FinalFrameBlocks, "samples", "sample"), Explain.FinalFrameBlocks, Topics.Frames);

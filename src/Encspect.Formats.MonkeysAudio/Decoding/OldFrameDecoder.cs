@@ -14,8 +14,8 @@ internal sealed class OldFrameDecoder : IFrameDecoder
     internal const long RiceUnits = 32;
     internal const long RangeUnits = 192;
 
-    // Units a sample of a channel costs in a frame flagged silent, besides the fixed work: the arrays are cleared and not decoded, which is cheaper than the later versions'
-    // sample-by-sample zeros (FrameDecoder.SilentUnits).
+    // Units a sample of a channel costs in a frame flagged silent, besides the fixed work: the arrays are cleared and not decoded, and the values still go
+    // through the pairing, the byte conversion and the CRC one sample at a time.
     internal const long SilentUnits = 10;
 
     // The zero bytes the range coder may read past the data of the last frame: the two the SDK takes after an array, with room for the reads that follow.
@@ -30,7 +30,7 @@ internal sealed class OldFrameDecoder : IFrameDecoder
 
     private readonly DecodeContext _context;
     private readonly ApeHeader _header;
-    private readonly long _dataStart;
+    private readonly long _wordStart;
     private readonly byte[] _seekBits;
     private readonly int _channels;
     private readonly int _bits;
@@ -51,11 +51,11 @@ internal sealed class OldFrameDecoder : IFrameDecoder
     private long _checked;
     private long _failed;
 
-    public OldFrameDecoder(DecodeContext context, ApeHeader header, long dataStart, byte[] seekBits)
+    public OldFrameDecoder(DecodeContext context, ApeHeader header, long wordStart, byte[] seekBits)
     {
         _context = context;
         _header = header;
-        _dataStart = dataStart;
+        _wordStart = wordStart;
         _seekBits = seekBits;
         _channels = header.Channels;
         _bits = header.BitsPerSample;
@@ -105,10 +105,10 @@ internal sealed class OldFrameDecoder : IFrameDecoder
             _stream = new byte[Math.Max(length + padding, _stream.Length * 2)];
         }
 
-        WordOrder.ToStream(frame.Bytes, _dataStart, _stream);
+        WordOrder.ToStream(frame.Bytes, _wordStart, _stream);
         if (frame.Following is { } following)
         {
-            WordOrder.ToStream(following, _dataStart, _stream, frameLength);
+            WordOrder.ToStream(following, _wordStart, _stream, frameLength);
         }
 
         Array.Clear(_stream, length, padding);
@@ -210,13 +210,13 @@ internal sealed class OldFrameDecoder : IFrameDecoder
             {
                 _context.AddFinding(Severity.Warning, "monkeys-audio.frame-crc-mismatch",
                     $"The CRC of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is 0x{computed:X8}, but the frame stores 0x{stored:X8}: the decoded samples differ from what the encoder read.",
-                    Nodes.CrcOfFrame(frame.Bytes, _dataStart, stored, (int)startBit));
+                    frame.NodeName == Nodes.UnlistedName ? _context.Setup.Stream : Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored, (int)startBit));
             }
             else
             {
                 _context.AddFinding(Severity.Warning, "monkeys-audio.frame-checksum-mismatch",
                     $"The checksum of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is {computed}, but the frame stores {stored}: the decoded samples differ from what the encoder read.",
-                    FrameNode(frame));
+                    frame.NodeName == Nodes.UnlistedName ? _context.Setup.Stream : FrameNode(frame));
             }
         }
 

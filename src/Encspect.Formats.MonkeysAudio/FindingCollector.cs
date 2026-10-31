@@ -17,8 +17,7 @@ internal sealed class FindingCollector
 
     public void Add(Severity severity, string code, Node node, Func<int, string> message, string problem = "")
     {
-        Func<Node>? redirect = Redirect;
-        Add(severity, code, redirect ?? (() => node), message, problem);
+        Add(severity, code, () => node, message, problem);
     }
 
     // node is built only for the first case, and only when the findings are reported, so a finding
@@ -26,6 +25,7 @@ internal sealed class FindingCollector
     // of packets) is built as it ends.
     public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message, string problem = "")
     {
+        node = Redirect ?? node;
         (string, string) key = (code, problem);
         if (_aggregated.TryGetValue(key, out var existing))
         {

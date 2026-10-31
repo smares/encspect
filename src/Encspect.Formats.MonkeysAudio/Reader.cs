@@ -96,12 +96,14 @@ internal static class Reader
         Records records = s.Records;
         records.Junk = junk;
         records.DataStart = s.DataStart;
+        records.WordStart = s.DataStart;
         records.DataLimit = Math.Min(reader.End, s.FrameDataEnd);
         records.SeekTableAt = s.SeekTableAt;
         records.HasFrameFields = h.HasStoredCrc;
         records.Channels = h.Channels;
         records.HasSpecialFrames = h.HasSpecialFrames;
-        records.HasRangeCoder = h.FileVersion >= 3891;
+        records.FileVersion = h.FileVersion;
+        records.HasRangeCoder = h.FileVersion >= 3900;
         if (junk > reader.Start)
         {
             long length = junk - reader.Start;
@@ -196,6 +198,12 @@ internal static class Reader
             int version = h.FileVersion;
             f.Add(Severity.Info, "monkeys-audio.old-format", () => Field("File Version"), _ =>
                 $"Version {ApeHeader.VersionText(version)} files start with one header and have no descriptor, so they store no MD5 of the coded data.");
+            if (h.CreatesWavHeader && h.StoredHeaderDataBytes != 0)
+            {
+                uint stored = h.StoredHeaderDataBytes;
+                f.Add(Severity.Info, "monkeys-audio.wav-header-unused", () => Field("WAV Header Data Bytes"), _ =>
+                    $"The header flags a WAV header created on decompression, so the SDK counts no WAV header data in the file, whatever the {Counts.Of(stored, "byte", "bytes")} this field states, and writes a header of its own; the analyzer reads no format or channel mask from the file.", "old");
+            }
         }
         else
         {
@@ -311,12 +319,15 @@ internal static class Reader
         {
             if (h.HasDescriptor)
             {
-                configuration = MappedBytes.Read(reader, [new ByteRange(s.Junk, ApeHeader.DescriptorLength), new ByteRange(headerAt, ApeHeader.HeaderLength)]);
+                var ranges = new List<ByteRange> { new(s.Junk, ApeHeader.DescriptorLength), new(headerAt, ApeHeader.HeaderLength) };
+                AddFirstEntry(s, h, ranges, reader);
+                configuration = MappedBytes.Read(reader, ranges);
             }
             else
             {
                 // A file of version 3.80 also gives the decoder the table of the bits its frames start at, which follows the seek table.
                 var ranges = new List<ByteRange> { new(s.Junk, h.OldHeaderBytes) };
+                AddFirstEntry(s, h, ranges, reader);
                 long elements = h.SeekElementCount;
                 long bitsAt = s.SeekTableAt + (4 * elements);
                 if (h.FileVersion <= 3800 && elements > 0 && elements <= State.MaxSeekBits && bitsAt + elements <= reader.End)
@@ -325,9 +336,9 @@ internal static class Reader
                 }
 
                 configuration = MappedBytes.Read(reader, ranges);
-                if (ranges.Count > 1)
+                if (ranges.Count > 2)
                 {
-                    s.SeekBits = configuration.Span[h.OldHeaderBytes..].ToArray();
+                    s.SeekBits = configuration.Span.Slice(h.OldHeaderBytes + 4, (int)elements).ToArray();
                 }
             }
         }
@@ -349,6 +360,16 @@ internal static class Reader
         });
     }
 
+    // The first entry of the seek table follows the header in the decoder's configuration (then, in a file of 3.80, the table of start bits): the words
+    // of the frames are counted from it, not from the end of the structures before the frames (APEDecompress.cpp, nSeekRemainder).
+    private static void AddFirstEntry(State s, ApeHeader h, List<ByteRange> ranges, ByteReader reader)
+    {
+        if (h.SeekElementCount > 0 && s.SeekTableAt + 4 <= reader.End)
+        {
+            ranges.Add(new ByteRange(s.SeekTableAt, 4));
+        }
+    }
+
     private static void Frames(State s, ApeHeader h, Source source)
     {
         ByteReader reader = s.Reader;
@@ -357,7 +378,11 @@ internal static class Reader
         long present = Math.Max(0, Math.Min(elements * 4, reader.End - s.SeekTableAt)) / 4;
         s.SeekEntries = present;
         long frameCount = Math.Min(h.TotalFrames, present);
-        long dataSpan = s.FrameDataEnd - s.DataStart;
+        var seek = new SeekReader(reader, s.SeekTableAt, present);
+        long next = frameCount > 0 ? seek.Next() : 0;
+        long wordStart = frameCount > 0 ? next + s.Junk : s.DataStart;
+        records.WordStart = wordStart;
+        long dataSpan = s.FrameDataEnd - wordStart;
         long available = Nodes.Available(records);
         s.Figures = new StreamFigures(h.SampleRate);
         IDecodeSession? session = s.Session;
@@ -365,10 +390,7 @@ internal static class Reader
         long previousEnd = -1;
         bool followsGap = false;
         byte[] seekBits = s.SeekBits;
-        var seek = new SeekReader(reader, s.SeekTableAt, present);
-        long next = frameCount > 0 ? seek.Next() : 0;
-        long expectedFirst = frameCount > 0 ? next + s.Junk - s.DataStart : 0;
-        if (frameCount > 0 && expectedFirst != 0)
+        if (frameCount > 0 && wordStart != s.DataStart)
         {
             long first = next + s.Junk;
             long expected = s.DataStart;
@@ -383,7 +405,7 @@ internal static class Reader
                 s.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            long start = next + s.Junk - s.DataStart;
+            long start = next + s.Junk - wordStart;
             bool isLast = f == frameCount - 1;
             long end;
             if (isLast)
@@ -393,7 +415,7 @@ internal static class Reader
             else
             {
                 next = seek.Next();
-                end = next + s.Junk - s.DataStart;
+                end = next + s.Junk - wordStart;
             }
 
             uint blocks = f == h.TotalFrames - 1 ? h.FinalFrameBlocks : h.BlocksPerFrame;
@@ -419,7 +441,7 @@ internal static class Reader
                 {
                     if (usable - start >= 4)
                     {
-                        (crc, special, bool hasSpecial) = ReadStart(source, s.DataStart, start, usable, h.HasSpecialFrames, startBit);
+                        (crc, special, bool hasSpecial) = ReadStart(source, wordStart, start, usable, h.HasSpecialFrames, startBit);
                         s.StoredCrcs++;
                         if (hasSpecial)
                         {
@@ -454,7 +476,6 @@ internal static class Reader
             if (index < State.MaxListedFrames)
             {
                 records.Entries.Add(entry);
-                Notice(s, status, start, end, index, blocks);
             }
             else
             {
@@ -467,6 +488,9 @@ internal static class Reader
                 records.UnlistedEnd = Math.Max(records.UnlistedEnd, end);
             }
 
+            s.Findings.Redirect = index < State.MaxListedFrames ? null : () => Nodes.Unlisted(records);
+            Notice(s, status, start, f);
+            s.Findings.Redirect = null;
             s.Frames++;
             s.Samples += blocks;
             if ((status & EntryStatus.Misplaced) == 0)
@@ -485,34 +509,34 @@ internal static class Reader
         }
     }
 
-    private static long FileOffsetOf(Records records, long start) => records.DataStart + Math.Max(0, start);
+    private static long FileOffsetOf(Records records, long start) => records.WordStart + Math.Max(0, start);
 
-    private static void Notice(State s, EntryStatus status, long start, long end, int index, uint blocks)
+    private static void Notice(State s, EntryStatus status, long start, long index)
     {
         Records records = s.Records;
         if ((status & EntryStatus.Misplaced) != 0)
         {
-            long raw = start + s.DataStart;
-            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-misplaced", () => Nodes.Frame(records, index), count =>
+            long raw = start + s.Records.WordStart;
+            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-misplaced", () => Nodes.Frame(records, (int)index), count =>
                 $"The seek table puts frame {index} at 0x{raw:X}, outside the frame data or before the frame it follows, so its bytes cannot be told{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} placed the same way" : string.Empty)}.");
         }
 
         if ((status & EntryStatus.Cut) != 0)
         {
-            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-cut", () => Nodes.Frame(records, index), count =>
+            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-cut", () => Nodes.Frame(records, (int)index), count =>
                 $"The frame data ends inside frame {index}{(count > 1 ? $", and {Counts.Of(count - 1, "more frame lies", "more frames lie")} past its end" : string.Empty)}; a frame is read only as far as the file holds whole words of it.");
         }
 
         if ((status & EntryStatus.StartBitOutsideWord) != 0)
         {
-            int bit = s.SeekBits[index];
-            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-start-bit", () => Nodes.Frame(records, index), count =>
+            int bit = s.SeekBits[(int)index];
+            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-start-bit", () => Nodes.Frame(records, (int)index), count =>
                 $"The table of start bits puts frame {index} at bit {bit} of the word its seek entry names, but a word holds 32 bits; the decoder, like the SDK, starts the frame that many bits into the bytes from that word on{(count > 1 ? $", and {Counts.Of(count - 1, "more frame is", "more frames are")} placed the same way" : string.Empty)}.");
         }
 
         if ((status & EntryStatus.NoStartFields) != 0)
         {
-            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-too-short", () => Nodes.Frame(records, index), count =>
+            s.Findings.Add(Severity.Warning, "monkeys-audio.frame-too-short", () => Nodes.Frame(records, (int)index), count =>
                 $"Frame {index} is too short for the CRC and the special frame codes it starts with{(count > 1 ? $", and {Counts.Of(count - 1, "more frame is", "more frames are")} too" : string.Empty)}.");
         }
     }
@@ -564,25 +588,26 @@ internal static class Reader
         Records records = s.Records;
         long first = frame * s.Header.BlocksPerFrame;
         long held = Math.Min(e.End, Nodes.Available(records)) - e.Start;
+        string name = index >= 0 ? "Frame" : Nodes.UnlistedName;
         bool isTooLarge = held > State.MaxDecodedFrameBytes;
         bool isUnreadable = (e.Status & (EntryStatus.Misplaced | EntryStatus.NoStartFields)) != 0 || isTooLarge || e.End <= e.Start;
         if (isTooLarge && (e.Status & EntryStatus.Misplaced) == 0)
         {
             s.UnreadableFrames++;
             long length = held;
-            s.Findings.Add(Severity.Info, "monkeys-audio.frame-not-decoded", () => index >= 0 ? Nodes.Frame(records, index) : s.Stream, count =>
+            s.Findings.Add(Severity.Info, "monkeys-audio.frame-not-decoded", () => index >= 0 ? Nodes.Frame(records, (int)index) : s.Stream, count =>
                 $"Frame {frame} holds {Counts.Of(length, "byte", "bytes")}, more than the 64 MiB the analyzer reads into memory to decode a frame, so it is not decoded{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} not either" : string.Empty)}.");
         }
 
         if (isUnreadable)
         {
-            session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, records.DataStart), "Frame", first, (int)Math.Min(e.Blocks, int.MaxValue)) { IsUnreadable = true, FollowsGap = followsGap });
+            session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, records.WordStart), name, first, (int)Math.Min(e.Blocks, int.MaxValue)) { IsUnreadable = true, FollowsGap = followsGap });
             return true;
         }
 
         List<ByteRange> ranges = Nodes.FrameRanges(records, e);
         MappedBytes bytes = MappedBytes.Read(s.Reader, ranges);
-        session.Decode(new CodedFrame(bytes, "Frame", first, (int)Math.Min(e.Blocks, int.MaxValue))
+        session.Decode(new CodedFrame(bytes, name, first, (int)Math.Min(e.Blocks, int.MaxValue))
         {
             IsDamaged = (e.Status & EntryStatus.Cut) != 0,
             FollowsGap = followsGap,
@@ -602,7 +627,7 @@ internal static class Reader
             return null;
         }
 
-        return MappedBytes.Read(s.Reader, WordOrder.Ranges(records.DataStart, e.End, Math.Min(limit, e.End + 4)));
+        return MappedBytes.Read(s.Reader, WordOrder.Ranges(records.WordStart, e.End, Math.Min(limit, e.End + 4)));
     }
 
     // The digest of the coded data that the descriptor stores (APEHeader.h and MACLib.cpp, VerifyFileW2): the WAV header data, then the frame data and
