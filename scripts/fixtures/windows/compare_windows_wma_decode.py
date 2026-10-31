@@ -81,8 +81,10 @@ def analyzer_frames(report):
 
 def ffmpeg_samples(path):
     out = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", "framecrc", "-"], capture_output=True, text=True)
+    if out.returncode != 0:
+        return None, f"ffmpeg exited with {out.returncode}: {out.stderr.strip().splitlines()[-1][:80] if out.stderr.strip() else ''}"
     durations = [int(line.split(",")[3]) for line in out.stdout.splitlines() if line and not line.startswith("#")]
-    return sum(durations) if durations else (0 if out.returncode == 0 else None)
+    return sum(durations), None
 
 
 def hr_failed(text):
@@ -154,6 +156,10 @@ def main():
         print("Decoders: " + ", ".join(f"{k} {v}" for k, v in env.get("decodersUsed", {}).items()))
         print()
     ffmpeg = None if args.no_ffmpeg else shutil.which("ffmpeg")
+    if ffmpeg:
+        version = subprocess.run([ffmpeg, "-version"], capture_output=True, text=True).stdout.splitlines()
+        print(f"ffmpeg column: {version[0] if version else ffmpeg} (the local ffmpeg; the artifact's environment.json names the runner's: {env.get('ffmpeg', 'not recorded') if env_path.exists() else 'no environment.json'})")
+        print()
 
     rows = []
     details = []
@@ -170,9 +176,10 @@ def main():
         stream = audio_stream(report) if report else None
         analyzer = stream.get("samples") if stream else None
         ffm = None
+        ffmpeg_error = None
         source = args.fixtures / record.get("path", name)
         if ffmpeg and source.exists():
-            ffm = ffmpeg_samples(source)
+            ffm, ffmpeg_error = ffmpeg_samples(source)
 
         if reader.get("crashed"):
             reader_text = f"crashed {reader.get('exitCode')}"
@@ -186,7 +193,13 @@ def main():
             reader_text = "no PCM output"
         else:
             reader_text = str(reader.get("totalSamples"))
-        reader_total = reader.get("totalSamples") if reader.get("outputSet") else None
+        # The reader's total is the reference only where it reached the end of the stream with no failed
+        # read, no stall and no stop by the probe; else it is the samples before the stop, and the DMO's total is the reference.
+        reader_complete = bool(reader.get("outputSet") and reader.get("endOfStream") and not reader.get("stoppedBy")
+                               and not reader.get("stalled") and not reader.get("errorCount"))
+        reader_total = reader.get("totalSamples") if reader_complete else None
+        if reader.get("outputSet") and not reader_complete and not reader.get("crashed") and not reader.get("timedOut"):
+            reader_text = f"stopped at {reader.get('totalSamples')}" if not reader.get("stalled") else "stalled"
 
         if direct.get("crashed"):
             direct_text = f"crashed {direct.get('exitCode')}"
@@ -197,8 +210,11 @@ def main():
         else:
             direct_text = direct.get("error") or asf.get("error") or "no decoder"
         direct_total = direct.get("totalSamples")
+        reference, reference_from = (reader_total, "reader") if reader_total is not None else (direct_total, "decoder") if direct_total is not None else (None, None)
 
         notes = []
+        if ffmpeg_error:
+            notes.append(ffmpeg_error)
         figures = {"analyzer": analyzer, "ffmpeg": ffm, "reader": reader_total, "decoder": direct_total}
         known = {k: v for k, v in figures.items() if v is not None}
         if len(set(known.values())) > 1:
@@ -212,21 +228,24 @@ def main():
             notes.append(f"reader stalled after {reader.get('calls')} ReadSample calls, {reader.get('sampleCount')} samples, last timestamp {reader.get('lastTimestamp')}, "
                          f"{'inside ReadSample since ' + str(reader.get('readStartedAtMs')) + ' ms' if reader.get('inReadSample') else 'between calls'}")
         if reader.get("stoppedBy"):
-            notes.append("reader stopped by the probe: " + reader["stoppedBy"])
+            notes.append(f"reader stopped ({reader['stoppedBy']}) after {reader.get('totalSamples')} samples; reference is the decoder's")
         nots = record.get("directWithoutTimestamps") or {}
         if "totalSamples" in nots and nots["totalSamples"] != direct_total:
             notes.append(f"decoder without timestamps: {nots['totalSamples']}")
         events = reader_events(reader) if reader.get("opened") else {}
         if events and any(events.values()):
             notes.append("reader " + ", ".join(f"{v} {k}" for k, v in events.items() if v))
-        failed = [e for e in direct.get("inputs", []) if hr_failed(e.get("processInputHresult")) or any(hr_failed(o.get("hresult")) for o in e.get("outputs", []))]
+        # A first ProcessInput refused with DMO_E_NOTACCEPTING that the retry then took is not a failure.
+        failed = [e for e in direct.get("inputs", [])
+                  if (hr_failed(e.get("processInputHresult")) and not (e.get("retryHresult") and not hr_failed(e["retryHresult"])))
+                  or hr_failed(e.get("retryHresult")) or any(hr_failed(o.get("hresult")) for o in e.get("outputs", []))]
         silent = [e for e in direct.get("inputs", []) if e.get("frames") == 0 and e not in failed]
         if failed:
             notes.append(f"{len(failed)} objects with a failing HRESULT")
         if silent:
             notes.append(f"{len(silent)} objects without output")
         rows.append({"file": name, "tag": tag, "analyzer": analyzer, "ffmpeg": ffm, "reader": reader_total, "reader_text": reader_text,
-                     "decoder": direct_total, "decoder_text": direct_text, "notes": notes})
+                     "decoder": direct_total, "decoder_text": direct_text, "reference": reference, "reference_from": reference_from, "notes": notes})
 
         if tag in PER_OBJECT_TAGS and report and "inputs" in direct:
             frames = analyzer_frames(report)
@@ -236,12 +255,21 @@ def main():
                 if diff:
                     details.append((name, len(table), diff))
 
-    width = max(len(r["file"]) for r in rows) if rows else 10
-    header = f"{'file'.ljust(width)}  {'format':<12} {'analyzer':>9} {'ffmpeg':>9} {'reader':>14} {'decoder':>14}  notes"
+    # Files whose audio stream is not one of the WMA formats (PCM, MPEG audio, none) are counted apart.
+    others = [r for r in rows if r["tag"] not in TAGS]
+    rows = [r for r in rows if r["tag"] in TAGS]
+    width = max((len(r["file"]) for r in rows), default=10)
+    header = f"{'file'.ljust(width)}  {'format':<12} {'reference':>16} {'analyzer':>9} {'ffmpeg':>9} {'reader':>14} {'decoder':>14}  notes"
     print(header)
     print("-" * len(header))
     for r in rows:
-        print(f"{r['file'].ljust(width)}  {TAGS.get(r['tag'], fmt(r['tag'])):<12} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text'][:14]:>14} {r['decoder_text'][:14]:>14}  {'; '.join(r['notes'])}")
+        ref = "-" if r["reference"] is None else f"{r['reference']} ({r['reference_from']})"
+        print(f"{r['file'].ljust(width)}  {TAGS[r['tag']]:<12} {ref:>16} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text'][:14]:>14} {r['decoder_text'][:14]:>14}  {'; '.join(r['notes'])}")
+    if others:
+        by_tag = {}
+        for r in others:
+            by_tag.setdefault(hex(r["tag"]) if r["tag"] is not None else "no audio stream", []).append(r["file"])
+        print(f"\nNot WMA, left out of the table and the counts ({len(others)} files): " + "; ".join(f"{len(v)} with format tag {k}" for k, v in sorted(by_tag.items())))
 
     if details:
         print("\nMedia objects whose decoded samples differ from the analyzer's frames (versions 1 and 2):")
@@ -257,20 +285,20 @@ def main():
         pairs = [(r[a], r[b]) for r in rows if r[a] is not None and r[b] is not None]
         return sum(1 for x, y in pairs if x == y), len(pairs)
 
-    for label, a, b in (("reader = decoder", "reader", "decoder"), ("decoder = analyzer", "decoder", "analyzer"), ("reader = analyzer", "reader", "analyzer"),
-                        ("decoder = ffmpeg", "decoder", "ffmpeg"), ("reader = ffmpeg", "reader", "ffmpeg"), ("ffmpeg = analyzer", "ffmpeg", "analyzer")):
+    for label, a, b in (("reference = analyzer", "reference", "analyzer"), ("reference = ffmpeg", "reference", "ffmpeg"), ("ffmpeg = analyzer", "ffmpeg", "analyzer"),
+                        ("reader = decoder (reader complete)", "reader", "decoder")):
         same, of = count(a, b)
         print(f"  {label}: {same} of {of} files where both are known")
     print("\nPer format (files where both figures are known / agreeing):")
-    print(f"  {'format':<14} {'files':>5} {'analyzer=ffmpeg':>16} {'analyzer=reader':>16} {'analyzer=decoder':>17} {'reader=decoder':>15}")
-    for tag in sorted({r["tag"] for r in rows if r["tag"] is not None}):
+    print(f"  {'format':<14} {'files':>5} {'reference=analyzer':>19} {'reference=ffmpeg':>17} {'ffmpeg=analyzer':>16} {'reader=decoder':>15}")
+    for tag in sorted({r["tag"] for r in rows}):
         group = [r for r in rows if r["tag"] == tag]
         cells = []
-        for a, b in (("analyzer", "ffmpeg"), ("analyzer", "reader"), ("analyzer", "decoder"), ("reader", "decoder")):
+        for a, b in (("reference", "analyzer"), ("reference", "ffmpeg"), ("ffmpeg", "analyzer"), ("reader", "decoder")):
             pairs = [(r[a], r[b]) for r in group if r[a] is not None and r[b] is not None]
             cells.append(f"{sum(1 for x, y in pairs if x == y)}/{len(pairs)}")
-        print(f"  {TAGS.get(tag, hex(tag)):<14} {len(group):>5} {cells[0]:>16} {cells[1]:>16} {cells[2]:>17} {cells[3]:>15}")
-    print(f"  files: {n}; Source Reader gave no samples for {sum(1 for r in rows if r['reader'] is None)}; decoder gave none for {sum(1 for r in rows if r['decoder'] is None)}")
+        print(f"  {TAGS[tag]:<14} {len(group):>5} {cells[0]:>19} {cells[1]:>17} {cells[2]:>16} {cells[3]:>15}")
+    print(f"  WMA files: {n}; no reference for {sum(1 for r in rows if r['reference'] is None)}; the reader stopped, stalled or crashed on {sum(1 for r in rows if r['reader'] is None and r['reader_text'].split()[0] in ('stopped', 'stalled', 'crashed', 'timed'))}")
 
     if args.json:
         args.json.write_text(json.dumps(rows, indent=1) + "\n", encoding="utf-8")
