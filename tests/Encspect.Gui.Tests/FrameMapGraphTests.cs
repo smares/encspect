@@ -409,25 +409,76 @@ public class FrameMapGraphTests
     [Fact]
     public void A_series_of_runs_of_frames_names_rings_and_marks_the_run_that_holds_a_frame()
     {
-        // 5 runs of 16 frames of 100 bytes each, starting at 1,000.
-        double[] x = [.. Enumerable.Range(0, 5).Select(i => 1000.0 + (i * 1600))];
-        Series runs = new("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 100, 200, 100, 200, 100 }) { FramesPerPoint = 16 };
-        MapFinding[] findings = [new(1000 + (1600 * 2) + (100 * 5), Severity.Error, "damaged", 1), new(1000 + 1600 + 50, Severity.Warning, "not a run start", 1)];
+        // Runs of 16, 27, 16, 1 and 10 frames: the stream has 70.
+        double[] x = [1000, 2600, 5300, 6900, 7000];
+        var frameRuns = new FrameRuns(new long[] { 1, 17, 44, 60, 61 }, 70);
+        Series runs = new("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 100, 200, 100, 200, 100 }) { Runs = frameRuns };
+        MapFinding[] findings = [new(5300 + 500, Severity.Error, "damaged", 1), new(2600 + 50, Severity.Warning, "not a run start", 1)];
         FrameMapGraph map = Map(runs, findings: findings);
 
-        Assert.Equal(16, map.RunLength);
-        Assert.Equal("One square per run of 16 frames", map.Caption);
+        Assert.Equal("One square per run of frames", map.Caption);
         Assert.Equal([1, 2], map.FindingSquares());
-        Assert.Equal(2, map.IndexOfFrame(1000 + (1600 * 2) + (100 * 5)));
-        Assert.StartsWith("Frames 33 to 48 · ", map.Describe(2), StringComparison.Ordinal);
-        Assert.StartsWith("From frame 65 · ", map.Describe(4), StringComparison.Ordinal);
+        Assert.Equal(2, map.IndexOfFrame(5800));
+        Assert.StartsWith("Frames 44 to 59 · ", map.Describe(2), StringComparison.Ordinal);
+        Assert.StartsWith("Frames 17 to 43 · ", map.Describe(1), StringComparison.Ordinal);
+        Assert.StartsWith("Frame 60 · ", map.Describe(3), StringComparison.Ordinal);
+        Assert.StartsWith("Frames 61 to 70 · ", map.Describe(4), StringComparison.Ordinal);
         Assert.Contains("Error: damaged", map.Describe(2), StringComparison.Ordinal);
 
         var line = new LineGraph(runs, x.AsMemory(), 10);
-        Assert.Equal(3, line.IndexOfFrame(1000 + (1600 * 3) + 1500));
-        Assert.StartsWith("Frames 17 to 32 · ", line.Describe(1), StringComparison.Ordinal);
+        Assert.Equal(3, line.IndexOfFrame(6950));
+        Assert.StartsWith("Frames 17 to 43 · ", line.Describe(1), StringComparison.Ordinal);
 
-        var locator = SampleLocator.Of(x.AsMemory(), 5 * 16 * 40, isRuns: true);
-        Assert.Equal(2 * 16 * 40, locator.PositionOfFrame(1000 + (1600 * 2) + (100 * 5)));
+        // 70 frames of 40 samples: sample 44 * 40 + 5 is in frame 45 (index 44), the second of run 3, which starts at frame 44.
+        var locator = SampleLocator.Of(x.AsMemory(), 70 * 40, runs: frameRuns);
+        Assert.Equal(5300, locator.FrameOffsetAt((43 * 40) + 5));
+        Assert.Equal(0, locator.FramesIntoRunAt((43 * 40) + 5));
+        Assert.Equal(1, locator.FramesIntoRunAt((44 * 40) + 5));
+        Assert.Equal(43 * 40, locator.PositionOfFrame(5800));
+    }
+
+    [Fact]
+    public void The_runs_of_a_truehd_stream_hold_the_frames_of_the_tree_and_ring_its_findings()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", "built-parity-mismatch.thd"));
+        StreamInfo stream = report.Streams[0];
+        Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+        FrameRuns runs = bitrate.Runs!;
+        var frames = new List<Node>();
+        void Collect(Node node)
+        {
+            foreach (Node child in node.Children)
+            {
+                if (child.Kind == NodeKind.Frame)
+                {
+                    frames.Add(child);
+                }
+                else if (child.Kind is NodeKind.Stream or NodeKind.Detail)
+                {
+                    Collect(child);
+                }
+            }
+        }
+
+        foreach (Node node in stream.Nodes)
+        {
+            Collect(node);
+        }
+
+        Assert.Equal(frames.Count, runs.FrameCount);
+        IReadOnlyList<MapFinding> findings = GraphsViewModel.MapFindings(report);
+        GraphChoice entry = GraphsViewModel.For(stream, findings).Single(e => e.Title == "Bitrate");
+        var map = (FrameMapGraph)entry.Forms.Single(f => f.Kind == GraphForm.Map).Graph;
+        for (int n = 0; n < frames.Count; n++)
+        {
+            int run = map.IndexOfFrame(frames[n].Offset)!.Value;
+            Assert.InRange(n + 1, runs.FirstFrames.Span[run], runs.FirstFrames.Span[run] + runs.FramesIn(run) - 1);
+        }
+
+        Assert.NotEmpty(findings);
+        foreach (MapFinding finding in findings)
+        {
+            Assert.Contains(map.IndexOfFrame(finding.Offset)!.Value, map.FindingSquares());
+        }
     }
 }

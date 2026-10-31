@@ -74,7 +74,7 @@ Read from the parsers' code at e8f51bc. Only MPEG audio, AAC and AC-3 build cate
 | WMA Voice | a superframe | "Bitrate" | none |
 | WavPack | a block | "Bitrate" | none |
 | FLAC, Monkey's Audio, TTA | a frame | "Bitrate" | none |
-| TrueHD and MLP | a run of 16 access units | "Bitrate" | none |
+| TrueHD and MLP | a run of access units (`frameRuns` names where each starts) | "Bitrate" | none |
 | WAV, Wave64, AIFF | (no units) | none | none |
 
 The per-second series ("… Over Time") have no units and no map.

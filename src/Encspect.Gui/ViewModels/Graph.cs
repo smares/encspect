@@ -41,6 +41,10 @@ public abstract class Graph
     // steps through them.
     public abstract long? FrameAt(int index, long? selected);
 
+    // How many frames after the one at FrameAt the point's frame is, where the point leads to a run of frames and the time it stands
+    // for lies inside it; 0 otherwise.
+    public virtual int FramesAfterAt(int index) => 0;
+
     // The point that stands for the frame at an offset, to mark it on the chart, or null.
     public abstract int? IndexOfFrame(long offset);
 
@@ -77,19 +81,19 @@ public abstract class Graph
         return found;
     }
 
-    // The text for a point's frames: "Frame 3", or "Frames 33 to 48" for a point that covers a run of them (the last run's end is
-    // not known to the series, so it says where the run starts).
-    private protected static string FramesText(int index, int count, int perPoint)
+    // The text for a point's frames: "Frame 3", or "Frames 33 to 48" for a point that stands for a run of them.
+    private protected static string FramesText(int index, FrameRuns? runs)
     {
-        if (perPoint <= 1)
+        if (runs is null)
         {
             return $"Frame {(index + 1).ToString("N0", CultureInfo.InvariantCulture)}";
         }
 
-        long first = ((long)index * perPoint) + 1;
-        return index + 1 < count
-            ? $"Frames {first.ToString("N0", CultureInfo.InvariantCulture)} to {(first + perPoint - 1).ToString("N0", CultureInfo.InvariantCulture)}"
-            : $"From frame {first.ToString("N0", CultureInfo.InvariantCulture)}";
+        long first = runs.FirstFrames.Span[index];
+        long frames = runs.FramesIn(index);
+        return frames == 1
+            ? $"Frame {first.ToString("N0", CultureInfo.InvariantCulture)}"
+            : $"Frames {first.ToString("N0", CultureInfo.InvariantCulture)} to {(first + frames - 1).ToString("N0", CultureInfo.InvariantCulture)}";
     }
 
     // The frame index of an offset among sorted frame offsets, or -1.
@@ -153,7 +157,7 @@ public sealed class LineGraph : Graph
         double x = Series.X.Span[index];
         string value = FormatValue(ValueAt(index), Unit);
         return Axis == SeriesAxis.FrameOffset
-            ? $"{FramesText(index, Count, Series.FramesPerPoint)} · {Format.Hex((long)x)} · {value}"
+            ? $"{FramesText(index, Series.Runs)} · {Format.Hex((long)x)} · {value}"
             : $"{Format.Clock(x)} · {value}";
     }
 
@@ -185,7 +189,7 @@ public sealed class LineGraph : Graph
     {
         if (Axis == SeriesAxis.FrameOffset)
         {
-            int found = Series.FramesPerPoint > 1 ? RunIndex(Series.X.Span, offset) : FrameIndex(Series.X.Span, offset);
+            int found = Series.Runs is not null ? RunIndex(Series.X.Span, offset) : FrameIndex(Series.X.Span, offset);
             return found >= 0 ? found : null;
         }
 
@@ -256,8 +260,8 @@ public sealed class DistributionGraph : Graph
         ArgumentNullException.ThrowIfNull(series);
 
         _series = series;
-        _unitWord = series.FramesPerPoint > 1 ? "run" : "frame";
-        string what = series.FramesPerPoint > 1 ? $"How many runs of {series.FramesPerPoint} frames have each value." : "How many frames have each value.";
+        _unitWord = series.Runs is not null ? "run" : "frame";
+        string what = series.Runs is not null ? "How many runs of frames have each value." : "How many frames have each value.";
         Description = series.Description is { } description ? what + " " + description : what;
         ReadOnlySpan<double> values = series.Values.Span;
         var counts = new SortedDictionary<double, int>();
@@ -333,7 +337,7 @@ public sealed class DistributionGraph : Graph
 
     public override int? IndexOfFrame(long offset)
     {
-        int frame = _series.FramesPerPoint > 1 ? RunIndex(_series.X.Span, offset) : FrameIndex(_series.X.Span, offset);
+        int frame = _series.Runs is not null ? RunIndex(_series.X.Span, offset) : FrameIndex(_series.X.Span, offset);
         return frame >= 0 && BarOf(_series.Values.Span[frame]) is var bar and >= 0 ? bar : null;
     }
 

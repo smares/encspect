@@ -52,9 +52,9 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(Encspect.Core.Confidence.Low, read.Summary.WriterConfidence);
     }
 
-    // The writer (version 4), the protection (version 5) and the verification verdict (version 6) changed what a summary holds and so the store's layout: an older store reads as empty, and the folder is analyzed again.
+    // The writer (version 4) and the protection (version 5) changed what a summary holds and so the store's layout, and version 7 dropped the verification verdict, which nothing read: an older store reads as empty, and the folder is analyzed again.
     [Fact]
-    public void The_store_format_was_bumped_for_the_writer_the_protection_and_the_verification()
+    public void The_store_format_was_bumped_for_the_writer_the_protection_and_the_dropped_verdict()
     {
         Assert.Equal(7, SummaryCache.FormatVersion);
     }

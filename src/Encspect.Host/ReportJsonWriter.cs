@@ -382,9 +382,22 @@ public static class ReportJsonWriter
                 WriteDeclaredRange(writer, range);
             }
 
-            if (series.FramesPerPoint > 1)
+            if (series.Runs is { } runs)
             {
-                writer.WriteNumber("framesPerPoint", series.FramesPerPoint);
+                writer.WriteStartObject("frameRuns");
+                writer.WriteStartArray("firstFrames");
+                foreach (long frame in runs.FirstFrames.Span)
+                {
+                    writer.WriteNumberValue(frame);
+                    if (writer.BytesPending > FlushThreshold)
+                    {
+                        writer.Flush();
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteNumber("frameCount", runs.FrameCount);
+                writer.WriteEndObject();
             }
 
             if (explain && series.Description is { } description)

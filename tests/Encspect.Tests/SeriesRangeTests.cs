@@ -103,13 +103,13 @@ public class SeriesRangeTests
     }
 
     [Fact]
-    public void The_json_writes_frames_per_point_only_above_one_and_a_point_covers_at_least_one_frame()
+    public void The_json_writes_the_first_frame_of_each_run_only_for_a_series_of_runs()
     {
-        double[] x = [0, 10];
-        double[] values = [128, 160];
+        double[] x = [0, 10, 20];
+        double[] values = [128, 160, 140];
         Series[] series =
         [
-            new("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { FramesPerPoint = 16 },
+            new("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { Runs = new FrameRuns(new long[] { 1, 17, 44 }, 50) },
             new("Frames", "kbps", SeriesAxis.FrameOffset, x, values),
         ];
         Report report = new("a.bin", new Node("File", 0, 20), [], [new StreamInfo { Nodes = [], Codec = "Test", Series = series }]);
@@ -118,9 +118,22 @@ public class SeriesRangeTests
         using JsonDocument document = JsonDocument.Parse(output.ToArray());
         JsonElement[] written = document.RootElement[0].GetProperty("streams")[0].GetProperty("series").EnumerateArray().ToArray();
 
-        Assert.Equal(16, written[0].GetProperty("framesPerPoint").GetInt32());
-        Assert.False(written[1].TryGetProperty("framesPerPoint", out _));
-        Assert.Equal(1, series[1].FramesPerPoint);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Series("Runs", "kbps", SeriesAxis.FrameOffset, x, values) { FramesPerPoint = 0 });
+        JsonElement runs = written[0].GetProperty("frameRuns");
+        Assert.Equal([1L, 17L, 44L], runs.GetProperty("firstFrames").EnumerateArray().Select(v => v.GetInt64()));
+        Assert.Equal(50, runs.GetProperty("frameCount").GetInt64());
+        Assert.False(written[1].TryGetProperty("frameRuns", out _));
+        Assert.Equal(27, series[0].Runs!.FramesIn(1));
+        Assert.Equal(1, series[0].Runs!.RunOf(17));
+        Assert.Equal(-1, new FrameRuns(new long[] { 3 }, 5).RunOf(2));
+    }
+
+    [Fact]
+    public void Runs_need_ascending_first_frames_inside_the_stream_and_a_first_frame_for_each_point()
+    {
+        Assert.Throws<ArgumentException>(() => new FrameRuns(new long[] { 1, 1 }, 5));
+        Assert.Throws<ArgumentException>(() => new FrameRuns(new long[] { 0, 2 }, 5));
+        Assert.Throws<ArgumentException>(() => new FrameRuns(ReadOnlyMemory<long>.Empty, 5));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new FrameRuns(new long[] { 1, 9 }, 5));
+        Assert.Throws<ArgumentException>(() => new Series("Runs", "kbps", SeriesAxis.FrameOffset, new double[] { 0, 10 }, new double[] { 1, 2 }) { Runs = new FrameRuns(new long[] { 1 }, 5) });
     }
 }

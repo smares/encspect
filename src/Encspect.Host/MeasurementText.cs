@@ -18,8 +18,8 @@ public enum MeasurementFigure
     MaximumShortTermLoudness,
     MaximumTruePeakLevel,
     SamplePeak,
-    RMSLevel,
-    DCOffset,
+    RmsLevel,
+    DcOffset,
     Clipping,
     DigitalSilence,
     ZeroSamples,
@@ -199,8 +199,8 @@ public static class MeasurementText
         bool isFloat = levels.Format != SampleFormat.Integer;
 
         lines.Add(new MeasurementLine(MeasurementFigure.SamplePeak, "Sample Peak", $"{Tenths(stream.SamplePeakTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.SamplePeakTenths)))}", SamplePeakDescription, LevelsTopic));
-        lines.Add(new MeasurementLine(MeasurementFigure.RMSLevel, "RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
-        lines.Add(new MeasurementLine(MeasurementFigure.DCOffset, "DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.RmsLevel, "RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.DcOffset, "DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
 
         string what = isFloat ? "at or beyond full scale" : "at full scale";
         string clipping = stream.ClippingRuns == 0

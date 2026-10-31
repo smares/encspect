@@ -118,6 +118,9 @@ public abstract class TimeGraph : AudioGraph
     public override long? FrameAt(int index, long? selected) =>
         (uint)index >= (uint)Columns || Locator is not { } locator ? null : locator.FrameOffsetAt(PositionOfColumn(index));
 
+    public override int FramesAfterAt(int index) =>
+        (uint)index >= (uint)Columns || Locator is not { } locator ? 0 : locator.FramesIntoRunAt(PositionOfColumn(index));
+
     public override int? IndexOfFrame(long offset)
     {
         if (Locator?.PositionOfFrame(offset) is not { } position || Columns == 0)

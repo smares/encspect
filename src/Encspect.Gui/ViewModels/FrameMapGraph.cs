@@ -127,20 +127,20 @@ public sealed class FrameMapGraph : Graph
     }
 
     // The line above the squares.
-    public string Caption => HasOwnSquares ? "One square per point of this series" : RunLength > 1 ? $"One square per run of {RunLength} frames" : "One square per frame";
+    public string Caption => HasOwnSquares ? "One square per point of this series" : Runs is not null ? "One square per run of frames" : "One square per frame";
 
-    // The frames a square covers where each point of the series is a run of them and the squares are the points; 1 otherwise.
-    public int RunLength
+    // The runs of frames the squares are, where each point of the series is a run of them and the squares are the points.
+    public FrameRuns? Runs
     {
         get
         {
             Resolve();
-            return _identity && !_hasOwnSquares ? _numbers?.FramesPerPoint ?? 1 : 1;
+            return _identity && !_hasOwnSquares ? _numbers?.Runs : null;
         }
     }
 
     // The square that holds a frame: the one at its offset, or for squares that are runs, the run it lies in.
-    private int SquareHolding(long offset) => RunLength > 1 ? RunIndex(_squares.Span, offset) : FrameIndex(_squares.Span, offset);
+    private int SquareHolding(long offset) => Runs is not null ? RunIndex(_squares.Span, offset) : FrameIndex(_squares.Span, offset);
 
     // The byte offset of a square.
     public long OffsetOf(int square)
@@ -614,7 +614,7 @@ public sealed class FrameMapGraph : Graph
             return string.Empty;
         }
 
-        string head = $"{FramesText(index, Count, RunLength)} · {Format.Hex(OffsetOf(index))}";
+        string head = $"{FramesText(index, Runs)} · {Format.Hex(OffsetOf(index))}";
         string body = _numbers is not null ? DescribeNumber(index) : DescribeUnit(index);
         var parts = new List<string> { head, body };
         foreach (ResolvedFinding finding in Resolved.Where(f => f.Square == index && IsShown(f.Severity, shown)))
@@ -754,5 +754,5 @@ public sealed class FrameMapGraph : Graph
 
     // What a swatch of the key says on hover: "128 kbps · 1,263 frames".
     public string DescribeKeyEntry(int entry) =>
-        $"{KeyEntryText(entry)} · {(RunLength > 1 ? Format.Count(EnsureScale().Counts[entry], "run", "runs") : Format.Count(EnsureScale().Counts[entry], "frame", "frames"))}";
+        $"{KeyEntryText(entry)} · {(Runs is not null ? Format.Count(EnsureScale().Counts[entry], "run", "runs") : Format.Count(EnsureScale().Counts[entry], "frame", "frames"))}";
 }

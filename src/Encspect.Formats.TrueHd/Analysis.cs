@@ -52,6 +52,7 @@ internal sealed class Analysis
     private long _runBits;
     private long _runSamples;
     private long _runOffset;
+    private long _runFirstFrame;
 
     public Analysis(AnalysisContext context)
     {
@@ -1117,6 +1118,7 @@ internal sealed class Analysis
         if (_runUnits == 0)
         {
             _runOffset = offset;
+            _runFirstFrame = Units;
         }
 
         _runUnits++;
@@ -1135,7 +1137,7 @@ internal sealed class Analysis
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength, _runFirstFrame);
         }
 
         _runUnits = 0;

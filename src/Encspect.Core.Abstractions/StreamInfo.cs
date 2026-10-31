@@ -163,15 +163,80 @@ public sealed class Series
     // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
     public GraphConcept Concept { get; init; }
 
-    private readonly int _framesPerPoint = 1;
+    private FrameRuns? _runs;
 
-    // How many frames each point of a series over frames covers: 1 where a point is a frame, more where it is a run of that many
-    // consecutive frames (the last run may hold fewer), starting at the frame at the point's offset and ending before the next
-    // point's. A front end names, marks and finds a frame by the point whose run holds it. Meaningless for a series over seconds.
-    public int FramesPerPoint
+    // Set where a point of a series over frames stands for a run of consecutive frames instead of one frame: the frame each run
+    // starts at. A front end names, rings, marks and finds a frame by the run that holds it. One entry for each point; null where
+    // each point is a frame.
+    public FrameRuns? Runs
     {
-        get => _framesPerPoint;
-        init => _framesPerPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "A point covers at least one frame.");
+        get => _runs;
+        init => _runs = value is null || value.FirstFrames.Length == X.Length
+            ? value
+            : throw new ArgumentException("A series of runs needs one first frame for each point.", nameof(value));
+    }
+}
+
+// The frames that the points of a series cover, where a point is a run of frames: the number of the frame each run starts at, in
+// the numbering of the stream's frame nodes (counted from 1, in file order). A run ends where the next starts, and the last at
+// the stream's last frame.
+public sealed class FrameRuns
+{
+    public FrameRuns(ReadOnlyMemory<long> firstFrames, long frameCount)
+    {
+        if (firstFrames.IsEmpty)
+        {
+            throw new ArgumentException("Runs need at least one first frame.", nameof(firstFrames));
+        }
+
+        ReadOnlySpan<long> frames = firstFrames.Span;
+        for (int i = 0; i < frames.Length; i++)
+        {
+            if (frames[i] < 1 || (i > 0 && frames[i] <= frames[i - 1]))
+            {
+                throw new ArgumentException("The first frames must be at least 1 and strictly ascending.", nameof(firstFrames));
+            }
+        }
+
+        if (frameCount < frames[^1])
+        {
+            throw new ArgumentOutOfRangeException(nameof(frameCount), "The last run starts at a frame the stream has.");
+        }
+
+        FirstFrames = firstFrames;
+        FrameCount = frameCount;
+    }
+
+    public ReadOnlyMemory<long> FirstFrames { get; }
+
+    // The frames of the stream, which the last run ends with.
+    public long FrameCount { get; }
+
+    // The number of frames in a run.
+    public long FramesIn(int run) => (run + 1 < FirstFrames.Length ? FirstFrames.Span[run + 1] : FrameCount + 1) - FirstFrames.Span[run];
+
+    // The run that holds a frame (counted from 1): the last that starts at or before it; -1 before the first.
+    public int RunOf(long frame)
+    {
+        ReadOnlySpan<long> frames = FirstFrames.Span;
+        int low = 0;
+        int high = frames.Length - 1;
+        int found = -1;
+        while (low <= high)
+        {
+            int middle = (low + high) >>> 1;
+            if (frames[middle] <= frame)
+            {
+                found = middle;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return found;
     }
 }
 

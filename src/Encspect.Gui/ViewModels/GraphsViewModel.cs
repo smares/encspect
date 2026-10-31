@@ -400,7 +400,7 @@ public sealed class GraphsViewModel : ObservableObject
     }
 
     private static GraphFormChoice MapForm(FrameMapGraph graph) =>
-        new(GraphForm.Map, "Frame Map", graph.RunLength > 1 ? $"Every run of {graph.RunLength} frames as a square, in rows like text" : "Every frame as a square, in rows like text", graph);
+        new(GraphForm.Map, "Frame Map", graph.Runs is not null ? "Every run of frames as a square, in rows like text" : "Every frame as a square, in rows like text", graph);
 
     private static GraphChoice Entry(List<Series> quantity, ReadOnlyMemory<double> frameOffsets, double duration, IReadOnlyList<MapFinding>? findings)
     {
@@ -410,7 +410,7 @@ public sealed class GraphsViewModel : ObservableObject
         var forms = new List<GraphFormChoice>();
         if (perFrame is not null)
         {
-            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", perFrame.FramesPerPoint > 1 ? $"One point for every run of {perFrame.FramesPerPoint} frames" : "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
+            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", perFrame.Runs is not null ? "One point for every run of frames" : "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
         }
 
         if (perSecond is not null)
@@ -425,7 +425,7 @@ public sealed class GraphsViewModel : ObservableObject
         // The bitrate is the series in kbps, whatever a format names it.
         if (perFrame is { Unit: "kbps" })
         {
-            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", perFrame.FramesPerPoint > 1 ? $"How many runs of {perFrame.FramesPerPoint} frames have each value" : "How many frames have each value", new DistributionGraph(perFrame)));
+            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", perFrame.Runs is not null ? "How many runs of frames have each value" : "How many frames have each value", new DistributionGraph(perFrame)));
         }
 
         if (perFrame is not null)
@@ -481,12 +481,16 @@ public sealed class GraphsViewModel : ObservableObject
         SelectedStream = null;
     }
 
+    // With FrameRequested: the frames after the one at its offset that the click leads to (see Graph.FramesAfterAt).
+    public int FramesAfterRequested { get; private set; }
+
     // A click on a point: selects its frame, if it leads to one.
     public void Activate(int index)
     {
         if (Graph is { } graph && graph.FrameAt(index, _markedFrame) is { } offset)
         {
             _click = (graph, index, offset);
+            FramesAfterRequested = graph.FramesAfterAt(index);
             FrameRequested?.Invoke(this, offset);
         }
     }
