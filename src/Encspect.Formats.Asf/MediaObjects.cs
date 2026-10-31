@@ -95,7 +95,7 @@ public sealed partial class AsfParser
                 {
                     if (data is not null)
                     {
-                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
+                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "next", anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. They are dropped.");
                         data = null;
                     }
@@ -139,7 +139,7 @@ public sealed partial class AsfParser
                 }
 
                 collected += take;
-                isCutByFile = (packet.Issues & PacketIssues.Truncated) != 0;
+                isCutByFile = (packet.Issues & PacketIssues.Truncated) != 0 && payload.DataPosition + payload.DataLength >= count;
                 if (collected == total)
                 {
                     yield return new MappedBytes(data, ranges);
@@ -153,11 +153,17 @@ public sealed partial class AsfParser
 
         if (data is not null)
         {
-            findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
-                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: {(isKeepingPartial ? "the next one starts first, the data ends first or later fragments never arrive. The bytes of one that the file ends inside are handed to the codec's parser as they are; the others are dropped." : "the data ends first. They are dropped.")}");
-            if (isKeepingPartial && collected > 0 && isCutByFile && end >= reader.Start + reader.Length)
+            bool isHandedOver = isKeepingPartial && collected > 0 && isCutByFile && end >= reader.Start + reader.Length;
+            if (isHandedOver)
             {
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "file", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are.");
                 yield return new MappedBytes(data.AsMemory(0, collected), ranges);
+            }
+            else
+            {
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "end", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
             }
         }
     }

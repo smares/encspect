@@ -272,10 +272,10 @@ public class WmaLosslessPacketTests
         WmaStream stream = WmaStream.LoadLossless();
         stream.Data[1] = 0x01;
         CodecContext context = stream.RunLossless();
-        Node size = Find(context.Parent, "Bits Per Sample");
+        Node size = Find(context.Parent, "Bits Per Sample Low Byte");
         Assert.Equal(16L, size.Value!.AsInteger());
         Assert.Equal(1, size.Length);
-        Node high = Find(context.Parent, "Sample Size High Byte");
+        Node high = Find(context.Parent, "Bits Per Sample High Byte");
         Assert.Equal(size.Offset + 1, high.Offset);
         Assert.Equal(1, high.Length);
     }
@@ -300,6 +300,53 @@ public class WmaLosslessPacketTests
         Report report = Analyzer.CreateDefault().Analyze("never.wma", new MemoryStream(AsfBuilder.Assemble(properties, size, packets)));
         Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
         Assert.Equal(86_016, Assert.Single(report.Streams).Samples);
+    }
+
+    // The packets of the 16-bit stereo fixture as an ASF file; stated(i) is the size packet i states for its media object.
+    private static (byte[] File, int PacketSize, int Count) FixtureFile(Func<int, int, uint>? stated = null)
+    {
+        (byte[] properties, _) = AsfBuilder.Take(WmaStream.Lossless, 0x0163);
+        List<byte[]> objects = AsfBuilder.Objects(WmaStream.Lossless, 0x0163);
+        int size = 23 + objects[0].Length;
+        var packets = new List<byte[]>();
+        for (int i = 0; i < objects.Count; i++)
+        {
+            byte[] packet = AsfBuilder.Packet(size, 1, i & 0xFF, 0, stated?.Invoke(i, objects.Count) ?? (uint)objects[i].Length, (uint)(i * 46));
+            objects[i].CopyTo(packet, 23);
+            packets.Add(packet);
+        }
+
+        return (AsfBuilder.Assemble(properties, size, packets), size, objects.Count);
+    }
+
+    // The Data Object states an end 6,000 bytes into the last media object, with the file going on: the demuxer does not hand the cut object over.
+    [Fact]
+    public void AnObjectCutByTheDataObjectsEndIsDropped()
+    {
+        (byte[] file, int size, int count) = FixtureFile();
+        int at = file.Length - (count * size) - 50;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt64LittleEndian(file.AsSpan(at + 16), (ulong)(50 + ((count - 1) * size) + 23 + 6000));
+        Report report = Analyzer.CreateDefault().Analyze("stated.wma", new MemoryStream(file));
+        Assert.Equal(86_016, Assert.Single(report.Streams).Samples);
+        Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
+    }
+
+    // An incomplete object in the middle (the next one starts first) and one the file ends inside are described and counted apart: the first is
+    // dropped, the second handed over.
+    [Fact]
+    public void TheTwoKindsOfIncompleteObjectAreCountedApart()
+    {
+        (byte[] file, int size, int count) = FixtureFile((i, n) => i == 4 ? (uint)(13_375 + 500) : 13_375u);
+        byte[] cut = file[..^(13_375 - 6000)];
+        Report report = Analyzer.CreateDefault().Analyze("both.wma", new MemoryStream(cut));
+        Finding[] found = [.. report.Findings.Where(f => f.Code == "asf.object-incomplete")];
+        Assert.Equal(2, found.Length);
+        Finding middle = Assert.Single(found, f => f.Message.Contains("the next one starts first", StringComparison.Ordinal));
+        Assert.Equal(1, middle.Count);
+        Assert.Contains("dropped", middle.Message, StringComparison.Ordinal);
+        Finding end = Assert.Single(found, f => f.Message.Contains("the file ends inside", StringComparison.Ordinal));
+        Assert.Equal(1, end.Count);
+        Assert.Contains("handed to the codec's parser", end.Message, StringComparison.Ordinal);
     }
 
     private static Node Find(Node node, string name)

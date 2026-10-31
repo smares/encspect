@@ -20,6 +20,9 @@ internal sealed class FindingCollector
     // report names its own stream number.
     public void Add(Severity severity, string code, int streamNumber, Node node, Func<int, string> message) => Add(severity, code, streamNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), () => node, message);
 
+    // The same, for a code whose cases of one stream fall into kinds that are described and counted apart.
+    public void Add(Severity severity, string code, int streamNumber, string kind, Node node, Func<int, string> message) => Add(severity, code, $"{streamNumber}:{kind}", () => node, message);
+
     private void Add(Severity severity, string code, string? scope, Func<Node> node, Func<int, string> message)
     {
         string key = scope is null ? code : $"{code}#{scope}";

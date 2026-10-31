@@ -221,6 +221,15 @@ internal sealed class WmaPacketReader
             long overreadOffset = packet.FileStart;
             record.Kind = PacketKind.Short;
             Data.Packets.Add(record);
+            // The run it does not touch stays held where its count reads as 0; a count above 0 saves a negative length, which empties the buffer.
+            packet.Span[..length].CopyTo(_packetBuffer);
+            Array.Clear(_packetBuffer, length, _packetBuffer.Length - length);
+            var header = new Bits(_packetBuffer, p.HeaderBits) { Position = 6 };
+            if (header.Read(p.CountWidth) > 0)
+            {
+                ClearSaved();
+            }
+
             _findings.Add(Severity.Warning, "wma.packet-overread", () => PacketNode(index), count =>
                 count == 1
                     ? $"A media object holds fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past its end and counts a loss ({DecoderFile}). It is at 0x{WmaText.Hex(overreadOffset)}."
@@ -473,8 +482,26 @@ internal sealed class WmaPacketReader
         bool isRefused = false;
         if (isDropped)
         {
-            ClearSaved();
-            taken = count;
+            // A loss is pending (a later frame failed, a sequence gap, a packet shorter than its header): the bits held from before stay held
+            // and the count bits are still appended to them under the buffer rule. They are passed and the run thrown away with the loss, or
+            // refused, which is the same as a refused append without a loss.
+            if (count > 0 && _savedBits > 0)
+            {
+                if (Append(packet, payloadStart, count))
+                {
+                    taken = count;
+                    ClearSaved();
+                }
+                else
+                {
+                    isRefused = true;
+                }
+            }
+            else
+            {
+                ClearSaved();
+                taken = count;
+            }
         }
         else if (count > 0)
         {
@@ -499,7 +526,11 @@ internal sealed class WmaPacketReader
         }
 
         bool isRestDropped = !isCovering && !DecodeRun(false, taken > 0 && !isDropped, isLostStart);
-        ClearSaved();
+        if (!isRestDropped)
+        {
+            ClearSaved();
+        }
+
         int start = payloadStart + taken;
         int tail = Math.Max(0, end - start);
         ref PacketRecord record = ref Record(packet);
@@ -508,6 +539,7 @@ internal sealed class WmaPacketReader
         record.IsTailUnfinished = true;
         if (isRestDropped)
         {
+            // The failed run's bits stay held, and count against the buffer at the next header step.
             _isLoss = true;
         }
         else if (tail > 0)

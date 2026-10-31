@@ -196,8 +196,8 @@ internal static class CodecData
         if (isLossless)
         {
             // Lossless uses the low byte of the field as its sample size; the high byte is not read.
-            holder.Add("Bits Per Sample", offset, 1, NodeValue.Integer(bytes[0], "bits"), LosslessExplain.SampleSize, topic);
-            holder.Add("Sample Size High Byte", offset + 1, 1, NodeValue.Hex(bytes[1], 2), LosslessExplain.SampleSizeHighByte);
+            holder.Add("Bits Per Sample Low Byte", offset, 1, NodeValue.Integer(bytes[0], "bits"), LosslessExplain.SampleSize, topic);
+            holder.Add("Bits Per Sample High Byte", offset + 1, 1, NodeValue.Hex(bytes[1], 2), LosslessExplain.SampleSizeHighByte);
         }
         else
         {
