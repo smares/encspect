@@ -22,7 +22,7 @@ internal sealed class StdStream
     // Reading never depends on the store: the reservoir's superframes are held in a window of their own.
     internal const long MaxStoredBytes = 4L << 20;
 
-    private readonly Dictionary<int, byte[]> _window = [];
+    private readonly SortedDictionary<int, byte[]> _window = [];
     private long _stored;
 
     public StdStream(StdParameters parameters)
@@ -156,21 +156,29 @@ internal sealed class StdStream
                 UndetailedSuperframes++;
             }
 
-            _window[index] = buffer.AsSpan(0, align).ToArray();
-
             if (!p.UsesBitReservoir)
             {
                 ReadWithoutReservoir(record, index, buffer, ref state, nodes, findings);
             }
             else
             {
+                _window[index] = buffer.AsSpan(0, align).ToArray();
                 ReadWithReservoir(record, index, buffer, ref state, ref reservoir, nodes, findings);
             }
 
-            int keepFrom = reservoir.Bytes > 0 && p.UsesBitReservoir ? reservoir.First : int.MaxValue;
-            foreach (int key in _window.Keys.Where(k => k < keepFrom).ToList())
+            if (p.UsesBitReservoir)
             {
-                _window.Remove(key);
+                int keepFrom = reservoir.Bytes > 0 ? reservoir.First : int.MaxValue;
+                while (_window.Count > 0)
+                {
+                    int lowest = _window.Keys.First();
+                    if (lowest >= keepFrom)
+                    {
+                        break;
+                    }
+
+                    _window.Remove(lowest);
+                }
             }
         }
 

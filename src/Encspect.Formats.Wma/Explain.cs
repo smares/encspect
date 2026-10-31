@@ -1,7 +1,7 @@
 namespace Encspect.Formats.Wma;
 
 // What each Windows Media Audio node is. Constants only, shared by every node of their kind. The frames of
-// versions 1 and 2, Professional and Voice are not read, so the nodes describe only what the container states.
+// Professional and Voice are not read, so the nodes of those streams describe only what the container states.
 internal static class Explain
 {
     public const string EncryptedHeaderOnlyStream = "The stream as the container and the codec-specific data describe it: its packets are encrypted and their frames are not read.";

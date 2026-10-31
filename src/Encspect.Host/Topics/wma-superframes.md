@@ -11,4 +11,4 @@ references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sect
 
 **What you see.** Each superframe in the tree with its header fields, the bits of each frame, and the bytes left for the next superframe. A media object shorter than the block alignment, a frame count that leaves no frame to end in the superframe, and a bit offset past the superframe's end are findings, because a decoder rejects them.
 
-**Padding.** In Encspect's test files, ffmpeg's wmav1 and wmav2 encoders pad every superframe with 0x4E bytes after the frame, and the files of Microsoft's encoders, which use the bit reservoir, have no such padding. The analyzer uses the padding to name ffmpeg's encoders.
+**Padding.** In Encspect's test files, ffmpeg 6.1.1's wmav1 and wmav2 encoders (libavcodec 60.31.102) pad every superframe with 0x4E bytes after the frame, and the files of Microsoft's encoders, which use the bit reservoir, have no such padding. The analyzer uses the padding to name ffmpeg's encoders.

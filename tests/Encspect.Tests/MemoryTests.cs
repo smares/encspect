@@ -623,7 +623,7 @@ public class MemoryTests(ITestOutputHelper output)
 
     // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
     // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
-    // a Windows Media Audio stream of ffmpeg's encoder (its frames read), a 185-byte superframe repeated, and over PCM payloads: the
+    // a Windows Media Audio stream of ffmpeg's encoder (its frames read), a 743-byte superframe repeated, and over PCM payloads: the
     // bounds are far below what keeping each media object's bytes or nodes would cost.
     [Fact]
     public void ManyAsfPacketsStayCompact()
@@ -634,7 +634,10 @@ public class MemoryTests(ITestOutputHelper output)
 
         (Report report, long kept, long peak) = Measure("packets.wma", data, data[..4096]);
 
-        Assert.Equal("Windows Media Audio 2", Assert.Single(report.Streams).Codec);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio 2", stream.Codec);
+        // One frame of 2,048 samples per superframe (the fixture's golden report: 44 superframes, 88,064 samples); the last frame adds none.
+        Assert.Equal((packets - 1) * 2048L, stream.Samples);
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("parse.", StringComparison.Ordinal));
         output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * AsfWmaKeptBound, $"The report keeps {kept / packets} bytes per packet.");
