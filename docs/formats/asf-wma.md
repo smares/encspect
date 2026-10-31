@@ -1,8 +1,8 @@
 # ASF and WMA
 
-The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs, all of them at header level: the frames of versions 1 and 2, Professional, Lossless and Voice are not read yet.
+The Advanced Systems Format container (`.wma`, `.wmv`, `.asf`) and the Windows Media Audio codecs. Professional and Lossless are read down to the layout of their frames; versions 1 and 2 and Voice are at header level: their frames are not read yet.
 
-Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`, `wmalosslessdec.c`), both pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely; clean-room rewrites are to bring them back (see [the plan](../PLAN.md), phase 2).
+Sources: the ASF specification, revision 01.20.03, and FFmpeg 6.1.1 (`asfdec_f.c`), pinned by SHA-256 (see [development](../development.md)). Microsoft has published no specification of the codecs. The frame-level readers of versions 1 and 2, Professional and Voice were removed on 2026-10-29 because their code followed FFmpeg's LGPL decoders too closely. The Professional and Lossless readers are clean-room rewrites from the project's format descriptions, [wma-pro-format.md](../design/wma-pro-format.md) and [wma-lossless-format.md](../design/wma-lossless-format.md); versions 1 and 2 and Voice are to follow (see [the plan](../PLAN.md), phase 2).
 
 ## ASF: what is read
 
@@ -54,30 +54,61 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 - **Broadcast files:** a Data Object of size 0 runs to the end of the file, so what is at its end is the Data Object's, not a tag.
 - The packets are read twice: the first pass keeps a compact record per packet and payload (the first 65,536 packets are detailed, the rest counted), and builds nodes on demand; the second pass puts media objects together as they are needed.
 
-## WMA versions 1 and 2, Professional and Voice
+## WMA versions 1 and 2 and Voice
 
-Format tags 0x0160 and 0x0161 (the codec "wma"), 0x0162 ("wma-pro") and 0x000A ("wma-voice"). Header level until the clean-room rewrites, as Lossless is:
+Format tags 0x0160 and 0x0161 (the codec "wma") and 0x000A ("wma-voice"). Header level until the clean-room rewrites:
 
 - The codec-specific data (the type-specific data after the WAVEFORMATEX):
   - **Version 2** (0x0161): the three fields of the ASF specification's section 11.1.1 are shown as plain values: Samples Per Block, Encode Options (as a 16-bit value, since the specification gives its bits no meaning) and Super Block Align. Bytes after them are an Extra Data node.
   - **Version 1** (0x0160): the specification has no layout for it, so its bytes stay the container's bytes.
-  - **Professional:** the 18 bytes are shown the way Lossless's are (below).
   - **Voice:** the bytes stay the container's bytes; its channel mask is read from them (see "Channel layout").
 - The packets are counted, with their total, smallest and largest size, the block alignment, the nominal bitrate the container states and the average bitrate.
 - The length comes from the container (the play duration less the preroll), and the stream's samples are that length at the sample rate.
 - The stream's average bitrate is the bytes of the packets over that length. The nominal bitrate (the WAVEFORMATEX's nAvgBytesPerSec) is shown apart in the statistics, since it can differ much for a variable bitrate stream. Where the stream starts with a preroll, the packets cover the preroll as well and the figure is a little high. A stream with encrypted samples counts no packets and reports the nominal bitrate.
-- The channel mode is Mono for one channel and Stereo for two, and has no value for other counts.
-- One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2), `wma.pro-not-read` and `wma.voice-not-read`.
+- The channel mode is Mono for one channel and Stereo for two, and has no value for other counts. (Professional and Lossless streams that are read have no channel mode.)
+- One info finding per stream says the frames are not read: `wma.standard-not-read` (versions 1 and 2) and `wma.voice-not-read`.
 - The encoder and writer are named from the file's metadata and layout only (see below); a stream's frames name no encoder.
 - A stream whose samples are encrypted is shown as "frames not read: encrypted", with no finding of its own.
 
 
+## WMA Professional
+
+Format tag 0x0162, routed as the codec "wma-pro". The format is described in [wma-pro-format.md](../design/wma-pro-format.md); nothing is decoded.
+
+What is read:
+- **The codec-specific data:** 18 bytes, shown as the sample size, the channel mask, two unknown fields and the decode flags with their bit fields (frame length adjustment, the log2 of the most subframes, the length prefix, dynamic range compression). Ten checks on them, in order, decide whether the stream is read at all: a failed one gives `wma.format-unsupported` with its reason and the stream is shown as "not analyzed".
+- **The packets:** the first block alignment's bytes of each media object. Each starts with a sequence number, two bits Encspect does not read and the count of bits that finish the frame before. Frames follow one another from the bit the count gives; the frame that crosses into a packet is finished from the bits kept at the end of the packet before.
+- **Loss:** a short object, a gap in the sequence numbers, an invalid frame inside a packet or a frame too large for the decoder's buffer count as a loss: the frame that crosses into the next packet is dropped. An invalid frame also drops the rest of its media object.
+- **The frames:** with the length prefix, a frame is read where it lies in its packet. Without it a frame's end is found by reading it to the end, and the frames of a packet are read when the next packet supplies their last bits; the packets of such a stream are shown with their header fields only.
+- **Inside a frame:** the length prefix, the tile header (each channel's subframe lengths), the postprocessing transform bit, the dynamic range gain, the trims, and for each subframe the extended header, the channel transform groups and their bands, which channels send coefficients, the vector counts, the quantization step, the scale factors of each channel and the coefficient codes (how many coefficients are not 0, how many use an escape, which codebook). The coefficients' values are not kept.
+
+What is reported:
+- **Nodes:** "Statistics", "Packets" and "Frames" under the stream; each packet lists its header fields and the frames that start in it, each frame its fields and subframes. They are built when read, from a compact record of each frame.
+- **Samples and duration:** the frames read without error, less the first (which only fills the overlap of the transform), less the samples each frame's trims cut. A frame that only fails the check of its length, or reads past its end, counts as a decoder outputs it: with its trims where it is the frame that crosses into its packet, without them where it is the first frame the packet gives (a frame that fills the overlap of the transform gives none), and not otherwise. The duration is the samples over the sampling rate. A stream whose frames cannot be read reports 0 samples. The average bitrate is the bytes of the full packets over the duration.
+- **Series:** the bitrate of each frame over the frames' file offsets, and the bitrate in each second of audio.
+- **Findings:** `wma.packet-short`, `wma.packet-long`, `wma.packet-sequence`, `wma.frame-invalid` (with the reason, such as "its length prefix is not where its data ends") and `wma.frame-unfinished` (the last packet ends with the start of a frame no packet finishes); `wma.records-limit` for more than 262,144 media objects, which are counted and not read; `wma.codec-data-size`, `wma.format-unsupported`, `wma.no-format` and `wma.payload-not-analyzed` for streams that cannot be read.
+- **Stream figures:** the sampling rate from the WAVEFORMATEX, the channels from the channel mask where it is not 0 (up to 8), the speakers in the order of the mask's bits, and no channel mode.
+- **Encrypted streams** are shown as "frames not read: encrypted", with no finding of their own.
+
+Not covered: decoding; what the extended header, the postprocessing transform and the dynamic range gain carry (they are read and not used); the default channel transform matrices (not needed to find a frame's end); a frame that spans three packets (it is read in the middle one and fails); frames larger than the 32,768 bytes a decoder buffers.
+
 ## WMA Lossless
 
-Format tag 0x0163, routed as the codec "wma-lossless".
+Format tag 0x0163, routed as the codec "wma-lossless". The format is described in [wma-lossless-format.md](../design/wma-lossless-format.md). The layout of the frames is read; the filters that turn residuals into samples are not run, so no sample is reconstructed or checked (that is the decoder of phase 3).
 
-- The 18 bytes of codec data (the sample size of 16 or 24 bits, the channel mask, the decode flags) are shown, the packets are counted, and the length is the container's. The frames are not read yet; a finding says so.
-- The length comes from the container (the play duration less the preroll) and the average bitrate is the packets' bytes over it, as for the other codecs above.
+What is read:
+- **The codec-specific data:** the same 18 bytes as Professional's, with the sample size (16 or 24 bits, the low byte of its field) and the flag in bit 8 of the decode flags that adds an LPC flag to each subframe. A failed check (data under 18 bytes, a sample size other than 16 and 24, no channels or more than 8, more than 32 subframes per frame, no sampling rate, a block alignment of 0) gives `wma.format-unsupported`.
+- **The packets:** a sequence number, a "seekable frame in packet" bit, a "spliced" bit (`wma.lossless-spliced` where it is set) and the count of bits that finish the frame before.
+- **The frames** do not start with their length in any test file, so a frame's end is found by reading it. The bits from the first frame that starts in a packet to its end are kept as a run, joined by the first bits of the next packets, and the run's frames are read when a packet arrives that does not only continue it (a count that covers its payload); the last run is read at the end of the stream. A frame is therefore read after its last bit has arrived, and the frames that start in a packet are listed under it. A frame whose length prefix is set is read where it lies, as Professional's.
+- **Inside a frame:** the tile header, the dynamic range gain, the trims, and for each subframe the seekable flag and, if it is set, the filter parameters (the recursive filter, mid/side stereo, the multichannel filter, the cascaded filters of every channel, the mean scaling and the quantization step), the raw PCM flag, which channels are coded, the LPC flag, the zero low bits and then the raw samples or each coded channel's residuals. The residual code depends on a running sum per channel that lasts from subframe to subframe, so the reader keeps it; the residuals' values are not kept.
+- **Loss:** a gap in the sequence numbers drops the run of the packet before; an invalid frame drops the run if it is the run's first frame, and otherwise also the rest of the packet that completed the run.
+
+What is reported:
+- **Nodes and series** as for Professional: "Statistics", "Packets" and "Frames", and the bitrate of each frame and in each second. The statistics count the seekable and raw PCM subframes, the coded channels, the escapes, the filters stated and the zero low bits.
+- **Samples:** each frame's samples less the trim at its end (the trim at the start is read and not applied; the first frame is output). A frame that fails in a subframe adds the samples of the subframes before it where it is the first of its run; a frame cut short by the end of the data adds its full length, as a decoder outputs it.
+- **Findings:** the packet and frame findings of Professional, `wma.frame-boundary` (the last frame of a run ends elsewhere than the next packet's count says), `wma.lossless-spliced` and `wma.lossless-channel-count` (the channel mask names another count than the WAVEFORMATEX).
+
+Not covered: reconstruction (the filters, mid/side, the quantization step), the checksum-verifying decoder (phase 3), arithmetic coding (not supported), the LPC filter's coefficients, and resynchronization at the next seekable packet after damage (the reading goes on with the running sums it has, as a decoder does).
 
 ## Channel layout
 
@@ -90,7 +121,7 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ### Encoder
 
-- The frames of versions 1 and 2, Professional and Voice are not read, so no trait of the stream names an encoder. Before 2026-10-29 the analyzer named ffmpeg's wmav1 and wmav2 encoders from the 'N' padding of their superframes (high) and Microsoft's from the codec data of version 2 (medium); both went with the frame-level readers and may return with the rewrites.
+- The frames of versions 1 and 2, Professional, Lossless and Voice name no encoder. Before 2026-10-29 the analyzer named ffmpeg's wmav1 and wmav2 encoders from the 'N' padding of their superframes (high) and Microsoft's from the codec data of version 2 (medium); both went with the frame-level readers and may return with the rewrites.
 - A claim of the encoder role names the encoder (low) unless it names FFmpeg: a `Lavc…` ID in an attribute counts only where the stream itself shows ffmpeg's, which no stream does now, so such a claim is not listed.
 - Professional, Lossless and Voice have no trait of their own.
 
@@ -114,7 +145,8 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ## Not yet covered
 
-- The frames of WMA versions 1 and 2, Professional and Voice, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2), and those of WMA Lossless (phase 3, with the checksum-verifying decoders).
+- The frames of WMA versions 1 and 2 and Voice, removed on 2026-10-29 for their provenance and to return as clean-room rewrites (phase 2).
+- Decoding WMA Lossless (phase 3, with the checksum-verifying decoders).
 - The audio of any codec (no decoder is built).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 - The contents of script commands and markers beyond their fields (planned: later, a separate item).

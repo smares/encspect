@@ -210,6 +210,14 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("asf-crosscheck", run("tests/fixtures/asf/voice-spillover.asf"))
         self.assertIn("asf-crosscheck", run("src/Encspect.Formats.Wma/WmaVoiceParser.cs"))
 
+    def test_the_wma_professional_and_lossless_samples_belong_to_the_asf_job(self):
+        self.assertEqual(run("scripts/fixtures/check_wma_samples.py"), {"fixtures", "asf-crosscheck"})
+        manifest = run("tests/conformance/wma-samples.json")
+        self.assertIn("asf-crosscheck", manifest)
+        self.assertFalse(manifest & {"mpeg-crosscheck", "mp4-crosscheck", "ac3-crosscheck", "dts-crosscheck"})
+        self.assertIn("asf-crosscheck", run("src/Encspect.Formats.Wma/WmaProParser.cs"))
+        self.assertIn("asf-crosscheck", run("src/Encspect.Formats.Wma/WmaLosslessParser.cs"))
+
     def test_a_parser_change_runs_the_ac3_samples_too(self):
         for path in ("src/Encspect.Formats.Aac/AacCodecParser.cs", "src/Encspect.Tags.Ape/ApeTagParser.cs"):
             self.assertIn("ac3-crosscheck", run(path), path)
