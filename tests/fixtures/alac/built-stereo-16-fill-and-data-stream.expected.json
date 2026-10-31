@@ -1,0 +1,498 @@
+{
+ "container": "mp4",
+ "length": 21903,
+ "description": "Fill and data stream elements around the audio: a fill element of 3 bytes before the channel pair element, then a data stream element of 7 bytes, an aligned one of 280 bytes (a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more). FFmpeg 8.0.1 does not decode the element types (\"Not yet implemented\"), so only alacconvert does.",
+ "input": {
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 10000,
+  "width": 2,
+  "left_shift": 0,
+  "decoders": [
+   "alacconvert"
+  ],
+  "channel_md5": [
+   "964e67df1128b8f184e0c0892a651b75",
+   "4467a74bda97fb0947ad9f342a7751c8"
+  ]
+ },
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 40,
+  "mb": 10,
+  "kb": 14,
+  "channels": 2,
+  "max_run": 255,
+  "max_frame_bytes": 9218,
+  "average_bitrate": 0,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 605,
+   "size": 5094,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 5094,
+   "channels": 2,
+   "element_count": 6,
+   "elements": [
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 0,
+     "end": 31,
+     "bytes": 3
+    },
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 31,
+     "end": 38228,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 2,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1166,
+        -755,
+        -9,
+        37,
+        16,
+        86,
+        43,
+        25
+       ],
+       "zero_runs": 0,
+       "long_codes": 6,
+       "residual_end": 18886
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1099,
+        -651,
+        -43,
+        117
+       ],
+       "zero_runs": 1,
+       "long_codes": 2,
+       "residual_end": 38228
+      }
+     ]
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 38228,
+     "end": 38300,
+     "instance": 0,
+     "bytes": 7,
+     "aligned": false
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 38300,
+     "end": 40568,
+     "instance": 1,
+     "bytes": 280,
+     "aligned": true
+    },
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 40568,
+     "end": 40743,
+     "bytes": 20
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 40743,
+     "end": 40746
+    }
+   ]
+  },
+  {
+   "offset": 5699,
+   "size": 9218,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 9218,
+   "channels": 2,
+   "element_count": 6,
+   "elements": [
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 0,
+     "end": 31,
+     "bytes": 3
+    },
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 31,
+     "end": 71222,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 4096,
+     "mix_bits": 2,
+     "mix_res": 2,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1166,
+        -755,
+        -9,
+        37,
+        16,
+        86,
+        43,
+        25
+       ],
+       "zero_runs": 0,
+       "long_codes": 7,
+       "residual_end": 36212
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1099,
+        -651,
+        -43,
+        117
+       ],
+       "zero_runs": 0,
+       "long_codes": 5,
+       "residual_end": 71222
+      }
+     ]
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 71222,
+     "end": 71294,
+     "instance": 0,
+     "bytes": 7,
+     "aligned": false
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 71294,
+     "end": 73560,
+     "instance": 1,
+     "bytes": 280,
+     "aligned": true
+    },
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 73560,
+     "end": 73735,
+     "bytes": 20
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 73735,
+     "end": 73738
+    }
+   ]
+  },
+  {
+   "offset": 14917,
+   "size": 6986,
+   "status": "ok",
+   "samples": 1808,
+   "walked": 6986,
+   "channels": 2,
+   "element_count": 6,
+   "elements": [
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 0,
+     "end": 31,
+     "bytes": 3
+    },
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 31,
+     "end": 53363,
+     "instance": 0,
+     "partial": true,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 1808,
+     "mix_bits": 2,
+     "mix_res": 2,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 8,
+       "coefficients": [
+        1166,
+        -755,
+        -9,
+        37,
+        16,
+        86,
+        43,
+        25
+       ],
+       "zero_runs": 0,
+       "long_codes": 6,
+       "residual_end": 27712
+      },
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1099,
+        -651,
+        -43,
+        117
+       ],
+       "zero_runs": 0,
+       "long_codes": 3,
+       "residual_end": 53363
+      }
+     ]
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 53363,
+     "end": 53435,
+     "instance": 0,
+     "bytes": 7,
+     "aligned": false
+    },
+    {
+     "tag": 4,
+     "name": "data stream",
+     "start": 53435,
+     "end": 55704,
+     "instance": 1,
+     "bytes": 280,
+     "aligned": true
+    },
+    {
+     "tag": 6,
+     "name": "fill",
+     "start": 55704,
+     "end": 55879,
+     "bytes": 20
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 55879,
+     "end": 55882
+    }
+   ]
+  }
+ ],
+ "frame_count": 3,
+ "statistics": {
+  "frames": 3,
+  "partial_frames": 1,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   3,
+   0,
+   0,
+   6,
+   0,
+   6,
+   3
+  ],
+  "compressed": 3,
+  "uncompressed": 0,
+  "pairs": 3,
+  "mixed_pairs": 3,
+  "channels": 6,
+  "types": [
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   6,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   3,
+   0,
+   0
+  ],
+  "zero_runs": 1,
+  "long_codes": 29,
+  "fill_bytes": 69,
+  "data_stream_bytes": 861
+ },
+ "findings": [],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 10000,
+   "duration": 0.22675736961451248,
+   "bits_per_sample": 16,
+   "average_bitrate": 751.3934399999999,
+   "is_vbr": true,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "units": 3,
+   "pair_codes": [
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ],
+   "element_codes": [
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

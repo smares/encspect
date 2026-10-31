@@ -2,7 +2,7 @@
 """Downloads every pinned file the scripts fetch from every one of its addresses (downloads.py)
 and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_sources.py extracts), so the scheduled sources workflow notices when an original address or one
 of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
-the commits of their tags (faac_tool.py), which it asks both repositories for.
+the commits of their tags (faac_tool.py), which it asks both repositories for, and Apple's ALAC source by its commit (alac_tool.py).
 
 Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --list       prints every (name, SHA-256, address, kind) as sorted JSON, without downloading; the LAME svn trees
@@ -18,6 +18,7 @@ import tempfile
 import time
 
 import a52_trace_tool
+import alac_tool
 import aotuv_tool
 import asf_specs
 import blade_tool
@@ -115,7 +116,7 @@ def member_name(member):
 def entries():
     """(kind, name, SHA-256 or commit, address) of everything the full run checks: "download" for a file,
     "member" for a file of FFmpeg's release that must be in the archive (the archive's digest and address),
-    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository."""
+    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository, "commit" for the commit of Apple's ALAC source."""
     for name, digest, addresses in sources():
         for address in addresses:
             yield "download", name, digest, address
@@ -127,6 +128,7 @@ def entries():
     for faac_tag, commit, _, _ in faac_tool.RELEASES.values():
         for repository in faac_tool.REPOSITORIES:
             yield "tag", faac_tag, f"commit:{commit}", f"{repository} refs/tags/{faac_tag}"
+    yield "commit", alac_tool.NAME, f"commit:{alac_tool.COMMIT}", f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
 
 
 def listing(selected=None):
@@ -213,6 +215,13 @@ def main():
     for problem in faac_tool.tag_problems(faac_wanted):
         problems += 1
         print(problem)
+    # Apple's ALAC source is pinned by one commit, which the repository must still serve.
+    alac_address = f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
+    if wanted_entry(alac_tool.NAME, f"commit:{alac_tool.COMMIT}", alac_address):
+        checked += 1
+        for problem in alac_tool.commit_problems({alac_address}):
+            problems += 1
+            print(problem)
     print(f"Checked {checked} entries, {problems} problems{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 

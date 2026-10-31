@@ -209,11 +209,12 @@ public class AppleEncoderTests
     [Theory]
     [InlineData("alac/apple-alac-m4a-st44q16.m4a")]
     [InlineData("alac/apple-alac-m4a-st44q24.m4a")]
-    public void AlacInM4aShowsTheContainerOnly(string name)
+    public void AlacInM4aIsReadFrameByFrame(string name)
     {
         Report report = Analyze(name, Read(name));
-        Assert.Empty(report.Streams);
-        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Apple Lossless", stream.Codec);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
         Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.itunsmpb-total");
         Assert.All(report.Findings, f => Assert.True(f.Severity < Severity.Warning, f.Message));
     }

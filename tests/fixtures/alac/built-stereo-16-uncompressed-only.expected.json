@@ -1,0 +1,292 @@
+{
+ "container": "mp4",
+ "length": 40621,
+ "description": "A stream of uncompressed frames only, with a cookie whose tuning parameters (pb, mb and kb) are all 0, as FFmpeg's encoder writes it at compression level 0.",
+ "input": {
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 10000,
+  "width": 2,
+  "left_shift": 0,
+  "decoders": [
+   "ffmpeg",
+   "alacconvert"
+  ],
+  "channel_md5": [
+   "964e67df1128b8f184e0c0892a651b75",
+   "4467a74bda97fb0947ad9f342a7751c8"
+  ]
+ },
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 0,
+  "mb": 0,
+  "kb": 0,
+  "channels": 2,
+  "max_run": 255,
+  "max_frame_bytes": 16388,
+  "average_bitrate": 0,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 605,
+   "size": 16388,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 16388,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 131095,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": true,
+     "samples": 4096,
+     "reserved_zero": true,
+     "channels": []
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 131095,
+     "end": 131098
+    }
+   ]
+  },
+  {
+   "offset": 16993,
+   "size": 16388,
+   "status": "ok",
+   "samples": 4096,
+   "walked": 16388,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 131095,
+     "instance": 0,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": true,
+     "samples": 4096,
+     "reserved_zero": true,
+     "channels": []
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 131095,
+     "end": 131098
+    }
+   ]
+  },
+  {
+   "offset": 33381,
+   "size": 7240,
+   "status": "ok",
+   "samples": 1808,
+   "walked": 7240,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 57911,
+     "instance": 0,
+     "partial": true,
+     "shifted": 0,
+     "uncompressed": true,
+     "samples": 1808,
+     "reserved_zero": true,
+     "channels": []
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 57911,
+     "end": 57914
+    }
+   ]
+  }
+ ],
+ "frame_count": 3,
+ "statistics": {
+  "frames": 3,
+  "partial_frames": 1,
+  "uncompressed_frames": 3,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   3,
+   0,
+   0,
+   0,
+   0,
+   0,
+   3
+  ],
+  "compressed": 0,
+  "uncompressed": 3,
+  "pairs": 3,
+  "mixed_pairs": 0,
+  "channels": 0,
+  "types": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   0,
+   0,
+   0
+  ],
+  "zero_runs": 0,
+  "long_codes": 0,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 10000,
+   "duration": 0.22675736961451248,
+   "bits_per_sample": 16,
+   "average_bitrate": 1411.76448,
+   "is_vbr": true,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "units": 3,
+   "pair_codes": [
+    [
+     0
+    ],
+    [
+     0
+    ],
+    [
+     0
+    ]
+   ],
+   "element_codes": [
+    [
+     1
+    ],
+    [
+     1
+    ],
+    [
+     1
+    ]
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

@@ -91,14 +91,14 @@ def mp4box(scheme, options, pssh, name=None, clear=False):
 # The codings whose parsers ffmpeg runs on the samples, so that its packets are no longer the samples.
 REPACKETIZED = {"AC-3", "E-AC-3", "Apple Lossless"}
 # The sample entry's format of the codings no codec parser reads, as the finding names it.
-UNPARSED_FORMAT = {"Apple Lossless": "alac", "FLAC": "fLaC", "Opus": "Opus"}
+UNPARSED_FORMAT = {"FLAC": "fLaC", "Opus": "Opus"}
 FIXTURES = [
     ffmpeg("ffmpeg-cenc-aac", ".m4a", ["-c:a", "aac", "-b:a", "128k"], "AAC LC", 44100),
     ffmpeg("ffmpeg-cenc-aac-fragmented", ".mp4", ["-c:a", "aac", "-b:a", "128k"], "AAC LC", 44100, fragmented=True),
     ffmpeg("ffmpeg-cenc-ac3", ".mp4", ["-c:a", "ac3", "-b:a", "192k"], "AC-3", 44100),
     ffmpeg("ffmpeg-cenc-eac3", ".mp4", ["-c:a", "eac3", "-b:a", "192k"], "E-AC-3", 44100),
     ffmpeg("ffmpeg-cenc-mp3", ".mp4", ["-c:a", "libmp3lame", "-b:a", "128k"], "MPEG-1 audio", 44100),
-    ffmpeg("ffmpeg-cenc-alac", ".m4a", ["-c:a", "alac"], "Apple Lossless", 44100, parsed=False),
+    ffmpeg("ffmpeg-cenc-alac", ".m4a", ["-c:a", "alac"], "Apple Lossless", 44100),
     ffmpeg("ffmpeg-cenc-flac", ".mp4", ["-c:a", "flac", "-strict", "-2"], "FLAC", 44100, parsed=False),
     ffmpeg("ffmpeg-cenc-opus", ".mp4", ["-c:a", "libopus", "-b:a", "96k", "-strict", "-2"], "Opus", 48000, parsed=False),
     mp4box("cenc", 'IV_size="8"', [(WIDEVINE, 1, bytes.fromhex("08011210" + KID)), (PLAYREADY, 0, b"<WRMHEADER>test</WRMHEADER>")]),
@@ -164,11 +164,13 @@ def manifest_for(entry, path):
     listed = is_aac and "fragmented" not in entry["name"]
     packets = ffprobe_packets(path) if listed else [[None, size] for size in mp4box_sample_sizes(path)]
     is_clear = entry.get("is_clear", False)
-    stream = {"codec": entry["codec"], "sample_rate": entry["rate"], "channels": 2, "channel_mode": "Stereo" if is_aac else None,
-              "channel_layout": ["front left", "front right"] if is_aac else [],
+    # The cookie of Apple Lossless names the channels, as the AAC configuration does; the other codings are not read.
+    has_layout = is_aac or entry["codec"] == "Apple Lossless"
+    stream = {"codec": entry["codec"], "sample_rate": entry["rate"], "channels": 2, "channel_mode": "Stereo" if has_layout else None,
+              "channel_layout": ["front left", "front right"] if has_layout else [],
               "samples": duration_samples(fields, entry["rate"]), "is_vbr": False,
               "protection": {"scheme": SCHEMES[entry["scheme"]], "is_encrypted": True, "systems": entry["systems"]}}
-    if is_aac:
+    if has_layout:
         # With no frame to read, the only evidence is the writer's own tool atom: a writer claim of low confidence, as in any file whose frames name nothing.
         stream["writer"] = [GPAC_TOOL if entry["command"][0] == "MP4Box" else LAVF, "Low"]
     crosscheck = {"ffprobe": listed, "mp4box": True, "mp4box_samples": not listed, "faad": None,

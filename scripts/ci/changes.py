@@ -84,6 +84,12 @@ AREAS = {
         "scripts": ["crosscheck_tta_fixtures.py"],
         "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
     },
+    "alac-crosscheck": {
+        "projects": ["Encspect.Formats.Alac"],
+        "fixtures": ["alac"],
+        "scripts": ["crosscheck_alac_fixtures.py", "alac_tool.py"],
+        "globs": ["scripts/fixtures/make_*alac*", "scripts/fixtures/alac_*"],
+    },
     "wav-crosscheck": {
         "projects": ["Encspect.Formats.Wav", "Encspect.Formats.Aiff"],
         "fixtures": ["wav", "aiff"],

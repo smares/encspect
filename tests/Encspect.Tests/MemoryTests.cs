@@ -1438,6 +1438,35 @@ public class MemoryTests(ITestOutputHelper output)
         Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
     }
 
+    // An ALAC track keeps a record of a few dozen bytes per frame and 16 bytes of its bitrate graph, and nodes only for the first 4,096 frames; the frames
+    // here are 6 bytes each, the fewest a frame can hold. The bounds are about twice what linux-x64 measures.
+    [Fact]
+    public void ManyAlacFramesStayCompact()
+    {
+        const int frames = 200_000;
+        byte[] data = AlacBuilder.SmallFrames(frames);
+
+        (Report report, long kept, long peak) = Measure("frames.m4a", data, AlacBuilder.SmallFrames(100));
+
+        Assert.Equal(frames, report.Streams.Single().Samples);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * 100L, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * 160L, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // Frames past the records the report keeps: the rest are walked and counted, and the heap stays near the cap's.
+    [Fact]
+    public void AlacFramesPastTheCapStayBounded()
+    {
+        int count = Encspect.Formats.Alac.Records.MaxEntries + 1_000;
+        byte[] data = AlacBuilder.SmallFrames(count);
+
+        Report report = Bounded("capped.m4a", data, 600_000_000, "alac.entries-limit");
+
+        Assert.Equal(count, Assert.Single(report.Streams).Samples);
+    }
+
     // A WavPack file keeps a 64-byte entry per block and 16 bytes per set for its graph, and the
     // sub-blocks of the first 4,096 blocks; past them a block is its entry alone, and its nodes are
     // built in blocks of 1,024 when read. The bounds are about twice what linux-x64 measures and below

@@ -346,6 +346,11 @@ public sealed partial class Mp4Parser : IFormatParser
             return new(field, NodeKind.Detail, Explain.UserDataText(header.Type), Topics.QuickTimeUserData);
         }
 
+        if (header.Type == "alac" && state.CurrentEntry is not null)
+        {
+            return new(header.Type, NodeKind.Detail, Explain.AlacSpecificBox, Topics.Alac);
+        }
+
         return new(header.Type, NodeKind.Detail, Explain.Box(header.Type), Explain.BoxTopic(header.Type));
     }
 

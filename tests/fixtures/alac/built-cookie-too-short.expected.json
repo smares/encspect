@@ -1,0 +1,159 @@
+{
+ "container": "mp4",
+ "length": 20943,
+ "description": "The alac box holds 20 bytes, fewer than the 24 of the ALACSpecificConfig: the stream's figures are unknown and its frames are not read.",
+ "cookie": {
+  "length": 20,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": false
+ },
+ "frames": [
+  {
+   "offset": 601,
+   "size": 4775,
+   "status": "not-walked",
+   "samples": 0
+  },
+  {
+   "offset": 5376,
+   "size": 8900,
+   "status": "not-walked",
+   "samples": 0
+  },
+  {
+   "offset": 14276,
+   "size": 6667,
+   "status": "not-walked",
+   "samples": 0
+  }
+ ],
+ "frame_count": 3,
+ "statistics": {
+  "frames": 3,
+  "partial_frames": 0,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "compressed": 0,
+  "uncompressed": 0,
+  "pairs": 0,
+  "mixed_pairs": 0,
+  "channels": 0,
+  "types": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   0,
+   0,
+   0
+  ],
+  "zero_runs": 0,
+  "long_codes": 0,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [
+  {
+   "code": "alac.cookie-too-short"
+  }
+ ],
+ "stream_infos": [],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}
