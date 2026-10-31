@@ -32,6 +32,7 @@ public class TrueHdFindingTests
             return data;
         },
         ["truehd.no-units"] = () => new byte[100],
+        // The finding of the codec parser: see CodecIdOfOtherTypeThanTheMajorSyncIsReported.
         // The end of stream marker of the last unit drops all it can: more samples than the unit holds.
         ["truehd.unit-short"] = () =>
         {
@@ -106,6 +107,57 @@ public class TrueHdFindingTests
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Contains(report.Streams.Single().Verification!.Checksums, c => c.Name == "lossless check, substream 0");
+    }
+
+    // A later major sync with another substream count is not followed by the decoder, so the stream info keeps the channels, layout and substream count
+    // of the first one, as the decoder session does.
+    [Theory]
+    [InlineData("built-tiny-truehd-51.thd", "built-tiny-truehd-stereo.thd", 6)]
+    [InlineData("built-tiny-truehd-stereo.thd", "built-tiny-truehd-51.thd", 2)]
+    public void AStreamThatChangesItsSubstreamCountReportsTheFirstSyncsChannels(string first, string second, int channels)
+    {
+        byte[] data = [.. Fixture(first), .. Fixture(second)];
+
+        Report report = Analyzer.CreateDefault().Analyze("splice.thd", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(channels, stream.Channels);
+        Assert.NotNull(stream.ChannelLayout);
+        Assert.Equal(channels, stream.ChannelLayout!.Count);
+        Assert.Equal(channels == 2 ? "Stereo" : "Multichannel", stream.ChannelMode);
+        Assert.Contains(report.Findings, f => f.Code == "truehd.stream-parameters-change");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    // A substream that states check data but is shorter than the two bytes of it has one finding, not a second about its empty content.
+    [Fact]
+    public void ASubstreamTooShortForItsCheckDataHasOneFinding()
+    {
+        byte[] data = Fixture(Tiny);
+        (int offset, _) = Units(data)[2];
+        data[offset + 5] = 0;
+        data[offset] &= 0x0F;
+        int x = 0;
+        foreach (byte b in data.AsSpan(offset, 6).ToArray())
+        {
+            x ^= b;
+        }
+
+        data[offset] |= (byte)((((x >> 4) ^ (x & 0xF)) ^ 0xF) << 4);
+
+        Report report = Analyzer.CreateDefault().Analyze("zero.thd", new MemoryStream(data), new AnalysisOptions { ForcedFormat = "thd" });
+
+        Assert.Single(report.Findings, f => f.Code == "truehd.substream-end-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "truehd.block-invalid");
+    }
+
+    // "truehd.codec-id-mismatch": an MLP stream handed over as "truehd" (the codec parser's finding, which a raw file cannot raise).
+    [Fact]
+    public void CodecIdOfOtherTypeThanTheMajorSyncIsReported()
+    {
+        Report report = TrueHdTests.MlpAsTrueHd();
+
+        Assert.Contains(report.Findings, f => f.Code == "truehd.codec-id-mismatch");
     }
 
     private static Analyzer With(Func<TrueHdParser> parser) =>

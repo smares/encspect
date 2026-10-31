@@ -28,12 +28,6 @@ internal static class Tables
     // The channels of one TrueHD channel flag, in the order of the table, each pair left before right.
     public static readonly int[] FlagChannels = [2, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2, 1, 1];
 
-    public static readonly string[] FlagNames =
-    [
-        "left, right", "center", "LFE", "left surround, right surround", "left height, right height", "left center, right center", "left rear surround, right rear surround",
-        "center surround", "top surround", "left surround direct, right surround direct", "left wide, right wide", "center height", "second LFE",
-    ];
-
     public static int ChannelsOf(int assignment)
     {
         int count = 0;

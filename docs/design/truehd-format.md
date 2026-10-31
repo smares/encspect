@@ -857,7 +857,7 @@ Observed behavior of the encoders behind Encspect's test files, not rules; none 
 - **Timing:** in the MLP files and FFmpeg's encoder the input timing starts at minus one unit's samples (0xFFD8 for 40) and grows by one unit's samples per unit, and a restart header's output timing is its unit's input timing plus one unit's samples. In the Dolby file the input timing grows by 29 to 51 per unit, and the output timing is 41 to 51 ahead of it.
 - **Noise:** the Dolby file's 6-channel substream uses noise type 1 with matrix noise shifts; no file gives a noise channel a nonzero matrix coefficient or uses a noise shift above 0.
 - **Restart header maxima:** in every test file the 4-bit field after the noise seed equals the largest output shift and the next 5-bit field the largest LSB count used up to the next restart header. The two 5-bit fields after them are always equal and at least the two's complement width of every output sample in that stretch: equal in most stretches, one more in the rest (56 of 497 stretches in the first 4,000 units of `440hz.mlp`, 1 of 994 in the first 8,000 of `luckynight.mlp`). Values seen: 19 to 23 in the Dolby file, 22 to 23 and 16 to 24 in the MLP files.
-- **Not used by any file:** LSB bypass, presence flags other than 0xFF, the block size check, three or four substreams, the major sync extension, MLP with two substreams.
+- **Not used by the real files:** LSB bypass (the stereo encodes of FFmpeg 6.1.1 among the fixtures set it in 24-bit and some 16-bit files, and their decoded samples and lossless checks agree with FFmpeg), presence flags other than 0xFF, the block size check, three or four substreams, the major sync extension, MLP with two substreams.
 
 ## Not determined
 
@@ -868,7 +868,7 @@ Observed behavior of the encoders behind Encspect's test files, not rules; none 
 - Whether filter histories reset at a restart header.
 - Whether a Matroska block may hold more than one access unit, and the `mlpa` sample entry's rules beyond FFmpeg's muxer.
 - Anything about Dolby Atmos beyond FFmpeg's signaling rule: the fourth substream, its checks, the extended substream info, the extension.
-- LSB bypass and the block size check are described from FFmpeg alone; no file exercises them. Noise type 0 runs in every MLP file and in the Dolby file's substream 0, but no file has a nonzero noise coefficient or noise shift, so the generated noise values never reach the output and are unverified.
+- The block size check is described from FFmpeg alone; no file exercises it. Noise type 0 runs in every MLP file and in the Dolby file's substream 0, but no file has a nonzero noise coefficient or noise shift, so the generated noise values never reach the output and are unverified.
 - The channel order of MLP arrangements 18 to 20 (inferred from FFmpeg's reordering) and of every MLP arrangement with more than two channels; all test files are stereo.
 - Whether a restart header may start at a bit other than 2 of its substream; the advice under [Restart header CRC](#restart-header-crc) to use the actual first bit is unverified, as every header in the test files starts at bit 2.
 - What a later major sync that changes stream parameters (substream count, rate, assignments) means for the state. FFmpeg takes the new parameters and keeps its accumulators.

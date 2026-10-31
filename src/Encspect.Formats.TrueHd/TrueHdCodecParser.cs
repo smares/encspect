@@ -26,6 +26,35 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
         Records records = analysis.Records;
         List<Node> leading = analysis.Leading;
         Node parent = context.Parent;
+        IEnumerator<MappedBytes>? enumerator = null;
+        var buffered = new List<MappedBytes>();
+        bool isMismatch = false;
+        if (context.Payload is { } found)
+        {
+            long at = Locator.FindSyncUnit(new Source(found), found.Start, Math.Min(found.End, found.Start + Locator.SearchLimit), out MajorSync first);
+            if (at >= 0 && first.IsTrueHd == isMlp)
+            {
+                isMismatch = true;
+                isMlp = !isMlp;
+            }
+        }
+        else if (context.Packets is { } all)
+        {
+            // The stream type the first usable major sync states names the stream; the container's ID only where none shows in the first packets.
+            enumerator = all.GetEnumerator();
+            while (buffered.Count < LookAhead && enumerator.MoveNext())
+            {
+                MappedBytes packet = enumerator.Current;
+                buffered.Add(packet);
+                if (packet.Length > 4 && MajorSync.Read(packet.Span[4..]) is { IsUsable: true } sync)
+                {
+                    isMismatch = sync.IsTrueHd == isMlp;
+                    isMlp = !sync.IsTrueHd;
+                    break;
+                }
+            }
+        }
+
         Node stream = new(isMlp ? "MLP" : "Dolby TrueHD", parent.Offset, parent.Length, null, () => new BlockedChildren(leading, records.Entries.Count, i => Nodes.Entry(records, i)))
         {
             Kind = NodeKind.Stream,
@@ -34,31 +63,56 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
         };
         analysis.Stream = stream;
         parent.Add(stream);
+        if (isMismatch)
+        {
+            string stated = isMlp ? "MLP" : "Dolby TrueHD";
+            string claimed = isMlp ? "Dolby TrueHD" : "MLP";
+            analysis.Findings.AddNow(Severity.Warning, "truehd.codec-id-mismatch",
+                $"The container's codec ID names {claimed}, but the first major sync states the stream type {stated}; the stream is read as {stated}.", stream);
+        }
+
         if (context.Payload is { } payload)
         {
             var source = new Source(payload);
             long first = Locator.FindSyncUnit(source, payload.Start, Math.Min(payload.End, payload.Start + Locator.SearchLimit), out _);
             TrueHdParser.Run(analysis, source, first, context.CancellationToken);
         }
-        else if (context.Packets is { } packets)
+        else if (enumerator is not null)
         {
-            int index = 0;
-            foreach (MappedBytes packet in packets)
+            using (enumerator)
             {
-                if (index++ % 1024 == 0)
+                int index = 0;
+                foreach (MappedBytes packet in buffered)
                 {
-                    context.CancellationToken.ThrowIfCancellationRequested();
+                    AddPacket(analysis, packet);
+                    index++;
                 }
 
-                AddPacket(analysis, packet);
+                while (enumerator.MoveNext())
+                {
+                    if (index++ % 1024 == 0)
+                    {
+                        context.CancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    AddPacket(analysis, enumerator.Current);
+                }
             }
         }
 
         Summary.Finish(analysis, parent.Offset, parent.End, context);
     }
 
+    private const int LookAhead = 64;
+
     private static void AddPacket(Analysis analysis, MappedBytes packet)
     {
+        // The units are framed by the container: a packet after lost ones does not continue the stream, so it waits for a major sync.
+        if (packet.FollowsGap)
+        {
+            analysis.MarkGap();
+        }
+
         int position = 0;
         ReadOnlyMemory<byte> data = packet.Data;
         while (position < data.Length)
