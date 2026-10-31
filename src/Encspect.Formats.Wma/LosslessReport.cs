@@ -8,7 +8,7 @@ internal static class LosslessReport
 {
     public static Node Statistics(LosslessParameters p, WmaPacketReader reader, LosslessTally tally, Node parent, double duration)
     {
-        long frames = reader.Data.Frames.Count;
+        long frames = reader.FramesRead;
         string value = string.Create(CultureInfo.InvariantCulture, $"{Counts.Of(frames, "frame", "frames")}, {duration:0.000} s");
         var statistics = new Node("Statistics", parent.Offset, parent.Length, NodeValue.Text(value))
         {

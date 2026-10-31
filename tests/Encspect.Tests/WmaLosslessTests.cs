@@ -105,10 +105,13 @@ public class WmaLosslessTests
     public void ACutLastPacketGivesAnInvalidFrameAndStillCountsWhatADecoderOutputs()
     {
         WmaStream stream = WmaStream.LoadLossless();
-        stream.Objects[^1] = stream.Objects[^1][..(stream.Objects[^1].Length / 2)];
+        stream.Objects[^1] = stream.Objects[^1][..6000];
         CodecContext context = stream.RunLossless();
         Assert.Contains(context.Findings, f => f.Code == "wma.packet-short");
         Assert.DoesNotContain(context.Findings, f => f.Code == "parse.failed");
+        // The cut frame runs past its bits and is output whole, as a decoder does (ffmpeg: 43 frames, 88,064 samples).
+        Assert.Equal(88_064, context.Streams[0].Samples);
+        Assert.Contains(context.Findings, f => f.Code == "wma.frame-invalid");
     }
 
     public static TheoryData<string, string> Unsupported => new()
@@ -150,6 +153,15 @@ public class WmaLosslessTests
         }
 
         CodecContext context = stream.RunLossless();
+        if (change == "short data")
+        {
+            // One problem, one finding: the size of the data, which the stream's treatment follows from.
+            Assert.Single(context.Findings, f => f.Code == "wma.codec-data-size");
+            Assert.DoesNotContain(context.Findings, f => f.Code == "wma.format-unsupported");
+            Assert.Equal("not analyzed", WmaStream.StreamNode(context).Value!.ToString());
+            return;
+        }
+
         Finding finding = Assert.Single(context.Findings, f => f.Code == "wma.format-unsupported");
         Assert.Equal($"The stream is not analyzed: {reason}.", finding.Message);
         Assert.Equal("not analyzed", WmaStream.StreamNode(context).Value!.ToString());

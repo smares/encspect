@@ -287,7 +287,10 @@ public class WmaLosslessRunTests
             WmaStream.SetBits(s.Objects[0], Header + Frame0Bits - 1, 1, 0);
         });
         Assert.Equal(88200, context.Streams[0].Samples);
-        Assert.Contains(context.Findings, f => f.Code == "wma.frame-boundary");
+        // The gap lies after frame 0, which says that no frame follows it, and the finding points there, not at the last frame read.
+        Finding boundary = Assert.Single(context.Findings, f => f.Code == "wma.frame-boundary");
+        Node first = WmaStream.Child(WmaStream.StreamNode(context), "Frames").Children[0];
+        Assert.Equal(("Frame", first.Offset, first.Length), (boundary.Node!.Name, boundary.Node.Offset, boundary.Node.Length));
         Assert.DoesNotContain(context.Findings, f => f.Code is "wma.frame-invalid" or "wma.packet-sequence");
         Assert.Equal("44", WmaStream.Statistic(WmaStream.StreamNode(context), "Frames"));
     }
@@ -375,5 +378,8 @@ public class WmaLosslessRunTests
         Assert.Contains("10 for 2", gap.Message, StringComparison.Ordinal);
         Assert.Contains(context.Findings, f => f.Code == "wma.frame-invalid" && f.Message.Contains("its trim at the end is the whole frame or more", StringComparison.Ordinal));
         Assert.DoesNotContain(context.Findings, f => f.Message.Contains("tile header", StringComparison.Ordinal));
+        // Encspect reads on from the bit where the trim ended, and the finding says so.
+        Assert.DoesNotContain(context.Findings, f => f.Message.Contains("no more frames", StringComparison.Ordinal));
+        Assert.Contains(context.Findings, f => f.Message.Contains("reads on from the bit where its trim ended", StringComparison.Ordinal));
     }
 }

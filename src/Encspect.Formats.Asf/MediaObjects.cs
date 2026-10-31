@@ -12,7 +12,10 @@ public sealed partial class AsfParser
     // shares them with other streams), in the order they complete. A compressed payload's
     // sub-payloads are media objects of their own (section 5.2.3.2). The packets are read again from
     // the file, one at a time, as the codec asks for objects.
-    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber)
+    //
+    // isKeepingPartial: the object that the data ends in the middle of is handed over with the bytes that arrived, after its finding, for a
+    // codec whose decoder reads a short packet (Windows Media Audio Lossless); the others never see it.
+    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber, bool isKeepingPartial)
     {
         ByteReader reader = state.Reader;
         FindingCollector findings = state.Findings;
@@ -148,7 +151,11 @@ public sealed partial class AsfParser
         if (data is not null)
         {
             findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
-                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
+                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. {(isKeepingPartial ? (n == 1 ? "Its bytes are handed to the codec's parser as they are." : "Their bytes are handed to the codec's parsers as they are.") : "They are dropped.")}");
+            if (isKeepingPartial && collected > 0)
+            {
+                yield return new MappedBytes(data.AsMemory(0, collected), ranges);
+            }
         }
     }
 
