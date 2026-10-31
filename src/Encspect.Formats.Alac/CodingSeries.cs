@@ -7,10 +7,37 @@ namespace Encspect.Formats.Alac;
 // description in the tree and in the graph.
 internal static class CodingCategories
 {
-    // The codes of the "Stereo Coding" series: a channel pair that mixes its channels (a mixing resolution other than 0) is coded as mid/side; the
-    // others, uncompressed pairs included, as left and right.
+    // The codes of the "Stereo Coding" series, by what matrix_dec.c reconstructs: the first channel u and the second v give left = u + v - (mixRes * v >> mixBits)
+    // and right = left - v. A mixing resolution of 0 (and an uncompressed pair) leaves the channels as they are; 2^mixBits makes u the left channel itself and v
+    // left minus right; half of that makes u the mean of both, which is mid/side; any other value is a weighted mix.
     public const byte CodeLeftRight = 0;
-    public const byte CodeMidSide = 1;
+    public const byte CodeLeftSide = 1;
+    public const byte CodeMidSide = 2;
+    public const byte CodeWeightedMix = 3;
+
+    public static byte PairCode(bool isUncompressed, byte mixBits, sbyte mixResolution)
+    {
+        if (isUncompressed || mixResolution == 0)
+        {
+            return CodeLeftRight;
+        }
+
+        if (mixBits < 8)
+        {
+            int whole = 1 << mixBits;
+            if (mixResolution == whole)
+            {
+                return CodeLeftSide;
+            }
+
+            if (mixBits > 0 && mixResolution == whole >> 1)
+            {
+                return CodeMidSide;
+            }
+        }
+
+        return CodeWeightedMix;
+    }
 
     // The codes of the "Element Coding" series.
     public const byte CodeCompressed = 0;
@@ -19,7 +46,9 @@ internal static class CodingCategories
     public static readonly Category[] StereoCodings =
     [
         new("Left/right stereo", Explain.CodingLeftRight) { Topic = Topics.Prediction },
-        new("Mid/side stereo", Explain.CodingMidSide) { Topic = Topics.Prediction },
+        new("Left/side stereo", Explain.CodingLeftSide) { Topic = Topics.ChannelAssignment },
+        new("Mid/side stereo", Explain.CodingMidSide) { Topic = Topics.MidSide },
+        new("Weighted mix", Explain.CodingWeightedMix) { Topic = Topics.Prediction },
     ];
 
     public static readonly Category[] ElementCodings =

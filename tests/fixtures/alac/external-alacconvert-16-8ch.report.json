@@ -1548,8 +1548,14 @@
                           "length": 157179,
                           "children": [
                             {
-                              "name": "Mid/side stereo",
-                              "value": "15 channel pairs (100.0%)",
+                              "name": "Left/side stereo",
+                              "value": "14 channel pairs (93.3%)",
+                              "offset": 753,
+                              "length": 157179
+                            },
+                            {
+                              "name": "Weighted mix",
+                              "value": "1 channel pair (6.7%)",
                               "offset": 753,
                               "length": 157179
                             }
@@ -7222,8 +7228,16 @@
                 "count": 0
               },
               {
+                "name": "Left/side stereo",
+                "count": 14
+              },
+              {
                 "name": "Mid/side stereo",
-                "count": 15
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 1
               }
             ],
             "total": 15,
@@ -7237,7 +7251,11 @@
             "runs": [
               [
                 1,
-                15
+                14
+              ],
+              [
+                3,
+                1
               ]
             ],
             "seconds": [
