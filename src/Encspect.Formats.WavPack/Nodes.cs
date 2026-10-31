@@ -127,6 +127,25 @@ internal static partial class Nodes
     internal static Node BlockCrc(MappedBytes block, uint crc) =>
         block.IsOpaque ? new Node("CRC", block.FileStart + 4, 4, NodeValue.Hex(crc, 8)) { Description = Explain.BlockCrc, Topic = Topics.AudioChecksums } : BlockCrc(block.FileStart, crc);
 
+    // The node a finding on the extra bits' CRC points at: the CRC field of the extra bitstream sub-block, in a file whose blocks are in it;
+    // the codec parser of a container lists the sub-block only, so the finding points at that.
+    internal static Node ExtraCrc(MappedBytes block, BlockContents contents)
+    {
+        if (block.IsOpaque)
+        {
+            return new Node(SubBlockIds.Name(SubBlockIds.WvxBitstream), OffsetInOpaque(block, contents.ExtraPosition), contents.ExtraHeaderLength + contents.ExtraSize)
+            {
+                Description = Explain.SubBlock(SubBlockIds.WvxBitstream),
+                Topic = TopicOf(SubBlockIds.WvxBitstream),
+            };
+        }
+
+        return new Node("CRC", block.OffsetOf(contents.ExtraBitstream.Start - 4), 4, NodeValue.Hex(contents.ExtraCrc, 8)) { Description = Explain.WvxCrc, Topic = Topics.AudioChecksums };
+    }
+
+    // The file offset of a byte of a block a container stores without its header: the bytes of one block are contiguous, so it is counted back from the block's end.
+    internal static long OffsetInOpaque(MappedBytes block, int index) => Math.Max(block.FileStart, block.FileEnd - (block.Length - index));
+
     // A sub-block as a node without its fields, for the list of a block whose bytes the report does not detail.
     internal static Node SubBlockSummary(long offset, int length, int function, int dataLength) =>
         new(SubBlockIds.Name(function), offset, length, NodeValue.Integer(dataLength, "bytes", "byte")) { Description = Explain.SubBlock(function), Topic = TopicOf(function) };

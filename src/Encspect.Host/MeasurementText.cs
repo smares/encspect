@@ -290,6 +290,7 @@ public static class MeasurementText
         return m.Status switch
         {
             MeasurementStatus.Stopped => text + "; measuring stopped before the end of the stream",
+            MeasurementStatus.Incomplete => m.Reason is { } why ? $"{text}; {why}" : text + "; frames were not decoded",
             MeasurementStatus.FormatChanged => text + "; measuring stopped where the format of the decoded blocks changed",
             _ => text,
         };

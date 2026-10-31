@@ -565,6 +565,7 @@ public static class AudioPanels
             MeasurementStatus.NotPossible => new AudioCaption(Cannot(m.Reason ?? "the stream cannot be measured"), false),
             MeasurementStatus.Failed => new AudioCaption("The measuring failed, so the audio has no figures.", false),
             MeasurementStatus.FormatChanged => new AudioCaption("Measuring stopped where the format of the decoded blocks changed; the figures cover what came before.", false),
+            MeasurementStatus.Incomplete => new AudioCaption($"{(m.Reason is { Length: > 0 } why ? char.ToUpperInvariant(why[0]) + why[1..] : "Frames were not decoded")}; the figures cover what the decoder delivered.", false),
             _ => new AudioCaption(StoppedText(m), false),
         };
     }
