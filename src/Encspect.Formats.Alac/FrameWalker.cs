@@ -26,6 +26,9 @@ internal enum WalkFault : byte
     // A compressed element, in a stream whose cookie states a maximum Golomb parameter of 0 or of more than 31, for which the reference code does not define the
     // residual code (ag_dec.c shifts by it as a 32-bit mask, and a parameter of 0 reads no bits).
     Tuning,
+
+    // The 12 reserved bits of an element header are not 0, in an element the decoder reads (ALACDecoder.cpp: RequireAction(unusedHeader == 0)).
+    ReservedBits,
 }
 
 // What the walk of one frame found: how far it got, what it saw and the first place of each oddity, as element indexes (-1 for none).
@@ -35,6 +38,11 @@ internal sealed class WalkResult
 
     // The element the fault is in, and the bit of the frame it is found at.
     public int FaultElement { get; set; }
+
+    // The channels the elements before the faulting element had read: the reference decoder reads no further
+    // element once the cookie's channels are all there.
+    public int FaultChannelsBefore { get; set; }
+
 
     // The tag of the element the fault is in, for an element the walk cannot read further.
     public int FaultTag { get; set; }
@@ -52,8 +60,11 @@ internal sealed class WalkResult
     // The elements read, END included.
     public int Elements { get; set; }
 
-    // The sample count of the first audio element, and the count of each element for the comparison.
+    // The frame's sample count: the count the last audio element read had. A partial element states it, and the elements after it that do not keep it
+    // (ALACDecoder.cpp, Decode: numSamples is set by a partial element and stays).
     public uint Samples { get; set; }
+
+    public uint FirstSamples { get; set; }
 
     public bool HasSamples { get; set; }
 
@@ -82,6 +93,7 @@ internal sealed class WalkResult
     {
         Fault = WalkFault.None;
         FaultElement = -1;
+        FaultChannelsBefore = 0;
         FaultTag = 0;
         FaultBit = 0;
         HasEnd = false;
@@ -89,6 +101,7 @@ internal sealed class WalkResult
         Walked = 0;
         Elements = 0;
         Samples = 0;
+        FirstSamples = 0;
         HasSamples = false;
         ChannelsRead = 0;
         Flags = FrameFlags.None;
@@ -123,6 +136,8 @@ internal static class FrameWalker
         int channels = 0;
         int index = 0;
         long restStart = -1;
+        uint frameSamples = cookie.FrameLength;
+        int fillers = 0;
         while (true)
         {
             if (position + 3 > total)
@@ -140,12 +155,13 @@ internal static class FrameWalker
             }
 
             int tag = (int)Peek(data, position, 3);
+            int channelsBefore = channels;
             long start = position;
             position += 3;
             var element = new ElementRecord { Tag = (byte)tag, Start = start, AreReservedBitsZero = true };
             WalkFault fault = tag switch
             {
-                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, ref element, store, cancellation),
+                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, frameSamples, channels < cookie.Channels, ref element, store, cancellation),
                 ElementTags.DataStream => DataStream(data, total, ref position, ref element),
                 ElementTags.Fill => Fill(data, total, ref position, ref element),
                 ElementTags.End => WalkFault.None,
@@ -160,12 +176,17 @@ internal static class FrameWalker
                 }
 
                 CountAudio(result, cookie, in element, index, ref channels);
+                frameSamples = element.Samples;
             }
 
             tally.Count(in element);
-            if (kept.Count < Records.MaxDetailedElements)
+            // Fill and data stream elements carry nothing the analysis shows, and a crafted frame can hold thousands: past MaxDetailedFillElements of them
+            // the rest of the frame is one node, counted and walked but not listed.
+            bool isFiller = tag is ElementTags.Fill or ElementTags.DataStream;
+            if (restStart < 0 && kept.Count < Records.MaxDetailedElements && (!isFiller || fillers < Records.MaxDetailedFillElements))
             {
                 kept.Add(element);
+                fillers += isFiller ? 1 : 0;
             }
             else if (restStart < 0)
             {
@@ -176,6 +197,7 @@ internal static class FrameWalker
             if (fault != WalkFault.None)
             {
                 Fail(result, fault, index - 1, fault == WalkFault.UnknownElement ? start : element.End);
+                result.FaultChannelsBefore = channelsBefore;
                 result.FaultTag = tag;
                 break;
             }
@@ -224,12 +246,14 @@ internal static class FrameWalker
         if (!result.HasSamples)
         {
             result.HasSamples = true;
-            result.Samples = element.Samples;
+            result.FirstSamples = element.Samples;
         }
-        else if (element.Samples != result.Samples && result.DifferingElement < 0)
+        else if (element.Samples != result.FirstSamples && result.DifferingElement < 0)
         {
             result.DifferingElement = index;
         }
+
+        result.Samples = element.Samples;
 
         if (element.IsPartial)
         {
@@ -260,7 +284,7 @@ internal static class FrameWalker
     }
 
     // A single channel, LFE or channel pair element (ALACDecoder.cpp, Decode, ID_SCE, ID_LFE and ID_CPE). The caller has read the 3-bit tag.
-    private static WalkFault ReadAudio(ReadOnlySpan<byte> data, long total, ref long position, AlacCookie cookie, ref ElementRecord element, ByteStore? store, CancellationToken cancellation)
+    private static WalkFault ReadAudio(ReadOnlySpan<byte> data, long total, ref long position, AlacCookie cookie, uint frameSamples, bool isDecoded, ref ElementRecord element, ByteStore? store, CancellationToken cancellation)
     {
         bool isPair = element.Tag == ElementTags.ChannelPair;
         int channels = isPair ? 2 : 1;
@@ -272,6 +296,12 @@ internal static class FrameWalker
 
         element.Instance = (byte)Peek(data, position, 4);
         element.AreReservedBitsZero = Peek(data, position + 4, 12) == 0;
+        if (!element.AreReservedBitsZero && isDecoded)
+        {
+            position += 16;
+            return WalkFault.ReservedBits;
+        }
+
         uint header = Peek(data, position + 16, 4);
         position += 20;
         bool isPartial = (header & 8) != 0;
@@ -279,7 +309,7 @@ internal static class FrameWalker
         bool isUncompressed = (header & 1) != 0;
         element.BytesShifted = (byte)shifted;
         element.Flags = (isPartial ? ElementFlags.Partial : 0) | (isUncompressed ? ElementFlags.Uncompressed : 0);
-        element.Samples = cookie.FrameLength;
+        element.Samples = frameSamples;
         if (shifted == 3)
         {
             return WalkFault.InvalidHeader;

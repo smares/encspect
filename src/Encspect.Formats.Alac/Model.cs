@@ -186,6 +186,9 @@ internal sealed class Records
 
     public const int MaxDetailedElements = 64;
 
+    // Of those, the fill and data stream elements a frame lists; the frame's other elements after the first of the rest are not listed either.
+    public const int MaxDetailedFillElements = 8;
+
     public ChunkedList<FrameRecord> Frames { get; } = new();
 
     public List<FrameDetail> Details { get; } = [];

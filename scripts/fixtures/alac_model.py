@@ -814,6 +814,8 @@ def cookie_findings(c):
         out.append("alac.compatible-version")
     if not 0 < c["frame_length"] <= MAX_FRAME_LENGTH:
         out.append("alac.frame-length-invalid")
+    if c["rate"] == 0:
+        out.append("alac.sample-rate-zero")
     if c["bit_depth"] not in (16, 20, 24, 32):
         out.append("alac.bit-depth-invalid")
     if not 1 <= c["channels"] <= 8:
@@ -951,6 +953,8 @@ def manifest(data, kind, extra=None):
             points.append((offset, size * 8, samples))
             pair_codes.append(frame_pairs)
             element_codes.append(frame_elements)
+    if c is not None and c["complete"] and c["max_frame_bytes"] and any(size > c["max_frame_bytes"] for _, size in packets):
+        add("alac.frame-larger-than-stated")
     result["frames"] = frames
     result["frame_count"] = len(frames)
     result["statistics"] = {"frames": len(packets), "partial_frames": partial_frames, "uncompressed_frames": uncompressed_frames,

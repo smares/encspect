@@ -144,12 +144,16 @@ internal sealed class State
         int read = w.ChannelsRead;
         int elements = w.Elements;
         Func<Node> At(int element) => !isRecorded ? () => stream : isDetailed && element >= 0 && element < elements ? () => Nodes.Element(records, (int)listed, element) : () => Nodes.Frame(records, (int)listed);
+        // The reference decoder (ALACDecoder.cpp, Decode) stops reading elements once the cookie's channels are all decoded, so what a later element holds
+        // is never looked at there; before that, a bad element makes it return an error.
+        bool IsBeyond(int channelsBefore) => channelsBefore >= channels;
         static string More(int count, string one, string many) => count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, one, many)}" : string.Empty;
 
         if (w.Fault != WalkFault.None)
         {
             int at = w.FaultElement;
             int tag = w.FaultTag;
+            bool isBeyond = IsBeyond(w.FaultChannelsBefore);
             bool inElement = at < elements;
             string place = inElement ? $"element {at + 1}" : $"the {Counts.Of(elements, "element", "elements")} before it";
             switch (w.Fault)
@@ -160,20 +164,24 @@ internal sealed class State
                     break;
                 case WalkFault.UnknownElement:
                     Findings.Add(Severity.Warning, "alac.element-unknown", At(at), count =>
-                        $"Element {at + 1} of the frame at 0x{offset:X} has the tag {tag} ({ElementTags.Name(tag)}), for which ALAC defines no syntax; the reference decoder refuses the frame, so the rest of it is not read{More(count, "has such an element", "have such elements")}.");
+                        $"Element {at + 1} of the frame at 0x{offset:X} has the tag {tag} ({ElementTags.Name(tag)}), for which ALAC defines no syntax; {(isBeyond ? "it follows the stream's channels, which the reference decoder does not read past" : "the reference decoder returns an error there")}, so the rest of the frame is not read{More(count, "has such an element", "have such elements")}.");
                     break;
                 case WalkFault.InvalidHeader:
                     Findings.Add(Severity.Warning, "alac.element-invalid", At(at), count =>
-                        $"Element {at + 1} of the frame at 0x{offset:X} states a header the reference decoder cannot use (3 bytes shifted, or a sample width of no bits or of more than 32), so the rest of the frame is not read{More(count, "does the same", "do the same")}.");
+                        $"Element {at + 1} of the frame at 0x{offset:X} states a header the reference decoder cannot use (3 bytes shifted, or a sample width of no bits or of more than 32), so the rest of the frame is not read{(isBeyond ? "; it follows the stream's channels, which the reference decoder does not read past" : string.Empty)}{More(count, "does the same", "do the same")}.");
                     break;
                 case WalkFault.Tuning:
                     int kb = cookie.Kb;
                     Findings.Add(Severity.Warning, "alac.tuning-invalid", At(at), count =>
-                        $"Element {at + 1} of the frame at 0x{offset:X} is compressed, but the cookie states the maximum Golomb parameter (kb) {kb}, for which the reference code defines no residual code (it uses the parameter as a 32-bit mask, and 0 reads no bits), so the rest of the frame is not read{More(count, "does the same", "do the same")}.");
+                        $"Element {at + 1} of the frame at 0x{offset:X} is compressed, but the cookie states the maximum Golomb parameter (kb) {kb}, for which the reference code defines no residual code (it uses the parameter as a 32-bit mask, and 0 reads no bits), so the rest of the frame is not read{(isBeyond ? "; it follows the stream's channels, which the reference decoder does not read past" : string.Empty)}{More(count, "does the same", "do the same")}.");
+                    break;
+                case WalkFault.ReservedBits:
+                    Findings.Add(Severity.Warning, "alac.element-reserved-bits", At(at), count =>
+                        $"The 12 reserved bits of element {at + 1} of the frame at 0x{offset:X} are not 0, which the reference decoder refuses, so the rest of the frame is not read{More(count, "does the same", "do the same")}.");
                     break;
                 default:
                     Findings.Add(Severity.Warning, "alac.residual-invalid", At(at), count =>
-                        $"In element {at + 1} of the frame at 0x{offset:X} a run of zero residuals goes past the samples of the element, which the reference decoder refuses{More(count, "does the same", "do the same")}.");
+                        $"In element {at + 1} of the frame at 0x{offset:X} a run of zero residuals goes past the samples of the element, {(isBeyond ? "which follows the stream's channels, so the reference decoder does not read it" : "which the reference decoder refuses")}{More(count, "does the same", "do the same")}.");
                     break;
             }
         }
@@ -199,14 +207,14 @@ internal sealed class State
         else if (w.HasEnd && read < channels)
         {
             Findings.Add(Severity.Warning, "alac.channels-missing", At(-1), count =>
-                $"The elements of the frame at 0x{offset:X} hold {Counts.Of(read, "channel", "channels")}, but the cookie states {channels}; the reference decoder fills the others with zeros{More(count, "does the same", "do the same")}.");
+                $"The elements of the frame at 0x{offset:X} hold {Counts.Of(read, "channel", "channels")}, but the cookie states {channels}; the reference decoder writes nothing to the other channels{More(count, "does the same", "do the same")}.");
         }
 
         if (w.ReservedElement >= 0)
         {
             int element = w.ReservedElement;
             Findings.Add(Severity.Warning, "alac.element-reserved-bits", At(element), count =>
-                $"The 12 reserved bits of element {element + 1} of the frame at 0x{offset:X} are not 0, which the reference decoder refuses{More(count, "does the same", "do the same")}.");
+                $"The 12 reserved bits of element {element + 1} of the frame at 0x{offset:X} are not 0, but the element follows the stream's channels, which the reference decoder does not read past{More(count, "does the same", "do the same")}.");
         }
 
         if (w.ShiftedEscapeElement >= 0)
@@ -219,7 +227,7 @@ internal sealed class State
         if (w.DifferingElement >= 0)
         {
             int element = w.DifferingElement;
-            long first = w.Samples;
+            long first = w.FirstSamples;
             Findings.Add(Severity.Warning, "alac.element-samples-differ", At(element), count =>
                 $"Element {element + 1} of the frame at 0x{offset:X} has a sample count that differs from the first element's {first}; the frame has one count{More(count, "does the same", "do the same")}.");
         }

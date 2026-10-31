@@ -218,6 +218,18 @@ def build():
          "(a count of 255 and 25 more) and a fill element of 20 bytes (a count of 15 and 6 more). FFmpeg 8.0.1 does not decode the element types (\"Not yet implemented\"), so only alacconvert does.",
          packets, m.cookie(2, bit_depth=16, rate=44100, max_frame_bytes=max(len(p) for p in packets)), 2, 16, 44100, 10000, data=stereo, decoders=("alacconvert",))
 
+    # A partial element's sample count stays for the elements after it that do not state one (ALACDecoder.cpp, Decode: numSamples is set by the partial flag
+    # and kept). The frame's second element has no partial flag and decodes 100 samples, as the first.
+    short = planes(2, 16, 44100, 100)
+    carried = m.BitWriter()
+    m.write_audio(carried, m.SCE, 0, [short[0]], 16, 4096, parameters=MONO)
+    m.write_audio(carried, m.SCE, 1, [short[1]], 16, 4096, partial=False, parameters=MONO)
+    m.write_end(carried)
+    carried_packet = carried.data()
+    case("stereo-16-partial-count-carried", "One frame of 100 samples: a single channel element that states its count (the partial flag) and a second one without the flag, which keeps the 100 as "
+         "the reference decoder does. FFmpeg 8.0.1 reads the second element as a whole frame, so only alacconvert decodes it.", [carried_packet],
+         m.cookie(2, bit_depth=16, rate=44100, max_frame_bytes=len(carried_packet)), 2, 16, 44100, 100, data=short, decoders=("alacconvert",))
+
     # The older forms of the cookie, in Matroska, whose CodecPrivate holds the cookie as the container stores it.
     packets, data = stream(2, 16, 44100, 10000, STEREO, mix_res=2)
     plain = m.cookie(2, bit_depth=16, rate=44100)
@@ -252,6 +264,9 @@ def build():
     damaged("layout-differs", "A cookie of two channels whose channel layout info names the six channels of 5.1.", packets, cookie + m.layout_info(6))
     damaged("tuning-nonstandard", "A cookie with the tuning parameters 30, 12 and 10 in place of Apple's 40, 10 and 14; the frames are coded with them and read to their end.",
             stream(2, 16, 44100, count, STEREO, mix_res=2, pb=30, mb=12, kb=10)[0], m.cookie(2, bit_depth=16, rate=44100, pb=30, mb=12, kb=10))
+
+    damaged("sample-rate-zero", "A cookie that states a sample rate of 0 Hz; the container states 44,100.", packets, m.cookie(2, bit_depth=16, rate=0))
+    damaged("frame-larger-than-stated", "A cookie that states a maximum packet size of 1,000 bytes, which the frames exceed.", packets, m.cookie(2, bit_depth=16, rate=44100, max_frame_bytes=1000))
 
     first = packets[1]
 

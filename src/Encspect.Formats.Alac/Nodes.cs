@@ -227,7 +227,7 @@ internal static class Nodes
     private static void Audio(Records r, FieldMap map, in ElementRecord e, Node element)
     {
         long start = e.Start;
-        if (e.End < start + 23)
+        if (e.End < start + 19)
         {
             // The element ends inside its header.
             return;
@@ -235,6 +235,11 @@ internal static class Nodes
 
         element.Add(map.Bits("Instance Tag", start + 3, start + 7, NodeValue.Integer(e.Instance), Explain.InstanceTag, Topics.Alac));
         element.Add(map.Bits("Reserved Bits", start + 7, start + 19, e.AreReservedBitsZero ? NodeValue.Integer(0) : "not zero", e.AreReservedBitsZero ? Explain.ReservedBits : Explain.ReservedBitsSet, Topics.Alac));
+        if (e.End < start + 23)
+        {
+            return;
+        }
+
         element.Add(map.Bits("IsPartialFrame", start + 19, start + 20, NodeValue.Boolean(e.IsPartial), e.IsPartial ? Explain.PartialFrame : Explain.WholeFrame, Topics.Alac));
         element.Add(map.Bits("Bytes Shifted", start + 20, start + 22, NodeValue.Integer(e.BytesShifted, "bytes", "byte"), e.BytesShifted switch
         {

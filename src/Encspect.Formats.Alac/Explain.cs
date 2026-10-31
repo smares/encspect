@@ -59,8 +59,8 @@ internal static class Explain
     public const string EndElement = "The end tag that closes the frame; the frame's bytes then continue to a byte boundary (ALACDecoder.cpp, ID_END).";
     public const string ElementTag = "The 3-bit tag that opens an element: 0 single channel, 1 channel pair, 2 coupling channel, 3 LFE, 4 data stream, 5 program config, 6 fill, 7 end (ALACAudioTypes.h).";
     public const string InstanceTag = "The 4-bit instance tag of the element, which tells elements of one type apart. Apple's encoder numbers them from 0; the reference decoder only notes which occurred.";
-    public const string ReservedBits = "Twelve bits the element header reserves; they are 0 (ALACDecoder.cpp: the decoder refuses an element where they are not).";
-    public const string ReservedBitsSet = "Twelve bits the element header reserves, which are not all 0; the reference decoder refuses such an element (ALACDecoder.cpp).";
+    public const string ReservedBits = "Twelve bits the element header reserves; they are 0 (ALACDecoder.cpp: the decoder refuses an element where they are not, if it reads the element at all).";
+    public const string ReservedBitsSet = "Twelve bits the element header reserves, which are not all 0; the reference decoder refuses such an element, and with it the frame, unless the cookie's channels are all decoded before it (ALACDecoder.cpp).";
     public const string PartialFrame = "The element states its own sample count, in the 32 bits that follow the header, instead of using the frame length of the cookie. Apple's encoder sets it for a frame with fewer samples, such as the last one (ALACEncoder.cpp).";
     public const string WholeFrame = "The element has the frame length of the cookie as its sample count.";
     public const string NoBytesShifted = "No bytes are shifted out of the samples: the predictor and the residuals carry their whole width.";
@@ -69,7 +69,7 @@ internal static class Explain
     public const string Compressed = "The element holds a predictor and Golomb-coded residuals for each channel.";
     public const string Uncompressed = "The element holds its samples as they are, because the compressed form would not be smaller (the \"escape\" flag of the element header; ALACEncoder.cpp).";
     public const string SampleCount = "The number of samples in each channel of the element.";
-    public const string UncompressedSamples = "The samples of the element, each as many bits wide as the bit depth, the channels of a pair alternating.";
+    public const string UncompressedSamples = "The samples of the element, the channels of a pair alternating. A channel pair's samples are as many bits wide as the bit depth; a single channel's are the bit depth less 8 bits for each byte shifted (ALACDecoder.cpp).";
     public const string MixBits = "The number of bits of the mixing weights of a channel pair: with the mixing resolution it gives how the first channel mixes left and right (matrix_dec.c).";
     public const string MixBitsMono = "A byte the header of a single channel element carries, which the decoder reads and does not use.";
     public const string MixResolutionMixed = "The weight of the left channel in the first channel's mix, out of 2 to the power of the mix bits; the second channel is left less right (matrix_dec.c). Mid/side stereo has the two weights equal.";
@@ -80,7 +80,7 @@ internal static class Explain
     public const string PredictionTypeFirstOrder = "The type is not 0: the decoder first undoes a first-order difference, adding each residual to the sample before, and then applies the adaptive filter (ALACDecoder.cpp: the \"numActive == 31\" pass).";
     public const string PredictorShift = "The shift that scales the filter's sum back to the sample's size; the coefficients are fractions of 2 to the power of the shift (dp_dec.c).";
     public const string WeightFactor = "The factor, out of 4, that scales the history weight of the cookie for this channel (ALACDecoder.cpp: pb times the factor over 4).";
-    public const string PredictorOrder = "The number of coefficients of the filter, 0 to 31 (the field is 5 bits); Apple's encoder writes up to 16 (ALACAudioTypes.h, kALACMaxCoefs).";
+    public const string PredictorOrder = "The number of coefficients of the filter, 0 to 31 (the field is 5 bits). Apple's encoder writes 4 or 8 (ALACEncoder.cpp, kMinUV and kMaxUV); kALACMaxCoefs, 16, only sizes its coefficient arrays (ALACAudioTypes.h).";
     public const string PredictorCoefficients = "The starting values of the filter's coefficients, signed 16-bit numbers; the decoder adapts them sample by sample (dp_dec.c).";
     public const string ShiftedBits = "The low bytes shifted out of every sample of the element, stored apart in sample order, the channels of a pair alternating (ALACDecoder.cpp).";
     public const string Residuals = "The residuals of a channel: what is left of each sample after the prediction, coded with the adaptive Golomb code (ag_dec.c).";

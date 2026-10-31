@@ -67,6 +67,14 @@ internal static class Summary
 
     private static void Checks(State s)
     {
+        if (s.Cookie is { IsComplete: true, MaxFrameBytes: > 0 } cookie && s.Largest > cookie.MaxFrameBytes && s.CookieNode is { } cookieNode)
+        {
+            long largest = s.Largest;
+            uint stated = cookie.MaxFrameBytes;
+            s.Findings.AddNow(Severity.Warning, "alac.frame-larger-than-stated",
+                $"The largest frame is {Counts.Of(largest, "byte", "bytes")}, more than the {Counts.Of(stated, "byte", "bytes")} the cookie states as the maximum size of a packet.", Field(cookieNode, "Specific Config", "Maximum Frame Size"));
+        }
+
         if (s.Listed > Records.MaxEntries)
         {
             long listed = s.Listed;
@@ -100,6 +108,12 @@ internal static class Summary
             uint length = c.FrameLength;
             s.Findings.AddNow(Severity.Warning, "alac.frame-length-invalid",
                 $"The cookie states a frame length of {length}, which is 0 or more than the {AlacCookie.MaxFrameLength} samples per channel a decoder is designed for.", Field(cookie, "Specific Config", "Frame Length"));
+        }
+
+        if (c.SampleRate == 0)
+        {
+            s.Findings.AddNow(Severity.Warning, "alac.sample-rate-zero",
+                "The cookie states a sample rate of 0 Hz; Apple's ReadMe gives 1 to 384,000 Hz, so the stream's duration and bitrates are unknown.", Field(cookie, "Specific Config", "Sample Rate"));
         }
 
         if (!c.IsBitDepthValid)
