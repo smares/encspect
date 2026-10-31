@@ -57,7 +57,7 @@ internal static class LosslessReport
         Add("Subframes", NodeValue.Integer(tally.Subframes), ProExplain.StatSubframes, Topics.WmaSubframes);
         Add("Seekable Subframes", NodeValue.Text(WmaText.Share(tally.Seekable, tally.Subframes, "subframe", "subframes")), LosslessExplain.StatSeekable, Topics.WmaLosslessSubframes);
         Add("Raw PCM Subframes", NodeValue.Text(WmaText.Share(tally.RawPcm, tally.Subframes, "subframe", "subframes")), LosslessExplain.StatRawPcm, Topics.WmaLosslessSubframes);
-        Add("Coded Channel Subframes", NodeValue.Text(WmaText.Share(tally.CodedChannels, tally.ChannelSubframes - (tally.RawPcm * p.Channels), "channel subframe", "channel subframes")), LosslessExplain.StatCodedChannels, Topics.WmaLosslessSubframes);
+        Add("Coded Channel Subframes", NodeValue.Text(WmaText.Share(tally.CodedChannels, tally.CodableChannelSubframes, "channel subframe", "channel subframes")), LosslessExplain.StatCodedChannels, Topics.WmaLosslessSubframes);
         Add("Escape-Coded Residuals", NodeValue.Integer(tally.Escapes), LosslessExplain.StatEscapes, Topics.WmaLosslessSubframes);
         Add("Transient Channel Subframes", NodeValue.Integer(tally.Transients), LosslessExplain.StatTransients, Topics.WmaLosslessSubframes);
         Add("Subframes with Zero Low Bits", NodeValue.Integer(tally.ZeroLowBitSubframes), LosslessExplain.StatZeroLowBits, Topics.WastedBits);

@@ -125,7 +125,7 @@ internal sealed class WmaPacketReader
 
         if (_isLossless && !_p.HasLengthPrefix)
         {
-            DecodeRun(true);
+            DecodeRun(true, false);
         }
 
         Packets = Data.Packets.Count;
@@ -417,7 +417,7 @@ internal sealed class WmaPacketReader
             return;
         }
 
-        bool isRestDropped = !DecodeRun(false);
+        bool isRestDropped = !DecodeRun(false, count > 0 && !isDropped);
         ClearSaved();
         int start = payloadStart + count;
         int tail = Math.Max(0, end - start);
@@ -435,9 +435,12 @@ internal sealed class WmaPacketReader
         }
     }
 
-    // Reads the frames of the run from its start until a frame says no other follows, or the bits are used up. Returns false where a frame
-    // after the first of the run fails: a decoder then drops the rest of the packet that arrived as well.
-    private bool DecodeRun(bool isFlush)
+    // Reads the frames of the run (docs/design/wma-lossless-format.md, "Which frames of a run are decoded"). The first frame is the one a decoder
+    // reads in the call that reads the packet's header (isHeaderCall), where the packet states a count of bits that finish the frame before: its
+    // trailer bit is ignored, bits left after it are read as further frames, and an error in it is cleared in the same call. Each further frame is
+    // read while bits of the run are left, until a trailer bit of 0; an error in one drops the rest of the packet that arrived, which is the
+    // false this returns. A frame that runs past the kept bits, and one whose end trim is F or more, are no errors.
+    private bool DecodeRun(bool isFlush, bool isHeaderCall)
     {
         int total = _savedBits;
         if (total <= 0)
@@ -451,36 +454,44 @@ internal sealed class WmaPacketReader
         bool isFirst = true;
         bool isOk = true;
         bool isTrailerOne = false;
+        int gap = 0;
         while (position < total)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            _isFirstOfRun = isFirst;
+            bool isInHeaderCall = isFirst && isHeaderCall;
+            _isFirstOfRun = isInHeaderCall;
             FrameOutcome result = ReadOne(joined, position, total, 0, [], parts, position);
-            if (!result.IsValid)
+            isFirst = false;
+            if (!result.IsValid && result.Fault is not ((int)LosslessFault.NeedsMoreBits or (int)LosslessFault.TrimTooLarge))
             {
-                isOk = isFirst;
+                isOk = isInHeaderCall;
                 position = total;
                 isTrailerOne = false;
                 break;
             }
 
             position += Math.Max(result.Bits, 1);
-            isFirst = false;
-            isTrailerOne = result.Trailer;
-            if (!result.Trailer)
+            // A frame rejected for its end trim stops before its trailer bit, and the next frame is read from there.
+            isTrailerOne = result.Trailer || result.Fault == (int)LosslessFault.TrimTooLarge;
+            if (!isTrailerOne && position < total && result.IsValid && gap == 0)
+            {
+                gap = total - position;
+            }
+
+            if (!isTrailerOne && !isInHeaderCall)
             {
                 break;
             }
         }
 
-        if (!isFlush && isOk && !isTrailerOne && position != total && position > 0)
+        if (!isFlush && isOk && gap > 0)
         {
             int frame = (int)Data.Frames.Count - 1;
-            int before = total - position;
+            int before = gap;
             _findings.Add(Severity.Warning, "wma.frame-boundary", () => FrameNode(frame), n =>
                 n == 1
-                    ? $"The last frame that starts in a packet ends {Counts.Bits(before)} before the place the next packet's count of bits that finish the frame before gives; a decoder does not check this."
-                    : $"{n} packets' last frames end at other places than the next packet's count of bits that finish the frame before gives (the first {Counts.Bits(before)} before it); a decoder does not check this.");
+                    ? $"A frame that starts in a packet says that no frame follows it, but {Counts.Bits(before)} lie between its end and the place the next packet's count of bits that finish the frame before gives. A decoder reads the bits left after the first frame of a packet's frames as further frames, whatever its trailer bit says, and leaves those after a later frame unread."
+                    : $"{n} packets have frames that say that no frame follows them, but bits lie between their ends and the place the next packet's count of bits that finish the frame before gives (the first {Counts.Bits(before)}). A decoder reads the bits left after the first frame of a packet's frames as further frames, whatever its trailer bit says, and leaves those after a later frame unread.");
         }
 
         FramePart owner = parts[0];

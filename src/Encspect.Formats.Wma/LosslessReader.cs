@@ -23,6 +23,7 @@ internal sealed class LosslessTally
     public long RawPcm;
     public long ChannelSubframes;
     public long CodedChannels;
+    public long CodableChannelSubframes;
     public long Residuals;
     public long Escapes;
     public long Transients;
@@ -135,6 +136,12 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         trace.Put(trimStart);
         trace.Put(result.TrimEnd);
 
+        if (result.TrimEnd >= p.FrameLength)
+        {
+            // A decoder stops here, before any subframe and without a loss.
+            return Finish(ref result, LosslessFault.TrimTooLarge, start);
+        }
+
         LosslessFault fault = ReadSubframes(ref result);
         if (fault != LosslessFault.None)
         {
@@ -168,11 +175,6 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
 
         trace.Put(Tag.Trailer);
         trace.Put(result.Trailer ? 1 : 0);
-        if (result.TrimEnd >= p.FrameLength)
-        {
-            return Finish(ref result, LosslessFault.TrimTooLarge, start);
-        }
-
         return Finish(ref result, LosslessFault.None, start);
     }
 
@@ -310,16 +312,11 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
             tally.Subframes++;
             tally.ChannelSubframes += members;
 
-            LosslessFault fault = ReadSubframe(length);
+            LosslessFault fault = ReadSubframe(length, mask);
             _trace.Put(LosslessTag.End);
             if (fault != LosslessFault.None)
             {
                 return fault;
-            }
-
-            if (_bits.Position > _limit)
-            {
-                return LosslessFault.NeedsMoreBits;
             }
 
             if ((mask & 1) != 0)
@@ -338,7 +335,7 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         }
     }
 
-    private LosslessFault ReadSubframe(int length)
+    private LosslessFault ReadSubframe(int length, uint members)
     {
         Bits bits = _bits;
         int b = parameters.SampleSize;
@@ -349,15 +346,21 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         if (isSeekable)
         {
             tally.Seekable++;
+            Array.Clear(_sums);
             LosslessFault fault = ReadSeekableParameters();
             if (fault != LosslessFault.None)
             {
-                _isReady = false;
+                // The arithmetic coding flag stops the subframe with the sums cleared and the readiness as it was; a rejected filter order
+                // makes the decoder wait for the next seekable subframe.
+                if (fault == LosslessFault.FilterOrder)
+                {
+                    _isReady = false;
+                }
+
                 return fault;
             }
 
             _isReady = true;
-            Array.Clear(_sums);
         }
 
         at = bits.Position;
@@ -393,7 +396,8 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
             _trace.Put(LosslessTag.CodedChannels);
             _trace.Put(bits.Position - at);
             _trace.Put(codedMask);
-            tally.CodedChannels += BitOperations.PopCount(codedMask);
+            tally.CodedChannels += BitOperations.PopCount(codedMask & members);
+            tally.CodableChannelSubframes += BitOperations.PopCount(members);
             if (parameters.HasLpcFlags)
             {
                 at = bits.Position;

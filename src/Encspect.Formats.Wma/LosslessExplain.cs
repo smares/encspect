@@ -35,7 +35,7 @@ internal static class LosslessExplain
     public const string StatSeekable = "How many subframes are seekable, and their share of all.";
     public const string StatRawPcm = "How many subframes hold raw samples, and their share of all.";
     public const string StatCodedChannels = "How many channels of the subframes that are not raw PCM code residuals, and their share of all channels of subframes.";
-    public const string StatEscapes = "How many residuals use an escape for a long quotient.";
+    public const string StatEscapes = "How many residual codes have a quotient of 32 or more, which takes an escape: a length code and extra bits added to the quotient.";
     public const string StatTransients = "How many channels of subframes set the transient bit.";
     public const string StatZeroLowBits = "How many subframes leave out zero low bits.";
     public const string StatMidSide = "How many seekable subframes code the two channels as a sum and a difference.";
