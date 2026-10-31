@@ -2174,7 +2174,7 @@
       {
         "severity": "Warning",
         "code": "alac.element-unknown",
-        "message": "Element 1 of the frame at 0x1504 has the tag 2 (Coupling Channel Element), for which ALAC defines no syntax; the reference decoder refuses the frame, so the rest of it is not read.",
+        "message": "Element 1 of the frame at 0x1504 has the tag 2 (Coupling Channel Element), for which ALAC defines no syntax; the reference decoder returns an error there, so the rest of the frame is not read.",
         "offset": 5380,
         "length": 1,
         "path": [

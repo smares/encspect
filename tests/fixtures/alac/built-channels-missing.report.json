@@ -2336,7 +2336,7 @@
       {
         "severity": "Warning",
         "code": "alac.channels-missing",
-        "message": "The elements of the frame at 0x1504 hold 1 channel, but the cookie states 2; the reference decoder fills the others with zeros.",
+        "message": "The elements of the frame at 0x1504 hold 1 channel, but the cookie states 2; the reference decoder writes nothing to the other channels.",
         "offset": 5380,
         "length": 4526,
         "path": [

@@ -3030,7 +3030,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ## Apple's ALAC reference implementation
 
-Encspect's ALAC parser is written in C#; the parts derived from Apple's ALAC reference implementation (github.com/macosforge/alac, commit c38887c5c5e64a4b31108733bd79ca9b2496d987; `src/Encspect.Formats.Alac`) say so in their source files. The source files of the implementation carry the Copyright (c) 2011 Apple Inc. notice and the Apache License header; the `LICENSE` of the repository:
+Encspect's ALAC parser is written in C#; the parts derived from Apple's ALAC reference implementation (github.com/macosforge/alac, commit c38887c5c5e64a4b31108733bd79ca9b2496d987; `src/Encspect.Formats.Alac`) say so in their source files. The source files of the implementation carry the Copyright (c) 2011 Apple Inc. notice and the Apache License header; the file `codec/APPLE_LICENSE.txt` in the repository (the Apple Public Source License) is a leftover that no source file refers to, and every file Encspect follows carries the Apache header; the `LICENSE` of the repository:
 
 ```
 Apache License

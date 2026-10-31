@@ -185,4 +185,36 @@ public class AlacCodecParserTests
 
         Assert.Contains(report.Findings, f => f.Code == "alac.writer-claim-differs");
     }
+
+    [Fact]
+    public void FillElementsPastTheEighthOfAFrameAreOneNodeAndStillCounted()
+    {
+        byte[] frame = AlacBuilder.FillFrame(40, 64, 64);
+        Report report = Analyze([frame], node => Cookie(node, AlacBuilder.Cookie()));
+
+        Node frameNode = Find(report.Root, n => n.Name == "Frame") ?? throw new InvalidOperationException("No frame node.");
+        Assert.Equal(8, frameNode.Children.Count(c => c.Name == "Fill Element"));
+        Node further = frameNode.Children.Single(c => c.Name == "Further Elements");
+        Assert.Equal(34, further.Value?.AsInteger());
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("alac.", StringComparison.Ordinal) && f.Severity != Severity.Info);
+        Assert.Equal(64, report.Streams.Single().Samples);
+    }
+
+    private static Node? Find(Node start, Func<Node, bool> match)
+    {
+        if (match(start))
+        {
+            return start;
+        }
+
+        foreach (Node child in start.Children)
+        {
+            if (Find(child, match) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
+    }
 }

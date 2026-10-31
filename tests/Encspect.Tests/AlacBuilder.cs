@@ -89,6 +89,34 @@ internal static class AlacBuilder
         return w.Bytes;
     }
 
+    // A frame of `fills` empty fill elements, then an uncompressed channel pair element of `samples` samples and the end tag.
+    public static byte[] FillFrame(int fills, int samples, int frameLength)
+    {
+        var w = new Bits();
+        for (int i = 0; i < fills; i++)
+        {
+            w.Write(6, 3);
+            w.Write(0, 4);
+        }
+
+        w.Write(1, 3);
+        w.Write(0, 16);
+        bool partial = samples != frameLength;
+        w.Write(partial ? 9 : 1, 4);
+        if (partial)
+        {
+            w.Write(samples, 32);
+        }
+
+        for (int i = 0; i < samples * 2; i++)
+        {
+            w.Write(i & 0xFFFF, 16);
+        }
+
+        w.Write(7, 3);
+        return w.Bytes;
+    }
+
     // An MP4 file of one stereo or mono track of ALAC frames with the cookie in the alac box of its sample entry.
     public static byte[] M4a(IReadOnlyList<byte[]> frames, byte[] cookie, int channels = 2, int bits = 16, uint rate = 44100, long samplesPerFrame = 64, bool withCookie = true)
     {

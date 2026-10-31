@@ -42,11 +42,11 @@
   {
    "offset": 589,
    "size": 309,
-   "status": "truncated",
+   "status": "ok",
    "samples": 100,
-   "walked": 0,
+   "walked": 309,
    "channels": 2,
-   "element_count": 2,
+   "element_count": 3,
    "elements": [
     {
      "tag": 0,
@@ -83,12 +83,12 @@
      "tag": 0,
      "name": "single channel",
      "start": 1252,
-     "end": 2472,
+     "end": 2464,
      "instance": 1,
      "partial": false,
      "shifted": 0,
      "uncompressed": false,
-     "samples": 4096,
+     "samples": 100,
      "mix_bits": 2,
      "mix_res": 0,
      "reserved_zero": true,
@@ -106,9 +106,15 @@
        ],
        "zero_runs": 0,
        "long_codes": 6,
-       "residual_end": 2472
+       "residual_end": 2464
       }
      ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 2464,
+     "end": 2467
     }
    ]
   }
@@ -118,7 +124,7 @@
   "frames": 1,
   "partial_frames": 1,
   "uncompressed_frames": 0,
-  "unreadable_frames": 1,
+  "unreadable_frames": 0,
   "elements": [
    2,
    0,
@@ -127,15 +133,15 @@
    0,
    0,
    0,
-   0
+   1
   ],
   "compressed": 2,
   "uncompressed": 0,
   "pairs": 0,
   "mixed_pairs": 0,
-  "channels": 1,
+  "channels": 2,
   "types": [
-   1,
+   2,
    0,
    0,
    0,
@@ -157,7 +163,7 @@
    0,
    0,
    0,
-   1,
+   2,
    0,
    0,
    0,
@@ -196,7 +202,7 @@
    0,
    0,
    0,
-   1,
+   2,
    0,
    0,
    0,
@@ -209,7 +215,7 @@
    0,
    0,
    0,
-   1,
+   2,
    0,
    0,
    0
@@ -220,18 +226,11 @@
    0
   ],
   "zero_runs": 0,
-  "long_codes": 8,
+  "long_codes": 14,
   "fill_bytes": 0,
   "data_stream_bytes": 0
  },
- "findings": [
-  {
-   "code": "alac.element-samples-differ"
-  },
-  {
-   "code": "alac.frame-overrun"
-  }
- ],
+ "findings": [],
  "stream_infos": [
   {
    "codec": "Apple Lossless",
