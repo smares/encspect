@@ -376,15 +376,23 @@ public class MeasurementOutputTests
     {
         (_, string json, _) = Run("--json", "--verify", Brickwall);
 
-        Assert.DoesNotContain("measurements", json);
+        Assert.False(HasProperty(JsonDocument.Parse(json).RootElement, "measurements"));
     }
+
+    // Whether any object in the document has a property of this name (the file's path, which may hold any word, is a value and does not count).
+    private static bool HasProperty(JsonElement element, string name) => element.ValueKind switch
+    {
+        JsonValueKind.Object => element.EnumerateObject().Any(p => p.Name == name || HasProperty(p.Value, name)),
+        JsonValueKind.Array => element.EnumerateArray().Any(e => HasProperty(e, name)),
+        _ => false,
+    };
 
     [Fact]
     public void TheTextOfAFileWithoutAnyMeasurementIsUnchanged()
     {
         (_, string before, _) = Run(Brickwall);
 
-        Assert.DoesNotContain("Measured", before);
+        Assert.DoesNotMatch(@"(?m)^\s*Measured:", before);
     }
 
     // Every figure the writers print carries a description and a topic, as nodes do (DescriptionTests): one or two sentences, no verdict,

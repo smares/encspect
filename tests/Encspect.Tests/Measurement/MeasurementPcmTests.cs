@@ -162,6 +162,17 @@ public class MeasurementPcmTests
         Assert.False(m.Levels.Stream.HasOnly16BitValues);
     }
 
+    // The relative gate lies above +30 LUFS, where the first version's histograms ended: the quiet tone is dropped and the loud one reads its own level.
+    [Fact]
+    public void ARelativeGateAbove30LufsDropsTheQuietToneAndReadsTheLoudOne()
+    {
+        LoudnessFigures l = Analyze("synthetic-pcm-float32-loudness-above-30.wav", new MeasureOptions()).Streams.Single().Measurements!.Loudness!;
+
+        Assert.True(l.IntegratedTenths > 400, $"{l.IntegratedTenths}");
+        Assert.True(Math.Abs(l.IntegratedTenths - l.MaximumMomentaryTenths) <= 5, $"integrated {l.IntegratedTenths}, maximum momentary {l.MaximumMomentaryTenths}");
+        Assert.True(l.BlocksAboveRelativeGate < l.BlocksAboveAbsoluteGate);
+    }
+
     [Fact]
     public void NonFiniteFloatsAreCountedAndMeasuredAsZero()
     {

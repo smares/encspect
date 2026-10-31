@@ -830,6 +830,11 @@ public static class ReportJsonWriter
         writer.WriteNumber("total", l.Blocks);
         writer.WriteNumber("aboveAbsoluteGate", l.BlocksAboveAbsoluteGate);
         writer.WriteNumber("aboveRelativeGate", l.BlocksAboveRelativeGate);
+        if (!l.IsGatedExactly)
+        {
+            writer.WriteBoolean("isGatedExactly", false);
+        }
+
         writer.WriteEndObject();
         if (l.ShortTerm is { } series)
         {
