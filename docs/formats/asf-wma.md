@@ -200,10 +200,10 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ## Reference for sample counts
 
-- **Microsoft's decoder is the reference** for the number of samples and the duration of a WMA stream: the figure of Media Foundation's Source Reader where it gives one, else that of the WMA decoder DMO fed the media objects directly. Both are recorded on a Windows runner by `.github/workflows/windows-wma-decode.yml` (see "WMA decoding by Microsoft's decoder" in [development.md](../development.md)).
-- **FFmpeg is the second cross-check.** Where its count differs from Microsoft's, the difference is listed per file in the run's `comparison.txt` and in the notes of the tests that pin the analyzer's counts, not hidden by agreement with the analyzer.
-- Damaged-input behavior (refused buffers, dropped runs, cut files) is derived from black-box runs of Microsoft's decoder, not from FFmpeg's.
-- The analyzer's counts have not been changed to the reference yet: the runs show where they differ (see the development notes).
+- **Microsoft's decoder is the reference** for the number of samples and the duration of a WMA stream: the figure of Media Foundation's Source Reader where it reached the end of the stream without a failed read or a stall, else that of the WMA decoder DMO fed the media objects directly. Both are recorded on a Windows runner by `.github/workflows/windows-wma-decode.yml` (see "WMA decoding by Microsoft's decoder" in [development.md](../development.md), which also lists the differences found).
+- **FFmpeg is the second cross-check.** Where its count differs from Microsoft's, the difference is listed per file in the run's `comparison.txt`, not hidden by agreement with the analyzer.
+- Damaged-input behavior (refused buffers, dropped runs, cut files) is to be derived from black-box runs of Microsoft's decoder, not from FFmpeg's. Until then the analyzer follows FFmpeg's decoder, as the checks of the Voice codec data do.
+- The analyzer's counts have not been changed to the reference yet.
 
 ## Observed in Microsoft's files
 
