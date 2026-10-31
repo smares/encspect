@@ -8,9 +8,10 @@ namespace Encspect.Host.Measurement;
 // 100 ms, which is (rate + 5) / 10 samples, to the nearest sample); the weighted sum over the channels of the last 20 granules is a block of
 // 400 ms (momentary loudness), that of the last 150 the short-term loudness (3 s). The gating blocks, the short-term values of the loudness
 // range and the series are taken every 100 ms, as the Recommendation's 75 % overlap has it; the maximum momentary loudness every 20 ms,
-// because EBU Tech 3341 test 13 needs a window that can start at any multiple of 20 ms. Neither the filtered audio nor the blocks are kept:
-// the memory is fixed whatever the length, two histograms of 10,000 bins of 0.01 LU (a count and an energy sum each, the energy sums exact),
-// the last 150 granules and a series of at most 1,024 points.
+// because EBU Tech 3341 test 13 needs a window that can start at any multiple of 20 ms. The filtered audio is not kept, and the memory is
+// bounded whatever the length: the energy of each gating block and of each short-term value above the absolute gate, up to MaxExact of each
+// (the gates of BS.1770-5 equation 7 and Tech 3342 are then applied to every value on its own), two histograms of 15,000 bins of 0.01 LU
+// (a count and an energy sum each) that take over beyond that, the last 150 granules and a series of at most 1,024 points.
 //
 // Nothing here depends on how the decoder cut its blocks: every sum runs in the order of the samples, the filter states are flushed at
 // stream positions that are multiples of 4,096, and a block never spans a gap.
@@ -19,7 +20,13 @@ internal sealed class LoudnessMeter
     // The most samples of a channel given to AddChannel at once.
     public const int MaxPiece = 16384;
 
-    private const int Bins = 10000;
+    private const int Bins = 15000;
+
+    // The most gating blocks, and the most short-term values, whose energies are kept (1 MiB of doubles each, 3.6 hours at 10 a second).
+    // Past it the histograms decide the gates and IsGatedExactly is false.
+    internal const int MaxExact = 1 << 17;
+
+    private const int FirstExact = 4096;
 
     private const int GranulesPerStep = 5;
 
@@ -29,10 +36,12 @@ internal sealed class LoudnessMeter
 
     private const double Flush = 1e-30;
 
-    // Bin b holds the loudness from -70 + b / 100 to -70 + (b + 1) / 100 LUFS: floor(1000 log10(z) + 6930.9) for an energy z.
+    // Bin b holds the loudness from -70 + b / 100 to -70 + (b + 1) / 100 LUFS: floor(1000 log10(z) + 6930.9) for an energy z. The last bin
+    // (+79.99 LUFS and up) takes anything louder; the largest sample the measurer lets through, in 32 channels at the most weighted position, gives about +78.7 LUFS.
     private const double BinOffset = 6930.9;
 
     private readonly int _measured;
+    private readonly int _maxExact;
     private readonly int _rate;
     private readonly long _stepLength;
     private readonly KWeighting _filter;
@@ -44,11 +53,17 @@ internal sealed class LoudnessMeter
     private readonly double[] _ring = new double[Ring];
     private readonly long[] _ringSamples = new long[Ring];
 
-    // The histograms (320 KB) are made with the first block, so a stream that never fills 400 ms costs nothing.
+    // The histograms (480 KB) are made with the first block, so a stream that never fills 400 ms costs nothing.
     private long[] _blockCounts = [];
     private double[] _blockSums = [];
     private long[] _shortCounts = [];
     private double[] _shortSums = [];
+    private double[] _blockEnergies = [];
+    private double[] _shortEnergies = [];
+    private int _blockEnergyCount;
+    private int _shortEnergyCount;
+    private bool _isExact = true;
+    private LoudnessFigures? _built;
 
     // The energy of -70 LUFS; a block or a short-term value passes the absolute gate when it is above it (BS.1770-5 and Tech 3342 both
     // say "above"), one exactly at it does not.
@@ -74,8 +89,9 @@ internal sealed class LoudnessMeter
     private int _points;
     private int _perPoint = 1;
 
-    public LoudnessMeter(int rate, IReadOnlyList<int> weights)
+    public LoudnessMeter(int rate, IReadOnlyList<int> weights, int maxExact = MaxExact)
     {
+        _maxExact = maxExact;
         _rate = rate;
         _measured = weights.Count;
         _stepLength = (rate + 5L) / 10;
@@ -91,7 +107,7 @@ internal sealed class LoudnessMeter
     public static long EstimateBytes(int measured, int rate)
     {
         long capacity = (MaxPiece / Math.Max(1, (rate + 5L) / 10 / GranulesPerStep)) + 2;
-        return (4L * Bins * 8) + (measured * ((4 * 8) + 8 + (capacity * 8))) + (MeasurementLimits.MaxSeriesPoints * 20L) + (Ring * 16L) + 1024;
+        return (4L * Bins * 8) + (2L * 2 * MaxExact * 8) + (measured * ((4 * 8) + 8 + (capacity * 8))) + (MeasurementLimits.MaxSeriesPoints * 20L) + (Ring * 16L) + 1024;
     }
 
     public int Measured => _measured;
@@ -164,6 +180,7 @@ internal sealed class LoudnessMeter
     }
 
     // The piece is done for every channel: the granules that closed in it are summed over the channels and become blocks.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void EndPiece(int count)
     {
         long run = _runSamples;
@@ -232,6 +249,7 @@ internal sealed class LoudnessMeter
 
     // A closed granule, the granule-th since the run began, with the weighted sum of squares z over its samples, ending at the given stream
     // position.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Close(double z, long granule, long samples, long endPosition)
     {
         int slot = (int)((granule - 1) % Ring);
@@ -265,6 +283,7 @@ internal sealed class LoudnessMeter
         {
             _blocksAbove++;
             Add(_blockCounts, _blockSums, momentary);
+            Keep(ref _blockEnergies, ref _blockEnergyCount, momentary);
         }
 
         if (filled < Ring)
@@ -281,12 +300,14 @@ internal sealed class LoudnessMeter
         if (IsAboveAbsoluteGate(shortTerm))
         {
             Add(_shortCounts, _shortSums, shortTerm);
+            Keep(ref _shortEnergies, ref _shortEnergyCount, shortTerm);
         }
 
         AddPoint(shortTerm, (long)((UInt128)(ulong)(endPosition - _firstPosition) * 1000 / (ulong)_rate));
     }
 
     // The mean square of the last n granules, summed from the oldest.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private double Mean(long granule, int n)
     {
         double sum = 0;
@@ -301,6 +322,23 @@ internal sealed class LoudnessMeter
         return sum / samples;
     }
 
+    // The energy stays for the exact gates until MaxExact are kept; the histogram has it either way.
+    private void Keep(ref double[] energies, ref int count, double energy)
+    {
+        if (count == _maxExact)
+        {
+            _isExact = false;
+            return;
+        }
+
+        if (count == energies.Length)
+        {
+            Array.Resize(ref energies, Math.Min(_maxExact, Math.Max(FirstExact, energies.Length * 2)));
+        }
+
+        energies[count++] = energy;
+    }
+
     private static int Bin(double energy) => (int)Math.Clamp(Math.Floor((1000.0 * DetMath.Log10(energy)) + BinOffset), 0, Bins - 1);
 
     private void Allocate()
@@ -311,8 +349,17 @@ internal sealed class LoudnessMeter
         _shortSums = new double[Bins];
     }
 
-    // The work the histograms are charged as, once, when the first of them is made: a few tenths of a millisecond.
-    public const long AllocationUnits = 1 << 18;
+    // The work charged, once, when the first block is made: the histograms and the sort of up to MaxExact short-term values at the end, a few
+    // milliseconds.
+    public const long AllocationUnits = HistogramUnits + SortUnits;
+
+    private const long HistogramUnits = 1 << 18;
+
+    // The sort of MaxExact short-term values at the end of the stream (measured by MeasurementWorkTests at the reference's time per unit).
+    internal const long SortUnits = 1 << 25;
+
+    // The one sort the percentiles need; its cost is SortUnits.
+    internal static void SortEnergies(double[] energies, int count) => Array.Sort(energies, 0, count);
 
     public bool HasAllocated => _blockCounts.Length > 0;
 
@@ -364,7 +411,9 @@ internal sealed class LoudnessMeter
     // The loudness in tenths of a LUFS of an energy: floor(10 (10 log10 z - 0.691) + 0.5).
     public static int Tenths(double energy) => (int)Math.Clamp(Math.Floor((100.0 * DetMath.Log10(energy)) - 6.91 + 0.5), -100000, 100000);
 
-    public LoudnessFigures Build(IReadOnlyList<int> weights)
+    public LoudnessFigures Build(IReadOnlyList<int> weights) => _built ??= BuildFigures(weights);
+
+    private LoudnessFigures BuildFigures(IReadOnlyList<int> weights)
     {
         var figures = new LoudnessFigures
         {
@@ -376,17 +425,20 @@ internal sealed class LoudnessMeter
             ShortTermAbsence = _maxShortTerm < 0 ? LoudnessAbsence.TooShort : LoudnessAbsence.None,
             MaximumShortTermTenths = _maxShortTerm <= 0 ? MeasurementLimits.NoLevel : Tenths(_maxShortTerm),
             StepsPerPoint = _perPoint,
+            IsGatedExactly = _isExact,
         };
 
         // Integrated loudness: the blocks above the absolute gate, then those above a gate 10 LU below their mean loudness.
-        (long count, double sum) = Totals(_blockCounts, _blockSums);
+        (long count, double sum) = _isExact ? ExactTotals(_blockEnergies, _blockEnergyCount) : Totals(_blockCounts, _blockSums);
         if (count == 0)
         {
             figures = figures with { IntegratedAbsence = _blocks == 0 ? LoudnessAbsence.TooShort : LoudnessAbsence.BelowGate };
         }
         else
         {
-            (long passed, double energy) = Gated(_blockCounts, _blockSums, sum / count * 0.1);
+            (long passed, double energy) = _isExact
+                ? ExactGated(_blockEnergies, _blockEnergyCount, sum / count * 0.1)
+                : Gated(_blockCounts, _blockSums, sum / count * 0.1);
             figures = figures with
             {
                 BlocksAboveRelativeGate = passed,
@@ -397,33 +449,85 @@ internal sealed class LoudnessMeter
 
         // Loudness range: the short-term values above the absolute gate, then those above a gate 20 LU below their mean, and the spread
         // between the 10th and the 95th percentile of what is left.
-        (long shortCount, double shortSum) = Totals(_shortCounts, _shortSums);
+        (long shortCount, double shortSum) = _isExact ? ExactTotals(_shortEnergies, _shortEnergyCount) : Totals(_shortCounts, _shortSums);
         if (shortCount == 0)
         {
-            figures = figures with { RangeAbsence = _maxShortTerm < 0 ? LoudnessAbsence.TooShort : LoudnessAbsence.BelowGate };
+            return figures with { RangeAbsence = _maxShortTerm < 0 ? LoudnessAbsence.TooShort : LoudnessAbsence.BelowGate, ShortTerm = BuildSeries() };
         }
-        else
+
+        double gate = shortSum / shortCount * 0.01;
+        if (_isExact)
         {
-            double gate = shortSum / shortCount * 0.01;
-            (long passed, _) = Gated(_shortCounts, _shortSums, gate);
-            if (passed == 0)
+            // The values are sorted in place; the passing ones are the tail above the gate.
+            SortEnergies(_shortEnergies, _shortEnergyCount);
+            int first = 0;
+            while (_shortEnergies[first] <= gate)
             {
-                figures = figures with { RangeAbsence = LoudnessAbsence.BelowGate };
+                first++;
             }
-            else
+
+            int passedCount = _shortEnergyCount - first;
+            double low = _shortEnergies[first + (int)Rank(passedCount, 10)];
+            double high = _shortEnergies[first + (int)Rank(passedCount, 95)];
+            return figures with
             {
-                int low = Percentile(_shortCounts, _shortSums, gate, passed, 10);
-                int high = Percentile(_shortCounts, _shortSums, gate, passed, 95);
-                figures = figures with
-                {
-                    RangeTenths = (high - low + 5) / 10,
-                    RangeLowTenths = (((2 * low) + 11) / 20) - 700,
-                    RangeHighTenths = (((2 * high) + 11) / 20) - 700,
-                };
+                RangeTenths = (int)((Hundredths(high) - Hundredths(low) + 5) / 10),
+                RangeLowTenths = Tenths(low),
+                RangeHighTenths = Tenths(high),
+                ShortTerm = BuildSeries(),
+            };
+        }
+
+        (long passed2, _) = Gated(_shortCounts, _shortSums, gate);
+        if (passed2 == 0)
+        {
+            return figures with { RangeAbsence = LoudnessAbsence.BelowGate, ShortTerm = BuildSeries() };
+        }
+
+        int lowBin = Percentile(_shortCounts, _shortSums, gate, passed2, 10);
+        int highBin = Percentile(_shortCounts, _shortSums, gate, passed2, 95);
+        return figures with
+        {
+            RangeTenths = (highBin - lowBin + 5) / 10,
+            RangeLowTenths = (((2 * lowBin) + 11) / 20) - 700,
+            RangeHighTenths = (((2 * highBin) + 11) / 20) - 700,
+            ShortTerm = BuildSeries(),
+        };
+    }
+
+    // The rank of the p-th percentile among n values in ascending order, round((n - 1) p / 100) (Tech 3342).
+    private static long Rank(long n, int p) => (((n - 1) * p) + 50) / 100;
+
+    // An energy in hundredths of a LU, relative to nothing: only differences are used.
+    private static long Hundredths(double energy) => (long)Math.Floor((1000.0 * DetMath.Log10(energy)) + 0.5);
+
+    // The count and the energy sum of the kept values, summed in the order they were kept.
+    private static (long Count, double Sum) ExactTotals(double[] energies, int count)
+    {
+        double sum = 0;
+        for (int i = 0; i < count; i++)
+        {
+            sum += energies[i];
+        }
+
+        return (count, sum);
+    }
+
+    // The count and the energy of the kept values above a gate (BS.1770-5 equation 7: each value on its own), in the order they were kept.
+    private static (long Count, double Sum) ExactGated(double[] energies, int count, double gate)
+    {
+        long passed = 0;
+        double sum = 0;
+        for (int i = 0; i < count; i++)
+        {
+            if (energies[i] > gate)
+            {
+                passed++;
+                sum += energies[i];
             }
         }
 
-        return figures with { ShortTerm = BuildSeries() };
+        return (passed, sum);
     }
 
     private static (long Count, double Sum) Totals(long[] counts, double[] sums)
@@ -442,9 +546,9 @@ internal sealed class LoudnessMeter
     // The bin that holds a gate of the given energy: -1 where the gate is at or below the absolute one, so that every bin is above it.
     private static int GateBin(double gate) => gate <= 0 ? -1 : (int)Math.Min(Math.Floor((1000.0 * DetMath.Log10(gate)) + BinOffset), Bins - 1);
 
-    // Bins above the gate's bin pass whole; the gate's own bin passes whole when the mean energy of its values is above the gate, which is
-    // exact for values of one level and wrong by less than the bin's share of the passing values (docs/design/spectral-analysis.md has the
-    // bound).
+    // The histogram path, used beyond MaxExact values. Bins above the gate's bin pass whole; the gate's own bin passes whole when the mean
+    // energy of its values is above the gate, and not at all otherwise. With p the share of the passing values that sit in that bin, the
+    // integrated loudness is wrong by less than -10 log10(1 - p) LU (docs/design/spectral-analysis.md).
     private static bool Passes(int bin, int gateBin, long[] counts, double[] sums, double gate) =>
         counts[bin] > 0 && (bin > gateBin || (bin == gateBin && sums[bin] > gate * counts[bin]));
 
