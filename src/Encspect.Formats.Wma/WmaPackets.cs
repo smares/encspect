@@ -30,6 +30,7 @@ internal sealed class WmaPacketReader
     private bool _isFirstSeen;
     private int _currentPacket;
     private long _framesInCall;
+    private bool _isReturnedInCall;
     private readonly List<long> _secondBits = [];
     private readonly List<int> _secondFrames = [];
     private int _lastValidSecond = -1;
@@ -139,6 +140,7 @@ internal sealed class WmaPacketReader
         Data.Table.Add(packet.FileRanges(0, length));
         var record = new PacketRecord();
         _framesInCall = 0;
+        _isReturnedInCall = false;
         record.FirstFrame = (int)Data.Frames.Count;
 
         if (packet.Length < p.BlockAlignment)
@@ -276,8 +278,14 @@ internal sealed class WmaPacketReader
 
         bool isTrailerOne = false;
         bool isError = false;
+        int read = 0;
         while (true)
         {
+            if (++read % 1024 == 0)
+            {
+                _context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             int left = end - position;
             if (left <= p.CountWidth)
             {
@@ -663,18 +671,29 @@ internal sealed class WmaPacketReader
 
             Samples += output;
         }
-        else if (result.AreSubframesRead)
+        else if (result.AreSubframesRead || result.Fault == (int)ProFault.NeedsMoreBits)
         {
+            // A decoder reads on to the end of the subframes past the bits a frame has, so a frame that reads past its end got there too. A frame
+            // that fails only the check of its length, or reads past its end, is output where a decoder returns it from the call that
+            // reads the packet's header: with its trims where it is the frame that crosses into the packet, without them where it is the
+            // first whole frame (docs/design/wma-pro-format.md, "What FFmpeg outputs").
+            bool isCrossing = p.HasLengthPrefix && parts.Count > 0 && parts[0].Packet != _currentPacket;
+            bool isLengthOnly = result.Fault is (int)ProFault.LengthPrefix or (int)ProFault.NeedsMoreBits;
             if (!_isFirstSeen)
             {
                 _isFirstSeen = true;
             }
-            else if (result.IsValid)
+            else if (result.IsValid || (isLengthOnly && p.HasLengthPrefix && !_isReturnedInCall))
             {
                 long output = p.FrameLength;
-                output = result.TrimStart >= output ? 0 : output - result.TrimStart;
-                output = result.TrimEnd >= output ? 0 : output - result.TrimEnd;
+                if (result.IsValid || isCrossing)
+                {
+                    output = result.TrimStart >= output ? 0 : output - result.TrimStart;
+                    output = result.TrimEnd >= output ? 0 : output - result.TrimEnd;
+                }
+
                 Samples += output;
+                _isReturnedInCall = true;
             }
         }
 
