@@ -163,6 +163,10 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
         }
     }
 
+    // The frames the searches stepped over on this thread, for the test that holds the search for an early burst to linear in the data.
+    [ThreadStatic]
+    internal static long FramesScanned;
+
     // The next preamble from position on at a frame of the chain, or null.
     // With limit, only a preamble that starts before it counts.
     private long? FindBurst(BurstWindow window, long from, long limit = long.MaxValue)
@@ -185,7 +189,9 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             }
 
             // The next block starts at a frame, and re-reads the frames whose preamble the block cut.
-            position += Math.Max(Iec61937.FrameLength, (length - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
+            long step = Math.Max(Iec61937.FrameLength, (length - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
+            FramesScanned += step / Iec61937.FrameLength;
+            position += step;
         }
 
         return null;

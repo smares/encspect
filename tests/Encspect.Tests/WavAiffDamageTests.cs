@@ -209,28 +209,19 @@ public class WavAiffDamageTests
         Assert.True(stream.Reads < 1400, $"{stream.Reads} reads for {file.Length} bytes");
     }
 
-    // A search that stops at the limit costs the same for every burst, so the time follows the number of bursts; one that runs on past it to the end of the
-    // data (which asks the window for nothing, so no read shows it) costs a pass over the data per burst, and five times the bursts take 25 times as long.
-    [Fact]
-    public void TheSearchForEarlyBurstsStopsAtTheNextPeriod()
+    // A search that stops at the limit steps over each frame of the data about once, whatever the number of bursts; one that runs on past it (which asks
+    // the window for nothing, so no read shows it) steps over the rest of the data for every burst.
+    [Theory]
+    [InlineData(300)]
+    [InlineData(1500)]
+    public void TheSearchForEarlyBurstsStopsAtTheNextPeriod(int bursts)
     {
-        static double Best(int bursts)
-        {
-            byte[] file = Riff(Fmt(), Chunk("data", Bursts(1, 1536, 100, bursts)));
-            double best = double.MaxValue;
-            for (int i = 0; i < 3; i++)
-            {
-                var watch = System.Diagnostics.Stopwatch.StartNew();
-                Analyzer.CreateDefault().Analyze("bursts.wav", new MemoryStream(file));
-                best = Math.Min(best, watch.Elapsed.TotalSeconds);
-            }
-
-            return best;
-        }
-
-        double few = Best(300);
-        double many = Best(1500);
-        Assert.True(many < 12 * few, $"{many:F3} s for 1500 bursts, {few:F3} s for 300");
+        byte[] file = Riff(Fmt(), Chunk("data", Bursts(1, 1536, 100, bursts)));
+        Encspect.Formats.Wav.BurstRun.FramesScanned = 0;
+        Report report = Analyzer.CreateDefault().Analyze("bursts.wav", new MemoryStream(file));
+        long scanned = Encspect.Formats.Wav.BurstRun.FramesScanned;
+        Assert.Null(Find(report, "wav.iec61937-burst-spacing"));
+        Assert.InRange(scanned, 1, 2L * bursts * 1536);
     }
 
     private sealed class CountingStream(byte[] data) : MemoryStream(data)
