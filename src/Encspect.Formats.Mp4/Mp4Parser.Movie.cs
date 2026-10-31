@@ -64,6 +64,9 @@ public sealed partial class Mp4Parser
             case "dac3" or "dec3" or "ddts":
                 CodecSpecificBox(state, node, f);
                 return true;
+            case "alac" when state.CurrentEntry is not null:
+                AlacSpecificBox(state, node, f);
+                return true;
             case "btrt":
                 f.U32(node, "Buffer Size", Explain.BtrtBufferSize, unit: "bytes");
                 f.U32(node, "Maximum Bitrate", Explain.BtrtMaxBitrate, unit: "bit/s");
@@ -181,6 +184,25 @@ public sealed partial class Mp4Parser
         byte[] data = f.TakeBytes(f.Remaining);
         node.Value = NodeValue.Integer(data.Length, "bytes");
         if (state.CurrentEntry is { DecoderSpecificInfo: null } entry)
+        {
+            entry.DecoderSpecificInfo = new MappedBytes(data, start);
+            entry.DecoderSpecificInfoNode = node;
+        }
+        else if (data.Length > 0)
+        {
+            node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
+        }
+    }
+
+    // Apple's ALAC magic cookie box in an alac sample entry (ALACMagicCookieDescription.txt): version and flags, then the cookie, which the codec parser
+    // reads field by field.
+    private static void AlacSpecificBox(State state, Node node, BoxFields f)
+    {
+        FullBox(node, f);
+        long start = f.Position;
+        byte[] data = f.TakeBytes(f.Remaining);
+        node.Value = NodeValue.Integer(data.Length, "bytes");
+        if (state.CurrentEntry is { DecoderSpecificInfo: null } entry && data.Length > 0)
         {
             entry.DecoderSpecificInfo = new MappedBytes(data, start);
             entry.DecoderSpecificInfoNode = node;

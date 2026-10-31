@@ -17,6 +17,7 @@ internal static class Codecs
         "A_DTS" or "A_DTS/EXPRESS" or "A_DTS/LOSSLESS" => "dts",
         "A_VORBIS" => "vorbis",
         "A_OPUS" or "A_OPUS/EXPERIMENTAL" => "opus",
+        "A_ALAC" => "alac",
         _ => null,
     };
 
@@ -29,6 +30,7 @@ internal static class Codecs
         "dts" => KnownWriters.Dts,
         "vorbis" => KnownWriters.Vorbis,
         "opus" => KnownWriters.Opus,
+        "alac" => KnownWriters.Alac,
         _ => null,
     };
 

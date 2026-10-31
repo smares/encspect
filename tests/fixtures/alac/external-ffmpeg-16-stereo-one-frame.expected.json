@@ -1,0 +1,274 @@
+{
+ "container": "mp4",
+ "length": 8193,
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers (ffmpeg package of Ubuntu 24.04)",
+  "arguments": [],
+  "input": {
+   "kind": "music",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 3000
+  }
+ },
+ "input": {
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 3000,
+  "width": 2,
+  "left_shift": 0,
+  "decoders": [
+   "ffmpeg",
+   "alacconvert"
+  ],
+  "channel_md5": [
+   "dc35d5fad07d7bb98c79b1c76b93a8d7",
+   "77e12afacb1026e2d176c9198a33e60d"
+  ]
+ },
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 40,
+  "mb": 10,
+  "kb": 14,
+  "channels": 2,
+  "max_run": 0,
+  "max_frame_bytes": 16388,
+  "average_bitrate": 1411200,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 44,
+   "size": 7503,
+   "status": "ok",
+   "samples": 3000,
+   "walked": 7503,
+   "channels": 2,
+   "element_count": 2,
+   "elements": [
+    {
+     "tag": 1,
+     "name": "channel pair",
+     "start": 0,
+     "end": 60014,
+     "instance": 0,
+     "partial": true,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 3000,
+     "mix_bits": 1,
+     "mix_res": 1,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 6,
+       "coefficients": [
+        229,
+        203,
+        86,
+        8,
+        33,
+        -57
+       ],
+       "zero_runs": 0,
+       "long_codes": 7,
+       "residual_end": 32908
+      },
+      {
+       "type": 0,
+       "shift": 8,
+       "weight": 4,
+       "order": 6,
+       "coefficients": [
+        128,
+        114,
+        70,
+        9,
+        -31,
+        -77
+       ],
+       "zero_runs": 1,
+       "long_codes": 9,
+       "residual_end": 60014
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 60014,
+     "end": 60017
+    }
+   ]
+  }
+ ],
+ "frame_count": 1,
+ "statistics": {
+  "frames": 1,
+  "partial_frames": 1,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "compressed": 1,
+  "uncompressed": 0,
+  "pairs": 1,
+  "mixed_pairs": 1,
+  "channels": 2,
+  "types": [
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   1,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   1,
+   0,
+   0
+  ],
+  "zero_runs": 1,
+  "long_codes": 16,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [
+  {
+   "code": "mp4.edit-beyond-media"
+  },
+  {
+   "code": "mp4.moov-after-mdat"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 3000,
+   "duration": 0.06802721088435375,
+   "bits_per_sample": 16,
+   "average_bitrate": 882.3528,
+   "is_vbr": false,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "units": 1,
+   "pair_codes": [
+    [
+     1
+    ]
+   ],
+   "element_codes": [
+    [
+     0
+    ]
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

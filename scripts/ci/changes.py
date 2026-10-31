@@ -84,6 +84,12 @@ AREAS = {
         "scripts": ["crosscheck_tta_fixtures.py"],
         "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
     },
+    "alac-crosscheck": {
+        "projects": ["Encspect.Formats.Alac"],
+        "fixtures": ["alac"],
+        "scripts": ["crosscheck_alac_fixtures.py", "alac_tool.py"],
+        "globs": ["scripts/fixtures/make_*alac*", "scripts/fixtures/alac_*"],
+    },
     "wav-crosscheck": {
         "projects": ["Encspect.Formats.Wav", "Encspect.Formats.Aiff"],
         "fixtures": ["wav", "aiff"],
@@ -94,8 +100,9 @@ AREAS = {
     "asf-crosscheck": {
         "projects": ["Encspect.Formats.Asf", "Encspect.Formats.Wma"],
         "fixtures": ["asf"],
-        "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py", "check_wmavoice_samples.py"],
-        "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/make_voice*", "scripts/fixtures/windows/**", "tests/conformance/wmavoice-samples.json"],
+        "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py", "check_wmavoice_samples.py", "check_wma_samples.py"],
+        "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/make_voice*", "scripts/fixtures/windows/**", "tests/conformance/wmavoice-samples.json",
+                  "tests/conformance/wma-samples.json"],
     },
     "matroska-crosscheck": {
         "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Aac", "Encspect.Formats.Ac3", "Encspect.Formats.Dts", "Encspect.Formats.Mpeg",

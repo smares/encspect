@@ -1,0 +1,267 @@
+{
+ "container": "mp4",
+ "length": 898,
+ "description": "One frame of 100 samples: a single channel element that states its count (the partial flag) and a second one without the flag, which keeps the 100 as the reference decoder does. FFmpeg 8.0.1 reads the second element as a whole frame, so only alacconvert decodes it.",
+ "input": {
+  "channels": 2,
+  "bits": 16,
+  "rate": 44100,
+  "samples": 100,
+  "width": 2,
+  "left_shift": 0,
+  "decoders": [
+   "alacconvert"
+  ],
+  "channel_md5": [
+   "770e43893ecb4feef761bbc29d8e4df7",
+   "810e2811a111a05b6c2219f5daf6aaa5"
+  ]
+ },
+ "cookie": {
+  "length": 24,
+  "format_atom": null,
+  "config_atom": null,
+  "layout": null,
+  "terminator": null,
+  "extra": 0,
+  "config_at": 0,
+  "complete": true,
+  "frame_length": 4096,
+  "version": 0,
+  "bit_depth": 16,
+  "pb": 40,
+  "mb": 10,
+  "kb": 14,
+  "channels": 2,
+  "max_run": 255,
+  "max_frame_bytes": 309,
+  "average_bitrate": 0,
+  "rate": 44100
+ },
+ "frames": [
+  {
+   "offset": 589,
+   "size": 309,
+   "status": "ok",
+   "samples": 100,
+   "walked": 309,
+   "channels": 2,
+   "element_count": 3,
+   "elements": [
+    {
+     "tag": 0,
+     "name": "single channel",
+     "start": 0,
+     "end": 1252,
+     "instance": 0,
+     "partial": true,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 100,
+     "mix_bits": 2,
+     "mix_res": 0,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1099,
+        -651,
+        -43,
+        117
+       ],
+       "zero_runs": 0,
+       "long_codes": 8,
+       "residual_end": 1252
+      }
+     ]
+    },
+    {
+     "tag": 0,
+     "name": "single channel",
+     "start": 1252,
+     "end": 2464,
+     "instance": 1,
+     "partial": false,
+     "shifted": 0,
+     "uncompressed": false,
+     "samples": 100,
+     "mix_bits": 2,
+     "mix_res": 0,
+     "reserved_zero": true,
+     "channels": [
+      {
+       "type": 0,
+       "shift": 9,
+       "weight": 4,
+       "order": 4,
+       "coefficients": [
+        1099,
+        -651,
+        -43,
+        117
+       ],
+       "zero_runs": 0,
+       "long_codes": 6,
+       "residual_end": 2464
+      }
+     ]
+    },
+    {
+     "tag": 7,
+     "name": "end",
+     "start": 2464,
+     "end": 2467
+    }
+   ]
+  }
+ ],
+ "frame_count": 1,
+ "statistics": {
+  "frames": 1,
+  "partial_frames": 1,
+  "uncompressed_frames": 0,
+  "unreadable_frames": 0,
+  "elements": [
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "compressed": 2,
+  "uncompressed": 0,
+  "pairs": 0,
+  "mixed_pairs": 0,
+  "channels": 2,
+  "types": [
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "orders": [
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "shifts": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "weights": [
+   0,
+   0,
+   0,
+   0,
+   2,
+   0,
+   0,
+   0
+  ],
+  "bytes_shifted": [
+   2,
+   0,
+   0
+  ],
+  "zero_runs": 0,
+  "long_codes": 14,
+  "fill_bytes": 0,
+  "data_stream_bytes": 0
+ },
+ "findings": [],
+ "stream_infos": [
+  {
+   "codec": "Apple Lossless",
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 100,
+   "duration": 0.0022675736961451248,
+   "bits_per_sample": 16,
+   "average_bitrate": 1090.152,
+   "is_vbr": false,
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "units": 1,
+   "pair_codes": [
+    []
+   ],
+   "element_codes": [
+    [
+     0,
+     0
+    ]
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "noDecoder",
+   "checksums": []
+  }
+ }
+}

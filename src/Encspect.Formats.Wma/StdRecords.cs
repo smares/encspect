@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Wma;
 
 // One run of a frame's bits: the index of the superframe holding it, the first bit in that superframe and the number of bits.
-internal readonly record struct FramePart(int Superframe, int StartBit, int BitCount);
+internal readonly record struct StdFramePart(int Superframe, int StartBit, int BitCount);
 
 internal enum SuperframeState : byte
 {
@@ -69,7 +69,7 @@ internal struct SuperframeRecord
     public int Kept;
 }
 
-internal struct FrameRecord
+internal struct StdFrameRecord
 {
     // The superframe the frame was read in, which is where it ends.
     public int Superframe;

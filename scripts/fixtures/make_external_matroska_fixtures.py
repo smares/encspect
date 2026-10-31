@@ -57,7 +57,7 @@ FIXTURES = {
     "external-ffmpeg-wavpack": ("ffmpeg", ["wavpack/external-ffmpeg-apev2-tag.wv"], ["-c", "copy"], [("WavPack", 44100, 2)], [NOT_READ], "mka"),
     "external-ffmpeg-flac": ("ffmpeg", ["sine"], ["-c:a", "flac"], [("FLAC", 44100, 1)], [NOT_READ], "mka"),
     "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [NOT_READ], "mka"),
-    "external-ffmpeg-alac": ("ffmpeg", ["sine"], ["-c:a", "alac"], [("Apple Lossless", 44100, 1)], [NOT_READ], "mka"),
+    "external-ffmpeg-alac": ("ffmpeg", ["sine"], ["-c:a", "alac"], [("Apple Lossless", 44100, 1)], [], "mka"),
     "external-ffmpeg-tta": ("ffmpeg", ["sine"], ["-c:a", "tta"], [("TTA", 44100, 1)], [NOT_READ], "mka"),
     "external-ffmpeg-truehd": ("ffmpeg", ["sine"], ["-c:a", "truehd", "-strict", "-2"], [("Dolby TrueHD", 44100, 1)], [NOT_READ], "mka"),
     "external-ffmpeg-live": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus"], ["-c", "copy", "-live", "1"], [("Opus", 48000, 2)],

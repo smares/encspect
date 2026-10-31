@@ -62,6 +62,7 @@ jobs:
       flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
       monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
       tta-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tta-crosscheck }}
+      alac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.alac-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
       dts-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.dts-crosscheck }}
@@ -104,10 +105,12 @@ jobs:
       - uses: actions/checkout@v5
         with:
           # The golden is the real report test_golden_additions.py checks the script against; the conformance
-          # lists are what test_sources_plan.py lists the addresses of.
+          # lists are what test_sources_plan.py lists the addresses of; the Matroska element table is what
+          # matroska_model.py, which test_alac_model.py imports, reads its schema from.
           sparse-checkout: |
             /docs/
             /scripts/
+            /src/Encspect.Formats.Matroska/Elements.cs
             /README.md
             /CLAUDE.md
             /tests/fixtures/mpeg/channel-mode-change.report.json
@@ -129,6 +132,7 @@ jobs:
           python3 scripts/ci/test_tool_versions.py
           python3 scripts/ci/test_golden_additions.py
           python3 scripts/ci/test_sources_plan.py
+          python3 scripts/ci/test_alac_model.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -623,6 +627,11 @@ jobs:
           python3 scripts/fixtures/make_tta_fixtures.py
           python3 scripts/fixtures/make_external_tta_fixtures.py --manifests-only
 
+      - name: Regenerate the hand-built ALAC fixtures and the encoder-made ones' manifests
+        run: |
+          python3 scripts/fixtures/make_alac_fixtures.py
+          python3 scripts/fixtures/make_external_alac_fixtures.py --manifests-only
+
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
@@ -1014,7 +1023,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The real-sample check below runs the analyzer on the downloaded file.
+      # The real-sample checks below run the analyzer on the downloaded file.
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
@@ -1104,6 +1113,28 @@ jobs:
       - name: Cross-check the TTA fixtures
         run: python3 scripts/fixtures/crosscheck_tta_fixtures.py
 
+  alac-crosscheck:
+    name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.alac-crosscheck == 'true'
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts, both black boxes. The reference decoder, alacconvert,
+      # is built unpatched by alac_tool.py from the commit of Apple's source that is pinned there (gcc and g++ from build-essential, git).
+      - name: Install ffmpeg, mediainfo and the compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo build-essential git
+
+      - name: Cross-check the ALAC fixtures
+        run: python3 scripts/fixtures/crosscheck_alac_fixtures.py
+
   wav-crosscheck:
     name: WAV and AIFF fixtures agree with FFmpeg and MediaInfo
     runs-on: ubuntu-26.04
@@ -1177,7 +1208,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The real-sample check below runs the analyzer on the downloaded files.
+      # The real-sample checks below run the analyzer on the downloaded files.
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
@@ -1187,8 +1218,17 @@ jobs:
       - name: Check the real WMA Voice samples with ffprobe, ffmpeg and MediaInfo
         run: python3 scripts/fixtures/check_wmavoice_samples.py .cache/wmavoice
 
+      # Real Windows Media Audio Professional and Lossless files (24 and 6) from the FFmpeg sample archive and FATE suite, fetched and checked
+      # against their SHA-256 like the Voice files. ffmpeg's decoder is the one outside check of the frame boundaries the clean-room readers
+      # find: the samples and frames it outputs against the manifest, and the analyzer's report against the same manifest.
+      - name: Check the real WMA Professional and Lossless samples with ffprobe, ffmpeg and MediaInfo
+        run: python3 scripts/fixtures/check_wma_samples.py .cache/wma
+
       - name: Check the analyzer against the real WMA Voice samples
         run: python3 scripts/fixtures/check_wmavoice_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/wmavoice
+
+      - name: Check the analyzer against the real WMA Professional and Lossless samples
+        run: python3 scripts/fixtures/check_wma_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/wma
 
   matroska-crosscheck:
     name: Matroska and WebM fixtures agree with mkvinfo, ffprobe, ffmpeg and MediaInfo, and the element table with the RFCs
@@ -1345,7 +1385,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The real-sample check below runs the analyzer on the downloaded files.
+      # The real-sample checks below run the analyzer on the downloaded files.
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
@@ -1403,7 +1443,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The real-sample check below runs the analyzer, with decoding, on the downloaded files.
+      # The real-sample checks below run the analyzer, with decoding, on the downloaded files.
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
@@ -1444,6 +1484,7 @@ jobs:
       - flac-crosscheck
       - monkeys-audio-crosscheck
       - tta-crosscheck
+      - alac-crosscheck
       - asf-crosscheck
       - ac3-crosscheck
       - dts-crosscheck

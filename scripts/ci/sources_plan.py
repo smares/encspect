@@ -32,6 +32,7 @@ CHECK_FILES = (
 KIND_MODULES = {
     "scripts/fixtures/old_lame_tool.py": ("svn",),
     "scripts/fixtures/faac_tool.py": ("tag",),
+    "scripts/fixtures/alac_tool.py": ("commit",),
     "scripts/fixtures/ffmpeg_sources.py": ("member", "archive"),
 }
 

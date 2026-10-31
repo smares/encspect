@@ -3,8 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Wma;
 
-// What the codec parsers of Windows Media Audio versions 1 and 2, Professional, Lossless and Voice share: the stream is described by what the
-// container and the codec-specific data say (and its packets counted); the frames are not read.
+// A Windows Media Audio Voice stream whose configuration the reader rejects: it is described by what the container and the codec-specific
+// data say (and its packets counted); the frames are not read.
 internal static class WmaHeaderOnly
 {
     public static void Parse(CodecContext context, string codecName, string topic, string notReadCode, string notReadMessage, Action<CodecConfiguration, FindingCollector>? configuration, bool channelMaskInData = false)

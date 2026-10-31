@@ -44,15 +44,19 @@ Disagreements fail the run (exit status 1).
 
 The voice-* manifests pin what ffmpeg decodes (samples and superframes); make_voice_fixtures.py writes the pins.
 
-What no tool at hand gives: the frame boundaries inside a WMA superframe. ffmpeg's decoder does not
-expose them and no other decoder is available, so they rest on the encoder's own padding (ffmpeg's
-fills each superframe with 'N' bytes, which the encoder trait uses) and, for Microsoft's files, on the
-decoder reading every superframe without error and outputting exactly the analyzer's samples, which
-count the frames the analyzer read. The frames of Professional are not read by the analyzer.
+The frames of WMA Voice are held to ffmpeg's decoder by the samples it decodes and the superframes it reads
+(check_voice_frames). For versions 1 and 2 the frame boundaries inside a superframe rest on the encoder's own padding
+(ffmpeg's fills each superframe with 'N' bytes, which the encoder trait uses) and, for Microsoft's files, on the decoder
+reading every superframe without error and outputting exactly the analyzer's samples, which count the frames the analyzer
+read. Professional and Lossless are read, and for their Microsoft-encoded fixtures the golden report is held to ffmpeg's
+decoder frame by frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc) are the frame's
+samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the overlap;
+Lossless outputs it), and their total is the stream's samples.
 """
 
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -478,7 +482,56 @@ def check_windows(name, provenance, path, problems):
             if analyzer_samples(path) != len(pcm) // 2:
                 problems.append(f"the analyzer's golden report has {analyzer_samples(path)} samples, ffmpeg decodes {len(pcm) // 2}")
             check_voice_frames(path, problems)
+    if stream["codec_name"] in ("wmapro", "wmalossless"):
+        check_wma_frames(path, {"wmapro": "Windows Media Audio Professional", "wmalossless": "Windows Media Audio Lossless"}[stream["codec_name"]], problems)
     check_mediainfo(name, path, stream, problems, golden_report(path))
+
+
+def trim_of(frame):
+    """The trims a Frame node of the golden report states: (at the start, at the end)."""
+    trim = next((c.get("value", "none") for c in frame.get("children", []) if c["name"] == "Trim"), "none")
+    if trim == "none":
+        return 0, 0
+    match = re.fullmatch(r"(\d+) samples? at the start, (\d+) at the end", trim)
+    return int(match.group(1)), int(match.group(2))
+
+
+def check_wma_frames(path, codec, problems):
+    """Frame by frame: the samples ffmpeg's decoder outputs for each frame (framecrc's duration column) against the golden report's frames.
+    Professional's first frame only fills the overlap of the transform and is not output; a trim of a frame's whole length or more removes
+    the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied)."""
+    report = golden_report(path)
+    if report is None:
+        return
+    stream = next((n for n in nodes_of(report["root"]) if n["name"] == codec), None)
+    frames = next((c for c in stream.get("children", []) if c["name"] == "Frames"), None) if stream else None
+    length = named(report, "Frame Length", codec)
+    if frames is None or length is None:
+        problems.append(f"the golden report has no frames for {codec}")
+        return
+    expected = []
+    skipped_first = codec == "Windows Media Audio Lossless"
+    for frame in frames.get("children", []):
+        if str(frame.get("value", "")).startswith("invalid"):
+            continue
+        start, end = trim_of(frame)
+        if not skipped_first:
+            skipped_first = True
+            continue
+        output = length
+        if codec == "Windows Media Audio Professional":
+            output = 0 if start >= output else output - start
+        output = 0 if end >= output else output - end
+        if output:
+            expected.append(output)
+    result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-f", "framecrc", "-"], text=True)
+    durations = [int(line.split(",")[3]) for line in result.stdout.splitlines() if line and not line.startswith("#")]
+    if durations != expected:
+        first = next((i for i, (a, b) in enumerate(zip(durations, expected)) if a != b), min(len(durations), len(expected)))
+        problems.append(f"ffmpeg outputs {len(durations)} frames of {sum(durations)} samples, the golden report's frames give {len(expected)} of {sum(expected)} (the first difference is frame {first})")
+    samples = sum(durations)
+    if report["streams"][0]["samples"] != samples:
+        problems.append(f"the golden report has {report['streams'][0]['samples']} samples, ffmpeg outputs {samples}")
 
 
 def main():
