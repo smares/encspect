@@ -1115,8 +1115,8 @@ def id3v24_itunes_plain_sizes():
     f = Fixture(
         "id3v24-itunes-plain-sizes",
         "ID3v2.4 tag whose frame sizes are all plain integers, as old iTunes versions wrote them, with no byte that "
-        "rules out syncsafe: TIT2's 300 bytes are $00 00 01 2C. Walking the frames both ways, as mutagen does, only the "
-        "plain reading finds TPE1; read as syncsafe, TIT2 would end after 172 bytes.",
+        "rules out syncsafe: TIT2's 300 bytes are $00 00 01 2C. Only the plain reading leads from TIT2 to TPE1 and on to "
+        "the padding; read as syncsafe, TIT2 would end after 172 bytes, inside its text.",
     )
     title = "t" * 299
     frames = [
@@ -1175,6 +1175,85 @@ def id3v24_plain_frame_sizes():
     f.tag("ID3v2", "2.4.0", id3v2(4, frames), "Medium", {"TIT2/Text": long_text, "TPE1/Text": "After"})
     f.finding("id3v2.frame-size-not-syncsafe", "TIT2")
     f.audio()
+    return f
+
+
+@fixture
+def id3v24_syncsafe_looks_plain():
+    f = Fixture(
+        "id3v24-syncsafe-looks-plain",
+        "Valid ID3v2.4 tag with a TIT2 of 130 bytes (syncsafe $00 00 01 02, 258 as a plain integer). Read as plain, TIT2 "
+        "jumps into the data of the PRIV frame behind it, where a TPE1 header and zero bytes make a chain that also ends "
+        "exactly at the end of the tag. The syncsafe reading is consistent, so it is the one used.",
+    )
+    title = "t" * 129
+    fake = frame24("TPE1", text_frame_data(LATIN1, ["Fake"]))
+    priv = b"owner\x00" + b"\x01" * 112 + fake + b"\x00" * 20
+    frames = [frame24("TIT2", text_frame_data(LATIN1, [title])), frame24("PRIV", priv)]
+    tag = id3v2(4, frames)
+    assert tag[10 + 10 + 130 + 10 + 118 : 10 + 10 + 130 + 10 + 122] == b"TPE1"
+    f.tag("ID3v2", "2.4.0", tag, "High", {"TIT2/Text": title})
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_plain_sizes_extended_header():
+    f = Fixture(
+        "id3v24-plain-sizes-extended-header",
+        "ID3v2.4 tag with an extended header whose frame sizes are plain integers: TIT2's 300 bytes are $00 00 01 2C. "
+        "The frames start after the extended header, and only the plain reading leads from TIT2 to TPE1 and the padding.",
+    )
+    title = "t" * 299
+    frames = [
+        frame24("TIT2", text_frame_data(LATIN1, [title]), plain_size=True),
+        frame24("TPE1", text_frame_data(LATIN1, ["Artist"]), plain_size=True),
+    ]
+    tag = id3v2(4, frames, padding=12, extended_header=ext_header24())
+    f.tag("ID3v2", "2.4.0", tag, "Medium", {"TIT2/Text": title, "TPE1/Text": "Artist"})
+    f.finding("id3v2.frame-size-not-syncsafe", "TIT2")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_plain_sizes_experimental_frame():
+    f = Fixture(
+        "id3v24-plain-sizes-experimental-frame",
+        "ID3v2.4 tag whose frame sizes are plain integers and whose first frame has the experimental ID XTST (ID3v2.4 "
+        "section 4) and 300 bytes, $00 00 01 2C. An ID the analyzer does not know is still a frame, so the plain reading "
+        "leads from XTST to TIT2 and the padding.",
+    )
+    frames = [
+        frame24("XTST", b"\x05" * 300, plain_size=True),
+        frame24("TIT2", text_frame_data(LATIN1, ["Title"]), plain_size=True),
+    ]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=16), "Medium", {"TIT2/Text": "Title"})
+    f.finding("id3v2.frame-size-not-syncsafe", "XTST")
+    f.audio()
+    return f
+
+
+@fixture
+def id3v24_plain_sizes_truncated():
+    f = Fixture(
+        "id3v24-plain-sizes-truncated",
+        "ID3v2.4 tag whose frame sizes are plain integers, cut by the end of the file: the header declares the whole tag, "
+        "and the file ends 50 bytes into TIT2's 300. The syncsafe reading of TIT2 (172 bytes) would end inside the file "
+        "and lead to bytes that are no frame header; the plain one runs past the end, as the cut tag does. The plain "
+        "reading is used.",
+    )
+    title = "t" * 299
+    frames = [
+        frame24("TPE1", text_frame_data(LATIN1, ["Artist"]), plain_size=True),
+        frame24("TIT2", text_frame_data(LATIN1, [title]), plain_size=True),
+    ]
+    tag = id3v2(4, frames)
+    f.tag("ID3v2", "2.4.0", tag[: len(tag) - 50], "Low", {"TPE1/Text": "Artist"})
+    f.finding("id3v2.truncated", "declares")
+    f.finding("id3v2.frame-size-not-syncsafe", "TIT2")
+    f.finding("id3v2.frame-too-large", "Frame TIT2")
+    f.finding("layout.tags-only", "")
     return f
 
 

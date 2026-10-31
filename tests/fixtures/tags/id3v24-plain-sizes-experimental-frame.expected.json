@@ -1,0 +1,27 @@
+{
+  "description": "ID3v2.4 tag whose frame sizes are plain integers and whose first frame has the experimental ID XTST (ID3v2.4 section 4) and 300 bytes, $00 00 01 2C. An ID the analyzer does not know is still a frame, so the plain reading leads from XTST to TIT2 and the padding.",
+  "length": 864,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Medium",
+      "fields": {
+        "TIT2/Text": "Title"
+      },
+      "offset": 0,
+      "length": 352
+    },
+    {
+      "name": "Data",
+      "offset": 352,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-size-not-syncsafe",
+      "contains": "XTST"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "description": "ID3v2.4 tag whose frame sizes are plain integers, cut by the end of the file: the header declares the whole tag, and the file ends 50 bytes into TIT2's 300. The syncsafe reading of TIT2 (172 bytes) would end inside the file and lead to bytes that are no frame header; the plain one runs past the end, as the cut tag does. The plain reading is used.",
+  "length": 287,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "Low",
+      "fields": {
+        "TPE1/Text": "Artist"
+      },
+      "offset": 0,
+      "length": 287
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.truncated",
+      "contains": "declares"
+    },
+    {
+      "code": "id3v2.frame-size-not-syncsafe",
+      "contains": "TIT2"
+    },
+    {
+      "code": "id3v2.frame-too-large",
+      "contains": "Frame TIT2"
+    },
+    {
+      "code": "layout.tags-only",
+      "contains": ""
+    }
+  ]
+}
