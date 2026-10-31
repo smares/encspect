@@ -116,7 +116,7 @@ internal sealed class LosslessNodes(StreamData data, LosslessParameters paramete
                         }
                     }
 
-                    tile.Add(At($"Channel {c + 1} Subframes", tileStart, tileBits, NodeValue.Text(string.Join(", ", lengths)), ProExplain.ChannelSubframes, null, false));
+                    tile.Add(At($"Channel {c + 1} Subframes", tileStart, tileBits, NodeValue.Text(string.Join(", ", lengths)), ProExplain.ChannelSubframes, null, tileBits == 0));
                 }
             }
 
