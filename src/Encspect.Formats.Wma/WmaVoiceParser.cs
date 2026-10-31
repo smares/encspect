@@ -226,7 +226,7 @@ public sealed class WmaVoiceParser : ICodecParser
 
     private static Node AddTable(Node holder, long offset, ReadOnlySpan<byte> table)
     {
-        int[] slots = VoiceParameters.SlotsOfTable(table);
+        int[] slots = VoiceParameters.Slots(table);
         Node node = holder.Add("Frame Type Table", offset, table.Length, NodeValue.Integer(VoiceParameters.FrameTypes, "frame types", "frame type"), VoiceExplain.FrameTypeTable, Topics.WmaVoice);
         for (int t = 0; t < VoiceParameters.FrameTypes; t++)
         {

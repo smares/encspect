@@ -16,7 +16,7 @@ internal sealed class VoiceParameters
     public const int SuperframeSamples = 480;
     public const int CacheBytes = 256;
     public const int CacheBits = CacheBytes * 8;
-    public const int Slots = 22;
+    public const int SlotCount = 22;
 
     // The most a block alignment can be: FFmpeg's decoder takes 1 to 2^22.
     private const int MaxBlockAlign = 1 << 22;
@@ -182,7 +182,7 @@ internal sealed class VoiceParameters
     }
 
     // For each frame type its slot (a code number from 0 to 21), or -1 where no code reaches it. It works on any table, also a rejected one.
-    public static int[] SlotsOfTable(ReadOnlySpan<byte> table) => SlotsOf(table, out _, out _, out _, out _);
+    public static int[] Slots(ReadOnlySpan<byte> table) => SlotsOf(table, out _, out _, out _, out _);
 
     // The smallest k with 2^k >= value, and 0 for a value of 1 or less.
     public static int CeilLog2(long value) => value <= 1 ? 0 : 64 - System.Numerics.BitOperations.LeadingZeroCount((ulong)(value - 1));
@@ -224,12 +224,12 @@ internal sealed class VoiceParameters
             holder[slot] = t;
         }
 
-        typeOfSlot = new int[Slots];
+        typeOfSlot = new int[SlotCount];
         Array.Fill(typeOfSlot, -1);
         int[] slots = new int[FrameTypes];
         for (int t = 0; t < FrameTypes; t++)
         {
-            slots[t] = ownSlot[t] < Slots && holder[ownSlot[t]] == t ? ownSlot[t] : -1;
+            slots[t] = ownSlot[t] < SlotCount && holder[ownSlot[t]] == t ? ownSlot[t] : -1;
             if (slots[t] >= 0)
             {
                 typeOfSlot[slots[t]] = t;
