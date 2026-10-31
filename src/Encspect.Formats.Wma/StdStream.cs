@@ -34,7 +34,7 @@ internal sealed class StdStream
 
     public ChunkedList<SuperframeRecord> Superframes { get; } = new();
 
-    public ChunkedList<FrameRecord> Frames { get; } = new();
+    public ChunkedList<StdFrameRecord> Frames { get; } = new();
 
     public ByteStore Store { get; } = new();
 
@@ -77,7 +77,7 @@ internal sealed class StdStream
     public int FinalReservoirStartBit { get; private set; }
 
     // Whether the frame's blocks can be listed: the bytes of every superframe it lies in were kept.
-    public bool HasBytes(in FrameRecord frame)
+    public bool HasBytes(in StdFrameRecord frame)
     {
         if (Superframes[frame.Superframe].DataRef == uint.MaxValue)
         {
@@ -270,7 +270,7 @@ internal sealed class StdStream
         var reader = new Bits(buffer, 8 * align) { Position = end };
         for (int i = 0; i < record.Count - 1; i++)
         {
-            var frame = new FrameRecord { Superframe = index, StartSuperframe = index, StartBit = reader.Position, State = state.Pack() };
+            var frame = new StdFrameRecord { Superframe = index, StartSuperframe = index, StartBit = reader.Position, State = state.Pack() };
             FrameFault fault = StdFrameReader.Read(p, reader, ref state, Totals, null, out int blocks);
             frame.Blocks = blocks;
             frame.Fault = fault;
@@ -304,7 +304,7 @@ internal sealed class StdStream
     // Reads the frame the reservoir holds the start of, which ends in this superframe.
     private FrameFault ReadSpanning(int index, int first, int firstBit, ref FrameState state, StdNodes nodes, FindingCollector findings)
     {
-        var frame = new FrameRecord { Superframe = index, StartSuperframe = first, StartBit = firstBit, State = state.Pack() };
+        var frame = new StdFrameRecord { Superframe = index, StartSuperframe = first, StartBit = firstBit, State = state.Pack() };
         FrameBuffer buffer = BuildBuffer(frame, i => _window[i]);
         var bits = new Bits(buffer.Data, buffer.Total) { Position = buffer.Start };
         FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, Totals, null, out int blocks);
@@ -360,7 +360,7 @@ internal sealed class StdStream
         ReservoirSum += reservoir;
     }
 
-    private int AddFrame(FrameRecord frame)
+    private int AddFrame(StdFrameRecord frame)
     {
         if (frame.IsValid)
         {
@@ -381,7 +381,7 @@ internal sealed class StdStream
     {
         StdParameters p = Parameters;
         int align = p.BlockAlign;
-        var frame = new FrameRecord { Superframe = index, StartSuperframe = index, StartBit = 0, State = state.Pack() };
+        var frame = new StdFrameRecord { Superframe = index, StartSuperframe = index, StartBit = 0, State = state.Pack() };
         var bits = new Bits(buffer, 8 * align);
         FrameFault fault = StdFrameReader.Read(p, bits, ref state, Totals, null, out int blocks);
         frame.Blocks = blocks;
@@ -458,7 +458,7 @@ internal sealed class StdStream
 
     // The bits a frame is read from: the superframe's bytes for a frame read in one superframe; for a frame spanning superframes
     // the reservoir from its first byte on, then the bits after the header of the superframe where the frame ends.
-    public FrameBuffer BuildBuffer(in FrameRecord frame, Func<int, byte[]> bytesOf)
+    public FrameBuffer BuildBuffer(in StdFrameRecord frame, Func<int, byte[]> bytesOf)
     {
         int align = Parameters.BlockAlign;
         if (!frame.IsSpanning)

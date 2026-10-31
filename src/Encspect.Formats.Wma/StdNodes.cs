@@ -100,7 +100,7 @@ internal sealed class FrameLayout
     private readonly Dictionary<int, ByteMap> _maps = [];
     private readonly StdStream _stream;
 
-    public FrameLayout(StdStream stream, in FrameRecord frame)
+    public FrameLayout(StdStream stream, in StdFrameRecord frame)
     {
         _stream = stream;
         int align = stream.Parameters.BlockAlign;
@@ -284,7 +284,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
 
         for (int i = record.FirstFrame; i < record.FirstFrame + record.Frames; i++)
         {
-            FrameRecord frame = stream.Frames[i];
+            StdFrameRecord frame = stream.Frames[i];
             if (!frame.IsSpanning)
             {
                 string frameValue = frame.IsValid ? WmaStandardParser.Count(frame.Blocks, "block", "blocks") : "invalid";
@@ -324,7 +324,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
 
     public Node Frame(int index)
     {
-        FrameRecord frame = stream.Frames[index];
+        StdFrameRecord frame = stream.Frames[index];
         var layout = new FrameLayout(stream, frame);
         int start = frame.BufferStart;
         string value = frame.IsValid
@@ -333,7 +333,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
         return layout.Field("Frame", start, start + frame.Bits, value, StdText.Frame, Topics.WmaFramesAndBlocks, NodeKind.Frame, isWholeBytes: true, build: () => Blocks(frame, layout));
     }
 
-    private IReadOnlyList<Node> Blocks(FrameRecord frame, FrameLayout layout)
+    private IReadOnlyList<Node> Blocks(StdFrameRecord frame, FrameLayout layout)
     {
         if (!stream.HasBytes(frame))
         {

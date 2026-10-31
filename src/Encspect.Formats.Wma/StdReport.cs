@@ -111,7 +111,7 @@ internal static class StdReport
         int mapped = -1;
         for (int i = 0; i < frames; i++)
         {
-            FrameRecord frame = stream.Frames[i];
+            StdFrameRecord frame = stream.Frames[i];
             if (mapped != frame.StartSuperframe)
             {
                 SuperframeRecord record = stream.Superframes[frame.StartSuperframe];

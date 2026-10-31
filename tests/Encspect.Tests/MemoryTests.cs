@@ -648,6 +648,79 @@ public class MemoryTests(ITestOutputHelper output)
     private const long AsfWmaKeptBound = 550;
     private const long AsfWmaPeakBound = 550;
 
+    // A Professional stream keeps, for each frame, a record with where its bits lie and a trace of the lengths and values its nodes show (a few
+    // dozen bytes), and for each packet a record; the packets, frames and subframes become nodes when read. The ten media objects of a fixture
+    // (a stereo stream at 128 kbit/s, 66 frames) repeated with continuing sequence numbers.
+    [Fact]
+    public void ManyProfessionalFramesStayCompact()
+    {
+        const int packets = 6_000;
+        byte[] data = FileOfCycles("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 0x0162, packets);
+
+        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..8192]);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio Professional", stream.Codec);
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("wma.", StringComparison.Ordinal));
+        long frames = Assert.Single(stream.Nodes[0].Children, n => n.Name == "Frames").Children.Count;
+        Assert.Equal(packets / 10 * 66L, frames);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * ProfessionalKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * ProfessionalPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    private const long ProfessionalKeptBound = 600;
+    private const long ProfessionalPeakBound = 1200;
+
+    // A Lossless stream keeps the same records, and the bits of the run a packet's frames are read from only while they are read. The fifteen
+    // media objects of a fixture (a stereo stream, 44 frames of about 4,000 bytes) repeated with continuing sequence numbers. The peak holds
+    // about 10 MB that do not grow with the stream (1,100 frames: 3.9 MB, 4,400: 11.2 MB, 8,800: 12.1 MB), so the stream is long enough for
+    // them to be a small part of the bound.
+    [Fact]
+    public void ManyLosslessFramesStayCompact()
+    {
+        const int packets = 3_000;
+        byte[] data = FileOfCycles("asf/external-windows-wma92lossless-stereo-44k-16.wma", 0x0163, packets);
+
+        (Report report, long kept, long peak) = Measure("packets.wma", data, data[..32768]);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio Lossless", stream.Codec);
+
+        // At each seam of the repeated file the last packet's bits after the final frame are read as the end of a run.
+        Assert.All(report.Findings.Where(f => f.Code.StartsWith("wma.", StringComparison.Ordinal)), f => Assert.Equal("wma.frame-boundary", f.Code));
+        long frames = Assert.Single(stream.Nodes[0].Children, n => n.Name == "Frames").Children.Count;
+        Assert.Equal(packets / 15 * 44L, frames);
+        output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * LosslessKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * LosslessPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    private const long LosslessKeptBound = 600;
+    private const long LosslessPeakBound = 2500;
+
+    // A file of a fixture's media objects, one to a packet, repeated until there are the given number of packets, with sequence numbers that
+    // continue at every seam (the objects of a Professional or Lossless stream carry theirs in the first four bits).
+    private static byte[] FileOfCycles(string fixture, int tag, int count)
+    {
+        (byte[] properties, _) = AsfBuilder.Take(fixture, tag);
+        List<byte[]> objects = AsfBuilder.Objects(fixture, tag);
+        int size = 23 + objects[0].Length;
+        var packets = new List<byte[]>(count);
+        for (int i = 0; i < count; i++)
+        {
+            byte[] media = (byte[])objects[i % objects.Count].Clone();
+            media[0] = (byte)((media[0] & 0x0F) | ((i & 15) << 4));
+            byte[] packet = AsfBuilder.Packet(size, 1, i & 0xFF, 0, (uint)media.Length, (uint)(i * 46));
+            media.CopyTo(packet, 23);
+            packets.Add(packet);
+        }
+
+        return AsfBuilder.Assemble(properties, size, packets);
+    }
+
     // Objects that state millions of entries, in files of tens of megabytes: each list becomes nodes only up to a
     // count, so the heap stays a small fraction of what a node for every entry would take (gigabytes).
     [Fact]

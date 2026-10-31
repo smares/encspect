@@ -27,6 +27,7 @@ import check_monkeys_audio_samples
 import check_mp3pro_samples
 import check_sbr_samples
 import check_usac_samples
+import check_wma_samples
 import check_wmavoice_samples
 import conformance_mpeg_audio
 import dashif_systems
@@ -75,6 +76,9 @@ def sources():
     wmavoice = json.loads((ROOT / "tests" / "conformance" / "wmavoice-samples.json").read_text(encoding="utf-8"))
     for sample in wmavoice["samples"]:
         yield sample["file"], sample["sha256"], check_wmavoice_samples.addresses(sample)
+    wma = json.loads((ROOT / "tests" / "conformance" / "wma-samples.json").read_text(encoding="utf-8"))
+    for sample in wma["samples"]:
+        yield sample["file"], sample["sha256"], check_wma_samples.addresses(sample)
     monkeys = json.loads((ROOT / "tests" / "conformance" / "monkeys-audio-samples.json").read_text(encoding="utf-8"))
     for sample in monkeys["samples"]:
         yield sample["file"], sample["sha256"], check_monkeys_audio_samples.addresses(sample)
