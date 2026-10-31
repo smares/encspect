@@ -965,7 +965,7 @@ These are built or fetched by helper scripts:
 The models that compute the expected values are:
 
 - `stream_stats.py` and `ancillary_scan.py` for MPEG audio
-- `mp4_boxes.py` and `aac_model.py` for MP4 and AAC
+- `mp4_boxes.py` and `aac_model.py` for MP4 and AAC (`scripts/ci/test_aac_model.py` tests the model with hand-worked cases, which CI runs)
 - `ogg_model.py` and `vorbis_opus_model.py` for Ogg
 - `musepack_model.py` for Musepack
 - `wavpack_model.py` for WavPack
