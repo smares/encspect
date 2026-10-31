@@ -73,7 +73,6 @@ public sealed class WmaVoiceParser : ICodecParser
         voice.Finish();
 
         VoiceTotals totals = voice.Totals;
-        VoiceStream stream = voice;
         streamNode = parent.Add(new Node(VoiceReport.CodecName, parent.Offset, parent.Length, VoiceReport.Count(totals.Superframes, "superframe", "superframes"))
         {
             Kind = NodeKind.Stream,
@@ -83,24 +82,23 @@ public sealed class WmaVoiceParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings);
         Node? statistics = null;
-        VoiceStats stats = default;
+        double seconds = 0;
         if (totals.Packets > 0)
         {
-            statistics = VoiceReport.Statistics(stream, format, config.Duration, parent, out double duration);
+            statistics = VoiceReport.Statistics(voice, format, config.Duration, parent, out seconds);
             streamNode.Add(statistics);
-            stats = new VoiceStats(duration);
         }
 
-        if (stream.Packets > 0)
+        if (voice.Packets > 0)
         {
-            var packetNodes = new BlockedChildren([], stream.Packets, nodes.PacketNode);
-            streamNode.Add(new Node("Packets", parent.Offset, parent.Length, VoiceReport.Count(stream.Packets, "packet", "packets"), () => packetNodes)
+            var packetNodes = new BlockedChildren([], voice.Packets, nodes.PacketNode);
+            streamNode.Add(new Node("Packets", parent.Offset, parent.Length, VoiceReport.Count(voice.Packets, "packet", "packets"), () => packetNodes)
             {
                 Description = VoiceExplain.Packets,
                 Topic = Topics.WmaVoice,
             });
-            var superframeNodes = new BlockedChildren([], stream.Superframes, nodes.SuperframeNode);
-            streamNode.Add(new Node("Superframes", parent.Offset, parent.Length, VoiceReport.Count(stream.Superframes, "superframe", "superframes"), () => superframeNodes)
+            var superframeNodes = new BlockedChildren([], voice.Superframes, nodes.SuperframeNode);
+            streamNode.Add(new Node("Superframes", parent.Offset, parent.Length, VoiceReport.Count(voice.Superframes, "superframe", "superframes"), () => superframeNodes)
             {
                 Description = VoiceExplain.Superframes,
                 Topic = Topics.WmaVoiceSuperframes,
@@ -113,19 +111,18 @@ public sealed class WmaVoiceParser : ICodecParser
                 $"The stream has more than {MaxPackets} media objects; the {afterLimit} after them are not read, so the statistics and the series cover the first {MaxPackets}.", parent);
         }
 
-        if (stream.Truncated)
+        if (voice.Truncated)
         {
             findings.AddNow(Severity.Info, "wma.records-limit",
-                $"The stream has more than {stream.LimitCount} {stream.Limit}; the rest are not read, so the statistics and the series cover the first {stream.LimitCount}.", parent);
+                $"The stream has more than {voice.LimitCount} {voice.Limit}; the rest are not read, so the statistics and the series cover the first {voice.LimitCount}.", parent);
         }
 
-        double seconds = stats.Duration;
-        IReadOnlyList<Series> series = statistics is null ? [] : VoiceReport.SeriesOf(stream, nodes, format.SampleRate, statistics);
+        IReadOnlyList<Series> series = statistics is null ? [] : VoiceReport.SeriesOf(voice, nodes, format.SampleRate, statistics);
         context.AddStream(new StreamInfo
         {
             Nodes = [streamNode],
             Codec = VoiceReport.CodecName,
-            SampleRate = format.SampleRate,
+            SampleRate = Math.Max(format.SampleRate, 0),
             Channels = format.Channels,
             ChannelMode = null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
@@ -142,8 +139,6 @@ public sealed class WmaVoiceParser : ICodecParser
 
         findings.Flush(context);
     }
-
-    private readonly record struct VoiceStats(double Duration);
 
     // The nodes of the 46 bytes of codec-specific data, as far as the bytes go, and the findings the configuration gives.
     private static void AddConfiguration(CodecConfiguration configuration, VoiceParameters parameters, FindingCollector findings, bool accepted)
@@ -165,7 +160,7 @@ public sealed class WmaVoiceParser : ICodecParser
         Node? table = null;
         if (bytes.Length >= VoiceParameters.TableOffset + 7)
         {
-            table = AddTable(holder, offset + VoiceParameters.TableOffset, bytes[VoiceParameters.TableOffset..]);
+            table = AddTable(holder, offset + VoiceParameters.TableOffset, bytes[VoiceParameters.TableOffset..Math.Min(bytes.Length, VoiceParameters.ExtraDataSize)]);
         }
 
         if (bytes.Length > VoiceParameters.ExtraDataSize)
@@ -176,8 +171,8 @@ public sealed class WmaVoiceParser : ICodecParser
 
         foreach ((string code, string message) in parameters.Issues)
         {
-            // The table's finding points to the table where there is one; the other checks to the node that holds the codec data.
-            findings.AddNow(Severity.Warning, code, message + ".", code == "wma.voice-frame-type-table" && table is not null ? holder : holder);
+            // The failed checks point to the node that holds the codec data, the table's included.
+            findings.AddNow(Severity.Warning, code, message + ".", holder);
         }
 
         if (!accepted)

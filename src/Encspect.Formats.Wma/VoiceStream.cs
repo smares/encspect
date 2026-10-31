@@ -149,7 +149,7 @@ internal sealed class VoiceStream
             {
                 Totals.BitsAfterLast = count - sf.Needed;
             }
-            else
+            else if (sf.Outcome == VoiceOutcome.Overrun)
             {
                 Totals.BitsAfterLast = count;
             }

@@ -33,7 +33,6 @@ internal static class VoiceNames
 internal static class VoiceExplain
 {
     public const string Stream = "The stream as its packets, superframes and frames read: Windows Media Audio Voice codes speech at low bitrates in superframes of 480 samples, each of three frames.";
-    public const string RejectedStream = "The stream as the container and the codec-specific data describe it: the stream's configuration is one that FFmpeg's decoder rejects, so its packets are counted and their frames are not read.";
     public const string Statistics = "Figures over the stream's packets, superframes and frames, counted from what the analysis read.";
 
     public const string StatPackets = "How many packets the stream has, read or not.";
@@ -56,7 +55,7 @@ internal static class VoiceExplain
     public const string StatSpanning = "How many superframes continue from one packet into the next: those read from the bits cached at a header.";
     public const string StatMostInPacket = "The most superframes read in one packet, counting the one that began in the packet before and the packet finishes.";
     public const string StatSpilloverField = "The width of the spillover field in each packet header, which follows from the block alignment.";
-    public const string StatSampleCount = "How many superframes state their own sample count, which only the last superframe of a stream has in the files seen.";
+    public const string StatSampleCount = "How many superframes state their own sample count.";
     public const string StatLspsPerFrame = "How many line spectral pairs describe the filter of each frame: 10 or 16, as the codec-specific data's flags say.";
     public const string StatResidualLsps = "The superframes read with their LSPs sent once for the three frames, as the packet's header says.";
     public const string StatAdditionalData = "How many superframes carry additional data, which a decoder skips.";

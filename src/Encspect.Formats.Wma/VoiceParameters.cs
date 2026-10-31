@@ -90,7 +90,8 @@ internal sealed class VoiceParameters
     {
         ArgumentNullException.ThrowIfNull(format);
 
-        int rate = format.SampleRate;
+        // The container's reader rejects a rate of 0 or less alike, so a stored rate that reads as negative is 0 here.
+        int rate = Math.Max(format.SampleRate, 0);
         int align = format.BlockAlign;
         VoiceParameters Failed(string code, string message, uint flags = 0) =>
             new() { SampleRate = rate, BlockAlign = align, Channels = format.Channels, Flags = flags, Issues = [(code, message)] };
@@ -125,7 +126,7 @@ internal sealed class VoiceParameters
             return Failed("wma.voice-sample-rate", $"The sample rate is {rate} Hz; FFmpeg's decoder rejects rates of 226719 Hz and more (wmavoice.c)", flags);
         }
 
-        long r = Math.Max(rate, 0);
+        long r = rate;
         int minPitch = (int)(((256 * r / 400) + 50) / 256);
         int maxPitch = (int)(((256 * 37 * r / 2000) + 50) / 256);
         int range = maxPitch - minPitch;

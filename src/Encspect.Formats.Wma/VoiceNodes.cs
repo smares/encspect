@@ -96,7 +96,26 @@ internal sealed class VoiceNodes
         int bits = packet.Length * 8;
         int at = 0;
 
+        // Unread bits that follow one another are one node; it is added when something else comes after them.
+        int unreadStart = -1;
+        int unreadEnd = -1;
+
         void Part(string name, int start, int end, NodeValue? value, string description, string? topic = null)
+        {
+            FlushUnread();
+            Add(name, start, end, value, description, topic);
+        }
+
+        void FlushUnread()
+        {
+            if (unreadStart >= 0)
+            {
+                Add("Unread Bits", unreadStart, unreadEnd, NodeValue.Integer(unreadEnd - unreadStart, "bits"), VoiceExplain.UnreadBits);
+                unreadStart = -1;
+            }
+        }
+
+        void Add(string name, int start, int end, NodeValue? value, string description, string? topic = null)
         {
             end = Math.Min(end, bits);
             if (end > start && start < bits)
@@ -105,7 +124,24 @@ internal sealed class VoiceNodes
             }
         }
 
-        void Unread(int start, int end) => Part("Unread Bits", start, end, NodeValue.Integer(Math.Max(0, Math.Min(end, bits) - start), "bits"), VoiceExplain.UnreadBits);
+        void Unread(int start, int end)
+        {
+            end = Math.Min(end, bits);
+            if (end <= start || start >= bits)
+            {
+                return;
+            }
+
+            if (unreadStart >= 0 && unreadEnd == start)
+            {
+                unreadEnd = end;
+                return;
+            }
+
+            FlushUnread();
+            unreadStart = start;
+            unreadEnd = end;
+        }
 
         if (packet.Kind == VoicePacketKind.Headerless)
         {
@@ -119,6 +155,7 @@ internal sealed class VoiceNodes
             if (packet.Kind == VoicePacketKind.InvalidHeader)
             {
                 Unread(packet.HeaderBits, bits);
+                FlushUnread();
                 return children;
             }
 
@@ -143,7 +180,7 @@ internal sealed class VoiceNodes
                     at += packet.LeadBits;
                     break;
                 case VoiceLead.Skipped:
-                    Part("Skipped Spillover", at, at + packet.Spillover, NodeValue.Integer(packet.Spillover, "bits"), VoiceExplain.SkippedSpillover, Topics.WmaVoiceSuperframes);
+                    Part("Skipped Spillover", at, at + packet.Spillover, NodeValue.Integer(Math.Max(0, Math.Min(at + packet.Spillover, bits) - at), "bits"), VoiceExplain.SkippedSpillover, Topics.WmaVoiceSuperframes);
                     at += packet.Spillover;
                     break;
             }
@@ -223,6 +260,7 @@ internal sealed class VoiceNodes
             Unread(at, bits);
         }
 
+        FlushUnread();
         return children;
     }
 

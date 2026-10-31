@@ -75,17 +75,15 @@ internal static class VoiceReport
             Add("Maximum Superframe Bitrate", NodeValue.Decimal(t.LargestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMaximumBitrate);
         }
 
-        {
-            Add("Superframes Spanning Packets", NodeValue.Integer(t.SpanningPackets), VoiceExplain.StatSpanning);
-            Add("Most Superframes in a Packet", NodeValue.Integer(t.MostInPacket), VoiceExplain.StatMostInPacket);
-            Add("Spillover Field", NodeValue.Integer(p.SpilloverBits, "bits"), VoiceExplain.StatSpilloverField);
-            Add("Superframes with a Sample Count", NodeValue.Integer(t.WithSampleCount), VoiceExplain.StatSampleCount);
-            Add("LSPs per Frame", NodeValue.Integer(p.LspCount), VoiceExplain.StatLspsPerFrame);
-            Add("Superframes with Residual LSPs", Share(t.WithResidualLsps, t.Superframes, "superframe", "superframes"), VoiceExplain.StatResidualLsps);
-            Add("Superframes with Additional Data", NodeValue.Integer(t.WithAdditionalData), VoiceExplain.StatAdditionalData);
-            Add("Uses Postfilter", NodeValue.Boolean(p.HasPostfilter), VoiceExplain.StatPostfilter);
-            Add("Pitch Range", $"{p.MinPitch} to {p.MaxPitch - 1} samples", VoiceExplain.StatPitchRange);
-        }
+        Add("Superframes Spanning Packets", NodeValue.Integer(t.SpanningPackets), VoiceExplain.StatSpanning);
+        Add("Most Superframes in a Packet", NodeValue.Integer(t.MostInPacket), VoiceExplain.StatMostInPacket);
+        Add("Spillover Field", NodeValue.Integer(p.SpilloverBits, "bits"), VoiceExplain.StatSpilloverField);
+        Add("Superframes with a Sample Count", NodeValue.Integer(t.WithSampleCount), VoiceExplain.StatSampleCount);
+        Add("LSPs per Frame", NodeValue.Integer(p.LspCount), VoiceExplain.StatLspsPerFrame);
+        Add("Superframes with Residual LSPs", Share(t.WithResidualLsps, t.Superframes, "superframe", "superframes"), VoiceExplain.StatResidualLsps);
+        Add("Superframes with Additional Data", NodeValue.Integer(t.WithAdditionalData), VoiceExplain.StatAdditionalData);
+        Add("Uses Postfilter", NodeValue.Boolean(p.HasPostfilter), VoiceExplain.StatPostfilter);
+        Add("Pitch Range", $"{p.MinPitch} to {p.MaxPitch - 1} samples", VoiceExplain.StatPitchRange);
 
         if (t.IgnoredBits > 0)
         {

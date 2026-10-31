@@ -3,8 +3,8 @@
 of every frame type (10 and 16 LSPs, residual and per-frame LSPs, a pitch per frame and per block, silence, sample counts and
 additional data, packets with one and two blocks) and damaged ones (a configuration FFmpeg's decoder rejects, a frame type table
 with codes that reach no type, truncated data, spillover that does not agree with the superframes, music and invalid superframes,
-a packet header that runs past the packet). Microsoft has published no specification of the codec; the writer follows FFmpeg 6.1.1's
-wmavoice.c, and crosscheck_asf_fixtures.py has FFmpeg decode every file: the valid ones to the samples they hold, the damaged ones to
+a packet header that runs past the packet). Microsoft has published no specification of the codec; the writer follows
+docs/design/wma-voice-format.md, and crosscheck_asf_fixtures.py has FFmpeg decode every file: the valid ones to the samples they hold, the damaged ones to
 the sample count and the errors the analysis predicts.
 
 Each fixture has a manifest (voice-*.expected.json) in the form of the other hand-built ASF fixtures (the objects, streams, packets and
