@@ -103,7 +103,7 @@ def reader_events(reader):
         if any(a.startswith("9cdf01d9-a0f0-43ba-b077-eaa06cbd728a=") and not a.endswith("=0") for a in read.get("attributes", [])):
             events["discontinuities"] += 1
         if "duration" in read:
-            if previous_end is not None and abs(read["timestamp"] - previous_end) > 1:
+            if previous_end is not None and abs(read["timestamp"] - previous_end) > 10000:  # more than 1 ms; the durations are rounded to 100 ns
                 events["gaps"] += 1
             previous_end = read["timestamp"] + read["duration"]
     return events
@@ -227,11 +227,11 @@ def main():
                     details.append((name, len(table), diff))
 
     width = max(len(r["file"]) for r in rows) if rows else 10
-    header = f"{'file'.ljust(width)}  {'format':<12} {'analyzer':>9} {'ffmpeg':>9} {'reader':>9} {'decoder':>9}  notes"
+    header = f"{'file'.ljust(width)}  {'format':<12} {'analyzer':>9} {'ffmpeg':>9} {'reader':>14} {'decoder':>14}  notes"
     print(header)
     print("-" * len(header))
     for r in rows:
-        print(f"{r['file'].ljust(width)}  {TAGS.get(r['tag'], fmt(r['tag'])):<12} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text'][:9]:>9} {r['decoder_text'][:9]:>9}  {'; '.join(r['notes'])}")
+        print(f"{r['file'].ljust(width)}  {TAGS.get(r['tag'], fmt(r['tag'])):<12} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text'][:14]:>14} {r['decoder_text'][:14]:>14}  {'; '.join(r['notes'])}")
 
     if details:
         print("\nMedia objects whose decoded samples differ from the analyzer's frames (versions 1 and 2):")
@@ -251,6 +251,15 @@ def main():
                         ("decoder = ffmpeg", "decoder", "ffmpeg"), ("reader = ffmpeg", "reader", "ffmpeg"), ("ffmpeg = analyzer", "ffmpeg", "analyzer")):
         same, of = count(a, b)
         print(f"  {label}: {same} of {of} files where both are known")
+    print("\nPer format (files where both figures are known / agreeing):")
+    print(f"  {'format':<14} {'files':>5} {'analyzer=ffmpeg':>16} {'analyzer=reader':>16} {'analyzer=decoder':>17} {'reader=decoder':>15}")
+    for tag in sorted({r["tag"] for r in rows if r["tag"] is not None}):
+        group = [r for r in rows if r["tag"] == tag]
+        cells = []
+        for a, b in (("analyzer", "ffmpeg"), ("analyzer", "reader"), ("analyzer", "decoder"), ("reader", "decoder")):
+            pairs = [(r[a], r[b]) for r in group if r[a] is not None and r[b] is not None]
+            cells.append(f"{sum(1 for x, y in pairs if x == y)}/{len(pairs)}")
+        print(f"  {TAGS.get(tag, hex(tag)):<14} {len(group):>5} {cells[0]:>16} {cells[1]:>16} {cells[2]:>17} {cells[3]:>15}")
     print(f"  files: {n}; Source Reader gave no samples for {sum(1 for r in rows if r['reader'] is None)}; decoder gave none for {sum(1 for r in rows if r['decoder'] is None)}")
 
     if args.json:
