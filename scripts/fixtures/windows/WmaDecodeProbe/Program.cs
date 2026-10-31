@@ -2,8 +2,9 @@
 //
 //   wma-decode-probe --out <dir> [--list <file with one path per line>] [--timeout <seconds>] <file or folder>...
 //
-// Each file is handled by two child processes of this program, one per path (Source Reader, decoder
-// DMO), so that a decoder that crashes on a damaged file is recorded and the run goes on.
+// Each file is handled by three child processes of this program (Source Reader, decoder DMO, and the
+// DMO again without timestamps), so that a decoder that crashes on a damaged file is recorded and the
+// run goes on.
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
@@ -91,6 +92,7 @@ public static class Program
         var modules = new SortedDictionary<string, string?>();
         var used = new HashSet<string>();
         int written = 0;
+        WriteEnvironment(outDir, decoders, modules);
         string root = Path.GetFullPath(inputs.FirstOrDefault(Directory.Exists) ?? ".");
         foreach (var file in files)
         {
@@ -139,7 +141,9 @@ public static class Program
 
             if (node["stalled"] != null)
             {
-                return $"stalled after {node["calls"]} reads (last timestamp {node["lastTimestamp"]}, in ReadSample {node["inReadSample"]})";
+                return key == "sourceReader"
+                    ? $"stalled after {node["calls"]} reads (last timestamp {node["lastTimestamp"]}, in ReadSample {node["inReadSample"]})"
+                    : $"stalled after {node["objectCount"] ?? 0} objects, {node["totalSamples"] ?? 0} samples";
             }
 
             if (node["timedOut"] != null)
@@ -157,7 +161,7 @@ public static class Program
             return node["decoder"] != null ? $"{node["totalSamples"]} samples, {node["objectCount"]} objects" : (node["error"]?.ToString() ?? node["asf"]?["error"]?.ToString() ?? "no decoder");
         }
 
-        return $"{name}: reader {Part("sourceReader")}; decoder {Part("direct")}";
+        return $"{name}: reader {Part("sourceReader")}; decoder {Part("direct")}; without timestamps {Part("directWithoutTimestamps")}";
     }
 
     private static JsonNode RunChild(string mode, string file, int timeoutSeconds, SortedDictionary<string, string?> modules)
@@ -243,6 +247,10 @@ public static class Program
                 {
                     SourceReaderProbe.Run(file, record);
                 }
+                else if (mode == "asf")
+                {
+                    DmoProbe.WalkOnly(file, record);
+                }
                 else
                 {
                     DmoProbe.Run(file, record, withTimestamps: mode != "dmo-nots");
@@ -277,9 +285,11 @@ public static class Program
                 {
                     json = JsonSerializer.Serialize(record, Options);
                 }
-                catch (InvalidOperationException)
+                catch (Exception e)
                 {
-                    // The stalled worker changed a collection while it was written; try again.
+                    // Serializing is done under the lock the probes write under, so this is a bug of the
+                    // probe or of a type it serializes: say so in the record and try again.
+                    record["serializeError"] = e.GetType().Name + ": " + e.Message;
                     Thread.Sleep(50);
                 }
             }

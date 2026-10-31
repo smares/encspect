@@ -1,11 +1,12 @@
 name: WMA decoding by Microsoft's decoder
 
 # Decodes the project's ASF and WMA fixtures with the decoders of Windows on a windows-2025 runner,
-# two ways, and uploads one JSON record per file with a record of the OS build and the decoder DLLs:
+# two ways (three runs per file, each in a process of its own), and uploads one JSON record per file with a record of the OS build and the decoder DLLs:
 #   - Media Foundation's Source Reader with PCM output: every sample's timestamp, duration and frame
 #     count, each ReadSample result and stream flags;
 #   - the WMA, WMA Professional and Lossless or WMA Voice decoder DMO used directly, fed one media
-#     object at a time from the probe's own minimal ASF reader, so that damaged files reach the decoder.
+#     object at a time from the probe's own minimal ASF reader, so that damaged files reach the decoder;
+#     run a second time without timestamps on the input buffers, as a control.
 # scripts/fixtures/windows/compare_windows_wma_decode.py compares the records with the analyzer's
 # reports and ffmpeg's sample counts (it runs on Linux). Run by hand (Actions, "WMA decoding by
 # Microsoft's decoder", Run workflow, optionally with a list of more files) or by pushing the branch
@@ -55,6 +56,8 @@ jobs:
 
       - name: Decode every fixture two ways
         shell: bash
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 45
         env:
           EXTRA_PATHS: ${{ github.event.inputs.paths }}
         run: |
@@ -67,7 +70,16 @@ jobs:
         if: always()
         shell: powershell
         continue-on-error: true
-        run: choco install ffmpeg --no-progress -y
+        run: choco install ffmpeg --version=9.0.2 --no-progress -y
+
+      # The ffmpeg column of comparison.txt comes from this version; the script run on Linux uses the local ffmpeg.
+      - name: Record the ffmpeg version
+        if: always()
+        shell: bash
+        continue-on-error: true
+        run: |
+          ffmpeg -version | head -1 | tee decode-out/ffmpeg-version.txt
+          python -c "import json,pathlib; p=pathlib.Path('decode-out/environment.json'); e=json.loads(p.read_text(encoding='utf-8')); e['ffmpeg']=pathlib.Path('decode-out/ffmpeg-version.txt').read_text().strip(); p.write_text(json.dumps(e, indent=2)+'\n', encoding='utf-8')"
 
       - name: Compare with the analyzer and ffmpeg
         if: always()

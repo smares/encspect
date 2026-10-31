@@ -14,36 +14,68 @@ public static class SourceReaderProbe
 
     public static void Run(string path, Dictionary<string, object?> record)
     {
+        var com = new List<object>();
+        try
+        {
+            RunCore(path, record, com);
+        }
+        finally
+        {
+            foreach (var o in com)
+            {
+                Marshal.ReleaseComObject(o);
+            }
+
+            Native.MFShutdown();
+        }
+    }
+
+    private static void RunCore(string path, Dictionary<string, object?> record, List<object> com)
+    {
+        void Set(string key, object? value)
+        {
+            lock (Gate)
+            {
+                record[key] = value;
+            }
+        }
+
         var reads = new List<Dictionary<string, object?>>();
-        record["reads"] = reads;
+        Set("reads", reads);
         int hr = Native.MFStartup(Native.MfVersion, 0);
         if (hr < 0)
         {
-            record["startupHresult"] = Format.Hr(hr);
+            Set("startupHresult", Format.Hr(hr));
             return;
         }
 
         hr = Native.MFCreateSourceReaderFromURL(Path.GetFullPath(path), IntPtr.Zero, out var reader);
-        record["openHresult"] = Format.Hr(hr);
+        Set("openHresult", Format.Hr(hr));
         if (hr < 0 || reader == null)
         {
-            record["opened"] = false;
+            Set("opened", false);
             return;
         }
 
-        record["opened"] = true;
+        Set("opened", true);
         reader.SetStreamSelection(Native.AllStreams, 0);
-        record["selectHresult"] = Format.Hr(reader.SetStreamSelection(Native.FirstAudioStream, 1));
+        Set("selectHresult", Format.Hr(reader.SetStreamSelection(Native.FirstAudioStream, 1)));
         hr = reader.GetNativeMediaType(Native.FirstAudioStream, 0, out var native);
-        record["nativeTypeHresult"] = Format.Hr(hr);
-        if (hr >= 0)
+        if (native != null)
         {
-            record["nativeType"] = Describe(native);
+            com.Add(native);
         }
 
+        Set("nativeTypeHresult", Format.Hr(hr));
+        if (hr >= 0)
+        {
+            Set("nativeType", Describe(native!));
+        }
+
+        com.Add(reader);
         var attempts = new List<Dictionary<string, object?>>();
-        record["outputAttempts"] = attempts;
-        var nativeFormat = hr >= 0 ? Describe(native) : null;
+        Set("outputAttempts", attempts);
+        var nativeFormat = hr >= 0 ? Describe(native!) : null;
         int channels = nativeFormat != null && nativeFormat.TryGetValue("channels", out var c) ? (int)c! : 2;
         int rate = nativeFormat != null && nativeFormat.TryGetValue("sampleRate", out var r) ? (int)r! : 44100;
         bool set = false;
@@ -52,6 +84,7 @@ public static class SourceReaderProbe
             var attempt = new Dictionary<string, object?> { ["tag"] = tag, ["bits"] = bits };
             attempts.Add(attempt);
             Native.MFCreateMediaType(out var type);
+            com.Add(type);
             var wfx = Format.Wfx(tag, channels, rate, bits);
             attempt["initHresult"] = Format.Hr(Native.MFInitMediaTypeFromWaveFormatEx(type, wfx, (uint)wfx.Length));
             int setHr = reader.SetCurrentMediaType(Native.FirstAudioStream, IntPtr.Zero, type);
@@ -63,7 +96,7 @@ public static class SourceReaderProbe
             }
         }
 
-        record["outputSet"] = set;
+        Set("outputSet", set);
         if (!set)
         {
             return;
@@ -75,10 +108,11 @@ public static class SourceReaderProbe
             if (reader.GetCurrentMediaType(Native.FirstAudioStream, out var current) >= 0)
             {
                 var d = Describe(current);
+                Marshal.ReleaseComObject(current);
                 if (d != null)
                 {
                     blockAlign = (int)d["blockAlign"]!;
-                    record["outputFormat"] = d;
+                    Set("outputFormat", d);
                 }
             }
         }
@@ -96,9 +130,9 @@ public static class SourceReaderProbe
             calls++;
             lock (Gate)
             {
-                record["calls"] = calls;
-                record["inReadSample"] = true;
-                record["readStartedAtMs"] = started.ElapsedMilliseconds;
+                Set("calls", calls);
+                Set("inReadSample", true);
+                Set("readStartedAtMs", started.ElapsedMilliseconds);
             }
 
             hr = reader.ReadSample(Native.FirstAudioStream, 0, out uint actual, out uint flags, out long timestamp, out var sample);
@@ -138,22 +172,18 @@ public static class SourceReaderProbe
             lock (Gate)
             {
                 reads.Add(read);
-                record["inReadSample"] = false;
-                record["sampleCount"] = samples;
-                record["totalSamples"] = totalFrames;
-                record["lastTimestamp"] = timestamp;
-                record["lastHresult"] = Format.Hr(hr);
+                Set("inReadSample", false);
+                Set("sampleCount", samples);
+                Set("totalSamples", totalFrames);
+                Set("lastTimestamp", timestamp);
+                Set("lastHresult", Format.Hr(hr));
             }
 
-            if (sample != null || timestamp != 0)
+            sameTimestamp = timestamp == lastTimestamp ? sameTimestamp + 1 : 1;
+            lastTimestamp = timestamp;
+            if (sameTimestamp >= 1000 && (flags & EndOfStreamFlag) == 0)
             {
-                sameTimestamp = timestamp == lastTimestamp ? sameTimestamp + 1 : 0;
-                lastTimestamp = timestamp;
-            }
-
-            if (sameTimestamp >= 1000)
-            {
-                record["stoppedBy"] = "1000 reads at the same timestamp " + timestamp;
+                Set("stoppedBy", "1000 reads at the timestamp " + timestamp);
                 break;
             }
 
@@ -164,10 +194,11 @@ public static class SourceReaderProbe
 
             if (hr < 0 || (flags & ErrorFlag) != 0)
             {
-                // After a failed read the reader is not read again: in the first run a ReadSample issued after
-                // an E_FAIL on a damaged Voice file never returned.
+                // After a failed read the reader is not read again: in run 41249058352 (d7ebb85), which read on
+                // after up to four more errors, the ReadSample issued after an E_FAIL on 13 damaged Voice files
+                // did not return within its 20 second budget.
                 errors++;
-                record["stoppedBy"] = "the first failed read, " + Format.Hr(hr);
+                Set("stoppedBy", "the first failed read, " + Format.Hr(hr));
                 break;
             }
 
@@ -178,18 +209,18 @@ public static class SourceReaderProbe
             }
         }
 
-        if (calls >= 200_000)
+        if (calls >= 200_000 && !ended && !record.ContainsKey("stoppedBy"))
         {
-            record["stoppedBy"] = "200000 ReadSample calls without the end of the stream";
+            Set("stoppedBy", "200000 ReadSample calls without the end of the stream");
         }
 
-        record["calls"] = calls;
-        record["sampleCount"] = samples;
-        record["errorCount"] = errors;
-        record["endOfStream"] = ended;
-        record["totalBytes"] = totalBytes;
-        record["totalSamples"] = totalFrames;
-        record["elapsedMs"] = timer.ElapsedMilliseconds;
+        Set("calls", calls);
+        Set("sampleCount", samples);
+        Set("errorCount", errors);
+        Set("endOfStream", ended);
+        Set("totalBytes", totalBytes);
+        Set("totalSamples", totalFrames);
+        Set("elapsedMs", timer.ElapsedMilliseconds);
     }
 
     private static string[] FlagNames(uint flags)

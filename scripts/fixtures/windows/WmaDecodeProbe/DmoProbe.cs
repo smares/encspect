@@ -15,47 +15,99 @@ public static class DmoProbe
 
     private static Guid SubtypeOf(int tag) => new($"{tag:x8}-0000-0010-8000-00AA00389B71");
 
+    // The probe's ASF reader alone, without a decoder (child mode "asf"): the media objects it would feed.
+    public static void WalkOnly(string path, Dictionary<string, object?> record)
+    {
+        var asf = AsfReader.ReadHeader(path);
+        var objects = new List<MediaObject>();
+        lock (SourceReaderProbe.Gate)
+        {
+            record["asf"] = asf;
+            record["objects"] = objects;
+        }
+
+        AsfReader.WalkObjects(asf, obj =>
+        {
+            lock (SourceReaderProbe.Gate)
+            {
+                objects.Add(obj);
+            }
+        });
+    }
+
     public static void Run(string path, Dictionary<string, object?> record, bool withTimestamps = true)
     {
-        var asf = AsfReader.Read(path);
-        record["asf"] = asf;
-        record["withTimestamps"] = withTimestamps;
-        record["objects"] = asf.Objects;
-        var objects = new List<Dictionary<string, object?>>();
-        record["inputs"] = objects;
+        var asf = AsfReader.ReadHeader(path);
+        var objects = new List<MediaObject>();
+        var objectInputs = new List<Dictionary<string, object?>>();
+        lock (SourceReaderProbe.Gate)
+        {
+            record["asf"] = asf;
+            record["withTimestamps"] = withTimestamps;
+            record["objects"] = objects;
+            record["inputs"] = objectInputs;
+        }
+
         if (asf.Error != null || asf.FormatBlock.Length == 0)
         {
             return;
         }
 
         var candidates = new List<Dictionary<string, object?>>();
-        record["candidates"] = candidates;
+        lock (SourceReaderProbe.Gate)
+        {
+            record["candidates"] = candidates;
+        }
+
         IMediaObject? dmo = null;
         foreach (var (clsid, name, how) in Candidates(asf.FormatTag))
         {
             var candidate = new Dictionary<string, object?> { ["clsid"] = clsid.ToString(), ["name"] = name, ["foundBy"] = how };
-            candidates.Add(candidate);
             var dll = ServerOf(clsid);
             candidate["dll"] = dll;
             candidate["dllVersion"] = Versions.Of(dll);
+            IMediaObject? instance = null;
             try
             {
                 var type = Type.GetTypeFromCLSID(clsid, true)!;
-                var instance = (IMediaObject)Activator.CreateInstance(type)!;
+                instance = (IMediaObject)Activator.CreateInstance(type)!;
                 var input = InputType(asf);
-                int hr = instance.SetInputType(0, ref input, 0);
+                int hr;
+                try
+                {
+                    hr = instance.SetInputType(0, ref input, 0);
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(input.Format);
+                }
+
                 candidate["setInputHresult"] = Format.Hr(hr);
-                Marshal.FreeHGlobal(input.Format);
                 if (hr >= 0)
                 {
                     dmo = instance;
-                    record["decoder"] = candidate;
+                    lock (SourceReaderProbe.Gate)
+                    {
+                        candidates.Add(candidate);
+                        record["decoder"] = candidate;
+                    }
+
                     break;
                 }
             }
             catch (Exception e)
             {
                 candidate["error"] = e.GetType().Name + ": " + e.Message;
+            }
+
+            if (instance != null)
+            {
+                Marshal.ReleaseComObject(instance);
+            }
+
+            lock (SourceReaderProbe.Gate)
+            {
+                candidates.Add(candidate);
             }
         }
 
@@ -64,8 +116,20 @@ public static class DmoProbe
             return;
         }
 
+        try
+        {
+            Decode(dmo, asf, record, objects, objectInputs, withTimestamps);
+        }
+        finally
+        {
+            Marshal.ReleaseComObject(dmo);
+        }
+    }
+
+    private static void Decode(IMediaObject dmo, AsfAudio asf, Dictionary<string, object?> record, List<MediaObject> objects,
+        List<Dictionary<string, object?>> objectInputs, bool withTimestamps)
+    {
         var offered = new List<Dictionary<string, object?>>();
-        record["offeredOutputTypes"] = offered;
         DmoMediaType? chosen = null;
         for (uint i = 0; i < 64; i++)
         {
@@ -76,86 +140,127 @@ public static class DmoProbe
 
             var d = Describe(type);
             offered.Add(d);
-            bool pcm16 = type.SubType == SubtypeOf(1) && (int)d["bitsPerSample"]! == 16;
+            bool pcm16 = type.SubType == SubtypeOf(1) && d.TryGetValue("bitsPerSample", out var bits) && bits is 16;
             if (chosen == null && pcm16)
             {
                 chosen = type;
             }
+            else if (type.Format != IntPtr.Zero)
+            {
+                Marshal.FreeCoTaskMem(type.Format);
+            }
+        }
+
+        lock (SourceReaderProbe.Gate)
+        {
+            record["offeredOutputTypes"] = offered;
         }
 
         if (chosen == null)
         {
-            record["error"] = "the decoder offers no 16-bit PCM output type";
+            lock (SourceReaderProbe.Gate)
+            {
+                record["error"] = "the decoder offers no 16-bit PCM output type";
+            }
+
             return;
         }
 
         var output = chosen.Value;
-        record["setOutputHresult"] = Format.Hr(dmo.SetOutputType(0, ref output, 0));
+        int setOutput = dmo.SetOutputType(0, ref output, 0);
         var outFormat = Describe(output);
-        record["outputFormat"] = outFormat;
-        int outAlign = Math.Max((int)outFormat["blockAlign"]!, 1);
+        Marshal.FreeCoTaskMem(output.Format);
+        int outAlign = Math.Max(outFormat.TryGetValue("blockAlign", out var align) && align is int a ? a : 1, 1);
         dmo.GetOutputSizeInfo(0, out uint outSize, out _);
         dmo.GetInputSizeInfo(0, out uint inSize, out uint lookahead, out uint inAlignment);
-        record["inputSizeInfo"] = new { size = inSize, lookahead, alignment = inAlignment };
-        record["outputSize"] = outSize;
-        record["allocateHresult"] = Format.Hr(dmo.AllocateStreamingResources());
+        int allocate = dmo.AllocateStreamingResources();
+        lock (SourceReaderProbe.Gate)
+        {
+            record["setOutputHresult"] = Format.Hr(setOutput);
+            record["outputFormat"] = outFormat;
+            record["inputSizeInfo"] = new { size = inSize, lookahead, alignment = inAlignment };
+            record["outputSize"] = outSize;
+            record["allocateHresult"] = Format.Hr(allocate);
+        }
 
-        using var outBuffer = new NativeMediaBuffer(Math.Max(outSize * 4, 1u << 20));
-        var buffers = new List<NativeMediaBuffer>();
+        using var outBuffer = new NativeMediaBuffer((uint)Math.Clamp((long)outSize * 4, 1L << 20, 64L << 20));
         long total = 0;
         var timer = System.Diagnostics.Stopwatch.StartNew();
-        foreach (var obj in asf.Objects)
+        // The DMO may keep an input buffer past the call that handed it over, so a buffer is freed only
+        // after the decoder is done with the stream.
+        var buffers = new List<NativeMediaBuffer>();
+        try
         {
-            var entry = new Dictionary<string, object?>
+            AsfReader.WalkObjects(asf, obj =>
             {
-                ["index"] = obj.Index,
-                ["number"] = obj.Number,
-                ["size"] = obj.Size,
-                ["bytes"] = obj.Data.Length,
-                ["isComplete"] = obj.IsComplete,
-                ["presentationTimeMs"] = obj.PresentationTimeMs,
-            };
+                var entry = new Dictionary<string, object?>
+                {
+                    ["index"] = obj.Index,
+                    ["number"] = obj.Number,
+                    ["size"] = obj.Size,
+                    ["bytes"] = obj.FedBytes,
+                    ["isComplete"] = obj.IsComplete,
+                    ["presentationTimeMs"] = obj.PresentationTimeMs,
+                };
+                var outputs = new List<Dictionary<string, object?>>();
+                entry["outputs"] = outputs;
+                long frames = 0;
+                if (obj.FedBytes == 0)
+                {
+                    entry["processInputHresult"] = null;
+                    entry["notFed"] = "no bytes from offset 0";
+                }
+                else
+                {
+                    var input = new NativeMediaBuffer((uint)obj.Data.Length, obj.Data);
+                    buffers.Add(input);
+                    uint flags = withTimestamps ? 0x1u | 0x2u : 0x1u;
+                    long time = withTimestamps ? obj.PresentationTimeMs * 10000 : 0;
+                    int hr = dmo.ProcessInput(0, input, flags, time, 0);
+                    entry["processInputHresult"] = Format.Hr(hr);
+                    frames = Drain(dmo, outBuffer, outAlign, outputs);
+                    if (hr == unchecked((int)0x80040204)) // DMO_E_NOTACCEPTING: the output had to be drained first
+                    {
+                        int retry = dmo.ProcessInput(0, input, flags, time, 0);
+                        entry["retryHresult"] = Format.Hr(retry);
+                        frames += Drain(dmo, outBuffer, outAlign, outputs);
+                    }
+                }
+
+                entry["frames"] = frames;
+                total += frames;
+                lock (SourceReaderProbe.Gate)
+                {
+                    objects.Add(obj);
+                    objectInputs.Add(entry);
+                    record["totalSamples"] = total;
+                    record["objectCount"] = objects.Count;
+                }
+            });
+
+            var tail = new Dictionary<string, object?>();
+            var tailOutputs = new List<Dictionary<string, object?>>();
+            tail["discontinuityHresult"] = Format.Hr(dmo.Discontinuity(0));
+            long tailFrames = Drain(dmo, outBuffer, outAlign, tailOutputs);
+            tail["outputs"] = tailOutputs;
+            tail["frames"] = tailFrames;
+            total += tailFrames;
             lock (SourceReaderProbe.Gate)
             {
-                objects.Add(entry);
-                record["inObject"] = obj.Index;
+                record["drain"] = tail;
+                record["totalSamples"] = total;
+                record["objectCount"] = objects.Count;
+                record["elapsedMs"] = timer.ElapsedMilliseconds;
             }
-            var input = new NativeMediaBuffer((uint)obj.Data.Length, obj.Data);
-            buffers.Add(input);
-            uint flags = withTimestamps ? 0x1u | 0x2u : 0x1u;
-            long time = withTimestamps ? obj.PresentationTimeMs * 10000 : 0;
-            int hr = dmo.ProcessInput(0, input, flags, time, 0);
-            entry["processInputHresult"] = Format.Hr(hr);
-            var outputs = new List<Dictionary<string, object?>>();
-            entry["outputs"] = outputs;
-            long frames = Drain(dmo, outBuffer, outAlign, outputs);
-            if (hr == unchecked((int)0x80040204)) // DMO_E_NOTACCEPTING: the output had to be drained first
-            {
-                int retry = dmo.ProcessInput(0, input, flags, time, 0);
-                entry["retryHresult"] = Format.Hr(retry);
-                frames += Drain(dmo, outBuffer, outAlign, outputs);
-            }
-
-            entry["frames"] = frames;
-            total += frames;
         }
-
-        var tail = new Dictionary<string, object?>();
-        var tailOutputs = new List<Dictionary<string, object?>>();
-        tail["discontinuityHresult"] = Format.Hr(dmo.Discontinuity(0));
-        long tailFrames = Drain(dmo, outBuffer, outAlign, tailOutputs);
-        tail["outputs"] = tailOutputs;
-        tail["frames"] = tailFrames;
-        record["drain"] = tail;
-        total += tailFrames;
-        record["totalSamples"] = total;
-        record["objectCount"] = asf.Objects.Count;
-        record["elapsedMs"] = timer.ElapsedMilliseconds;
-        foreach (var b in buffers)
+        finally
         {
-            b.Dispose();
+            dmo.FreeStreamingResources();
+            foreach (var b in buffers)
+            {
+                b.Dispose();
+            }
         }
-
     }
 
     // Calls ProcessOutput until the decoder has nothing more for what it was given.
