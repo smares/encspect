@@ -88,14 +88,16 @@ public interface IPcmSink
     // On the analysis thread, in stream order; a sink copies what it keeps.
     void Write(PcmBlock block);
 
-    // Called once by the host when the stream's decoding ends, with the samples per channel decoded. A decoder never calls it:
-    // the sink a decoder gets from DeclareOutput ignores it.
+    // Called once by the host when the stream's decoding ends, with the samples per channel of the frames that were decoded. A
+    // frame that failed midway (decode.frame-invalid) or that a stop interrupted does not count there, though the blocks it
+    // had written reached Write, so a sink may hold more samples than End reports. A canceled analysis (its own token, which
+    // leaves no report) does not end its sinks. A decoder never calls it: the sink a decoder gets from DeclareOutput ignores it.
     void End(long samples);
 }
 
 // The canonical byte layout of decoded audio: interleaved, signed, little-endian, ceil(bits / 8) bytes a sample (floats
 // as their IEEE 754 bytes). FLAC's MD5 is computed over it, and so are the tests' hashing sink, the manifests'
-// decoded_pcm_md5 and the host's budget. Monkey's Audio and WavPack compute their checksums over their own layouts.
+// decoded_pcm_md5. Monkey's Audio and WavPack compute their checksums over their own layouts.
 public static class CanonicalPcm
 {
     public static int BytesPerSample(int bitsPerSample)

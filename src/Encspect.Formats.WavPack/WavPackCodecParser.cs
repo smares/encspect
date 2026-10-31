@@ -314,6 +314,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 Stream = context.Parent,
                 Channels = _channels,
                 BitsPerSample = header.IsDsd ? 8 : header.IsFloat ? 32 : header.BytesPerSample * 8,
+                IsDsd = header.IsDsd,
                 Configuration = new MappedBytes(rebuilt.ToArray(), fileStart),
                 IsLossy = _isLossy,
             });

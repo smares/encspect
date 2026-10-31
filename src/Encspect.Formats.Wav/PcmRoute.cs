@@ -67,7 +67,7 @@ internal static class PcmRoute
         });
         if (session.IsDecoding)
         {
-            PcmFeed.Run(session, s.Reader.Slice(data.Start, data.Available), data.Start, frames, frameBytes, data.Node.Name);
+            PcmFeed.Run(session, s.Reader.Slice(data.Start, data.Available), data.Start, frames, frameBytes, data.Node);
         }
 
         return session.Finish([]);

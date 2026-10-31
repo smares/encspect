@@ -632,6 +632,7 @@ public static class ReportJsonWriter
         {
             MeasurementStatus.Complete => "complete",
             MeasurementStatus.Stopped => "stopped",
+            MeasurementStatus.Incomplete => "incomplete",
             MeasurementStatus.NotPossible => "notPossible",
             MeasurementStatus.FormatChanged => "formatChanged",
             _ => "failed",
