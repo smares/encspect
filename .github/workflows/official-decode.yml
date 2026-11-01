@@ -30,6 +30,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg opus-tools vorbis-tools libogg-dev libopus-dev libvorbis-dev build-essential cmake git
 
+      # The versions the probe's figures were taken with (run 41304419984 on image ubuntu26 20261026.180.1). A different version is a warning, not
+      # a failure: the probe records what it ran with, and a moved image is one of the reasons to run it again.
+      - name: Check the package versions
+        run: |
+          mkdir -p out
+          while read -r package version; do
+            found=$(dpkg-query -W -f='${Version}' "$package")
+            if [ "$found" != "$version" ]; then echo "::warning::$package is $found, the probe was written with $version"; echo "version differs: $package $found (expected $version)" >> out/version-warnings.txt; fi
+          done <<'LIST'
+          ffmpeg 7:8.0.1-3ubuntu2
+          libogg0 1.3.6-2
+          libopus0 1.6.1-1
+          libvorbis0a 1.3.7-3build2
+          opus-tools 0.2-1build5
+          vorbis-tools 1.4.3-1build1
+          LIST
+
+      - name: Cache the FDK AAC builds
+        id: fdk-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            build/inst-v2.0.2
+            build/inst-v2.0.3
+            build/inst-v3.0.0
+          key: fdk-aac-801f67f-716f439-a68a51a-${{ runner.os }}-ubuntu26-gcc15
+
       # The three FDK AAC versions of open question 6, each built from the commit of its tag. The harness is compiled
       # against each version's own headers.
       - name: Build FDK AAC 2.0.2, 2.0.3 and 3.0.0 and the harnesses
@@ -37,14 +64,17 @@ jobs:
           set -euo pipefail
           mkdir -p build/bin out
           : > out/build-info.txt
+          gcc --version | head -1 >> out/build-info.txt
           for entry in v2.0.2=801f67f671929311e0c9952c5f92d6e147c7b003 v2.0.3=716f4394641d53f0d79c9ddac3fa93b03a49f278 v3.0.0=a68a51aa45d86a43c7b228e3d45624af09dcdd8d; do
             name=${entry%%=*}; commit=${entry##*=}
-            git clone -q https://github.com/mstorsjo/fdk-aac "build/fdk-$name"
-            git -C "build/fdk-$name" checkout -q "$commit"
-            test "$(git -C build/fdk-$name rev-parse HEAD)" = "$commit"
-            cmake -S "build/fdk-$name" -B "build/fdk-$name/build" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_PROGRAMS=OFF > /dev/null
-            cmake --build "build/fdk-$name/build" -j4 > /dev/null
-            cmake --install "build/fdk-$name/build" --prefix "$PWD/build/inst-$name" > /dev/null
+            if [ ! -d "build/inst-$name/lib" ]; then
+              git clone -q https://github.com/mstorsjo/fdk-aac "build/fdk-$name"
+              git -C "build/fdk-$name" checkout -q "$commit"
+              test "$(git -C build/fdk-$name rev-parse HEAD)" = "$commit"
+              cmake -S "build/fdk-$name" -B "build/fdk-$name/build" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_PROGRAMS=OFF > /dev/null
+              cmake --build "build/fdk-$name/build" -j4 > /dev/null
+              cmake --install "build/fdk-$name/build" --prefix "$PWD/build/inst-$name" > /dev/null
+            fi
             gcc -O2 -w -I"build/inst-$name/include" scripts/fixtures/fdk_decode.c -L"build/inst-$name/lib" -lfdk-aac -o "build/bin/fdk_decode-$name"
             echo "fdk-aac $name $commit $(ls build/inst-$name/lib | tr '\n' ' ')" >> out/build-info.txt
           done
@@ -53,7 +83,9 @@ jobs:
           cat out/build-info.txt
 
       # libtta_tool.build() hides the compiler's output and gcc 15 (Ubuntu 26.04) refuses something in the 2.3 sources by default, so the
-      # archive is fetched and checked by the repository's script and compiled here as C17, with the output visible. Nothing is patched.
+      # archive is fetched and checked by the repository's script and compiled here as C17. Nothing is patched. The compiler's output goes to a
+      # file that is not uploaded and not printed: its diagnostics quote lines of libtta's LGPL source, which the TTA decoder's agents must not read
+      # (decisions 6 and 10 of decoders.md).
       - name: Build libtta-c 2.3 for tta
         run: |
           set -euo pipefail
@@ -65,8 +97,7 @@ jobs:
           tarfile.open(target / libtta_tool.NAME).extractall(target, filter='data')")
           cd build/libtta/libtta-c-2.3
           gcc --version | head -1
-          CC='gcc -std=gnu17' ./configure > /dev/null
-          make 2>&1 | tail -30
+          if ! { CC='gcc -std=gnu17' ./configure && make; } > ../../tta-build.log 2>&1; then echo "libtta-c did not build; the log is build/tta-build.log on the runner and is not printed"; exit 1; fi
           ./console/tta -h 2>&1 | head -3 || true
           echo "$PWD/console/tta" > ../../tta-path.txt
           echo "libtta-c 2.3 $(sha256sum ../libtta-c-2.3.tar.gz | cut -d' ' -f1)" >> ../../../out/build-info.txt
@@ -152,8 +183,9 @@ jobs:
         if: matrix.full
         shell: bash
         run: |
-          mkdir -p units
-          python scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac tests/fixtures/adts tests/fixtures/apple tests/fixtures/mp4 tests/fixtures/ac3
+          mkdir -p units inventory-out
+          python --version | tee inventory-out/python-version.txt
+          python -I scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac tests/fixtures/adts tests/fixtures/apple tests/fixtures/mp4 tests/fixtures/ac3
           ls units | wc -l
 
       - name: Decode with the Source Reader and the AAC decoder MFT

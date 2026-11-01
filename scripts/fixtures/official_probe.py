@@ -37,6 +37,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 FIXTURES = HERE.parent.parent / "tests" / "fixtures"
 TIMEOUT = 30
 STDERR_LIMIT = 4000
+OUTPUT_CAP = 64 * 1024 * 1024
 LINE_LIMIT = 20000
 LOG_LOCK = threading.Lock()
 
@@ -50,11 +51,13 @@ def sha256(path):
 
 def parse_lines(text):
     lines, truncated = [], False
-    for raw in text.splitlines():
+    raws = text.splitlines()
+    for i, raw in enumerate(raws):
         try:
             lines.append(json.loads(raw))
         except json.JSONDecodeError:
-            truncated = True
+            # Only a last line without its newline is a line cut off by a kill; any other line that does not parse is a bug of the harness.
+            truncated = truncated or (i == len(raws) - 1 and not text.endswith("\n"))
             lines.append({"type": "unparsed", "text": raw[:300]})
     return lines, truncated
 
@@ -62,17 +65,23 @@ def parse_lines(text):
 def run_child(label, command, env=None, timeout=TIMEOUT, jsonl=True, stdin=None):
     """One child process: the exit status or the signal, a time-out, the elapsed time, standard output as JSON lines and standard error."""
     started = time.monotonic()
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=stdin, env={**os.environ, **(env or {})}, start_new_session=True)
-    timed_out = False
-    try:
-        out, err = process.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        timed_out = True
+    # Output goes to files and is read back up to a cap, so a child that writes without end cannot fill the memory of the driver.
+    with tempfile.TemporaryFile() as out_file, tempfile.TemporaryFile() as err_file:
+        process = subprocess.Popen(command, stdout=out_file, stderr=err_file, stdin=stdin, env={**os.environ, **(env or {})}, start_new_session=True)
+        timed_out = False
         try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        out, err = process.communicate()
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
+        out_file.seek(0)
+        out = out_file.read(OUTPUT_CAP)
+        err_file.seek(0)
+        err = err_file.read(OUTPUT_CAP)
     code = process.returncode
     record = {
         "label": label,
@@ -144,11 +153,12 @@ def unit_list(path, directory):
     sys.path.insert(0, str(HERE))
     import unit_list as extractor
     result = extractor.extract(str(path))
-    tsv = pathlib.Path(directory) / (pathlib.Path(path).name + ".units.tsv")
+    tsv = pathlib.Path(directory) / (result["sha256"] + ".units.tsv")
     tsv.write_text(extractor.tsv(result), encoding="utf-8")
     cut = sum(1 for u in result["units"] if u[2] != u[1])
     return tsv, {"kind": result["kind"], "codec": result.get("codec"), "units": len(result["units"]), "cutUnits": cut, "skippedRanges": len(result["skipped"]),
-                 "skippedBytes": sum(s[1] for s in result["skipped"]), "config": result.get("config"), "timescale": result.get("timescale"), "note": result.get("note")}
+                 "skippedBytes": sum(s[1] for s in result["skipped"]), "config": result.get("config"), "timescale": result.get("timescale"), "note": result.get("note"),
+                 "encrypted": result.get("encrypted", False), "detected": result.get("detected"), "oti": result.get("oti")}
 
 
 # ---- derived variants of Ogg files (no randomness) ---------------------------------------------------------------------------
@@ -236,6 +246,11 @@ def linux_reader_runs(path, tmp, tta):
         run["stderr"] = "\n".join(l for l in run["stderr"].replace("\r", "\n").splitlines() if l.strip() and not re.match(r"^\s*\[[^\]]*\]\s*(\d\d:\d\d:\d\d)?\s*$", l))
         written = target.stat().st_size if target.exists() else None
         run["outputBytes"] = written
+        # opusdec states the channel count it decodes to (it forces stereo for a chained stream with several channel counts)
+        stated = re.search(r"Decoding to \d+ Hz \((\d+) channels?\)", run["stderr"])
+        run["headerChannels"] = channels
+        if stated:
+            channels = int(stated.group(1))
         run["channels"] = channels
         run["samples"] = written // (bytes_per_sample * channels) if written is not None and channels else None
         run["remainder"] = written % (bytes_per_sample * channels) if written is not None and channels else None
@@ -297,7 +312,7 @@ def run_linux(args):
 
     for path in aac:
         summary = lists[path][1]
-        if summary["codec"] != "aac" or summary["kind"] == "unknown":
+        if summary["codec"] != "aac" or summary["kind"] == "unknown" or summary["encrypted"] or (not summary["units"] and summary["kind"] != "adif"):
             out.record("fdk-skipped", path, [], unitList=summary)
             continue
         if summary["kind"] == "adif":
@@ -417,10 +432,9 @@ def run_macos(args):
     def case(path):
         tsv, summary = unit_list(path, tmp)
         runs = [run_child("reader", [probe, "reader", path])]
-        if summary["kind"] != "unknown" and summary["units"]:
+        if summary["units"] and summary["codec"] in ("aac", "ac-3", "ec-3") and not summary["encrypted"]:
             runs.append(run_child("convert-prime-default", [probe, "convert", path, tsv, "default"]))
             runs.append(run_child("convert-prime-none", [probe, "convert", path, tsv, "none"]))
-            runs.append(run_child("convert-double-rate", [probe, "convert", path, tsv, "double"]))
         folder = "ac3" if path.parent.name == "ac3" else "aac"
         out.record("coreaudio-" + folder, path, runs, unitList=summary)
 

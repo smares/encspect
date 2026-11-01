@@ -249,11 +249,6 @@ public static class MftProbe
         foreach (var (name, candidate) in candidates)
         {
             var attempt = new Dictionary<string, object?> { ["config"] = name, ["asc"] = Convert.ToHexString(candidate) };
-            lock (SourceReaderProbe.Gate)
-            {
-                attempts.Add(attempt);
-            }
-
             try
             {
                 var instance = (IMFTransform)Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("32d186a7-218f-4c75-8876-dd77273a8999"), true)!)!;
@@ -273,6 +268,8 @@ public static class MftProbe
                     mft = instance;
                     com.Add(instance);
                     set("inputConfigUsed", name);
+                    var dll = Inventory.ServerOf(new Guid("32d186a7-218f-4c75-8876-dd77273a8999"));
+                    set("decoder", new Dictionary<string, object?> { ["clsid"] = "32d186a7-218f-4c75-8876-dd77273a8999", ["dll"] = dll, ["dllVersion"] = Versions.Of(dll) });
                     break;
                 }
 
@@ -281,6 +278,12 @@ public static class MftProbe
             catch (Exception e)
             {
                 attempt["error"] = e.GetType().Name + ": " + e.Message;
+            }
+
+            // The attempt is complete before the serializer can see it.
+            lock (SourceReaderProbe.Gate)
+            {
+                attempts.Add(attempt);
             }
         }
 
@@ -291,6 +294,8 @@ public static class MftProbe
         }
 
         int blockAlign = 4;
+        string formatKey = "";
+        var byFormat = new Dictionary<string, long>();
         var offered = new List<Dictionary<string, object?>>();
         set("offeredOutputTypes", offered);
 
@@ -316,6 +321,7 @@ public static class MftProbe
                     if (hrSet >= 0)
                     {
                         blockAlign = Math.Max(1, (int)d["blockAlign"]!);
+                        formatKey = $"{d.GetValueOrDefault("sampleRate")} Hz, {d.GetValueOrDefault("channels")} channels";
                         set("outputFormat", d);
                         Marshal.ReleaseComObject(type);
                         return true;
@@ -394,6 +400,7 @@ public static class MftProbe
                         var sample = (IMFSample)Marshal.GetObjectForIUnknown(buffer.Sample);
                         sample.GetTotalLength(out uint length);
                         frames += length / blockAlign;
+                        byFormat[formatKey] = byFormat.GetValueOrDefault(formatKey) + length / blockAlign;
                         Marshal.ReleaseComObject(sample);
                         results.Add("ok");
                     }
@@ -404,6 +411,11 @@ public static class MftProbe
                 }
                 finally
                 {
+                    if (buffer.Events != IntPtr.Zero)
+                    {
+                        Marshal.Release(buffer.Events);
+                    }
+
                     if (own != IntPtr.Zero)
                     {
                         Marshal.Release(own);
@@ -437,7 +449,19 @@ public static class MftProbe
 
             Native.MFCreateSample(out var sample);
             Native.MFCreateMemoryBuffer((uint)received, out var mb);
-            mb.Lock(out var pointer, out _, out _);
+            if (mb.Lock(out var pointer, out _, out _) < 0)
+            {
+                entry["lockFailed"] = true;
+                lock (SourceReaderProbe.Gate)
+                {
+                    units.Add(entry);
+                }
+
+                Marshal.ReleaseComObject(mb);
+                Marshal.ReleaseComObject(sample);
+                continue;
+            }
+
             Marshal.Copy(data, (int)offset, pointer, (int)received);
             mb.Unlock();
             mb.SetCurrentLength((uint)received);
@@ -481,7 +505,7 @@ public static class MftProbe
             lock (SourceReaderProbe.Gate)
             {
                 units.Add(entry);
-                record["totalSamples"] = total;
+                record["partialSamples"] = total;
                 record["unitsFed"] = i + 1;
             }
 
@@ -493,11 +517,18 @@ public static class MftProbe
         }
 
         set("stoppedBy", stopped);
-        set("codedSamples", total);
+        set("endOfStreamMessage", Format.Hr(mft.ProcessMessage(0x10000002, IntPtr.Zero)));
         set("drainMessage", Format.Hr(mft.ProcessMessage(1, IntPtr.Zero)));
         var (drained, drainText) = Pull();
         set("drain", new { frames = drained, results = drainText });
         set("errorCount", errors);
+        set("totalsByOutputFormat", byFormat);
+        // The complete total only for a stream fed to its end and drained; a loop that stopped early leaves partialSamples.
+        if (stopped == "end")
+        {
+            set("codedSamples", total);
+            set("totalSamples", total + drained);
+        }
     }
 
     private static Dictionary<string, object?> Describe(IMFMediaType type)

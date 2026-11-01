@@ -5,10 +5,9 @@
          the formats AudioToolbox decodes, the file types it reads, and the decoders registered per format
      audiotoolbox_probe reader <file>
          ExtAudioFile: opens the file, sets a 16-bit client format and reads to the end; one line per read
-     audiotoolbox_probe convert <file> <units.tsv> <default|none|double>
+     audiotoolbox_probe convert <file> <units.tsv> <default|none>
          AudioConverter: one unit of the unit list (unit_list.py --tsv) per call, with the file's magic cookie; the prime method
-         is left at the converter's default or set to none (kConverterPrimeMethod_None); "double" asks for twice the input's
-         sample rate as the output rate
+         is left at the converter's default or set to none (kConverterPrimeMethod_None)
 
    Every result is one JSON line, written and flushed before the next call, so a killed child leaves what it did. A cut unit is fed
    from its first byte to the last byte the file holds and never padded. */
@@ -138,6 +137,7 @@ static int reader(const char *path) {
         return 0;
     }
     AudioStreamBasicDescription fileFormat;
+    memset(&fileFormat, 0, sizeof fileFormat);
     UInt32 size = sizeof fileFormat;
     status = ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileDataFormat, &size, &fileFormat);
     printf("{\"type\":\"fileFormat\",\"status\":%d,", (int)status);
@@ -153,10 +153,15 @@ static int reader(const char *path) {
     size = sizeof audio;
     if (ExtAudioFileGetProperty(file, kExtAudioFileProperty_AudioFile, &size, &audio) == 0 && audio) {
         AudioFilePacketTableInfo table;
+        memset(&table, 0, sizeof table);
         size = sizeof table;
         OSStatus s = AudioFileGetProperty(audio, kAudioFilePropertyPacketTableInfo, &size, &table);
-        printf("{\"type\":\"packetTableInfo\",\"status\":%d,\"validFrames\":%" PRId64 ",\"primingFrames\":%d,\"remainderFrames\":%d}\n", (int)s,
-               (int64_t)table.mNumberValidFrames, (int)table.mPrimingFrames, (int)table.mRemainderFrames);
+        if (s == 0) {
+            printf("{\"type\":\"packetTableInfo\",\"status\":0,\"validFrames\":%" PRId64 ",\"primingFrames\":%d,\"remainderFrames\":%d}\n",
+                   (int64_t)table.mNumberValidFrames, (int)table.mPrimingFrames, (int)table.mRemainderFrames);
+        } else {
+            printf("{\"type\":\"packetTableInfo\",\"status\":%d,\"validFrames\":null,\"primingFrames\":null,\"remainderFrames\":null}\n", (int)s);
+        }
         UInt64 packets = 0;
         size = sizeof packets;
         s = AudioFileGetProperty(audio, kAudioFilePropertyAudioDataPacketCount, &size, &packets);
@@ -234,6 +239,7 @@ typedef struct {
     int have;
     AudioStreamPacketDescription description;
     int delivered;
+    int eos; /* set for the drain: the input proc then answers with no packets and no error, which tells the converter the stream has ended */
     int adts; /* the converter takes access units, not ADTS frames: the header (7 bytes, 9 with a CRC) is left out */
 } Feed;
 
@@ -244,7 +250,7 @@ static OSStatus supply(AudioConverterRef converter, UInt32 *packets, AudioBuffer
     Feed *feed = user;
     if (!feed->have) {
         *packets = 0;
-        return NO_MORE_DATA;
+        return feed->eos ? 0 : NO_MORE_DATA;
     }
     feed->have = 0;
     feed->delivered++;
@@ -370,6 +376,29 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
         if (s == 0) {
             source = "audiofile";
         }
+        /* The file's format list names the layers of a stream (HE-AAC: the base layer and the extended one); the first playable entry is the
+           one a player uses and the one the converter is built from. */
+        UInt32 list_size = 0, list_writable = 0;
+        if (AudioFileGetPropertyInfo(audio, kAudioFilePropertyFormatList, &list_size, &list_writable) == 0 && list_size >= sizeof(AudioFormatListItem)) {
+            AudioFormatListItem *list = malloc(list_size);
+            if (AudioFileGetProperty(audio, kAudioFilePropertyFormatList, &list_size, list) == 0) {
+                UInt32 count = list_size / sizeof(AudioFormatListItem), index = 0, index_size = sizeof index;
+                OSStatus fs = AudioFormatGetProperty(kAudioFormatProperty_FirstPlayableFormatFromList, list_size, list, &index_size, &index);
+                printf(",\"formatListEntries\":%u,\"firstPlayable\":%d,\"firstPlayableIndex\":%u,\"formatList\":[", (unsigned)count, (int)fs, (unsigned)index);
+                for (UInt32 i = 0; i < count && i < 8; i++) {
+                    char id[5];
+                    fourcc(list[i].mASBD.mFormatID, id);
+                    printf("%s{\"formatID\":\"%s\",\"sampleRate\":%.1f,\"framesPerPacket\":%u,\"channels\":%u}", i ? "," : "", id, list[i].mASBD.mSampleRate,
+                           (unsigned)list[i].mASBD.mFramesPerPacket, (unsigned)list[i].mASBD.mChannelsPerFrame);
+                }
+                printf("]");
+                if (fs == 0 && index < count) {
+                    input = list[index].mASBD;
+                    source = "audiofile-format-list";
+                }
+            }
+            free(list);
+        }
         UInt32 cs = 0;
         UInt32 writable = 0;
         if (AudioFileGetPropertyInfo(audio, kAudioFilePropertyMagicCookieData, &cs, &writable) == 0 && cs > 0) {
@@ -382,7 +411,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             }
         }
     }
-    if (strcmp(source, "audiofile") != 0) {
+    if (strcmp(source, "audiofile") != 0 && strcmp(source, "audiofile-format-list") != 0) {
         UInt32 id = !strcmp(codec, "ac-3") ? kAudioFormatAC3 : !strcmp(codec, "ec-3") ? kAudioFormatEnhancedAC3 : kAudioFormatMPEG4AAC;
         input.mFormatID = id;
         if (adts_profile >= 0) {
@@ -405,7 +434,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     }
     if (!cookie && config_length > 0 && !strcmp(codec, "aac")) {
         cookie = build_esds(config, config_length, &cookie_size);
-        source = strcmp(source, "audiofile") ? source : "audiofile+esds";
+        source = strncmp(source, "audiofile", 9) ? source : "audiofile+esds";
     }
     printf(",\"source\":\"%s\",\"cookieBytes\":%u,", source, (unsigned)cookie_size);
     print_asbd("input", &input);
@@ -415,8 +444,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     AudioStreamBasicDescription output;
     memset(&output, 0, sizeof output);
     output.mFormatID = kAudioFormatLinearPCM;
-    /* "double": ask for twice the input's rate, which is what an explicitly signaled HE-AAC stream decodes to. */
-    output.mSampleRate = !strcmp(prime, "double") ? input.mSampleRate * 2 : input.mSampleRate;
+    output.mSampleRate = input.mSampleRate;
     output.mChannelsPerFrame = input.mChannelsPerFrame ? input.mChannelsPerFrame : 2;
     output.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
     output.mBitsPerChannel = 32;
@@ -438,23 +466,32 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     }
     UInt32 method = 0, size = sizeof method;
     status = AudioConverterGetProperty(converter, kAudioConverterPrimeMethod, &size, &method);
-    printf("{\"type\":\"primeMethod\",\"when\":\"default\",\"status\":%d,\"method\":%u}\n", (int)status, (unsigned)method);
+    if (status == 0) {
+        printf("{\"type\":\"primeMethod\",\"when\":\"default\",\"status\":0,\"method\":%u}\n", (unsigned)method);
+    } else {
+        printf("{\"type\":\"primeMethod\",\"when\":\"default\",\"status\":%d,\"method\":null}\n", (int)status);
+    }
     if (!strcmp(prime, "none")) {
         method = kConverterPrimeMethod_None;
         status = AudioConverterSetProperty(converter, kAudioConverterPrimeMethod, sizeof method, &method);
         printf("{\"type\":\"primeMethod\",\"when\":\"set none\",\"status\":%d}\n", (int)status);
     }
     AudioConverterPrimeInfo prime_info;
+    memset(&prime_info, 0, sizeof prime_info);
     size = sizeof prime_info;
     status = AudioConverterGetProperty(converter, kAudioConverterPrimeInfo, &size, &prime_info);
-    printf("{\"type\":\"primeInfo\",\"status\":%d,\"leadingFrames\":%u,\"trailingFrames\":%u}\n", (int)status, (unsigned)prime_info.leadingFrames, (unsigned)prime_info.trailingFrames);
+    if (status == 0) {
+        printf("{\"type\":\"primeInfo\",\"status\":0,\"leadingFrames\":%u,\"trailingFrames\":%u}\n", (unsigned)prime_info.leadingFrames, (unsigned)prime_info.trailingFrames);
+    } else {
+        printf("{\"type\":\"primeInfo\",\"status\":%d,\"leadingFrames\":null,\"trailingFrames\":null}\n", (int)status);
+    }
     fflush(stdout);
 
     enum { OUT_FRAMES = 16384 };
     size_t out_bytes = (size_t)OUT_FRAMES * output.mBytesPerFrame;
     char *out_buffer = malloc(out_bytes);
     long long total = 0, calls = 0, failed = 0;
-    Feed feed = {data, NULL, 0, {0, 0, 0}, 0, !strcmp(kind, "adts")};
+    Feed feed = {data, NULL, 0, {0, 0, 0}, 0, 0, !strcmp(kind, "adts")};
     for (long i = 0; i <= count + 3; i++) {
         int is_unit = i < count;
         if (is_unit) {
@@ -462,6 +499,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             feed.have = 1;
         } else {
             feed.have = 0;
+            feed.eos = 1; /* the drain calls: the end of the stream */
         }
         AudioBufferList list;
         list.mNumberBuffers = 1;
@@ -483,7 +521,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             failed++;
         }
     }
-    printf("{\"type\":\"end\",\"stoppedBy\":\"end\",\"calls\":%lld,\"failedCalls\":%lld,\"codedFrames\":%lld}\n", calls, failed, total);
+    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"calls\":%lld,\"failedCalls\":%lld,\"codedFrames\":%lld}\n", failed ? "error" : "end", calls, failed, total);
     fflush(stdout);
     AudioConverterDispose(converter);
     free(out_buffer);
@@ -502,6 +540,6 @@ int main(int argc, char **argv) {
     if (argc == 5 && !strcmp(argv[1], "convert")) {
         return convert(argv[2], argv[3], argv[4]);
     }
-    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | convert file units.tsv default|none|double\n");
+    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | convert file units.tsv default|none\n");
     return 2;
 }

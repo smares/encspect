@@ -25,9 +25,11 @@ public static class Inventory
         }
 
         Set("startupHresult", Format.Hr(Native.MFStartup(Native.MfVersion, 0)));
-        // 0x3F: sync, async, hardware, field of use, local and transcode only. 0x41: sync and sort-and-filter, which is what an application gets by default.
+        // 0x3F: sync, async, hardware, field of use, local and transcode only. 0x43F adds the untrusted Store MFTs (0x400), which a Store-packaged
+        // decoder such as a Dolby extension needs. 0: the flags an application gets by default (the API reads them as 0x51).
         Set("mftAll", Enumerate(0x3F));
-        Set("mftDefault", Enumerate(0x41));
+        Set("mftWithStore", Enumerate(0x43F));
+        Set("mftDefault", Enumerate(0));
         Set("dmo", EnumerateDmo());
         var created = new List<Dictionary<string, object?>>();
         Set("createInstance", created);
@@ -110,7 +112,7 @@ public static class Inventory
         }
     }
 
-    private static string? ServerOf(Guid clsid)
+    internal static string? ServerOf(Guid clsid)
     {
         try
         {

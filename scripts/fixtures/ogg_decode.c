@@ -5,7 +5,7 @@
      ogg_decode <mode> <file>
 
    modes:
-     opus            libopus, opus_multistream_decode per packet (mapping families 0 and 1)
+     opus            libopus, opus_multistream_decode per packet (mapping families 0, 1, 2 and 3: the multistream decoder for 0, 1 and 2, the projection decoder for 3)
      vorbis          libvorbis with granulepos -1 and e_o_s 0 on every audio packet, so libvorbis trims nothing (the coded stage)
      vorbis-granule  libvorbis with the packets as libogg hands them, granule positions and end of stream included (the trimmed stage)
 
@@ -16,6 +16,7 @@
 #include <string.h>
 #include <ogg/ogg.h>
 #include <opus/opus_multistream.h>
+#include <opus/opus_projection.h>
 #include <vorbis/codec.h>
 
 static int is_opus(const ogg_packet *p) { return p->bytes >= 8 && !memcmp(p->packet, "OpusHead", 8); }
@@ -42,6 +43,8 @@ int main(int argc, char **argv) {
     int have_stream = 0;
     ogg_sync_init(&sync);
     OpusMSDecoder *opus = NULL;
+    OpusProjectionDecoder *projection = NULL;
+    const char *stopped = "end";
     int opus_channels = 0, opus_head_seen = 0;
     int header_packets = 0;
     vorbis_info vi;
@@ -53,7 +56,7 @@ int main(int argc, char **argv) {
     vorbis_comment_init(&vc);
     long long offset = 0, packet_index = 0, coded = 0, packets_decoded = 0, holes = 0, skipped_bytes = 0, pages = 0;
     long long streams = 0;
-    static float opus_pcm[5760 * 8];
+    static float opus_pcm[5760 * 255];
     int eof = 0;
     while (!eof) {
         char *buffer = ogg_sync_buffer(&sync, 4096);
@@ -61,6 +64,9 @@ int main(int argc, char **argv) {
         ogg_sync_wrote(&sync, (long)got);
         if (got == 0) {
             eof = 1;
+            if (ferror(file)) {
+                stopped = "error";
+            }
         }
         for (;;) {
             ogg_page page;
@@ -100,6 +106,10 @@ int main(int argc, char **argv) {
                     opus_multistream_decoder_destroy(opus);
                     opus = NULL;
                 }
+                if (projection) {
+                    opus_projection_decoder_destroy(projection);
+                    projection = NULL;
+                }
                 printf("{\"type\":\"stream\",\"offset\":%lld,\"serial\":%d}\n", page_offset, ogg_page_serialno(&page));
             }
             if (!have_stream || ogg_stream_pagein(&stream, &page) < 0) {
@@ -131,33 +141,49 @@ int main(int argc, char **argv) {
                             const unsigned char *h = op.packet;
                             int channels = h[9], family = h[18];
                             unsigned char mapping[256];
-                            int nstreams = 1, coupled = channels == 2, err = 0;
-                            if (channels < 1 || channels > 8) {
-                                printf(",\"result\":\"%d channels\"}\n", channels);
-                            } else {
-                                mapping[0] = 0;
-                                mapping[1] = 1;
-                                if (family == 1 && op.bytes >= 21 + channels) {
-                                    nstreams = h[19];
-                                    coupled = h[20];
-                                    memcpy(mapping, h + 21, channels);
-                                } else if (family != 0) {
-                                    nstreams = 0;
-                                }
-                                if (nstreams == 0) {
-                                    printf(",\"result\":\"mapping family %d is not decoded by this harness\"}\n", family);
+                            int nstreams = 0, coupled = 0, err = 0, supported = 1;
+                            const char *why = "";
+                            if (channels < 1 || channels > 255) {
+                                supported = 0;
+                                why = "channel count";
+                            } else if (family == 0) {
+                                if (channels > 2) {
+                                    supported = 0;
+                                    why = "family 0 with more than 2 channels";
                                 } else {
-                                    opus = opus_multistream_decoder_create(48000, channels, nstreams, coupled, mapping, &err);
-                                    opus_channels = channels;
-                                    printf(",\"result\":\"head\",\"channels\":%d,\"family\":%d,\"preSkip\":%d,\"created\":%d}\n", channels, family, h[10] | (h[11] << 8), err);
+                                    nstreams = 1;
+                                    coupled = channels == 2;
+                                    mapping[0] = 0;
+                                    mapping[1] = 1;
                                 }
+                            } else if ((family == 1 || family == 2) && op.bytes >= 21 + channels) {
+                                nstreams = h[19];
+                                coupled = h[20];
+                                memcpy(mapping, h + 21, channels);
+                            } else if (family == 3 && op.bytes >= 21 + 2 * channels * (h[19] + h[20])) {
+                                nstreams = h[19];
+                                coupled = h[20];
+                                projection = opus_projection_decoder_create(48000, channels, nstreams, coupled, (unsigned char *)h + 21, 2 * channels * (nstreams + coupled), &err);
+                            } else {
+                                supported = 0;
+                                why = family == 255 ? "mapping family 255 (undefined by RFC 7845)" : "head too short for its mapping or an unknown family";
+                            }
+                            if (!supported) {
+                                printf(",\"result\":\"not decoded: %s\",\"family\":%d,\"channels\":%d}\n", why, family, channels);
+                            } else {
+                                if (family != 3) {
+                                    opus = opus_multistream_decoder_create(48000, channels, nstreams, coupled, mapping, &err);
+                                }
+                                opus_channels = channels;
+                                printf(",\"result\":\"head\",\"channels\":%d,\"family\":%d,\"preSkip\":%d,\"created\":%d}\n", channels, family, h[10] | (h[11] << 8), err);
                             }
                         }
                     } else if (op.bytes >= 8 && !memcmp(op.packet, "OpusTags", 8)) {
                         printf(",\"result\":\"tags\"}\n");
-                    } else if (opus) {
+                    } else if (opus || projection) {
                         int nb = opus_packet_get_nb_samples(op.packet, (opus_int32)op.bytes, 48000);
-                        int frames = opus_multistream_decode_float(opus, op.packet, (opus_int32)op.bytes, opus_pcm, 5760, 0);
+                        int frames = opus ? opus_multistream_decode_float(opus, op.packet, (opus_int32)op.bytes, opus_pcm, 5760, 0)
+                                          : opus_projection_decode_float(projection, op.packet, (opus_int32)op.bytes, opus_pcm, 5760, 0);
                         if (frames >= 0) {
                             coded += frames;
                             packets_decoded++;
@@ -213,8 +239,25 @@ int main(int argc, char **argv) {
             }
         }
     }
-    printf("{\"type\":\"end\",\"stoppedBy\":\"end\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"decodedPackets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"codedSamples\":%lld}\n",
-           pages, streams, packet_index, packets_decoded, holes, skipped_bytes, coded);
+    if (opus) {
+        opus_multistream_decoder_destroy(opus);
+    }
+    if (projection) {
+        opus_projection_decoder_destroy(projection);
+    }
+    if (vorbis_ready) {
+        vorbis_block_clear(&vb);
+        vorbis_dsp_clear(&vd);
+    }
+    vorbis_comment_clear(&vc);
+    vorbis_info_clear(&vi);
+    if (have_stream) {
+        ogg_stream_clear(&stream);
+    }
+    ogg_sync_clear(&sync);
+    fclose(file);
+    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"decodedPackets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"codedSamples\":%lld}\n",
+           stopped, pages, streams, packet_index, packets_decoded, holes, skipped_bytes, coded);
     fflush(stdout);
     return 0;
 }

@@ -68,8 +68,9 @@ def find(data, start, end, path):
 
 
 def descriptor_config(data, start, end):
-    """The DecoderSpecificInfo (tag 5) inside an esds payload (after its version and flags)."""
+    """(DecoderSpecificInfo (tag 5), objectTypeIndication) inside an esds payload (after its version and flags); either may be None."""
     pos = start + 4
+    oti = None
 
     def read_len(p):
         n = 0
@@ -87,7 +88,7 @@ def descriptor_config(data, start, end):
         tag = data[pos]
         length, body = read_len(pos + 1)
         if length is None:
-            return None
+            return None, oti
         if tag == 3:
             pos = body + 3
             flags = data[body + 2] if body + 2 < end else 0
@@ -98,12 +99,13 @@ def descriptor_config(data, start, end):
             if flags & 0x20:
                 pos += 2
         elif tag == 4:
+            oti = data[body] if body < end else None
             pos = body + 13
         elif tag == 5:
-            return data[body:body + length]
+            return data[body:body + length], oti
         else:
             pos = body + length
-    return None
+    return None, oti
 
 
 def mp4_units(data, result):
@@ -150,7 +152,8 @@ def mp4_units(data, result):
         child = es + 28 + {0: 0, 1: 16, 2: 36}.get(version, 0)
         for ck, cs, ce, _ in boxes(data, child, ee):
             if codec == "aac" and ck == b"esds":
-                config = descriptor_config(data, cs, ce)
+                config, oti = descriptor_config(data, cs, ce)
+                result["oti"] = oti
                 if config is not None:
                     result["config"] = config.hex()
             elif ck in (b"dac3", b"dec3"):
@@ -158,10 +161,21 @@ def mp4_units(data, result):
             elif ck == b"wave" and codec == "aac":
                 inner = find(data, cs, ce, [b"esds"])
                 if inner:
-                    config = descriptor_config(data, *inner)
+                    config, oti = descriptor_config(data, *inner)
+                    result["oti"] = oti
                     if config is not None:
                         result["config"] = config.hex()
         break
+
+    # The track is encrypted when it carries a protection scheme box; the search is for the four-character codes in the track's bytes.
+    if b"sinf" in data[s:e] or b"tenc" in data[s:e]:
+        result["note"] = "encrypted track (sinf or tenc box): no reference"
+        result["encrypted"] = True
+        return
+    if result.get("codec") == "aac" and result.get("oti") not in (0x40, 0x66, 0x67, 0x68):
+        result["note"] = "mp4a with object type indication %s is not AAC" % (hex(result["oti"]) if result.get("oti") is not None else "none")
+        result["codec"] = "other"
+        return
 
     units = []
     stsz = find(data, stbl[0], stbl[1], [b"stsz"])
@@ -170,6 +184,8 @@ def mp4_units(data, result):
     stsc = find(data, stbl[0], stbl[1], [b"stsc"])
     if stsz and (stco or co64) and stsc:
         fixed, count = struct.unpack_from(">II", data, stsz[0] + 4)
+        # A declared count never allocates by itself: with a table it is bounded by the table, with a fixed size by the file.
+        count = min(count, (stsz[1] - stsz[0] - 12) // 4) if not fixed else min(count, size // max(fixed, 1) + 1)
         sizes = []
         for i in range(count):
             p = stsz[0] + 12 + 4 * i
@@ -180,7 +196,7 @@ def mp4_units(data, result):
             else:
                 break
         chunk_box, wide = (co64, True) if co64 else (stco, False)
-        chunks = struct.unpack_from(">I", data, chunk_box[0] + 4)[0]
+        chunks = min(struct.unpack_from(">I", data, chunk_box[0] + 4)[0], (chunk_box[1] - chunk_box[0] - 8) // (8 if wide else 4))
         offsets = []
         for i in range(chunks):
             p = chunk_box[0] + 8 + (8 if wide else 4) * i
@@ -188,7 +204,7 @@ def mp4_units(data, result):
                 break
             offsets.append(struct.unpack_from(">Q" if wide else ">I", data, p)[0])
         runs = []
-        for i in range(struct.unpack_from(">I", data, stsc[0] + 4)[0]):
+        for i in range(min(struct.unpack_from(">I", data, stsc[0] + 4)[0], (stsc[1] - stsc[0] - 8) // 12)):
             p = stsc[0] + 8 + 12 * i
             if p + 12 > stsc[1]:
                 break
@@ -196,7 +212,10 @@ def mp4_units(data, result):
         index = 0
         for r, (first, per, _) in enumerate(runs):
             last = runs[r + 1][0] - 1 if r + 1 < len(runs) else len(offsets)
-            for chunk in range(first, last + 1):
+            if first < 1:
+                result["note"] = "stsc names chunk 0"
+                continue
+            for chunk in range(first, min(last, len(offsets)) + 1):
                 if chunk - 1 >= len(offsets):
                     break
                 pos = offsets[chunk - 1]
@@ -231,13 +250,16 @@ def mp4_units(data, result):
             default_size = 0
             if flags & 0x10:
                 default_size = struct.unpack_from(">I", data, p)[0]
+            cursor = base
             for rk, rs, re_, _ in boxes(data, ts, te):
                 if rk != b"trun":
                     continue
                 tf = struct.unpack_from(">I", data, rs)[0] & 0xFFFFFF
                 n = struct.unpack_from(">I", data, rs + 4)[0]
                 p = rs + 8
-                pos = base
+                per_sample = 4 * sum(1 for bit in (0x100, 0x200, 0x400, 0x800) if tf & bit)
+                n = min(n, (re_ - p) // per_sample if per_sample else size)
+                pos = cursor
                 if tf & 1:
                     pos = base + struct.unpack_from(">i", data, p)[0]
                     p += 4
@@ -258,7 +280,8 @@ def mp4_units(data, result):
                         p += 4
                     units.append((pos, length))
                     pos += length
-    for pos, length in sorted(set(units)):
+                cursor = pos
+    for pos, length in sorted(units, key=lambda u: u[0]):
         result["units"].append((pos, length, max(0, min(length, size - pos))))
     if not result["units"]:
         result["note"] = "no samples in the sample tables or fragments"
@@ -281,24 +304,30 @@ def adts_header(data, pos):
 
 
 def adts_units(data, result):
+    """ADTS frames in a chain: a frame counts when it starts where the last one ended with a header of the same profile, rate and
+    channels, or when the next header follows it at its end with the same fields; a run of one frame counts only when the file is that
+    one frame. The bytes between are the skipped ranges."""
     size = len(data)
     pos = 0
     skip_from = None
+    previous = None
+    frames = []
     while pos < size:
         h = adts_header(data, pos)
         valid = False
         if h:
             nxt = pos + h[3]
-            # A header counts when the frame is followed by another header or by the end of the file, or is cut by it; a frame
-            # followed by bytes that start no later frame (trailing junk) counts too, since a decoder reads it.
-            valid = nxt >= size or adts_header(data, nxt) is not None or not any(adts_header(data, i) for i in range(nxt, size - 6))
+            same_before = previous is not None and previous[0] == pos and previous[1] == h[:3]
+            h2 = adts_header(data, nxt) if nxt < size else None
+            valid = same_before or (h2 is not None and h2[:3] == h[:3]) or (nxt >= size and pos == 0 and size - pos == h[3])
         if valid:
             if skip_from is not None:
                 result["skipped"].append((skip_from, pos - skip_from))
                 skip_from = None
             if "adts" not in result:
                 result["adts"] = h[:3]
-            result["units"].append((pos, h[3], min(h[3], size - pos)))
+            frames.append((pos, h[3], min(h[3], size - pos)))
+            previous = (pos + h[3], h[:3])
             pos += h[3]
         else:
             if skip_from is None:
@@ -306,53 +335,64 @@ def adts_units(data, result):
             pos += 1
     if skip_from is not None:
         result["skipped"].append((skip_from, size - skip_from))
+    result["units"] = frames
+
+
+def ac3_header(data, pos):
+    """(length, is_eac3, independent, key) of the AC-3 or E-AC-3 syncframe at pos, or None; bsid 9 and 10 are not read."""
+    if pos + 8 > len(data) or data[pos] != 0x0B or data[pos + 1] != 0x77:
+        return None
+    bsid = data[pos + 5] >> 3
+    if bsid <= 8:
+        fscod, code = data[pos + 4] >> 6, data[pos + 4] & 0x3F
+        if fscod < 3 and code < 38:
+            return WORDS[fscod][code] * 2, False, True, (False, fscod)
+    elif 11 <= bsid <= 16:
+        strmtyp, substream = data[pos + 2] >> 6, (data[pos + 2] >> 3) & 7
+        length = (((data[pos + 2] & 7) << 8 | data[pos + 3]) + 1) * 2
+        if strmtyp != 3 and length >= 8:
+            return length, True, not (strmtyp == 1 or substream != 0), (True, (data[pos + 4] >> 6))
+    return None
 
 
 def ac3_units(data, result):
+    """AC-3 and E-AC-3 syncframes in a chain (the next syncframe at the end of the frame, or the end of the file; a frame after a
+    skipped range counts when the next one follows); an E-AC-3 access unit is the independent frame of substream 0 and the frames up
+    to the next one."""
     size = len(data)
     pos = 0
     skip_from = None
-    eac3 = None
+    previous_end = None
     current = None
+    units = []
+    eac3 = None
     while pos < size:
-        length = None
-        frame_eac3 = None
-        independent = True
-        if pos + 6 <= size and data[pos] == 0x0B and data[pos + 1] == 0x77:
-            bsid = data[pos + 5] >> 3
-            if bsid <= 8:
-                fscod, code = data[pos + 4] >> 6, data[pos + 4] & 0x3F
-                if fscod < 3 and code < 38:
-                    length, frame_eac3 = WORDS[fscod][code] * 2, False
-            elif 11 <= bsid <= 16:
-                strmtyp, substream = data[pos + 2] >> 6, (data[pos + 2] >> 3) & 7
-                length, frame_eac3 = (((data[pos + 2] & 7) << 8 | data[pos + 3]) + 1) * 2, True
-                independent = not (strmtyp == 1 or substream != 0)
-                if strmtyp == 3 or length < 8:
-                    length = None
-        if length is not None:
+        h = ac3_header(data, pos)
+        valid = False
+        if h:
+            nxt = pos + h[0]
+            valid = previous_end == pos or nxt >= size or ac3_header(data, nxt) is not None
+        if valid:
             if skip_from is not None:
                 result["skipped"].append((skip_from, pos - skip_from))
                 skip_from = None
-            eac3 = frame_eac3 if eac3 is None else eac3
-            received = min(length, size - pos)
-            # An E-AC-3 access unit is the independent frame of substream 0 and the frames that follow it
-            # until the next one (dependent frames and other substreams), as an MP4 sample holds them.
-            if frame_eac3 and not independent and current is not None:
-                u = result["units"][current]
-                result["units"][current] = (u[0], pos + length - u[0], min(pos + length, size) - u[0])
+            eac3 = h[1] if eac3 is None else eac3
+            if h[1] and not h[2] and current is not None:
+                u = units[current]
+                units[current] = (u[0], pos + h[0] - u[0], min(pos + h[0], size) - u[0])
             else:
-                result["units"].append((pos, length, received))
-                current = len(result["units"]) - 1
-            pos += length
+                units.append((pos, h[0], min(h[0], size - pos)))
+                current = len(units) - 1
+            previous_end = pos + h[0]
+            pos += h[0]
         else:
             if skip_from is None:
                 skip_from = pos
             pos += 1
     if skip_from is not None:
         result["skipped"].append((skip_from, size - skip_from))
-    result["kind"] = "eac3" if eac3 else "ac3"
-    result["codec"] = "ec-3" if eac3 else "ac-3"
+    result["units"] = units
+    result["eac3"] = bool(eac3)
 
 
 def extract(path):
@@ -366,25 +406,37 @@ def extract(path):
             result["kind"] = "adif"
             result["codec"] = "aac"
             result["note"] = "ADIF has no frame lengths; the harness uses FDK's own transport"
-        elif data[:2] == b"\x0b\x77":
-            ac3_units(data, result)
-        elif adts_header(data, 0):
-            result["kind"] = "adts"
-            result["codec"] = "aac"
-            adts_units(data, result)
+        elif len(data) >= 6 and data[:2] == b"\x0b\x77" and data[5] >> 3 in (9, 10):
+            result["codec"] = "ac-3"
+            result["note"] = "bsid %d (not read by this extractor)" % (data[5] >> 3)
         else:
-            # Junk before the first frame: ADTS if a valid chain starts within the first 64 KiB.
-            adts_units(data, result)
-            if result["units"]:
-                result["kind"] = "adts"
-                result["codec"] = "aac"
+            # Neither ADIF nor MP4: the format whose chain of frames covers more bytes of the file decides, and the record says what the other covered.
+            candidates = {}
+            for name, function in (("adts", adts_units), ("ac3", ac3_units)):
+                trial = {"units": [], "skipped": []}
+                function(data, trial)
+                candidates[name] = (sum(u[2] for u in trial["units"]), trial)
+            best = max(candidates, key=lambda k: candidates[k][0])
+            # The format whose chain begins first decides when both have a chain of two frames or more: look-alike headers inside the frames of
+            # the other (`junk-adts-in-frames.eac3`) begin later, and cover less or equally.
+            chains = {k: v[1]["units"] for k, v in candidates.items() if len(v[1]["units"]) >= 2}
+            if len(chains) == 2:
+                best = min(chains, key=lambda k: (chains[k][0][0], -candidates[k][0]))
+            other = "ac3" if best == "adts" else "adts"
+            if candidates[best][0] == 0 or len(candidates[best][1]["units"]) < 2 and len(data) > candidates[best][0] + 64:
+                result["note"] = "neither ADTS nor AC-3 frames in a chain (ADTS %d bytes, AC-3 %d bytes)" % (candidates["adts"][0], candidates["ac3"][0])
             else:
-                result["skipped"] = []
-                ac3_units(data, result)
-                if not result["units"]:
-                    result["kind"] = "unknown"
-                    result["skipped"] = []
-                    result["note"] = "neither ADTS, MP4, AC-3 nor E-AC-3 frames found"
+                trial = candidates[best][1]
+                result["units"], result["skipped"] = trial["units"], trial["skipped"]
+                if best == "adts":
+                    result["kind"], result["codec"] = "adts", "aac"
+                    if trial["units"]:
+                        h = adts_header(data, trial["units"][0][0])
+                        result["adts"] = h[:3]
+                else:
+                    result["kind"] = "eac3" if trial["eac3"] else "ac3"
+                    result["codec"] = "ec-3" if trial["eac3"] else "ac-3"
+                result["detected"] = "%s covers %d bytes, %s %d" % (best, candidates[best][0], other, candidates[other][0])
     except (struct.error, IndexError, ValueError) as error:
         result["units"] = []
         result["note"] = "extractor failed: %s" % error
