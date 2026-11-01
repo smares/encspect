@@ -40,6 +40,7 @@ class ProgramTests(unittest.TestCase):
             "php": "8.5.1",
             "oggz": "oggz version 1.1.3\n",
             "ogginfo": "ogginfo from vorbis-tools 1.4.3\n",
+            "oggdec": "oggdec from vorbis-tools 1.4.3\n",
             "flac": "flac 1.5.0\n",
             "metaflac": "metaflac 1.5.0\n",
             "ebur128_driver": "ebur128_driver libebur128 1.2.6\n",
@@ -73,7 +74,8 @@ class ProgramTests(unittest.TestCase):
             self.assertEqual(tool_versions.problems("a52"), ["liba52-0.7.4-dev (dpkg) 0.7.4 is needed, found 0.7.3-1"])
         with printing("", code=1):
             self.assertIn("no version was found", tool_versions.problems("dca")[0])
-        for name, found in (("madplay", "0.15.2b-10.2"), ("speex", "1.2.1-3build1"), ("opus-tools", "0.2-1build5")):
+        for name, found in (("madplay", "0.15.2b-10.2"), ("speex", "1.2.1-3build1"), ("opus-tools", "0.2-1build5"), ("libogg", "1.3.6-2"), ("libopus", "1.6.1-1"),
+                            ("libvorbis", "1.3.7-3build2")):
             with printing(found):
                 self.assertEqual(tool_versions.problems(name), [], name)
         with printing("0.2.1-1"):
