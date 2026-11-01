@@ -12,7 +12,11 @@ public sealed partial class AsfParser
     // shares them with other streams), in the order they complete. A compressed payload's
     // sub-payloads are media objects of their own (section 5.2.3.2). The packets are read again from
     // the file, one at a time, as the codec asks for objects.
-    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber)
+    //
+    // isKeepingPartial: the object that the file ends in the middle of one of its payloads is handed over with the bytes that arrived, after
+    // its finding, for a codec whose decoder reads a short packet (Windows Media Audio Lossless); the others never see it. An object that is
+    // incomplete because later fragments never arrive, or because the Data Object's stated end comes first, is dropped, as the ASF demuxer drops it.
+    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber, bool isKeepingPartial)
     {
         ByteReader reader = state.Reader;
         FindingCollector findings = state.Findings;
@@ -32,6 +36,7 @@ public sealed partial class AsfParser
         // The object's stated size; its buffer grows with the fragments that arrive, so a packet that states a
         // large object and never delivers it costs what it holds, not what it states.
         int total = 0;
+        bool isCutByFile = false;
 
         while (position < end)
         {
@@ -90,7 +95,7 @@ public sealed partial class AsfParser
                 {
                     if (data is not null)
                     {
-                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
+                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "next", anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. They are dropped.");
                         data = null;
                     }
@@ -134,6 +139,7 @@ public sealed partial class AsfParser
                 }
 
                 collected += take;
+                isCutByFile = (packet.Issues & PacketIssues.Truncated) != 0 && payload.DataPosition + payload.DataLength >= count;
                 if (collected == total)
                 {
                     yield return new MappedBytes(data, ranges);
@@ -147,8 +153,18 @@ public sealed partial class AsfParser
 
         if (data is not null)
         {
-            findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, anchor, n =>
-                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
+            bool isHandedOver = isKeepingPartial && collected > 0 && isCutByFile && end >= reader.Start + reader.Length;
+            if (isHandedOver)
+            {
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "file", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are.");
+                yield return new MappedBytes(data.AsMemory(0, collected), ranges);
+            }
+            else
+            {
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "end", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
+            }
         }
     }
 

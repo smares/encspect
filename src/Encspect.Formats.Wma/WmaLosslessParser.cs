@@ -13,6 +13,9 @@ public sealed class WmaLosslessParser : ICodecParser
 
     public string Id => CodecId;
 
+    // The frames kept as records, past which they are only counted; tests lower it.
+    internal int FrameLimit { get; init; } = WmaPacketReader.MaxFrames;
+
     public void Parse(CodecContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -52,7 +55,12 @@ public sealed class WmaLosslessParser : ICodecParser
         if (p.Unsupported is { } reason)
         {
             WmaStreams.AddNotAnalyzed(context, Name, format, Topics.WmaLossless, LosslessExplain.NotAnalyzedStream);
-            findings.AddNow(Severity.Warning, "wma.format-unsupported", $"The stream is not analyzed: {reason}.", configuration.Parent);
+            if (data.Length >= LosslessParameters.DataSize)
+            {
+                // Data that is too short has its finding already.
+                findings.AddNow(Severity.Warning, "wma.format-unsupported", $"The stream is not analyzed: {reason}.", configuration.Parent);
+            }
+
             findings.Flush(context);
             return;
         }
@@ -73,12 +81,12 @@ public sealed class WmaLosslessParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new LosslessTally();
-        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings);
+        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings) { FrameLimit = FrameLimit };
         reader.Run(packets);
 
         var nodes = new LosslessNodes(reader.Data, p);
         var packetNodes = new PacketNodes(reader.Data, p, true);
-        long frameCount = reader.Data.Frames.Count;
+        long frameCount = reader.FramesRead;
         double duration = reader.Samples / (double)p.SampleRate;
         if (frameCount > 0)
         {
@@ -90,6 +98,13 @@ public sealed class WmaLosslessParser : ICodecParser
         stream.Value = NodeValue.Text(Counts.Of(reader.ValidFrames, "frame", "frames"));
         reader.PacketNode = i => packetsNode.Children[i];
         reader.FrameNode = i => framesNode.Children[i];
+        reader.FramesListNode = () => framesNode;
+
+        if (reader.SkippedFrames > 0)
+        {
+            findings.AddNow(Severity.Info, "wma.records-limit",
+                $"The stream has more than {FrameLimit} frames; the {reader.SkippedFrames} after them are counted in the figures but not listed, and the series cover the first {FrameLimit}.", parent);
+        }
 
         if (reader.Skipped > 0)
         {

@@ -298,7 +298,7 @@ The reader keeps three block sizes across blocks, frames and superframes: the pr
 | Order | Field (node) | Bits | Present |
 | --- | --- | --- | --- |
 | 1 | block size indexes ("Previous Block Size", "Block Size", "Next Block Size") | w_s each | variable block lengths (above) |
-| 2 | mid/side ("Mid/Side Stereo") | 1 | C = 2, in every block |
+| 2 | mid/side ("Uses Mid/Side Stereo") | 1 | C = 2, in every block |
 | 3 | coded flag of each channel ("Channel 1 Coded", "Channel 2 Coded") | 1 each | always |
 | 4 | total gain ("Total Gain") | 7 per step | some channel coded |
 | 5 | noise flags ("Noise Substitution") | H_k per coded channel | noise substitution on and some channel coded |

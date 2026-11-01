@@ -87,7 +87,7 @@ internal sealed class LosslessNodes(StreamData data, LosslessParameters paramete
                     cursor += padding;
                     break;
                 case Tag.Trailer:
-                    children.Add(At("More Frames", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.MoreFrames));
+                    children.Add(At("Has More Frames", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.MoreFrames));
                     cursor += 1;
                     break;
                 default:
@@ -171,17 +171,17 @@ internal sealed class LosslessNodes(StreamData data, LosslessParameters paramete
             switch (tag)
             {
                 case LosslessTag.Seekable:
-                    sub.Nodes.Add(N("Seekable Subframe", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.SeekableSubframe, Subframes));
+                    sub.Nodes.Add(N("Is Seekable Subframe", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.SeekableSubframe, Subframes));
                     cursor += 1;
                     break;
                 case LosslessTag.ArithmeticCoding:
-                    sub.Nodes.Add(N("Arithmetic Coding", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.ArithmeticCoding, Subframes));
+                    sub.Nodes.Add(N("Uses Arithmetic Coding", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.ArithmeticCoding, Subframes));
                     cursor += 1;
                     break;
                 case LosslessTag.FilterFlags:
-                    sub.Nodes.Add(N("Recursive Filter", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.RecursiveFilter, Subframes));
-                    sub.Nodes.Add(N("Mid/Side Stereo", cursor + 1, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.MidSide, Topics.MidSide));
-                    sub.Nodes.Add(N("Multichannel Filter", cursor + 2, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.MultichannelFilter, Subframes));
+                    sub.Nodes.Add(N("Has Recursive Filter", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.RecursiveFilter, Subframes));
+                    sub.Nodes.Add(N("Uses Mid/Side Stereo", cursor + 1, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.MidSide, Topics.MidSide));
+                    sub.Nodes.Add(N("Has Multichannel Filter", cursor + 2, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.MultichannelFilter, Subframes));
                     cursor += 3;
                     break;
                 case LosslessTag.RecursiveParameters:
@@ -214,7 +214,7 @@ internal sealed class LosslessNodes(StreamData data, LosslessParameters paramete
                     cursor += 8;
                     break;
                 case LosslessTag.RawPcm:
-                    sub.Nodes.Add(N("Raw PCM Subframe", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.RawPcm, Subframes));
+                    sub.Nodes.Add(N("Is Raw PCM Subframe", cursor, 1, NodeValue.Boolean(trace.Get() != 0), LosslessExplain.RawPcm, Subframes));
                     cursor += 1;
                     break;
                 case LosslessTag.CodedChannels:

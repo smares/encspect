@@ -49,9 +49,10 @@ The frames of WMA Voice are held to ffmpeg's decoder by the samples it decodes a
 (ffmpeg's fills each superframe with 'N' bytes, which the encoder trait uses) and, for Microsoft's files, on the decoder
 reading every superframe without error and outputting exactly the analyzer's samples, which count the frames the analyzer
 read. Professional and Lossless are read, and for their Microsoft-encoded fixtures the golden report is held to ffmpeg's
-decoder frame by frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc) are the frame's
-samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the overlap;
-Lossless outputs it), and their total is the stream's samples.
+decoder by the sample count of each frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc)
+are the frame's samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the
+overlap; Lossless outputs it), and their total is the stream's samples. Frame boundaries in the file are not compared: framecrc
+gives no input offsets, and every frame but the last outputs the same number of samples.
 """
 
 import json
@@ -497,7 +498,8 @@ def trim_of(frame):
 
 
 def check_wma_frames(path, codec, problems):
-    """Frame by frame: the samples ffmpeg's decoder outputs for each frame (framecrc's duration column) against the golden report's frames.
+    """The sample count of each frame ffmpeg's decoder outputs (framecrc's duration column) against the golden report's frames; where the
+    frames start and end in the file is not compared.
     Professional's first frame only fills the overlap of the transform and is not output; a trim of a frame's whole length or more removes
     the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied)."""
     report = golden_report(path)
