@@ -19,4 +19,9 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Thread pool threads do not exit when idle: an exiting thread's arrays in the shared array pools would leave the heap with no event
+         for the memory tests' accounting of pooled bytes (PoolAccounting). Dedicated threads still take theirs with them. -->
+    <RuntimeHostConfigurationOption Include="System.Threading.ThreadPool.ThreadsToKeepAlive" Value="-1" />
+  </ItemGroup>
 </Project>

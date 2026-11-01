@@ -8,8 +8,15 @@ namespace Encspect.Tests;
 // estimate, not a measurement of what survived: the first version of this test used it and read 8.09 MB for a 4 MB series on
 // macOS (about one 4 MB region of free space counted as in use) and 23,000 bytes under the budget on Windows.
 [Collection(nameof(MemoryTests))]
-public class CategorySeriesMemoryTests
+public sealed class CategorySeriesMemoryTests : IDisposable
 {
+    private readonly SharedPoolGuard _pools = new();
+
+    public void Dispose()
+    {
+        _pools.Check();
+    }
+
     // The budget of the design: a byte per value, a count byte per unit of a variable layout, a weight byte per value where
     // weights are used and four bytes per 1,024 units. What the series keeps is that, and the arrays' headers.
     [Fact]

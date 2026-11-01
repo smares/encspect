@@ -26,7 +26,7 @@ internal static class Mp4Builder
 
     public static byte[] FullBox(string type, params byte[][] parts) => Box(type, [[0, 0, 0, 0], .. parts]);
 
-    public static byte[] Join(params byte[][] parts) => [.. parts.SelectMany(p => p)];
+    public static byte[] Join(params byte[][] parts) => Unpooled.Join(parts);
 
     public static byte[] Ftyp() => Box("ftyp", "M4A "u8.ToArray(), new byte[4], "M4A isom"u8.ToArray());
 
