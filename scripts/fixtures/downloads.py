@@ -44,55 +44,117 @@ def has_token(url):
     return not url.startswith(PRIVATE) or bool(os.environ.get(TOKEN))
 
 
-# ETSI's server refuses curl's own user agent, so its addresses name a browser's.
+# These servers refuse curl's own user agent, so their addresses name a browser's.
 BROWSER = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
-BROWSER_PREFIXES = ("https://www.etsi.org/",)
+BROWSER_PREFIXES = ("https://www.etsi.org/", "https://www.atsc.org/", "https://download.microsoft.com/")
 
 
-# The Wayback Machine answers intermittent 404, 429 and 5xx for captures that it serves a minute later.
-# curl's own retries are too close together to outlast that, so an address there gets further attempts
-# after growing delays, up to ARCHIVE_BUDGET seconds of waiting in all per run so that many failing
-# addresses cannot use up a job's timeout.
+# curl itself runs with --retry 5 --retry-delay 15 --retry-all-errors, so it repeats every failure, a 404 or a
+# certificate failure included, five times. Those retries are too close together to outlast an outage of a minute or
+# more, so fetch() makes further rounds after growing delays when the answer was not a definite one. It tries every
+# address once before the first round, so a dead original does not delay a working fallback. What counts as transient:
+#   - on every host: a failure to resolve, connect, handshake, send or receive, a timeout, a partial transfer, an empty reply
+#     (curl exit codes TRANSIENT_CURL_CODES) and an HTTP 429 or 5xx (curl exit 22 with that status);
+#   - on the Wayback Machine also an HTTP 404, which it answers intermittently for captures that it serves a minute later,
+#     and every other curl failure, a certificate failure included, as before: it refuses clients for a while after many downloads.
+# Not retried beyond curl's own five: the other HTTP statuses, a certificate failure, a malformed address (all off the
+# Wayback Machine) and a file with the wrong SHA-256 (fetch() compares that after a successful transfer).
+# Between 11:41 and 15:02 UTC on 2026-11-01 samples.ffmpeg.org intermittently reset connections or timed out
+# (docs/development.md, "Pinned downloads"); the Wayback delays are the older, shorter ones.
+# The time spent waiting and on the retry attempts themselves (not on the first attempt at an address, which is always made) is
+# counted with a monotonic clock against RETRY_BUDGET seconds for the whole job: the scripts of a job add to one file under
+# RUNNER_TEMP, so that many failing addresses cannot use up its timeout, and a dead address costs the budget nothing.
 ARCHIVE_PREFIX = "https://web.archive.org/"
 ARCHIVE_DELAYS = (10, 30, 60)
-ARCHIVE_BUDGET = 900
-_waited = 0
+HOST_DELAYS = (30, 90, 180)
+RETRY_BUDGET = 1200
+TRANSIENT_CURL_CODES = frozenset({5, 6, 7, 18, 28, 35, 52, 55, 56, 92})
+BUDGET_FILE = "encspect-download-budget"
+_clock = time.monotonic
+_local_spent = 0.0
+
+
+def _budget_path():
+    temp = os.environ.get("RUNNER_TEMP")
+    return pathlib.Path(temp) / BUDGET_FILE if temp else None
+
+
+def spent():
+    """Seconds this job has spent on waiting and on retry attempts."""
+    path = _budget_path()
+    if path is None:
+        return _local_spent
+    try:
+        return float(path.read_text())
+    except (OSError, ValueError):
+        return 0.0
+
+
+def spend(seconds):
+    global _local_spent
+    path = _budget_path()
+    if path is None:
+        _local_spent += seconds
+        return
+    # The scripts of a job run one after another, so there is no concurrent writer; the replace keeps a reader from
+    # ever seeing a half-written figure, which would read as 0 and reset the budget.
+    try:
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(str(spent() + seconds))
+        os.replace(temporary, path)
+    except OSError:
+        _local_spent += seconds
 
 
 def retry_delay(url, error, attempt, waited=0):
     """Seconds to wait before the next attempt at url after the failure error, which is curl's exit code
-    and message, or None when it is not retried. attempt counts the retries made so far; waited is the
-    time spent waiting so far. Only the Wayback Machine, and there only an HTTP 404, 429 or 5xx or a
-    failure to connect or transfer, is retried."""
-    if not url.startswith(ARCHIVE_PREFIX) or attempt >= len(ARCHIVE_DELAYS):
+    and message (code 0: not a transfer failure, never retried), or None when it is not retried. attempt
+    counts the retries made so far; waited is the budget spent so far."""
+    archive = url.startswith(ARCHIVE_PREFIX)
+    delays = ARCHIVE_DELAYS if archive else HOST_DELAYS
+    if attempt >= len(delays):
         return None
     code, message = error
+    if not code:
+        return None
     if code == 22:
         status = re.search(r"error: (\d{3})", message)
-        if not status or not (status.group(1) in ("404", "429") or status.group(1).startswith("5")):
+        if not status or not (status.group(1) == "429" or status.group(1).startswith("5") or (archive and status.group(1) == "404")):
             return None
-    delay = ARCHIVE_DELAYS[attempt]
-    return delay if waited + delay <= ARCHIVE_BUDGET else None
+    elif not archive and code not in TRANSIENT_CURL_CODES:
+        return None
+    delay = delays[attempt]
+    return delay if waited + delay <= RETRY_BUDGET else None
+
+
+def attempt(url, path, retry=False):
+    """One transfer of url to path: None when it worked, else (exit code, message). The time of a failed
+    retry (not of a first attempt) counts toward the budget."""
+    if not has_token(url):
+        return 0, f"{TOKEN} is not set"
+    start = _clock()
+    error = _curl(url, path)
+    if error is not None and retry:
+        spend(_clock() - start)
+    return error
 
 
 def download(url, path, sleep=time.sleep):
-    """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
-    refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
-    global _waited
-    if not has_token(url):
-        return f"{TOKEN} is not set"
-    attempt = 0
+    """Downloads url to path, retrying a transient error after growing delays (see retry_delay); returns
+    None when it worked, else curl's error message. check_sources.py uses it for one address; fetch() orders
+    its own rounds."""
+    tries = 0
     while True:
-        error = _curl(url, path)
+        error = attempt(url, path, retry=tries > 0)
         if error is None:
             return None
-        delay = retry_delay(url, error, attempt, _waited)
+        delay = retry_delay(url, error, tries, spent())
         if delay is None:
             return error[1]
         print(f"{url}: {error[1]}; retrying in {delay} s", file=sys.stderr)
-        _waited += delay
+        spend(delay)
         sleep(delay)
-        attempt += 1
+        tries += 1
 
 
 def _curl(url, path):
@@ -141,24 +203,52 @@ def remember(path, digest):
         shutil.copyfile(path, pathlib.Path(directory) / digest)
 
 
-def fetch(addresses, digest, path):
+def _try(address, digest, path, retry=False):
+    """One attempt at address: None when path now holds the pinned file, else the error."""
+    error = attempt(address, path, retry)
+    if error is None and sha256(path) == digest:
+        return None
+    if error is None:
+        error = (0, f"has SHA-256 {sha256(path)}")
+    path.unlink(missing_ok=True)
+    return error
+
+
+def fetch(addresses, digest, path, sleep=time.sleep):
     """Makes path hold the file with SHA-256 digest: keeps it if it already does, else copies it from the
     download cache, else downloads it from the first address that serves it, saying so when that is not
-    the first."""
+    the first. Every address is tried once before any is tried again, in rounds after growing delays."""
     if path.exists() and sha256(path) == digest:
         return
     if (entry := cached(digest)) is not None:
         shutil.copyfile(entry, path)
         return
-    failures = []
-    for address in addresses:
-        error = download(address, path)
-        if error is None and sha256(path) == digest:
-            if failures:
-                print(f"{path.name}: fetched from {address} after {'; '.join(failures)}", file=sys.stderr)
+    errors = {}
+
+    def served(address, retry=False):
+        if (error := _try(address, digest, path, retry)) is None:
+            if errors:
+                print(f"{path.name}: fetched from {address} after {'; '.join(f'{a}: {e[1]}' for a, e in errors.items())}", file=sys.stderr)
             if not address.startswith(PRIVATE):
                 remember(path, digest)
+            return True
+        errors[address] = error
+        return False
+
+    for address in addresses:
+        if served(address):
             return
-        failures.append(f"{address} has SHA-256 {sha256(path)}" if error is None else f"{address}: {error}")
-        path.unlink(missing_ok=True)
-    raise SystemExit(f"{path.name}: no address serves the file with SHA-256 {digest}: {'; '.join(failures)}")
+    for round_number in range(max(len(ARCHIVE_DELAYS), len(HOST_DELAYS))):
+        due = sorted((retry_delay(a, e, round_number), a) for a, e in errors.items() if retry_delay(a, e, round_number) is not None)
+        waited = 0
+        for delay, address in due:
+            if retry_delay(address, errors[address], round_number, spent()) is None:
+                continue
+            if delay > waited:
+                print(f"{path.name}: retrying in {delay - waited} s (round {round_number + 1})", file=sys.stderr)
+                spend(delay - waited)
+                sleep(delay - waited)
+                waited = delay
+            if served(address, retry=True):
+                return
+    raise SystemExit(f"{path.name}: no address serves the file with SHA-256 {digest}: {'; '.join(f'{a}: {e[1]}' for a, e in errors.items())}")

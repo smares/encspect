@@ -1,0 +1,26 @@
+name: Set up .NET
+description: actions/setup-dotnet with one more attempt when the first fails, for a crash of the PowerShell process that runs the install script.
+
+# On windows-11-arm, a second `pwsh` start in quick succession has crashed in the CLR's startup, before install-dotnet.ps1
+# ran (exit code 3221225477, "Fatal error. Internal CLR error. (0x80131506)"; docs/development.md, "Setting up .NET"). The
+# install is idempotent, so the second attempt only repeats the step that crashed; no test is ever run twice.
+inputs:
+  dotnet-version:
+    description: The SDK version to install, as for actions/setup-dotnet.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up .NET
+      id: first
+      uses: actions/setup-dotnet@v5
+      continue-on-error: true
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Set up .NET again after a failed first attempt
+      if: steps.first.outcome == 'failure'
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}

@@ -147,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -404,7 +404,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -467,7 +467,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -490,7 +490,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -521,7 +521,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -688,7 +688,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -723,7 +724,7 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -735,6 +736,24 @@ jobs:
 
       - name: Check the analyzer against the mp3PRO manifest
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   mp4-crosscheck:
     name: MP4 and AAC fixtures agree with ffprobe, MP4Box, faad and MediaInfo, and other encoders' xHE-AAC and HE-AAC samples with the manifests
@@ -759,7 +778,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -830,7 +850,7 @@ jobs:
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -846,6 +866,24 @@ jobs:
         run: python3 scripts/fixtures/check_sbr_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/sbr
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   ogg-crosscheck:
     name: Ogg fixtures agree with oggz, ogginfo, ffprobe, speexdec and MediaInfo
@@ -870,7 +908,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -888,6 +927,24 @@ jobs:
 
       - name: Cross-check the Ogg fixtures
         run: python3 scripts/fixtures/crosscheck_ogg_fixtures.py
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   musepack-crosscheck:
     name: Musepack fixtures agree with mpcdec, ffprobe, libmpcdec and MediaInfo
@@ -912,7 +969,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -940,6 +998,24 @@ jobs:
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+
   wavpack-crosscheck:
     name: WavPack fixtures and decoded audio agree with libwavpack, wvunpack, FFmpeg and MediaInfo
     runs-on: ubuntu-26.04
@@ -963,7 +1039,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -984,6 +1061,24 @@ jobs:
       - name: Cross-check the WavPack fixtures
         run: python3 scripts/fixtures/crosscheck_wavpack_fixtures.py
 
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+
   monkeys-audio-crosscheck:
     name: Monkey's Audio fixtures and decoded audio agree with mac, FFmpeg and MediaInfo
     runs-on: ubuntu-26.04
@@ -1002,7 +1097,8 @@ jobs:
 
       # The SDK's source archive is a pinned download (see the WavPack job above for how the cache is kept).
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1021,7 +1117,7 @@ jobs:
       - name: Cross-check the Monkey's Audio fixtures
         run: python3 scripts/fixtures/crosscheck_monkeys_audio_fixtures.py
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1036,6 +1132,24 @@ jobs:
 
       - name: Check the analyzer against the real Monkey's Audio sample
         run: python3 scripts/fixtures/check_monkeys_audio_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/monkeys-audio
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   flac-crosscheck:
     name: FLAC fixtures agree with flac, metaflac, FFmpeg and MediaInfo, and the decoder with flac -d and FFmpeg
@@ -1077,7 +1191,7 @@ jobs:
             echo "pinned=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         if: steps.ebu.outputs.pinned == 'true'
         with:
           dotnet-version: 10.0.x
@@ -1181,7 +1295,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1206,7 +1321,7 @@ jobs:
       - name: Cross-check the ASF and WMA fixtures
         run: python3 scripts/fixtures/crosscheck_asf_fixtures.py
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1232,6 +1347,24 @@ jobs:
       - name: Check the analyzer against the real WMA Professional and Lossless samples
         run: python3 scripts/fixtures/check_wma_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/wma
 
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+
   matroska-crosscheck:
     name: Matroska and WebM fixtures agree with mkvinfo, ffprobe, ffmpeg and MediaInfo, and the element table with the RFCs
     runs-on: ubuntu-26.04
@@ -1250,7 +1383,8 @@ jobs:
 
       # The RFCs are pinned downloads; see the ASF job for how the cache is kept.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1269,7 +1403,7 @@ jobs:
       - name: Check the element table against the RFCs
         run: python3 scripts/fixtures/matroska_tables.py --check
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1279,6 +1413,24 @@ jobs:
 
       - name: Cross-check the Matroska and WebM fixtures
         run: python3 scripts/fixtures/crosscheck_matroska_fixtures.py
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   ac3-crosscheck:
     name: AC-3 and E-AC-3 fixtures agree with ffprobe, ffmpeg, liba52 and MediaInfo
@@ -1303,7 +1455,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1320,7 +1473,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg liba52-0.7.4-dev mediainfo
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1341,6 +1494,24 @@ jobs:
 
       - name: Check the analyzer against the real E-AC-3 samples
         run: python3 scripts/fixtures/check_eac3_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/eac3
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   dts-crosscheck:
     name: DTS fixtures agree with ffprobe, ffmpeg, libdca and MediaInfo
@@ -1365,7 +1536,8 @@ jobs:
       # a pull request from a fork. The key changes with the ISO week and with the manifests, so a job saves one
       # entry a week, not one per commit; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1383,7 +1555,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1402,6 +1574,24 @@ jobs:
 
       - name: Check the analyzer against the real DTS-HD Master Audio samples
         run: python3 scripts/fixtures/check_dts_hd_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/dts-hd
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   truehd-crosscheck:
     name: TrueHD and MLP fixtures agree with ffprobe, ffmpeg and MediaInfo, and the decoder with ffmpeg
@@ -1423,7 +1613,8 @@ jobs:
       # checked against its pin before use (scripts/fixtures/downloads.py), so a changed pin downloads the new file; nothing here can
       # hide one. The key changes with the ISO week and with the manifests; restore-keys finds the last week's.
       - name: Cache the pinned downloads
-        uses: actions/cache@v6
+        id: downloads-cache
+        uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
@@ -1441,7 +1632,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg mediainfo
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1466,6 +1657,24 @@ jobs:
   # success passes, and a job may be skipped only when the changes job decided it is not needed
   # (scripts/ci/check_results.py): a skip any other way, such as behind a failed dependency, fails.
   # A matrix job reports one result for all its legs, which is not success if any leg failed.
+
+      # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
+      # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
+      # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
+      # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Save the pinned downloads
+        if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+
+      - name: Save the pinned downloads of a failed job
+        if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: .cache/downloads
+          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
   all-checks:
     name: all checks passed
     if: always()
