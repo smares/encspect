@@ -1,4 +1,5 @@
 using System.Runtime;
+using System.Runtime.InteropServices;
 using System.Text;
 using Encspect.Core;
 using Encspect.Formats.Aac;
@@ -91,8 +92,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
             if (series.Values.Length == Frames)
             {
                 Assert.True(series.X.Span.SequenceEqual(bitrate.X.Span), $"{series.Name} has its own x values although every frame has a value.");
-                Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(series.X, out ArraySegment<double> own)
-                    && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+                Assert.True(MemoryMarshal.TryGetArray(series.X, out ArraySegment<double> own)
+                    && MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
                     $"{series.Name} copies the bitrate series' x values.");
             }
         }
@@ -336,14 +337,14 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         long numeric = BackingBytes(bandwidth.Values) - BackingBytes(small.Series.Single(s => s.Name == "Coded Bandwidth").Values);
         Assert.True(numeric <= (units - fewer) * (long)numericBytes, $"The coded bandwidth grows by {numeric / (double)(units - fewer):F2} bytes per further unit.");
         Series bitrate = large.Series.Single(s => s.Name == "Bitrate");
-        Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
-            && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+        Assert.True(MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
+            && MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
             "The coded bandwidth copies the bitrate series' x values although every unit has a value.");
     }
 
     // The bytes of the array behind a series, not only of the part it shows, so a slack kept at the end counts.
     private static long BackingBytes(ReadOnlyMemory<double> values) =>
-        System.Runtime.InteropServices.MemoryMarshal.TryGetArray(values, out ArraySegment<double> segment) ? segment.Array!.Length * 8L : values.Length * 8L;
+        MemoryMarshal.TryGetArray(values, out ArraySegment<double> segment) ? segment.Array!.Length * 8L : values.Length * 8L;
 
     // Frames of ffmpeg's encoder at 96 kbit/s, repeated.
     private static byte[] AdtsFrames(int count)
@@ -513,8 +514,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         long numeric = BackingBytes(bandwidth.Values) - BackingBytes(small.Series.Single(s => s.Name == "Coded Bandwidth").Values);
         Assert.True(numeric <= (units - fewer) * (long)numericBytes, $"The coded bandwidth grows by {numeric / (double)(units - fewer):F2} bytes per further unit.");
         Series bitrate = large.Series.Single(s => s.Name == "Bitrate");
-        Assert.True(System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
-            && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+        Assert.True(MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> own)
+            && MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
             "The coded bandwidth copies the bitrate series' x values although every unit has a value.");
     }
 
@@ -1749,7 +1750,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
         Report report = Bounded("budget.wv", data, 15_000_000, "wavpack.block-index-overlap");
 
-        List<Node> blocks = [.. report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block")];
+        var blocks = new List<Node>(report.Root.Children.Single(n => n.Kind == NodeKind.Stream).Children.Where(c => c.Name == "Block"));
         Assert.Equal(4096, blocks.Count);
         Assert.Equal(State.MaxListedSubBlocksInAll, blocks.Sum(c => c.Children.Count(k => k.Children.Any(i => i.Name == "ID"))));
     }
@@ -2249,7 +2250,13 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         // from the shared pool and leaves it there (SharedPoolGuard).
         public override int Read(Span<byte> buffer)
         {
-            int read = (int)Math.Clamp(Length - Position, 0, buffer.Length);
+            if (Position >= Length)
+            {
+                Probe();
+                return 0;
+            }
+
+            int read = (int)Math.Min(Length - Position, buffer.Length);
             _data.AsSpan((int)Position, read).CopyTo(buffer);
             Position += read;
             Probe();
@@ -2300,8 +2307,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         {
             while (!Volatile.Read(ref done))
             {
-                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: false);
-                Volatile.Write(ref shared, Math.Max(Volatile.Read(ref shared), LastFullCollection()));
+                Volatile.Write(ref shared, Math.Max(Volatile.Read(ref shared), Collected(compacting: false)));
                 Thread.Sleep(SampleInterval);
             }
         });
@@ -2324,12 +2330,27 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         return live;
     }
 
-    // The heap that survived the last blocking full collection, as it stood when that collection
-    // ended.
-    private static long LastFullCollection()
+    // One blocking full collection and the heap that survived it, as it stood when the collection ended, with what the shared array pools
+    // had released before it added back (PoolReleases): an array a pool releases after the collection, in the finalizer it triggers, is
+    // still in this reading and is counted back into the next. The finalizers of an earlier collection are waited for first, so a release
+    // is never half counted. A release from a pool whose element type is not known fails the reading.
+    private static long Collected(bool compacting)
     {
+        GC.WaitForPendingFinalizers();
+        long released = PoolReleases.Released;
+        if (compacting)
+        {
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        }
+
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: compacting);
         GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
-        return info.HeapSizeBytes - info.FragmentedBytes;
+        if (PoolReleases.Unknown is { } unknown)
+        {
+            Assert.Fail($"A reading of the heap cannot count the shared array pools' releases back in: {unknown}.");
+        }
+
+        return info.HeapSizeBytes - info.FragmentedBytes + released;
     }
 
     // A decoder that charges the floor and nothing else, keeping nothing per analysis.
@@ -2378,12 +2399,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
     // One such collection: a reading to compare with a bound of MB, taken while the analysis runs,
     // where the repeats of Live (for what finalizers release) would cost seconds.
-    private static long LiveOnce()
-    {
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
-        return LastFullCollection();
-    }
+    private static long LiveOnce() => Collected(compacting: true);
 
     // The live heap after full, compacting collections that also compact the large object heap,
     // where series and record chunks live, so the space their growth left behind does not count.
@@ -2400,10 +2416,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         for (int i = 0; i < 8 && Math.Abs(previous - current) > 64 * 1024; i++)
         {
             previous = current;
-            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
-            GC.WaitForPendingFinalizers();
-            current = LastFullCollection();
+            current = Collected(compacting: true);
         }
 
         return current;
@@ -2584,7 +2597,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         }
 
         Write(0, 11);
-        return System.Runtime.InteropServices.MemoryMarshal.AsBytes(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(words))[..(int)(((bit + 31) >> 5) << 2)].ToArray();
+        return MemoryMarshal.AsBytes(CollectionsMarshal.AsSpan(words))[..(int)(((bit + 31) >> 5) << 2)].ToArray();
     }
 
     // An SV8 stream (SV8 specification): a stream header with a sample count of 0, 44.1 kHz, 32
