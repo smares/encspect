@@ -101,14 +101,14 @@ class Output:
         (self.directory / "records").mkdir(parents=True, exist_ok=True)
         self.log = open(self.directory / "log.txt", "a", encoding="utf-8")
 
-    def record(self, case, path, runs, **extra):
+    def record(self, case, path, runs, tag=None, **extra):
         path = pathlib.Path(path)
         data = path.read_bytes()
         name = path.name
         record = {"case": case, "file": name, "path": relative(path), "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), **extra, "runs": runs}
         folder = self.directory / "records" / case
         folder.mkdir(parents=True, exist_ok=True)
-        target = folder / (name + ".json")
+        target = folder / (name + ("." + tag if tag else "") + ".json")
         if target.exists():
             target = folder / (name + "-" + record["sha256"][:8] + ".json")
         target.write_text(json.dumps(record) + "\n", encoding="utf-8")
@@ -292,7 +292,7 @@ def run_linux(args):
         tsv, summary = lists[path]
         env_ = {"LD_LIBRARY_PATH": fdk[version]}
         run = run_child("%s-%s-method%d" % (mode, version, method), [bins / ("fdk_decode-" + version), mode, path, tsv, str(method)], env=env_)
-        out.record(case, path, [run], unitList=summary, fdkVersion=version, concealMethod=method)
+        out.record(case, path, [run], tag="%s-m%d" % (version, method), unitList=summary, fdkVersion=version, concealMethod=method)
 
     for path in aac:
         summary = lists[path][1]
