@@ -39,7 +39,7 @@ public static class Versions
         foreach (ProcessModule m in Process.GetCurrentProcess().Modules)
         {
             string name = m.ModuleName.ToLowerInvariant();
-            if (name.StartsWith("wm") || name.StartsWith("mf") || name.Contains("asf") || name.Contains("dmo") || name.StartsWith("msaudio"))
+            if (name.StartsWith("wm") || name.StartsWith("mf") || name.StartsWith("msaud") || name.Contains("asf") || name.Contains("dmo") || name.StartsWith("msaudio"))
             {
                 list.Add(new Dictionary<string, string?> { ["name"] = m.ModuleName, ["path"] = m.FileName, ["version"] = m.FileVersionInfo.FileVersion });
             }
