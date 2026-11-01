@@ -495,12 +495,12 @@ Each frame record is a "Frame" node over its bits (the ranges of both packets wh
 | --- | --- | --- |
 | "Frame Length" | the length prefix | the length, unit "bits" |
 | "Tile Header" | the tile header | "N subframes", N the subframes read; with a child "Channel c Subframes" per channel (c from 1), over the same bytes, listing the lengths of the subframes read that hold the channel, comma-separated ("512, 256, 128") |
-| "Postprocessing Transform" | its bits | a boolean: the first bit (only where C > 1) |
+| "Has Postprocessing Transform" | its bits | a boolean: the first bit (only where C > 1) |
 | "Dynamic Range Gain" | 8 bits | the gain (only with the flag) |
 | "Trim" | its bits | "none" where the trim bit is 0, else "S samples at the start, E at the end" ("1 sample" for 1) |
 | "Subframe" | one per subframe read | below |
 | "Frame Padding" | the bit before the trailer bit | 1, unit "bits" (only for a frame read without error) |
-| "More Frames" | the trailer bit | a boolean (only for a frame read without error) |
+| "Has More Frames" | the trailer bit | a boolean (only for a frame read without error) |
 
 A frame that fails in its tile header has only "Frame Length" and "Tile Header" ("0 subframes").
 
@@ -511,7 +511,7 @@ A frame that fails in its tile header has only "Frame Length" and "Tile Header" 
 | Node | Value |
 | --- | --- |
 | "Extended Header" | "none", or "n fill bits" |
-| "Reserved Bit" | false, or true where the frame failed on it |
+| "Is Reserved Bit Set" | false, or true where the frame failed on it |
 | "Channel Transform" | "N groups" (only where C > 1); a child "Channel Group" per group, over its bits, "channels 1 2, no transform" or "channels 1 2, transform in N bands" (the bands it is on in) |
 | "Coefficients Sent" | "yes" or "no" per channel of the subframe, comma-separated |
 | "Vector Coefficients" | "all", or the channels' counts comma-separated (only where a channel sends coefficients) |
@@ -522,7 +522,7 @@ A frame that fails in its tile header has only "Frame Length" and "Tile Header" 
 - The scale factor and coefficient nodes come channel by channel (scale factors of channel 1, its coefficients, then channel 2's), although all scale factors precede all coefficients in the bits.
 - K counts the non-zero vector values and every run-level code that sets a coefficient (escapes included); E counts the run-level escape codes (symbol 0 of the selected codebook) only. The escapes of the vector codes (symbol 0 of the vector tables) and the large values they or a single value add are not counted, and neither is any other code.
 - A subframe that fails stops its children where the failure is:
-  - after "Extended Header" for the fill bits, after "Reserved Bit" for that bit, after "Channel Transform" for a transform;
+  - after "Extended Header" for the fill bits, after "Is Reserved Bit Set" for that bit, after "Channel Transform" for a transform;
   - after "Vector Coefficients" (the last child) for a vector count above L;
   - for a scale factor run past the last band, with "Quantization Step" and the "Scale Factors (channel c)" nodes of the channels that send coefficients up to and including the failing channel, whose node ends where the run went past; no coefficient node follows.
 - "Channel Group" always says "channels" and then the member numbers, also for one member ("channels 3, no transform") and for none ("channels , no transform"). The group of a rejected `1 1` pair is added too, with "no transform", before the failure.
@@ -739,7 +739,7 @@ Frame 1 of `external-windows-wma10pro-cbr-stereo-44k-128.wma` (44.1 kHz, B = 16,
 | 47–48 | channel 1: scale factor step (its first subframe, so no flag bit) | `01` | 2 | "Scale Factors (channel 1)" = a new set, step 2 |
 | 49 … | 26 scale factor codes of channel 1, then channel 2's step and codes, then each channel's coefficient codes | | | |
 | 2,339 | the skipped bit | `1` | | "Frame Padding" = 1 |
-| 2,340 | trailer bit | `1` | another frame follows | "More Frames" = true |
+| 2,340 | trailer bit | `1` | another frame follows | "Has More Frames" = true |
 
 The length check holds: 2,339 bits are read up to the end of the subframe, and 2,339 + 2 = 2,341. Frame 2 starts at bit 7,015 of the packet.
 

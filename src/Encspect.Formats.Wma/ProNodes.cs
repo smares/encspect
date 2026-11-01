@@ -67,7 +67,7 @@ internal sealed class ProNodes(StreamData data, ProParameters parameters)
                 case Tag.Postprocessing:
                     long postBits = trace.Get();
                     bool first = trace.Get() != 0;
-                    children.Add(At("Postprocessing Transform", cursor, postBits, NodeValue.Boolean(first), ProExplain.PostprocessingTransform));
+                    children.Add(At("Has Postprocessing Transform", cursor, postBits, NodeValue.Boolean(first), ProExplain.PostprocessingTransform));
                     cursor += postBits;
                     break;
                 case Tag.DynamicRange:
@@ -96,7 +96,7 @@ internal sealed class ProNodes(StreamData data, ProParameters parameters)
                     cursor += padding;
                     break;
                 case Tag.Trailer:
-                    children.Add(At("More Frames", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.MoreFrames));
+                    children.Add(At("Has More Frames", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.MoreFrames));
                     cursor += 1;
                     break;
                 default:
@@ -201,7 +201,7 @@ internal sealed class ProNodes(StreamData data, ProParameters parameters)
                     cursor += bits;
                     break;
                 case Tag.ReservedBit:
-                    nodes.Add(N("Reserved Bit", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.ReservedBit));
+                    nodes.Add(N("Is Reserved Bit Set", cursor, 1, NodeValue.Boolean(trace.Get() != 0), ProExplain.ReservedBit));
                     cursor += 1;
                     break;
                 case Tag.ChannelTransform:

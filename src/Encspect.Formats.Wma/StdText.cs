@@ -109,13 +109,13 @@ internal static class StdText
         $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
 
     public static string SuperframeLong(int count, int align) =>
-        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} bytes as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";
+        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} {(align == 1 ? "byte" : "bytes")} as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";
 
     public static string SuperframeHeader(int count, long offset) =>
         $"{(count == 1 ? "A superframe states" : $"{Number(count)} superframes state")} no frame ending in {(count == 1 ? "it" : "them")}, or fewer than none, with no room for the middle of a frame; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
 
     public static string BitOffset(int count, long offset) =>
-        $"{(count == 1 ? "A superframe gives" : $"{Number(count)} superframes give")} a last frame bit offset past {(count == 1 ? "its" : "their")} end; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
+        $"{(count == 1 ? "A superframe gives" : $"{Number(count)} superframes give")} a last frame bit offset past {(count == 1 ? "its" : "their")} end, or {(count == 1 ? "is" : "are")} too short to hold that field; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
 
     public static string Filler(int count, bool isStuffing, long bits, long offset) =>
         $"{(count == 1 ? "A frame that began in the superframe before is" : $"{Number(count)} frames that began in the superframe before are")} followed by {(isStuffing ? "zero bits" : "bits that are not zero")} up to the bit offset the superframe states, which a decoder skips; the first has {Number(bits)} (in the superframe at {Hex(offset)}).";
