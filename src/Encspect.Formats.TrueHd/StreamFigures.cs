@@ -49,13 +49,13 @@ internal sealed class StreamFigures(long firstRate)
     // isPartial: a run cut short by the end of the stream; it is in the series and the totals, but only
     // counts for the extremes and the distribution where no whole run came before it, since a run of one
     // unit is not what the bitrate of a run means.
-    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false)
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0)
     {
         long runRate = rate > 0 ? rate : _firstRate;
         double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
-            _points.Add(new Point(offset, bitrate));
+            _points.Add(new Point(offset, bitrate, firstFrame, coded));
         }
 
         if (runRate != _rate && runRate > 0)
@@ -102,7 +102,7 @@ internal sealed class StreamFigures(long firstRate)
 
     // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the
     // units that start in it over their duration, rounded half to even.
-    public List<Series> Series(Node? anchor, CancellationToken cancellation)
+    public List<Series> Series(Node? anchor, long frameCount, CancellationToken cancellation)
     {
         if (Units == 0)
         {
@@ -112,6 +112,8 @@ internal sealed class StreamFigures(long firstRate)
         var series = new List<Series>();
         var offsets = new double[Count];
         var bitrates = new double[Count];
+        var firstFrames = new long[Count];
+        var runSamples = new long[Count];
         for (int i = 0; i < Count; i++)
         {
             if (i % 4096 == 0)
@@ -121,11 +123,13 @@ internal sealed class StreamFigures(long firstRate)
 
             offsets[i] = _points[i].Offset;
             bitrates[i] = _points[i].Bitrate;
+            firstFrames[i] = _points[i].FirstFrame;
+            runSamples[i] = _points[i].Samples;
         }
 
         if (Count > 0)
         {
-            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries });
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
         }
 
         if (_seconds.Count > 0)
@@ -180,5 +184,5 @@ internal sealed class StreamFigures(long firstRate)
     public static string Share(long count, long total) =>
         total > 0 ? (Math.Round(count * 1000.0 / total, MidpointRounding.ToEven) / 10).ToString("F1", CultureInfo.InvariantCulture) + "%" : "0.0%";
 
-    private readonly record struct Point(long Offset, double Bitrate);
+    private readonly record struct Point(long Offset, double Bitrate, long FirstFrame, long Samples);
 }

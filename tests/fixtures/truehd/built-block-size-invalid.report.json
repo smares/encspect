@@ -169,7 +169,7 @@
                 },
                 {
                   "name": "Smallest Run",
-                  "value": 1698,
+                  "value": 226,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 5310
@@ -190,7 +190,7 @@
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 1029.6,
+                  "value": 2169.6,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 5310
@@ -202,13 +202,19 @@
                   "children": [
                     {
                       "name": "992 to 1023 kbps",
-                      "value": "1 run (50.0%)",
+                      "value": "1 run (33.3%)",
                       "offset": 0,
                       "length": 5310
                     },
                     {
                       "name": "1024 to 1055 kbps",
-                      "value": "1 run (50.0%)",
+                      "value": "1 run (33.3%)",
+                      "offset": 0,
+                      "length": 5310
+                    },
+                    {
+                      "name": "2144 to 2175 kbps",
+                      "value": "1 run (33.3%)",
                       "offset": 0,
                       "length": 5310
                     }
@@ -300,6 +306,19 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "frameRuns": {
+              "firstFrames": [
+                1,
+                17,
+                33
+              ],
+              "frameCount": 48,
+              "samples": [
+                640,
+                640,
+                0
+              ]
+            },
             "x": [
               0,
               1698,

@@ -23,6 +23,33 @@ public static class FrameLocator
         return Descend(start, offset, path, 0) ? path : null;
     }
 
+    // The path of the frame that is the given number of frames after the one at the path, among its siblings, or the last frame of the
+    // list where there are fewer; a node between the frames (skipped data) is not counted.
+    public static List<int> Advance(Node start, List<int> path, int frames)
+    {
+        ArgumentNullException.ThrowIfNull(start);
+        ArgumentNullException.ThrowIfNull(path);
+
+        Node parent = start;
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            parent = parent.Children[path[i]];
+        }
+
+        IReadOnlyList<Node> siblings = parent.Children;
+        int index = path[^1];
+        for (int next = index + 1; next < siblings.Count && frames > 0; next++)
+        {
+            if (siblings[next].Kind == NodeKind.Frame)
+            {
+                index = next;
+                frames--;
+            }
+        }
+
+        return [.. path.Take(path.Count - 1), index];
+    }
+
     private static bool Descend(Node node, long offset, List<int> path, int depth)
     {
         if (depth >= Node.MaxDepth || !node.HasChildren)

@@ -1,4 +1,7 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using Encspect.Core;
+using Encspect.Gui.Views;
 using Encspect.Gui.ViewModels;
 using Encspect.Host;
 
@@ -216,6 +219,34 @@ public class DecodeAudioTests
         Assert.False(model.IsDecoding);
         Assert.Equal("MPEG Audio", model.Report!.Root.Value);
         Assert.False(model.CanDecodeAudio);
+    }
+
+    // The File menu of macOS: Decode Audio is enabled where there is audio to decode and no decode runs, Stop Decoding only while one runs.
+    [AvaloniaFact]
+    public void The_file_menu_enables_decode_audio_and_stop_decoding_as_the_command_does()
+    {
+        DetailWindow window = FrameMapViewTests.Open(Fixtures.Flac("external-16-stereo-l5.flac"), 900, 600);
+        NativeMenuItem[] file = [.. NativeMenu.GetMenu(window)!.Items.OfType<NativeMenuItem>().First(i => i.Header == "File").Menu!.Items.OfType<NativeMenuItem>()];
+        NativeMenuItem decode = file.Single(i => i.Header == "Decode Audio");
+        NativeMenuItem stop = file.Single(i => i.Header == "Stop Decoding");
+
+        Assert.True(decode.IsEnabled);
+        Assert.False(stop.IsEnabled);
+
+        Task running = window.Model.DecodeAudioAsync();
+        Assert.True(window.Model.IsDecoding);
+        Assert.False(decode.IsEnabled);
+        Assert.True(stop.IsEnabled);
+        UiPump.Until(() => running.IsCompleted);
+
+        Assert.False(decode.IsEnabled);
+        Assert.False(stop.IsEnabled);
+        window.Close();
+
+        window = FrameMapViewTests.Open(Fixtures.Mpeg("external-lame-tagged.mp3"), 900, 600);
+        decode = NativeMenu.GetMenu(window)!.Items.OfType<NativeMenuItem>().First(i => i.Header == "File").Menu!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Decode Audio");
+        Assert.False(decode.IsEnabled);
+        window.Close();
     }
 }
 

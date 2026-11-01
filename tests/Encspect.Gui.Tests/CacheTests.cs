@@ -52,11 +52,11 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(Encspect.Core.Confidence.Low, read.Summary.WriterConfidence);
     }
 
-    // The writer (version 4), the protection (version 5) and the verification verdict (version 6) changed what a summary holds and so the store's layout: an older store reads as empty, and the folder is analyzed again.
+    // The writer (version 4) and the protection (version 5) changed what a summary holds and so the store's layout, and version 7 dropped the verification verdict, which nothing read: an older store reads as empty, and the folder is analyzed again.
     [Fact]
-    public void The_store_format_was_bumped_for_the_writer_the_protection_and_the_verification()
+    public void The_store_format_was_bumped_for_the_writer_the_protection_and_the_dropped_verdict()
     {
-        Assert.Equal(6, SummaryCache.FormatVersion);
+        Assert.Equal(7, SummaryCache.FormatVersion);
     }
 
     [Fact]
@@ -81,8 +81,7 @@ public sealed class CacheTests : IDisposable
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    [InlineData(null)]
-    public void The_verification_verdict_survives_the_cache(bool? verdict)
+    public void No_verification_verdict_is_cached(bool verdict)
     {
         string file = _folder.Copy(Path.Combine(Fixtures.Directory, "mpeg", "external-lame-tagged.mp3"), "verified.mp3");
         FileSummary summary = Summarize(file);
@@ -94,8 +93,7 @@ public sealed class CacheTests : IDisposable
 
         using SummaryCache later = Cache();
         FileSummary? read = later.TryGet(file, FileFingerprint.Read(file)!);
-        AssertSame(summary, read);
-        Assert.Equal(verdict, read!.Summary.IsVerified);
+        Assert.Null(read!.Summary.IsVerified);
     }
 
     [Fact]

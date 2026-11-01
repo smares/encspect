@@ -400,7 +400,7 @@ public sealed class GraphsViewModel : ObservableObject
     }
 
     private static GraphFormChoice MapForm(FrameMapGraph graph) =>
-        new(GraphForm.Map, "Frame Map", "Every frame as a square, in rows like text", graph);
+        new(GraphForm.Map, "Frame Map", graph.Runs is not null ? "Every run of frames as a square, in rows like text" : "Every frame as a square, in rows like text", graph);
 
     private static GraphChoice Entry(List<Series> quantity, ReadOnlyMemory<double> frameOffsets, double duration, IReadOnlyList<MapFinding>? findings)
     {
@@ -410,7 +410,7 @@ public sealed class GraphsViewModel : ObservableObject
         var forms = new List<GraphFormChoice>();
         if (perFrame is not null)
         {
-            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
+            forms.Add(new GraphFormChoice(GraphForm.Frames, "Per Frame", perFrame.Runs is not null ? "One point for every run of frames" : "One point for every frame", new LineGraph(perFrame, frameOffsets, duration)));
         }
 
         if (perSecond is not null)
@@ -425,7 +425,7 @@ public sealed class GraphsViewModel : ObservableObject
         // The bitrate is the series in kbps, whatever a format names it.
         if (perFrame is { Unit: "kbps" })
         {
-            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", "How many frames have each value", new DistributionGraph(perFrame)));
+            forms.Add(new GraphFormChoice(GraphForm.Summary, "Distribution", perFrame.Runs is not null ? "How many runs of frames have each value" : "How many frames have each value", new DistributionGraph(perFrame)));
         }
 
         if (perFrame is not null)
@@ -481,13 +481,25 @@ public sealed class GraphsViewModel : ObservableObject
         SelectedStream = null;
     }
 
+    // With FrameRequested: the frames after the one at its offset that the click leads to (see Graph.FramesAfterAt).
+    public int FramesAfterRequested { get; private set; }
+
     // A click on a point: selects its frame, if it leads to one.
     public void Activate(int index)
     {
         if (Graph is { } graph && graph.FrameAt(index, _markedFrame) is { } offset)
         {
             _click = (graph, index, offset);
-            FrameRequested?.Invoke(this, offset);
+            RequestFrame(offset, graph.FramesAfterAt(index));
+        }
+    }
+
+    // The frame a click on a run really selected (see Graph.FramesAfterAt): the click keeps its column.
+    public void ClickLandedAt(long offset)
+    {
+        if (_click is { } click)
+        {
+            _click = click with { Offset = offset };
         }
     }
 
@@ -498,7 +510,7 @@ public sealed class GraphsViewModel : ObservableObject
         {
             if (map.NextFrameOf(category, _markedFrame, _shownSeverities) is { } next)
             {
-                FrameRequested?.Invoke(this, next);
+                RequestFrame(next, 0);
             }
 
             return;
@@ -506,8 +518,14 @@ public sealed class GraphsViewModel : ObservableObject
 
         if (Graph is CategoryGraph graph && CategoryGraph.NextUnit(graph.Series, category, _markedFrame) is { } offset)
         {
-            FrameRequested?.Invoke(this, offset);
+            RequestFrame(offset, 0);
         }
+    }
+
+    private void RequestFrame(long offset, int framesAfter)
+    {
+        FramesAfterRequested = framesAfter;
+        FrameRequested?.Invoke(this, offset);
     }
 
     // Draws the chosen entry in another form; the choice holds for the next entry that has a form of that kind.

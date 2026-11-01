@@ -176,14 +176,14 @@
                 },
                 {
                   "name": "Smallest Run",
-                  "value": 1698,
+                  "value": 220,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 7090
                 },
                 {
                   "name": "Largest Run",
-                  "value": 2000,
+                  "value": 1896,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 7090
@@ -197,7 +197,7 @@
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 1200,
+                  "value": 2112,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 7090
@@ -209,19 +209,25 @@
                   "children": [
                     {
                       "name": "992 to 1023 kbps",
-                      "value": "1 run (33.3%)",
+                      "value": "1 run (25.0%)",
                       "offset": 0,
                       "length": 7090
                     },
                     {
                       "name": "1056 to 1087 kbps",
-                      "value": "1 run (33.3%)",
+                      "value": "1 run (25.0%)",
                       "offset": 0,
                       "length": 7090
                     },
                     {
-                      "name": "1184 to 1215 kbps",
-                      "value": "1 run (33.3%)",
+                      "name": "1120 to 1151 kbps",
+                      "value": "1 run (25.0%)",
+                      "offset": 0,
+                      "length": 7090
+                    },
+                    {
+                      "name": "2112 to 2143 kbps",
+                      "value": "1 run (25.0%)",
                       "offset": 0,
                       "length": 7090
                     }
@@ -314,17 +320,32 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "frameRuns": {
+              "firstFrames": [
+                1,
+                17,
+                33,
+                49
+              ],
+              "frameCount": 64,
+              "samples": [
+                640,
+                0,
+                640,
+                640
+              ]
+            },
             "x": [
               0,
               1698,
-              5194,
-              6986
+              3414,
+              5310
             ],
             "values": [
               1018.8,
-              1200,
-              1075.2,
-              998.4
+              2112,
+              1137.6,
+              1068
             ]
           },
           {

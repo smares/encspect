@@ -38,6 +38,24 @@ public class TrueHdFixtureTests
         }
     }
 
+    // The runs of the bitrate series state what each codes, so a front end can place a time in the stream: together they code the stream's
+    // samples, and a run holds no unit that codes nothing but its last.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void TheRunsCodeTheSamplesOfTheStream(string name)
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg(name).Streams[0];
+        Series? bitrate = stream.Series.FirstOrDefault(s => s.Name == "Bitrate");
+        if (bitrate is null)
+        {
+            return;
+        }
+
+        FrameRuns runs = bitrate.Runs!;
+        Assert.Equal(stream.Samples, runs.Samples.ToArray().Sum());
+        Assert.Equal(bitrate.X.Length, runs.FirstFrames.Length);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void ReportMatchesManifest(string name)

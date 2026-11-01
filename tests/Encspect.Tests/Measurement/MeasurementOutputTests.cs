@@ -413,6 +413,21 @@ public class MeasurementOutputTests
         }
     }
 
+    // The Zero Samples line names the count of each channel only where the channels differ (docs/cli.md).
+    [Theory]
+    [MemberData(nameof(MeasurementFixtureTests.Names), MemberType = typeof(MeasurementFixtureTests))]
+    public void ZeroSamplesNamesTheChannelsOnlyWhereTheirCountsDiffer(string name)
+    {
+        StreamMeasurements m = MeasurementFixtureTests.Analyze(name, new MeasureOptions { Include = MeasurementKinds.Levels }).Streams.Single().Measurements!;
+        if (m.Levels is not { Channels.Count: > 1 } levels)
+        {
+            return;
+        }
+
+        string text = MeasurementText.Lines(m, isLossy: false).Single(l => l.Figure == MeasurementFigure.ZeroSamples).Text;
+        Assert.Equal(levels.Channels.Any(c => c.ZeroSamples != levels.Channels[0].ZeroSamples), text.Contains('('));
+    }
+
     [Fact]
     public void TheTextNeverCallsACutoffAVerdict()
     {

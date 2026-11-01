@@ -118,6 +118,9 @@ public abstract class TimeGraph : AudioGraph
     public override long? FrameAt(int index, long? selected) =>
         (uint)index >= (uint)Columns || Locator is not { } locator ? null : locator.FrameOffsetAt(PositionOfColumn(index));
 
+    public override int FramesAfterAt(int index) =>
+        (uint)index >= (uint)Columns || Locator is not { } locator ? 0 : locator.FramesIntoRunAt(PositionOfColumn(index));
+
     public override int? IndexOfFrame(long offset)
     {
         if (Locator?.PositionOfFrame(offset) is not { } position || Columns == 0)
@@ -326,7 +329,7 @@ public sealed class SpectrumGraph : AudioGraph
 public sealed class LoudnessGraph : AudioGraph
 {
     // The figures the header and the automation text name, in the order the command line prints them.
-    private static readonly string[] FigureNames = ["Integrated Loudness", "Loudness Range", "Maximum True Peak Level", "Maximum Momentary Loudness", "Maximum Short-Term Loudness"];
+    private static readonly MeasurementFigure[] FigureKeys = [MeasurementFigure.IntegratedLoudness, MeasurementFigure.LoudnessRange, MeasurementFigure.MaximumTruePeakLevel, MeasurementFigure.MaximumMomentaryLoudness, MeasurementFigure.MaximumShortTermLoudness];
 
     private const double MaximumAxisLufs = 1000;
 
@@ -335,7 +338,7 @@ public sealed class LoudnessGraph : AudioGraph
     {
         Loudness = measurements.Loudness ?? throw new ArgumentException("No loudness was measured.");
         Series = Loudness.ShortTerm ?? throw new ArgumentException("No short-term loudness was measured.");
-        Figures = [.. MeasurementText.Lines(measurements, stream.Verification?.IsLossy == true).Where(l => FigureNames.Contains(l.Name))];
+        Figures = [.. MeasurementText.Lines(measurements, stream.Verification?.IsLossy == true).Where(l => FigureKeys.Contains(l.Figure))];
         // The measurer's values lie between -70 and a few LUFS; the clamp and the NaN check keep the axis whole for any series, since the ticks
         // are counted in integers.
         double high = double.NegativeInfinity;
@@ -439,7 +442,7 @@ public sealed class LoudnessGraph : AudioGraph
 
     // "Integrated Loudness: -23.0 LUFS · Loudness Range: 5.2 LU", the figures a header can fit.
     public string Header(bool isShort) =>
-        string.Join(" · ", Figures.Where(f => isShort ? f.Name is "Integrated Loudness" or "Loudness Range" : true).Select(f => $"{f.Name}: {f.Text}"));
+        string.Join(" · ", Figures.Where(f => isShort ? f.Figure is MeasurementFigure.IntegratedLoudness or MeasurementFigure.LoudnessRange : true).Select(f => $"{f.Name}: {f.Text}"));
 }
 
 // The measured figures as lines of text ("Spectral Cutoff: …", "Sample Peak: …"), each with its description; drawn by the window's list.
@@ -555,6 +558,8 @@ public static class AudioPanels
                 // A coding without a decoder, or a stream its container does not hand to the codec's parser: the text claims neither.
                 null or DecodeStatus.NoDecoder => new AudioCaption(NotDecodedHere(stream.Codec), false),
                 DecodeStatus.NotPossible => new AudioCaption(Cannot("the stream cannot be decoded"), false),
+                DecodeStatus.Failed => new AudioCaption("Decoding failed, so the audio has no figures.", false),
+                DecodeStatus.Stopped => new AudioCaption("Decoding stopped before any audio was measured.", false),
                 _ => new AudioCaption("The audio was decoded, but not measured.", false),
             };
         }
