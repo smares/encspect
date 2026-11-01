@@ -168,7 +168,7 @@ jobs:
 
       # Pinned to one SDK, unlike CI's 10.0.x: a self-contained publish bundles the runtime of the SDK it runs on, and
       # THIRD-PARTY-NOTICES.md names that runtime. Change the pin, scripts/release/dotnet-pin.txt and the notices together.
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.402
 

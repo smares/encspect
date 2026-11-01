@@ -147,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -404,7 +404,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -467,7 +467,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -490,7 +490,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -521,7 +521,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -723,7 +723,7 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -830,7 +830,7 @@ jobs:
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1021,7 +1021,7 @@ jobs:
       - name: Cross-check the Monkey's Audio fixtures
         run: python3 scripts/fixtures/crosscheck_monkeys_audio_fixtures.py
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1077,7 +1077,7 @@ jobs:
             echo "pinned=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         if: steps.ebu.outputs.pinned == 'true'
         with:
           dotnet-version: 10.0.x
@@ -1206,7 +1206,7 @@ jobs:
       - name: Cross-check the ASF and WMA fixtures
         run: python3 scripts/fixtures/crosscheck_asf_fixtures.py
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1269,7 +1269,7 @@ jobs:
       - name: Check the element table against the RFCs
         run: python3 scripts/fixtures/matroska_tables.py --check
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1320,7 +1320,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg liba52-0.7.4-dev mediainfo
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1383,7 +1383,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
@@ -1441,7 +1441,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg mediainfo
 
-      - uses: actions/setup-dotnet@v5
+      - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
 
