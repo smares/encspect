@@ -26,7 +26,7 @@ granule position of each stream's last page (in file order), less the pre-skip f
 the check impossible and the trimmed stage has no reference. A reader that stops early or drops a stretch without a message falls below it; one that is right
 about a start offset or wrong granule positions (G above the coded total) falls outside it too, and the rule then has no reference. The sum can hide errors that
 cancel across links, which a reader's single total cannot show. Proposal for the project lead, not approved and not used: also accept a reader that equals the libvorbis
-run with the granule positions (`proposedReference` in the figure).
+run with the granule positions (`proposedReference` in the figure). The two are not independent: libvorbisfile uses libvorbis's own granule handling, so agreement shows that the read was complete, not that the trimming is right.
 """
 
 import argparse
@@ -196,7 +196,7 @@ def compare_ogg(record, analyzer, ffmpeg):
     for s in direct["streams"]:
         if s["codec"] in ("opus", "vorbis"):
             by_codec.setdefault(s["codec"], []).append(s)
-    figures, differences = [], []
+    figures = []
     notes = []
     if analyzer is None:
         return {"figures": [], "differences": [], "units": [], "notes": ["no analyzer report"]}
@@ -231,7 +231,7 @@ def compare_ogg(record, analyzer, ffmpeg):
             if st.get("refusal") and st["codec"] in ("opus", "vorbis"):
                 m = mapping.get(st["stream"])
                 coded.append({"stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [analyzer_index(analyzer, m)], "analyzer": m["decodedSamples"] if m else None,
-                              "reference": None, "referencePath": None, "witnesses": {}, "kind": "refused", "refused": "the decoder refuses the stream (%s)" % st["refusal"],
+                              "reference": None, "referencePath": None, "witnesses": {}, "kind": "refused", "refused": st["refusal"],
                               "stream": st["stream"]})
     for number, figure in enumerate(coded):
         if len(coded) == 1:
@@ -299,7 +299,7 @@ def compare_ogg(record, analyzer, ffmpeg):
             "id": "samples", "stage": "trimmed", "analyzerFigure": "samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
             "reference": total if reason is None else None, "referencePath": reader["tool"] if reason is None else None,
             "format": {"rate": reader["formats"][0]["rate"], "channels": reader["formats"][0]["channels"]} if reader.get("formats") else None, "witnesses": {},
-            "readerTotal": total, "lastGranule": granule, "consistentRange": bounds,
+            "readerTotal": total, "readerTool": reader["tool"], "lastGranule": granule, "consistentRange": bounds,
         }
         if reason:
             figure["noReference"] = reason
@@ -308,7 +308,7 @@ def compare_ogg(record, analyzer, ffmpeg):
             figure["witnesses"]["libvorbis with granule positions"] = direct_total(witness)
             if range_reason and direct_total(witness) == total:
                 # A proposal for the project lead, not an approved rule: the reader's count equals libvorbis's own trimming from the granule positions.
-                figure["proposedReference"] = {"value": total, "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved)"}
+                figure["proposedReference"] = {"value": total, "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved; the two share libvorbis's granule handling, so it shows a complete read, not correct trimming)"}
         if ffmpeg and single:
             figure["witnesses"]["ffmpeg"] = ff_default
             if ff_default is None:
@@ -317,7 +317,12 @@ def compare_ogg(record, analyzer, ffmpeg):
     elif by_codec:
         notes.append("no reader run")
 
-    # differences, never dropped
+    return {"figures": figures, "differences": figure_differences(figures), "units": unit_verdicts(direct, analyzer), "notes": notes}
+
+
+def figure_differences(figures):
+    """The differences of figures, never dropped: the analyzer against the reference, a witness against the reference, a reader that is not the reference, a stream the decoder refuses."""
+    differences = []
     for figure in figures:
         a, r = figure["analyzer"], figure["reference"]
         if r is not None and a != r:
@@ -330,9 +335,9 @@ def compare_ogg(record, analyzer, ffmpeg):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
         if r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
-            differences.append({"figure": figure["id"], "decoder": paths["reader"]["tool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
+            differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
                                 "kind": "reader-not-accepted", "reason": figure.get("noReference")})
-    return {"figures": figures, "differences": differences, "units": unit_verdicts(direct, analyzer), "notes": notes}
+    return differences
 
 
 def ffmpeg_failure(ffmpeg, key):
@@ -572,46 +577,58 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
 
 # ---- the committed results ---------------------------------------------------------------------------------------------
 
+def unit_key(path, sha, d):
+    return (path, sha, d.get("figure") or "unit", d.get("decoder"), d.get("offset"), d.get("kind"), d.get("reference"))
+
+
 def write_official(target, previous_file, results, environment, ffmpeg_version, run_id):
-    previous, previous_figures, previous_image = {}, {}, None
+    previous, previous_figures, previous_run = {}, {}, {}
     source = previous_file or target
     if source.exists():
         old_doc = json.loads(source.read_text(encoding="utf-8"))
-        previous_image = old_doc.get("run", {}).get("imageVersion")
+        previous_run = old_doc.get("run", {})
         for f in old_doc.get("files", []):
             for fig in f.get("figures", []):
                 previous_figures[(f["path"], f["sha256"], fig["id"])] = fig
             for d in f.get("differences", []) + f.get("units", []):
-                previous[(f["path"], f["sha256"], d.get("figure") or "unit", d.get("decoder"), d.get("offset"))] = d
-    files = []
+                previous[unit_key(f["path"], f["sha256"], d)] = d
+    # A figure that differs from the committed one for the same file bytes is `build-dependent` only when the decoder packages differ between the runs;
+    # a different figure from the same packages (a changed harness or script) is listed for review and replaces the old one.
+    packages_differ = previous_run.get("packages") != environment.get("dpkg") or previous_run.get("oggdec") != environment.get("oggdec") or previous_run.get("opusdec") != environment.get("opusdec")
+    files, changed = [], []
     for r in results:
         if r["derived"]:
             continue
         rel = r["file"]
         figures = [dict(f) for f in r["figures"]]
-        differences = [dict(d) for d in r["differences"]]
+        extra = []
         for fig in figures:
             old = previous_figures.get((rel, r["sha256"], fig["id"]))
-            if old and old.get("reference") is not None and fig["reference"] is not None and old["reference"] != fig["reference"] and previous_image != environment.get("imageVersion"):
-                # the same file bytes gave another figure on another image: the first one stays the reference
-                differences.append({"figure": fig["id"], "decoder": fig["referencePath"], "value": fig["reference"], "analyzer": fig["analyzer"], "reference": old["reference"],
-                                    "status": "build-dependent", "kind": "build-dependent", "previousImage": previous_image, "image": environment.get("imageVersion")})
-                fig["reference"] = old["reference"]
+            if old and old.get("reference") is not None and fig["reference"] is not None and old["reference"] != fig["reference"]:
+                if packages_differ:
+                    extra.append({"figure": fig["id"], "decoder": fig["referencePath"], "value": fig["reference"], "analyzer": fig["analyzer"], "reference": old["reference"],
+                                  "status": "build-dependent", "kind": "build-dependent", "previousRun": previous_run.get("id"), "previousImage": previous_run.get("imageVersion"),
+                                  "image": environment.get("imageVersion")})
+                    fig["reference"] = old["reference"]
+                else:
+                    changed.append("%s %s: %s -> %s" % (rel, fig["id"], old["reference"], fig["reference"]))
         entry = {"path": rel, "sha256": r["sha256"], "figures": figures, "differences": [], "units": []}
-        for kind, listing in (("differences", differences), ("units", r["units"])):
+        for kind, listing in (("differences", figure_differences(figures) + extra), ("units", r["units"])):
             for d in listing:
-                old = previous.get((rel, r["sha256"], d.get("figure") or "unit", d.get("decoder"), d.get("offset")))
-                same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "kind", "verdict"))
+                old = previous.get(unit_key(rel, r["sha256"], d))
+                same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason"))
                 if same and old.get("statusSource") == "reviewed":
                     d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
                 else:
                     d["statusSource"] = "rule"
                 entry[kind].append(d)
         files.append(entry)
+    for line in changed:
+        print("changed figure, same packages (review): " + line, file=sys.stderr)
     doc = {"schema": SCHEMA, "format": "ogg", "run": {"id": run_id or environment.get("runId"), "commit": environment.get("commit"), "imageOS": environment.get("imageOS"),
                                                          "imageVersion": environment.get("imageVersion"), "ffmpeg": (ffmpeg_version or [None])[0], "packages": environment.get("dpkg"),
                                                          "oggdec": environment.get("oggdec"), "opusdec": environment.get("opusdec")},
-           "statuses": list(STATUSES), "files": files}
+           "statuses": list(STATUSES), "changedFiguresForReview": changed, "files": files}
     target.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

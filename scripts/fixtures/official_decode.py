@@ -110,16 +110,16 @@ def direct_result(child, mode):
                 continue
             if "codec" in l:
                 s["codec"] = l["codec"]
-            if l["granulepos"] >= 0:
-                s["lastGranule"] = l["granulepos"]  # the last page's, in file order
             result = l.get("result")
             if result == "head":
                 s["channels"], s["family"], s["preSkip"], s["created"] = l["channels"], l["family"], l["preSkip"], l["created"]
             elif result == "header":
-                s.setdefault("headerPackets", []).append({"index": l["index"], "error": l["error"]})
+                s.setdefault("headerPackets", []).append({"index": l["index"], "error": l["error"], "initError": l.get("initError", 0)})
             elif result == "tags":
                 s["tagsIndex"] = l["index"]
             else:
+                if l["granulepos"] >= 0 and result != "other codec":
+                    s["lastGranule"] = l["granulepos"]  # the last audio page's, in file order; header pages carry 0 and are not audio
                 unit = {"index": l["index"], "stream": l["stream"], "ranges": l["ranges"], "pageOffset": l["pageOffset"], "bytes": l["bytes"], "result": result}
                 for key in ("samples", "tocSamples", "error", "granulepos", "eos"):
                     if key in l and (key not in ("granulepos", "eos") or l[key] not in (-1, 0)):
@@ -128,19 +128,27 @@ def direct_result(child, mode):
                     s["samples"] += l["samples"]
                     s["rate"], s["channels"] = l["rate"], l["channels"]
                     s["decodedUnits"] = s.get("decodedUnits", 0) + 1
-                elif result in ("not an OpusHead", "not a Vorbis identification header") or (result or "").startswith("not decoded"):
-                    s["refusal"] = result
+                elif result == "not an OpusHead":
+                    s["refusal"] = "not passed to libopus: the first packet is not an OpusHead (the harness's check, RFC 7845 section 5.1)"
+                elif result == "not a Vorbis identification header":
+                    s["refusal"] = "libvorbis is not given the stream: the first packet is not a Vorbis identification header (the harness's check)"
+                elif (result or "").startswith("not decoded"):
+                    why = result[len("not decoded: "):]
+                    s["refusal"] = ("libopus refuses the OpusHead (%s, code %d)" % (why, l["created"])) if l.get("by") == "libopus" else \
+                        "not passed to libopus: the harness's OpusHead check fails (%s; RFC 7845 section 5.1)" % why
                 units.append(unit)
     for s in streams.values():
         if s["codec"] == "vorbis" and "refusal" not in s:
             packets = s.get("headerPackets", [])
             bad = next((i for i, h in enumerate(packets) if h["error"] != 0), None)
             if bad is not None:
-                s["refusal"] = "header packet %d refused (code %d)" % (bad + 1, packets[bad]["error"])
+                s["refusal"] = "libvorbis refuses header packet %d (code %d)" % (bad + 1, packets[bad]["error"])
+            elif any(h["initError"] != 0 for h in packets):
+                s["refusal"] = "libvorbis accepts the three headers but vorbis_synthesis_init fails (code %d)" % next(h["initError"] for h in packets if h["initError"] != 0)
             elif len(packets) < 3:
-                s["refusal"] = "%d of the 3 header packets" % len(packets)
+                s["refusal"] = "libvorbis is given %d of the 3 header packets" % len(packets)
         if s["codec"] == "opus" and "refusal" not in s and s.get("created", 0) != 0:
-            s["refusal"] = "decoder not created (code %d)" % s["created"]
+            s["refusal"] = "libopus does not create a decoder from the OpusHead (code %d)" % s["created"]
         if s["codec"] == "opus" and "refusal" not in s and "channels" not in s:
             s["refusal"] = "no OpusHead"
     # one total per run of constant output format: consecutive streams with the same rate and channels
@@ -180,6 +188,7 @@ def direct_result(child, mode):
         "dropped": dropped,
         "holes": holes,
         "refusedPages": refused,
+        "pagesAfterEndOfStream": end.get("pagesAfterEndOfStream", 0) if end else None,
         "skippedBytes": end["skippedBytes"] if end else None,
         "trailingBytes": end["trailingBytes"] if end else None,
         "pages": end["pages"] if end else None,

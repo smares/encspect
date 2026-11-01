@@ -14,11 +14,12 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
 {
     private static readonly string[] Statuses = ["explained", "noted", "pending", "follow", "keep", "build-dependent", "stale"];
 
-    // Lists go to the test output and, in CI, to the job summary, where they are seen without opening a log.
+    // Lists go to the test output and, in the one CI job that sets ENCSPECT_OFFICIAL_SUMMARY (the rest shard on Linux), to the job summary, where they are seen
+    // without opening a log; the other jobs would only repeat them.
     private void Note(string line)
     {
         output.WriteLine(line);
-        if (Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
+        if (Environment.GetEnvironmentVariable("ENCSPECT_OFFICIAL_SUMMARY") == "1" && Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
         {
             File.AppendAllText(summary, line + "\n");
         }

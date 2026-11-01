@@ -55,6 +55,7 @@ static void ranges_add(RangeList *list, long long offset, long long length) {
 
 typedef struct {
     int used;
+    int ended;
     long serial;
     long long index;
     long long last_sequence;
@@ -111,7 +112,7 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
     if (!s->opus_head_seen) {
         s->opus_head_seen = 1;
         if (!is_opus(op) || op->bytes < 19) {
-            printf(",\"result\":\"not an OpusHead\"}\n");
+            printf(",\"result\":\"not an OpusHead\",\"by\":\"harness\"}\n");
             return;
         }
         const unsigned char *h = op->packet;
@@ -119,19 +120,23 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
         unsigned char mapping[256];
         int nstreams = 0, coupled = 0, err = 0, supported = 1;
         const char *why = "";
-        if (channels < 1) {
-            supported = 0;
-            why = "channel count";
-        } else if (family == 0) {
-            if (channels > 2) {
-                supported = 0;
-                why = "family 0 with more than 2 channels";
-            } else {
-                nstreams = 1;
-                coupled = channels == 2;
-                mapping[0] = 0;
-                mapping[1] = 1;
+        if (channels < 1 || (family == 0 && channels > 2)) {
+            /* RFC 7845 section 5.1.1 allows 1 or 2 channels in family 0 and 1 to 255 otherwise; the fields are handed to libopus as they are, to get its verdict. */
+            unsigned char identity[256];
+            for (int k = 0; k < 255; k++) {
+                identity[k] = (unsigned char)k;
             }
+            OpusMSDecoder *probe = opus_multistream_decoder_create(48000, channels, 1, 0, identity, &err);
+            if (probe) {
+                opus_multistream_decoder_destroy(probe);
+            }
+            printf(",\"result\":\"not decoded: %s\",\"by\":\"libopus\",\"created\":%d,\"family\":%d,\"channels\":%d}\n", channels < 1 ? "channel count 0" : "family 0 with more than 2 channels", err, family, channels);
+            return;
+        } else if (family == 0) {
+            nstreams = 1;
+            coupled = channels == 2;
+            mapping[0] = 0;
+            mapping[1] = 1;
         } else if ((family == 1 || family == 2 || family == 255) && op->bytes >= 21 + channels) {
             /* RFC 7845 section 5.1.1.4 gives family 255 the table of family 1. */
             nstreams = h[19];
@@ -146,7 +151,7 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
             why = "head too short for its mapping or an unknown family";
         }
         if (!supported) {
-            printf(",\"result\":\"not decoded: %s\",\"family\":%d,\"channels\":%d}\n", why, family, channels);
+            printf(",\"result\":\"not decoded: %s\",\"by\":\"harness\",\"family\":%d,\"channels\":%d}\n", why, family, channels);
         } else {
             if (family != 3) {
                 s->opus = opus_multistream_decoder_create(48000, channels, nstreams, coupled, mapping, &err);
@@ -177,15 +182,16 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
 static void decode_vorbis(Slot *s, ogg_packet *op, int keep_granule) {
     if (s->header_packets < 3 && !s->vorbis_ready) {
         int err = vorbis_synthesis_headerin(&s->vi, &s->vc, op);
+        int init = 0;
         s->header_packets++;
         if (s->header_packets == 3 && err == 0) {
-            err = vorbis_synthesis_init(&s->vd, &s->vi);
-            if (err == 0) {
+            init = vorbis_synthesis_init(&s->vd, &s->vi);
+            if (init == 0) {
                 vorbis_block_init(&s->vd, &s->vb);
                 s->vorbis_ready = 1;
             }
         }
-        printf(",\"result\":\"header\",\"error\":%d%s}\n", err, s->header_packets == 1 && err == 0 ? ",\"detail\":\"identification\"" : "");
+        printf(",\"result\":\"header\",\"error\":%d,\"initError\":%d%s}\n", err, init, s->header_packets == 1 && err == 0 ? ",\"detail\":\"identification\"" : "");
     } else if (s->vorbis_ready) {
         if (!keep_granule) {
             op->granulepos = -1;
@@ -211,6 +217,25 @@ static void decode_vorbis(Slot *s, ogg_packet *op, int keep_granule) {
     }
 }
 
+/* A packet's size follows from the lacing values; libogg would assemble it in memory before the harness could look, so the page is checked first. */
+static int page_exceeds_cap(const Slot *s, const ogg_page *page) {
+    long long current = 0;
+    for (int k = 0; k < s->pending.count; k++) {
+        current += s->pending.items[k].length;
+    }
+    for (int i = 0; i < page->header[26]; i++) {
+        int lace = page->header[27 + i];
+        current += lace;
+        if (current > MAX_PACKET) {
+            return 1;
+        }
+        if (lace < 255) {
+            current = 0;
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc != 3 || (strcmp(argv[1], "direct") && strcmp(argv[1], "granule"))) {
         fprintf(stderr, "usage: ogg_decode direct|granule file\n");
@@ -229,7 +254,7 @@ int main(int argc, char **argv) {
     ogg_sync_state sync;
     ogg_sync_init(&sync);
     const char *stopped = "end";
-    long long offset = 0, packet_index = 0, holes = 0, skipped_bytes = 0, pages = 0, streams = 0, refused_pages = 0;
+    long long offset = 0, packet_index = 0, holes = 0, skipped_bytes = 0, pages = 0, streams = 0, refused_pages = 0, pages_after_eos = 0;
     static float opus_pcm[5760 * 255];
     int eof = 0;
     while (!eof) {
@@ -277,6 +302,12 @@ int main(int argc, char **argv) {
                         break;
                     }
                 }
+                for (int i = 0; !s && i < MAX_STREAMS; i++) {
+                    if (slots[i].used && slots[i].ended) {
+                        slot_release(&slots[i]);
+                        s = &slots[i];
+                    }
+                }
                 if (s) {
                     memset(s, 0, sizeof(*s));
                     s->used = 1;
@@ -288,6 +319,16 @@ int main(int argc, char **argv) {
                     vorbis_comment_init(&s->vc);
                     printf("{\"type\":\"stream\",\"stream\":%lld,\"offset\":%lld,\"serial\":%ld}\n", s->index, page_offset, serial);
                 }
+            }
+            if (s && s->ended && !ogg_page_bos(&page)) {
+                pages_after_eos++;
+                printf("{\"type\":\"after-eos\",\"offset\":%lld,\"serial\":%ld}\n", page_offset, serial);
+            }
+            if (s && page_exceeds_cap(s, &page)) {
+                stopped = "limit";
+                printf("{\"type\":\"limit\",\"offset\":%lld,\"serial\":%ld,\"detail\":\"a packet over 16 MiB; the page is not given to libogg\"}\n", page_offset, serial);
+                fflush(stdout);
+                continue;
             }
             if (!s || ogg_stream_pagein(&s->os, &page) < 0) {
                 refused_pages++;
@@ -393,7 +434,7 @@ int main(int argc, char **argv) {
                 free(queue[k].items);
             }
             if (ogg_page_eos(&page)) {
-                slot_release(s);
+                s->ended = 1;
             }
         }
     }
@@ -403,8 +444,8 @@ int main(int argc, char **argv) {
     }
     ogg_sync_clear(&sync);
     fclose(file);
-    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"trailingBytes\":%lld,\"refusedPages\":%lld,\"codedSamples\":%lld}\n",
-           stopped, pages, streams, packet_index, holes, skipped_bytes, trailing, refused_pages, total_samples);
+    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"trailingBytes\":%lld,\"refusedPages\":%lld,\"pagesAfterEndOfStream\":%lld,\"codedSamples\":%lld}\n",
+           stopped, pages, streams, packet_index, holes, skipped_bytes, trailing, refused_pages, pages_after_eos, total_samples);
     fflush(stdout);
     return 0;
 }
