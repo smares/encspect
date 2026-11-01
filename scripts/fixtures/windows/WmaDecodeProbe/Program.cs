@@ -1,10 +1,14 @@
 // Decodes WMA files with Microsoft's decoders on a Windows runner and writes one JSON record per file.
 //
 //   wma-decode-probe --out <dir> [--list <file with one path per line>] [--timeout <seconds>] <file or folder>...
+//   wma-decode-probe --format aac --units <folder of unit lists> --out <dir> [--timeout <seconds>] <file or folder>...
+//   wma-decode-probe inventory --out <dir>
 //
 // Each file is handled by three child processes of this program (Source Reader, decoder DMO, and the
 // DMO again without timestamps), so that a decoder that crashes on a damaged file is recorded and the
-// run goes on.
+// run goes on. With --format aac the decoder is the AAC decoder MFT, fed the units of the unit list
+// (scripts/fixtures/unit_list.py --tsv) of the file, and the same three children are the Source Reader,
+// the MFT with timestamps and the MFT without. "inventory" lists the audio decoders of the image.
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,10 +31,11 @@ public static class Program
     {
         if (args.Length >= 5 && args[0] == "--child")
         {
-            return Child(args[1], args[2], args[3], int.Parse(args[4]));
+            return Child(args[1], args[2], args[3], int.Parse(args[4]), args.Length > 5 ? args[5] : null);
         }
 
-        string? outDir = null, list = null;
+        string? outDir = null, list = null, format = null, unitsDir = null;
+        bool inventory = args.Length > 0 && args[0] == "inventory";
         int timeout = 120;
         var inputs = new List<string>();
         for (int i = 0; i < args.Length; i++)
@@ -46,6 +51,14 @@ public static class Program
                 case "--timeout":
                     timeout = int.Parse(args[++i]);
                     break;
+                case "--format":
+                    format = args[++i];
+                    break;
+                case "--units":
+                    unitsDir = args[++i];
+                    break;
+                case "inventory" when i == 0:
+                    break;
                 default:
                     inputs.Add(args[i]);
                     break;
@@ -58,6 +71,18 @@ public static class Program
             return 2;
         }
 
+        if (inventory)
+        {
+            Directory.CreateDirectory(outDir);
+            var modulesOfInventory = new SortedDictionary<string, string?>();
+            var node = RunChild("inventory", "-", timeout, modulesOfInventory, null);
+            File.WriteAllText(Path.Combine(outDir, "inventory.json"), node.ToJsonString(Options) + "\n", new UTF8Encoding(false));
+            WriteEnvironment(outDir, new SortedDictionary<string, string?>(), modulesOfInventory);
+            Console.WriteLine(node.ToJsonString(Options));
+            return 0;
+        }
+
+        bool aac = format == "aac";
         if (list != null)
         {
             inputs.AddRange(File.ReadAllLines(list).Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')));
@@ -71,7 +96,7 @@ public static class Program
                 foreach (var f in Directory.EnumerateFiles(input, "*", SearchOption.AllDirectories))
                 {
                     var ext = Path.GetExtension(f).ToLowerInvariant();
-                    if (ext is ".wma" or ".asf")
+                    if (aac ? ext is ".m4a" or ".mp4" or ".aac" or ".m4b" or ".3gp" or ".ac3" or ".eac3" : ext is ".wma" or ".asf")
                     {
                         files.Add(Path.GetFullPath(f));
                     }
@@ -98,15 +123,22 @@ public static class Program
         {
             string name = Path.GetFileName(file);
             string recordName = used.Add(name) ? name : name + "-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(file)))[..8];
+            string hash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant();
+            string? units = aac && unitsDir != null ? Path.Combine(unitsDir, hash + ".units.tsv") : null;
+            if (units != null && !File.Exists(units))
+            {
+                units = null;
+            }
+
             var record = new JsonObject
             {
                 ["file"] = name,
                 ["path"] = Path.GetRelativePath(root, file).Replace('\\', '/'),
                 ["bytes"] = new FileInfo(file).Length,
-                ["sha256"] = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))).ToLowerInvariant(),
-                ["sourceReader"] = RunChild("sr", file, timeout, modules),
-                ["direct"] = RunChild("dmo", file, timeout, modules),
-                ["directWithoutTimestamps"] = RunChild("dmo-nots", file, timeout, modules),
+                ["sha256"] = hash,
+                ["sourceReader"] = RunChild("sr", file, timeout, modules, null),
+                ["direct"] = RunChild(aac ? "mft" : "dmo", file, timeout, modules, units),
+                ["directWithoutTimestamps"] = RunChild(aac ? "mft-nots" : "dmo-nots", file, timeout, modules, units),
             };
             var direct = record["direct"]?["decoder"];
             if (direct != null)
@@ -115,13 +147,32 @@ public static class Program
             }
 
             File.WriteAllText(Path.Combine(outDir, "records", recordName + ".json"), record.ToJsonString(Options) + "\n", new UTF8Encoding(false));
-            Console.WriteLine(Summary(name, record));
+            Console.WriteLine(aac ? SummaryAac(name, record) : Summary(name, record));
             written++;
         }
 
         WriteEnvironment(outDir, decoders, modules);
         Console.WriteLine($"{written} records written to {Path.Combine(outDir, "records")}");
         return written > 0 ? 0 : 1;
+    }
+
+    private static string SummaryAac(string name, JsonObject record)
+    {
+        string Reader()
+        {
+            var node = record["sourceReader"];
+            return node?["crashed"] != null ? "crashed " + node["exitCode"] : node?["stalled"] != null ? "stalled" : node?["timedOut"] != null ? "timed out"
+                : node?["opened"]?.GetValue<bool>() == true ? $"{node["totalSamples"]} samples, {node["errorCount"]} errors" : "open " + node?["openHresult"];
+        }
+
+        string Mft(string key)
+        {
+            var node = record[key];
+            return node?["crashed"] != null ? "crashed " + node["exitCode"] : node?["stalled"] != null ? "stalled" : node?["timedOut"] != null ? "timed out"
+                : node?["skipped"] != null ? "skipped" : node?["refusedMediaType"] != null ? "media type refused" : $"{node?["codedSamples"]} samples, {node?["errorCount"]} errors";
+        }
+
+        return $"{name}: reader {Reader()}; MFT {Mft("direct")}; without timestamps {Mft("directWithoutTimestamps")}";
     }
 
     private static string Summary(string name, JsonObject record)
@@ -164,7 +215,7 @@ public static class Program
         return $"{name}: reader {Part("sourceReader")}; decoder {Part("direct")}; without timestamps {Part("directWithoutTimestamps")}";
     }
 
-    private static JsonNode RunChild(string mode, string file, int timeoutSeconds, SortedDictionary<string, string?> modules)
+    private static JsonNode RunChild(string mode, string file, int timeoutSeconds, SortedDictionary<string, string?> modules, string? units)
     {
         string json = Path.Combine(Path.GetTempPath(), "wma-probe-" + Guid.NewGuid().ToString("N") + ".json");
         var psi = new ProcessStartInfo
@@ -179,7 +230,7 @@ public static class Program
             psi.ArgumentList.Add(typeof(Program).Assembly.Location);
         }
 
-        foreach (var a in new[] { "--child", mode, file, json, Math.Max(5, timeoutSeconds - 10).ToString() })
+        foreach (var a in units == null ? new[] { "--child", mode, file, json, Math.Max(5, timeoutSeconds - 10).ToString() } : ["--child", mode, file, json, Math.Max(5, timeoutSeconds - 10).ToString(), units])
         {
             psi.ArgumentList.Add(a);
         }
@@ -236,7 +287,7 @@ public static class Program
     // Runs the probe on a thread of its own and waits for the budget: a call into Windows that does not
     // return leaves a record of what was seen up to then (calls, last timestamp, whether it is inside
     // ReadSample and since when) instead of a bare time-out.
-    private static int Child(string mode, string file, string jsonPath, int budgetSeconds)
+    private static int Child(string mode, string file, string jsonPath, int budgetSeconds, string? units)
     {
         var record = new Dictionary<string, object?>();
         var worker = new Thread(() =>
@@ -246,6 +297,24 @@ public static class Program
                 if (mode == "sr")
                 {
                     SourceReaderProbe.Run(file, record);
+                }
+                else if (mode == "inventory")
+                {
+                    Inventory.Run(record);
+                }
+                else if (mode is "mft" or "mft-nots")
+                {
+                    if (units == null)
+                    {
+                        lock (SourceReaderProbe.Gate)
+                        {
+                            record["skipped"] = "no unit list for the file";
+                        }
+                    }
+                    else
+                    {
+                        MftProbe.Run(file, units, record, withTimestamps: mode == "mft");
+                    }
                 }
                 else
                 {

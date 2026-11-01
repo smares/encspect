@@ -35,7 +35,7 @@ jobs:
       - name: Build FDK AAC 2.0.2, 2.0.3 and 3.0.0 and the harnesses
         run: |
           set -euo pipefail
-          mkdir -p build/bin build/inc out
+          mkdir -p build/bin out
           : > out/build-info.txt
           for entry in v2.0.2=801f67f671929311e0c9952c5f92d6e147c7b003 v2.0.3=716f4394641d53f0d79c9ddac3fa93b03a49f278 v3.0.0=a68a51aa45d86a43c7b228e3d45624af09dcdd8d; do
             name=${entry%%=*}; commit=${entry##*=}
@@ -44,10 +44,9 @@ jobs:
             test "$(git -C build/fdk-$name rev-parse HEAD)" = "$commit"
             cmake -S "build/fdk-$name" -B "build/fdk-$name/build" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_PROGRAMS=OFF > /dev/null
             cmake --build "build/fdk-$name/build" -j4 > /dev/null
-            mkdir -p "build/inc/$name/fdk-aac"
-            cp -n build/fdk-$name/libAACdec/include/*.h build/fdk-$name/libSYS/include/*.h build/fdk-$name/libAACenc/include/*.h "build/inc/$name/fdk-aac/" 2>/dev/null || true
-            gcc -O2 -w -I"build/inc/$name" scripts/fixtures/fdk_decode.c -L"build/fdk-$name/build" -lfdk-aac -o "build/bin/fdk_decode-$name"
-            echo "fdk-aac $name $commit $(ls build/fdk-$name/build/libfdk-aac.so.*.*.* | head -1)" >> out/build-info.txt
+            cmake --install "build/fdk-$name/build" --prefix "$PWD/build/inst-$name" > /dev/null
+            gcc -O2 -w -I"build/inst-$name/include" scripts/fixtures/fdk_decode.c -L"build/inst-$name/lib" -lfdk-aac -o "build/bin/fdk_decode-$name"
+            echo "fdk-aac $name $commit $(ls build/inst-$name/lib | tr '\n' ' ')" >> out/build-info.txt
           done
           gcc -O2 -Wall scripts/fixtures/ogg_decode.c -o build/bin/ogg_decode -lvorbis -lopus -logg
           dpkg-query -W -f='${Package} ${Version}\n' libogg-dev libopus-dev libvorbis-dev libogg0 libopus0 libvorbis0a ffmpeg opus-tools vorbis-tools >> out/build-info.txt
@@ -64,7 +63,7 @@ jobs:
         timeout-minutes: 40
         run: |
           python3 -I scripts/fixtures/official_probe.py linux --out out --bin build/bin \
-            --fdk v2.0.2=$PWD/build/fdk-v2.0.2/build v2.0.3=$PWD/build/fdk-v2.0.3/build v3.0.0=$PWD/build/fdk-v3.0.0/build \
+            --fdk v2.0.2=$PWD/build/inst-v2.0.2/lib v2.0.3=$PWD/build/inst-v2.0.3/lib v3.0.0=$PWD/build/inst-v3.0.0/lib \
             --tta "$(cat build/tta-path.txt)"
 
       - uses: actions/upload-artifact@v7
@@ -74,3 +73,94 @@ jobs:
           path: out
           retention-days: 30
           if-no-files-found: error
+
+  macos:
+    name: Core Audio on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the AudioToolbox probe
+        run: |
+          mkdir -p build
+          clang -O2 -Wall scripts/fixtures/macos/audiotoolbox_probe.c -framework AudioToolbox -framework CoreFoundation -o build/audiotoolbox_probe
+
+      - name: Run the probe
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 40
+        run: python3 -I scripts/fixtures/official_probe.py macos --out out --probe build/audiotoolbox_probe
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-macos-${{ matrix.runner }}
+          path: out
+          retention-days: 30
+          if-no-files-found: error
+
+  windows:
+    name: Media Foundation on ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            full: true
+          - runner: windows-2022
+            full: false
+          - runner: windows-11-arm
+            full: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the probe
+        shell: bash
+        run: dotnet publish scripts/fixtures/windows/WmaDecodeProbe -c Release -o probe-bin
+
+      - name: Inventory of the audio decoders
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          mkdir -p inventory-out
+          ./probe-bin/wma-decode-probe.exe inventory --out inventory-out --timeout 60 | head -c 20000
+
+      - name: Make the unit lists
+        if: matrix.full
+        shell: bash
+        run: |
+          mkdir -p units
+          python scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac/*.* tests/fixtures/adts/*.* tests/fixtures/apple/*.* tests/fixtures/mp4/*.* tests/fixtures/ac3/*.* 2>&1 | tail -3 || true
+          ls units | wc -l
+
+      - name: Decode with the Source Reader and the AAC decoder MFT
+        if: matrix.full
+        shell: bash
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 40
+        run: |
+          mkdir -p decode-out
+          for folder in aac adts apple mp4 ac3; do
+            mkdir -p "decode-out/$folder"
+            ./probe-bin/wma-decode-probe.exe --format aac --units units --out "decode-out/$folder" --timeout 30 "tests/fixtures/$folder" 2>&1 | tee -a decode-out/log.txt | tail -3
+          done
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-windows-${{ matrix.runner }}
+          path: |
+            inventory-out
+            decode-out
+          retention-days: 30
+          if-no-files-found: ignore

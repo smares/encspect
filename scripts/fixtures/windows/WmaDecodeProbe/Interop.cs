@@ -51,13 +51,117 @@ public interface IMFSample
     [PreserveSig] int GetSampleDuration(out long duration);
     void SetSampleDuration(long duration);
     [PreserveSig] int GetBufferCount(out uint count);
-    void GetBufferByIndex();
-    void ConvertToContiguousBuffer();
-    void AddBuffer();
+    [PreserveSig] int GetBufferByIndex(uint index, out IMFMediaBuffer buffer);
+    [PreserveSig] int ConvertToContiguousBuffer(out IMFMediaBuffer buffer);
+    [PreserveSig] int AddBuffer(IMFMediaBuffer buffer);
     void RemoveBufferByIndex();
     void RemoveAllBuffers();
     [PreserveSig] int GetTotalLength(out uint length);
     void CopyToBuffer();
+}
+
+[ComImport, Guid("045fa593-8799-42b8-bc8d-8968c6453507"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMFMediaBuffer
+{
+    [PreserveSig] int Lock(out IntPtr buffer, out uint maxLength, out uint currentLength);
+    [PreserveSig] int Unlock();
+    [PreserveSig] int GetCurrentLength(out uint length);
+    [PreserveSig] int SetCurrentLength(uint length);
+    [PreserveSig] int GetMaxLength(out uint length);
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct MftInputStreamInfo
+{
+    public long MaxLatency;
+    public uint Flags;
+    public uint Size;
+    public uint MaxLookahead;
+    public uint Alignment;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct MftOutputStreamInfo
+{
+    public uint Flags;
+    public uint Size;
+    public uint Alignment;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct MftOutputDataBuffer
+{
+    public uint StreamId;
+    public IntPtr Sample;
+    public uint Status;
+    public IntPtr Events;
+}
+
+[ComImport, Guid("bf94c121-5b05-4e6f-8000-ba598961414d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMFTransform
+{
+    [PreserveSig] int GetStreamLimits(out uint inputMin, out uint inputMax, out uint outputMin, out uint outputMax);
+    [PreserveSig] int GetStreamCount(out uint inputs, out uint outputs);
+    [PreserveSig] int GetStreamIDs(uint inputSize, IntPtr inputIds, uint outputSize, IntPtr outputIds);
+    [PreserveSig] int GetInputStreamInfo(uint stream, out MftInputStreamInfo info);
+    [PreserveSig] int GetOutputStreamInfo(uint stream, out MftOutputStreamInfo info);
+    [PreserveSig] int GetAttributes(out IntPtr attributes);
+    [PreserveSig] int GetInputStreamAttributes(uint stream, out IntPtr attributes);
+    [PreserveSig] int GetOutputStreamAttributes(uint stream, out IntPtr attributes);
+    [PreserveSig] int DeleteInputStream(uint stream);
+    [PreserveSig] int AddInputStreams(uint count, IntPtr ids);
+    [PreserveSig] int GetInputAvailableType(uint stream, uint index, out IMFMediaType type);
+    [PreserveSig] int GetOutputAvailableType(uint stream, uint index, out IMFMediaType type);
+    [PreserveSig] int SetInputType(uint stream, IMFMediaType type, uint flags);
+    [PreserveSig] int SetOutputType(uint stream, IMFMediaType type, uint flags);
+    [PreserveSig] int GetInputCurrentType(uint stream, out IMFMediaType type);
+    [PreserveSig] int GetOutputCurrentType(uint stream, out IMFMediaType type);
+    [PreserveSig] int GetInputStatus(uint stream, out uint flags);
+    [PreserveSig] int GetOutputStatus(out uint flags);
+    [PreserveSig] int SetOutputBounds(long lower, long upper);
+    [PreserveSig] int ProcessEvent(uint stream, IntPtr evt);
+    [PreserveSig] int ProcessMessage(uint message, IntPtr parameter);
+    [PreserveSig] int ProcessInput(uint stream, IMFSample sample, uint flags);
+    [PreserveSig] int ProcessOutput(uint flags, uint count, ref MftOutputDataBuffer buffers, out uint status);
+}
+
+// IMFActivate: the 30 methods of IMFAttributes in vtable order, of which three are called, then its own.
+[ComImport, Guid("7fee9e9a-4a89-47a6-899c-b6a53a70fb67"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IMFActivate
+{
+    void GetItem();
+    void GetItemType();
+    void CompareItem();
+    void Compare();
+    void GetUINT32();
+    void GetUINT64();
+    void GetDouble();
+    [PreserveSig] int GetGUID(ref Guid key, out Guid value);
+    void GetStringLength();
+    void GetString();
+    [PreserveSig] int GetAllocatedString(ref Guid key, out IntPtr value, out uint length);
+    [PreserveSig] int GetBlobSize(ref Guid key, out uint size);
+    [PreserveSig] int GetBlob(ref Guid key, IntPtr buffer, uint size, out uint written);
+    void GetAllocatedBlob();
+    void GetUnknown();
+    void SetItem();
+    void DeleteItem();
+    void DeleteAllItems();
+    void SetUINT32();
+    void SetUINT64();
+    void SetDouble();
+    void SetGUID();
+    void SetString();
+    void SetBlob();
+    void SetUnknown();
+    void LockStore();
+    void UnlockStore();
+    void GetCount();
+    void GetItemByIndex();
+    void CopyAllItems();
+    void ActivateObject();
+    void ShutdownObject();
+    void DetachObject();
 }
 
 [ComImport, Guid("70ae66f2-c809-4e4f-8915-bdcb406b7993"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -230,6 +334,15 @@ public static class Native
 
     [DllImport("mfplat.dll")]
     public static extern int MFCreateWaveFormatExFromMFMediaType(IMFMediaType type, out IntPtr format, out uint size, uint flags);
+
+    [DllImport("mfplat.dll")]
+    public static extern int MFCreateSample(out IMFSample sample);
+
+    [DllImport("mfplat.dll")]
+    public static extern int MFCreateMemoryBuffer(uint maxLength, out IMFMediaBuffer buffer);
+
+    [DllImport("mfplat.dll")]
+    public static extern int MFTEnumEx(Guid category, uint flags, IntPtr inputType, IntPtr outputType, out IntPtr activates, out uint count);
 
     [DllImport("mfreadwrite.dll", CharSet = CharSet.Unicode)]
     public static extern int MFCreateSourceReaderFromURL(string url, IntPtr attributes, out IMFSourceReader reader);

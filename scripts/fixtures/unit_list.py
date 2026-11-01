@@ -6,7 +6,10 @@ It is not the analyzer and shares no code with it. For one AAC, AC-3 or E-AC-3 f
 bytes the file holds of it, the byte ranges it skipped, and the configuration (AudioSpecificConfig, dac3 or dec3).
 Every direct path of every platform reads this list, so differences between decoders are not differences between readers.
 
-  unit_list.py [--tsv] file...      one JSON object per line, or a flat text form for the C harnesses:
+  unit_list.py [--tsv] file...      one JSON object per line, or a flat text form for the C harnesses
+  unit_list.py --tsv-dir DIR file...  writes DIR/<sha256 of the file>.units.tsv for each file (the Windows probe finds the lists by hash)
+
+The flat form:
       F <sha256> <kind>              kind: adts, adif, mp4, ac3, eac3, unknown
       T <codec> <timescale>          codec: aac, ac-3, ec-3
       C <hex>                        configuration, when the container has one
@@ -405,6 +408,14 @@ def tsv(result):
 
 
 def main(argv):
+    if "--tsv-dir" in argv:
+        i = argv.index("--tsv-dir")
+        directory = argv[i + 1]
+        for path in argv[:i] + argv[i + 2:]:
+            result = extract(path)
+            with open("%s/%s.units.tsv" % (directory, result["sha256"]), "w", encoding="utf-8", newline="\n") as target:
+                target.write(tsv(result))
+        return 0
     flat = "--tsv" in argv
     for path in [a for a in argv if a != "--tsv"]:
         result = extract(path)
