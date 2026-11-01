@@ -378,6 +378,42 @@ The project lead accepted every recommendation below on 2026-11-01.
 7. **The reference implementation of AAC.** The plan says "the decoder of a format's owner, or its reference implementation". AAC's is the ISO/IEC 14496-5 software, deferred here ("license and build were not examined"), yet it would cover the object types FDK and Media Foundation refuse (Main, LTP, SSR). Options: examine its license and build now, as part of the probe; or leave it for a later step. Recommendation: examine its license now (a reading task, no build), and decide on the build with the probe's results on FDK's refusals.
 8. **Probe size.** Options: the full probe at 2 to 3 days, or the inventory and the reader paths only, with the direct-path cases moved to the steps. Recommendation: the full probe, because its answers decide the design of steps 2 to 6.
 
+## License reading for the test decoders
+
+Task 1 of rollout step 1, from option (b) of question 1 and question 7. It reads each license from its own published text and decides nothing the text does not settle; what is left goes to the project lead as the questions at the end of this section. Read on 2026-11-01. This is a reading by the probe's author, not legal advice.
+
+### FDK AAC
+
+- **Text read:** the header comment of `libAACdec/include/aacdecoder_lib.h` at the pinned commit 801f67f (v2.0.2), "Software License for The Fraunhofer FDK AAC Codec Library for Android", and the repository's `NOTICE` at the same commit (the same text, copyright 1995 - 2018 there, 1995 - 2019 in the header).
+- **Section 2, copyright license:** "Redistribution and use in source and binary forms, with or without modification, are permitted without payment of copyright license fees" under conditions that concern redistribution (keep the license text, give binary recipients the source, no endorsement by the name of Fraunhofer, no copyright fees charged, modified versions carry notices). Building the source on a runner and running it is "use in source and binary forms"; this project redistributes nothing, so the conditions do not apply to it.
+- **Section 3, no patent license:** "NO EXPRESS OR IMPLIED LICENSES TO ANY PATENT CLAIMS ... ARE GRANTED BY THIS SOFTWARE LICENSE", and "You may use this FDK AAC Codec software or modifications thereto only for purposes that are authorized by appropriate patent licenses."
+- **Section 1** says patent licenses "may be obtained through Via Licensing ... or through the respective patent owners individually for the purpose of encoding or decoding bit streams in products that are compliant with the ISO/IEC MPEG audio standards", and that manufacturers of Android devices usually hold them.
+- **What the text settles:** nothing in it forbids building the library or using it as a test tool; section 2 grants use without copyright fees. It makes the use conditional on an authorization by patent licenses, and says nowhere whether a test run in CI, of an open-source analyzer that redistributes no codec, is such a purpose, or who would hold the authorization. That is not settled by the text.
+- **Consequence for this work:** the probe builds FDK the way `fdk_tool.py` already does (in CI, for this project's own checks, never redistributed, never linked into Encspect), which is the precedent of question 1(a). The text does not forbid it, so the probe goes ahead; the patent condition stays a question for the project lead.
+
+### Dolby's decoder in the Microsoft Store
+
+- **Texts read:** Microsoft Learn, "Dolby Audio Decoder" (`Msauddecmft.dll`) and "Field of Use Restrictions"; Dolby's "Windows Licensing Program license agreement" page was found by search and not read beyond its summary.
+- **Not readable:** the terms of the Store package (it is reported by users under the name "Microsoft Dolby Audio Extensions" for Windows 11 24H2) could not be read. The Store page is script-rendered and its search returned no listing for the package; the one forum thread found for it (elevenforum.com) answered 403. No license text of the package was seen, so this design states nothing about it.
+- **What Learn says:** "For versions of Windows prior to Windows 8, the Microsoft implementation of the Dolby Digital technology is restricted under terms of the Dolby Digital licensing program to use by Microsoft applications." "Minimum supported server: None supported."
+- **Field of use:** an MFT registered with `MFT_ENUM_FLAG_FIELDOFUSE` "must block its own use by applications until the application has performed a handshake with the MFT", and "Media Foundation does not define the handshake". No handshake for the Dolby decoder is documented in the pages read, so an application cannot unlock it from the documentation.
+- **What the text settles:** nothing about the Store decoder. For the inbox decoder it shows a field-of-use lock with an undocumented handshake.
+- **Consequence:** the probe does not install anything from the Store. It enumerates and tries to create the inbox decoder (open question 1) and records the result.
+
+### ISO/IEC 14496-5 reference software for AAC
+
+- **Texts read:** none of the standard itself. Search results show that ISO/IEC 14496-5:2001 and its amendments are sold by national bodies (a DIN listing of the amendment with the HE-AAC reference software at 19.30 EUR; other listings at a price of zero) and that some catalog pages say the electronic version of an amendment can be downloaded from the ITTF site.
+- **Second-hand:** a search summary of a 1997 committee draft (N1905), hosted at `sound.media.mit.edu`, says ISO/IEC gives users of the MPEG standard "free license to this software module or modifications thereof for use in hardware or software products claiming conformance to the MPEG standard". The page itself could not be read (the server's certificate chain is self-signed, and the fetch tool got a 503), so this is neither a quote nor the final wording.
+- **Not found:** the license text of the published edition and the amendments; which amendments carry the AAC decoder; whether a current download exists.
+- **What the text settles:** nothing. The wording reported for the draft limits the free license to products "claiming conformance", which a CI test tool may not be.
+- **Consequence:** nothing is built or downloaded for it in the probe.
+
+### Questions for the project lead from the license reading
+
+1. **FDK's patent condition.** The probe uses FDK as the precedent allows. Options: (a) accept that precedent now that the text is read, and record the reading here; (b) ask Fraunhofer (the license names `amm-info@iis.fraunhofer.de`) whether a test use in CI is authorized; (c) drop FDK for AAC and rely on Core Audio and Media Foundation. Not decided by the text.
+2. **Dolby's Store decoder.** Its terms are unreadable from here. Options: the project lead or a person with a Windows machine reads the Store terms; or the Store decoder stays out for good. Recommendation: stay out, since the probe also finds no unlock handshake for the inbox decoder.
+3. **ISO/IEC 14496-5.** The license cannot be read from here. Options: a person with access reads the edition and the AAC amendments; or the reference software stays out of scope. Recommendation: leave it out of scope until a text is in hand.
+
 ## Out of scope
 
 - Comparing decoded PCM: the analyzer has no lossy decoder yet; that waits for the lossy decoders under "Later" in the plan.
