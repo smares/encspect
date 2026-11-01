@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "tta",
  "run": {
-  "id": "41338214809",
-  "commit": "54697b354b8b0a4c0b42ec2ed0e9f5e313af7172",
+  "id": "41340327636",
+  "commit": "fec9cf3620a116b7f30ea60b6e87cc7245960bb0",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -178,16 +178,17 @@
       "stoppedBy": "end",
       "exit": 0,
       "signal": null,
-      "reason": "exit 0, 0 channels: the bytes written give no sample count"
+      "reason": "exit status 0, 0 channels: the bytes written give no sample count"
      },
      "ttaNoCount": "0 channels: the bytes written give no sample count",
+     "ttaDataBytes": 0,
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
       }
      },
-     "noReference": "tta -d gave none (exit 0, 0 channels: the bytes written give no sample count); ffmpeg gave none (exit None: no audio stream)"
+     "noReference": "tta -d gave none (exit status 0, 0 channels: the bytes written give no sample count); ffmpeg gave none (exit None: no audio stream)"
     }
    ],
    "differences": [
@@ -198,7 +199,7 @@
      "analyzer": 100000,
      "status": "noted",
      "kind": "decoder-gives-no-count",
-     "reason": "tta -d accepts the header (exit 0) and writes no data; with 0 channels: the bytes written give no sample count",
+     "reason": "tta -d accepts the header (exit 0) and writes no data; 0 channels: the bytes written give no sample count",
      "statusSource": "rule"
     }
    ],
