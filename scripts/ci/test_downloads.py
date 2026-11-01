@@ -123,17 +123,26 @@ class DownloadTests(Case):
         self.assertIn("404", error)
         self.assertEqual((sleeps, calls), ([], 1))
 
-    def test_failed_transfers_and_waiting_count_toward_the_budget(self):
+    def test_waiting_and_retry_attempts_count_toward_the_budget_but_the_first_attempt_does_not(self):
         self.run_download(OTHER, [RESET] * 4)
-        self.assertEqual(downloads.spent(), 4 * 5 + 30 + 90 + 180)
+        self.assertEqual(downloads.spent(), 3 * 5 + 30 + 90 + 180)
 
-    def test_a_slow_failing_host_uses_up_the_budget_without_sleeping(self):
-        # curl's own retries can take many minutes: after one failure of 1190 s, no retry fits.
-        run = mock.Mock(side_effect=lambda url, path: (setattr(self, "clock", self.clock + 1190), RESET)[1])
-        with mock.patch.object(downloads, "_curl", run):
+    def test_a_dead_address_costs_the_budget_nothing(self):
+        for _ in range(50):
+            self.run_download(OTHER, [http(404)])
+        self.assertEqual(downloads.spent(), 0)
+
+    def test_a_slow_failing_retry_uses_up_the_budget(self):
+        results = iter([RESET, RESET, RESET])
+
+        def slow(url, path):
+            self.clock += 1100
+            return next(results)
+        with mock.patch.object(downloads, "_curl", slow):
             error = downloads.download(OTHER, pathlib.Path("unused"), sleep=self.sleep)
+        # first attempt free; the retry after 30 s fails in 1100 s; 1130 + 90 > 1200 ends the retries
         self.assertIn("Connection reset", error)
-        self.assertEqual((self.sleeps, run.call_count), ([], 1))
+        self.assertEqual(self.sleeps, [30])
 
     def test_the_budget_is_shared_through_a_file_under_runner_temp(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -141,6 +150,7 @@ class DownloadTests(Case):
             self.run_download(OTHER, [RESET] * 4)
             used = downloads.spent()
             self.assertGreater(used, 0)
+            self.assertEqual([f.name for f in pathlib.Path(directory).iterdir()], [downloads.BUDGET_FILE])
             self.assertEqual(downloads._local_spent, 0.0)
             # any process of the job reads the same figure
             self.assertEqual(float((pathlib.Path(directory) / downloads.BUDGET_FILE).read_text()), used)

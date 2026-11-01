@@ -280,9 +280,11 @@ public sealed class ReleaseWorkflowTests
         Assert.NotEmpty(uses);
         Assert.All(uses, u => Assert.Matches(@"^actions/[a-z-]+(/[a-z]+)?@v\d+$", u));
 
-        // CI reaches setup-dotnet through the composite action .github/actions/setup-dotnet, which release.yml cannot use.
-        string ci = File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml"))
-            + string.Concat(Directory.EnumerateFiles(Path.Combine(Root, ".github", "actions"), "action.yml", SearchOption.AllDirectories).Select(File.ReadAllText));
+        // CI reaches setup-dotnet through the composite action .github/actions/setup-dotnet, which release.yml cannot use:
+        // the composites that ci.yml itself references count as CI's.
+        string ci = File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml"));
+        ci += string.Concat(Regex.Matches(ci, @"uses: \./\.github/actions/([\w-]+)").Select(m => m.Groups[1].Value).Distinct()
+            .Select(name => File.ReadAllText(Path.Combine(Root, ".github", "actions", name, "action.yml"))));
         foreach (string action in uses.Where(u => !u.StartsWith("actions/download-artifact", StringComparison.Ordinal)))
         {
             Assert.Contains("uses: " + action, ci, StringComparison.Ordinal);

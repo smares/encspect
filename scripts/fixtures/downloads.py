@@ -61,8 +61,9 @@ BROWSER_PREFIXES = ("https://www.etsi.org/", "https://www.atsc.org/", "https://d
 # Wayback Machine) and a file with the wrong SHA-256 (fetch() compares that after a successful transfer).
 # Between 11:41 and 15:02 UTC on 2026-11-01 samples.ffmpeg.org intermittently reset connections or timed out
 # (docs/development.md, "Pinned downloads"); the Wayback delays are the older, shorter ones.
-# The time spent on failed transfers and on waiting is counted with a monotonic clock against RETRY_BUDGET seconds for
-# the whole job: the scripts of a job add to one file under RUNNER_TEMP, so that many failing addresses cannot use up its timeout.
+# The time spent waiting and on the retry attempts themselves (not on the first attempt at an address, which is always made) is
+# counted with a monotonic clock against RETRY_BUDGET seconds for the whole job: the scripts of a job add to one file under
+# RUNNER_TEMP, so that many failing addresses cannot use up its timeout, and a dead address costs the budget nothing.
 ARCHIVE_PREFIX = "https://web.archive.org/"
 ARCHIVE_DELAYS = (10, 30, 60)
 HOST_DELAYS = (30, 90, 180)
@@ -79,7 +80,7 @@ def _budget_path():
 
 
 def spent():
-    """Seconds this job has spent on failed transfers and on waiting to retry them."""
+    """Seconds this job has spent on waiting and on retry attempts."""
     path = _budget_path()
     if path is None:
         return _local_spent
@@ -95,8 +96,12 @@ def spend(seconds):
     if path is None:
         _local_spent += seconds
         return
+    # The scripts of a job run one after another, so there is no concurrent writer; the replace keeps a reader from
+    # ever seeing a half-written figure, which would read as 0 and reset the budget.
     try:
-        path.write_text(str(spent() + seconds))
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(str(spent() + seconds))
+        os.replace(temporary, path)
     except OSError:
         _local_spent += seconds
 
@@ -122,14 +127,14 @@ def retry_delay(url, error, attempt, waited=0):
     return delay if waited + delay <= RETRY_BUDGET else None
 
 
-def attempt(url, path):
-    """One transfer of url to path: None when it worked, else (exit code, message). The time of a failure
-    counts toward the budget."""
+def attempt(url, path, retry=False):
+    """One transfer of url to path: None when it worked, else (exit code, message). The time of a failed
+    retry (not of a first attempt) counts toward the budget."""
     if not has_token(url):
         return 0, f"{TOKEN} is not set"
     start = _clock()
     error = _curl(url, path)
-    if error is not None:
+    if error is not None and retry:
         spend(_clock() - start)
     return error
 
@@ -140,7 +145,7 @@ def download(url, path, sleep=time.sleep):
     its own rounds."""
     tries = 0
     while True:
-        error = attempt(url, path)
+        error = attempt(url, path, retry=tries > 0)
         if error is None:
             return None
         delay = retry_delay(url, error, tries, spent())
@@ -198,9 +203,9 @@ def remember(path, digest):
         shutil.copyfile(path, pathlib.Path(directory) / digest)
 
 
-def _try(address, digest, path):
+def _try(address, digest, path, retry=False):
     """One attempt at address: None when path now holds the pinned file, else the error."""
-    error = attempt(address, path)
+    error = attempt(address, path, retry)
     if error is None and sha256(path) == digest:
         return None
     if error is None:
@@ -220,8 +225,8 @@ def fetch(addresses, digest, path, sleep=time.sleep):
         return
     errors = {}
 
-    def served(address):
-        if (error := _try(address, digest, path)) is None:
+    def served(address, retry=False):
+        if (error := _try(address, digest, path, retry)) is None:
             if errors:
                 print(f"{path.name}: fetched from {address} after {'; '.join(f'{a}: {e[1]}' for a, e in errors.items())}", file=sys.stderr)
             if not address.startswith(PRIVATE):
@@ -244,6 +249,6 @@ def fetch(addresses, digest, path, sleep=time.sleep):
                 spend(delay - waited)
                 sleep(delay - waited)
                 waited = delay
-            if served(address):
+            if served(address, retry=True):
                 return
     raise SystemExit(f"{path.name}: no address serves the file with SHA-256 {digest}: {'; '.join(f'{a}: {e[1]}' for a, e in errors.items())}")
