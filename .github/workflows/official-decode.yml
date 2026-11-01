@@ -152,7 +152,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p units
-          python scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac/*.* tests/fixtures/adts/*.* tests/fixtures/apple/*.* tests/fixtures/mp4/*.* tests/fixtures/ac3/*.* 2>&1 | tail -3 || true
+          python scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac tests/fixtures/adts tests/fixtures/apple tests/fixtures/mp4 tests/fixtures/ac3
           ls units | wc -l
 
       - name: Decode with the Source Reader and the AAC decoder MFT

@@ -7,7 +7,7 @@ bytes the file holds of it, the byte ranges it skipped, and the configuration (A
 Every direct path of every platform reads this list, so differences between decoders are not differences between readers.
 
   unit_list.py [--tsv] file...      one JSON object per line, or a flat text form for the C harnesses
-  unit_list.py --tsv-dir DIR file...  writes DIR/<sha256 of the file>.units.tsv for each file (the Windows probe finds the lists by hash)
+  unit_list.py --tsv-dir DIR file-or-folder...  writes DIR/<sha256 of the file>.units.tsv for each file (the Windows probe finds the lists by hash)
 
 The flat form:
       F <sha256> <kind>              kind: adts, adif, mp4, ac3, eac3, unknown
@@ -21,6 +21,7 @@ The flat form:
 
 import hashlib
 import json
+import os
 import struct
 import sys
 
@@ -411,7 +412,13 @@ def main(argv):
     if "--tsv-dir" in argv:
         i = argv.index("--tsv-dir")
         directory = argv[i + 1]
-        for path in argv[:i] + argv[i + 2:]:
+        paths = []
+        for item in argv[:i] + argv[i + 2:]:
+            if os.path.isdir(item):
+                paths.extend(sorted(os.path.join(item, n) for n in os.listdir(item) if os.path.isfile(os.path.join(item, n))))
+            else:
+                paths.append(item)
+        for path in paths:
             result = extract(path)
             with open("%s/%s.units.tsv" % (directory, result["sha256"]), "w", encoding="utf-8", newline="\n") as target:
                 target.write(tsv(result))
