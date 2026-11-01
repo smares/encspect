@@ -521,7 +521,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             failed++;
         }
     }
-    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"calls\":%lld,\"failedCalls\":%lld,\"codedFrames\":%lld}\n", failed ? "error" : "end", calls, failed, total);
+    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"calls\":%lld,\"failedCalls\":%lld,\"codedFrames\":%lld}\n", "end", calls, failed, total);
     fflush(stdout);
     AudioConverterDispose(converter);
     free(out_buffer);

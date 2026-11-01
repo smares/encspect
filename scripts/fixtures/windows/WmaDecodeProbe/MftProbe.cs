@@ -528,6 +528,10 @@ public static class MftProbe
         {
             set("codedSamples", total);
             set("totalSamples", total + drained);
+            lock (SourceReaderProbe.Gate)
+            {
+                record.Remove("partialSamples");
+            }
         }
     }
 

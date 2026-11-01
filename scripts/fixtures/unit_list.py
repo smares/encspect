@@ -108,6 +108,30 @@ def descriptor_config(data, start, end):
     return None, oti
 
 
+def protected(data, trak_start, trak_end):
+    """Whether the track carries a protection scheme: a sinf, schm or tenc box among the children of trak, mdia, minf, stbl and of each
+    sample entry, where encryption puts them (or misplaces them, as `cenc-sinf-in-trak.m4a` does)."""
+    marks = (b"sinf", b"schm", b"tenc")
+    levels = [(trak_start, trak_end)]
+    for path in ([b"mdia"], [b"mdia", b"minf"], [b"mdia", b"minf", b"stbl"]):
+        found = find(data, trak_start, trak_end, path)
+        if found:
+            levels.append(found)
+    for s, e in levels:
+        if any(kind in marks for kind, _, _, _ in boxes(data, s, e)):
+            return True
+    stsd = find(data, trak_start, trak_end, [b"mdia", b"minf", b"stbl", b"stsd"])
+    if stsd:
+        for kind, es, ee, _ in boxes(data, stsd[0] + 8, stsd[1]):
+            if kind in (b"enca", b"encv"):
+                return True
+            version = struct.unpack_from(">H", data, es + 8)[0] if es + 10 <= ee else 0
+            child = es + 28 + {0: 0, 1: 16, 2: 36}.get(version, 0)
+            if any(k in marks for k, _, _, _ in boxes(data, child, ee)):
+                return True
+    return False
+
+
 def mp4_units(data, result):
     size = len(data)
     moov = find(data, 0, size, [b"moov"])
@@ -168,7 +192,7 @@ def mp4_units(data, result):
         break
 
     # The track is encrypted when it carries a protection scheme box; the search is for the four-character codes in the track's bytes.
-    if b"sinf" in data[s:e] or b"tenc" in data[s:e]:
+    if protected(data, s, e):
         result["note"] = "encrypted track (sinf or tenc box): no reference"
         result["encrypted"] = True
         return
@@ -281,7 +305,7 @@ def mp4_units(data, result):
                 n = struct.unpack_from(">I", data, rs + 4)[0]
                 p = rs + 8
                 per_sample = 4 * sum(1 for bit in (0x100, 0x200, 0x400, 0x800) if tf & bit)
-                n = min(n, (re_ - p) // per_sample if per_sample else size)
+                n = min(n, (re_ - p) // per_sample if per_sample else size // max(default_size, 1))
                 pos = cursor
                 if tf & 1:
                     pos = base + struct.unpack_from(">i", data, p)[0]
@@ -349,9 +373,20 @@ def adts_units(data, result):
                 skip_from = None
             if "adts" not in result:
                 result["adts"] = h[:3]
-            frames.append((pos, h[3], min(h[3], size - pos)))
-            previous = (pos + h[3], h[:3])
-            pos += h[3]
+            # A unit ends where the next frame of the same stream begins: a header inside the declared length that starts a chain closes
+            # the frame there (a cut or wrongly sized frame), and the unit keeps only the bytes up to it.
+            end = min(pos + h[3], size)
+            for q in range(pos + 1, end):
+                hq = adts_header(data, q)
+                if hq and hq[:3] == h[:3]:
+                    nq = q + hq[3]
+                    hn = adts_header(data, nq) if nq < size else None
+                    if nq >= size or (hn is not None and hn[:3] == h[:3]):
+                        end = q
+                        break
+            frames.append((pos, h[3], end - pos))
+            previous = (end, h[:3])
+            pos = end if end < pos + h[3] else pos + h[3]
         else:
             if skip_from is None:
                 skip_from = pos
@@ -359,6 +394,16 @@ def adts_units(data, result):
     if skip_from is not None:
         result["skipped"].append((skip_from, size - skip_from))
     result["units"] = frames
+
+
+def crc16(data):
+    """The CRC of A/52 (x^16 + x^15 + x^2 + 1, start value 0): over a whole syncframe after its sync word it comes to zero."""
+    crc = 0
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x8005) & 0xFFFF if crc & 0x8000 else (crc << 1) & 0xFFFF
+    return crc
 
 
 def ac3_header(data, pos):
@@ -400,14 +445,25 @@ def ac3_units(data, result):
                 result["skipped"].append((skip_from, pos - skip_from))
                 skip_from = None
             eac3 = h[1] if eac3 is None else eac3
+            # As for ADTS, a frame ends where the next syncframe of the same kind begins inside its declared length.
+            end = min(pos + h[0], size)
+            for q in range(pos + 1, end):
+                hq = ac3_header(data, q)
+                if hq and hq[3] == h[3]:
+                    nq = q + hq[0]
+                    if nq >= size or ac3_header(data, nq) is not None:
+                        end = q
+                        break
+            if end == min(pos + h[0], size) and end - pos == h[0] and crc16(data[pos + 2:end]) == 0:
+                result["crcOk"] = result.get("crcOk", 0) + 1
             if h[1] and not h[2] and current is not None:
                 u = units[current]
-                units[current] = (u[0], pos + h[0] - u[0], min(pos + h[0], size) - u[0])
+                units[current] = (u[0], pos + h[0] - u[0], end - u[0])
             else:
-                units.append((pos, h[0], min(h[0], size - pos)))
+                units.append((pos, h[0], end - pos))
                 current = len(units) - 1
-            previous_end = pos + h[0]
-            pos += h[0]
+            previous_end = end
+            pos = end
         else:
             if skip_from is None:
                 skip_from = pos
@@ -445,6 +501,11 @@ def extract(path):
             chains = {k: v[1]["units"] for k, v in candidates.items() if len(v[1]["units"]) >= 2}
             if len(chains) == 2:
                 best = min(chains, key=lambda k: (chains[k][0][0], -candidates[k][0]))
+                # Look-alike ADTS headers inside AC-3 frames cannot pass an AC-3 CRC: when the AC-3 chain has more than half of its whole frames
+                # CRC-clean it decides, wherever the chains begin.
+                ac3_ok = candidates["ac3"][1].get("crcOk", 0)
+                if ac3_ok * 2 > len(chains["ac3"]):
+                    best = "ac3"
             other = "ac3" if best == "adts" else "adts"
             if candidates[best][0] == 0 or len(candidates[best][1]["units"]) < 2 and len(data) > candidates[best][0] + 64:
                 result["note"] = "neither ADTS nor AC-3 frames in a chain (ADTS %d bytes, AC-3 %d bytes)" % (candidates["adts"][0], candidates["ac3"][0])

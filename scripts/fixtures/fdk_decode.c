@@ -79,7 +79,11 @@ static struct {
 /* Decodes what the library holds until it asks for more bits, and writes one line per call; numTotalBytes in each line says how
    many bytes of the input the library has used up to that call. */
 static void decode_all(long index, long from, long to, unsigned fill, unsigned left, long offset, long declared, long received) {
-    for (int attempt = 0; attempt < 64; attempt++) {
+    /* The loop ends when the library asks for more bits. It is cut off only when numTotalBytes stops advancing for eight calls in a row
+       without an output, or after a million calls: a long run of small frames or of junk is not a limit. */
+    long last_total = -1;
+    int stuck = 0;
+    for (int attempt = 0; attempt < 1000000; attempt++) {
         AAC_DECODER_ERROR error = aacDecoder_DecodeFrame(G.decoder, pcm, MAX_PCM, 0);
         long samples;
         int channels;
@@ -96,6 +100,13 @@ static void decode_all(long index, long from, long to, unsigned fill, unsigned l
         printf("}\n");
         fflush(stdout);
         G.calls++;
+        CStreamInfo *current = aacDecoder_GetStreamInfo(G.decoder);
+        long total_now = current ? (long)current->numTotalBytes : -1;
+        stuck = (total_now == last_total && !output) ? stuck + 1 : 0;
+        last_total = total_now;
+        if (stuck >= 8) {
+            break;
+        }
         /* ADTS: the library keeps the bytes it was given and asks for more with 0x1002, so decoding goes on until it does. Raw access units: one
            unit per fill, one call per unit; a second call without new data conceals a frame (USAC answers 0x4004 with a valid output forever). */
         if (error == AAC_DEC_NOT_ENOUGH_BITS || (G.raw && left == 0)) {

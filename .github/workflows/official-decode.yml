@@ -25,6 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # One Python for the unit extractor on every platform, so that the lists are made by the same interpreter (the design's harness rules).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
       - name: Install the decoders' packages and the compilers
         run: |
           sudo apt-get update
@@ -129,6 +134,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # One Python for the unit extractor on every platform, so that the lists are made by the same interpreter (the design's harness rules).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
       - name: Build the AudioToolbox probe
         run: |
           mkdir -p build
@@ -163,6 +173,11 @@ jobs:
             full: false
     steps:
       - uses: actions/checkout@v5
+
+      # One Python for the unit extractor on every platform, so that the lists are made by the same interpreter (the design's harness rules).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
 
       - uses: actions/setup-dotnet@v5
         with:
