@@ -241,7 +241,7 @@ def main():
         if reader.get("stoppedBy"):
             notes.append(f"reader stopped ({reader['stoppedBy']}) after {reader.get('totalSamples')} samples" + ("; reference is the decoder's" if direct_total is not None else "; no reference"))
         nots = record.get("directWithoutTimestamps") or {}
-        if "totalSamples" in nots and nots["totalSamples"] != direct_total:
+        if not notes_encrypted and "totalSamples" in nots and nots["totalSamples"] != direct_total:
             notes.append(f"decoder without timestamps: {nots['totalSamples']}")
         events = reader_events(reader) if reader.get("opened") else {}
         if events and any(events.values()):
