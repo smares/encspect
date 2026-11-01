@@ -1922,88 +1922,88 @@
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libopus refuses the OpusHead (channel count 0, code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus refuses the OpusHead (channel count 0, code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus refuses the OpusHead (channel count 0, code -1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream3",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with more than 2 channels (code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with more than 2 channels (code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with more than 2 channels (code -1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream5",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libopus does not create a decoder from the OpusHead (code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream6",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libopus does not create a decoder from the OpusHead (code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream7",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libopus does not create a decoder from the OpusHead (code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus does not create a decoder from the OpusHead (code -1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream9",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1)",
      "statusSource": "reviewed",
-     "note": "Not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream10",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1)",
      "statusSource": "reviewed",
-     "note": "Not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Not passed to libopus: the harness's OpusHead check fails (head too short for its mapping or an unknown family; RFC 7845 section 5.1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream11",
      "decoder": "direct",
      "value": null,
      "analyzer": 600,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "not passed to libopus: the first packet is not an OpusHead (the harness's check, RFC 7845 section 5.1)",
      "statusSource": "reviewed",
-     "note": "Not passed to libopus: the first packet is not an OpusHead (the harness's check, RFC 7845 section 5.1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Not passed to libopus: the first packet is not an OpusHead (the harness's check, RFC 7845 section 5.1). The analyzer counts 600 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     }
    ],
    "units": []
@@ -2124,9 +2124,9 @@
      "decoder": "direct",
      "value": 10560,
      "analyzer": 24960,
-     "status": "pending",
+     "status": "explained",
      "kind": "analyzer-differs",
-     "note": "libopus refuses 9 packets (error -4) and an empty packet is not passed to it; the analyzer counts them by their TOC bytes: the direct total is 10,560 against 'Decoded Samples' 24,960 of the first (mono) stream. libopus conceals nothing here (refused packets give no samples), so the concealment rule does not apply. Changing the analyzer would change this count and the stream's samples.",
+     "note": "\"Decoded Samples\" counts the positions the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     },
     {
@@ -2134,9 +2134,9 @@
      "decoder": "direct",
      "value": 3840,
      "analyzer": 5760,
-     "status": "pending",
+     "status": "explained",
      "kind": "analyzer-differs",
-     "note": "As the first stream (2 packets refused): 3,840 against 5,760 for the second stream. opusdec stops with 'Decoding error.' after 1,608 samples, so the trimmed stage has no reference.",
+     "note": "\"Decoded Samples\" counts the positions the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     }
    ],
@@ -2836,11 +2836,7 @@
       28696,
       29696
      ],
-     "noReference": "the reader's 28672 is outside 28696 to 29696, what the last pages' granule positions (28696) and the coded total 29696 allow",
-     "proposedReference": {
-      "value": 28672,
-      "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved; the two share libvorbis's granule handling, so it shows a complete read, not correct trimming)"
-     }
+     "noReference": "the reader's 28672 is outside 28696 to 29696, what the last pages' granule positions (28696) and the coded total 29696 allow"
     }
    ],
    "differences": [],
@@ -2891,11 +2887,11 @@
      "decoder": "direct",
      "value": null,
      "analyzer": 19456,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis refuses header packet 2 (code -133)",
      "statusSource": "reviewed",
-     "note": "Libvorbis refuses header packet 2 (code -133). The analyzer counts 19,456 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis refuses header packet 2 (code -133). The analyzer counts 19,456 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     }
    ],
    "units": []
@@ -3082,10 +3078,10 @@
      "decoder": "oggdec",
      "value": 8192,
      "analyzer": 11264,
-     "status": "pending",
+     "status": "keep",
      "kind": "reader-not-accepted",
      "reason": "the reader's 8192 is outside 11264 to 11264, what the last pages' granule positions (11264) and the coded total 11264 allow",
-     "note": "The known difference. oggdec writes 8,192; libvorbis fed packet by packet gives 11,264 at the coded stage and with the granule positions, as does the analyzer. oggdec's count lies below what the last granule position (11,264) allows, so by the rule for Ogg readers it is not the reference and the trimmed stage has none. Whether the analyzer should follow libvorbisfile's handling of the packets that code no block is the lead's decision.",
+     "note": "oggdec writes fewer samples than the analyzer (8,192 against 11,264); the analyzer agrees with libvorbis fed packet by packet, with and without the real granule positions, so oggdec's shortfall is a reader behavior. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     }
    ],
@@ -3312,33 +3308,33 @@
      "decoder": "direct",
      "value": null,
      "analyzer": 5120,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1)",
      "statusSource": "reviewed",
-     "note": "Libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1). The analyzer counts 5,120 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1). The analyzer counts 5,120 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream2",
      "decoder": "direct",
      "value": null,
      "analyzer": 5120,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1)",
      "statusSource": "reviewed",
-     "note": "Libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1). The analyzer counts 5,120 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis accepts the three headers but vorbis_synthesis_init fails (code 1). The analyzer counts 5,120 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream3",
      "decoder": "direct",
      "value": null,
      "analyzer": 5120,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis refuses header packet 3 (code -133)",
      "statusSource": "reviewed",
-     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream4",
@@ -3356,22 +3352,22 @@
      "decoder": "direct",
      "value": null,
      "analyzer": 5120,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis refuses header packet 3 (code -133)",
      "statusSource": "reviewed",
-     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     },
     {
      "figure": "decodedSamples.stream6",
      "decoder": "direct",
      "value": null,
      "analyzer": 5120,
-     "status": "pending",
+     "status": "keep",
      "kind": "decoder-refuses-stream",
      "reason": "libvorbis refuses header packet 3 (code -133)",
      "statusSource": "reviewed",
-     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libvorbis refuses header packet 3 (code -133). The analyzer counts 5,120 samples in this stream. The analyzer describes what the packets code, next to its findings on the invalid headers; its count stays. Decision of the project lead, 2026-11-01."
     }
    ],
    "units": []
@@ -3580,11 +3576,7 @@
       29696,
       29696
      ],
-     "noReference": "the reader's 29596 is outside 29696 to 29696, what the last pages' granule positions (73696) and the coded total 29696 allow",
-     "proposedReference": {
-      "value": 29596,
-      "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved; the two share libvorbis's granule handling, so it shows a complete read, not correct trimming)"
-     }
+     "noReference": "the reader's 29596 is outside 29696 to 29696, what the last pages' granule positions (73696) and the coded total 29696 allow"
     }
    ],
    "differences": [],
@@ -3807,10 +3799,10 @@
      "decoder": "oggdec",
      "value": 7168,
      "analyzer": 14336,
-     "status": "pending",
+     "status": "keep",
      "kind": "reader-not-accepted",
      "reason": "the reader's 7168 is outside 14336 to 14336, what the last pages' granule positions (14336) and the coded total 14336 allow",
-     "note": "oggdec writes the first link of the chain only (7,168) with exit 0 and no message; libvorbis fed packet by packet and the analyzer count both links (14,336). The reader fails the consistency rule, so it is not the reference, and the trimmed stage has none. Listed as pending with vorbis-packet-errors.ogg, for the lead to decide together: whether the owner's reader should set the analyzer's trimmed count where it stops early.",
+     "note": "oggdec writes fewer samples than the analyzer (7,168 against 14,336); the analyzer agrees with libvorbis fed packet by packet, with and without the real granule positions, so oggdec's shortfall is a reader behavior. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     }
    ],

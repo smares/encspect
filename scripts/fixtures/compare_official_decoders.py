@@ -25,8 +25,8 @@ A reader's count is consistent when it lies in [low, high]: high is the coded to
 granule position of each stream's last page (in file order), less the pre-skip for Opus, both limited to the coded total. A stream with no granule position makes
 the check impossible and the trimmed stage has no reference. A reader that stops early or drops a stretch without a message falls below it; one that is right
 about a start offset or wrong granule positions (G above the coded total) falls outside it too, and the rule then has no reference. The sum can hide errors that
-cancel across links, which a reader's single total cannot show. Proposal for the project lead, not approved and not used: also accept a reader that equals the libvorbis
-run with the granule positions (`proposedReference` in the figure). The two are not independent: libvorbisfile uses libvorbis's own granule handling, so agreement shows that the read was complete, not that the trimming is right.
+cancel across links, which a reader's single total cannot show. A further acceptance (the reader equals the libvorbis run with the granule positions) was declined by
+the project lead on 2026-11-01: both runs share libvorbis's granule handling, so agreement would show a complete read, not correct trimming.
 """
 
 import argparse
@@ -275,7 +275,6 @@ def compare_ogg(record, analyzer, ffmpeg):
         granule = sum(g or 0 for g in lasts)
         pre_skip = sum(m.get("preSkip", 0) for m in members) if codec == "opus" else 0
         reason = None
-        range_reason = False
         total = reader.get("totalSamples")
         bounds = None
         if not reader.get("opened"):
@@ -295,7 +294,6 @@ def compare_ogg(record, analyzer, ffmpeg):
             low = max(0, min(granule, coded_total) - pre_skip)
             bounds = [low, high]
             if not low <= total <= high:
-                range_reason = True
                 reason = "the reader's %d is outside %d to %d, what the last pages' granule positions (%d) and the coded total %d allow" % (total, low, high, granule, coded_total)
         figure = {
             "id": "samples", "stage": "trimmed", "analyzerFigure": "samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
@@ -308,9 +306,6 @@ def compare_ogg(record, analyzer, ffmpeg):
         witness = paths.get("directGranule")
         if witness and direct_total(witness) is not None:
             figure["witnesses"]["libvorbis with granule positions"] = direct_total(witness)
-            if range_reason and direct_total(witness) == total:
-                # A proposal for the project lead, not an approved rule: the reader's count equals libvorbis's own trimming from the granule positions.
-                figure["proposedReference"] = {"value": total, "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved; the two share libvorbis's granule handling, so it shows a complete read, not correct trimming)"}
         if ffmpeg and single:
             figure["witnesses"]["ffmpeg"] = ff_default
             if ff_default is None:
@@ -557,9 +552,9 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
             ffsame = [f for f in ff if all(v == f["reference"] for k, v in f["witnesses"].items() if k.startswith("ffmpeg") and v is not None)]
             out.append("  %-16s %-8s figures %3d, with a reference %3d, analyzer equals it %3d, no reference %3d; ffmpeg equals the reference in %d of %d" % (
                 label, stage, len(figs), len(withref), len(same), len(figs) - len(withref), len(ffsame), len(ff)))
-    proposals = [(r["file"], f["id"], f["proposedReference"]["value"]) for r in results if not r["derived"] for f in r["figures"] if f.get("proposedReference")]
-    out += ["", "Proposal for the project lead, not approved: accept the reader's count when it equals the libvorbis run with the granule positions. Committed figures that would gain a reference: %d" % len(proposals)]
-    out += ["  %s %s %s" % p for p in proposals]
+    out += ["", "Variant groups, decided by the project lead on 2026-11-01 (recorded here and in the docs, not in the JSON)",
+            "  (a) noted: a repeated page, which opusdec and oggdec skip while the analyzer and libogg count it (14 of 24 files); the analyzer equals libogg's own packet stream",
+            "  (b) to be looked into in a follow-up, no conclusion yet: a repeated packet, where the analyzer is 38 to 128 samples below oggdec and ffmpeg agrees with oggdec (10 of 24 files)"]
     out += ["", "Derived variants by rule (figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.OGG_RULES:

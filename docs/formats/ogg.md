@@ -33,7 +33,11 @@ What breaks RFC 3533, such as:
 - The reference figures, the run, and every difference with its status are in `tests/fixtures/ogg/official-decoders.json`, which `OggOfficialDecodersTests` holds the analyzer to.
 - Derived damage variants (cuts, a changed byte, a removed or repeated page or packet; `scripts/fixtures/derive_variants.py`) are decoded the same way and matched by SHA-256; they are not committed.
 - Only Opus and Vorbis are in scope; Speex has no official decoder run.
-- The analyzer's counts have not been changed to the reference: every difference that would change them is `pending` until the project lead decides it.
+- The analyzer's counts have not been changed to the reference. The project lead decided the differences of step 2 on 2026-11-01:
+  - **`keep`:** `vorbis-packet-errors.ogg` and `vorbis-vendor-variants.ogg` (the analyzer agrees with libvorbis fed packet by packet, with and without the real granule positions; `oggdec` writes fewer samples, a reader behavior), and the streams whose headers the decoder refuses while the analyzer counts samples (the analyzer describes what the packets code, next to its findings on the invalid headers).
+  - **`explained`:** `opus-packets-corrupt.opus` at the coded stage: "Decoded Samples" counts the positions the packets declare, the packets libopus refuses carry findings, and a future Encspect Opus decoder leaves them as gaps counted as lost samples (gaps, not concealment).
+  - **Declined:** accepting a reader's count when it equals the libvorbis run with the granule positions; both runs share libvorbis's granule handling, so agreement shows a complete read, not correct trimming.
+  - **Variants** (in the comparison only): a repeated page, which `opusdec` and `oggdec` skip while the analyzer and libogg count it (14 of 24 files), is `noted`, since the analyzer equals libogg's own packet stream. A repeated packet, where the analyzer is 38 to 128 samples below `oggdec` and ffmpeg agrees with `oggdec` (10 of 24 files), is to be looked into in a follow-up; there is no conclusion yet.
 
 ## Not covered
 
