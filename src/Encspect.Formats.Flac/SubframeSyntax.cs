@@ -54,6 +54,9 @@ internal enum SubframeFault : byte
 
     // The frame runs past 16 MiB, the most STREAMINFO can state for a frame.
     TooLong,
+
+    // Every subframe reads, but the data ends before the frame's CRC-16 does.
+    EndsBeforeCrc,
 }
 
 // Where a subframe's samples go: nowhere (the structure pass), 32-bit buffers, or 64-bit ones as well for the side channel of a 32-bit

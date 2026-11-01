@@ -11,4 +11,4 @@ references: RFC 9639 (FLAC), section 10.1
 
 **Granule positions.** The granule position of a page is the number of samples up to the end of the last frame that ends on the page, so the last page tells the length of the stream ([granule positions](granule-position)).
 
-**What you see.** The mapping header and each metadata block, and the frames of the stream under the logical stream, read as a native FLAC stream's are. Findings name a header count that does not match the blocks, a packet that holds more than a frame and granule positions that do not match the frames.
+**What you see.** The mapping header and each metadata block, and the frames of the stream under the logical stream, read as a native FLAC stream's are. Findings name a header count that does not match the blocks, a packet that holds more than a frame or a metadata block and granule positions that do not match the frames.
