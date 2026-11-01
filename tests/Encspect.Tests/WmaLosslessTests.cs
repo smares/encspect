@@ -45,16 +45,16 @@ public class WmaLosslessTests
         string[] values = [.. packets.Children.Take(4).Select(p => p.Value!.ToString()!)];
         Assert.Equal(["3 frames", "3 frames", "3 frames", "3 frames"], values);
         Assert.Equal([0L, 4028L, 6179L, 7613L], packets.Children.Take(4).Select(p => WmaStream.Child(p, "Bits of Previous Frame").Value!.AsInteger()!.Value));
-        Assert.Equal([true, false, false, true], packets.Children.Take(4).Select(p => WmaStream.Child(p, "Seekable Frame in Packet").Value!.AsBoolean()!.Value));
+        Assert.Equal([true, false, false, true], packets.Children.Take(4).Select(p => WmaStream.Child(p, "Has Seekable Frame in Packet").Value!.AsBoolean()!.Value));
         Assert.Equal("1 subframe, 37493 bits", frames.Children[0].Value!.ToString());
         Assert.Equal("1 subframe, 36834 bits", frames.Children[1].Value!.ToString());
         Assert.Equal("1 subframe, 36678 bits", frames.Children[2].Value!.ToString());
         Assert.Equal("Frame Start", packets.Children[0].Children.Last(c => c.Name.StartsWith("Frame", StringComparison.Ordinal)).Name);
-        Assert.True(WmaStream.Child(frames.Children[0], "More Frames").Value!.AsBoolean());
-        Assert.True(WmaStream.Child(frames.Children[1], "More Frames").Value!.AsBoolean());
-        Assert.False(WmaStream.Child(frames.Children[2], "More Frames").Value!.AsBoolean());
+        Assert.True(WmaStream.Child(frames.Children[0], "Has More Frames").Value!.AsBoolean());
+        Assert.True(WmaStream.Child(frames.Children[1], "Has More Frames").Value!.AsBoolean());
+        Assert.False(WmaStream.Child(frames.Children[2], "Has More Frames").Value!.AsBoolean());
         Node subframe = WmaStream.Child(frames.Children[0], "Subframe");
-        Assert.True(WmaStream.Child(subframe, "Seekable Subframe").Value!.AsBoolean());
+        Assert.True(WmaStream.Child(subframe, "Is Seekable Subframe").Value!.AsBoolean());
         Assert.Equal("order 1, scaling 6", WmaStream.Child(subframe, "Recursive Filter Parameters").Value!.ToString());
         Assert.Equal(1L, WmaStream.Child(subframe, "Quantization Step").Value!.AsInteger());
         Assert.Equal(5L, WmaStream.Child(subframe, "Mean Scaling").Value!.AsInteger());
@@ -105,10 +105,13 @@ public class WmaLosslessTests
     public void ACutLastPacketGivesAnInvalidFrameAndStillCountsWhatADecoderOutputs()
     {
         WmaStream stream = WmaStream.LoadLossless();
-        stream.Objects[^1] = stream.Objects[^1][..(stream.Objects[^1].Length / 2)];
+        stream.Objects[^1] = stream.Objects[^1][..6000];
         CodecContext context = stream.RunLossless();
         Assert.Contains(context.Findings, f => f.Code == "wma.packet-short");
         Assert.DoesNotContain(context.Findings, f => f.Code == "parse.failed");
+        // The cut frame runs past its bits and is output whole, as a decoder does (ffmpeg: 43 frames, 88,064 samples).
+        Assert.Equal(88_064, context.Streams[0].Samples);
+        Assert.Contains(context.Findings, f => f.Code == "wma.frame-invalid");
     }
 
     public static TheoryData<string, string> Unsupported => new()
@@ -150,6 +153,15 @@ public class WmaLosslessTests
         }
 
         CodecContext context = stream.RunLossless();
+        if (change == "short data")
+        {
+            // One problem, one finding: the size of the data, which the stream's treatment follows from.
+            Assert.Single(context.Findings, f => f.Code == "wma.codec-data-size");
+            Assert.DoesNotContain(context.Findings, f => f.Code == "wma.format-unsupported");
+            Assert.Equal("not analyzed", WmaStream.StreamNode(context).Value!.ToString());
+            return;
+        }
+
         Finding finding = Assert.Single(context.Findings, f => f.Code == "wma.format-unsupported");
         Assert.Equal($"The stream is not analyzed: {reason}.", finding.Message);
         Assert.Equal("not analyzed", WmaStream.StreamNode(context).Value!.ToString());

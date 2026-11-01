@@ -57,8 +57,8 @@ internal sealed class PacketNodes(StreamData data, IStreamParameters parameters,
         node.Add(At("Packet Sequence Number", 0, 4, NodeValue.Integer(record.Sequence), ProExplain.SequenceNumber, Topics.WmaPackets));
         if (isLossless)
         {
-            node.Add(At("Seekable Frame in Packet", 4, 5, NodeValue.Boolean(record.IsSeekable), LosslessExplain.SeekableFrameInPacket, Topics.WmaLosslessSubframes));
-            node.Add(At("Spliced", 5, 6, NodeValue.Boolean(record.IsSpliced), LosslessExplain.Spliced));
+            node.Add(At("Has Seekable Frame in Packet", 4, 5, NodeValue.Boolean(record.IsSeekable), LosslessExplain.SeekableFrameInPacket, Topics.WmaLosslessSubframes));
+            node.Add(At("Is Spliced", 5, 6, NodeValue.Boolean(record.IsSpliced), LosslessExplain.Spliced));
         }
         else
         {

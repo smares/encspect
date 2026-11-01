@@ -738,6 +738,39 @@ public class MemoryTests(ITestOutputHelper output)
         GC.KeepAlive(report);
     }
 
+    // Frames of 7 bits are valid, so 88 media objects of 30,000 bytes hold 3,000,000 of them (one seekable frame, then frames that code no
+    // channel): without a limit the records of the frames take about 130 bytes each and the report hundreds of megabytes. With it the report
+    // keeps the first 524,288 frames' records, and the samples of all are counted.
+    [Fact]
+    public void MinimalLosslessFramesStayBounded()
+    {
+        const int frames = 3_000_000;
+        const int blockAlignment = 30_000;
+        List<byte[]> objects = LosslessBuilder.TinyStream(blockAlignment, frames);
+        int size = 23 + blockAlignment;
+        var packets = new List<byte[]>(objects.Count);
+        for (int i = 0; i < objects.Count; i++)
+        {
+            byte[] packet = AsfBuilder.Packet(size, 1, i & 0xFF, 0, blockAlignment, (uint)(i * 46));
+            objects[i].CopyTo(packet, 23);
+            packets.Add(packet);
+        }
+
+        byte[] properties = AsfBuilder.StreamProperties(1, 0x0163, 1, 44100, 88200, blockAlignment, 16, LosslessBuilder.Data());
+        byte[] data = AsfBuilder.Assemble(properties, size, packets);
+
+        (Report report, long kept) = MeasureKept("minimal.wma", data, data[..32768]);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(frames * 2048L, stream.Samples);
+        long listed = Assert.Single(stream.Nodes[0].Children, n => n.Name == "Frames").Children.Count;
+        Assert.Equal(524_288, listed);
+        Assert.Contains(report.Findings, f => f.Code == "wma.records-limit");
+        output.WriteLine($"{kept / listed} bytes kept per listed frame");
+        Assert.True(kept < listed * 200, $"The report keeps {kept / listed} bytes per listed frame.");
+        GC.KeepAlive(report);
+    }
+
     private const long LosslessKeptBound = 600;
     private const long LosslessPeakBound = 2500;
 

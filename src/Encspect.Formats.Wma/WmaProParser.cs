@@ -193,8 +193,17 @@ internal static class CodecData
     {
         ReadOnlySpan<byte> bytes = data.Span;
         long offset = data.FileStart;
-        int bits = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
-        holder.Add("Bits Per Sample", offset, 2, NodeValue.Integer(bits, "bits"), ProExplain.SampleSize, topic);
+        if (isLossless)
+        {
+            // Lossless uses the low byte of the field as its sample size; the high byte is not read.
+            holder.Add("Bits Per Sample Low Byte", offset, 1, NodeValue.Integer(bytes[0], "bits"), LosslessExplain.SampleSize, topic);
+            holder.Add("Bits Per Sample High Byte", offset + 1, 1, NodeValue.Hex(bytes[1], 2), LosslessExplain.SampleSizeHighByte);
+        }
+        else
+        {
+            holder.Add("Bits Per Sample", offset, 2, NodeValue.Integer(BinaryPrimitives.ReadUInt16LittleEndian(bytes), "bits"), ProExplain.SampleSize, topic);
+        }
+
         holder.Add("Channel Mask", offset + 2, 4, NodeValue.Hex(BinaryPrimitives.ReadUInt32LittleEndian(bytes[2..]), 8), ProExplain.ChannelMask, Topics.ChannelLayouts);
         holder.Add("Unknown 1", offset + 6, 8, NodeValue.Hex(BinaryPrimitives.ReadUInt64LittleEndian(bytes[6..]), 16), ProExplain.Unknown);
         int value = BinaryPrimitives.ReadUInt16LittleEndian(bytes[14..]);

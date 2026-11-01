@@ -69,6 +69,7 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
     private readonly int[] _done = new int[parameters.Channels];
     private readonly int[] _next = new int[parameters.Channels];
     private readonly bool[] _coded = new bool[parameters.Channels];
+    private readonly bool[] _takes = new bool[parameters.Channels];
     private readonly uint[] _sums = new uint[parameters.Channels];
 
     private Bits _bits = null!;
@@ -195,7 +196,7 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         Array.Clear(_done);
         Array.Clear(_next);
         bool isAligned = _bits.ReadBit() != 0;
-        var takes = new bool[_channels];
+        bool[] takes = _takes;
         while (true)
         {
             int smallest = int.MaxValue;
@@ -529,12 +530,16 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         bool hasCoefficients = bits.ReadBit() != 0;
         long filters = 0;
         int firstChannelFilters = 0;
+        int fewest = int.MaxValue;
+        int most = 0;
         Span<int> orders = stackalloc int[8];
         Span<int> scalings = stackalloc int[8];
         for (int c = 0; c < _channels; c++)
         {
             int n = (int)bits.Read(3) + 1;
             filters += n;
+            fewest = Math.Min(fewest, n);
+            most = Math.Max(most, n);
             if (c == 0)
             {
                 firstChannelFilters = n;
@@ -573,8 +578,8 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
         _trace.Put(bits.Position - at);
         _trace.Put(firstChannelFilters);
         _trace.Put(filters);
-        tally.MinFilters = Math.Min(tally.MinFilters, filters / _channels);
-        tally.MaxFilters = Math.Max(tally.MaxFilters, filters / _channels);
+        tally.MinFilters = Math.Min(tally.MinFilters, fewest);
+        tally.MaxFilters = Math.Max(tally.MaxFilters, most);
 
         _meanScaling = (int)bits.Read(3);
         _trace.Put(LosslessTag.MeanScaling);

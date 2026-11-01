@@ -376,7 +376,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
             FieldKind.PreviousSize => layout.Field("Previous Block Size", f.Start, f.End, SizeValue(), StdText.PreviousBlockSize, Topics.WmaFramesAndBlocks),
             FieldKind.Size => layout.Field("Block Size", f.Start, f.End, SizeValue(), StdText.BlockSize, Topics.WmaFramesAndBlocks),
             FieldKind.NextSize => layout.Field("Next Block Size", f.Start, f.End, SizeValue(), StdText.NextBlockSize, Topics.WmaFramesAndBlocks),
-            FieldKind.MidSide => layout.Field("Mid/Side Stereo", f.Start, f.End, NodeValue.Boolean(f.A != 0), StdText.MidSide, Topics.MidSideStereo),
+            FieldKind.MidSide => layout.Field("Uses Mid/Side Stereo", f.Start, f.End, NodeValue.Boolean(f.A != 0), StdText.MidSide, Topics.MidSideStereo),
             FieldKind.Coded => layout.Field($"Channel {channel} Coded", f.Start, f.End, NodeValue.Boolean(f.A != 0), StdText.ChannelCoded, null),
             FieldKind.Gain => layout.Field("Total Gain", f.Start, f.End, NodeValue.Integer(f.A), StdText.TotalGain, null),
             FieldKind.NoiseFlags => layout.Field("Noise Substitution", f.Start, f.End, $"{f.A.ToString(System.Globalization.CultureInfo.InvariantCulture)} of {WmaStandardParser.Count(f.B, "high band", "high bands")}", StdText.NoiseSubstitution, Topics.NoiseSubstitution),

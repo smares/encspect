@@ -65,7 +65,7 @@ public class WmaProTests
         Assert.Equal(83L, WmaStream.Child(subframe, "Quantization Step").Value!.AsInteger());
         Assert.Equal("a new set, step 2", WmaStream.Child(subframe, "Scale Factors (channel 1)").Value!.ToString());
         Assert.Equal("yes, yes", WmaStream.Child(subframe, "Coefficients Sent").Value!.ToString());
-        Assert.True(WmaStream.Child(frame, "More Frames").Value!.AsBoolean());
+        Assert.True(WmaStream.Child(frame, "Has More Frames").Value!.AsBoolean());
         Assert.Equal(1L, WmaStream.Child(frame, "Frame Padding").Value!.AsInteger());
     }
 

@@ -183,7 +183,7 @@ public sealed partial class AsfParser
                 continue;
             }
 
-            bool routed = state.Context.ParsePackets(codec, state.DataNode, MediaObjects(state, stream.Number), configuration);
+            bool routed = state.Context.ParsePackets(codec, state.DataNode, MediaObjects(state, stream.Number, codec == "wma-lossless"), configuration);
             if (!routed)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
