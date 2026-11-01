@@ -1,0 +1,56 @@
+name: WMA Professional variants through Microsoft's decoder
+
+# Asks Microsoft's WMA Professional decoder one question at a time: scripts/fixtures/windows/make_wma_pro_variants.py
+# writes copies of three Windows-written Professional fixtures that differ in one thing each (the stream cut after
+# frame k, a trim value or flag, the ASF header's play duration or preroll), and the probe of windows-wma-decode.yml
+# decodes them with the Source Reader and the decoder DMO (see docs/development.md, "WMA decoding by Microsoft's
+# decoder"). The variants are generated in the job and not committed. scripts/fixtures/windows/check_wma_pro_variants.py
+# compares the records with the rule under test and runs on Linux.
+# Run by hand (Actions, Run workflow) or by pushing the branch ci/windows-wma-pro. Not part of ci.yml and not a check.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/windows-wma-pro]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  decode:
+    name: decode variants on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the probe
+        shell: bash
+        run: dotnet publish scripts/fixtures/windows/WmaDecodeProbe -c Release -o probe-bin
+
+      - name: Write the variants
+        shell: bash
+        run: python scripts/fixtures/windows/make_wma_pro_variants.py tests/fixtures/asf variants
+
+      - name: Decode every variant (three runs each)
+        shell: bash
+        timeout-minutes: 45
+        run: |
+          mkdir -p decode-out
+          ./probe-bin/wma-decode-probe.exe --out decode-out --timeout 30 variants 2>&1 | tee decode-out/log.txt
+          cp variants/manifest.json decode-out/manifest.json
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-wma-pro-variants
+          path: decode-out
+          retention-days: 7
+          if-no-files-found: error
