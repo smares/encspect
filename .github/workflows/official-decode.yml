@@ -120,9 +120,9 @@ jobs:
           found = tool_versions.problems('ffmpeg', 'ffprobe')
           for line in found:
               print('::warning::' + line)"
-          ls artifacts
+          find artifacts -maxdepth 2 | sort | head -30
           python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
-            --write-official comparison/official-decoders.ogg.draft.json artifacts/*
+            --write-official comparison/official-decoders.ogg.draft.json artifacts
           { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 500000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7

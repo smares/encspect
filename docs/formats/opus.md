@@ -26,6 +26,12 @@ From mapping family 0 or 1, in the Vorbis channel order, with the speakers named
 - **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libopus"), shown as "FFmpeg (Lavc60.31.102 libopus)" with medium confidence (bit-exact, without a version: "Lavc libopus", shown "FFmpeg (Lavc libopus)"). A vendor string that names libopus wins over it; an ID of another codec's encoder never becomes the encoder, stays as evidence under it, as does an own ID that a vendor string outranks (every ENCODER field is weighed, not the first), and is `opus.encoder-other-format`.
 - **Writer:** the ENCODER field of an application (RFC 7845 section 5.2: the vendor string is "intended to identify the codec encoder and encapsulation implementations", and "user-facing applications can use the 'ENCODER' user comment tag to identify themselves"): opusenc's "opusenc from opus-tools 0.2" is shown as "opusenc 0.2". A vendor string that is ffmpeg's muxer version ("Lavf60.16.100") names the writer too. Two claims that name different software are `opus.writer-claim-differs`, and software known to write another format is `opus.writer-other-format`.
 
+## Reference for sample counts
+
+- The reference for Opus sample counts is Xiph's decoder (libopus fed packet by packet; `opusdec --rate 48000`), run by `.github/workflows/official-decode.yml` and held to the analyzer by `OggOfficialDecodersTests`. How it is driven, what the reference rule is and the differences found are described under "Reference for sample counts" in [ogg.md](ogg.md).
+- Pre-skip and end trimming are compared with `opusdec`'s output, the packets' samples with libopus's.
+- The analyzer's counts have not been changed to the reference yet.
+
 ## Not yet covered
 
 - The SILK and CELT layers (planned: entropy pass).

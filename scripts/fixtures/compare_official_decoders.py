@@ -323,8 +323,10 @@ def load_records(folders):
     records, environments = {}, []
     for folder in folders:
         folder = pathlib.Path(folder)
-        for env in folder.rglob("environment.json"):
-            environments.append(json.loads(env.read_text(encoding="utf-8")))
+        for env in sorted(folder.rglob("environment.json")):
+            content = json.loads(env.read_text(encoding="utf-8"))
+            if "format" in content:  # not the probe's
+                environments.append(content)
         for path in sorted(folder.rglob("records/*/*.json")):
             record = json.loads(path.read_text(encoding="utf-8"))
             if record.get("schema") != SCHEMA or "format" not in record:
@@ -466,6 +468,18 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
             ffsame = [f for f in ff if all(v == f["reference"] for k, v in f["witnesses"].items() if k.startswith("ffmpeg") and v is not None)]
             out.append("  %-16s %-8s figures %3d, with a reference %3d, analyzer equals it %3d, no reference %3d; ffmpeg equals the reference in %d of %d" % (
                 label, stage, len(figs), len(withref), len(same), len(figs) - len(withref), len(ffsame), len(ff)))
+    out += ["", "Derived variants by rule (figures: analyzer equals the reference / differs / no reference)"]
+    rule_rows = []
+    for rule in derive_variants.OGG_RULES:
+        subset = [r for r in results if r["derived"] and r["derived"]["rule"] == rule]
+        row = [rule, len(subset)]
+        for stage in ("trimmed", "coded"):
+            figs = [f for r in subset for f in r["figures"] if f["stage"] == stage]
+            same = sum(1 for f in figs if f["reference"] is not None and f["analyzer"] == f["reference"])
+            differs = sum(1 for f in figs if f["reference"] is not None and f["analyzer"] != f["reference"])
+            row.append("%d / %d / %d" % (same, differs, len(figs) - same - differs))
+        rule_rows.append(row)
+    out.append(table(rule_rows, ["rule", "files", "trimmed", "coded"]))
     out += ["", "Files with no Opus or Vorbis stream, counted apart (%d): %s" % (len(other_files), ", ".join(other_files) or "none")]
     out += ["", "Not run (selected files without a record): " + (", ".join(not_run) if not_run else "none")]
     if unmatched:

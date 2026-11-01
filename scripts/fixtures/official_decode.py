@@ -245,9 +245,8 @@ def reader_result(codec, path, tmp, decoder_versions):
 # ---- the Ogg run -----------------------------------------------------------------------------------------------------
 
 def tool_versions():
-    env = {"gcc": probe.tool_line(["gcc", "--version"]), "oggdec": probe.tool_line(["oggdec", "--version"]), "opusdec": probe.tool_line(["opusdec", "--version"]),
-           "ffmpeg": probe.tool_line(["ffmpeg", "-version"]), "dpkg": {}}
-    for package in ("libogg0", "libogg-dev", "libopus0", "libopus-dev", "libopusfile0", "libvorbis0a", "libvorbisfile3", "libvorbis-dev", "opus-tools", "vorbis-tools", "ffmpeg"):
+    env = {"gcc": probe.tool_line(["gcc", "--version"]), "oggdec": probe.tool_line(["oggdec", "--version"]), "opusdec": probe.tool_line(["opusdec", "--version"]), "dpkg": {}}
+    for package in ("libogg0", "libogg-dev", "libopus0", "libopus-dev", "libopusfile0", "libvorbis0a", "libvorbisfile3", "libvorbis-dev", "opus-tools", "vorbis-tools"):
         env["dpkg"][package] = probe.tool_line(["dpkg-query", "-W", "-f=${Version}", package])
     return env
 
