@@ -179,14 +179,37 @@ def mp4_units(data, result):
 
     units = []
     stsz = find(data, stbl[0], stbl[1], [b"stsz"])
+    stz2 = find(data, stbl[0], stbl[1], [b"stz2"]) if not stsz else None
     stco = find(data, stbl[0], stbl[1], [b"stco"])
     co64 = find(data, stbl[0], stbl[1], [b"co64"])
     stsc = find(data, stbl[0], stbl[1], [b"stsc"])
-    if stsz and (stco or co64) and stsc:
-        fixed, count = struct.unpack_from(">II", data, stsz[0] + 4)
-        # A declared count never allocates by itself: with a table it is bounded by the table, with a fixed size by the file.
-        count = min(count, (stsz[1] - stsz[0] - 12) // 4) if not fixed else min(count, size // max(fixed, 1) + 1)
+    if stz2 and (stco or co64) and stsc:
+        # stz2, the compact sample size box: 4, 8 or 16 bits per sample (ISO/IEC 14496-12, 8.7.3.3)
+        field = data[stz2[0] + 7]
+        count = struct.unpack_from(">I", data, stz2[0] + 8)[0]
+        count = min(count, (stz2[1] - stz2[0] - 12) * 8 // max(field, 4))
         sizes = []
+        for i in range(count):
+            if field == 16:
+                sizes.append(struct.unpack_from(">H", data, stz2[0] + 12 + 2 * i)[0])
+            elif field == 8:
+                sizes.append(data[stz2[0] + 12 + i])
+            elif field == 4:
+                b = data[stz2[0] + 12 + i // 2]
+                sizes.append(b >> 4 if i % 2 == 0 else b & 15)
+        stsz = (0, 0)
+        fixed_sizes = sizes
+    else:
+        fixed_sizes = None
+    if (stsz or fixed_sizes is not None) and (stco or co64) and stsc:
+        fixed, count = (0, 0) if fixed_sizes is not None else struct.unpack_from(">II", data, stsz[0] + 4)
+        # A declared count never allocates by itself: with a table it is bounded by the table, with a fixed size by the file.
+        if fixed_sizes is None:
+            count = min(count, (stsz[1] - stsz[0] - 12) // 4) if not fixed else min(count, size // max(fixed, 1) + 1)
+        sizes = []
+        if fixed_sizes is not None:
+            sizes = fixed_sizes
+            count = 0
         for i in range(count):
             p = stsz[0] + 12 + 4 * i
             if fixed:

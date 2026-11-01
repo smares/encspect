@@ -72,9 +72,9 @@ static struct {
     unsigned char *data;
     HANDLE_AACDECODER decoder;
     long coded, outputs, calls;
-    int limit;
+    int limit, raw;
     const char *stopped;
-} G = {NULL, NULL, 0, 0, 0, 0, "end"};
+} G = {NULL, NULL, 0, 0, 0, 0, 0, "end"};
 
 /* Decodes what the library holds until it asks for more bits, and writes one line per call; numTotalBytes in each line says how
    many bytes of the input the library has used up to that call. */
@@ -96,7 +96,9 @@ static void decode_all(long index, long from, long to, unsigned fill, unsigned l
         printf("}\n");
         fflush(stdout);
         G.calls++;
-        if (error == AAC_DEC_NOT_ENOUGH_BITS) {
+        /* ADTS: the library keeps the bytes it was given and asks for more with 0x1002, so decoding goes on until it does. Raw access units: one
+           unit per fill, one call per unit; a second call without new data conceals a frame (USAC answers 0x4004 with a valid output forever). */
+        if (error == AAC_DEC_NOT_ENOUGH_BITS || (G.raw && left == 0)) {
             return;
         }
     }
@@ -189,6 +191,7 @@ int main(int argc, char **argv) {
     fflush(stdout);
 
     G.data = data;
+    G.raw = raw;
     G.decoder = decoder;
     if (!strcmp(mode, "units")) {
         long fed_end = 0;
