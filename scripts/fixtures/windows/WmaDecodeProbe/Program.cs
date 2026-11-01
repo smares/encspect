@@ -143,7 +143,7 @@ public static class Program
             {
                 return key == "sourceReader"
                     ? $"stalled after {node["calls"]} reads (last timestamp {node["lastTimestamp"]}, in ReadSample {node["inReadSample"]})"
-                    : $"stalled after {node["objectCount"] ?? 0} objects, {node["totalSamples"] ?? 0} samples";
+                    : $"stalled after {node["objectCount"] ?? 0} objects, {node["partialSamples"] ?? 0} samples";
             }
 
             if (node["timedOut"] != null)
@@ -246,10 +246,6 @@ public static class Program
                 if (mode == "sr")
                 {
                     SourceReaderProbe.Run(file, record);
-                }
-                else if (mode == "asf")
-                {
-                    DmoProbe.WalkOnly(file, record);
                 }
                 else
                 {

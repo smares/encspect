@@ -54,7 +54,7 @@ jobs:
           ./probe-bin/wma-decode-probe.exe --out smoke-out --timeout 30 tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.wma
           head -c 3000 smoke-out/records/*.json
 
-      - name: Decode every fixture two ways
+      - name: Decode every fixture (three runs each)
         shell: bash
         # The artifact is uploaded even if this step runs out of time (environment.json is written first).
         timeout-minutes: 45

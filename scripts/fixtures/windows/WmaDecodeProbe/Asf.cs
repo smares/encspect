@@ -70,15 +70,19 @@ public static class AsfReader
     private static readonly Guid ExtendedStreamProperties = new("14E6A5CB-C672-4332-8399-A96952065B5A");
     private static readonly Guid AudioMedia = new("F8699E40-5B4D-11CF-A8FD-00805F5C442B");
 
+    // Everything that changes a published record goes under the lock the serializer takes.
     private static void Problem(AsfAudio info, string text)
     {
-        if (info.Problems.Count < MaxProblems)
+        lock (SourceReaderProbe.Gate)
         {
-            info.Problems.Add(text);
-        }
-        else if (info.Problems.Count == MaxProblems)
-        {
-            info.Problems.Add("more problems not listed");
+            if (info.Problems.Count < MaxProblems)
+            {
+                info.Problems.Add(text);
+            }
+            else if (info.Problems.Count == MaxProblems)
+            {
+                info.Problems.Add("more problems not listed");
+            }
         }
     }
 
@@ -183,7 +187,7 @@ public static class AsfReader
                 // Reserved GUID (16), reserved (2), data size (4), then the extension's objects.
                 ScanObjects(file, body + 22, bodyEnd, info, ref minPacket, ref maxPacket, depth + 1);
             }
-            else if (id == ExtendedStreamProperties && body + 64 <= bodyEnd)
+            else if (id == ExtendedStreamProperties && body + 64 <= bodyEnd && depth < 3)
             {
                 // The fixed part, the stream names and the payload extension systems come first; a
                 // Stream Properties Object may follow them.
@@ -248,6 +252,14 @@ public static class AsfReader
         }
     }
 
+    private static int NextObjectIndex(AsfAudio info)
+    {
+        lock (SourceReaderProbe.Gate)
+        {
+            return info.ObjectsRead++;
+        }
+    }
+
     // The object a stream is putting together. Spans are the byte ranges received, in object offsets.
     private sealed class Assembly
     {
@@ -285,7 +297,7 @@ public static class AsfReader
 
             var obj = new MediaObject
             {
-                Index = info.ObjectsRead++,
+                Index = NextObjectIndex(info),
                 Stream = stream,
                 Number = a.Number,
                 Size = a.Size,
@@ -353,7 +365,8 @@ public static class AsfReader
 
             if (a.Data.Length < end)
             {
-                Array.Resize(ref a.Data, (int)end);
+                // Geometric growth within the cap, so that many small fragments are not quadratic.
+                Array.Resize(ref a.Data, (int)Math.Min(Math.Max(end, (long)a.Data.Length * 2), MaxObjectBytes));
             }
 
             Array.Copy(file, position, a.Data, offset, length);
@@ -382,7 +395,11 @@ public static class AsfReader
                 next = fixedSize > 0 ? pos + fixedSize : info.DataEnd;
             }
 
-            info.PacketsRead++;
+            lock (SourceReaderProbe.Gate)
+            {
+                info.PacketsRead++;
+            }
+
             if (next <= pos)
             {
                 break;

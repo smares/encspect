@@ -15,26 +15,6 @@ public static class DmoProbe
 
     private static Guid SubtypeOf(int tag) => new($"{tag:x8}-0000-0010-8000-00AA00389B71");
 
-    // The probe's ASF reader alone, without a decoder (child mode "asf"): the media objects it would feed.
-    public static void WalkOnly(string path, Dictionary<string, object?> record)
-    {
-        var asf = AsfReader.ReadHeader(path);
-        var objects = new List<MediaObject>();
-        lock (SourceReaderProbe.Gate)
-        {
-            record["asf"] = asf;
-            record["objects"] = objects;
-        }
-
-        AsfReader.WalkObjects(asf, obj =>
-        {
-            lock (SourceReaderProbe.Gate)
-            {
-                objects.Add(obj);
-            }
-        });
-    }
-
     public static void Run(string path, Dictionary<string, object?> record, bool withTimestamps = true)
     {
         var asf = AsfReader.ReadHeader(path);
@@ -233,7 +213,7 @@ public static class DmoProbe
                 {
                     objects.Add(obj);
                     objectInputs.Add(entry);
-                    record["totalSamples"] = total;
+                    record["partialSamples"] = total;
                     record["objectCount"] = objects.Count;
                 }
             });
@@ -247,8 +227,11 @@ public static class DmoProbe
             total += tailFrames;
             lock (SourceReaderProbe.Gate)
             {
+                // totalSamples exists only for a run that fed every object and drained; a stalled or
+                // failed run leaves partialSamples.
                 record["drain"] = tail;
                 record["totalSamples"] = total;
+                record["partialSamples"] = total;
                 record["objectCount"] = objects.Count;
                 record["elapsedMs"] = timer.ElapsedMilliseconds;
             }

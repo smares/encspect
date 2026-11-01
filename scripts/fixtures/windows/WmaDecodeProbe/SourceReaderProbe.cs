@@ -82,13 +82,17 @@ public static class SourceReaderProbe
         foreach (var (tag, bits) in new[] { (1, 16), (3, 32), (1, 24) })
         {
             var attempt = new Dictionary<string, object?> { ["tag"] = tag, ["bits"] = bits };
-            attempts.Add(attempt);
             Native.MFCreateMediaType(out var type);
             com.Add(type);
             var wfx = Format.Wfx(tag, channels, rate, bits);
             attempt["initHresult"] = Format.Hr(Native.MFInitMediaTypeFromWaveFormatEx(type, wfx, (uint)wfx.Length));
             int setHr = reader.SetCurrentMediaType(Native.FirstAudioStream, IntPtr.Zero, type);
             attempt["setHresult"] = Format.Hr(setHr);
+            lock (Gate)
+            {
+                attempts.Add(attempt);
+            }
+
             if (setHr >= 0)
             {
                 set = true;
