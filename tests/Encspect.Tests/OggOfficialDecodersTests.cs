@@ -14,6 +14,16 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
 {
     private static readonly string[] Statuses = ["explained", "noted", "pending", "follow", "keep", "build-dependent", "stale"];
 
+    // Lists go to the test output and, in CI, to the job summary, where they are seen without opening a log.
+    private void Note(string line)
+    {
+        output.WriteLine(line);
+        if (Environment.GetEnvironmentVariable("GITHUB_STEP_SUMMARY") is { Length: > 0 } summary)
+        {
+            File.AppendAllText(summary, line + "\n");
+        }
+    }
+
     private static readonly string ResultsPath = Path.Combine(Fixtures.FixtureDirectory, "ogg", "official-decoders.json");
 
     public static TheoryData<string> Entries()
@@ -41,7 +51,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             foreach (JsonElement difference in file.GetProperty("differences").EnumerateArray().Concat(file.GetProperty("units").EnumerateArray()))
             {
                 string status = difference.GetProperty("status").GetString()!;
-                Assert.True(Statuses.Contains(status), $"{file.GetProperty("path").GetString()}: status {status}");
+                Assert.True(Statuses.Contains(status) || status == "agree", $"{file.GetProperty("path").GetString()}: status {status}");
             }
         }
     }
@@ -57,7 +67,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             string name = Path.GetFileName(file);
             if ((name.EndsWith(".ogg", StringComparison.Ordinal) || name.EndsWith(".opus", StringComparison.Ordinal)) && !known.Contains(name))
             {
-                output.WriteLine($"no entry: {name}");
+                Note($"official decoders: no entry for {name}");
             }
         }
     }
@@ -72,7 +82,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
         string sha256 = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(fixture)));
         if (sha256 != entry.GetProperty("sha256").GetString())
         {
-            output.WriteLine($"stale: {name} is no longer the file the run decoded ({entry.GetProperty("sha256").GetString()![..8]}, now {sha256[..8]})");
+            Note($"official decoders: stale {name} is no longer the file the run decoded ({entry.GetProperty("sha256").GetString()![..8]}, now {sha256[..8]})");
             return;
         }
 
@@ -84,10 +94,12 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             string id = figure.GetProperty("id").GetString()!;
             long? actual = AnalyzerFigure(report, streams, figure);
             figures[id] = actual;
-            if (figure.GetProperty("reference").ValueKind == JsonValueKind.Null || actual is null)
+            if (figure.GetProperty("reference").ValueKind == JsonValueKind.Null)
             {
                 continue;
             }
+
+            Assert.True(actual is not null, $"{name}: the analyzer's {figure.GetProperty("analyzerFigure").GetString()} of {id} is gone, and the reference is {figure.GetProperty("reference").GetInt64()}");
 
             long reference = figure.GetProperty("reference").GetInt64();
             if (actual == reference)
@@ -106,9 +118,21 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             string kind = difference.GetProperty("kind").GetString()!;
             string status = difference.GetProperty("status").GetString()!;
             long? actual = figures.GetValueOrDefault(id);
+            if (kind == "decoder-refuses-stream")
+            {
+                long? listedFigure = difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null ? null : difference.GetProperty("analyzer").GetInt64();
+                Assert.True(actual == listedFigure, $"{name}: {id} is {actual}; the decoder refuses the stream and the list has the analyzer's {listedFigure}");
+                if (status == "pending")
+                {
+                    Note($"official decoders: pending {name} {id}: the decoder refuses the stream, the analyzer counts {actual}");
+                }
+
+                continue;
+            }
+
             if (actual is null)
             {
-                continue;
+                Assert.Fail($"{name}: the analyzer's figure of {id} is gone");
             }
 
             if (kind == "witness-differs")
@@ -122,7 +146,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
                 continue;
             }
 
-            if (difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null)
+            if (difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null || difference.GetProperty("value").ValueKind == JsonValueKind.Null)
             {
                 continue;
             }
@@ -133,31 +157,49 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             Assert.True(resolved || actual == listed, $"{name}: {id} is {actual}; the difference with {difference.GetProperty("decoder").GetString()} ({decoder}) lists the analyzer's {listed}");
             if (status == "follow" && !resolved)
             {
-                output.WriteLine($"follow: {name} {id} is {actual}, the reference {decoder}; the analyzer is to follow it in its own change");
+                Note($"official decoders: follow {name} {id} is {actual}, the reference {decoder}; the analyzer is to follow it in its own change");
             }
             else if (status == "pending")
             {
-                output.WriteLine($"pending: {name} {id} is {actual}, {difference.GetProperty("decoder").GetString()} gives {decoder}");
+                Note($"official decoders: pending {name} {id} is {actual}, {difference.GetProperty("decoder").GetString()} gives {decoder}");
             }
+        }
+
+        // Every unit the decoder refuses and every finding about a unit is listed, so a finding that appears, goes or moves fails here.
+        var listedFindings = new Dictionary<string, int>();
+        var actualFindings = new Dictionary<string, int>();
+        foreach (Finding finding in report.Findings.Where(f => f.Node is not null && IsUnitFinding(f.Code)))
+        {
+            actualFindings[finding.Code] = actualFindings.GetValueOrDefault(finding.Code) + 1;
         }
 
         foreach (JsonElement unit in entry.GetProperty("units").EnumerateArray())
         {
-            long offset = unit.GetProperty("offset").GetInt64();
-            long length = unit.GetProperty("length").GetInt64();
-            JsonElement expected = unit.GetProperty("finding");
-            IEnumerable<Finding> unitFindings = report.Findings.Where(f => f.Node is not null && IsUnitFinding(f.Code) && f.Node.Offset >= offset && (f.Node.Offset < offset + length || f.Node.Offset == offset));
-            if (expected.ValueKind == JsonValueKind.Null)
+            List<(long Start, long Length)> ranges = unit.GetProperty("ranges").ValueKind == JsonValueKind.Null
+                ? []
+                : [.. unit.GetProperty("ranges").EnumerateArray().Select(r => (r[0].GetInt64(), r[1].GetInt64()))];
+            long offset = unit.GetProperty("offset").ValueKind == JsonValueKind.Null ? -1 : unit.GetProperty("offset").GetInt64();
+            bool Holds(Finding f) => f.Node is not null && IsUnitFinding(f.Code)
+                && (ranges.Count == 0 ? f.Node.Offset == offset : ranges.Any(r => r.Length == 0 ? f.Node.Offset == r.Start : f.Node.Offset >= r.Start && f.Node.Offset < r.Start + r.Length));
+            string[] expected = [.. unit.GetProperty("findings").EnumerateArray().Select(f => f.GetString()!)];
+            if (ranges.Count == 0 && expected.Length == 0)
             {
-                Assert.True(!unitFindings.Any(), $"{name}: the analyzer now has a finding at {offset}, where the decoder refuses a unit and the list says it has none");
+                continue;
             }
-            else
+
+            foreach (string code in expected)
             {
-                Assert.True(
-                    report.Findings.Any(f => f.Code == expected.GetString() && f.Node is not null && f.Node.Offset == offset),
-                    $"{name}: the finding {expected.GetString()} at {offset} listed with the decoder's verdict is not in the report");
+                listedFindings[code] = listedFindings.GetValueOrDefault(code) + 1;
             }
+
+            Assert.True(
+                report.Findings.Where(Holds).Select(f => f.Code).Order(StringComparer.Ordinal).SequenceEqual(expected.Order(StringComparer.Ordinal)),
+                $"{name}: the findings at {offset} are [{string.Join(", ", report.Findings.Where(Holds).Select(f => f.Code))}], the list has [{string.Join(", ", expected)}] beside the decoder's {unit.GetProperty("decoder").GetString()}");
         }
+
+        Assert.True(
+            listedFindings.OrderBy(k => k.Key, StringComparer.Ordinal).SequenceEqual(actualFindings.OrderBy(k => k.Key, StringComparer.Ordinal)),
+            $"{name}: the unit findings of the report ({string.Join(", ", actualFindings.Select(k => $"{k.Key} {k.Value}"))}) are not the listed ones ({string.Join(", ", listedFindings.Select(k => $"{k.Key} {k.Value}"))})");
     }
 
     private static bool IsUnitFinding(string code) =>

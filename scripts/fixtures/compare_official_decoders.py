@@ -19,10 +19,14 @@ what the owner's reader writes after the priming and padding of the format (the 
 The reference rule for Ogg, per stage:
   trimmed   the reader's total (oggdec, opusdec) when the reader reached the end without a failed read or a stop condition, the direct path fed every
             page, and the reader's count is consistent with the stream's last granule position (below); else none
-  coded     the direct path's total when it reached the end
-A reader's count is consistent when it lies in [low, high]: high is the coded total of the streams of its codec; low is the last granule position G
-(the largest one libogg returned with a page) less the pre-skip for Opus, and for Vorbis G, and both limited to the coded total. A reader that stops early
-or drops a stretch without a message falls below it.
+  coded     the direct path's total when it reached the end and fed every page (libogg dropped none); a stream whose headers the decoder refuses gets a figure
+            with no reference and the verdict
+A reader's count is consistent when it lies in [low, high]: high is the coded total of the streams of its codec; low is G, the sum over those streams of the
+granule position of each stream's last page (in file order), less the pre-skip for Opus, both limited to the coded total. A stream with no granule position makes
+the check impossible and the trimmed stage has no reference. A reader that stops early or drops a stretch without a message falls below it; one that is right
+about a start offset or wrong granule positions (G above the coded total) falls outside it too, and the rule then has no reference. The sum can hide errors that
+cancel across links, which a reader's single total cannot show. Proposal for the project lead, not approved and not used: also accept a reader that equals the libvorbis
+run with the granule positions (`proposedReference` in the figure).
 """
 
 import argparse
@@ -111,7 +115,13 @@ def load_analyzer(path, encspect_reports):
 
 def run_cli(encspect, folder):
     result = subprocess.run([encspect, "--json", str(folder)], capture_output=True, timeout=1800)
-    reports = json.loads(result.stdout.decode("utf-8")) if result.stdout.strip() else []
+    try:
+        reports = json.loads(result.stdout.decode("utf-8")) if result.stdout.strip() else []
+    except json.JSONDecodeError:
+        reports = []
+    expected = sum(1 for p in pathlib.Path(folder).iterdir() if p.is_file())
+    if len(reports) != expected:
+        sys.exit("the command line program gave %d reports for %d files (exit status %s): %s" % (len(reports), expected, result.returncode, result.stderr.decode("utf-8", "replace")[:500]))
     return {pathlib.Path(r["source"]).name: r for r in reports}
 
 
@@ -194,20 +204,48 @@ def compare_ogg(record, analyzer, ffmpeg):
     def analyzer_streams(streams):
         return [mapping.get(s["stream"]) for s in streams]
 
-    # coded stage, one figure per run of constant output format
+    # coded stage: one figure per run of constant output format, and one per stream the decoder refuses
     runs = direct.get("runs", [])
-    for number, run in enumerate(runs):
+    complete = direct.get("stoppedBy") == "end"
+    fed = complete and direct.get("fedEveryPage")
+    unfed = None
+    if not complete:
+        unfed = "the direct path did not reach the end (%s)" % direct.get("stoppedBy")
+    elif not fed:
+        unfed = "the direct path did not feed every unit (libogg dropped %d bytes, %d bytes left over, %d pages refused)" % (
+            direct.get("skippedBytes") or 0, direct.get("trailingBytes") or 0, direct.get("refusedPages") or 0)
+    coded = []
+    for run in runs:
         members = [s for s in direct["streams"] if s["stream"] in run["streams"]]
         mine = analyzer_streams(members)
         a = sum_known(m["decodedSamples"] if m else None for m in mine)
-        reference = run["samples"] if direct.get("stoppedBy") == "end" else None
-        figures.append({
-            "id": "decodedSamples" if len(runs) == 1 else "decodedSamples.run%d" % (number + 1), "stage": "coded", "analyzerFigure": "Decoded Samples",
-            "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a, "reference": reference, "referencePath": "direct" if reference is not None else None,
-            "format": {"rate": run["rate"], "channels": run["channels"]}, "witnesses": {},
-        })
-    if not runs:
-        figures.append({"id": "decodedSamples", "stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [], "analyzer": None, "reference": None, "referencePath": None, "witnesses": {}})
+        figure = {"stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
+                  "reference": run["samples"] if unfed is None else None, "referencePath": "direct" if unfed is None else None,
+                  "format": {"rate": run["rate"], "channels": run["channels"]}, "witnesses": {}, "kind": "run"}
+        if unfed:
+            figure["noReference"] = unfed
+            figure["directTotal"] = run["samples"]
+        coded.append(figure)
+    if complete:
+        for st in direct["streams"]:
+            if st.get("refusal") and st["codec"] in ("opus", "vorbis"):
+                m = mapping.get(st["stream"])
+                coded.append({"stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [analyzer_index(analyzer, m)], "analyzer": m["decodedSamples"] if m else None,
+                              "reference": None, "referencePath": None, "witnesses": {}, "kind": "refused", "refused": "the decoder refuses the stream (%s)" % st["refusal"],
+                              "stream": st["stream"]})
+    for number, figure in enumerate(coded):
+        if len(coded) == 1:
+            figure["id"] = "decodedSamples"
+        elif figure["kind"] == "run":
+            figure["id"] = "decodedSamples.run%d" % (number + 1)
+        else:
+            figure["id"] = "decodedSamples.stream%d" % figure.pop("stream")
+        figure.pop("stream", None)
+        figure.pop("kind")
+        figures.append(figure)
+    if not coded:
+        figures.append({"id": "decodedSamples", "stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [], "analyzer": None, "reference": None, "referencePath": None,
+                        "witnesses": {}, "noReference": unfed or "the decoder decoded no packet"})
     coded_figures = list(figures)
     # ffmpeg decodes the first audio stream only, so its counts are set against a file of one logical stream; the column of the others is kept apart.
     # +skip_manual gives the coded count of Opus (the probe); Vorbis has no such count, so ffmpeg is a witness at the trimmed stage only.
@@ -217,6 +255,8 @@ def compare_ogg(record, analyzer, ffmpeg):
     ff_default = ffmpeg.get("default", {}).get("samples") if ffmpeg else None
     if ffmpeg and single and codec_of_file == "opus" and len(coded_figures) == 1:
         coded_figures[0]["witnesses"]["ffmpeg +skip_manual"] = ff_coded
+        if ff_coded is None:
+            coded_figures[0]["witnessErrors"] = {"ffmpeg +skip_manual": ffmpeg_failure(ffmpeg, "skipManual")}
     elif ffmpeg and by_codec and not single:
         notes.append("ffmpeg decodes the first audio stream only (%s samples at the trimmed stage, %s with +skip_manual); not set against a file of %d logical streams"
                      % (show(ff_default), show(ff_coded), len(direct["streams"])))
@@ -228,10 +268,12 @@ def compare_ogg(record, analyzer, ffmpeg):
         members = by_codec.get(codec, [])
         mine = analyzer_streams(members)
         a = sum_known(m["samples"] if m else None for m in mine)
-        coded_total = sum(r["samples"] for r in runs if set(r["streams"]) <= {s["stream"] for s in members}) if direct.get("stoppedBy") == "end" else None
-        granule = sum((s["lastGranule"] or 0) for s in members)
-        pre_skip = sum(s.get("preSkip", 0) for s in members) if codec == "opus" else 0
+        coded_total = sum(m["samples"] for m in members) if complete else None
+        lasts = [m["lastGranule"] for m in members]
+        granule = sum(g or 0 for g in lasts)
+        pre_skip = sum(m.get("preSkip", 0) for m in members) if codec == "opus" else 0
         reason = None
+        range_reason = False
         total = reader.get("totalSamples")
         bounds = None
         if not reader.get("opened"):
@@ -244,12 +286,15 @@ def compare_ogg(record, analyzer, ffmpeg):
             reason = "the direct path did not feed every page (libogg dropped %d bytes, %d bytes left over, %d pages refused)" % (direct.get("skippedBytes") or 0, direct.get("trailingBytes") or 0, direct.get("refusedPages") or 0)
         elif coded_total is None:
             reason = "the direct path did not reach the end"
+        elif not members or any(g is None for g in lasts):
+            reason = "the last granule position of a stream is unknown, so the reader's count cannot be checked"
         else:
             high = coded_total
             low = max(0, min(granule, coded_total) - pre_skip)
             bounds = [low, high]
             if not low <= total <= high:
-                reason = "the reader's %d is outside %d to %d, what the last granule position %d and the coded total %d allow" % (total, low, high, granule, coded_total)
+                range_reason = True
+                reason = "the reader's %d is outside %d to %d, what the last pages' granule positions (%d) and the coded total %d allow" % (total, low, high, granule, coded_total)
         figure = {
             "id": "samples", "stage": "trimmed", "analyzerFigure": "samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
             "reference": total if reason is None else None, "referencePath": reader["tool"] if reason is None else None,
@@ -261,8 +306,13 @@ def compare_ogg(record, analyzer, ffmpeg):
         witness = paths.get("directGranule")
         if witness and direct_total(witness) is not None:
             figure["witnesses"]["libvorbis with granule positions"] = direct_total(witness)
+            if range_reason and direct_total(witness) == total:
+                # A proposal for the project lead, not an approved rule: the reader's count equals libvorbis's own trimming from the granule positions.
+                figure["proposedReference"] = {"value": total, "rule": "the reader equals the libvorbis run with the granule positions (proposal, not approved)"}
         if ffmpeg and single:
             figure["witnesses"]["ffmpeg"] = ff_default
+            if ff_default is None:
+                figure["witnessErrors"] = {"ffmpeg": ffmpeg_failure(ffmpeg, "default")}
         figures.append(figure)
     elif by_codec:
         notes.append("no reader run")
@@ -276,25 +326,34 @@ def compare_ogg(record, analyzer, ffmpeg):
             if value is not None and r is not None and value != r:
                 differences.append({"figure": figure["id"], "decoder": name, "value": value, "analyzer": a, "reference": r, "status": "explained" if a == r else "pending",
                                     "kind": "witness-differs"})
+        if figure.get("refused"):
+            differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
+                                "reason": figure["refused"]})
         if r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
             differences.append({"figure": figure["id"], "decoder": paths["reader"]["tool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
                                 "kind": "reader-not-accepted", "reason": figure.get("noReference")})
-    return {"figures": figures, "differences": differences, "units": unit_differences(direct, analyzer), "notes": notes}
+    return {"figures": figures, "differences": differences, "units": unit_verdicts(direct, analyzer), "notes": notes}
+
+
+def ffmpeg_failure(ffmpeg, key):
+    entry = ffmpeg.get(key) or {}
+    return {"exit": entry.get("exit"), "error": (entry.get("errors") or [ffmpeg.get("error")])[0]}
 
 
 def analyzer_index(analyzer, stream):
     return analyzer["streams"].index(stream) if stream is not None and analyzer else None
 
 
-def unit_differences(direct, analyzer):
-    """Units where the decoder's verdict and the analyzer's reading of the same bytes differ: a packet libopus or libvorbis refuses with no finding that points into it,
-    and a finding that points into a packet the decoder decoded. A finding that merges several packets points to the first only, and is marked."""
+def unit_verdicts(direct, analyzer):
+    """Every packet the decoder refuses and every packet that holds a finding about a unit, with the decoder's result and the analyzer's finding at the same bytes, and
+    whether they agree; and every such finding that points into no packet. A finding that merges several packets points to the first only, so a refused packet with no
+    finding in a file that has such findings is `noted`. A packet whose file ranges could not be worked out is listed as not located."""
     result = []
-    units = [u for u in direct.get("units", []) if u.get("ranges")]
     findings = [f for f in analyzer["findings"] if UNIT_FINDING.match(f["code"]) and f["offset"] is not None]
     merged = any(f["count"] > 1 for f in findings)
-
-    empty_at = {u["ranges"][0][0] for u in units if sum(r[1] for r in u["ranges"]) == 0}
+    units = [u for u in direct.get("units", []) if "index" in u]
+    located = [u for u in units if u.get("ranges")]
+    empty_at = {u["ranges"][0][0] for u in located if sum(r[1] for r in u["ranges"]) == 0}
 
     def inside(unit, f):
         """A finding at an offset belongs to the packet that contains the byte; one of length 0 at the start of an empty packet belongs to that packet, not to the next."""
@@ -306,21 +365,31 @@ def unit_differences(direct, analyzer):
 
     matched = set()
     for u in units:
+        refused = u["result"] == "error" or u["result"].startswith("not passed")
+        if not u.get("ranges"):
+            if refused:
+                result.append({"index": u["index"], "stream": u["stream"], "offset": None, "length": None, "ranges": None, "decoder": u["result"], "finding": None, "findings": [],
+                               "verdict": "unit not located: the decoder refuses a packet whose file ranges could not be worked out", "status": "noted"})
+            continue
         mine = [f for f in findings if inside(u, f)]
         for f in mine:
             matched.add((f["code"], f["offset"]))
-        refused = u["result"] == "error" or u["result"].startswith("not passed")
-        entry = {"index": u["index"], "stream": u["stream"], "offset": u["ranges"][0][0], "length": sum(r[1] for r in u["ranges"]), "decoder": u["result"] + (" %d" % u["error"] if "error" in u else "")}
-        if refused and not mine:
-            entry.update({"finding": None, "verdict": "decoder refuses, no finding" + (" (the file has findings that merge several packets: this may be a later one)" if merged else ""),
+        if not refused and not mine:
+            continue
+        entry = {"index": u["index"], "stream": u["stream"], "offset": u["ranges"][0][0], "length": sum(r[1] for r in u["ranges"]), "ranges": u["ranges"],
+                 "decoder": u["result"] + (" %d" % u["error"] if "error" in u else ""), "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine]}
+        if refused and mine:
+            entry.update({"verdict": "decoder refuses, finding at the same bytes", "status": "agree"})
+        elif refused:
+            entry.update({"verdict": "decoder refuses, no finding" + (" (the file has findings that merge several packets: this may be a later one)" if merged else ""),
                           "status": "noted" if merged else "pending"})
-            result.append(entry)
-        elif mine and not refused:
-            entry.update({"finding": mine[0]["code"], "verdict": "finding, decoder decodes", "status": "noted"})
-            result.append(entry)
+        else:
+            entry.update({"verdict": "finding, decoder decodes", "status": "noted"})
+        result.append(entry)
     for f in findings:
         if (f["code"], f["offset"]) not in matched:
-            result.append({"offset": f["offset"], "length": f["length"], "decoder": "no unit", "finding": f["code"], "verdict": "finding points into no packet the decoder was fed", "status": "noted"})
+            result.append({"index": None, "stream": None, "offset": f["offset"], "length": f["length"], "ranges": None, "decoder": "no unit", "finding": f["code"], "findings": [f["code"]],
+                           "verdict": "finding points into no packet the decoder was fed", "status": "noted"})
     return result
 
 
@@ -452,10 +521,13 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
     out.append("")
     out.append(table(rows, ["file", "sha256", "figure", "stage", "analyzer", "reference", "path", "other decoders", "notes"]))
 
-    out += ["", "Units where a decoder's verdict differs from the analyzer's (a finding that merges several packets points to the first only)"]
+    agreeing = sum(1 for r in results for u in r["units"] if u["status"] == "agree")
+    out += ["", "Units where a decoder's verdict differs from the analyzer's (a finding that merges several packets points to the first only); %d more agree (the decoder refuses and a finding is at the same bytes)" % agreeing]
     unit_rows = []
     for r in results:
         for u in r["units"]:
+            if u["status"] == "agree":
+                continue
             unit_rows.append([r["file"], show(u.get("offset")), show(u.get("length")), u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]])
     out.append(table(unit_rows, ["file", "offset", "length", "decoder", "finding", "verdict", "status"]) if unit_rows else "none")
 
@@ -476,6 +548,9 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
             ffsame = [f for f in ff if all(v == f["reference"] for k, v in f["witnesses"].items() if k.startswith("ffmpeg") and v is not None)]
             out.append("  %-16s %-8s figures %3d, with a reference %3d, analyzer equals it %3d, no reference %3d; ffmpeg equals the reference in %d of %d" % (
                 label, stage, len(figs), len(withref), len(same), len(figs) - len(withref), len(ffsame), len(ff)))
+    proposals = [(r["file"], f["id"], f["proposedReference"]["value"]) for r in results if not r["derived"] for f in r["figures"] if f.get("proposedReference")]
+    out += ["", "Proposal for the project lead, not approved: accept the reader's count when it equals the libvorbis run with the granule positions. Committed figures that would gain a reference: %d" % len(proposals)]
+    out += ["  %s %s %s" % p for p in proposals]
     out += ["", "Derived variants by rule (figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.OGG_RULES:
@@ -498,10 +573,14 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
 # ---- the committed results ---------------------------------------------------------------------------------------------
 
 def write_official(target, previous_file, results, environment, ffmpeg_version, run_id):
-    previous = {}
+    previous, previous_figures, previous_image = {}, {}, None
     source = previous_file or target
     if source.exists():
-        for f in json.loads(source.read_text(encoding="utf-8")).get("files", []):
+        old_doc = json.loads(source.read_text(encoding="utf-8"))
+        previous_image = old_doc.get("run", {}).get("imageVersion")
+        for f in old_doc.get("files", []):
+            for fig in f.get("figures", []):
+                previous_figures[(f["path"], f["sha256"], fig["id"])] = fig
             for d in f.get("differences", []) + f.get("units", []):
                 previous[(f["path"], f["sha256"], d.get("figure") or "unit", d.get("decoder"), d.get("offset"))] = d
     files = []
@@ -509,13 +588,21 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         if r["derived"]:
             continue
         rel = r["file"]
-        figures = [{k: v for k, v in f.items() if k not in ("witnesses",)} | {"witnesses": f["witnesses"]} for f in r["figures"]]
+        figures = [dict(f) for f in r["figures"]]
+        differences = [dict(d) for d in r["differences"]]
+        for fig in figures:
+            old = previous_figures.get((rel, r["sha256"], fig["id"]))
+            if old and old.get("reference") is not None and fig["reference"] is not None and old["reference"] != fig["reference"] and previous_image != environment.get("imageVersion"):
+                # the same file bytes gave another figure on another image: the first one stays the reference
+                differences.append({"figure": fig["id"], "decoder": fig["referencePath"], "value": fig["reference"], "analyzer": fig["analyzer"], "reference": old["reference"],
+                                    "status": "build-dependent", "kind": "build-dependent", "previousImage": previous_image, "image": environment.get("imageVersion")})
+                fig["reference"] = old["reference"]
         entry = {"path": rel, "sha256": r["sha256"], "figures": figures, "differences": [], "units": []}
-        for kind, listing in (("differences", r["differences"]), ("units", r["units"])):
+        for kind, listing in (("differences", differences), ("units", r["units"])):
             for d in listing:
-                d = dict(d)
                 old = previous.get((rel, r["sha256"], d.get("figure") or "unit", d.get("decoder"), d.get("offset")))
-                if old and old.get("statusSource") == "reviewed":
+                same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "kind", "verdict"))
+                if same and old.get("statusSource") == "reviewed":
                     d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
                 else:
                     d["statusSource"] = "rule"

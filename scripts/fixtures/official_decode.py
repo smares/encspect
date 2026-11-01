@@ -91,12 +91,12 @@ def direct_result(child, mode):
     lines = child["lines"]
     end = next((l for l in lines if l.get("type") == "end"), None)
     env = next((l for l in lines if l.get("type") == "env"), {})
-    streams, units, dropped, runs = {}, [], [], []
+    streams, units, dropped = {}, [], []
     holes = refused = 0
     for l in lines:
         kind = l.get("type")
         if kind == "stream":
-            streams[l["stream"]] = {"stream": l["stream"], "serial": l["serial"], "offset": l["offset"], "codec": None, "lastGranule": None}
+            streams[l["stream"]] = {"stream": l["stream"], "serial": l["serial"], "offset": l["offset"], "codec": None, "lastGranule": None, "samples": 0}
         elif kind == "skip":
             dropped.append({"offset": l["offset"], "bytes": l["bytes"]})
         elif kind == "hole":
@@ -110,11 +110,11 @@ def direct_result(child, mode):
                 continue
             if "codec" in l:
                 s["codec"] = l["codec"]
-            if l["granulepos"] >= 0 and (s["lastGranule"] is None or l["granulepos"] > s["lastGranule"]):
-                s["lastGranule"] = l["granulepos"]
+            if l["granulepos"] >= 0:
+                s["lastGranule"] = l["granulepos"]  # the last page's, in file order
             result = l.get("result")
             if result == "head":
-                s["channels"], s["family"], s["preSkip"] = l["channels"], l["family"], l["preSkip"]
+                s["channels"], s["family"], s["preSkip"], s["created"] = l["channels"], l["family"], l["preSkip"], l["created"]
             elif result == "header":
                 s.setdefault("headerPackets", []).append({"index": l["index"], "error": l["error"]})
             elif result == "tags":
@@ -125,19 +125,48 @@ def direct_result(child, mode):
                     if key in l and (key not in ("granulepos", "eos") or l[key] not in (-1, 0)):
                         unit[key] = l[key]
                 if result == "decoded":
-                    key = (l["rate"], l["channels"])
-                    if not runs or runs[-1]["_key"] != key:
-                        runs.append({"_key": key, "rate": key[0], "channels": key[1], "samples": 0, "units": 0, "streams": []})
-                    runs[-1]["samples"] += l["samples"]
-                    runs[-1]["units"] += 1
-                    if l["stream"] not in runs[-1]["streams"]:
-                        runs[-1]["streams"].append(l["stream"])
+                    s["samples"] += l["samples"]
                     s["rate"], s["channels"] = l["rate"], l["channels"]
+                    s["decodedUnits"] = s.get("decodedUnits", 0) + 1
+                elif result in ("not an OpusHead", "not a Vorbis identification header") or (result or "").startswith("not decoded"):
+                    s["refusal"] = result
                 units.append(unit)
+    for s in streams.values():
+        if s["codec"] == "vorbis" and "refusal" not in s:
+            packets = s.get("headerPackets", [])
+            bad = next((i for i, h in enumerate(packets) if h["error"] != 0), None)
+            if bad is not None:
+                s["refusal"] = "header packet %d refused (code %d)" % (bad + 1, packets[bad]["error"])
+            elif len(packets) < 3:
+                s["refusal"] = "%d of the 3 header packets" % len(packets)
+        if s["codec"] == "opus" and "refusal" not in s and s.get("created", 0) != 0:
+            s["refusal"] = "decoder not created (code %d)" % s["created"]
+        if s["codec"] == "opus" and "refusal" not in s and "channels" not in s:
+            s["refusal"] = "no OpusHead"
+    # one total per run of constant output format: consecutive streams with the same rate and channels
+    runs = []
+    for s in sorted(streams.values(), key=lambda x: x["stream"]):
+        if "decodedUnits" not in s:
+            continue
+        key = (s["rate"], s["channels"], s["codec"])
+        if runs and runs[-1]["_key"] == key:
+            runs[-1]["samples"] += s["samples"]
+            runs[-1]["units"] += s["decodedUnits"]
+            runs[-1]["streams"].append(s["stream"])
+        else:
+            runs.append({"_key": key, "rate": s["rate"], "channels": s["channels"], "samples": s["samples"], "units": s["decodedUnits"], "streams": [s["stream"]]})
     for run in runs:
         del run["_key"]
     stopped = stopped_by(child, end)
-    total = sum(r["samples"] for r in runs)
+    notes = []
+    incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
+    if incomplete and stopped == "end":
+        stopped = "limit"
+        notes.append("the output was cut (lines elided, truncated or not parseable); the per-stream figures are partial")
+    total = end["codedSamples"] if end and not incomplete else sum(r["samples"] for r in runs)
+    if end and not incomplete and total != sum(r["samples"] for r in runs):
+        stopped = "limit"
+        notes.append("the harness counted %d samples and the lines add up to %d" % (total, sum(r["samples"] for r in runs)))
     result = {
         "tool": "ogg_decode " + mode,
         "decoder": {"libvorbis": env.get("libvorbis"), "libopus": env.get("libopus")},
@@ -159,9 +188,12 @@ def direct_result(child, mode):
     }
     if len(units) > UNIT_LIMIT:
         result["unitsElided"] = True
+        notes.append("units elided above %d" % UNIT_LIMIT)
     result["totalSamples" if stopped == "end" else "partialSamples"] = total
     if holes or dropped:
-        result["notes"] = ["libogg dropped %d bytes in %d places and reported %d lost packets; the decoder never saw them" % (sum(d["bytes"] for d in dropped), len(dropped), holes)]
+        notes.append("libogg dropped %d bytes in %d places and reported %d lost packets; the decoder never saw them" % (sum(d["bytes"] for d in dropped), len(dropped), holes))
+    if notes:
+        result["notes"] = notes
     return result
 
 

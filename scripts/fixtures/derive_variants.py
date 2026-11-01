@@ -8,8 +8,9 @@ comparison, later macOS and Windows) decodes the same bytes. Each variant's SHA-
 records by SHA-256. The variants are never committed and never uploaded: artifacts and caches hold records only.
 
 Ogg (Opus and Vorbis files named external-*, which an encoder wrote). The audio pages are the pages from the first one whose granule position is
-above 0 (the header pages carry 0 or -1); a file with fewer than two has no variants. With A the audio pages, first = A[0],
-middle = A[len(A) // 2] and last = A[-1] (which is the middle page when there are two):
+above 0 (the header pages carry 0 or -1); a file with fewer than two has no variants. With A the audio pages, first = A[0], last = A[-1], and
+middle the page in the middle of A[1:-1] when A has three or more pages (so that audio comes before and after it and it is not the end-of-stream page);
+a file with two audio pages has no mid-stream page, and its middle is the last page:
 
   cut-first-page    the file cut in the middle of the first audio page
   cut-middle-page   the file cut in the middle of the middle audio page
@@ -20,7 +21,7 @@ middle = A[len(A) // 2] and last = A[-1] (which is the middle page when there ar
   drop-packet       the packet in the middle of those the middle audio page holds whole removed, the page's lacing and CRC rewritten
   repeat-packet     that packet written twice in a row, the page's lacing and CRC rewritten
 
-A variant that equals an earlier one (the middle page is the last one) is not written. The packet rules leave the granule positions as they were.
+A variant that equals an earlier one (a two-page file's middle page is its last) is not written. The packet rules leave the granule positions as they were.
 """
 
 import argparse
@@ -105,7 +106,7 @@ def rewrite_packet(data, page, repeat):
 
 
 def ogg_variants(data):
-    """{rule: bytes} for the bytes of one Ogg file; empty when the file has fewer than three audio pages."""
+    """{rule: bytes} for the bytes of one Ogg file; empty when the file has fewer than two audio pages."""
     pages = ogg_pages(data)
     first_audio = next((i for i, p in enumerate(pages) if p[3] > 0), None)
     if first_audio is None:
@@ -113,7 +114,8 @@ def ogg_variants(data):
     audio = pages[first_audio:]
     if len(audio) < 2:
         return {}
-    first, middle, last = audio[0], audio[len(audio) // 2], audio[-1]
+    inner = audio[1:-1]
+    first, middle, last = audio[0], inner[len(inner) // 2] if inner else audio[-1], audio[-1]
     flipped = bytearray(data)
     flipped[middle[0] + middle[2] + (middle[1] - middle[2]) // 2] ^= 0x55
     page = data[middle[0]:middle[0] + middle[1]]

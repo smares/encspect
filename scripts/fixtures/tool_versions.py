@@ -45,6 +45,9 @@ PACKAGES = {
     "libogg": ("libogg0", "1.3.6"),
     "libopus": ("libopus0", "1.6.1"),
     "libvorbis": ("libvorbis0a", "1.3.7"),
+    # The libraries opusdec and oggdec read files with.
+    "libopusfile": ("libopusfile0", "0.12"),
+    "libvorbisfile": ("libvorbisfile3", "1.3.7"),
 }
 
 

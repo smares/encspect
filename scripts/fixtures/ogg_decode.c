@@ -5,7 +5,7 @@
      ogg_decode <mode> <file>
 
    modes:
-     direct   libopus, opus_multistream_decode per packet (mapping families 0, 1, 2 and 3: the multistream decoder for 0, 1 and 2,
+     direct   libopus, opus_multistream_decode per packet (mapping families 0, 1, 2, 3 and 255: the multistream decoder for 0, 1, 2 and 255 with the header's table,
               the projection decoder for 3), and libvorbis with granulepos -1 and e_o_s 0 on every audio packet, so that libvorbis
               trims nothing (the coded stage)
      granule  as direct, but libvorbis gets the packets as libogg hands them, granule positions and end of stream included (the
@@ -72,6 +72,8 @@ typedef struct {
 } Slot;
 
 static Slot slots[MAX_STREAMS];
+static long long total_samples;
+#define MAX_PACKET (16LL << 20)
 
 static int is_opus(const ogg_packet *p) { return p->bytes >= 8 && !memcmp(p->packet, "OpusHead", 8); }
 static int is_vorbis(const ogg_packet *p) { return p->bytes >= 7 && p->packet[0] == 1 && !memcmp(p->packet + 1, "vorbis", 6); }
@@ -130,7 +132,8 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
                 mapping[0] = 0;
                 mapping[1] = 1;
             }
-        } else if ((family == 1 || family == 2) && op->bytes >= 21 + channels) {
+        } else if ((family == 1 || family == 2 || family == 255) && op->bytes >= 21 + channels) {
+            /* RFC 7845 section 5.1.1.4 gives family 255 the table of family 1. */
             nstreams = h[19];
             coupled = h[20];
             memcpy(mapping, h + 21, channels);
@@ -140,7 +143,7 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
             s->projection = opus_projection_decoder_create(48000, channels, nstreams, coupled, (unsigned char *)h + 21, 2 * channels * (nstreams + coupled), &err);
         } else {
             supported = 0;
-            why = family == 255 ? "mapping family 255 (undefined by RFC 7845)" : "head too short for its mapping or an unknown family";
+            why = "head too short for its mapping or an unknown family";
         }
         if (!supported) {
             printf(",\"result\":\"not decoded: %s\",\"family\":%d,\"channels\":%d}\n", why, family, channels);
@@ -161,6 +164,7 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
         int frames = s->opus ? opus_multistream_decode_float(s->opus, op->packet, (opus_int32)op->bytes, pcm, 5760, 0)
                              : opus_projection_decode_float(s->projection, op->packet, (opus_int32)op->bytes, pcm, 5760, 0);
         if (frames >= 0) {
+            total_samples += frames;
             printf(",\"result\":\"decoded\",\"samples\":%d,\"tocSamples\":%d,\"channels\":%d,\"rate\":48000}\n", frames, nb, s->opus_channels);
         } else {
             printf(",\"result\":\"error\",\"error\":%d,\"tocSamples\":%d}\n", frames, nb);
@@ -197,6 +201,7 @@ static void decode_vorbis(Slot *s, ogg_packet *op, int keep_granule) {
                 out += got_samples;
                 vorbis_synthesis_read(&s->vd, got_samples);
             }
+            total_samples += out;
             printf(",\"result\":\"decoded\",\"samples\":%ld,\"channels\":%d,\"rate\":%ld}\n", out, s->vi.channels, s->vi.rate);
         } else {
             printf(",\"result\":\"error\",\"error\":%d}\n", err);
@@ -346,7 +351,6 @@ int main(int argc, char **argv) {
                     holes++;
                     printf("{\"type\":\"hole\",\"stream\":%lld,\"pageOffset\":%lld}\n", s->index, page_offset);
                     fflush(stdout);
-                    s->pending.count = 0;
                     continue;
                 }
                 long long index = packet_index++;
@@ -358,8 +362,8 @@ int main(int argc, char **argv) {
                         sum += ranges->items[k].length;
                     }
                 }
-                printf("{\"type\":\"packet\",\"index\":%lld,\"stream\":%lld,\"pageOffset\":%lld,\"bytes\":%ld,\"granulepos\":%" PRId64 ",\"eos\":%ld", index, s->index, page_offset,
-                       op.bytes, (int64_t)op.granulepos, op.e_o_s);
+                printf("{\"type\":\"packet\",\"index\":%lld,\"stream\":%lld,\"pageOffset\":%lld,\"bytes\":%ld,\"granulepos\":%" PRId64 ",\"eos\":%d", index, s->index, page_offset,
+                       op.bytes, (int64_t)op.granulepos, op.e_o_s ? 1 : 0);
                 if (ranges && sum == op.bytes) {
                     print_ranges(ranges);
                 } else {
@@ -369,7 +373,10 @@ int main(int argc, char **argv) {
                     s->codec = is_opus(&op) ? CODEC_OPUS : is_vorbis(&op) ? CODEC_VORBIS : CODEC_OTHER;
                     printf(",\"codec\":\"%s\"", s->codec == CODEC_OPUS ? "opus" : s->codec == CODEC_VORBIS ? "vorbis" : "other");
                 }
-                if (s->codec == CODEC_OPUS) {
+                if (op.bytes > MAX_PACKET) {
+                    stopped = "limit";
+                    printf(",\"result\":\"not passed: packet over 16 MiB\"}\n");
+                } else if (s->codec == CODEC_OPUS) {
                     decode_opus(s, &op, opus_pcm);
                 } else if (s->codec == CODEC_VORBIS) {
                     if (s->header_packets == 0 && !is_vorbis(&op)) {
@@ -385,6 +392,9 @@ int main(int argc, char **argv) {
             for (int k = 0; k < expected_count; k++) {
                 free(queue[k].items);
             }
+            if (ogg_page_eos(&page)) {
+                slot_release(s);
+            }
         }
     }
     long long trailing = sync.fill - sync.returned;
@@ -393,8 +403,8 @@ int main(int argc, char **argv) {
     }
     ogg_sync_clear(&sync);
     fclose(file);
-    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"trailingBytes\":%lld,\"refusedPages\":%lld}\n",
-           stopped, pages, streams, packet_index, holes, skipped_bytes, trailing, refused_pages);
+    printf("{\"type\":\"end\",\"stoppedBy\":\"%s\",\"pages\":%lld,\"streams\":%lld,\"packets\":%lld,\"holes\":%lld,\"skippedBytes\":%lld,\"trailingBytes\":%lld,\"refusedPages\":%lld,\"codedSamples\":%lld}\n",
+           stopped, pages, streams, packet_index, holes, skipped_bytes, trailing, refused_pages, total_samples);
     fflush(stdout);
     return 0;
 }

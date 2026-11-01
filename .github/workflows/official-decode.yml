@@ -54,7 +54,7 @@ jobs:
           import sys
           sys.path.insert(0, 'scripts/fixtures')
           import tool_versions
-          found = tool_versions.problems('oggdec', 'opus-tools', 'libogg', 'libopus', 'libvorbis')
+          found = tool_versions.problems('oggdec', 'opus-tools', 'libogg', 'libopus', 'libvorbis', 'libopusfile', 'libvorbisfile')
           open('out/version-warnings.txt', 'w').write('\n'.join(found) + ('\n' if found else ''))
           for line in found:
               print('::warning::' + line)

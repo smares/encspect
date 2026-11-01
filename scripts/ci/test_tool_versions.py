@@ -75,7 +75,7 @@ class ProgramTests(unittest.TestCase):
         with printing("", code=1):
             self.assertIn("no version was found", tool_versions.problems("dca")[0])
         for name, found in (("madplay", "0.15.2b-10.2"), ("speex", "1.2.1-3build1"), ("opus-tools", "0.2-1build5"), ("libogg", "1.3.6-2"), ("libopus", "1.6.1-1"),
-                            ("libvorbis", "1.3.7-3build2")):
+                            ("libvorbis", "1.3.7-3build2"), ("libopusfile", "0.12-4build4"), ("libvorbisfile", "1.3.7-3build2")):
             with printing(found):
                 self.assertEqual(tool_versions.problems(name), [], name)
         with printing("0.2.1-1"):
