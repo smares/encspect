@@ -973,8 +973,8 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
-          restore-keys: downloads-${{ github.job }}-
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          restore-keys: downloads-vfy1-${{ github.job }}-
 
       # Each week's entry restores the last one and saves it again; downloads.py touches a file when it uses or
       # stores it, so what no job has used for a month (a pin that changed) leaves the cache here.
@@ -1007,14 +1007,14 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
 
       - name: Save the pinned downloads of a failed job
         if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
         uses: actions/cache/save@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   wavpack-crosscheck:
     name: WavPack fixtures and decoded audio agree with libwavpack, wvunpack, FFmpeg and MediaInfo
@@ -1101,8 +1101,8 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
-          restore-keys: downloads-${{ github.job }}-
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          restore-keys: downloads-vfy1-${{ github.job }}-
 
       - name: Drop downloads nobody has used for a month
         run: find .cache/downloads -type f -mtime +30 -delete 2>/dev/null || true
@@ -1137,19 +1137,22 @@ jobs:
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
       # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
       # SHA-256 and checked before use, so a partial cache is safe.
+      - name: Fail on purpose (verification)
+        run: exit 1
+
       - name: Save the pinned downloads
         if: success() && steps.downloads-cache.outputs.cache-hit != 'true' && hashFiles('.cache/downloads/**') != ''
         uses: actions/cache/save@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}
 
       - name: Save the pinned downloads of a failed job
         if: (failure() || cancelled()) && hashFiles('.cache/downloads/**') != ''
         uses: actions/cache/save@v6
         with:
           path: .cache/downloads
-          key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+          key: downloads-vfy1-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
 
   flac-crosscheck:
     name: FLAC fixtures agree with flac, metaflac, FFmpeg and MediaInfo, and the decoder with flac -d and FFmpeg
