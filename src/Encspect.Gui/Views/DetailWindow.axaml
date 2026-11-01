@@ -50,7 +50,7 @@
           </Button>
           <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
           <Button Name="DecodeAudioButton" Content="Decode Audio" Click="OnDecodeAudio" IsEnabled="{Binding CanDecodeAudio}" IsVisible="{Binding !IsDecoding}"
-                  ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples, and to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff and the levels. It reads the whole file again and takes longer than the analysis." />
+                  ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples, and to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff, the levels, the loudness and the true peak. It reads the whole file again and takes longer than the analysis." />
           <Button Name="StopDecodingButton" Content="Stop" Click="OnStopDecoding" IsVisible="{Binding IsDecoding}"
                   ToolTip.Tip="Stop decoding; the analysis stays as it is." />
           <Button Name="AnalyzeAsButton" Content="Analyze as…" IsEnabled="{Binding HasReport}"
@@ -198,7 +198,7 @@
                         <TextBlock Text="{Binding Heading}" Classes="secondary heading" />
                         <TextBlock Text="{Binding Caption}" Classes="secondary caption" IsVisible="{Binding HasCaption}" AutomationProperties.Name="{Binding Caption}" />
                         <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode"
-                                ToolTip.Tip="Decode the audio to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff and the levels. It reads the whole file again and takes longer than the analysis." />
+                                ToolTip.Tip="Decode the audio to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff, the levels, the loudness and the true peak. It reads the whole file again and takes longer than the analysis." />
                         <ItemsControl ItemsSource="{Binding Choices}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:GraphChoice">

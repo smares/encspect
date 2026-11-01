@@ -46,7 +46,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         _analyzer = analyzer;
         _post = post ?? UiThread.Post;
-        Graphs.FrameRequested += (_, offset) => SelectFrameAt(offset);
+        Graphs.FrameRequested += (_, offset) => SelectFrameAt(offset, Graphs.FramesAfterRequested);
         Graphs.DecodeRequested += (_, _) => _ = DecodeAudioAsync();
     }
 
@@ -584,7 +584,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     // Selects the frame that holds the offset, found through the tree's containment from the nodes
     // of the stream the graphs show, and returns its row; null when no frame holds it.
-    public TreeRow? SelectFrameAt(long offset)
+    // framesAfter: select the frame that many frames after it, among its siblings (a run of frames, which the graph names by its first).
+    public TreeRow? SelectFrameAt(long offset, int framesAfter = 0)
     {
         if (_tree is not { } tree)
         {
@@ -601,8 +602,24 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 continue;
             }
 
+            if (framesAfter > 0)
+            {
+                below = FrameLocator.Advance(node, below, framesAfter);
+            }
+
             if (tree.Reveal([.. start, .. below]) is { } row)
             {
+                if (framesAfter > 0)
+                {
+                    Node landed = node;
+                    foreach (int index in below)
+                    {
+                        landed = landed.Children[index];
+                    }
+
+                    Graphs.ClickLandedAt(landed.Offset);
+                }
+
                 SelectedNode = row;
                 return row;
             }

@@ -329,6 +329,11 @@ internal static class CommandLine
             return Fail(stderr, "--measure-grids is for the JSON; the text and CSV never hold the grids.");
         }
 
+        if (grids && kinds is { } chosenKinds && !chosenKinds.HasFlag(MeasurementKinds.Spectrum))
+        {
+            return Fail(stderr, "--measure-grids needs the spectrum measurement, which holds the grids; add spectrum to --measure.");
+        }
+
         var filter = new ReportFilter(hidden) { WritesGrids = grids };
         bool unreadable = false;
         Severity? worst = null;

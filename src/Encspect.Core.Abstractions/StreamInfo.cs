@@ -162,6 +162,103 @@ public sealed class Series
 
     // The shared concept the series shows, which front ends group by; None for a series that belongs to none.
     public GraphConcept Concept { get; init; }
+
+    private FrameRuns? _runs;
+
+    // Set where a point of a series over frames stands for a run of consecutive frames instead of one frame: the frame each run
+    // starts at. A front end names, rings, marks and finds a frame by the run that holds it. One entry for each point; null where
+    // each point is a frame.
+    public FrameRuns? Runs
+    {
+        get => _runs;
+        init => _runs = value is null || value.FirstFrames.Length == X.Length
+            ? value
+            : throw new ArgumentException("A series of runs needs one first frame for each point.", nameof(value));
+    }
+}
+
+// The frames that the points of a series cover, where a point is a run of frames: the number of the frame each run starts at, in
+// the numbering of the stream's frames (counted from 1, in file order; the numbering of its frame nodes, except past the limit of
+// recorded frames, where frames are counted but have no node). A run ends where the next starts, and the last at the stream's last
+// frame. Frames before the first run belong to none; a front end takes them for the first run's.
+//
+// Samples, where given, are the samples per channel that the frames of each run code. A frame of a run can carry none (a frame the
+// stream cannot read), so a front end that places a time in the stream spreads the samples over the runs by them, not over the frames.
+public sealed class FrameRuns
+{
+    public FrameRuns(ReadOnlyMemory<long> firstFrames, long frameCount, ReadOnlyMemory<long> samples = default)
+    {
+        if (!samples.IsEmpty && samples.Length != firstFrames.Length)
+        {
+            throw new ArgumentException("Runs need a sample count for each run, or none.", nameof(samples));
+        }
+
+        foreach (long count in samples.Span)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(samples), "A run codes no fewer than 0 samples.");
+            }
+        }
+
+        if (firstFrames.IsEmpty)
+        {
+            throw new ArgumentException("Runs need at least one first frame.", nameof(firstFrames));
+        }
+
+        ReadOnlySpan<long> frames = firstFrames.Span;
+        for (int i = 0; i < frames.Length; i++)
+        {
+            if (frames[i] < 1 || (i > 0 && frames[i] <= frames[i - 1]))
+            {
+                throw new ArgumentException("The first frames must be at least 1 and strictly ascending.", nameof(firstFrames));
+            }
+        }
+
+        if (frameCount < frames[^1])
+        {
+            throw new ArgumentOutOfRangeException(nameof(frameCount), "The last run starts at a frame the stream has.");
+        }
+
+        FirstFrames = firstFrames;
+        FrameCount = frameCount;
+        Samples = samples;
+    }
+
+    // The samples per channel of each run, or empty where the series does not state them.
+    public ReadOnlyMemory<long> Samples { get; }
+
+    public ReadOnlyMemory<long> FirstFrames { get; }
+
+    // The frames of the stream, which the last run ends with.
+    public long FrameCount { get; }
+
+    // The number of frames in a run.
+    public long FramesIn(int run) => (run + 1 < FirstFrames.Length ? FirstFrames.Span[run + 1] : FrameCount + 1) - FirstFrames.Span[run];
+
+    // The run that holds a frame (counted from 1): the last that starts at or before it; -1 before the first.
+    public int RunOf(long frame)
+    {
+        ReadOnlySpan<long> frames = FirstFrames.Span;
+        int low = 0;
+        int high = frames.Length - 1;
+        int found = -1;
+        while (low <= high)
+        {
+            int middle = (low + high) >>> 1;
+            if (frames[middle] <= frame)
+            {
+                found = middle;
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return found;
+    }
 }
 
 // The range a series declares for its values, in the series' unit: either the steps its format allows or a fixed minimum and

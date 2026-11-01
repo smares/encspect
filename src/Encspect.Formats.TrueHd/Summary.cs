@@ -187,7 +187,7 @@ internal static class Summary
             AverageBitrate = a.Figures?.AverageBitrate,
             IsVbr = a.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
             Verification = verification,
-            Series = a.Figures?.Series(anchor, default) ?? [],
+            Series = a.Figures?.Series(anchor, a.Units, default) ?? [],
         };
     }
 }

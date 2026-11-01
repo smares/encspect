@@ -382,6 +382,39 @@ public static class ReportJsonWriter
                 WriteDeclaredRange(writer, range);
             }
 
+            if (series.Runs is { } runs)
+            {
+                writer.WriteStartObject("frameRuns");
+                writer.WriteStartArray("firstFrames");
+                foreach (long frame in runs.FirstFrames.Span)
+                {
+                    writer.WriteNumberValue(frame);
+                    if (writer.BytesPending > FlushThreshold)
+                    {
+                        writer.Flush();
+                    }
+                }
+
+                writer.WriteEndArray();
+                writer.WriteNumber("frameCount", runs.FrameCount);
+                if (!runs.Samples.IsEmpty)
+                {
+                    writer.WriteStartArray("samples");
+                    foreach (long count in runs.Samples.Span)
+                    {
+                        writer.WriteNumberValue(count);
+                        if (writer.BytesPending > FlushThreshold)
+                        {
+                            writer.Flush();
+                        }
+                    }
+
+                    writer.WriteEndArray();
+                }
+
+                writer.WriteEndObject();
+            }
+
             if (explain && series.Description is { } description)
             {
                 writer.WriteString("description", description);

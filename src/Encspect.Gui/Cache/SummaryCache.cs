@@ -27,7 +27,7 @@ namespace Encspect.Gui.Cache;
 // SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 6;
+    public const int FormatVersion = 7;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -418,7 +418,6 @@ public sealed class SummaryCache : IDisposable
         bool? isVbr = reader.ReadBoolean() ? reader.ReadBoolean() : null;
         string? problem = ReadText(reader);
         summary = ReadProtection(reader, summary);
-        summary = summary with { IsVerified = reader.ReadBoolean() ? reader.ReadBoolean() : null };
         return new Entry(new FileFingerprint(size, ticks, id, hash), version, schemaVersion, lastUsed, new FileSummary(summary, isVbr, problem));
     }
 
@@ -564,7 +563,6 @@ public sealed class SummaryCache : IDisposable
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
         WriteProtection(writer, summary);
-        WriteOptional(writer, summary.IsVerified, writer.Write);
     }
 
     // The protection figures of a summary: whether a stream is protected, then its schemes and systems.
