@@ -1,0 +1,3040 @@
+{
+ "schema": 1,
+ "format": "ogg",
+ "run": {
+  "id": "41319156014",
+  "commit": "06d2221a5bc283c9ae2c7bc32c3d7a490e718527",
+  "imageOS": "ubuntu26",
+  "imageVersion": "20261026.180.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "packages": {
+   "libogg-dev": "1.3.6-2",
+   "libogg0": "1.3.6-2",
+   "libopus-dev": "1.6.1-1",
+   "libopus0": "1.6.1-1",
+   "libopusfile0": "0.12-4build4",
+   "libvorbis-dev": "1.3.7-3build2",
+   "libvorbis0a": "1.3.7-3build2",
+   "libvorbisfile3": "1.3.7-3build2",
+   "opus-tools": "0.2-1build5",
+   "vorbis-tools": "1.4.3-1build1"
+  },
+  "oggdec": "oggdec from vorbis-tools 1.4.3",
+  "opusdec": "opusdec opus-tools 0.2 (using libopus 1.6.1)"
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "files": [
+  {
+   "path": "external-aotuv-b5.7-q5.ogg",
+   "sha256": "49d08f546cdd8774135832866ec07aa918c3bd1464a4c4cccaf168f307f01bcf",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-aotuv-b6.03-2020-managed.ogg",
+   "sha256": "f9de483758a24d6f30f38fdda2b55379cabc9010ed2417f58e1bcf124a5108b9",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-aotuv-b6.03-2020-q3.ogg",
+   "sha256": "8481385fd5f289cf26b3740d91a84d86ae964998ea751711d6477568796d4fed",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-aotuv-b6.03-q5.ogg",
+   "sha256": "32b0b89679a16cb060143e1b12ab4e2b4cf29595be2551cbad0c5e924e94441a",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-libopus-ambisonics.opus",
+   "sha256": "b016c253a03713e58cdc8e7f76f53b4aa5712ef27d38a6641c90855fc9927560",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24960,
+     "reference": 24960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 4
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 24960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24000,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 24312,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {
+      "ffmpeg": 24000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-libopus-bitexact.opus",
+   "sha256": "3de3236ebce22f91af74c04335a901de9ab0f8c0a25e79fc064a1b0451e53b02",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-libopus.opus",
+   "sha256": "756975cb6fd5bd6bb0274ffa83a917a4e23ca4ce7c2be320c7021209719391a4",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-libvorbis-bitexact.ogg",
+   "sha256": "19c7f91c42e284b5e7292e3ceec0bcf85d92e9c37b2be343727f4076154ee6a9",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-libvorbis.ogg",
+   "sha256": "36b0950bf79a6b23c2811bf51d533d693de92da55fcba622002bed512a079c8e",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-opus.opus",
+   "sha256": "d08a69927e816c3704ef8042db926f64258e5fcb410945482b7408951838254c",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72120,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-ffmpeg-vorbis.ogg",
+   "sha256": "45a3dbebbab73d8af4059396b4cd1fbeb3a12e3043808e1fed77458e9a8bba63",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66560,
+     "reference": 66560,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66176,
+     "reference": 66176,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66176,
+     "lastGranule": 66176,
+     "consistentRange": [
+      66176,
+      66560
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66176,
+      "ffmpeg": 66176
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-51.ogg",
+   "sha256": "f8b50bca40bc3e3ab215910658728135c573d1daa6acc81a7cf77769b8748a3a",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48960,
+     "reference": 48960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48000,
+     "reference": 48000,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "readerTotal": 48000,
+     "lastGranule": 48000,
+     "consistentRange": [
+      48000,
+      48960
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 48000,
+      "ffmpeg": 48000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-managed.ogg",
+   "sha256": "0217aae3e7137d9ee386f4b035ced735094e9324eb48d5d883d20601acbb62db",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-mono.ogg",
+   "sha256": "b0afc06466b5cd52cf9e19c43c182bbde57746ede98fb1d2678be01d2db2bf96",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 33280,
+     "reference": 33280,
+     "referencePath": "direct",
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": 33075,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     },
+     "readerTotal": 33075,
+     "lastGranule": 33075,
+     "consistentRange": [
+      33075,
+      33280
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 33075,
+      "ffmpeg": 33280
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 33280,
+     "analyzer": 33075,
+     "reference": 33075,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "reviewed",
+     "note": "The analyzer equals the reference. ffmpeg 8.0.1 writes 33,280, the coded count, where oggdec, libvorbis with the granule positions and the analyzer give 33,075."
+    }
+   ],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-q0.ogg",
+   "sha256": "2cdedd2020c405fe86725cccc3c3d8212b73b6e1a9ad198a87b7331eefd6bf44",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-q10.ogg",
+   "sha256": "89d99c71c08c5e9aad5bab20afeab36af43002dc6a863859373cdb760867689f",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48000,
+     "reference": 48000,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48000,
+     "reference": 48000,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 48000,
+     "lastGranule": 48000,
+     "consistentRange": [
+      48000,
+      48000
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 48000,
+      "ffmpeg": 48000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc-q5.ogg",
+   "sha256": "137b1f4743ced3a31c623c070eea071f87120d0b412a7b476a331183af028123",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc2-aotuv-rarewares.ogg",
+   "sha256": "8b5d925d5524c25ef7b621ffbd5112a9363ae5979b0c52066af7535b16a6bb24",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-oggenc2-lancer-sse2.ogg",
+   "sha256": "d2489dd4da703210fa1ff89a4683af2d9f08a6c14bbe210b34dc96340cf434e4",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67136,
+     "reference": 67136,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": 66150,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 66150,
+     "lastGranule": 66150,
+     "consistentRange": [
+      66150,
+      67136
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 66150,
+      "ffmpeg": 66150
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-24-mono.opus",
+   "sha256": "713265f933689351b8054e4b8b1372aa267d295c3905b45c1b163af7528800eb",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-51.opus",
+   "sha256": "a1e25512ecc921a38aded024c8ae69670374db26fc1be42aa4c4803f79934c8b",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48960,
+     "reference": 48960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 48960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48000,
+     "reference": 48000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "readerTotal": 48000,
+     "lastGranule": 48312,
+     "consistentRange": [
+      48000,
+      48960
+     ],
+     "witnesses": {
+      "ffmpeg": 48000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-96.opus",
+   "sha256": "60d9ccb1a23b644dfc80f433a6b72239169746e5d548eef4cb38d4a10bf71fe7",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-cvbr.opus",
+   "sha256": "641dc67a67a538db37f3f4ba216d8dd651ec30f609226cece70f64ac6812ed00",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-hard-cbr.opus",
+   "sha256": "9a7e9f6b17655a2010e56847d50224e75a748c75ac6d41896a1dfb5dd3a39e21",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-music-5ms.opus",
+   "sha256": "bab815ea6ea946a8d44dd47f78980b369f05a4ce094ebc5c9b30f3d066d0b55f",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48480,
+     "reference": 48480,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 48480
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 48000,
+     "reference": 48000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 48000,
+     "lastGranule": 48312,
+     "consistentRange": [
+      48000,
+      48480
+     ],
+     "witnesses": {
+      "ffmpeg": 48000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-opusenc-speech.opus",
+   "sha256": "40540c07a227906d7d6f6f1a33d325db52400518a56cd31b07a7409d22824a21",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72960,
+     "reference": 72960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 72960
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": 72000,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "readerTotal": 72000,
+     "lastGranule": 72312,
+     "consistentRange": [
+      72000,
+      72960
+     ],
+     "witnesses": {
+      "ffmpeg": 72000
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-ambisonics-family-2.opus",
+   "sha256": "f695bf8effdb2aabb4e0b2ffc2e989052d7adc35a39ef89f93002b17551e0a3d",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 14400,
+     "reference": 14400,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 11
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 14400
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 14088,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 14400,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {
+      "ffmpeg": 14088
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-ambisonics-family-3.opus",
+   "sha256": "6f8909b287026d5bb1eb9d6d5397282ab0a13aca2947f2da79f88114c7c81fb0",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 14400,
+     "reference": 14400,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 4
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": null
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 14088,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 14400,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {
+      "ffmpeg": null
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-encoder-fields.opus",
+   "sha256": "2bb1978cbd9e9e4d4253af378ec5c33e5ebd3baf0c1aee40e21e107574e9a116",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 1200,
+     "reference": 1200,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 1200
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 888,
+     "reference": 888,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 888,
+     "lastGranule": 1200,
+     "consistentRange": [
+      888,
+      1200
+     ],
+     "witnesses": {
+      "ffmpeg": 888
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-encoder-other-format.opus",
+   "sha256": "b407eee4c79e218cb48fd15834fcd3650f425b75e82e834f29f936da92daf768",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 1200,
+     "reference": 1200,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 1200
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 888,
+     "reference": 888,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 888,
+     "lastGranule": 1200,
+     "consistentRange": [
+      888,
+      1200
+     ],
+     "witnesses": {
+      "ffmpeg": 888
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-encoder-vendor-wins.opus",
+   "sha256": "88254f04db1ac4663c306043ea05c231c477cae4e7bebc06534ad6a00a223559",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 1200,
+     "reference": 1200,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 1200
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 888,
+     "reference": 888,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 888,
+     "lastGranule": 1200,
+     "consistentRange": [
+      888,
+      1200
+     ],
+     "witnesses": {
+      "ffmpeg": 888
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-family-255.opus",
+   "sha256": "16c5f630b8ab8e3bc62ec6351eb254c8e4880becb6a946b5989fd69ecfd9c026",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {
+      "ffmpeg +skip_manual": 4800
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4488,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 4800,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {
+      "ffmpeg": 4488
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-granule-edges.opus",
+   "sha256": "3f51da5b5a466af59e6a138a32788b45be934bee2fab59362d6b7a811aa15bdc",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "analyzer": 172800,
+     "reference": 172800,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+     ],
+     "analyzer": 149004,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 218240,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {}
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-head-invalid.opus",
+   "sha256": "bf3e2f5bd0ee03c30177006821e2f22b8b158a397dae85e9ff00d0ccb960d646",
+   "figures": [
+    {
+     "id": "decodedSamples.run1",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 1200,
+     "reference": 1200,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "decodedSamples.run2",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      4
+     ],
+     "analyzer": 600,
+     "reference": 600,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 9
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "decodedSamples.run3",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      8
+     ],
+     "analyzer": 600,
+     "reference": 600,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 5
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "decodedSamples.run4",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      12
+     ],
+     "analyzer": 600,
+     "reference": 600,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 7800,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {}
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-multistream-51.opus",
+   "sha256": "db1928e7ba25a1731b0d5e2a7a35e779dfcd9937dde2864f041711baecca8e15",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28800,
+     "reference": 28800,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 28800
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28388,
+     "reference": 28388,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "readerTotal": 28388,
+     "lastGranule": 28700,
+     "consistentRange": [
+      28388,
+      28800
+     ],
+     "witnesses": {
+      "ffmpeg": 28388
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-packets-corrupt.opus",
+   "sha256": "b491ff99d622cfbd225145fa2b69898f1f9fb4c87c1fed2b5c2293a6a4f681ae",
+   "figures": [
+    {
+     "id": "decodedSamples.run1",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24960,
+     "reference": 10560,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "decodedSamples.run2",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      1
+     ],
+     "analyzer": 5760,
+     "reference": 3840,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 3
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 30096,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": null,
+     "lastGranule": 30720,
+     "consistentRange": null,
+     "noReference": "the reader stopped (error)",
+     "witnesses": {}
+    }
+   ],
+   "differences": [
+    {
+     "figure": "decodedSamples.run1",
+     "decoder": "direct",
+     "value": 10560,
+     "analyzer": 24960,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "reviewed",
+     "note": "libopus refuses 9 packets (error -4) and an empty packet is not passed to it; the analyzer counts them by their TOC bytes: the direct total is 10,560 against 'Decoded Samples' 24,960 of the first (mono) stream. libopus conceals nothing here (refused packets give no samples), so the concealment rule does not apply. Changing the analyzer would change this count and the stream's samples."
+    },
+    {
+     "figure": "decodedSamples.run2",
+     "decoder": "direct",
+     "value": 3840,
+     "analyzer": 5760,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "reviewed",
+     "note": "As the first stream (2 packets refused): 3,840 against 5,760 for the second stream. opusdec stops with 'Decoding error.' after 1,608 samples, so the trimmed stage has no reference."
+    }
+   ],
+   "units": [
+    {
+     "index": 13,
+     "stream": 0,
+     "offset": 1666,
+     "length": 12,
+     "decoder": "error -4",
+     "finding": null,
+     "verdict": "decoder refuses, no finding (the file has findings that merge several packets: this may be a later one)",
+     "status": "noted",
+     "statusSource": "reviewed",
+     "note": "libopus refuses the packet; the findings that merge several packets (opus.packet-r2, -r5, -r6) point to the first only, so this one may be a later instance."
+    },
+    {
+     "index": 17,
+     "stream": 0,
+     "offset": 1732,
+     "length": 4,
+     "decoder": "error -4",
+     "finding": null,
+     "verdict": "decoder refuses, no finding (the file has findings that merge several packets: this may be a later one)",
+     "status": "noted",
+     "statusSource": "reviewed",
+     "note": "libopus refuses the packet; the findings that merge several packets (opus.packet-r2, -r5, -r6) point to the first only, so this one may be a later instance."
+    },
+    {
+     "index": 19,
+     "stream": 0,
+     "offset": 1757,
+     "length": 2554,
+     "decoder": "error -4",
+     "finding": null,
+     "verdict": "decoder refuses, no finding (the file has findings that merge several packets: this may be a later one)",
+     "status": "noted",
+     "statusSource": "reviewed",
+     "note": "libopus refuses the packet; the findings that merge several packets (opus.packet-r2, -r5, -r6) point to the first only, so this one may be a later instance."
+    }
+   ]
+  },
+  {
+   "path": "opus-stereo-cbr.opus",
+   "sha256": "745b9dbe90bf119a8103162ea45115e75c96a018453b75085d7ccd8552ca5ff7",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 57600,
+     "reference": 57600,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 57600
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 57088,
+     "reference": 57088,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 57088,
+     "lastGranule": 57400,
+     "consistentRange": [
+      57088,
+      57600
+     ],
+     "witnesses": {
+      "ffmpeg": 57088
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-tags-variants.opus",
+   "sha256": "05e51fc2ea1fdba4a30a023715d7619da2d98c89841f2ba08d4b2ac3ce463e88",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0,
+      1,
+      2
+     ],
+     "analyzer": 3600,
+     "reference": 3600,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2
+     ],
+     "analyzer": 2664,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 3600,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnesses": {}
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-toc-configs.opus",
+   "sha256": "fe8dd2c6950caad907b18aca43e794f7dcc156f6bd81065557b63cf210059f65",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71040,
+     "reference": 71040,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 71040
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 70228,
+     "reference": 70228,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "readerTotal": 70228,
+     "lastGranule": 70540,
+     "consistentRange": [
+      70228,
+      71040
+     ],
+     "witnesses": {
+      "ffmpeg": 70228
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "opus-writer-claims-differ.opus",
+   "sha256": "3f774a5b941dcfc0d8383c0bef5be5cc57527fc737d15e822cec833f16b66ab9",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 1200,
+     "reference": 1200,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg +skip_manual": 1200
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 888,
+     "reference": 888,
+     "referencePath": "opusdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 888,
+     "lastGranule": 1200,
+     "consistentRange": [
+      888,
+      1200
+     ],
+     "witnesses": {
+      "ffmpeg": 888
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-encoder-fields.ogg",
+   "sha256": "7c4eb952dc24255a6f9c81ca4247514f7e2ed98e3bcfd6516ba83f336e704c46",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 19968,
+     "lastGranule": 19968,
+     "consistentRange": [
+      19968,
+      19968
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19968,
+      "ffmpeg": 19968
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-encoder-other-format.ogg",
+   "sha256": "f9eb9fcd1e0cb1911283e59f5c2f888004e83553a11fd4df056486359e33e819",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 19968,
+     "lastGranule": 19968,
+     "consistentRange": [
+      19968,
+      19968
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19968,
+      "ffmpeg": 19968
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-encoder-vendor-wins.ogg",
+   "sha256": "d95082d51671d8907a7bcc43d53fbcc4132d43a48c3746d7dd99c5783faf41e0",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 19968,
+     "lastGranule": 19968,
+     "consistentRange": [
+      19968,
+      19968
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19968,
+      "ffmpeg": 19968
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-end-trimming-large.ogg",
+   "sha256": "1bb05e731abb3e38cb43fd7ce65e609d511a007af69dd69e43ae8013edd7a07d",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28672,
+     "reference": 28672,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 28672,
+     "lastGranule": 26596,
+     "consistentRange": [
+      26596,
+      29696
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 28672,
+      "ffmpeg": 29696
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 29696,
+     "analyzer": 28672,
+     "reference": 28672,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "reviewed",
+     "note": "The analyzer equals the reference. ffmpeg 8.0.1 writes 29,696, the coded count, where oggdec, libvorbis with the granule positions and the analyzer trim to 28,672."
+    }
+   ],
+   "units": []
+  },
+  {
+   "path": "vorbis-granule-errors.ogg",
+   "sha256": "30306ba0451cdac1068f77b5cf737f7e1db3cc0440d40b1de93d250d89b79e13",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28672,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 28672,
+     "lastGranule": 28696,
+     "consistentRange": [
+      28696,
+      29696
+     ],
+     "noReference": "the reader's 28672 is outside 28696 to 29696, what the last granule position 28696 and the coded total 29696 allow",
+     "witnesses": {
+      "libvorbis with granule positions": 28672,
+      "ffmpeg": 29696
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-header-layout.ogg",
+   "sha256": "25b1fbd3eb359f6458ad4c0204ae1902be7aa17015feaa42c0a634dad851ad7d",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19456,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 19456,
+     "consistentRange": null,
+     "noReference": "the reader stopped (error)",
+     "witnesses": {
+      "libvorbis with granule positions": 0,
+      "ffmpeg": 19456
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-ident-invalid.ogg",
+   "sha256": "808087d0297ff79db3ddd3bdf4352aa3d3c37377d2203d7e36a3219990081dde",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 0,
+     "consistentRange": null,
+     "noReference": "the reader stopped (error)",
+     "witnesses": {
+      "libvorbis with granule positions": 0
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-minimal-mono.ogg",
+   "sha256": "608431f68b13bc7f8a826a2b5f597b18e2a0c028436c79c9f400517449f15cc7",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 40960,
+     "reference": 40960,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 40660,
+     "reference": 40660,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 40660,
+     "lastGranule": 40660,
+     "consistentRange": [
+      40660,
+      40960
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 40660,
+      "ffmpeg": 40660
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-packet-errors.ogg",
+   "sha256": "8ad8bed0e01c8b50a191ff7348c142fafc2c776ceae84d44cc92b2e1499b9f1b",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 11264,
+     "reference": 11264,
+     "referencePath": "direct",
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 11264,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     },
+     "readerTotal": 8192,
+     "lastGranule": 11264,
+     "consistentRange": [
+      11264,
+      11264
+     ],
+     "noReference": "the reader's 8192 is outside 11264 to 11264, what the last granule position 11264 and the coded total 11264 allow",
+     "witnesses": {
+      "libvorbis with granule positions": 11264,
+      "ffmpeg": 7168
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "oggdec",
+     "value": 8192,
+     "analyzer": 11264,
+     "status": "pending",
+     "kind": "reader-not-accepted",
+     "reason": "the reader's 8192 is outside 11264 to 11264, what the last granule position 11264 and the coded total 11264 allow",
+     "statusSource": "reviewed",
+     "note": "The known difference. oggdec writes 8,192; libvorbis fed packet by packet gives 11,264 at the coded stage and with the granule positions, as does the analyzer. oggdec's count lies below what the last granule position (11,264) allows, so by the rule for Ogg readers it is not the reference and the trimmed stage has none. Whether the analyzer should follow libvorbisfile's handling of the packets that code no block is the lead's decision."
+    }
+   ],
+   "units": [
+    {
+     "index": 6,
+     "stream": 0,
+     "offset": 235,
+     "length": 1,
+     "decoder": "decoded",
+     "finding": "vorbis.window-flag-mismatch",
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "reviewed",
+     "note": "libvorbis decodes the packet; the analyzer reports the window flag the specification requires (section 4.3.1)."
+    }
+   ]
+  },
+  {
+   "path": "vorbis-setup-invalid.ogg",
+   "sha256": "95f2e12d070b4fc879a5e9e8c24effb73b9a5eedd376d6306e1fdc9b84f64ef8",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "analyzer": 25600,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 35840,
+     "consistentRange": null,
+     "noReference": "the reader stopped (error)",
+     "witnesses": {
+      "libvorbis with granule positions": 0
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-setup-rich.ogg",
+   "sha256": "088345759043d2c7ca74460e88f1f40176b389eb40df58525dc0f09e84572fdf",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19958,
+     "reference": 19958,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 19958,
+     "lastGranule": 19958,
+     "consistentRange": [
+      19958,
+      19968
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19958,
+      "ffmpeg": null
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-setup-truncated.ogg",
+   "sha256": "657b8bb72545c7e20a3ce01dc499991cc37f3e459d2640cb3f8e47362582fbeb",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "readerTotal": null,
+     "lastGranule": 0,
+     "consistentRange": null,
+     "noReference": "the reader stopped (error)",
+     "witnesses": {
+      "libvorbis with granule positions": 0
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-start-offset.ogg",
+   "sha256": "09ff7da15b12e6051ca235e312faa4a75aba617b06392d95f299f8025f1cf584",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29596,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 29596,
+     "lastGranule": 73696,
+     "consistentRange": [
+      29696,
+      29696
+     ],
+     "noReference": "the reader's 29596 is outside 29696 to 29696, what the last granule position 73696 and the coded total 29696 allow",
+     "witnesses": {
+      "libvorbis with granule positions": 29596,
+      "ffmpeg": 29596
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-start-trimming.ogg",
+   "sha256": "5d68498da79f0cd89d91b6249573aa40ef8ac72404885a2fff095f1f418fc699",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29196,
+     "reference": 29196,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 29196,
+     "lastGranule": 29196,
+     "consistentRange": [
+      29196,
+      29696
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 29196,
+      "ffmpeg": 29696
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 29696,
+     "analyzer": 29196,
+     "reference": 29196,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "reviewed",
+     "note": "The analyzer equals the reference. ffmpeg 8.0.1 writes 29,696, the coded count, where oggdec, libvorbis with the granule positions and the analyzer give 29,196."
+    }
+   ],
+   "units": []
+  },
+  {
+   "path": "vorbis-stereo-coupled.ogg",
+   "sha256": "cc7fe26f131fe549b023a6fca79a140adebb2875db50deb2c87dd7318b602fff",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 32768,
+     "reference": 32768,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 31768,
+     "reference": 31768,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "readerTotal": 31768,
+     "lastGranule": 31768,
+     "consistentRange": [
+      31768,
+      32768
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 31768,
+      "ffmpeg": 31768
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-surround-51.ogg",
+   "sha256": "5effa70d9f21d006c5fa18a0625df6fcaf48d1625076fa4e8d19ab0571cae0be",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19456,
+     "reference": 19456,
+     "referencePath": "direct",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19406,
+     "reference": 19406,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "readerTotal": 19406,
+     "lastGranule": 19406,
+     "consistentRange": [
+      19406,
+      19456
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19406,
+      "ffmpeg": 19406
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-vendor-variants.ogg",
+   "sha256": "504d703323082a9070dc69e01290f0961534bb67d249ecd687cba34ce6d689e0",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 14336,
+     "reference": 14336,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 14336,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "readerTotal": 7168,
+     "lastGranule": 14336,
+     "consistentRange": [
+      14336,
+      14336
+     ],
+     "noReference": "the reader's 7168 is outside 14336 to 14336, what the last granule position 14336 and the coded total 14336 allow",
+     "witnesses": {
+      "libvorbis with granule positions": 14336
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "oggdec",
+     "value": 7168,
+     "analyzer": 14336,
+     "status": "noted",
+     "kind": "reader-not-accepted",
+     "reason": "the reader's 7168 is outside 14336 to 14336, what the last granule position 14336 and the coded total 14336 allow",
+     "statusSource": "reviewed",
+     "note": "oggdec writes the first link of the chain only (7,168) with exit 0 and no message; libvorbis fed packet by packet and the analyzer count both links (14,336). The reader fails the consistency rule, so nothing is changed; the lead may choose pending if the reader's behavior should count."
+    }
+   ],
+   "units": []
+  },
+  {
+   "path": "vorbis-writer-claims-differ.ogg",
+   "sha256": "4d7f3a42fb9504cb07b7c0c6384c20d2b48791b42b8b023301e0aded8a3d7fea",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {}
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 19968,
+     "reference": 19968,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "readerTotal": 19968,
+     "lastGranule": 19968,
+     "consistentRange": [
+      19968,
+      19968
+     ],
+     "witnesses": {
+      "libvorbis with granule positions": 19968,
+      "ffmpeg": 19968
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  }
+ ]
+}

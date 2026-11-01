@@ -502,6 +502,24 @@ The findings do not contradict an approved decision. Twelve questions follow, ea
 
 Each step ends with an independent review of the harness and the comparison against this design, as the WMA check had. The effort figures are estimates (see the end of this document).
 
+## As built: step 2
+
+Rollout step 2 ran as workflow run 41319156014 (commit 06d2221, `ci/official-decode-ogg`; the first complete run was 41318833038 with the same figures). Figures, versions and the differences with their columns are in [development.md](../development.md) and in `tests/fixtures/ogg/official-decoders.json`.
+
+- **Files:** `scripts/fixtures/official_decode.py` (the Linux record driver, shared by later steps), `compare_official_decoders.py`, `derive_variants.py`, the grown `ogg_decode.c`, `tests/Encspect.Tests/OggOfficialDecodersTests.cs`, the `linux` and `compare` jobs of the workflow (the probe jobs now run only with the input `probe`), and `tool_versions.py` asserting `oggdec` and the three libraries.
+- **Decisions made while building, for the review:**
+  - The harness modes are `direct` (libvorbis with `granulepos` -1) and `granule` (the third run, Vorbis files only); libopus is the same in both.
+  - Streams are told apart by serial number; the codec of a stream is its first packet's. Packet file ranges come from the pages' lacing values and are checked against libogg's packet size.
+  - An empty Opus packet is not passed to libopus (it would conceal as many samples as the frame size the harness picked).
+  - `oggdec` writes WAVE, so that the channel count is the tool's own; `opusdec` writes raw PCM and states its channel count on standard error. Declared WAVE sizes are never used.
+  - Question 6 of the new questions needed a definition of "consistent with the last granule position": the reader's count must lie in `[min(G, C) less the pre-skip for Opus, C]`, with G the largest granule position libogg returned and C the coded total of the codec's streams. It rejects `oggdec` stopping after the first link and the known `vorbis-packet-errors.ogg` difference. A truncated last page counts as a page the direct path did not feed.
+  - ffmpeg is set against files with one logical stream only (it decodes the first audio stream); `-flags2 +skip_manual` is the Opus coded count and is not used for Vorbis.
+  - Eight variant rules (cut in three places, a changed byte, a page removed or repeated, a packet removed or repeated); 178 variants of 24 files; two files with a single audio page get none.
+  - Units: a decoder's refusal of a packet and the analyzer's finding are matched by the packet's byte ranges; a finding that merges several packets points to the first, so later refused packets are `noted`.
+  - The test checks stream `samples` and "Decoded Samples" per stream index, the listed differences, and unit findings; `stale` entries are listed.
+  - The `compare` job keeps the reviewed statuses of the committed JSON when it writes its draft.
+- **Not done:** the other formats; the macOS and Windows columns; the independent review of this step.
+
 ## Decisions
 
 Approved by the project lead on 2026-11-01:
