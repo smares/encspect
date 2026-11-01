@@ -49,35 +49,47 @@ BROWSER = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.
 BROWSER_PREFIXES = ("https://www.etsi.org/",)
 
 
-# The Wayback Machine answers intermittent 404, 429 and 5xx for captures that it serves a minute later.
-# curl's own retries are too close together to outlast that, so an address there gets further attempts
-# after growing delays, up to ARCHIVE_BUDGET seconds of waiting in all per run so that many failing
-# addresses cannot use up a job's timeout.
+# A failed transfer is retried when the answer was not a definite one. curl's own retries (--retry 5 --retry-delay 15)
+# are too close together to outlast an outage of a minute or more, so download() makes further attempts after growing
+# delays, up to RETRY_BUDGET seconds of waiting in all per run so that many failing addresses cannot use up a job's
+# timeout. What counts as transient:
+#   - on every host: a failure to resolve, connect, handshake, send or receive, a timeout, a partial transfer, an empty reply
+#     (curl exit codes TRANSIENT_CURL_CODES) and an HTTP 429 or 5xx (curl exit 22 with that status);
+#   - on the Wayback Machine also an HTTP 404, which it answers intermittently for captures that it serves a minute later,
+#     and any other curl failure, as before: it refuses clients for a while after many downloads.
+# A definite answer is not retried: the other HTTP statuses, a certificate failure, a malformed address, and a file with
+# the wrong SHA-256 (fetch() compares that after a successful transfer). samples.ffmpeg.org reset connections for more
+# than an hour on 2026-11-01 (docs/development.md, "Pinned downloads"); the Wayback delays are the older, shorter ones.
 ARCHIVE_PREFIX = "https://web.archive.org/"
 ARCHIVE_DELAYS = (10, 30, 60)
-ARCHIVE_BUDGET = 900
+HOST_DELAYS = (30, 90, 180)
+RETRY_BUDGET = 900
+TRANSIENT_CURL_CODES = frozenset({5, 6, 7, 18, 28, 35, 52, 55, 56, 92})
 _waited = 0
 
 
 def retry_delay(url, error, attempt, waited=0):
     """Seconds to wait before the next attempt at url after the failure error, which is curl's exit code
     and message, or None when it is not retried. attempt counts the retries made so far; waited is the
-    time spent waiting so far. Only the Wayback Machine, and there only an HTTP 404, 429 or 5xx or a
-    failure to connect or transfer, is retried."""
-    if not url.startswith(ARCHIVE_PREFIX) or attempt >= len(ARCHIVE_DELAYS):
+    time spent waiting so far."""
+    archive = url.startswith(ARCHIVE_PREFIX)
+    delays = ARCHIVE_DELAYS if archive else HOST_DELAYS
+    if attempt >= len(delays):
         return None
     code, message = error
     if code == 22:
         status = re.search(r"error: (\d{3})", message)
-        if not status or not (status.group(1) in ("404", "429") or status.group(1).startswith("5")):
+        if not status or not (status.group(1) == "429" or status.group(1).startswith("5") or (archive and status.group(1) == "404")):
             return None
-    delay = ARCHIVE_DELAYS[attempt]
-    return delay if waited + delay <= ARCHIVE_BUDGET else None
+    elif not archive and code not in TRANSIENT_CURL_CODES:
+        return None
+    delay = delays[attempt]
+    return delay if waited + delay <= RETRY_BUDGET else None
 
 
 def download(url, path, sleep=time.sleep):
-    """Downloads url to path; returns None when it worked, else curl's error. Every error is retried,
-    refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
+    """Downloads url to path; returns None when it worked, else curl's error. A transient error is retried
+    (see retry_delay), refused connections too: the Wayback Machine refuses a client for a while after many downloads."""
     global _waited
     if not has_token(url):
         return f"{TOKEN} is not set"
