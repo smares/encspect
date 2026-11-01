@@ -289,9 +289,9 @@ def adts_units(data, result):
         valid = False
         if h:
             nxt = pos + h[3]
-            valid = nxt >= size or adts_header(data, nxt) is not None
-            if not valid and nxt >= size - 0:
-                valid = True
+            # A header counts when the frame is followed by another header or by the end of the file, or is cut by it; a frame
+            # followed by bytes that start no later frame (trailing junk) counts too, since a decoder reads it.
+            valid = nxt >= size or adts_header(data, nxt) is not None or not any(adts_header(data, i) for i in range(nxt, size - 6))
         if valid:
             if skip_from is not None:
                 result["skipped"].append((skip_from, pos - skip_from))

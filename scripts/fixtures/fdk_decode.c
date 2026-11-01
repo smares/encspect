@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
             fflush(stdout);
             index++;
             calls++;
-            if (error == AAC_DEC_NOT_ENOUGH_BITS || (valid == 0 && !output)) {
+            if (error == AAC_DEC_NOT_ENOUGH_BITS) {
                 break;
             }
             stuck = (valid == before && !output) ? stuck + 1 : 0;
