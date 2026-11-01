@@ -64,7 +64,7 @@ internal static class WavPackBuilder
     // The block with these sub-blocks; a checksum sub-block among them is worked out again.
     public static byte[] Join(byte[] block, IEnumerable<byte[]> parts)
     {
-        byte[] body = [.. parts.SelectMany(p => p)];
+        byte[] body = Unpooled.Join(parts);
         byte[] result = [.. block[..HeaderLength], .. body];
         BinaryPrimitives.WriteUInt32LittleEndian(result.AsSpan(4), (uint)(result.Length - 8));
         List<byte[]> list = Parts(result);
@@ -111,5 +111,5 @@ internal static class WavPackBuilder
         return Join(block, parts);
     }
 
-    public static byte[] Concat(IEnumerable<byte[]> blocks) => [.. blocks.SelectMany(b => b)];
+    public static byte[] Concat(IEnumerable<byte[]> blocks) => Unpooled.Join(blocks);
 }

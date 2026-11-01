@@ -58,8 +58,13 @@ internal static class TtaBuilder
     // A whole stream whose frames have the payload lengths given (a frame is 4 bytes longer).
     public static byte[] Stream(uint rate, int channels, int bits, long samples, IReadOnlyList<int> payloads)
     {
-        byte[][] frames = [.. payloads.Select((n, i) => Frame(n, i))];
-        return [.. Header(rate, channels, bits, samples), .. Table(frames.Select(f => (uint)f.Length)), .. frames.SelectMany(f => f)];
+        var frames = new byte[payloads.Count][];
+        for (int i = 0; i < frames.Length; i++)
+        {
+            frames[i] = Frame(payloads[i], i);
+        }
+
+        return Unpooled.Join([Header(rate, channels, bits, samples), Table(frames.Select(f => (uint)f.Length)), Unpooled.Join(frames)]);
     }
 
     // A stream of the frames only, each of the length given in bytes with its CRC-32.
