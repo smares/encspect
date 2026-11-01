@@ -52,11 +52,23 @@ jobs:
           dpkg-query -W -f='${Package} ${Version}\n' libogg-dev libopus-dev libvorbis-dev libogg0 libopus0 libvorbis0a ffmpeg opus-tools vorbis-tools >> out/build-info.txt
           cat out/build-info.txt
 
+      # libtta_tool.build() hides the compiler's output and gcc 15 (Ubuntu 26.04) refuses something in the 2.3 sources by default, so the
+      # archive is fetched and checked by the repository's script and compiled here as C17, with the output visible. Nothing is patched.
       - name: Build libtta-c 2.3 for tta
         run: |
           set -euo pipefail
-          cd scripts/fixtures
-          python3 -c "import libtta_tool; print(libtta_tool.build('${{ github.workspace }}/build/libtta'))" | tail -1 | tee ../../build/tta-path.txt
+          mkdir -p build/libtta
+          (cd scripts/fixtures && python3 -c "
+          import libtta_tool, tarfile
+          libtta_tool.downloads.fetch(libtta_tool.ADDRESSES, libtta_tool.SHA256, '${{ github.workspace }}/build/libtta/' + libtta_tool.NAME)
+          tarfile.open('${{ github.workspace }}/build/libtta/' + libtta_tool.NAME).extractall('${{ github.workspace }}/build/libtta', filter='data')")
+          cd build/libtta/libtta-c-2.3
+          gcc --version | head -1
+          CC='gcc -std=gnu17' ./configure > /dev/null
+          make 2>&1 | tail -30
+          ./console/tta -h 2>&1 | head -3
+          echo "$PWD/console/tta" > ../../tta-path.txt
+          echo "libtta-c 2.3 $(sha256sum ../libtta-c-2.3.tar.gz | cut -d' ' -f1)" >> ../../../out/build-info.txt
 
       - name: Run the probe
         # The artifact is uploaded even if this step runs out of time (environment.json is written first).
