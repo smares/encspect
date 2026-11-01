@@ -205,14 +205,25 @@ def main():
             direct_text = f"crashed {direct.get('exitCode')}"
         elif direct.get("timedOut"):
             direct_text = "timed out"
+        elif direct.get("stalled") or direct.get("exception"):
+            direct_text = f"{'stalled' if direct.get('stalled') else 'failed'} at {direct.get('partialSamples', direct.get('totalSamples', 0))}"
         elif "totalSamples" in direct:
             direct_text = str(direct["totalSamples"])
         else:
             direct_text = direct.get("error") or asf.get("error") or "no decoder"
-        direct_total = direct.get("totalSamples")
-        reference, reference_from = (reader_total, "reader") if reader_total is not None else (direct_total, "decoder") if direct_total is not None else (None, None)
+        # A partial total of a run that stalled or failed is never a figure to compare.
+        direct_total = None if direct.get("stalled") or direct.get("exception") else direct.get("totalSamples")
+        encrypted = bool(stream and (stream.get("protection") or {}).get("isEncrypted")) or bool(report and any(f.get("code") == "asf.content-encrypted" for f in report.get("findings", [])))
+        reference, reference_from = (None, None) if encrypted else (reader_total, "reader") if reader_total is not None else (direct_total, "decoder") if direct_total is not None else (None, None)
+        if encrypted:
+            reader_total = direct_total = None
+            notes_encrypted = True
+        else:
+            notes_encrypted = False
 
         notes = []
+        if notes_encrypted:
+            notes.append("payloads are encrypted: no reference, the decoders' figures are not compared")
         if ffmpeg_error:
             notes.append(ffmpeg_error)
         figures = {"analyzer": analyzer, "ffmpeg": ffm, "reader": reader_total, "decoder": direct_total}
@@ -228,7 +239,7 @@ def main():
             notes.append(f"reader stalled after {reader.get('calls')} ReadSample calls, {reader.get('sampleCount')} samples, last timestamp {reader.get('lastTimestamp')}, "
                          f"{'inside ReadSample since ' + str(reader.get('readStartedAtMs')) + ' ms' if reader.get('inReadSample') else 'between calls'}")
         if reader.get("stoppedBy"):
-            notes.append(f"reader stopped ({reader['stoppedBy']}) after {reader.get('totalSamples')} samples; reference is the decoder's")
+            notes.append(f"reader stopped ({reader['stoppedBy']}) after {reader.get('totalSamples')} samples" + ("; reference is the decoder's" if direct_total is not None else "; no reference"))
         nots = record.get("directWithoutTimestamps") or {}
         if "totalSamples" in nots and nots["totalSamples"] != direct_total:
             notes.append(f"decoder without timestamps: {nots['totalSamples']}")
@@ -259,12 +270,16 @@ def main():
     others = [r for r in rows if r["tag"] not in TAGS]
     rows = [r for r in rows if r["tag"] in TAGS]
     width = max((len(r["file"]) for r in rows), default=10)
-    header = f"{'file'.ljust(width)}  {'format':<12} {'reference':>16} {'analyzer':>9} {'ffmpeg':>9} {'reader':>14} {'decoder':>14}  notes"
+    def reference_text(r):
+        return "-" if r["reference"] is None else f"{r['reference']} ({r['reference_from']})"
+
+    rw = max([len("reference")] + [len(reference_text(r)) for r in rows])
+    cw = max([len("reader"), len("decoder")] + [len(r[k]) for r in rows for k in ("reader_text", "decoder_text")])
+    header = f"{'file'.ljust(width)}  {'format':<12} {'reference':>{rw}} {'analyzer':>9} {'ffmpeg':>9} {'reader':>{cw}} {'decoder':>{cw}}  notes"
     print(header)
     print("-" * len(header))
     for r in rows:
-        ref = "-" if r["reference"] is None else f"{r['reference']} ({r['reference_from']})"
-        print(f"{r['file'].ljust(width)}  {TAGS[r['tag']]:<12} {ref:>16} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text'][:14]:>14} {r['decoder_text'][:14]:>14}  {'; '.join(r['notes'])}")
+        print(f"{r['file'].ljust(width)}  {TAGS[r['tag']]:<12} {reference_text(r):>{rw}} {fmt(r['analyzer']):>9} {fmt(r['ffmpeg']):>9} {r['reader_text']:>{cw}} {r['decoder_text']:>{cw}}  {'; '.join(r['notes'])}")
     if others:
         by_tag = {}
         for r in others:
