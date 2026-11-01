@@ -85,7 +85,7 @@ public sealed class WmaStandardParser : ICodecParser
         double? averageBitrate = duration > 0 ? 8.0 * parameters.BlockAlign * stream.NotShortSuperframes / duration / 1000 : null;
         if (statistics is not null)
         {
-            StdReport.AddStatistics(statistics, parent, parameters, stream, samples, duration, averageBitrate);
+            StdReport.AddStatistics(statistics, parent, parameters, stream, samples, duration, averageBitrate, configuration);
         }
 
         if (stream.Skipped > 0)

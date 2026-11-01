@@ -14,6 +14,7 @@ internal static class Explain
     public const string StatLargestPacket = "The most bytes a packet takes.";
     public const string StatNominalBitrate = "The average bytes per second the container states for the stream (the WAVEFORMATEX's nAvgBytesPerSec), as a bitrate. For a variable bitrate stream it can differ much from the bitrate the packets take.";
     public const string StatAverageBitrate = "The bytes of all the packets divided by the stream's duration, as a bitrate. It is the figure the stream reports as its average bitrate.";
+    public const string StatContainerSamples = "The length of the stream as the container states it, in samples per channel: the File Properties Object's play duration less the preroll (section 3.2 of the ASF specification), at the stream's sampling rate and rounded to the nearest sample, halves up. The send duration is not used. It is the header's statement and is not counted from the audio, so it can differ from the samples the stream codes.";
     public const string StatContainerDuration = "The length of the stream as the container states it, the play duration less the preroll.";
 
     public const string Encoder = "Which program encoded the stream, as the analyzer concludes from the evidence below.";

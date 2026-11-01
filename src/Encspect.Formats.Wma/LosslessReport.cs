@@ -6,7 +6,7 @@ namespace Encspect.Formats.Wma;
 // The figures over a Lossless stream: the Statistics node and the series.
 internal static class LosslessReport
 {
-    public static Node Statistics(LosslessParameters p, WmaPacketReader reader, LosslessTally tally, Node parent, double duration)
+    public static Node Statistics(LosslessParameters p, WmaPacketReader reader, LosslessTally tally, Node parent, double duration, CodecConfiguration? configuration)
     {
         long frames = reader.FramesRead;
         string value = string.Create(CultureInfo.InvariantCulture, $"{Counts.Of(frames, "frame", "frames")}, {duration:0.000} s");
@@ -36,6 +36,7 @@ internal static class LosslessReport
         }
 
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), ProExplain.StatDuration);
+        ContainerFigures.AddSamples(statistics, parent, configuration);
         Add("Block Alignment", NodeValue.Integer(p.BlockAlignment, "bytes"), ProExplain.StatBlockAlignment);
         if (duration > 0)
         {

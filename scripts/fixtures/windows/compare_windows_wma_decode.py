@@ -54,6 +54,15 @@ def audio_stream(report):
     return report["streams"][0] if report.get("streams") else None
 
 
+def container_samples(report):
+    """The first "Container Samples" statistic of the report: the header's play duration less the preroll, in samples."""
+    for node in nodes_of(report["root"]):
+        if node.get("name") == "Container Samples":
+            value = node.get("value")
+            return value.get("value") if isinstance(value, dict) else value
+    return None
+
+
 def nodes_of(node):
     yield node
     for child in node.get("children", []):
@@ -235,6 +244,13 @@ def main():
             notes.append("; ".join("=".join(g) for g in groups.values()) + " differ")
         elif known:
             notes.append("agree")
+        # Standard WMA (versions 1 and 2) codes no trimming; the analyzer keeps its coded count (the frames the stream codes less the first,
+        # which fills the overlap), and Microsoft's count is explained: it also outputs the final overlap and sizes its output from the header's
+        # duration, a fit on Windows-written files only. The container's own statement is the "Container Samples" statistic.
+        if tag in PER_OBJECT_TAGS and reference is not None and analyzer is not None and reference != analyzer:
+            stated = container_samples(report)
+            notes.append(f"explained: Microsoft {reference} against the analyzer's coded {analyzer} (container states {stated if stated is not None else 'none'}); "
+                         "Microsoft also outputs the final overlap and sizes its output from the header's duration, a fit on Windows-written files only")
         if reader.get("stalled"):
             notes.append(f"reader stalled after {reader.get('calls')} ReadSample calls, {reader.get('sampleCount')} samples, last timestamp {reader.get('lastTimestamp')}, "
                          f"{'inside ReadSample since ' + str(reader.get('readStartedAtMs')) + ' ms' if reader.get('inReadSample') else 'between calls'}")

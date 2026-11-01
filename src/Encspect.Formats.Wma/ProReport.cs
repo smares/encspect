@@ -6,7 +6,7 @@ namespace Encspect.Formats.Wma;
 // The figures over a Professional stream (docs/design/wma-pro-format.md, "Statistics"): the Statistics node and the series.
 internal static class ProReport
 {
-    public static Node Statistics(ProParameters p, WmaPacketReader reader, ProTally tally, Node parent, double duration)
+    public static Node Statistics(ProParameters p, WmaPacketReader reader, ProTally tally, Node parent, double duration, CodecConfiguration? configuration)
     {
         long frames = reader.Data.Frames.Count;
         string value = string.Create(CultureInfo.InvariantCulture, $"{Counts.Of(frames, "frame", "frames")}, {duration:0.000} s");
@@ -35,6 +35,7 @@ internal static class ProReport
         }
 
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), ProExplain.StatDuration);
+        ContainerFigures.AddSamples(statistics, parent, configuration);
         Add("Block Alignment", NodeValue.Integer(p.BlockAlignment, "bytes"), ProExplain.StatBlockAlignment);
         if (duration > 0)
         {

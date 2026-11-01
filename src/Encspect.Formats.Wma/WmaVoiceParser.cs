@@ -85,7 +85,7 @@ public sealed class WmaVoiceParser : ICodecParser
         double seconds = 0;
         if (totals.Packets > 0)
         {
-            statistics = VoiceReport.Statistics(voice, format, config.Duration, parent, out seconds);
+            statistics = VoiceReport.Statistics(voice, format, config.Duration, config.DurationSamples, parent, out seconds);
             streamNode.Add(statistics);
         }
 

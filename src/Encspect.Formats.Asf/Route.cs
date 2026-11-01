@@ -363,6 +363,19 @@ public sealed partial class AsfParser
         return state.PlayDuration > preroll ? (state.PlayDuration - preroll) / 10_000_000.0 : null;
     }
 
+    // The same length in samples per channel at the stream's rate, in integers: (play duration less preroll) x rate / 10,000,000 ticks, rounded to the nearest with halves up.
+    private static long? SamplesOf(State state, int rate)
+    {
+        if (rate <= 0 || DurationOf(state) is null)
+        {
+            return null;
+        }
+
+        ulong preroll = state.Preroll > ulong.MaxValue / 10_000 ? ulong.MaxValue : state.Preroll * 10_000;
+        UInt128 samples = (((UInt128)(state.PlayDuration - preroll) * (uint)rate) + 5_000_000) / 10_000_000;
+        return samples > long.MaxValue ? null : (long)samples;
+    }
+
     private static CodecConfiguration? ConfigurationOf(State state, StreamEntry stream, WaveFormat format)
     {
         Node parent = stream.CodecSpecific ?? stream.TypeSpecific ?? stream.Properties!;
@@ -377,6 +390,7 @@ public sealed partial class AsfParser
         return new CodecConfiguration(mapped, parent)
         {
             Duration = DurationOf(state),
+            DurationSamples = SamplesOf(state, (int)Math.Min(format.SamplesPerSecond, int.MaxValue)),
             IsVbr = state.IsVbr,
             Format = new AudioFormat(format.EffectiveTag, format.Channels, format.SamplesPerSecond, format.AverageBytesPerSecond, format.BlockAlign, format.BitsPerSample)
             {

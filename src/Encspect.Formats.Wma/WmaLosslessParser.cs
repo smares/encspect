@@ -90,7 +90,7 @@ public sealed class WmaLosslessParser : ICodecParser
         double duration = reader.Samples / (double)p.SampleRate;
         if (frameCount > 0)
         {
-            stream.Add(LosslessReport.Statistics(p, reader, tally, parent, duration));
+            stream.Add(LosslessReport.Statistics(p, reader, tally, parent, duration, configuration));
         }
 
         Node packetsNode = stream.Add(packetNodes.PacketList(parent.Offset, parent.Length));

@@ -78,6 +78,8 @@ internal static class WmaHeaderOnly
             statistics.Add("Duration", parent.Offset, parent.Length, NodeValue.Decimal(duration.Value, 3, "s"), Explain.StatContainerDuration);
         }
 
+        ContainerFigures.AddSamples(statistics, parent, config);
+
         double nominal = format.BytesPerSecond * 8.0 / 1000;
         if (nominal > 0)
         {
