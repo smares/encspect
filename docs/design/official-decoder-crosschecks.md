@@ -264,6 +264,7 @@ The lessons of the WMA check's reviews (W-1 to W-22, R2-1 to R2-9), as rules for
   - `keep`: the project lead decided the analyzer keeps its figure, with the reason.
 - **A pending difference goes to the project lead** as one item: the files, the figures of every column, the stage, the decoder versions and run IDs, whether the official decoders agree among themselves, what would change in the analyzer (count, finding, golden) and the rule the change would follow. Items are collected per format in the pull request that commits the format's `official-decoders.json`, so the lead decides them together.
 - Until the lead decides, the analyzer keeps its current figures, and the docs say so. For Ogg and TTA these already follow RFC 7845, the Vorbis I granule rules and the TTA format description and are held to `opusdec` and `oggdec` on the valid fixtures; only for the formats where FFmpeg was the reference is it FFmpeg's behavior that stays.
+- **Decision of the project lead, 2026-11-01: concealment.** Encspect's future decoders leave a frame they cannot decode as a gap, never as concealed audio (`decode.frame-invalid`, lost samples in the measurements). Where an official decoder conceals a frame (FDK AAC with noise substitution, or libvorbis or libopus if they conceal), its count covers positions Encspect's decoder will leave empty, and such a difference is recorded as `explained`, not `pending`. PLAN.md records the same rule in its own pull request.
 
 ## Fixtures
 
