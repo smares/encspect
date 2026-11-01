@@ -198,8 +198,10 @@ def compare_ogg(record, analyzer, ffmpeg):
             by_codec.setdefault(s["codec"], []).append(s)
     figures = []
     notes = []
+    if direct.get("pagesAfterEndOfStream"):
+        notes.append("%d page(s) after the end-of-stream page, fed" % direct["pagesAfterEndOfStream"])
     if analyzer is None:
-        return {"figures": [], "differences": [], "units": [], "notes": ["no analyzer report"]}
+        return {"figures": [], "differences": [], "units": [], "notes": notes + ["no analyzer report"]}
 
     def analyzer_streams(streams):
         return [mapping.get(s["stream"]) for s in streams]
@@ -527,6 +529,8 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
     out.append(table(rows, ["file", "sha256", "figure", "stage", "analyzer", "reference", "path", "other decoders", "notes"]))
 
     agreeing = sum(1 for r in results for u in r["units"] if u["status"] == "agree")
+    file_notes = [(r["file"], n) for r in results for n in r["notes"]]
+    out += ["", "Notes per file"] + (["  %s: %s" % p for p in file_notes] or ["  none"])
     out += ["", "Units where a decoder's verdict differs from the analyzer's (a finding that merges several packets points to the first only); %d more agree (the decoder refuses and a finding is at the same bytes)" % agreeing]
     unit_rows = []
     for r in results:

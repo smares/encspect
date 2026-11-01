@@ -134,7 +134,8 @@ def direct_result(child, mode):
                     s["refusal"] = "libvorbis is not given the stream: the first packet is not a Vorbis identification header (the harness's check)"
                 elif (result or "").startswith("not decoded"):
                     why = result[len("not decoded: "):]
-                    s["refusal"] = ("libopus refuses the OpusHead (%s, code %d)" % (why, l["created"])) if l.get("by") == "libopus" else \
+                    s["refusal"] = ("libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with %s (code %d)" % ("more than 2 channels", l["created"]))\
+                        if why.startswith("family 0 with more") else ("libopus refuses the OpusHead (%s, code %d)" % (why, l["created"])) if l.get("by") == "libopus" else \
                         "not passed to libopus: the harness's OpusHead check fails (%s; RFC 7845 section 5.1)" % why
                 units.append(unit)
     for s in streams.values():
@@ -199,6 +200,8 @@ def direct_result(child, mode):
         result["unitsElided"] = True
         notes.append("units elided above %d" % UNIT_LIMIT)
     result["totalSamples" if stopped == "end" else "partialSamples"] = total
+    if end and end.get("pagesAfterEndOfStream"):
+        notes.append("%d page(s) after the end-of-stream page, fed (libogg accepts them)" % end["pagesAfterEndOfStream"])
     if holes or dropped:
         notes.append("libogg dropped %d bytes in %d places and reported %d lost packets; the decoder never saw them" % (sum(d["bytes"] for d in dropped), len(dropped), holes))
     if notes:

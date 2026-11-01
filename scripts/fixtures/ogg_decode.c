@@ -121,7 +121,8 @@ static void decode_opus(Slot *s, ogg_packet *op, float *pcm) {
         int nstreams = 0, coupled = 0, err = 0, supported = 1;
         const char *why = "";
         if (channels < 1 || (family == 0 && channels > 2)) {
-            /* RFC 7845 section 5.1.1 allows 1 or 2 channels in family 0 and 1 to 255 otherwise; the fields are handed to libopus as they are, to get its verdict. */
+            /* RFC 7845 section 5.1.1 allows 1 or 2 channels in family 0. A channel count of 0 is handed to libopus as the header gives it; for family 0 with more than 2 channels the
+               harness picks 1 uncoupled stream and the identity mapping itself, and libopus refuses that reading, not a table the header holds. */
             unsigned char identity[256];
             for (int k = 0; k < 255; k++) {
                 identity[k] = (unsigned char)k;

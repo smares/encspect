@@ -1935,9 +1935,9 @@
      "analyzer": 600,
      "status": "pending",
      "kind": "decoder-refuses-stream",
-     "reason": "libopus refuses the OpusHead (family 0 with more than 2 channels, code -1)",
+     "reason": "libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with more than 2 channels (code -1)",
      "statusSource": "reviewed",
-     "note": "Libopus refuses the OpusHead (family 0 with more than 2 channels, code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
+     "note": "Libopus refuses the harness's family-0 reading (1 stream, uncoupled, identity mapping) of a header with more than 2 channels (code -1). The analyzer counts 600 samples in this stream; following the decoder would change that count and the stream's samples."
     },
     {
      "figure": "decodedSamples.stream5",
