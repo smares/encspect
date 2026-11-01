@@ -83,7 +83,7 @@ internal sealed class PoolAccounting : EventListener
         };
         foreach (Assembly assembly in Encspect(typeof(PoolAccounting).Assembly).Concat(AppDomain.CurrentDomain.GetAssemblies()).Distinct())
         {
-            Register(assembly);
+            TryRegister(assembly);
         }
 
         _isReady = true;
@@ -95,14 +95,7 @@ internal sealed class PoolAccounting : EventListener
         PoolAccounting accounting = Instance.Value;
         while (accounting._loaded.TryDequeue(out Assembly? assembly))
         {
-            try
-            {
-                accounting.Register(assembly);
-            }
-            catch (Exception ex)
-            {
-                accounting._registrationFailures.Enqueue($"{assembly.GetName().Name}: {ex.GetType().Name}: {ex.Message}");
-            }
+            accounting.TryRegister(assembly);
         }
     }
 
@@ -195,6 +188,19 @@ internal sealed class PoolAccounting : EventListener
     private long? Bytes(int poolId, int length) =>
         _elementSizes.TryGetValue(poolId, out int size) && size != Ambiguous ? ((3L * IntPtr.Size) + ((long)size * length) + IntPtr.Size - 1) / IntPtr.Size * IntPtr.Size : null;
 
+    // A failure is recorded for the guard to report, so that one assembly cannot fail the accounting (and with it every memory test).
+    private void TryRegister(Assembly assembly)
+    {
+        try
+        {
+            Register(assembly);
+        }
+        catch (Exception ex)
+        {
+            _registrationFailures.Enqueue($"{assembly.GetName().Name}: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     private void Register(Assembly assembly)
     {
         Type[] types;
@@ -241,7 +247,7 @@ internal sealed class PoolAccounting : EventListener
     }
 
     // The Encspect assemblies this one references, directly or through another: a stale DLL left in the output is not among them.
-    private static IEnumerable<Assembly> Encspect(Assembly root)
+    private IEnumerable<Assembly> Encspect(Assembly root)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal) { root.GetName().Name! };
         var pending = new Queue<Assembly>([root]);
@@ -252,7 +258,14 @@ internal sealed class PoolAccounting : EventListener
             {
                 if (name.Name!.StartsWith("Encspect", StringComparison.Ordinal) && seen.Add(name.Name))
                 {
-                    pending.Enqueue(Assembly.Load(name));
+                    try
+                    {
+                        pending.Enqueue(Assembly.Load(name));
+                    }
+                    catch (Exception ex)
+                    {
+                        _registrationFailures.Enqueue($"{name.Name} did not load: {ex.GetType().Name}: {ex.Message}");
+                    }
                 }
             }
         }
