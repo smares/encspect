@@ -2,6 +2,7 @@
 """The Linux driver of the official-decoder cross-checks (docs/design/official-decoder-crosschecks.md, "Records and the comparison").
 
   official_decode.py ogg --out DIR --bin DIR     (DIR holds ogg_decode)
+  official_decode.py tta --out DIR --tta PROGRAM (PROGRAM is libtta-c's `tta`)
 
 Every decoder call is a child process of its own with a timeout, so that a crash or a stall is recorded and the run goes on. The C harness writes
 one JSON line per packet and flushes it, so a killed child leaves what it did; this script keeps those lines and assembles the file's record:
@@ -15,6 +16,11 @@ A path's result holds: whether it opened (and the failure), the output formats i
 (the packets: file ranges, bytes, result code, samples), what libogg dropped, the standard error of the tools apart from how the path stopped, and
 stoppedBy (end, error, timeout or crash); totalSamples only for end, partialSamples otherwise. Records hold no media: derived variants and decoded
 output are written to a temporary folder and deleted.
+
+TTA has one path, the reader `tta -d` (`tta -dp secret` for the file written with that password, beside a run without the password): TTA has no direct path
+(decision 6). Its samples are counted from the bytes written after the WAVE header with the channel count and bits per sample of the WAVE header it wrote, never
+from the declared size. A nonzero exit status, a crash, a time-out or a missing output file is a stop with its reason, and the sample count of what a stopped run
+left is `partialSamples`, never a figure.
 """
 
 import argparse
@@ -344,14 +350,117 @@ def run_ogg(args):
     return 0
 
 
+# ---- the TTA run -----------------------------------------------------------------------------------------------------
+
+TTA_PASSWORD = "secret"  # the password make_external_tta_fixtures.py wrote external-libtta-16-stereo-password.tta with
+TTA_CHATTER = re.compile(r"^(TTA1 lossless audio encoder/decoder, version [\d.]+|Decoding: .*|Progress: \d+%.*|Time: [\d.]+ sec\.)$")
+
+
+def tta_result(program, path, tmp, password):
+    """One run of `tta -d` (or `-dp password`): the samples counted from the PCM bytes in the WAVE file it wrote, with its own channel count and bits per sample."""
+    target = pathlib.Path(tmp) / ("out-" + pathlib.Path(path).name + ".wav")
+    if target.exists():
+        target.unlink()
+    arguments = [program, "-dp", password] if password else [program, "-d"]
+    child = probe.run_child("tta -dp" if password else "tta -d", [*arguments, str(path), str(target)], jsonl=False)
+    text = (child["stderr"] + child.get("stdout", "")).replace("\r", "\n").replace(str(path), pathlib.Path(path).name).replace(str(target), "OUTPUT").replace(str(program), "tta")
+    warnings = [l.strip() for l in text.splitlines() if l.strip() and not TTA_CHATTER.match(l.strip())]
+    left = target.exists()
+    info = wav_info(target) if left and target.stat().st_size else None
+    frame = info["channels"] * info["bits"] // 8 if info and info.get("channels") and info.get("bits") else None
+    # A WAVE header without channels and without data bytes (exit 0 on built-channels-zero.tta) writes no sample: 0, with the header's fields in the notes.
+    empty = bool(info) and info["headerBytes"] is not None and info["dataBytes"] == 0 and not frame
+    stopped = "end"
+    if child["timedOut"]:
+        stopped = "timeout"
+    elif child["signal"]:
+        stopped = "crash"
+    elif child["exit"] != 0 or not left or not info or info["headerBytes"] is None or not (frame or empty):
+        stopped = "error"
+    result = {
+        "tool": "tta -dp" if password else "tta -d",
+        "decoder": {"libtta-c": "2.3"},
+        "opened": info is not None,
+        "formats": [{"rate": info["rate"], "channels": info["channels"], "bits": info["bits"]}] if info and (frame or empty) else [],
+        "runs": [{"rate": info["rate"], "channels": info["channels"], "bits": info["bits"], "samples": info["dataBytes"] // frame if frame else 0, "outputBytes": info["dataBytes"],
+                  "remainder": info["dataBytes"] % frame if frame else 0, "declaredDataBytes": info["declaredDataBytes"]}] if (frame or empty) else [],
+        "stoppedBy": stopped,
+        "exit": child["exit"], "signal": child["signal"], "timedOut": child["timedOut"], "elapsedMs": child["elapsedMs"],
+        "outputFileLeft": left,
+        "warnings": warnings[:40],
+    }
+    notes = []
+    if stopped == "end":
+        run = result["runs"][0]
+        if empty:
+            notes.append("the WAVE header states %s channels and %s bits per sample and no data follows: 0 samples" % (info["channels"], info["bits"]))
+        if run["remainder"]:
+            notes.append("%d bytes after the last whole sample" % run["remainder"])
+        if run["declaredDataBytes"] != run["outputBytes"]:
+            notes.append("the WAVE header declares %d data bytes and %d were written; the written bytes are counted" % (run["declaredDataBytes"], run["outputBytes"]))
+    elif child["signal"]:
+        notes.append("killed by %s; no reference" % child["signal"])
+    elif child["exit"] not in (0, None):
+        notes.append("exit status %d%s; no reference" % (child["exit"], "" if left else " and no output file"))
+    if notes:
+        result["notes"] = notes
+    samples = result["runs"][0]["samples"] if result["runs"] else None
+    if samples is not None:
+        result["totalSamples" if stopped == "end" else "partialSamples"] = samples
+    if left:
+        target.unlink()
+    return result
+
+
+def run_tta(args):
+    out = pathlib.Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "records").mkdir(exist_ok=True)
+    records = Records(out)
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="odd-"))
+    started = time.time()
+    env = {"platform": "linux", "python": sys.version, "kernel": platform.platform(), "imageOS": os.environ.get("ImageOS"), "imageVersion": os.environ.get("ImageVersion"),
+           "runId": os.environ.get("GITHUB_RUN_ID"), "commit": os.environ.get("GITHUB_SHA"), "format": "tta", "gcc": probe.tool_line(["gcc", "--version"]),
+           "tta": next((l.strip() for l in probe.run_child("tta -h", [args.tta, "-h"], jsonl=False)["stderr"].replace("\r", "\n").splitlines() if "version" in l), None),
+           "ttaArchiveSha256": args.archive_sha256}
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    manifest = derive_variants.write_tta(tmp / "variants")
+    (out / "variants.json").write_text(json.dumps({"format": "tta", "rules": list(derive_variants.TTA_RULES), "variants": manifest}, indent=1) + "\n", encoding="utf-8")
+    committed = sorted(p for p in (FIXTURES / "tta").iterdir() if p.is_file() and p.suffix == ".tta")
+    work = [(p, None) for p in committed] + [(tmp / "variants" / m["name"], {"from": m["source"], "fromSha256": m["sourceSha256"], "rule": m["rule"]}) for m in manifest]
+
+    def case(item):
+        path, derived = item
+        record = file_record(path, "tta", derived)
+        if "password" in path.name:
+            record["paths"] = {"reader": tta_result(args.tta, path, tmp, TTA_PASSWORD), "readerWithoutPassword": tta_result(args.tta, path, tmp, None)}
+        else:
+            record["paths"] = {"reader": tta_result(args.tta, path, tmp, None)}
+        records.write("tta", path, record)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        for future in [pool.submit(case, item) for item in work]:
+            future.result()
+    shutil.rmtree(tmp, ignore_errors=True)
+    env["elapsedSeconds"] = round(time.time() - started)
+    env["records"] = records.count
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="format", required=True)
     ogg = sub.add_parser("ogg")
     ogg.add_argument("--out", required=True)
     ogg.add_argument("--bin", required=True)
+    tta = sub.add_parser("tta")
+    tta.add_argument("--out", required=True)
+    tta.add_argument("--tta", required=True)
+    tta.add_argument("--archive-sha256")
     args = parser.parse_args(argv)
-    return run_ogg(args)
+    return run_ogg(args) if args.format == "ogg" else run_tta(args)
 
 
 if __name__ == "__main__":
