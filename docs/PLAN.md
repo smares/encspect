@@ -773,6 +773,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
   - Vorbis floors and residues, Opus SILK and CELT.
   - AAC USAC, ER AAC and SBR envelope data.
 - Lossy decoders (MP3, AAC, Vorbis, Opus and the others), format by format, which the measurements of decoded audio wait for.
+  - A frame a decoder cannot decode is a gap, never concealed audio (the project lead, 2026-11-01): the decoder reports the frame (`decode.frame-invalid`) and outputs nothing for it, and the measurements count its positions as lost samples and show its columns without data. Where an official decoder conceals the frame (FDK AAC fills it with noise substitution), its output count covers positions that Encspect's decoder leaves empty; the cross-checks of "Phase 3, continued" record such a difference as `explained`.
 - ALAC, TTA and WMA Lossless decoders (they store no checksum over decoded audio, so phase 3 leaves them out; docs/design/decoders.md, decision 5).
 - Small separate items:
   - WavPack 1 to 3.
