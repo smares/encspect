@@ -197,7 +197,7 @@ class ProFile:
             pos += 1
         if self.has_gain:
             pos += 8
-        info = {"trim_pos": pos, "last_sizes": [x[-1] for x in sizes], "start": 0, "end": 0,
+        info = {"trim_pos": pos, "last_sizes": [x[-1] for x in sizes], "first_sizes": [x[0] for x in sizes], "start": 0, "end": 0,
                 "start_flag_pos": None, "start_pos": None, "end_flag_pos": None, "end_pos": None}
         width_t = self.f_log2 + 1
         flag = bits.get(pos, 1)
@@ -278,9 +278,16 @@ def summarize(data):
         last = pro.frame_info(frames[-1])
     except Unreadable:
         last = None
+    prev = None
+    if len(frames) > 1:
+        try:
+            prev = pro.frame_info(frames[-2])["last_sizes"]
+        except Unreadable:
+            prev = None
     return {
         "frames": len(frames), "frameSize": pro.f, "channels": pro.channels, "rate": pro.rate,
-        "startTrim": first["start"], "firstEndTrim": first["end"],
+        "startTrim": first["start"], "startStated": first["start_pos"] is not None, "firstSizes": first["first_sizes"],
+        "prevLastSizes": prev, "firstEndTrim": first["end"],
         "endTrim": last["end"] if last else None, "lastStartTrim": last["start"] if last else None,
         "lastSizes": last["last_sizes"] if last else None, "packets": len(pro.payloads),
     }
@@ -348,7 +355,7 @@ def variants_of(base_name, raw):
             add(f"cut-{k}", cut(k))
         if k % 8 == 3 and base_name != "stereo-64":
             add(f"cut-open-{k}", cut(k, clear_trailer=False))
-    ends = [0, 1, 256, 512, 820, 1024, 1331, 1536, 2000, 2047, 2048, 3000, 4095]
+    ends = [0, 1, 256, 512, 820, 1024, 1331, 1536, 2000, 2047, 2048, 2049, 2100, 2300, 2500, 2559, 2560, 2561, 3000, 4095]
     for value in ends:
         add(f"end-trim-{value}", set_value("end", value))
     add("end-trim-flag-off", drop("end", False))
@@ -372,6 +379,19 @@ def variants_of(base_name, raw):
         for k in ks[:2]:
             for value in (500, 1500):
                 add(f"cut-{k}-end-{value}", cut(k, value))
+
+    def from_packet(j):
+        def build(p, fr):
+            if not any(f[0] == j and f[1] == 6 + p.w for f in fr):
+                raise Unreadable("a frame does not start at the packet's first bit")
+            start = p.packets[0][0]
+            cut_at = p.packets[j][0]
+            del p.data[start:cut_at]
+            fix_counts(p, len(p.payloads) - j, len(p.data))
+        return build
+
+    for j in range(1, len(pro.payloads)):
+        add(f"from-{j}", from_packet(j))
 
     def header(field, ms):
         def build(p, fr):

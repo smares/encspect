@@ -3,7 +3,7 @@ name: WMA Professional variants through Microsoft's decoder
 # Asks Microsoft's WMA Professional decoder one question at a time: scripts/fixtures/windows/make_wma_pro_variants.py
 # writes copies of three Windows-written Professional fixtures that differ in one thing each (the stream cut after
 # frame k, a trim value or flag, the ASF header's play duration or preroll), and the probe of windows-wma-decode.yml
-# decodes them with the Source Reader and the decoder DMO (see docs/development.md, "WMA decoding by Microsoft's
+# decodes them, and the public Professional files of tests/conformance/wma-samples.json, with the Source Reader and the decoder DMO (see docs/development.md, "WMA decoding by Microsoft's
 # decoder"). The variants are generated in the job and not committed. scripts/fixtures/windows/check_wma_pro_variants.py
 # compares the records with the rule under test and runs on Linux.
 # Run by hand (Actions, Run workflow) or by pushing the branch ci/windows-wma-pro. Not part of ci.yml and not a check.
@@ -39,12 +39,17 @@ jobs:
         shell: bash
         run: python scripts/fixtures/windows/make_wma_pro_variants.py tests/fixtures/asf variants
 
-      - name: Decode every variant (three runs each)
+      - name: Download the public Professional files
+        shell: bash
+        continue-on-error: true
+        run: python scripts/fixtures/windows/fetch_wma_pro_samples.py public
+
+      - name: Decode every variant and public file (three runs each)
         shell: bash
         timeout-minutes: 45
         run: |
           mkdir -p decode-out
-          ./probe-bin/wma-decode-probe.exe --out decode-out --timeout 30 variants 2>&1 | tee decode-out/log.txt
+          ./probe-bin/wma-decode-probe.exe --out decode-out --timeout 30 variants public 2>&1 | tee decode-out/log.txt
           cp variants/manifest.json decode-out/manifest.json
 
       - uses: actions/upload-artifact@v7
