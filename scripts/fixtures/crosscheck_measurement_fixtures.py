@@ -71,6 +71,10 @@ import wav_model
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "tests" / "fixtures" / "measurement"
+# The fixtures whose blocks straddle the relative gate within one 0.01 LU bin: libebur128 and FFmpeg gate on histograms, take the bin whole and read 2 LU
+# low, where BS.1770-5 equation 7 (the model, the analyzer) gates each block on its own. Their integrated loudness is not compared.
+HISTOGRAM_GATED = {"synthetic-loudness-gate-straddle-8000"}
+
 GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps", "synthetic-loudness-gap-8000"}
 
 
@@ -311,7 +315,8 @@ def check_libebur128(path, expected, driver, found):
         elif not tenths_close(tenths, got, tolerance, "libebur128 " + what.split(" of channel")[0]):
             found.append(f"{what}: libebur128 {got:.2f}, the model {tenths / 10.0:.1f}, more than {tolerance} apart")
 
-    compare("integrated loudness", loud["integrated"]["tenths"], values.get("integrated"), 0.1)
+    if path.stem not in HISTOGRAM_GATED:
+        compare("integrated loudness", loud["integrated"]["tenths"], values.get("integrated"), 0.1)
     compare("maximum momentary loudness", loud["momentary"]["tenths"], values.get("momentary_max"), 0.1)
     compare("maximum short-term loudness", loud["short_term"]["tenths"], values.get("short_term_max"), 0.1)
     if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
@@ -359,7 +364,9 @@ def check_ffmpeg_ebur128(path, expected, info, found, skipped):
     if got["I"] is None:
         found.append("FFmpeg's ebur128 prints no summary")
         return
-    if loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness"):
+    if path.stem in HISTOGRAM_GATED:
+        skipped.append(f"{path.stem}: the integrated loudness of FFmpeg's ebur128 (it gates on a histogram)")
+    elif loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness"):
         found.append(f"integrated loudness: FFmpeg {got['I']}, the model {loud['integrated']['tenths'] / 10.0}")
     if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
         RANGES["FFmpeg"].append(path.stem)

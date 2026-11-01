@@ -291,11 +291,34 @@ public class MeasurementDeterminismTests
 
     // ---- No operation the platform defines for itself ----
 
+    // Banned by name on every type that defines arithmetic: System.Math and MathF, double, float and Half (their static members and the
+    // generic-math interfaces they implement), the vector types of System.Runtime.Intrinsics and System.Numerics, and Complex. By rule, not
+    // by a short list: a member of one of these types with one of these names, or ending in Native or Estimate, or holding FusedMultiplyAdd.
     private static readonly HashSet<string> BannedMath =
     [
-        "FusedMultiplyAdd", "Sin", "Cos", "Tan", "Sinh", "Cosh", "Tanh", "Asin", "Acos", "Atan", "Atan2", "Asinh", "Acosh", "Atanh", "Log", "Log10",
-        "Log2", "Exp", "Pow", "Cbrt", "SinCos", "ScaleB", "ILogB", "ReciprocalEstimate", "ReciprocalSqrtEstimate", "BitIncrement", "BitDecrement",
+        "FusedMultiplyAdd", "Sin", "Cos", "Tan", "SinCos", "Sinh", "Cosh", "Tanh", "Asin", "Acos", "Atan", "Atan2", "Asinh", "Acosh", "Atanh",
+        "SinPi", "CosPi", "TanPi", "SinCosPi", "AsinPi", "AcosPi", "AtanPi", "Atan2Pi", "Log", "Log2", "Log10", "LogP1", "Log2P1", "Log10P1",
+        "Exp", "Exp2", "Exp10", "ExpM1", "Exp2M1", "Exp10M1", "Pow", "RootN", "Cbrt", "Hypot", "Lerp", "ScaleB", "ILogB", "BitIncrement",
+        "BitDecrement", "ReciprocalEstimate", "ReciprocalSqrtEstimate", "MultiplyAddEstimate",
     ];
+
+    private static readonly HashSet<string> ArithmeticTypes = ["System.Math", "System.MathF", "System.Double", "System.Single", "System.Half", "System.Numerics.Complex"];
+
+    private static bool DefinesArithmetic(string parent) =>
+        ArithmeticTypes.Contains(parent)
+        || parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal)
+        || (parent.StartsWith("System.Numerics.", StringComparison.Ordinal) && !parent.StartsWith("System.Numerics.BitOperations", StringComparison.Ordinal));
+
+    internal static bool IsBanned(string parent, string name) =>
+        (DefinesArithmetic(parent) && BannedMath.Contains(name))
+        || (DefinesArithmetic(parent) && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal)))
+        || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
+        || ((parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal) || parent.StartsWith("System.Numerics.", StringComparison.Ordinal)) && name is "Sum" or "Dot")
+        || parent == "System.Numerics.Complex"
+        || parent is "System.Numerics.Vector`1" or "System.Numerics.Vector"
+        || (parent == "System.Linq.Enumerable" && BannedLinq.Contains(name))
+        || (parent == "System.MemoryExtensions" && name is "Sum" or "Max" or "Min")
+        || (parent == "System.Buffers.ArrayPool`1" && name == "get_Shared");
 
     private static readonly HashSet<string> BannedLinq = ["Sum", "Average", "Max", "Min", "Aggregate", "MaxBy", "MinBy"];
 
@@ -383,14 +406,7 @@ public class MeasurementDeterminismTests
                         HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(new NameProvider(md), null),
                         _ => string.Empty,
                     };
-                    bool banned = (parent is "System.Math" or "System.MathF" && BannedMath.Contains(name))
-                        || (parent.StartsWith("System.Runtime.Intrinsics", StringComparison.Ordinal) || parent.StartsWith("System.Numerics", StringComparison.Ordinal) || parent is "System.Math" or "System.MathF")
-                            && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal))
-                        || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
-                        || (parent.StartsWith("System.Runtime.Intrinsics", StringComparison.Ordinal) || parent.StartsWith("System.Numerics", StringComparison.Ordinal)) && name is "Sum" or "Dot"
-                        || parent is "System.Numerics.Vector`1" or "System.Numerics.Vector"
-                        || (parent == "System.Linq.Enumerable" && BannedLinq.Contains(name))
-                        || (parent == "System.MemoryExtensions" && name is "Sum" or "Max" or "Min");
+                    bool banned = IsBanned(parent, name);
                     if (banned)
                     {
                         found.Add($"{owner}::{md.GetString(method.Name)} calls {parent}.{name}");
@@ -418,10 +434,18 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
+
+        // The rule bans by name, so a self-test of the allowed side too: a plain Complex-free sum of element-wise members stays clean.
+        Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Max"));
+        Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Add"));
+        Assert.False(IsBanned("System.Math", "Sqrt"));
+        Assert.False(IsBanned("System.Double", "IsNaN"));
+        Assert.True(IsBanned("System.Double", "Cbrt"));
+        Assert.True(IsBanned("System.Numerics.ITrigonometricFunctions`1", "Sin"));
 
         // Allowed: Sqrt, Floor, Abs, Min.
         Assert.DoesNotContain(found, f => f.EndsWith("Math.Sqrt", StringComparison.Ordinal) || f.EndsWith("Math.Floor", StringComparison.Ordinal) || f.EndsWith("Math.Min", StringComparison.Ordinal));
@@ -449,6 +473,12 @@ internal static class BannedSamples
         sum += System.Runtime.Intrinsics.Vector128.MaxNative(v, w)[0];
         sum += System.Runtime.Intrinsics.Vector128.FusedMultiplyAdd(v, w, v)[0];
         sum += System.Runtime.Intrinsics.Vector128.Sum(v) + System.Runtime.Intrinsics.Vector128.Dot(v, w);
+        sum += double.FusedMultiplyAdd(x, x, x) + double.MultiplyAddEstimate(x, x, x) + double.ReciprocalEstimate(x) + double.Sin(x) + double.Log10(x) + double.Exp(x) + double.Pow(x, x) + float.Cos((float)x) + float.Hypot((float)x, (float)x);
+        sum += System.Runtime.Intrinsics.Vector128.Sin(v)[0] + System.Runtime.Intrinsics.Vector128.Cos(v)[0] + System.Runtime.Intrinsics.Vector128.SinCos(v).Sin[0] + System.Runtime.Intrinsics.Vector128.Exp(v)[0];
+        sum += System.Runtime.Intrinsics.Vector128.Log(v)[0] + System.Runtime.Intrinsics.Vector128.Log2(v)[0] + System.Runtime.Intrinsics.Vector128.Hypot(v, w)[0] + System.Runtime.Intrinsics.Vector128.Lerp(v, w, v)[0];
+        sum += System.Numerics.Complex.Exp(new System.Numerics.Complex(x, x)).Real;
+        double[] rented = System.Buffers.ArrayPool<double>.Shared.Rent(4);
+        sum += rented.Length;
         var wide = new System.Numerics.Vector<double>(x);
         sum += (wide + wide)[0];
         sum += Math.Sqrt(x) + Math.Floor(x) + Math.Min(x, sum);

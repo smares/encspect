@@ -32,13 +32,13 @@ Sources:
   - at most 2,048 chunks are listed at one level (`wav.chunk-limit`), and tables inside chunks (cue points, loops, `ds64` and `chna` entries) list at most 1,024 entries;
   - LIST chunks nest at most 8 levels (`wav.list-nesting`);
   - the tree holds at most 250,000 nodes in all, as MP4's and Matroska's do: past that the rest of the level is one "Chunks Not Shown" node and is not read (`wav.node-limit`, warning), and the findings about a missing `fmt ` or `data` chunk are left out;
-  - the `ds64` table keeps the first 1,024 entries whose ID is four printable characters, since only a top-level chunk can use an entry;
+  - the `ds64` table reads its first 1,024 entries and keeps those whose ID is four printable characters, since only a top-level chunk can use an entry; the rest are skipped;
   - the cue point names, kept to find a name twice and a label for a cue point the file does not hold, are limited to 65,536; with more cue points neither check is made.
 - The samples are not read. The figures come from the headers.
 
 ## Sizes, placeholders, RF64 and BW64
 
-- A RIFF size or a `data` size of `0xFFFFFFFF` is a placeholder of a writer that could not seek back (FFmpeg writing to a pipe does this). The data then runs to the end of the file (`wav.riff-size-placeholder`, `wav.data-size-placeholder`). A `data` size of 0 followed by no chunk is treated the same way.
+- A RIFF size or a `data` size of `0xFFFFFFFF` is a placeholder of a writer that could not seek back (FFmpeg writing to a pipe does this). The data then runs to the end of the file (`wav.riff-size-placeholder`, `wav.data-size-placeholder`). A `data` size of 0 followed by no chunk is treated the same way. In an RF64 or BW64 file a `0xFFFFFFFF` RIFF size stands for the size in the ds64 chunk, and the finding says why that size could not be used: no ds64 chunk with the three sizes, or one that does not come first (its size is then compared with what the file holds). A `data` chunk inside a LIST other than `wavl` is not the audio.
 - In an RF64 file the 32-bit sizes of `0xFFFFFFFF` are resolved from `ds64`: the RIFF size, the `data` size, the sample count and a table of the other chunks that need 64 bits. A missing `ds64` is `wav.ds64-missing`, one that is not first `wav.ds64-not-first`, and sizes that disagree with the file `wav.ds64-riff-size-mismatch` and `wav.ds64-data-size-mismatch`.
 - **BW64** (ITU-R BS.2088-2) works as RF64 does, with these differences:
   - the size of the BW64 chunk "shall be" `0xFFFFFFFF` (section 3.2); another value is `wav.bw64-size-not-placeholder`, and is used as it stands, as the specification's rule for the 32-bit fields says (section 2.4);
@@ -47,7 +47,7 @@ Sources:
   - the `fmt ` chunk has a `cbSize` that "if present shall be set to zero" and no extra data (section 2.6, "not to be used in BW64"), while section 2.6.2 asks readers to handle the extensible format tag 0xFFFE "in a sensible manner": `wav.bw64-format-extra-data` is raised for extra data outside the extensible form, and exempting the extensible form's own extra fields is the analyzer's reading of that.
 - The three sizes are the least a `ds64` chunk gives (24 bytes); a chunk without the table length after them (under 28 bytes) is `wav.ds64-too-short` and lists no chunk, and one that holds fewer than the three sizes is `wav.chunk-too-short` and gives none, so the sizes it should have resolved are `wav.chunk-size-unresolved`.
 - `DeclaredEnd` is the RIFF chunk's own end (for RF64 from `ds64`). It is what lets the host tell a tag after the chunk from a tag inside it; a size that is 0, `0xFFFFFFFF` or under 4 states no end.
-- Bytes after the RIFF chunk are `wav.trailing-bytes`; a chunk after it that looks like part of the file is `wav.data-after-riff`. A chunk cut by the end of the file is `wav.chunk-past-end` and the file `wav.truncated`.
+- Bytes inside the RIFF chunk after its last chunk, too few for another, are `wav.trailing-bytes`; any bytes after the end the RIFF chunk states are `wav.data-after-riff` (whether they look like a chunk is not checked). A chunk cut by the end of the file is `wav.chunk-past-end` and the file `wav.truncated`.
 - A pad byte that is missing where the next chunk starts right after an odd chunk is `wav.pad-byte-missing`; the parser follows the layout that gives a valid chunk ID next. A nonzero pad byte is `wav.pad-byte-not-zero`.
 
 ## Reported
@@ -116,9 +116,9 @@ S/PDIF passthrough captured or rendered to a WAVE file (or a Wave64 file) writes
 ## Channel layout
 
 - The channel mask of WAVEFORMATEXTENSIBLE gives the speakers in the order of its bits (front left, front right, front center, LFE, back left, back right and so on up to the top speakers). The channels follow that order.
-- Bits 18 and above are no WAVE speaker positions: Microsoft reserves them, and EBU Tech 3306-2009 section 3 assigns bits 23 to 30 (bitstreams, control samples and the stereo down mix). The analyzer counts each as a channel without a position (discrete); bit 31, SPEAKER_ALL, is not counted in the check.
+- Bits 18 and above are no WAVE speaker positions: Microsoft reserves them, and EBU Tech 3306-2009 section 3 assigns bits 23 to 30 (bitstreams, control samples and the stereo down mix). The analyzer counts each as a channel without a position (discrete); bit 31, SPEAKER_ALL, is left out of the count that `wav.channel-mask-mismatch` compares with the channels.
 - A mask and a channel count that disagree follow Microsoft's rule ("Multiple channel audio data and WAVE files", "Details about dwChannelMask"): with fewer channels than bits the extra, most significant bits are ignored, and with more the remaining channels are assigned to no speaker (discrete). The layout is built that way, and `wav.channel-mask-mismatch` is an information finding. A mask of 0 gives no layout.
-- The sub-format GUID is read with its first three groups little-endian, as Windows stores it, also in a RIFX file; the format tag is its first four bytes read little-endian. Microsoft's documents say nothing of RIFX, and FFmpeg's `riffdec.c` reads the tag the same way.
+- The sub-format GUID is read with its first three groups little-endian, as Windows stores it, also in a RIFX file; the format tag is its first four bytes read little-endian. Microsoft's documents say nothing of RIFX, so this byte order is the analyzer's choice, not a rule from a specification.
 - Without a mask, one channel is front center and two are front left and front right (`ksmedia.h`, `KSAUDIO_SPEAKER_MONO` and `KSAUDIO_SPEAKER_STEREO`). More channels have no layout.
 - A layout is named (5.1, 7.1 and so on) where it matches a common arrangement.
 

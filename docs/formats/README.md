@@ -22,7 +22,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | Apple Lossless (ALAC) frame by frame in MP4 and Matroska (the "alac" codec parser; CAF waits for a CAF parser) | [alac.md](alac.md) |
 | Dolby TrueHD and MLP (raw `.thd` and `.mlp` files, with decoding for verification) | [truehd.md](truehd.md) |
 | ASF and WMA (versions 1 and 2, Professional, Lossless and Voice frame by frame) | [asf-wma.md](asf-wma.md) |
-| WAV (RIFF, RIFX, RF64 and BW64; PCM, floating point and the compressed formats at header level; MPEG audio, AC-3 and DTS routed to their parsers; PCM, float, A-law and mu-law samples decoded for measurements) | [wav.md](wav.md) |
+| WAV (RIFF, RIFX, RF64 and BW64; PCM, floating point and the compressed formats at header level; MPEG audio, AC-3, E-AC-3 and DTS routed to their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples; PCM, float, A-law and mu-law samples decoded for measurements) | [wav.md](wav.md) |
 | Wave64 (Sony's 64-bit WAVE, `.w64`; the chunks of a WAVE file in GUID-named chunks, and the same decoding) | [wav.md](wav.md#wave64) |
 | AIFF and AIFF-C (all compression types at header level; the uncompressed, float, A-law and mu-law types decoded for measurements) | [aiff.md](aiff.md) |
 | Matroska and WebM (audio tracks routed to the codec parsers; video at container level) | [matroska.md](matroska.md) |

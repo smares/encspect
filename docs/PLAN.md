@@ -693,7 +693,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 | Gate 2 | Pipeline green everywhere, review findings fixed |
 | 3 (lossless) | FLAC, WAV, AIFF, ALAC in MP4, WMA Lossless in ASF (frames read, no reconstruction), Monkey's Audio, TTA; Dolby TrueHD and MLP frame by frame, implemented, by an agent that had not read FFmpeg's source, from [docs/design/truehd-format.md](design/truehd-format.md), a description written by one that had (raw `.thd` and `.mlp`, MP4 `mlpa`, Matroska `A_TRUEHD` and `A_MLP`; see "Phase 3: Dolby TrueHD and MLP"), including whether an Atmos substream is present; lossless decoders that verify the checksums stored over decoded audio (FLAC, Monkey's Audio, WavPack and Dolby TrueHD and MLP; ALAC, TTA and WMA Lossless store none over decoded audio, so their decoders wait under "Later"; see [docs/design/decoders.md](design/decoders.md)) |
 | Gate 3 | Pipeline green everywhere, review findings fixed |
-| 3, continued | lossyWAV and lossyFLAC detection, as described under "Phase 3, continued" below |
+| 3, continued | lossyWAV and lossyFLAC detection, then cross-checks against the formats' official decoders, as described under "Phase 3, continued" below |
 | 4 | TAK and OptimFROG at header level only |
 | 5 | More formats, in the order listed under "More formats" below: the better a format is documented, the sooner it comes |
 | 6 | Sequenced formats: MIDI, tracker modules and chiptunes, as listed under "Sequenced formats" below |
@@ -754,6 +754,13 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
    - FLAC: from the wasted bits of each subframe, which the parser reads already, without decoding. WavPack, Monkey's Audio, TrueHD and WAV: a measurement of the decoded audio.
    - Reported as figures with their basis (the share of blocks with zeroed low bits, the distribution of their counts, the block grid found) and as an encoder claim for lossyWAV with a confidence, backed by files lossyWAV writes (GPL, used only as a black-box tool for fixtures). No finding says a file is not lossless.
    - Limits: silence and audio truncated to fewer bits on purpose also have zeroed bits; any processing after lossyWAV (gain, dither, resampling) removes the pattern; another tool that zeroes bits per block the same way looks the same. Whether lossyWAV leaves a marker of its own is checked with its files first.
+2. Cross-checks against the formats' official decoders, where FFmpeg is the only reference so far. The decoder of a format's owner, or its reference implementation, becomes the reference for sample counts, durations and the handling of damage; FFmpeg stays a second cross-check, with each known difference listed per file. All are used as black boxes, as the WMA check against Microsoft's decoder on the Windows runners does.
+   - AC-3 and E-AC-3: Dolby's decoders in Windows' Media Foundation and in macOS's Core Audio, through the Windows harness of the WMA check and an equivalent one on the macOS runners.
+   - AAC, HE-AAC, HE-AAC v2 and xHE-AAC: Fraunhofer's FDK AAC decoder, Apple's decoder in Core Audio and the Media Foundation AAC decoder (whether the runner image has xHE-AAC is checked first).
+   - Opus and Vorbis: Xiph's reference decoders (libopus with `opusdec`, libvorbis with `oggdec`), which run on Linux.
+   - TTA: the format author's reference codec.
+   - Not possible: DTS and DTS-HD, and Dolby TrueHD and MLP, whose official decoders are not freely available (checked on the Windows and macOS images before this is settled); FFmpeg stays their reference.
+   - Each difference from FFmpeg that would change counts, findings or goldens goes to the project lead before the analyzer follows it.
 
 **Later.** The order is not fixed:
 
