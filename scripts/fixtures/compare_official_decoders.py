@@ -294,8 +294,15 @@ def unit_differences(direct, analyzer):
     findings = [f for f in analyzer["findings"] if UNIT_FINDING.match(f["code"]) and f["offset"] is not None]
     merged = any(f["count"] > 1 for f in findings)
 
+    empty_at = {u["ranges"][0][0] for u in units if sum(r[1] for r in u["ranges"]) == 0}
+
     def inside(unit, f):
-        return any(l == 0 and f["offset"] == start or start <= f["offset"] < start + l for start, l in unit["ranges"])
+        """A finding at an offset belongs to the packet that contains the byte; one of length 0 at the start of an empty packet belongs to that packet, not to the next."""
+        if sum(r[1] for r in unit["ranges"]) == 0:
+            return unit["ranges"][0][0] == f["offset"]
+        if f["length"] == 0 and f["offset"] in empty_at:
+            return False
+        return any(start <= f["offset"] < start + l for start, l in unit["ranges"])
 
     matched = set()
     for u in units:
@@ -360,6 +367,7 @@ def main(argv):
     parser.add_argument("--out", default=".")
     parser.add_argument("--run-id")
     parser.add_argument("--write-official", help="write tests/fixtures/ogg/official-decoders.json here")
+    parser.add_argument("--previous", help="the committed official-decoders.json whose reviewed statuses and notes are kept (default: the file --write-official names, if it exists)")
     parser.add_argument("--no-ffmpeg", action="store_true")
     args = parser.parse_args(argv)
 
@@ -413,7 +421,7 @@ def main(argv):
     (out / "comparison.json").write_text(json.dumps({"schema": SCHEMA, "environment": environment, "ffmpeg": ffmpeg_version, "warnings": warnings, "files": results,
                                                      "notRun": not_run, "recordsWithoutFile": unmatched, "filesWithoutOpusOrVorbis": other_files}, indent=1) + "\n", encoding="utf-8")
     if args.write_official:
-        write_official(pathlib.Path(args.write_official), results, environment, ffmpeg_version, args.run_id)
+        write_official(pathlib.Path(args.write_official), pathlib.Path(args.previous) if args.previous else None, results, environment, ffmpeg_version, args.run_id)
     print(text.split("\n\n")[0])
     print("comparison.txt: %d files compared, %d not run" % (len(results), len(not_run)))
     return 0
@@ -489,10 +497,11 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
 
 # ---- the committed results ---------------------------------------------------------------------------------------------
 
-def write_official(target, results, environment, ffmpeg_version, run_id):
+def write_official(target, previous_file, results, environment, ffmpeg_version, run_id):
     previous = {}
-    if target.exists():
-        for f in json.loads(target.read_text(encoding="utf-8")).get("files", []):
+    source = previous_file or target
+    if source.exists():
+        for f in json.loads(source.read_text(encoding="utf-8")).get("files", []):
             for d in f.get("differences", []) + f.get("units", []):
                 previous[(f["path"], f["sha256"], d.get("figure") or "unit", d.get("decoder"), d.get("offset"))] = d
     files = []
