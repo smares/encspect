@@ -105,7 +105,11 @@ static void decode_all(long index, long from, long to, unsigned fill, unsigned l
         stuck = (total_now == last_total && !output) ? stuck + 1 : 0;
         last_total = total_now;
         if (stuck >= 8) {
-            break;
+            printf("{\"type\":\"stuck\",\"index\":%ld,\"calls\":%d,\"totalBytes\":%ld}\n", index, attempt + 1, total_now);
+            fflush(stdout);
+            G.stopped = "limit";
+            G.limit = 1;
+            return;
         }
         /* ADTS: the library keeps the bytes it was given and asks for more with 0x1002, so decoding goes on until it does. Raw access units: one
            unit per fill, one call per unit; a second call without new data conceals a frame (USAC answers 0x4004 with a valid output forever). */

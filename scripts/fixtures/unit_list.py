@@ -381,7 +381,7 @@ def adts_units(data, result):
                 if hq and hq[:3] == h[:3]:
                     nq = q + hq[3]
                     hn = adts_header(data, nq) if nq < size else None
-                    if nq >= size or (hn is not None and hn[:3] == h[:3]):
+                    if nq == size or (hn is not None and hn[:3] == h[:3]):
                         end = q
                         break
             frames.append((pos, h[3], end - pos))
@@ -451,9 +451,10 @@ def ac3_units(data, result):
                 hq = ac3_header(data, q)
                 if hq and hq[3] == h[3]:
                     nq = q + hq[0]
-                    if nq >= size or ac3_header(data, nq) is not None:
+                    if nq == size or ac3_header(data, nq) is not None:
                         end = q
                         break
+            result["frameCount"] = result.get("frameCount", 0) + 1
             if end == min(pos + h[0], size) and end - pos == h[0] and crc16(data[pos + 2:end]) == 0:
                 result["crcOk"] = result.get("crcOk", 0) + 1
             if h[1] and not h[2] and current is not None:
@@ -501,10 +502,10 @@ def extract(path):
             chains = {k: v[1]["units"] for k, v in candidates.items() if len(v[1]["units"]) >= 2}
             if len(chains) == 2:
                 best = min(chains, key=lambda k: (chains[k][0][0], -candidates[k][0]))
-                # Look-alike ADTS headers inside AC-3 frames cannot pass an AC-3 CRC: when the AC-3 chain has more than half of its whole frames
+                # Look-alike ADTS headers inside AC-3 frames cannot pass an AC-3 CRC: when the AC-3 chain has more than half of its syncframes (dependent ones included)
                 # CRC-clean it decides, wherever the chains begin.
                 ac3_ok = candidates["ac3"][1].get("crcOk", 0)
-                if ac3_ok * 2 > len(chains["ac3"]):
+                if ac3_ok * 2 > candidates["ac3"][1].get("frameCount", 0):
                     best = "ac3"
             other = "ac3" if best == "adts" else "adts"
             if candidates[best][0] == 0 or len(candidates[best][1]["units"]) < 2 and len(data) > candidates[best][0] + 64:

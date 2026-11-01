@@ -414,6 +414,38 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     if (strcmp(source, "audiofile") != 0 && strcmp(source, "audiofile-format-list") != 0) {
         UInt32 id = !strcmp(codec, "ac-3") ? kAudioFormatAC3 : !strcmp(codec, "ec-3") ? kAudioFormatEnhancedAC3 : kAudioFormatMPEG4AAC;
         input.mFormatID = id;
+        if ((id == kAudioFormatAC3 || id == kAudioFormatEnhancedAC3) && count > 0 && units[0].offset + 8 <= length) {
+            /* The description of the first syncframe (A/52 5.3 and Annex E 2.2.2): rate, channels from acmod and lfeon, frames per packet from the
+               blocks per frame. It stands in for what AudioFile would have read from a file it cannot open. */
+            const unsigned char *d = data + units[0].offset;
+            static const int channel_counts[] = {2, 1, 2, 3, 3, 4, 4, 5};
+            static const double rates_ac3[] = {48000, 44100, 32000, 0};
+            static const double rates_half[] = {24000, 22050, 16000, 0};
+            int acmod = 0, lfeon = 0, blocks = 6;
+            double rate = 0;
+            if (id == kAudioFormatAC3) {
+                int fscod = d[4] >> 6;
+                rate = rates_ac3[fscod];
+                unsigned bits = ((unsigned)d[6] << 8) | d[7];
+                int at = 15;
+                acmod = (bits >> (at - 2)) & 7;
+                at -= 3;
+                if ((acmod & 1) && acmod != 1) at -= 2;
+                if (acmod & 4) at -= 2;
+                if (acmod == 2) at -= 2;
+                lfeon = (bits >> at) & 1;
+            } else {
+                int fscod = d[4] >> 6;
+                rate = fscod == 3 ? rates_half[(d[4] >> 4) & 3] : rates_ac3[fscod];
+                blocks = fscod == 3 ? 6 : (int[]){1, 2, 3, 6}[(d[4] >> 4) & 3];
+                acmod = (d[4] >> 1) & 7;
+                lfeon = d[4] & 1;
+            }
+            input.mSampleRate = rate;
+            input.mChannelsPerFrame = channel_counts[acmod] + lfeon;
+            input.mFramesPerPacket = (UInt32)blocks * 256;
+            printf(",\"syncframe\":{\"acmod\":%d,\"lfeon\":%d,\"blocks\":%d}", acmod, lfeon, blocks);
+        }
         if (adts_profile >= 0) {
             static const double rates[] = {96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350};
             input.mSampleRate = adts_sfi < 13 ? rates[adts_sfi] : 0;
