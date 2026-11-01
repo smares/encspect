@@ -233,6 +233,7 @@ def linux_reader_runs(path, tmp, tta):
             bytes_per_sample = 2
         else:
             return runs
+        run["stderr"] = "\n".join(l for l in run["stderr"].replace("\r", "\n").splitlines() if l.strip() and not re.match(r"^\s*\[[^\]]*\]\s*(\d\d:\d\d:\d\d)?\s*$", l))
         written = target.stat().st_size if target.exists() else None
         run["outputBytes"] = written
         run["channels"] = channels
@@ -419,10 +420,14 @@ def run_macos(args):
         if summary["kind"] != "unknown" and summary["units"]:
             runs.append(run_child("convert-prime-default", [probe, "convert", path, tsv, "default"]))
             runs.append(run_child("convert-prime-none", [probe, "convert", path, tsv, "none"]))
+            runs.append(run_child("convert-double-rate", [probe, "convert", path, tsv, "double"]))
         folder = "ac3" if path.parent.name == "ac3" else "aac"
         out.record("coreaudio-" + folder, path, runs, unitList=summary)
 
-    futures = [pool.submit(case, p) for p in corpus]
+    def ogg_case(path):
+        out.record("coreaudio-ogg", path, [run_child("reader", [probe, "reader", path])])
+
+    futures = [pool.submit(case, p) for p in corpus] + [pool.submit(ogg_case, p) for p in files("ogg", {".ogg", ".opus"})]
     concurrent.futures.wait(futures)
     for f in futures:
         f.result()

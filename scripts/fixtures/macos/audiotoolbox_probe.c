@@ -5,9 +5,10 @@
          the formats AudioToolbox decodes, the file types it reads, and the decoders registered per format
      audiotoolbox_probe reader <file>
          ExtAudioFile: opens the file, sets a 16-bit client format and reads to the end; one line per read
-     audiotoolbox_probe convert <file> <units.tsv> <default|none>
+     audiotoolbox_probe convert <file> <units.tsv> <default|none|double>
          AudioConverter: one unit of the unit list (unit_list.py --tsv) per call, with the file's magic cookie; the prime method
-         is left at the converter's default or set to none (kConverterPrimeMethod_None)
+         is left at the converter's default or set to none (kConverterPrimeMethod_None); "double" asks for twice the input's
+         sample rate as the output rate
 
    Every result is one JSON line, written and flushed before the next call, so a killed child leaves what it did. A cut unit is fed
    from its first byte to the last byte the file holds and never padded. */
@@ -414,7 +415,8 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     AudioStreamBasicDescription output;
     memset(&output, 0, sizeof output);
     output.mFormatID = kAudioFormatLinearPCM;
-    output.mSampleRate = input.mSampleRate;
+    /* "double": ask for twice the input's rate, which is what an explicitly signaled HE-AAC stream decodes to. */
+    output.mSampleRate = !strcmp(prime, "double") ? input.mSampleRate * 2 : input.mSampleRate;
     output.mChannelsPerFrame = input.mChannelsPerFrame ? input.mChannelsPerFrame : 2;
     output.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
     output.mBitsPerChannel = 32;
@@ -500,6 +502,6 @@ int main(int argc, char **argv) {
     if (argc == 5 && !strcmp(argv[1], "convert")) {
         return convert(argv[2], argv[3], argv[4]);
     }
-    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | convert file units.tsv default|none\n");
+    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | convert file units.tsv default|none|double\n");
     return 2;
 }
