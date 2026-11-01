@@ -12,18 +12,23 @@ namespace Encspect.Tests;
 // collection when its clock says so (System.Private.CoreLib's SharedArrayPool<T>.Trim, .NET 10: an array kept for a thread 30 s after the
 // first full collection that saw it, 15 s under medium memory pressure, at every full collection under high; one kept for all threads 60 s,
 // then one every 15 s, or after 10 s under high pressure), and drops a returned array at once when the per-core stack it would go to is full.
-// Under normal pressure an array returned between two readings cannot be dropped before the later one: the clocks above are longer than any
-// pair of compared readings is apart.
+// An array returned and dropped between two readings was in neither and is still added to the later one. Under low pressure that needs
+// 30 s between them; under medium pressure 15 s, which a sampled analysis on a slow runner can take between the reading before it and the
+// one with its report: the arrays made and dropped inside are the test host's (about 16 KiB each) and the test's (SharedPoolGuard), and they
+// only move that peak's baseline, whose bounds are MB.
 //
 // The events used are ArrayPoolEventSource's Informational ones, which fire rarely:
 // - BufferTrimmed(bufferId, bufferSize, poolId): a trim dropped an array.
 // - BufferDropped(bufferId, bufferSize, poolId, bucketId, reason): with reason Full (0), Return pushed the thread's previous array into a
-//   full per-core stack and dropped it, an array of the same size. OverMaximumSize is an array the pool never held.
+//   full per-core stack and dropped it, an array of the same size. The event names the array just returned, which stays pooled, so the
+//   drop is added without entering the dedupe below, where it would hide that array's own trim later. OverMaximumSize is an array the
+//   pool never held.
 // - BufferTrimPoll(milliseconds, pressure): each trim's memory pressure. Under high pressure (2) a pool drops every array a thread keeps at
 //   each full collection, so an array returned between two readings can be dropped inside the later one and counted though it was never
 //   in the earlier one; SharedPoolGuard fails a test during which that pressure was seen.
-// - BufferAllocated(bufferId, bufferSize, poolId, bucketId, reason): where a pool not identified made its first array, and SharedPoolGuard's
-//   check of the arrays the test's own thread puts into the pools.
+// - BufferAllocated(bufferId, bufferSize, poolId, bucketId, reason): where a pool not identified made its first array (its frames' method
+//   names, kept once per such pool: about a KB, possibly inside a window, which is accepted; the frames are read without file and line,
+//   which would load assemblies), and SharedPoolGuard's check of the arrays the pools make on the test's thread.
 // The Verbose events (every Rent and Return) would let the accounting follow every array in and out, which high pressure would not
 // disturb, but ManyLogicalStreamsStayBounded alone raises 28.8 million of them, and following them took that test from about 40 s to 8 min.
 //
@@ -32,9 +37,12 @@ namespace Encspect.Tests;
 // before the trim logged it reads as dropped while its renter holds it, and an array a Return pushed back reads as dropped until it goes.
 //
 // Bytes need the element type, which the events do not carry, and the frames of SharedArrayPool<T> name only the open type: the pools are
-// identified by registering the Shared pool of every type of every loaded assembly when the accounting starts, and of each assembly as it
-// loads. A pool still unknown, or whose ID two element sizes share, cannot be sized: its drops are listed, with where its first array was
-// allocated, and SharedPoolGuard fails a test during which one happened.
+// identified by registering the Shared pool of every type of every loaded assembly (about 14,400 pools, 1.1 KB each). That allocates for
+// good, so it never runs inside a test: an assembly that loads later is only queued, and the next SharedPoolGuard registers it before
+// its test's first reading. A pool still unknown (a generic instantiation such as a tuple, or a type of an assembly loaded during the
+// test) cannot be sized: its drops are listed, with where its first array was allocated, and SharedPoolGuard fails the test during
+// which one happened. So does a drop from an ID that two element sizes share (2 of 14,416 IDs in one run): which of the two pools is in
+// use is known only to a private field of the runtime, so a pool in use whose ID collides fails each test during which it drops an array.
 internal sealed class PoolAccounting : EventListener
 {
     private const int Ambiguous = -1;
@@ -46,6 +54,8 @@ internal sealed class PoolAccounting : EventListener
     private readonly ConcurrentDictionary<int, int> _elementSizes = new();
     private readonly ConcurrentDictionary<int, string> _origins = new();
     private readonly ConcurrentQueue<string> _unknownDrops = new();
+    private readonly ConcurrentQueue<Assembly> _loaded = new();
+    private readonly ConcurrentQueue<string> _registrationFailures = new();
 
     // The last drops counted, sized ahead so that keeping them allocates nothing between two readings.
     private readonly HashSet<(int Pool, int Array)> _recentDrops = new(RecentCount);
@@ -59,7 +69,18 @@ internal sealed class PoolAccounting : EventListener
 
     private PoolAccounting()
     {
-        AppDomain.CurrentDomain.AssemblyLoad += (_, e) => Register(e.LoadedAssembly);
+        AppDomain.CurrentDomain.AssemblyLoad += (_, e) =>
+        {
+            try
+            {
+                _loaded.Enqueue(e.LoadedAssembly);
+            }
+            catch (Exception ex)
+            {
+                // Nothing may escape into the code whose load raised the event; the guard reports it.
+                _registrationFailures.Enqueue($"{e.LoadedAssembly.GetName().Name} was not queued: {ex.GetType().Name}: {ex.Message}");
+            }
+        };
         foreach (Assembly assembly in Encspect(typeof(PoolAccounting).Assembly).Concat(AppDomain.CurrentDomain.GetAssemblies()).Distinct())
         {
             Register(assembly);
@@ -67,6 +88,27 @@ internal sealed class PoolAccounting : EventListener
 
         _isReady = true;
     }
+
+    // Registers the assemblies loaded since the last call; the guard calls it before its test's first reading.
+    public static void RegisterLoaded()
+    {
+        PoolAccounting accounting = Instance.Value;
+        while (accounting._loaded.TryDequeue(out Assembly? assembly))
+        {
+            try
+            {
+                accounting.Register(assembly);
+            }
+            catch (Exception ex)
+            {
+                accounting._registrationFailures.Enqueue($"{assembly.GetName().Name}: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+    }
+
+    public static int RegistrationFailureCount => Instance.Value._registrationFailures.Count;
+
+    public static string? FirstRegistrationFailureSince(int count) => Instance.Value._registrationFailures.Skip(count).FirstOrDefault();
 
     public static long Dropped => Volatile.Read(ref Instance.Value._dropped);
 
@@ -104,8 +146,8 @@ internal sealed class PoolAccounting : EventListener
             case ("BufferTrimmed", [int array, int length, int pool, ..]):
                 Drop(pool, array, length);
                 break;
-            case ("BufferDropped", [int array, int length, int pool, _, var reason, ..]) when Convert.ToInt32(reason, System.Globalization.CultureInfo.InvariantCulture) == 0:
-                Drop(pool, array, length);
+            case ("BufferDropped", [_, int length, int pool, _, var reason, ..]) when Convert.ToInt32(reason, System.Globalization.CultureInfo.InvariantCulture) == 0:
+                Drop(pool, null, length);
                 break;
             case ("BufferTrimPoll", [_, var pressure, ..]) when Convert.ToInt32(pressure, System.Globalization.CultureInfo.InvariantCulture) == HighPressure:
                 Interlocked.Increment(ref _highPressureTrims);
@@ -114,8 +156,7 @@ internal sealed class PoolAccounting : EventListener
                 long? bytes = Bytes(pool, length);
                 if (bytes is null && !_origins.ContainsKey(pool))
                 {
-                    string[] frames = [.. Environment.StackTrace.Split('\n').Select(line => line.Trim())];
-                    _origins.TryAdd(pool, "by " + string.Join(" < ", frames.Skip(Array.FindLastIndex(frames, line => line.Contains("ArrayPool", StringComparison.Ordinal)) + 1).Take(5).Select(line => line.StartsWith("at ", StringComparison.Ordinal) ? line[3..] : line)));
+                    _origins.TryAdd(pool, "by " + Callers(5));
                 }
 
                 _onAllocated?.Invoke(pool, bytes, length);
@@ -123,7 +164,7 @@ internal sealed class PoolAccounting : EventListener
         }
     }
 
-    private void Drop(int pool, int array, int length)
+    private void Drop(int pool, int? array, int length)
     {
         if (Bytes(pool, length) is not { } bytes)
         {
@@ -132,16 +173,19 @@ internal sealed class PoolAccounting : EventListener
             return;
         }
 
-        lock (_recentDrops)
+        if (array is { } id)
         {
-            if (!_recentDrops.Add((pool, array)))
+            lock (_recentDrops)
             {
-                return;
-            }
+                if (!_recentDrops.Add((pool, id)))
+                {
+                    return;
+                }
 
-            _recentDrops.Remove(_recent[_recentNext]);
-            _recent[_recentNext] = (pool, array);
-            _recentNext = (_recentNext + 1) % RecentCount;
+                _recentDrops.Remove(_recent[_recentNext]);
+                _recent[_recentNext] = (pool, id);
+                _recentNext = (_recentNext + 1) % RecentCount;
+            }
         }
 
         Interlocked.Add(ref _dropped, bytes);
@@ -181,6 +225,19 @@ internal sealed class PoolAccounting : EventListener
                 // Not an array element type (a type the runtime rejects as a generic argument).
             }
         }
+    }
+
+    // The methods that called into the pool, innermost first, without file and line.
+    internal static string Callers(int count)
+    {
+        IEnumerable<string> names = new System.Diagnostics.StackTrace(false).GetFrames()
+            .Select(frame => frame.GetMethod())
+            .Where(method => method is not null)
+            .Select(method => $"{method!.DeclaringType?.FullName}.{method.Name}");
+        string[] all = [.. names];
+        int caller = Array.FindLastIndex(all, name => name.Contains("ArrayPool", StringComparison.Ordinal) || name.Contains("System.Diagnostics.Tracing.", StringComparison.Ordinal)
+            || name.StartsWith("Encspect.Tests.PoolAccounting", StringComparison.Ordinal) || name.StartsWith("Encspect.Tests.SharedPoolGuard", StringComparison.Ordinal)) + 1;
+        return string.Join(" < ", all.Skip(caller).Take(count));
     }
 
     // The Encspect assemblies this one references, directly or through another: a stale DLL left in the output is not among them.
