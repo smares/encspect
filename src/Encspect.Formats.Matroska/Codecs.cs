@@ -18,6 +18,7 @@ internal static class Codecs
         "A_VORBIS" => "vorbis",
         "A_OPUS" or "A_OPUS/EXPERIMENTAL" => "opus",
         "A_ALAC" => "alac",
+        "A_TTA1" => "tta",
         _ => null,
     };
 
@@ -31,6 +32,7 @@ internal static class Codecs
         "vorbis" => KnownWriters.Vorbis,
         "opus" => KnownWriters.Opus,
         "alac" => KnownWriters.Alac,
+        "tta" => KnownWriters.Tta,
         _ => null,
     };
 

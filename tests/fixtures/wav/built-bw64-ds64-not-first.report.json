@@ -456,7 +456,7 @@
       {
         "severity": "Warning",
         "code": "wav.riff-size-placeholder",
-        "message": "The BW64 chunk's size is 0xFFFFFFFF and the ds64 chunk does not give a size, which is no size a BW64 chunk can have; a writer leaves it when it cannot go back and fill it in. The file is read to its end, 492 bytes after the size field.",
+        "message": "The BW64 chunk's size is 0xFFFFFFFF, which stands for the size in the ds64 chunk, but the ds64 chunk does not come first after the header, where the size is read; it states 492, which is the number of bytes the file holds after the size field. The file is read to its end, 492 bytes after the size field.",
         "offset": 4,
         "length": 4,
         "path": [

@@ -140,6 +140,8 @@ public class AudioPanelTests
         Assert.Equal("Measuring stopped where the format of the decoded blocks changed; the figures cover what came before.", Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.FormatChanged, Samples = 1 }, DecodeStatus.Decoded)));
         Assert.Equal("The measuring failed, so the audio has no figures.", Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Failed }, DecodeStatus.Decoded)));
         Assert.Equal("The audio was decoded, but not measured.", Caption(Stream(null, DecodeStatus.Decoded)));
+        Assert.Equal("Decoding failed, so the audio has no figures.", Caption(Stream(null, DecodeStatus.Failed)));
+        Assert.Equal("Decoding stopped before any audio was measured.", Caption(Stream(null, DecodeStatus.Stopped)));
         Assert.Null(Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete }, DecodeStatus.Decoded)));
         Assert.Null(AudioPanels.CaptionFor(Stream(null, null) with { Kind = StreamKind.Video }));
         Assert.Equal("The audio of this stream is not decoded here.", AudioPanels.NotDecodedHere(string.Empty));
