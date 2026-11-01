@@ -29,6 +29,12 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 - **Writer:** any other ENCODER field, which section 5.2.2 of the Vorbis I specification does not list, and a vendor string that is ffmpeg's muxer version ("Lavf60.16.100"): ffmpeg rewrites the vendor string, so its Ogg Vorbis files name the writer "FFmpeg (Lavf60.16.100)". Two claims that name different software are `vorbis.writer-claim-differs`, and software known to write another format is `vorbis.writer-other-format`.
 - **In a container:** a stream whose headers a container holds apart (a Matroska track's CodecPrivate) weighs the container's claims about the file first (the Segment's WritingApp and MuxingApp, after the file's tags) and then its own comment's. The container's writer is the stream's, and a comment that names other software is `vorbis.writer-claim-differs` against it (a copied Ogg file's vendor "Lavf60.16.100" in a file mkvmerge wrote).
 
+## Reference for sample counts
+
+- The reference for Vorbis sample counts is Xiph's decoder (libvorbis fed packet by packet; `oggdec`), run by `.github/workflows/official-decode.yml` and held to the analyzer by `OggOfficialDecodersTests`. How it is driven, what the reference rule is and the differences found are described under "Reference for sample counts" in [ogg.md](ogg.md).
+- Start and end trimming are compared with `oggdec`'s output, the packets' samples (the overlap of the blocks) with libvorbis's, and libvorbis's own granule handling is a third witness.
+- The analyzer's counts have not been changed to the reference yet.
+
 ## Not yet covered
 
 - The floor and residue data of the audio packets (planned: entropy pass). The setup header's floor and residue configurations are read.

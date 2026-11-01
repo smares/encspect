@@ -264,6 +264,7 @@ The lessons of the WMA check's reviews (W-1 to W-22, R2-1 to R2-9), as rules for
   - `keep`: the project lead decided the analyzer keeps its figure, with the reason.
 - **A pending difference goes to the project lead** as one item: the files, the figures of every column, the stage, the decoder versions and run IDs, whether the official decoders agree among themselves, what would change in the analyzer (count, finding, golden) and the rule the change would follow. Items are collected per format in the pull request that commits the format's `official-decoders.json`, so the lead decides them together.
 - Until the lead decides, the analyzer keeps its current figures, and the docs say so. For Ogg and TTA these already follow RFC 7845, the Vorbis I granule rules and the TTA format description and are held to `opusdec` and `oggdec` on the valid fixtures; only for the formats where FFmpeg was the reference is it FFmpeg's behavior that stays.
+- **Decision of the project lead, 2026-11-01: concealment.** Encspect's future decoders leave a frame they cannot decode as a gap, never as concealed audio (`decode.frame-invalid`, lost samples in the measurements). Where an official decoder conceals a frame (FDK AAC with noise substitution, or libvorbis or libopus if they conceal), its count covers positions Encspect's decoder will leave empty, and such a difference is recorded as `explained`, not `pending`. PLAN.md records the same rule (#208).
 
 ## Fixtures
 
@@ -500,6 +501,34 @@ The findings do not contradict an approved decision. Twelve questions follow, ea
 8. **Decisions:** each format's pending differences go to the project lead with the pull request that commits its `official-decoders.json`; the analyzer changes that follow are their own pull requests, each with its goldens.
 
 Each step ends with an independent review of the harness and the comparison against this design, as the WMA check had. The effort figures are estimates (see the end of this document).
+
+## As built: step 2
+
+Rollout step 2 ran as workflow run 41325618652 (commit e39069a, `ci/official-decode-ogg`, after two independent reviews; earlier runs: 41318833038, 41319156014, 41323494051). Figures, versions and the differences with their columns are in [development.md](../development.md) and in `tests/fixtures/ogg/official-decoders.json`.
+
+- **Files:** `scripts/fixtures/official_decode.py` (the Linux record driver, shared by later steps), `compare_official_decoders.py`, `derive_variants.py`, the grown `ogg_decode.c`, `tests/Encspect.Tests/OggOfficialDecodersTests.cs`, the `linux` and `compare` jobs of the workflow (the probe jobs now run only with the input `probe`), and `tool_versions.py` asserting `oggdec` and the five libraries (libogg, libopus, libopusfile, libvorbis, libvorbisfile).
+- **Decisions made while building, for the review:**
+  - The harness modes are `direct` (libvorbis with `granulepos` -1) and `granule` (the third run, Vorbis files only); libopus is the same in both.
+  - Streams are told apart by serial number; the codec of a stream is its first packet's. Packet file ranges come from the pages' lacing values and are checked against libogg's packet size.
+  - An empty Opus packet is not passed to libopus (it would conceal as many samples as the frame size the harness picked).
+  - `oggdec` writes WAVE, so that the channel count is the tool's own; `opusdec` writes raw PCM and states its channel count on standard error. Declared WAVE sizes are never used.
+  - Question 6 of the new questions needed a definition of "consistent with the last granule position": the reader's count must lie in `[min(G, C) less the pre-skip for Opus, C]`, with G the sum over the streams of the granule position of each stream's last page (none known: no reference) and C the coded total of the codec's streams. The reader gives one total, so errors that cancel across links stay hidden. The rule rejects the two intended cases (`vorbis-packet-errors.ogg`, `vorbis-vendor-variants.ogg`) and two where the reader agrees with libvorbis's granule run, ffmpeg and the analyzer (`vorbis-granule-errors.ogg`, `vorbis-start-offset.ogg`), and 9 removed-packet variants. A further acceptance, a reader that equals the libvorbis run with the granule positions, was declined by the lead on 2026-11-01 (see "Decisions on step 2"): the two are not independent (libvorbisfile uses libvorbis's own granule handling), so agreement shows a complete read, not correct trimming. A truncated last page counts as a page the direct path did not feed, and a coded figure has no reference when libogg dropped a page.
+  - A stream whose headers the decoder refuses gets a coded figure with no reference and the verdict, `pending` where the analyzer counts samples in it (decided as `keep` for the committed files, below).
+  - A page after an end-of-stream page of a known serial number is given to libogg (which accepts it) and counted as `pagesAfterEndOfStream`; it counts as fed. A stream is released only when its slot is needed for a new one.
+  - Mapping family 255 is decoded with the header's table (RFC 7845 section 5.1.1.4).
+  - ffmpeg is set against files with one logical stream only (it decodes the first audio stream); `-flags2 +skip_manual` is the Opus coded count and is not used for Vorbis.
+  - Eight variant rules (cut in three places, a changed byte, a page removed or repeated, a packet removed or repeated); the middle page is taken from the audio pages between the first and the last; 178 variants of 24 files; two files with a single audio page get none, and files of two audio pages have no mid-stream page.
+  - Units: every packet the decoder refuses and every packet with a unit finding is listed, with the finding at the same bytes by the packet's ranges; a finding that merges several packets points to the first, so later refused packets are `noted`.
+  - The test checks stream `samples` and "Decoded Samples" per stream index, the listed differences, and the unit findings (any appearing, going or moving fails); `stale` entries are listed in the output and the job summary.
+  - The `compare` job keeps the reviewed statuses of the committed JSON when it writes its draft.
+- **Decisions on step 2** (the project lead, 2026-11-01; the analyzer, parsers and goldens do not change; each changed entry in `official-decoders.json` has the status, `statusSource` `reviewed` and a note with the reason, the date and the source):
+  - `vorbis-packet-errors.ogg` and `vorbis-vendor-variants.ogg` (`oggdec` writes fewer samples; libvorbis and the analyzer agree): `keep`. The analyzer agrees with libvorbis fed packet by packet, with and without the real granule positions; `oggdec`'s shortfall is a reader behavior.
+  - `opus-packets-corrupt.opus`, coded stage (libopus refuses 11 packets with -4 that the analyzer counts by their TOC bytes): `explained`. "Decoded Samples" counts the positions the packets declare; the refused packets carry findings; under the gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples.
+  - Streams whose headers the decoder refuses while the analyzer counts samples (`vorbis-header-layout.ogg`, five links of `vorbis-setup-invalid.ogg`, eight streams of `opus-head-invalid.opus`): `keep`. The analyzer describes what the packets code, next to its findings on the invalid headers.
+  - The extra acceptance (the reader equals the libvorbis granule run): declined, and `proposedReference` removed from the script and the JSON; both runs share libvorbis's granule handling.
+  - Variant groups (in `comparison.txt` and the docs only): a repeated page, which `opusdec` and `oggdec` skip while the analyzer and libogg count it (14 of 24 files): `noted`, the analyzer equals libogg's own packet stream. A repeated packet, where the analyzer is 38 to 128 samples below `oggdec` and ffmpeg agrees with `oggdec` (10 of 24 files): to be looked into in a follow-up, no conclusion.
+  - The carry-over keeps a reviewed status and note while value, analyzer, finding, verdict and reason are unchanged; the test does not fail on `keep` or `explained`.
+- **Not done:** the other formats; the macOS and Windows columns; the follow-up on the repeated-packet variants.
 
 ## Decisions
 

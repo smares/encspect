@@ -1,14 +1,26 @@
 name: Cross-checks by the formats' official decoders
 
-# The probe of docs/design/official-decoder-crosschecks.md (rollout step 1): an inventory of the audio decoders of each runner image
-# and a few files per open question, decoded by FDK AAC, libopus and libvorbis (through a harness that feeds them packet by packet and
-# through opusdec and oggdec), tta, Core Audio and Media Foundation. Each job uploads JSON records, never media. Run by hand
-# (Actions, "Cross-checks by the formats' official decoders", Run workflow) or by pushing the branch ci/official-decode.
-# Not part of ci.yml and not a check: a difference between decoders is a finding, not a failure.
+# The cross-checks of docs/design/official-decoder-crosschecks.md. Each decoder job decodes the fixtures (and, on Linux, the derived damage variants of
+# derive_variants.py) with the format owner's decoder through a child process of its own per file and path, and uploads JSON records, never media.
+# The comparison job (Linux, ffmpeg 8.0.1) sets the records against the analyzer's figures and ffmpeg and uploads comparison.txt, comparison.json and
+# the draft of tests/fixtures/<format>/official-decoders.json. Run by hand (Actions, "Cross-checks by the formats' official decoders", Run workflow)
+# or by pushing a branch named ci/official-decode or ci/official-decode-*. Not part of ci.yml and not a check: a difference between decoders is
+# a finding, not a failure.
+#
+#   linux     libopus and libvorbis through ogg_decode.c and through oggdec and opusdec, over every Opus and Vorbis fixture and its variants (rollout step 2)
+#   compare   the comparison of the records of every decoder job
+#   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
   workflow_dispatch:
+    inputs:
+      probe:
+        description: Also run the probe jobs of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation)
+        type: boolean
+        default: false
   push:
-    branches: [ci/official-decode]
+    branches:
+      - ci/official-decode
+      - ci/official-decode-*
 
 permissions:
   contents: read
@@ -19,7 +31,111 @@ env:
 
 jobs:
   linux:
-    name: FDK AAC, libopus, libvorbis and tta on ubuntu-26.04
+    name: libopus and libvorbis on ubuntu-26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install the decoders' packages and the compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y opus-tools vorbis-tools libogg-dev libopus-dev libvorbis-dev build-essential
+
+      # A different version is a warning, not a failure: the records name what ran, and a moved image is one of the reasons to run this again.
+      - name: Check the tool versions
+        run: |
+          mkdir -p out
+          python3 -I -c "
+          import sys
+          sys.path.insert(0, 'scripts/fixtures')
+          import tool_versions
+          found = tool_versions.problems('oggdec', 'opus-tools', 'libogg', 'libopus', 'libvorbis', 'libopusfile', 'libvorbisfile')
+          open('out/version-warnings.txt', 'w').write('\n'.join(found) + ('\n' if found else ''))
+          for line in found:
+              print('::warning::' + line)
+          print('versions checked, %d differ' % len(found))"
+          dpkg-query -W -f='${Package} ${Version}\n' libogg0 libopus0 libopusfile0 libvorbis0a libvorbisfile3 libogg-dev libopus-dev libvorbis-dev opus-tools vorbis-tools
+
+      - name: Build the Ogg harness
+        run: |
+          mkdir -p build/bin
+          gcc --version | head -1
+          gcc -O2 -Wall scripts/fixtures/ogg_decode.c -o build/bin/ogg_decode -lvorbis -lopus -logg
+
+      - name: Decode the Opus and Vorbis files and their variants
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 40
+        run: python3 -I scripts/fixtures/official_decode.py ogg --out out --bin build/bin
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-linux
+          path: out
+          retention-days: 30
+          if-no-files-found: error
+
+  compare:
+    name: Comparison with the analyzer and ffmpeg on ubuntu-26.04
+    runs-on: ubuntu-26.04
+    needs: [linux]
+    if: always()
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: official-decode-*
+          path: artifacts
+
+      # The analyzer's figures of the derived variants come from the command line program; the committed fixtures use their golden reports.
+      - name: Build the command line program
+        run: dotnet publish src/Encspect.Cli -c Release -o cli-out
+
+      - name: Compare
+        run: |
+          python3 -I -c "
+          import sys
+          sys.path.insert(0, 'scripts/fixtures')
+          import tool_versions
+          found = tool_versions.problems('ffmpeg', 'ffprobe')
+          for line in found:
+              print('::warning::' + line)"
+          find artifacts -maxdepth 2 | sort | head -30
+          python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
+            --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json artifacts
+          { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 500000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-comparison
+          path: comparison
+          retention-days: 30
+          if-no-files-found: error
+
+  probe-linux:
+    name: Probe, FDK AAC, libopus, libvorbis and tta on ubuntu-26.04
+    if: ${{ inputs.probe }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
@@ -118,13 +234,14 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: official-decode-linux
+          name: official-decode-probe-linux
           path: out
           retention-days: 30
           if-no-files-found: error
 
-  macos:
-    name: Core Audio on ${{ matrix.runner }}
+  probe-macos:
+    name: Probe, Core Audio on ${{ matrix.runner }}
+    if: ${{ inputs.probe }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -152,13 +269,14 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: official-decode-macos-${{ matrix.runner }}
+          name: official-decode-probe-macos-${{ matrix.runner }}
           path: out
           retention-days: 30
           if-no-files-found: error
 
-  windows:
-    name: Media Foundation on ${{ matrix.runner }}
+  probe-windows:
+    name: Probe, Media Foundation on ${{ matrix.runner }}
+    if: ${{ inputs.probe }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -218,7 +336,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: official-decode-windows-${{ matrix.runner }}
+          name: official-decode-probe-windows-${{ matrix.runner }}
           path: |
             inventory-out
             decode-out

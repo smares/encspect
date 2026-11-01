@@ -26,6 +26,7 @@ PROGRAMS = {
     "php": (["php", "-r", "echo PHP_VERSION;"], r"^(\d+\.\d+)", "8.5"),
     "oggz": (["oggz", "--version"], r"^oggz version (\S+)", "1.1.3"),
     "ogginfo": (["ogginfo", "-V"], r"^ogginfo from vorbis-tools (\S+)", "1.4.3"),
+    "oggdec": (["oggdec", "--version"], r"^oggdec from vorbis-tools (\S+)", "1.4.3"),
     "flac": (["flac", "--version"], r"^flac (\S+)", "1.5.0"),
     "metaflac": (["metaflac", "--version"], r"^metaflac (\S+)", "1.5.0"),
     # Built by ebur128_tool.py from the pinned tag of libebur128, with scripts/fixtures/ebur128_driver.c; found on PATH.
@@ -40,6 +41,13 @@ PACKAGES = {
     "madplay": ("madplay", "0.15.2b"),
     "speex": ("speex", "1.2.1"),
     "opus-tools": ("opus-tools", "0.2"),
+    # The libraries opusdec, oggdec and the harness of the official-decoder cross-checks (ogg_decode.c) are built against; the probe's run (41312630570) recorded these versions.
+    "libogg": ("libogg0", "1.3.6"),
+    "libopus": ("libopus0", "1.6.1"),
+    "libvorbis": ("libvorbis0a", "1.3.7"),
+    # The libraries opusdec and oggdec read files with.
+    "libopusfile": ("libopusfile0", "0.12"),
+    "libvorbisfile": ("libvorbisfile3", "1.3.7"),
 }
 
 
