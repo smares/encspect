@@ -28,7 +28,6 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
     public void Dispose()
     {
-        _pools.Dispose();
         _pools.Check();
     }
 
@@ -2364,27 +2363,29 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     }
 
     // One blocking full collection and the heap that survived it, as it stood when the collection ended, with what the shared array pools
-    // had released before it added back (PoolReleases): an array a pool releases after the collection, in the finalizer it triggers, is
-    // still in this reading and is counted back into the next. The finalizers of an earlier collection are waited for first, so a release
-    // is never half counted. A release from a pool whose element type is not known fails the reading.
+    // had dropped before it added back (PoolAccounting): an array a pool drops after the collection, in the finalizer it triggers, is still
+    // in this reading and is counted into the next. The finalizers of an earlier collection are waited for first, and one collection runs
+    // at a time (the sampler threads read while the test thread does), so a drop is never counted without being gone from the heap read.
+    // What the accounting cannot add back is checked per test by SharedPoolGuard, on the test thread: an assertion here would end the test
+    // host when a sampler thread reads.
     private static long Collected(bool compacting)
     {
-        GC.WaitForPendingFinalizers();
-        long released = PoolReleases.Released;
-        if (compacting)
+        lock (CollectionLock)
         {
-            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        }
+            GC.WaitForPendingFinalizers();
+            long dropped = PoolAccounting.Dropped;
+            if (compacting)
+            {
+                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            }
 
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: compacting);
-        GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
-        if (PoolReleases.Unknown is { } unknown)
-        {
-            Assert.Fail($"A reading of the heap cannot count the shared array pools' releases back in: {unknown}.");
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: compacting);
+            GCMemoryInfo info = GC.GetGCMemoryInfo(GCKind.FullBlocking);
+            return info.HeapSizeBytes - info.FragmentedBytes + dropped;
         }
-
-        return info.HeapSizeBytes - info.FragmentedBytes + released;
     }
+
+    private static readonly object CollectionLock = new();
 
     // A decoder that charges the floor and nothing else, keeping nothing per analysis.
     private sealed class Charging : IDecoder, IFrameDecoder
@@ -2444,6 +2445,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     // readings in a row agree to within 64 KB.
     internal static long Live()
     {
+        SharedPoolGuard.ReadOn(Environment.CurrentManagedThreadId);
         long previous = long.MaxValue;
         long current = 0;
         for (int i = 0; i < 8 && Math.Abs(previous - current) > 64 * 1024; i++)

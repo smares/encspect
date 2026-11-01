@@ -14,7 +14,6 @@ public sealed class CategorySeriesMemoryTests : IDisposable
 
     public void Dispose()
     {
-        _pools.Dispose();
         _pools.Check();
     }
 
