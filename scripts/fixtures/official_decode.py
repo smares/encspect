@@ -370,11 +370,15 @@ def tta_wav(path):
             info["formatTag"], info["channels"], info["rate"], _, info["blockAlign"], info["bits"] = struct.unpack_from("<HHIIHH", data, pos + 8)
         elif kind == b"data":
             written = len(data) - pos - 8
-            info.update({"headerBytes": pos + 8, "declaredDataBytes": size, "writtenBytes": written, "trailingBytes": max(0, written - size) if size else 0})
-            info["dataBytes"] = min(written, size) if written > size else written
+            extra = max(0, written - size)
+            # Bytes past the declared size are a chunk (an id of four ASCII letters, digits or spaces and a size that fits) or an overrun, which is a stop.
+            end = pos + 8 + size
+            chunk = extra >= 8 and all(c == 32 or 48 <= c <= 57 or 65 <= c <= 90 or 97 <= c <= 122 for c in data[end:end + 4]) and struct.unpack_from("<I", data, end + 4)[0] <= extra - 8
+            info.update({"headerBytes": pos + 8, "declaredDataBytes": size, "writtenBytes": written, "trailingBytes": extra, "overrun": extra > 0 and not chunk})
+            info["dataBytes"] = size if chunk else written
             return info
         pos += 8 + size + (size & 1)
-    info.update({"headerBytes": None, "declaredDataBytes": None, "writtenBytes": 0, "dataBytes": 0, "trailingBytes": 0})
+    info.update({"headerBytes": None, "declaredDataBytes": None, "writtenBytes": 0, "dataBytes": 0, "trailingBytes": 0, "overrun": False})
     return info
 
 
@@ -399,6 +403,7 @@ def tta_result(program, path, tmp, password):
     short = has_header and info["declaredDataBytes"] is not None and info["dataBytes"] < info["declaredDataBytes"]
     stopped = "end"
     reason = None
+    overrun = has_header and info["overrun"]
     if child["timedOut"]:
         stopped = "timeout"
     elif child["signal"]:
@@ -408,6 +413,9 @@ def tta_result(program, path, tmp, password):
     elif short:
         stopped = "error"
         reason = "wrote %d of the %d data bytes its WAVE header declares" % (info["dataBytes"], info["declaredDataBytes"])
+    elif overrun:
+        stopped = "error"
+        reason = "wrote %d data bytes, more than the %d its WAVE header declares" % (info["writtenBytes"], info["declaredDataBytes"])
     elif not frame and not no_channels:
         stopped = "error"
         reason = "the WAVE header's block align %s does not fit %s channels of %s bits" % (info.get("blockAlign"), info.get("channels"), info.get("bits"))
@@ -441,7 +449,7 @@ def tta_result(program, path, tmp, password):
         if run.get("remainder"):
             notes.append("%d bytes after the last whole sample" % run["remainder"])
         if info["trailingBytes"]:
-            notes.append("%d bytes follow the data chunk's declared size and are not counted" % info["trailingBytes"])
+            notes.append("%d bytes of another chunk follow the data chunk's declared size and are not counted" % info["trailingBytes"])
     elif child["signal"]:
         notes.append("killed by %s; no reference" % child["signal"])
     elif child["exit"] not in (0, None):

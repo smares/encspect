@@ -93,6 +93,13 @@ public sealed class TtaOfficialDecodersTests(ITestOutputHelper output)
         Report report = Fixtures.AnalyzeMpeg($"tta/{name}");
         long? actual = report.Streams.FirstOrDefault(s => s.Codec == "TTA")?.Samples;
         JsonElement figure = entry.GetProperty("figures").EnumerateArray().Single(f => f.GetProperty("id").GetString() == "samples");
+        if (figure.TryGetProperty("ttaNoCount", out _))
+        {
+            Assert.True(
+                entry.GetProperty("differences").EnumerateArray().Any(d => d.GetProperty("kind").GetString() == "decoder-gives-no-count"),
+                $"{name}: tta -d gives no count and no decoder-gives-no-count difference lists it");
+        }
+
         if (figure.GetProperty("reference").ValueKind != JsonValueKind.Null)
         {
             long reference = figure.GetProperty("reference").GetInt64();

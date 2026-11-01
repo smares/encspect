@@ -336,7 +336,8 @@ def figure_differences(figures):
                                     "kind": "witness-differs"})
         if figure.get("ttaNoCount"):
             differences.append({"figure": figure["id"], "decoder": "tta -d", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-gives-no-count",
-                                "reason": "tta -d accepts the header (exit 0) and writes no data; with %s" % figure["ttaNoCount"]})
+                                "reason": "tta -d accepts the header (exit 0) and writes %s; %s" % (
+                                    "no data" if not figure.get("ttaDataBytes") else "%d data bytes" % figure["ttaDataBytes"], figure["ttaNoCount"])})
         if figure.get("refused"):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
@@ -438,7 +439,7 @@ def tta_stop_reason(reader):
         if reader.get("stopReason"):
             parts.append(reader["stopReason"])
     elif reader.get("noSampleCount"):
-        parts.append("exit 0, " + reader["noSampleCount"])
+        parts.append("exit status 0, " + reader["noSampleCount"])
     messages = [w for w in reader.get("warnings", []) if w.startswith("tta:")]
     if messages:
         parts.append('"%s"' % messages[0][len("tta: "):])
@@ -470,6 +471,7 @@ def compare_tta(record, analyzer, ffmpeg):
         figure["ttaStopped"] = {"stoppedBy": reader["stoppedBy"], "exit": reader["exit"], "signal": reader["signal"], "reason": tta_stop_reason(reader)}
         if reader.get("noSampleCount"):
             figure["ttaNoCount"] = reader["noSampleCount"]
+            figure["ttaDataBytes"] = reader["runs"][0]["outputBytes"]
         if reader.get("partialSamples") is not None:
             figure["ttaPartialSamples"] = reader["partialSamples"]
         if ff and ff.get("samples") is not None:
@@ -528,7 +530,7 @@ def render_tta(results, not_run, unmatched, environment, ffmpeg_version, warning
     for r in results:
         for f in r["figures"]:
             if "ttaStopped" in f:
-                stops.setdefault(f["ttaStopped"]["reason"], []).append(r["file"])
+                stops.setdefault(re.sub(r"wrote \d+ (data )?bytes?, more than the \d+", "wrote more data bytes than the header declares, N", re.sub(r"wrote \d+ of the \d+ data bytes", "wrote fewer data bytes than", f["ttaStopped"]["reason"])), []).append(r["file"])
     out += ["", "Where tta -d gave no reference (its own message), files per reason"]
     out += ["  %3d  %s" % (len(v), k) for k, v in sorted(stops.items(), key=lambda kv: (-len(kv[1]), kv[0]))] or ["  none"]
     out += ["", "Derived variants by rule (analyzer equals the reference / differs / no reference; of those with a reference, how many are ffmpeg's fallback)"]
