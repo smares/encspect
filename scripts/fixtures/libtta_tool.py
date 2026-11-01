@@ -9,6 +9,7 @@ TTA1 files (LGPL, not redistributed), pinned by SHA-256.
   files of one to six channels tried; a 32-bit and an 8-bit file are refused ("not compatible file format").
 """
 
+import os
 import pathlib
 import subprocess
 import tarfile
@@ -39,8 +40,10 @@ def build(directory=None):
     with tarfile.open(archive) as tar:
         tar.extractall(directory, filter="data")
     source = directory / "libtta-c-2.3"
-    subprocess.run(["./configure"], cwd=source, check=True, capture_output=True)
-    subprocess.run(["make"], cwd=source, check=True, capture_output=True)
+    # libtta-c 2.3 predates C23, the default of gcc 15 (ubuntu-26.04); its compiler output is never printed.
+    environment = {**os.environ, "CC": "gcc -std=gnu17"}
+    subprocess.run(["./configure"], cwd=source, check=True, capture_output=True, env=environment)
+    subprocess.run(["make"], cwd=source, check=True, capture_output=True, env=environment)
     program = source / "console" / "tta"
     usage = subprocess.run([str(program), "-h"], capture_output=True, text=True)
     if VERSION_LINE not in usage.stdout + usage.stderr:
