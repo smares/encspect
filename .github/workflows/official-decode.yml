@@ -67,7 +67,7 @@ jobs:
           gcc --version | head -1
           CC='gcc -std=gnu17' ./configure > /dev/null
           make 2>&1 | tail -30
-          ./console/tta -h 2>&1 | head -3
+          ./console/tta -h 2>&1 | head -3 || true
           echo "$PWD/console/tta" > ../../tta-path.txt
           echo "libtta-c 2.3 $(sha256sum ../libtta-c-2.3.tar.gz | cut -d' ' -f1)" >> ../../../out/build-info.txt
 
