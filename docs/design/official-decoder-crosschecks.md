@@ -1,6 +1,6 @@
 # Cross-checks against the formats' official decoders
 
-Status: draft (2026-11-01), revised after an independent review; not decided, and nothing in it is built. It designs step 1 of "Phase 3, continued" in the [plan](../PLAN.md). Claims about the repository (goldens, fixtures, scripts, workflows, parsers) were checked at c63ada6. Facts about outside software come from the sources listed at the end; what no source confirms is marked **unverified** and listed under [Unverified claims and estimates](#unverified-claims-and-estimates), and what only the first run can settle is marked **probe** and listed under [Open questions and the probe](#open-questions-and-the-probe). The questions for the project lead are collected under [Questions for the project lead](#questions-for-the-project-lead).
+Status: approved by the project lead on 2026-11-01, after three independent reviews, with every recommendation of [Questions for the project lead](#questions-for-the-project-lead) as listed; nothing in it is built. It designs step 1 of "Phase 3, continued" in the [plan](../PLAN.md). Claims about the repository (goldens, fixtures, scripts, workflows, parsers) were checked at c63ada6. Facts about outside software come from the sources listed at the end; what no source confirms is marked **unverified** and listed under [Unverified claims and estimates](#unverified-claims-and-estimates), and what only the first run can settle is marked **probe** and listed under [Open questions and the probe](#open-questions-and-the-probe).
 
 - For the formats where FFmpeg is the only reference so far, the decoder of the format's owner, or its reference implementation, becomes the reference for sample counts, durations and the handling of damage. FFmpeg stays a second cross-check, and each known difference from it is listed per file.
 - Every decoder is used as a black box, as the WMA check against Microsoft's decoder does (`.github/workflows/windows-wma-decode.yml`, "WMA decoding by Microsoft's decoder" in [development.md](../development.md)). That check is the model; the lessons of its two reviews are rules here (see [Harness rules](#harness-rules)).
@@ -207,7 +207,7 @@ Each decoder path declares what it outputs, and the probe confirms it on one fil
 - **libvorbis fed directly** trims only if it is given granule positions.
   - `vorbis_synthesis()` copies the packet's `granulepos` and `e_o_s` into the block (`synthesis.c`), and `vorbis_synthesis_blockin()` (`block.c`) cuts the start when the first granule position is smaller than the samples counted, and the end when the packet carries `e_o_s`. Packets from `ogg_stream_packetout` carry the page's granule position on the last packet of each page and the end-of-stream flag, so feeding them unchanged gives the trimmed count, not "Decoded Samples" (67,136 coded and 66,150 trimmed for `external-oggenc-q5.ogg`).
   - The direct path therefore sets `granulepos` to -1 and `e_o_s` to 0 on every packet before `vorbis_synthesis`, so that libvorbis computes nothing from granule positions, and the record says so.
-  - A third run with the packets' real granule positions, recorded at the trimmed stage, would show libvorbis's own granule handling as a further witness; it is put to the project lead.
+  - A third run with the packets' real granule positions, recorded at the trimmed stage, shows libvorbis's own granule handling as a further witness (question 4 for the project lead, approved).
 - **FDK fed directly** outputs one frame per access unit; its `outputDelay` is recorded, not subtracted (see [Linux](#linux) for the concealment delay and the drain).
 - **Core Audio:** whether `ExtAudioFile` trims iTunSMPB, the edit list or both, and what `kAudioConverterPrimeInfo` reports for the `AudioConverter` (probe). The same question holds for AC-3 and E-AC-3 in MP4, which carry edit lists (see the AC-3 section above): if a reader applies them, every MP4 AC-3 file would otherwise show a difference of 864 samples that the harness made.
 - **Media Foundation:** whether the MPEG-4 File Source applies the edit list or iTunSMPB (probe); the MFT fed directly trims nothing as far as documented.
@@ -249,14 +249,14 @@ The lessons of the WMA check's reviews (W-1 to W-22, R2-1 to R2-9), as rules for
 - **Committed results:** after a run is reviewed, the reference figures and the differences go into `tests/fixtures/<format>/official-decoders.json`: per fixture (path and SHA-256), each decoder's figure and stage, the decoder's version, the runner image and the run ID, and each difference with its status (see below).
   - **The check** is a test in `Encspect.Tests`, next to the golden tests of the format (`OggFixtureTests`, `Mp4FixtureTests`, `Ac3FixtureTests`, `TtaFixtureTests`), so it runs whenever a golden changes, not only when a cross-check job does. The cross-check jobs run only on path changes, and AC-3's folder is not in the job list of the gate.
   - **What it compares** are the figures the reference speaks to: the stream's `samples`, "Decoded Samples" (Opus, Vorbis), "Samples (Edit List)" and "Samples (iTunSMPB)", and the unit findings; not the whole golden. A figure that equals the reference passes, one that differs passes only as a listed difference.
-  - **Stale entries:** an entry whose SHA-256 no longer matches the fixture is stale. Failing it would mean that every regenerated fixture in these folders needs a macOS and Windows run before its pull request can pass; a status `stale` that is listed and does not fail is the alternative (question 5 for the project lead).
+  - **Stale entries:** an entry whose SHA-256 no longer matches the fixture is stale. Failing it would mean that every regenerated fixture in these folders needs a macOS and Windows run before its pull request can pass, so such an entry gets the status `stale`, which the test lists and does not fail; the pull request description lists the stale entries (question 5 for the project lead, approved).
   - `tests/fixtures/apple` has no goldens, so nothing in `Encspect.Tests` reads its entries; those files stay in the run's artifact and in the docs.
   - This keeps the macOS and Windows results in CI without their runners (decision 7).
 - **In the docs:** each format page gets a section "Reference for sample counts", as [asf-wma.md](../formats/asf-wma.md) has, and [development.md](../development.md) a section per decoder with "Differences found". The docs cite `official-decoders.json` and the run ID, not an artifact, since artifacts expire (see [Workflows](#workflows)).
 
 ## Differences and decisions
 
-- Every difference is listed, never dropped. Each gets one of five statuses in `official-decoders.json` (plus `build-dependent` and, if the lead agrees, `stale`, above):
+- Every difference is listed, never dropped. Each gets one of five statuses in `official-decoders.json` (plus `build-dependent` and `stale`, above):
   - `explained`: the analyzer equals the reference and FFmpeg differs, or a decoder documents the behavior (Media Foundation skips frames with coupling channel elements); nothing changes;
   - `noted`: a difference that changes nothing in the analyzer, for example a decoder that conceals a unit the analyzer reports as damaged, or a unit verdict where the analyzer reports no figure;
   - `pending`: the analyzer differs from the reference in a way that would change counts, findings or goldens;
@@ -343,7 +343,7 @@ Each step ends with an independent review of the harness and the comparison agai
 
 ## Decisions
 
-Proposed, for the project lead:
+Approved by the project lead on 2026-11-01:
 
 1. **Two paths per decoder, and the reader's total only when complete.** Reason: a reader stops at damage (the Source Reader on 14 Voice files), a direct path does not, and a partial total looked like agreement until W-4. Alternative: the reader path alone, which leaves damaged files without a reference.
 2. **Compare like with like:** each decoder figure against the analyzer's figure at the same stage, with no trimming computed by the harness; libvorbis's granule handling is switched off in the direct path so that it stays at the coded stage. Reason: the harness would otherwise repeat the analyzer's trimming rules, and an error in them would hide on both sides. Alternative: trim the direct paths' output in the harness.
@@ -360,7 +360,7 @@ Proposed, for the project lead:
 
 ## Questions for the project lead
 
-These are not decided in this document.
+The project lead accepted every recommendation below on 2026-11-01.
 
 1. **Licenses of the test decoders.** The design declines Dolby's Store decoder because its terms were not examined, and has not examined FDK's either. Section 3 of the "Software License for The Fraunhofer FDK AAC Codec Library for Android" grants no patent license and says the software may be used "only for purposes that are authorized by appropriate patent licenses" (`aacdecoder_lib.h`, license text at its top). The precedent is `fdk_tool.py`: FDK is built in CI and used for this project's fixtures, never redistributed. Options:
    - (a) keep the precedent: use FDK, decline the Store decoder unexamined;
@@ -374,7 +374,7 @@ These are not decided in this document.
 3. **The plan's wording.** `PLAN.md`, "Phase 3, continued", says "Dolby's decoders in Windows' Media Foundation and in macOS's Core Audio". Microsoft's own page calls its decoder Microsoft's implementation of Dolby Digital technology, and whose code Apple runs is not documented. Proposed wording: "the AC-3 and E-AC-3 decoders in Windows' Media Foundation (where a runner image has one) and in macOS's Core Audio", with "Docs say only what exists". Options: change it with this design, or after the probe. Recommendation: after the probe, with its inventory. (This design does not edit the plan.)
 4. **libvorbis's own granule handling.** The direct path switches it off (decision 2). Options: leave it off, or add a third run with the packets' real granule positions as a further witness at the trimmed stage. Recommendation: add the run; it costs one more child per Vorbis file.
 5. **Stale entries.** A stale `official-decoders.json` entry fails the test (as proposed), so every regenerated fixture needs a macOS and Windows run before its pull request passes. Alternative: a status `stale` that is listed in the test's output and does not fail. Recommendation: the non-failing status, with a list in the pull request description.
-6. **The statuses `noted` and `build-dependent`** are added in this draft (`stale` only if question 5 is answered so). Options: keep them, or fold `noted` into `explained`. Recommendation: keep them.
+6. **The statuses `noted` and `build-dependent`** are added in this design (`stale` with question 5). Options: keep them, or fold `noted` into `explained`. Recommendation: keep them.
 7. **The reference implementation of AAC.** The plan says "the decoder of a format's owner, or its reference implementation". AAC's is the ISO/IEC 14496-5 software, deferred here ("license and build were not examined"), yet it would cover the object types FDK and Media Foundation refuse (Main, LTP, SSR). Options: examine its license and build now, as part of the probe; or leave it for a later step. Recommendation: examine its license now (a reading task, no build), and decide on the build with the probe's results on FDK's refusals.
 8. **Probe size.** Options: the full probe at 2 to 3 days, or the inventory and the reader paths only, with the direct-path cases moved to the steps. Recommendation: the full probe, because its answers decide the design of steps 2 to 6.
 
