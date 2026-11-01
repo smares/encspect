@@ -59,9 +59,10 @@ jobs:
           set -euo pipefail
           mkdir -p build/libtta
           (cd scripts/fixtures && python3 -c "
-          import libtta_tool, tarfile
-          libtta_tool.downloads.fetch(libtta_tool.ADDRESSES, libtta_tool.SHA256, '${{ github.workspace }}/build/libtta/' + libtta_tool.NAME)
-          tarfile.open('${{ github.workspace }}/build/libtta/' + libtta_tool.NAME).extractall('${{ github.workspace }}/build/libtta', filter='data')")
+          import libtta_tool, pathlib, tarfile
+          target = pathlib.Path('${{ github.workspace }}/build/libtta')
+          libtta_tool.downloads.fetch(libtta_tool.ADDRESSES, libtta_tool.SHA256, target / libtta_tool.NAME)
+          tarfile.open(target / libtta_tool.NAME).extractall(target, filter='data')")
           cd build/libtta/libtta-c-2.3
           gcc --version | head -1
           CC='gcc -std=gnu17' ./configure > /dev/null

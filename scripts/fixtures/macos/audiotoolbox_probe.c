@@ -233,6 +233,7 @@ typedef struct {
     int have;
     AudioStreamPacketDescription description;
     int delivered;
+    int adts; /* the converter takes access units, not ADTS frames: the header (7 bytes, 9 with a CRC) is left out */
 } Feed;
 
 #define NO_MORE_DATA ((OSStatus)0x6e6f6d6f) /* 'nomo': the input has no further unit for this call */
@@ -246,13 +247,20 @@ static OSStatus supply(AudioConverterRef converter, UInt32 *packets, AudioBuffer
     }
     feed->have = 0;
     feed->delivered++;
+    long skip = 0;
+    if (feed->adts) {
+        skip = (feed->data[feed->unit->offset + 1] & 1) ? 7 : 9;
+        if (skip > feed->unit->received) {
+            skip = feed->unit->received;
+        }
+    }
     data->mNumberBuffers = 1;
     data->mBuffers[0].mNumberChannels = 0;
-    data->mBuffers[0].mDataByteSize = (UInt32)feed->unit->received;
-    data->mBuffers[0].mData = (void *)(feed->data + feed->unit->offset);
+    data->mBuffers[0].mDataByteSize = (UInt32)(feed->unit->received - skip);
+    data->mBuffers[0].mData = (void *)(feed->data + feed->unit->offset + skip);
     feed->description.mStartOffset = 0;
     feed->description.mVariableFramesInPacket = 0;
-    feed->description.mDataByteSize = (UInt32)feed->unit->received;
+    feed->description.mDataByteSize = (UInt32)(feed->unit->received - skip);
     if (descriptions) {
         *descriptions = &feed->description;
     }
@@ -287,12 +295,26 @@ static int hexbytes(const char *text, unsigned char *out, int max) {
     return n;
 }
 
+/* An esds payload: ES_Descriptor { DecoderConfigDescriptor { DecoderSpecificInfo }, SLConfigDescriptor }. */
+static unsigned char *build_esds(const unsigned char *config, int config_length, UInt32 *size) {
+    unsigned char *cookie = calloc(1, (size_t)config_length + 26);
+    unsigned char *p = cookie;
+    *p++ = 3; *p++ = (unsigned char)(config_length + 23); *p++ = 0; *p++ = 0; *p++ = 0;
+    *p++ = 4; *p++ = (unsigned char)(config_length + 15); *p++ = 0x40; *p++ = 0x15; p += 3; p += 8;
+    *p++ = 5; *p++ = (unsigned char)config_length;
+    memcpy(p, config, config_length);
+    p += config_length;
+    *p++ = 6; *p++ = 1; *p++ = 2;
+    *size = (UInt32)(p - cookie);
+    return cookie;
+}
+
 static int convert(const char *path, const char *tsv_path, const char *prime) {
     long length;
     unsigned char *data = read_file(path, &length);
     Unit *units = NULL;
     long count = 0, capacity = 0;
-    char codec[16] = "", line[2048];
+    char codec[16] = "", kind[16] = "", line[2048];
     unsigned char config[512];
     int config_length = 0, adts_profile = -1, adts_sfi = 0, adts_channels = 0;
     FILE *tsv = fopen(tsv_path, "r");
@@ -308,6 +330,9 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
                 units = realloc(units, capacity * sizeof(Unit));
             }
             units[count++] = u;
+        } else if (line[0] == 'F') {
+            char sha[80];
+            sscanf(line, "F %79s %15s", sha, kind);
         } else if (line[0] == 'T') {
             sscanf(line, "T %15s", codec);
         } else if (line[0] == 'C') {
@@ -322,6 +347,12 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     /* The input description: what AudioFile reads from the file (stream description and magic cookie) is the first source, since
        the stream description must be filled out in full for some formats; the second is built from the unit list and the
        kAudioFormatProperty_FormatInfo of the cookie. The record says which one was used. */
+    if (!strcmp(kind, "adts") && adts_profile >= 0 && config_length == 0) {
+        int value = ((adts_profile + 1) << 11) | (adts_sfi << 7) | (adts_channels << 3);
+        config[0] = (unsigned char)(value >> 8);
+        config[1] = (unsigned char)value;
+        config_length = 2;
+    }
     AudioStreamBasicDescription input;
     memset(&input, 0, sizeof input);
     unsigned char *cookie = NULL;
@@ -360,17 +391,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             input.mFramesPerPacket = 1024;
         }
         if (config_length > 0 && id == kAudioFormatMPEG4AAC) {
-            /* An esds payload: ES_Descriptor { DecoderConfigDescriptor { DecoderSpecificInfo } , SLConfigDescriptor }. */
-            cookie_size = (UInt32)(config_length + 26);
-            cookie = calloc(1, cookie_size);
-            unsigned char *p = cookie;
-            *p++ = 3; *p++ = (unsigned char)(config_length + 23); *p++ = 0; *p++ = 0; *p++ = 0;
-            *p++ = 4; *p++ = (unsigned char)(config_length + 15); *p++ = 0x40; *p++ = 0x15; p += 3; p += 8;
-            *p++ = 5; *p++ = (unsigned char)config_length;
-            memcpy(p, config, config_length);
-            p += config_length;
-            *p++ = 6; *p++ = 1; *p++ = 2;
-            cookie_size = (UInt32)(p - cookie);
+            cookie = build_esds(config, config_length, &cookie_size);
         } else if (config_length > 0) {
             cookie = malloc(config_length);
             memcpy(cookie, config, config_length);
@@ -380,6 +401,10 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
         OSStatus s = AudioFormatGetProperty(kAudioFormatProperty_FormatInfo, cookie_size, cookie, &size, &input);
         printf(",\"formatInfo\":%d", (int)s);
         source = "unit-list";
+    }
+    if (!cookie && config_length > 0 && !strcmp(codec, "aac")) {
+        cookie = build_esds(config, config_length, &cookie_size);
+        source = strcmp(source, "audiofile") ? source : "audiofile+esds";
     }
     printf(",\"source\":\"%s\",\"cookieBytes\":%u,", source, (unsigned)cookie_size);
     print_asbd("input", &input);
@@ -427,7 +452,7 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     size_t out_bytes = (size_t)OUT_FRAMES * output.mBytesPerFrame;
     char *out_buffer = malloc(out_bytes);
     long long total = 0, calls = 0, failed = 0;
-    Feed feed = {data, NULL, 0, {0, 0, 0}, 0};
+    Feed feed = {data, NULL, 0, {0, 0, 0}, 0, !strcmp(kind, "adts")};
     for (long i = 0; i <= count + 3; i++) {
         int is_unit = i < count;
         if (is_unit) {
