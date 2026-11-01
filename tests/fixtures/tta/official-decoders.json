@@ -1,0 +1,2143 @@
+{
+ "schema": 1,
+ "format": "tta",
+ "run": {
+  "id": "41340327636",
+  "commit": "fec9cf3620a116b7f30ea60b6e87cc7245960bb0",
+  "imageOS": "ubuntu26",
+  "imageVersion": "20261026.180.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "tta": "TTA1 lossless audio encoder/decoder, version 2.3",
+  "ttaArchiveSha256": "68ba6db2d494dcd4aa6832a40952b88a3d50ca1174ab0ef1e091db16992303c7",
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "changedFiguresForReview": [],
+ "files": [
+  {
+   "path": "built-audio-format-0.tta",
+   "sha256": "4b243472679083b4008982196a09b777140d017d167477be7103af16fc05a1fd",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-audio-format-2.tta",
+   "sha256": "20b0c3cc2bd1c050deb7b91a09df398e61fc704cf551d77f1efcfd5a715a793d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"password protected file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"password protected file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-audio-format-3.tta",
+   "sha256": "9f0fdb0661bc04fc43542e7526f13b3b9edfc28ee2837e951a43dc8294cc9915",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-bits-12.tta",
+   "sha256": "26b795d54b708524818830d0b3201694d8d93f307494e438bf631c20be7c9678",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-channels-zero.tta",
+   "sha256": "2c636aac6c8f7526a3e2374de4aabb3ff9bf9f0baa8a9ed08b8f89fc44d4b239",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "end",
+      "exit": 0,
+      "signal": null,
+      "reason": "exit status 0, 0 channels: the bytes written give no sample count"
+     },
+     "ttaNoCount": "0 channels: the bytes written give no sample count",
+     "ttaDataBytes": 0,
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 0, 0 channels: the bytes written give no sample count); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "tta -d",
+     "value": null,
+     "analyzer": 100000,
+     "status": "noted",
+     "kind": "decoder-gives-no-count",
+     "reason": "tta -d accepts the header (exit 0) and writes no data; 0 channels: the bytes written give no sample count",
+     "statusSource": "rule"
+    }
+   ],
+   "units": []
+  },
+  {
+   "path": "built-crc-only-frames.tta",
+   "sha256": "95448d50e00ef5ed417f8450c0acef40dda624274e9543a4197b7a02001165a1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-after-frame.tta",
+   "sha256": "fe99753283e359c0fc455b78f91db3145625e7dd84c9300df1498facd7b1b0a9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 46080,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-after-table.tta",
+   "sha256": "c5abd1a2520193bda9aa046e46885135955368823f93c782ec8f3f7fd4b32c28",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": 0,
+     "referencePath": "ffmpeg",
+     "referenceKind": "ffmpeg (fallback)",
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "noOfficialReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg 8.0.1 is the reference as the design says"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-in-header.tta",
+   "sha256": "ec705ba23faa472a209a52b2dd712ae953ca7ff62cda662f46de8752f15d407b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"file is corrupted\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"file is corrupted\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-in-table-crc.tta",
+   "sha256": "eeef45c6b05e6222722bac072e05fc6489402f4197b3459a8179671cdf5e9f3d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-in-table.tta",
+   "sha256": "5d1f3d4b1ba70e1c0f02fd581cb085a5854b89d5e13543d2ac5e3c54f7b41cd2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-cut-mid-frame.tta",
+   "sha256": "f889814f0af9187e584c870fda3090d3831aaf9a3bf552f2d61444f9d58ccf97",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 46080,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-frame-crc-fails-every-frame.tta",
+   "sha256": "96195d8bad6b75fe2ce69bc50d9571e37fb556d48837f505caf71073518e83d5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-frame-crc-fails.tta",
+   "sha256": "a3340d4449bfe0623a443f76d0009489125ffdcbea8a382b55d9fd155a3b0c78",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-header-crc-fails.tta",
+   "sha256": "6dd8913061f54ed1c5d3ca7c240ac4cca2e42fb164ed4af0cf95b308830c3d84",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"file is corrupted\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"file is corrupted\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-header-samples-too-many.tta",
+   "sha256": "8ed39f8b1d66f994761c08260a06fd4253724f8649c73d41820b9a4ac92edc08",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-huge-sample-count.tta",
+   "sha256": "0ea45c18d89461a67acec614182ff865617b1d669f4c34136dd214d85cafa098",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-id3v1-lookalike-in-last-frame.tta",
+   "sha256": "fc1d61dc9ac12009b9218fab1ab3bf1260e13b15f6f502c54eff91ffee462950",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-last-frame-one-sample.tta",
+   "sha256": "214b982feb583146050b600850189432f86c23bfd7d4cea217d5d6f9ab5b2373",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66873,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-leading-id3v2-trailing-ape.tta",
+   "sha256": "ddcc01f0c8798eaf7381009e8ea45465ca264b55a5f2a32f20d00f4bf3fbebda",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-leading-id3v2.tta",
+   "sha256": "de59f80d1020d7871f70633947828963e79ec433103b0d2c7480e5969cc7a0e5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-many-small-frames.tta",
+   "sha256": "c7b62bdb408297b4619130897feee5eb93b20241530986c2a9d30841c6d4f7e7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12538500,
+     "reference": 12538500,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "format": {
+      "rate": 8000,
+      "channels": 1,
+      "bits": 16
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Error submitting packet to decoder: Invalid data found when processing input"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-minimal-mono-8.tta",
+   "sha256": "fa71b925980a495f722b8e40080643eb6bd5382203ad19f1c2852c2e2f8b5d3b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 8359,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-no-samples.tta",
+   "sha256": "5bf9848b720eb69b83cb94942fe1f0abea8c5c8d868f91e932a8b7cba2383cd4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": 0,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-sample-rate-zero.tta",
+   "sha256": "ba61558ce242b289aeaf708466210d31603edc49df12c91e13147d5fa4d3bf69",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "crash",
+      "exit": null,
+      "signal": "SIGFPE",
+      "reason": "killed by SIGFPE"
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (killed by SIGFPE); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-entry-too-large.tta",
+   "sha256": "a78f6c289c7d02ed70ef76b9728be58105787509cb38f038d30b2e1f32bd2ba8",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-entry-too-small.tta",
+   "sha256": "2885d90a530ebc9bf5ab8a0e4daaca8bc4539b98dd3c977b9a5983faba3e06ea",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 53920,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-table-crc-fails.tta",
+   "sha256": "eaf1214197980e6bf523923e667ff06c3ede3f03f8e769e2840639edc469ea04",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-table-past-end.tta",
+   "sha256": "ffd4f81161ad09e635fd5b0433727d5c9c14ef0fc7270ba4c40613d9e19a33fa",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 0,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-table-short-of-data.tta",
+   "sha256": "2234d8fa2a36cf818709edf17ab6f196cbc1b7fbfab18d2f15ae12b9eac30ceb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-tag-between-frames.tta",
+   "sha256": "b1a739db84b81df524ec85c2e385f53c2d944df83acb7745ab21c669ed901ee6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-seek-tag-inside-stream.tta",
+   "sha256": "ff5dd6cc08a41d297751534d3e5465b74ef2e2328848bb845927d5fe5ea19a64",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-signature-only.tta",
+   "sha256": "cda3f6ebda95aa7d6c1265aafe3375ea94e5b2571132c7c7fa89d358ab93dd49",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"file is corrupted\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"file is corrupted\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-six-channels-24.tta",
+   "sha256": "485fa42dc30b96ed6247ccd8c0a95f6d0da65269aed0bbc52ad6fa1507043a83",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-three-frames.tta",
+   "sha256": "28532666950928fb236fdb4bb4db3f351fe8a211c2369725e5e53a1317905b48",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-trailing-ape-and-id3v1.tta",
+   "sha256": "0370a30b2f64115218dc2f4d63ab9ebb72478ec77ce44b413311ccfd095e1f8d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-trailing-ape.tta",
+   "sha256": "9d77cfd5c7ceffa77cad9b2234a985599b2b29b4684683c390fc434bb6537e85",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-trailing-id3v1.tta",
+   "sha256": "3e5bd2f149ec924f81b07a72ee3d1f0dd234ea017be19f4203f9aaa92609c949",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-trailing-junk.tta",
+   "sha256": "b26d21c3c05e44d36f3827668e80684f2e6cd86b60e6db05ca6ce4f27e17c05a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-tta2.tta",
+   "sha256": "23cd249ee17f3540499496b98bb6aa02434c16c9a85ec2f6b2053e711050ad75",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg gave none (exit None: no audio stream)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "built-whole-frames.tta",
+   "sha256": "9a319ce5331b91fbcd703be13a579533f6c21fdd1bc12344ed77433c916bd40b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"can't read from input file\""
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input"
+      }
+     },
+     "noReference": "tta -d gave none (exit status 255, no output file, \"can't read from input file\"); ffmpeg gave none (exit 69: [aist#0:0/tta] [dec:tta] Decoding error: Invalid data found when processing input)"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-11025-stereo.tta",
+   "sha256": "6922f8b78638c1b47c9fd1e24b0db0ea768f4f985032b56ac3ca00647f780a2d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24000,
+     "reference": 24000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24000
+     },
+     "format": {
+      "rate": 11025,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-3ch.tta",
+   "sha256": "adba7d74c9ebac66fed6c8090c89b9ab53a543e6ab0b7d0666baa8d8deb9ebb9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 3,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-6ch.tta",
+   "sha256": "84372711dd572f44126154e5aa0623ed6980eda1ec160768be8ef68ac501b15f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 6,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-8ch.tta",
+   "sha256": "50fca201925f9f2c10060c14daa70ec806360e51a2cc7172fe21df203923ce04",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30000,
+     "reference": 30000,
+     "referencePath": "ffmpeg",
+     "referenceKind": "ffmpeg (fallback)",
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "noOfficialReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg 8.0.1 is the reference as the design says"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-loud-noise.tta",
+   "sha256": "51804e8c185e4723c56843fe5549a87b1f10843b0aa074bec8e27582616745c6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-mono.tta",
+   "sha256": "66ac4ee4fb3cccdc057588f14bb8d0c9fcdb91fa053078deee364336abd0798a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": 100000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 100000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 1,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-silent.tta",
+   "sha256": "5b211bbc9f6377ec2c7c0e4bef63851af8b8deec1198950dfaa7dce368874da8",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": 100000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 100000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-stereo-bitexact.tta",
+   "sha256": "9abf5865fd78ed8eed5b823cc3fcff15f4a8f0b04e68c46d573df4ffa0aa8e39",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-stereo-one-frame.tta",
+   "sha256": "ffa7232e8a379c92fe61995b18280c214091901415581a86818592abfe751e91",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 5000,
+     "reference": 5000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 5000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-stereo-tags.tta",
+   "sha256": "57b6aa48c4df84e812ed597bb8d4a9919b82b65c60d470e847fae7f17b4ad1e1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-stereo-whole-frames.tta",
+   "sha256": "3079aff52cd0d7ebfb852c556de7d5eadd74061864e0a9f6851db3872dd99a89",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": 92160,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 92160
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-16-stereo.tta",
+   "sha256": "388a154bcc45b215c9bbd7959610e07eebfe8760e997a112133b512e30fb8b6f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": 100000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 100000
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-192000-mono.tta",
+   "sha256": "8b7f0b8d71044ab1df907c201bbf7fa4e531b8c3d1d04d5aa472df1ccc6e9788",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 220000,
+     "reference": 220000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 220000
+     },
+     "format": {
+      "rate": 192000,
+      "channels": 1,
+      "bits": 24
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-22050-stereo.tta",
+   "sha256": "c79c6df2d3c06de60a5c04ce3672fe42a590cdd128ef998284fbdbbb89c523ac",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-24-stereo.tta",
+   "sha256": "1c36dfd6d642b4144304cc475d2026258c9b9c692f934e0a4d5cbef2745a3372",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 60000,
+     "reference": 60000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 60000
+     },
+     "format": {
+      "rate": 48000,
+      "channels": 2,
+      "bits": 24
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-32000-stereo-last-frame-one-sample.tta",
+   "sha256": "6d4811ac4df778f9bf4ba02c185c09e04c2c3da7562f43d67767a3826aa48762",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66873,
+     "reference": 66873,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66873
+     },
+     "format": {
+      "rate": 32000,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-8-stereo.tta",
+   "sha256": "1d87e37c9acb45ad196041da00bd3d1fa48edfbd168fdb041deabe9fe6fb224e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 100000,
+     "reference": 100000,
+     "referencePath": "ffmpeg",
+     "referenceKind": "ffmpeg (fallback)",
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "error",
+      "exit": 255,
+      "signal": null,
+      "reason": "exit status 255, no output file, \"not compatible file format\""
+     },
+     "noOfficialReference": "tta -d gave none (exit status 255, no output file, \"not compatible file format\"); ffmpeg 8.0.1 is the reference as the design says"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-8000-mono.tta",
+   "sha256": "8a5a63a8bec08a00a4172821889f125087b6391d3c7a0d3d5b39bfccde693547",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20000,
+     "reference": 20000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20000
+     },
+     "format": {
+      "rate": 8000,
+      "channels": 1,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-96000-mono.tta",
+   "sha256": "f10695859c2ba8418e3caaea3b3b8f78f632598d014b510dddf7d2118d00042a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 210000,
+     "reference": 210000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 210000
+     },
+     "format": {
+      "rate": 96000,
+      "channels": 1,
+      "bits": 24
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-6ch.tta",
+   "sha256": "33bc35f604d0296a8f0661e6173ae681fd57b3dee6a6f7cf497ae3a82771038a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 6,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-loud-noise.tta",
+   "sha256": "4bba91d77733d5101f24bd9a9b39c50ac3483c74ecadfced749bc9cc233d5e45",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-mono-24000-last-frame-one-sample.tta",
+   "sha256": "6cc16364316551ee3c38e5edd4221d8a747b9bb2a0f6cf498e7a78bf96bc03be",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50155,
+     "reference": 50155,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50155
+     },
+     "format": {
+      "rate": 24000,
+      "channels": 1,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-mono-44100-whole-frames.tta",
+   "sha256": "c3c41b73c2f6394c14c7254c3e15c8b18dda77ba767e3ab4de9dab74015f25d4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 92160,
+     "reference": 92160,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 92160
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 1,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-stereo-32000-last-frame-one-sample.tta",
+   "sha256": "2009cb2f1f4b787b029d0651c878d22864e965fc703cbc6198d81c4325f6b0e3",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66873,
+     "reference": 66873,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66873
+     },
+     "format": {
+      "rate": 32000,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-16-stereo-password.tta",
+   "sha256": "e2ee4f8263eb5683a6d82f4c179127d406574f10add2b8728bf7d22846aa9008",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 50000,
+     "reference": 50000,
+     "referencePath": "tta -dp secret",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 50000
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 2,
+      "bits": 16
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "external-libtta-24-stereo.tta",
+   "sha256": "ceda430c339a2ea01e8ecbdee0d5492fa1b97dc697b90bfc8f1ad598bcb93ba7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 60000,
+     "reference": 60000,
+     "referencePath": "tta -d",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 60000
+     },
+     "format": {
+      "rate": 48000,
+      "channels": 2,
+      "bits": 24
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  }
+ ]
+}

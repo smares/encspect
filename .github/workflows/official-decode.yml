@@ -7,7 +7,8 @@ name: Cross-checks by the formats' official decoders
 # or by pushing a branch named ci/official-decode or ci/official-decode-*. Not part of ci.yml and not a check: a difference between decoders is
 # a finding, not a failure.
 #
-#   linux     libopus and libvorbis through ogg_decode.c and through oggdec and opusdec, over every Opus and Vorbis fixture and its variants (rollout step 2)
+#   linux     libopus and libvorbis through ogg_decode.c and through oggdec and opusdec, over every Opus and Vorbis fixture and its variants (rollout step 2);
+#             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3)
 #   compare   the comparison of the records of every decoder job
 #   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
@@ -31,7 +32,7 @@ env:
 
 jobs:
   linux:
-    name: libopus and libvorbis on ubuntu-26.04
+    name: libopus, libvorbis and libtta-c on ubuntu-26.04
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
@@ -72,11 +73,31 @@ jobs:
         timeout-minutes: 40
         run: python3 -I scripts/fixtures/official_decode.py ogg --out out --bin build/bin
 
+      # libtta_tool.build() fetches the pinned archive, builds it as C17 (gcc 15 refuses the 2.3 sources by default) and keeps the compiler's output captured: it
+      # quotes libtta's LGPL source, which the TTA decoder's agents must not read (decisions 6 and 10 of decoders.md). Only the path of the program is printed.
+      - name: Build libtta-c 2.3 for tta
+        run: |
+          python3 -I -c "
+          import sys
+          sys.path.insert(0, 'scripts/fixtures')
+          import libtta_tool
+          print(libtta_tool.build('${{ github.workspace }}/build/libtta'))" > build/tta-path.txt
+          cat build/tta-path.txt
+
+      - name: Decode the TTA files and their variants with tta -d
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 5
+        run: |
+          python3 -I scripts/fixtures/official_decode.py tta --out out-tta --tta "$(tail -n 1 build/tta-path.txt)" \
+            --archive-sha256 "$(python3 -I -c "import sys; sys.path.insert(0, 'scripts/fixtures'); import libtta_tool; print(libtta_tool.SHA256)")"
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: official-decode-linux
-          path: out
+          path: |
+            out
+            out-tta
           retention-days: 30
           if-no-files-found: error
 
@@ -122,8 +143,10 @@ jobs:
               print('::warning::' + line)"
           find artifacts -maxdepth 2 | sort | head -30
           python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
-            --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json artifacts
-          { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 500000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json \
+            --write-official-tta comparison/official-decoders.tta.draft.json --previous-tta tests/fixtures/tta/official-decoders.json artifacts
+          { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo 'TTA'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-tta.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -229,7 +252,7 @@ jobs:
         run: |
           python3 -I scripts/fixtures/official_probe.py linux --out out --bin build/bin \
             --fdk v2.0.2=$PWD/build/inst-v2.0.2/lib v2.0.3=$PWD/build/inst-v2.0.3/lib v3.0.0=$PWD/build/inst-v3.0.0/lib \
-            --tta "$(cat build/tta-path.txt)"
+            --tta "$(tail -n 1 build/tta-path.txt)"
 
       - uses: actions/upload-artifact@v7
         if: always()
