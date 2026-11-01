@@ -750,7 +750,7 @@ MP3 comes first, then the other lossy formats, then the lossless ones; each late
 
 **Phase 3, continued.** After Gate 3, in this order:
 1. Cross-checks against the formats' official decoders, where FFmpeg is the only reference so far. The decoder of a format's owner, or its reference implementation, becomes the reference for sample counts, durations and the handling of damage; FFmpeg stays a second cross-check, with each known difference listed per file. All are used as black boxes, as the WMA check against Microsoft's decoder on the Windows runners does.
-   - AC-3 and E-AC-3: Dolby's decoders in Windows' Media Foundation and in macOS's Core Audio, through the Windows harness of the WMA check and an equivalent one on the macOS runners.
+   - AC-3 and E-AC-3: the AC-3 and E-AC-3 decoders in macOS's Core Audio, on the macOS runners; Windows has no PCM decoder for them on any runner image (the probe of [official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)).
    - AAC, HE-AAC, HE-AAC v2 and xHE-AAC: Fraunhofer's FDK AAC decoder, Apple's decoder in Core Audio and the Media Foundation AAC decoder (whether the runner image has xHE-AAC is checked first).
    - Opus and Vorbis: Xiph's reference decoders (libopus with `opusdec`, libvorbis with `oggdec`), which run on Linux.
    - TTA: the format author's reference codec.
