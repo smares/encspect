@@ -19,17 +19,18 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 ## Frames and resync
 
-- A header counts as a frame only when its CRC-8 holds, its fields are legal and agree with STREAMINFO, its frame reads to the end with a CRC-16 that holds, and either the stream ends there or a consistent header follows. The header is checked before any frame is walked, and every walk counts against the search budget whether or not the candidate holds. After bytes that are no frame, the next frame is found by a chain of such headers, never by the 14-bit sync code alone (it occurs in audio).
-- A frame whose CRC-8 fails is still taken where its walk completes and a frame follows (or the data ends), since a flipped bit in the header's CRC-8 byte also fails the CRC-16 of a frame whose data is intact (`flac.header-crc-mismatch`; its message says whether the CRC-16 holds).
+- A header counts as a frame only when its CRC-8 holds, its fields are legal and agree with STREAMINFO, its frame reads to the end with a CRC-16 that holds, and either the stream ends there or a consistent header follows. The header is checked before any frame is walked, and every walk counts against the search budget whether or not the candidate holds. After bytes that are no frame, the next frame is found by a chain of such headers, never by the 15-bit sync code alone (it occurs in audio).
+- A frame whose CRC-8 fails is still taken where its walk completes and either its CRC-16 holds, a header follows or the data ends, since a flipped bit in the header's CRC-8 byte also fails the CRC-16 of a frame whose data is intact (`flac.header-crc-mismatch`; its message says whether the CRC-16 holds).
 - A frame whose CRC-16 fails is a frame with a finding (`flac.crc16-mismatch`); a frame cut by the end of the data is `flac.frame-cut`.
-- A frame whose header is intact but whose subframes break the syntax (`flac.subframe-invalid`) is unreadable: it ends at the next chained header and is handed to the decoder as unreadable, which counts it as not decoded and reports nothing more.
+- A frame whose header is intact but whose subframes break the syntax (`flac.subframe-invalid`) is unreadable: it ends at the next chained header and is handed to the decoder as unreadable, which counts it as not decoded and reports nothing more. A frame that runs past the end of the data gets the same search first: where a chained frame follows within 16 MiB, the damaged frame ends there, its CRC-16 is compared and the frames after it are kept; only where none follows is it cut (`flac.frame-cut`) and the rest of the data its bytes.
 - The loops of a walk cost what the data present holds, not the block size a header declares: a packet of a dozen bytes that claims 65,535 samples ends at once.
 - Bytes between frames are shown as skipped (`flac.data-skipped`). The search for the next frame reads at most 64 MiB plus four times the file's length in all; past that the rest is skipped (`flac.resync-limit`).
 - A frame may not be longer than 16 MiB; a longer one is a fault of its syntax.
 - The frame or sample number must follow without a gap: a jump is `flac.sample-number-discontinuity`. A stream that does not start at sample 0 is `flac.first-sample-not-zero`.
 - A sample rate of 0 in a header is legal for content that is not audio (RFC 9639, section 9.1.7): the frame is read, with `flac.sample-rate-zero`, and agrees with any STREAMINFO.
 - A residual whose partition order leaves as many samples in a partition as the predictor order (section 9.2.7 requires more) is `flac.partition-order-too-high`, and a residual sample of -2^31 (section 9.2.7.3 excludes it) is `flac.residual-out-of-range`. Both are decoded as libFLAC decodes them; the frame is not unreadable.
-- Frames whose block size, sample rate, channels or bit depth differ from STREAMINFO's are `flac.frame-differs-from-streaminfo`; a block size over STREAMINFO's maximum is `flac.block-size-out-of-range` and a frame larger than its maximum frame size `flac.frame-size-out-of-range`.
+- Frames whose sample rate, channels or bit depth differ from STREAMINFO's are `flac.frame-differs-from-streaminfo`.
+- A block size over STREAMINFO's maximum, or under its minimum in a frame that is not the last (RFC 9639, section 8.2 lets the last block be shorter), is `flac.block-size-out-of-range`; a frame larger than the maximum frame size or smaller than the minimum is `flac.frame-size-out-of-range`.
 
 ## Reported
 
@@ -40,7 +41,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 ## Channel layout
 
 - One to eight channels in FLAC's order (RFC 9639, section 9.1): mono is front center; two channels are front left and right; three add front center; four are front left, front right, back left, back right; five add front center before the back pair; six add the low-frequency channel before the back pair; seven and eight follow the layouts of the specification's table.
-- The channel mode is Mono, Stereo, Joint stereo or "Stereo, joint in some frames" from the share of left/side, side/right and mid/side frames.
+- The channel mode is Mono, Stereo, Joint stereo, "Stereo, joint in some frames" or Multichannel (three or more channels) from the share of left/side, side/right and mid/side frames.
 - Left/side, side/right and mid/side are shown as such; the side channel of a 32-bit stream has 33 bits.
 
 ## Encoder detection
@@ -54,7 +55,9 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 - The first packet is the mapping header: `0x7F`, `FLAC`, the major and minor version, the 16-bit count of header packets, `fLaC` and the STREAMINFO block. Then one metadata block per header packet, then one frame per packet.
 - The tree is the same as a native file's. Findings specific to the mapping: `flac.ogg-version`, `flac.ogg-header-count`, `flac.ogg-header-invalid`, `flac.ogg-packet-invalid`, `flac.ogg-packet-trailing` and `flac.ogg-granule-mismatch` (a page's granule position against the samples counted; the first audio page may state more than the samples counted, as for a stream joined mid-way, and its excess is the base the other pages count from).
-- A packet that spans pages is shown with its byte ranges.
+- A packet that spans pages is shown with its byte ranges, a metadata block over 1 MiB included: the node covers the whole block, only its first MiB is read.
+- An Ogg packet holds exactly one frame or metadata block (RFC 9639, section 10.1). A frame that overruns its packet, or whose packet ends before its CRC-16, is unreadable and its CRC-16, stored at the packet's end, is compared. Bytes after a frame or a metadata block, the mapping packet's included, are `flac.ogg-packet-trailing`: one finding with a count, and a "Trailing Data" node for the first case only.
+- Metadata blocks past the 1,024th are counted under "Further Metadata Blocks", as in a native file.
 - A frame in an Ogg stream is decoded from the packet's bytes.
 
 ## Decoding
@@ -83,8 +86,8 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 ## Memory
 
-- The frames are kept as a 56-byte entry each and expanded into nodes when the tree is opened; the frame details (subframes, partitions) are kept in compact records. A file of a million frames costs tens of megabytes, not a node tree.
-- The metadata is capped per block (1,024 blocks listed, 1 MiB of a block's body read) and the comment, picture and cuesheet text per field. Blocks past the 1,024th are read and checked, and their findings point to the "Further Metadata Blocks" node that stands for them; their Vorbis comments are not read.
+- The frames are kept as a 56-byte entry each (a frame that spans Ogg pages also keeps its byte ranges) and expanded into nodes when the tree is opened; the frame details (subframes, partitions) are kept in compact records. A file of a million frames costs tens of megabytes, not a node tree.
+- The metadata is capped per block (1,024 blocks listed, 1 MiB of a block's body read; Ogg FLAC has the same caps) and the comment, picture and cuesheet text per field. Blocks past the 1,024th are read and checked, and their findings point to the "Further Metadata Blocks" node that stands for them; their Vorbis comments are not read.
 - The decoder holds one frame's planes and the MD5 state, nothing per frame.
 
 ## Tags

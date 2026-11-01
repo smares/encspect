@@ -209,8 +209,17 @@ internal static class RawReader
                 }
                 else if (walk.IsCut && isHeaderIntact)
                 {
-                    length = end - position;
-                    status = EntryStatus.Cut;
+                    // A frame that runs past the end of the data may be a damaged one with intact frames after it; only when none follows is it cut.
+                    if (scanner.FindNext(position + 1, position + FrameWalker.MaxFrameBytes) is var after and >= 0)
+                    {
+                        length = after - position;
+                        status = EntryStatus.Unreadable | EntryStatus.ExtentFound;
+                    }
+                    else
+                    {
+                        length = end - position;
+                        status = EntryStatus.Cut;
+                    }
                 }
                 else if (walk.Fault != SubframeFault.None && isHeaderIntact && scanner.FindNext(position + 1, position + FrameWalker.MaxFrameBytes) is var following and >= 0)
                 {

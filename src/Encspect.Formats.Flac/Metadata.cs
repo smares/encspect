@@ -21,17 +21,23 @@ internal static class Metadata
 
     public const int SeekPointLength = 18;
 
-    // block holds the 4-byte header and as much of the body as was read. declared is the body length the header states.
-    public static Node Read(State s, MappedBytes block, bool isLast, int type, int declared, int available, int index, bool paddingIsZero, Func<Node, Node?>? parseComment)
+    // block holds the 4-byte header and as much of the body as was read. declared is the body length the header states. wholeRanges, where the block's
+    // bytes are not all in block (a block over MaxBodyBytes in an Ogg packet), are the file ranges of the whole block as far as it is present.
+    public static Node Read(State s, MappedBytes block, bool isLast, int type, int declared, int available, int index, bool paddingIsZero, Func<Node, Node?>? parseComment, IReadOnlyList<ByteRange>? wholeRanges = null)
     {
-        FieldMap map = FieldMap.Of(block);
+        FieldMap map = wholeRanges is not { Count: > 0 } ? FieldMap.Of(block)
+            : wholeRanges.Count == 1 ? FieldMap.At(wholeRanges[0].Offset)
+            : FieldMap.Of(wholeRanges, 4 + available);
         ReadOnlySpan<byte> body = block.Span[4..];
         bool isPartial = body.Length < declared;
-        var node = new Node("Metadata Block", block.FileStart, block.FileEnd - block.FileStart + (available - body.Length), BlockTypes.Name(type))
+        IReadOnlyList<ByteRange> nodeRanges = wholeRanges ?? block.FileRanges();
+        long nodeStart = wholeRanges is { Count: > 0 } ? wholeRanges[0].Offset : block.FileStart;
+        long nodeEnd = wholeRanges is { Count: > 0 } ? wholeRanges[^1].End : block.FileEnd + (available - body.Length);
+        var node = new Node("Metadata Block", nodeStart, nodeEnd - nodeStart, BlockTypes.Name(type))
         {
             Description = Explain.MetadataBlock,
             Topic = Topics.MetadataBlocks,
-            Ranges = block.FileRanges() is { Count: > 1 } ranges ? ranges : null,
+            Ranges = nodeRanges is { Count: > 1 } ranges ? ranges : null,
         };
         Node header = node.Add(map.Bytes("Block Header", 0, 4, null, Explain.BlockHeader, Topics.MetadataBlocks));
         header.Add(map.Bits("IsLastBlock", 0, 1, NodeValue.Boolean(isLast), Explain.IsLastBlock, Topics.MetadataBlocks));

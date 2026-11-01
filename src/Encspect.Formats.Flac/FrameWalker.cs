@@ -75,6 +75,7 @@ internal static class FrameWalker
         if (bytes + 2 > data.Length)
         {
             walk.IsCut = true;
+            walk.Fault = SubframeFault.EndsBeforeCrc;
             return walk;
         }
 

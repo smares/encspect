@@ -154,7 +154,7 @@ internal sealed class FrameScanner(Source source, StreamInfoBlock? info, long pr
             }
 
             int next = source.ByteAt(found + 1);
-            if (next >= 0 && (next & 0xFC) == 0xF8 && IsChained(found))
+            if (next >= 0 && FrameHeader.HasSync([0xFF, (byte)next]) && IsChained(found))
             {
                 return found;
             }
