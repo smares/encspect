@@ -115,14 +115,16 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             bool isTooLong = length > room;
             bool isCut = start + Math.Min(length, room) > end;
             long payload = Math.Min(Math.Min(length, room), end - start);
-            if (isCut && payload % 2 == 1)
+            bool isHalfSample = false;
+            if (payload % 2 == 1 && start + payload >= end)
             {
                 // The last byte of an odd payload is the second byte of a sample the data ends before.
                 payload--;
+                isHalfSample = true;
             }
 
             Node burst = AddBurst(position, Iec61937.PreambleLength + payload, header, payload);
-            if (isTooLong || isCut || payload == 0)
+            if (isTooLong || isCut || isHalfSample || payload == 0)
             {
                 long stated = length;
                 state.Findings.Add(Severity.Warning, "wav.iec61937-length-invalid", burst, _ =>
@@ -147,20 +149,37 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             }
 
             position = expected;
+
+            // A burst that starts after the payload's frames but before the period ends is early, not absent: without this the burst at the
+            // period would hide it.
+            if (searchFrom < expected && FindBurst(window, searchFrom, expected) is { } early)
+            {
+                long wanted = expected;
+                state.Findings.Add(Severity.Warning, "wav.iec61937-burst-spacing", container, _ =>
+                    $"A burst starts at 0x{early:X}, {Counts.Of(wanted - early, "byte", "bytes")} before the repetition period of {Counts.Of(type.Repetition, "IEC 60958 frame", "IEC 60958 frames")} puts the next one.");
+                position = early;
+                expected = -1;
+            }
         }
     }
 
+    // The frames the searches stepped over on this thread, for the test that holds the search for an early burst to linear in the data.
+    [ThreadStatic]
+    internal static long FramesScanned;
+
     // The next preamble from position on at a frame of the chain, or null.
-    private long? FindBurst(BurstWindow window, long from)
+    // With limit, only a preamble that starts before it counts.
+    private long? FindBurst(BurstWindow window, long from, long limit = long.MaxValue)
     {
         const int Block = 1 << 16;
         long position = from + ((Iec61937.FrameLength - ((from - data.Start) % Iec61937.FrameLength)) % Iec61937.FrameLength);
         long end = data.End;
-        while (position + Iec61937.PreambleLength <= end)
+        while (position < limit && position + Iec61937.PreambleLength <= end)
         {
-            ReadOnlySpan<byte> block = window.At(position, Block);
+            // A request past the window refills it, so a search up to a limit asks for no more than the limit and a preamble.
+            ReadOnlySpan<byte> block = window.At(position, (int)Math.Min(Block, limit - position + Iec61937.PreambleLength));
             int length = block.Length;
-            for (int i = 0; i + Iec61937.PreambleLength <= length; i += Iec61937.FrameLength)
+            for (int i = 0; i + Iec61937.PreambleLength <= length && position + i < limit; i += Iec61937.FrameLength)
             {
                 // The preamble lies inside the block, so looking at it reads nothing and the block stays valid.
                 if (block[i] == 0x72 && block[i + 1] == 0xF8 && Iec61937.HeaderAt(window, position + i) is not null)
@@ -170,7 +189,9 @@ internal sealed class BurstRun(State state, ByteReader data, BurstChain chain, N
             }
 
             // The next block starts at a frame, and re-reads the frames whose preamble the block cut.
-            position += Math.Max(Iec61937.FrameLength, (length - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
+            long step = Math.Max(Iec61937.FrameLength, (length - Iec61937.PreambleLength) / Iec61937.FrameLength * Iec61937.FrameLength);
+            FramesScanned += step / Iec61937.FrameLength;
+            position += step;
         }
 
         return null;

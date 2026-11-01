@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes tests/fixtures/monkeys-audio/external-interim-24-stereo.ape, a 24-bit file in the "interim" coding of Monkey's Audio 5.01 to 8.51.
+"""Writes tests/fixtures/monkeys-audio/external-interim-24-stereo.ape, a 24-bit file in the "interim" coding of Monkey's Audio from the addition of 32-bit audio to version 8.50.
 
 Those encoders summed the first stage of the predictor in 64 bits for samples over 16 bits; the SDK's decoder undoes that in its "interim mode", which it
 enters when a frame of a 24-bit file fails its CRC (APEDecompressCore.cpp, DecodeFrame; Interim.cpp). The SDK 13.44 encoder no longer writes such files, so

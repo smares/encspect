@@ -181,8 +181,10 @@ internal static class Summary
         int channels = cookie?.Channels ?? 0;
         long samples = s.Samples;
         double duration = rate > 0 ? samples / (double)rate : 0;
+        bool isStated = false;
         if (samples == 0 && configuration?.Duration is { } stated && rate > 0)
         {
+            isStated = true;
             duration = stated;
             samples = (long)Math.Round(stated * rate);
         }
@@ -209,7 +211,7 @@ internal static class Summary
 
         if (cookie is not null)
         {
-            statistics.Add(cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples, null));
+            statistics.Add(cover("Samples", NodeValue.Integer(samples, "samples", "sample"), isStated ? Explain.StatSamplesStated : Explain.StatSamples, null));
             statistics.Add(cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration, null));
             statistics.Add(cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate, null));
             statistics.Add(cover("Channels", NodeValue.Integer(channels, "channels", "channel"), Explain.StatChannels, null));
@@ -285,7 +287,7 @@ internal static class Summary
         if (t.Pairs > 0)
         {
             stereo = statistics.Add(cover("Stereo Coding", NodeValue.Integer(t.Pairs, "channel pairs", "channel pair"), Explain.StatStereoCoding, Topics.Prediction));
-            Entries(stereo, cover, CodingCategories.StereoCodings, [t.Pairs - t.MixedPairs, t.MixedPairs], t.Pairs, "channel pair", "channel pairs");
+            Entries(stereo, cover, CodingCategories.StereoCodings, t.PairCodings, t.Pairs, "channel pair", "channel pairs");
         }
 
         if (t.Channels > 0)

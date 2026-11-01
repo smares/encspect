@@ -1,6 +1,6 @@
 # TTA
 
-True Audio files (`.tta`, TTA1), and the frames of a TTA track that a container stores without the header (the "tta" codec parser, for Matroska's `A_TTA1`; the Matroska route is a later change). There is no decoder: the coded samples are not read.
+True Audio files (`.tta`, TTA1), and the frames of a TTA track that a container stores without the header (the "tta" codec parser, for Matroska's `A_TTA1`, which the Matroska parser routes to it). There is no decoder: the coded samples are not read.
 
 Sources: the TTA authors' format description (https://tta.sourceforge.net/en/tta-format-description/) and its "Compression Theory" page, Matroska's codec mapping for `A_TTA1` (https://www.matroska.org/technical/codec_specs.html), and FFmpeg 6.1.1, libtta-c 2.3 and MediaInfo as black-box readers and writers of the test files. libtta-c 2.3, the TTA authors' own encoder, is built from its pinned source (`libtta_tool.py`) and run on inputs the fixture scripts write; the reference code (libtta, ttaenc) and FFmpeg's TTA sources are LGPL or GPL and were not read ([decoders.md](../design/decoders.md), decision 10). A field whose meaning no description or tool confirms is not claimed.
 
@@ -72,7 +72,8 @@ The header states a channel count and no speaker positions, so the stream names 
 - A configuration that is no TTA1 header is `tta.header-invalid`. A payload handed in one piece is `tta.payload-not-analyzed`. A packet shorter than a CRC-32 is `tta.frame-too-small`.
 - A configuration longer than the 22-byte header (the mapping's "TTA Header Structure" may be read to include the seek table, which Matroska drops) shows the bytes after it as `Extra Data` and is `tta.configuration-extra` (Info); they are not read.
 - A container that states a sample rate, channels or bits per sample other than the header's is `tta.configuration-differs`; the header's figures are used.
-- The test file `matroska/external-ffmpeg-tta.mka` has no CodecPrivate: FFmpeg's muxer writes none (ffprobe nevertheless reports 22 bytes of extradata for the track).
+- The Matroska route hands the parser the track's SamplingFrequency, Channels and BitDepth (the mapping uses them) together with the CodecPrivate, which it accepts for `A_TTA1` as the mapping defines it.
+- The test files `matroska/external-ffmpeg-tta.mka` and `matroska/external-mkvmerge-tta.mka` (mkvmerge 82.0) have no CodecPrivate: neither muxer writes one (ffprobe nevertheless reports 22 bytes of extradata for the FFmpeg file). The header path is covered by `TtaCodecParserTests`.
 
 ## Not covered
 

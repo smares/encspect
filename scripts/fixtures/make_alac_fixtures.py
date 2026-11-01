@@ -163,6 +163,8 @@ def build():
     valid("stereo-16-plain", "A channel pair coded as left and right (mix resolution 0) with filters of 8 and 4 coefficients.", 2, 16, 44100, 10000, STEREO, mix_res=0)
     valid("stereo-16-mixed-weights", "A channel pair mixed with the weights 1/4 and 3/4 (mix bits 2, mix resolution 1), whose frames alternate with plain ones.", 2, 16, 44100, 14000, STEREO,
           mix_res=1, per_frame={1: {0: {"mix_res": 0}}, 3: {0: {"mix_res": 0}}})
+    valid("stereo-16-mix-kinds", "A channel pair whose frames state a mix resolution of 4 and mix bits 2 (left/side stereo), mix bits 3 (mid/side stereo), mix resolution 3 (a weighted mix) and mix resolution 2 (mid/side stereo).",
+          2, 16, 44100, 14000, STEREO, mix_res=4, per_frame={1: {0: {"mix_bits": 3}}, 2: {0: {"mix_res": 3}}, 3: {0: {"mix_res": 2}}})
     valid("stereo-16-long-filters", "A channel pair with filters of 16 and 12 coefficients and a history weight factor of 2 in the second channel.", 2, 16, 44100, 10000,
           [m.Channel(O16), m.Channel(O12, weight=2)], mix_res=2)
     valid("stereo-16-order-0", "A channel pair with no filter (0 coefficients), so the residuals are the samples.", 2, 16, 44100, 10000, [m.Channel([]), m.Channel([])], mix_res=2)

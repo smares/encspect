@@ -49,6 +49,42 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
     }
 
+    // The sort of the loudness range's short-term values, the most it ever sorts, against the units it is charged (LoudnessMeter.SortUnits) at
+    // the reference's time per unit of the same round.
+    [Fact]
+    public void TheSortOfTheLoudnessRangeTakesNoMoreThanItsCharge()
+    {
+        double[] source = new double[LoudnessMeter.MaxExact];
+        uint state = 12345;
+        for (int i = 0; i < source.Length; i++)
+        {
+            state = (state * 1664525) + 1013904223;
+            source[i] = 1e-7 + (state / (double)uint.MaxValue);
+        }
+
+        double[] work = new double[source.Length];
+        DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+        var ratios = new List<double>();
+        var times = new List<double>();
+        for (int round = 0; round < Rounds + 1; round++)
+        {
+            double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+            source.CopyTo(work, 0);
+            long start = Stopwatch.GetTimestamp();
+            LoudnessMeter.SortEnergies(work, work.Length);
+            double nanoseconds = Stopwatch.GetElapsedTime(start).TotalSeconds * 1e9;
+            if (round > 0)
+            {
+                ratios.Add(nanoseconds / LoudnessMeter.SortUnits / reference);
+                times.Add(nanoseconds / 1e6);
+            }
+        }
+
+        DecoderWorkTests.ReleaseReference();
+        output.WriteLine($"sorting {work.Length} values: {Median(times):F1} ms, ratio to its charge at the reference's time per unit {Median(ratios):F2}");
+        Assert.True(Median(ratios) <= Factor, $"The sort takes {Median(ratios):F2} times its charge, at most {Factor} are allowed.");
+    }
+
     // The two cases alternate for five rounds and each is taken at its fastest, so that the first round's warm-up and a busy moment of the machine
     // do not decide the ratio.
     [Fact]

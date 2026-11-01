@@ -16,13 +16,18 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const long RangeUnits = 192;
     internal const long PredictorUnits = 48;
 
-    // Units a sample of a channel costs in a frame flagged silent, which codes nothing: the zero values still go through the channel pairing, the byte
-    // conversion, the CRC and the sink one sample at a time, which took 2.5 times the FLAC reference's time per unit at 16 units a sample.
-    internal const long SilentUnits = 40;
-
     // The most samples over all channels that a frame of 24-bit audio may hold for the decoder to keep them until the CRC has passed, in case it has to
-    // decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame).
-    private const long MaxHeldSamples = 1 << 23;
+    // decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame). A larger frame is decoded once without output to find its CRC and
+    // again to give its samples, so that no frame size is left out of the retry.
+    internal const long DefaultMaxHeldSamples = 1 << 23;
+
+    // Where a decoded chunk goes: to the sink, into the held samples, or nowhere (a pass that only works out the CRC).
+    private enum Output
+    {
+        Sink,
+        Hold,
+        None,
+    }
 
     private enum Mode
     {
@@ -33,7 +38,8 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     private readonly DecodeContext _context;
     private readonly ApeHeader _header;
-    private readonly long _dataStart;
+    private readonly long _wordStart;
+    private readonly long _maxHeldSamples;
     private readonly int _channels;
     private readonly int _bits;
     private readonly bool _isFloat;
@@ -57,13 +63,14 @@ internal sealed class FrameDecoder : IFrameDecoder
     private long _checked;
     private long _failed;
 
-    public FrameDecoder(DecodeContext context, ApeHeader header, long dataStart)
+    public FrameDecoder(DecodeContext context, ApeHeader header, long wordStart, long maxHeldSamples = DefaultMaxHeldSamples)
     {
+        _maxHeldSamples = maxHeldSamples;
         _context = context;
         _header = header;
         _version = header.FileVersion;
         _range = new RangeDecoder(_version);
-        _dataStart = dataStart;
+        _wordStart = wordStart;
         _channels = header.Channels;
         _bits = header.BitsPerSample;
         _isFloat = (header.Flags & FormatFlags.IsFloatingPoint) != 0 && _bits == 32;
@@ -121,7 +128,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             _stream = new byte[Math.Max(length, _stream.Length * 2)];
         }
 
-        WordOrder.ToStream(frame.Bytes, _dataStart, _stream);
+        WordOrder.ToStream(frame.Bytes, _wordStart, _stream);
         uint word = BinaryPrimitives.ReadUInt32BigEndian(_stream);
         int at = 4;
         uint special = 0;
@@ -141,15 +148,17 @@ internal sealed class FrameDecoder : IFrameDecoder
             : _channels == 1 && (special & 1) != 0 ? Mode.BothSilent
             : _channels == 2 && (special & 4) != 0 ? Mode.PseudoStereo
             : Mode.Normal;
-        bool isHeld = _bits == 24 && !_isInterim && (long)blocks * _channels <= MaxHeldSamples;
+        bool isRetried = _bits == 24 && !_isInterim;
         uint computed;
-        if (isHeld)
+        if (isRetried)
         {
-            computed = DecodeHeld(frame, blocks, mode, at, length, stored);
+            computed = (long)blocks * _channels <= _maxHeldSamples
+                ? DecodeHeld(frame, blocks, mode, at, length, stored)
+                : DecodeTwice(frame, blocks, mode, at, length, stored);
         }
         else
         {
-            computed = DecodeBody(frame, blocks, mode, at, length, false);
+            computed = DecodeBody(frame, blocks, mode, at, length, Output.Sink);
         }
 
         _checked++;
@@ -158,7 +167,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             _failed++;
             _context.AddFinding(Severity.Warning, "monkeys-audio.frame-crc-mismatch",
                 $"The CRC of the decoded audio of the frame at 0x{frame.Bytes.FileStart:X} is 0x{computed:X8}, but the frame stores 0x{stored:X8}: the decoded samples differ from what the encoder read.",
-                Nodes.CrcOfFrame(frame.Bytes, _dataStart, stored));
+                frame.Node ?? Nodes.CrcOfFrame(frame.Bytes, _wordStart, stored));
         }
 
         return blocks;
@@ -181,7 +190,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         bool isRead = true;
         try
         {
-            normal = DecodeBody(frame, blocks, mode, at, length, true);
+            normal = DecodeBody(frame, blocks, mode, at, length, Output.Hold);
         }
         catch (InvalidDataException)
         {
@@ -199,7 +208,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         uint interim;
         try
         {
-            interim = DecodeBody(frame, blocks, mode, at, length, true);
+            interim = DecodeBody(frame, blocks, mode, at, length, Output.Hold);
         }
         catch (InvalidDataException)
         {
@@ -216,11 +225,63 @@ internal sealed class FrameDecoder : IFrameDecoder
         LeaveInterim();
         if (isRead)
         {
-            DecodeBody(frame, blocks, mode, at, length, true);
+            DecodeBody(frame, blocks, mode, at, length, Output.Hold);
         }
 
         Release(frame.FirstSample, blocks);
         return isRead ? normal : interim;
+    }
+
+    // The same as DecodeHeld for a frame too large to hold: each attempt that decides the outcome is decoded first without output, and the attempt
+    // that is kept is decoded once more to the sink (the work of every pass is charged before it is done).
+    private uint DecodeTwice(in CodedFrame frame, int blocks, Mode mode, int at, int length, uint stored)
+    {
+        uint normal = 0;
+        bool isRead = true;
+        try
+        {
+            normal = DecodeBody(frame, blocks, mode, at, length, Output.None);
+        }
+        catch (InvalidDataException)
+        {
+            isRead = false;
+        }
+
+        if (isRead && normal == stored)
+        {
+            DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+            return normal;
+        }
+
+        _isInterim = true;
+        CreatePredictors();
+        uint interim;
+        try
+        {
+            interim = DecodeBody(frame, blocks, mode, at, length, Output.None);
+        }
+        catch (InvalidDataException)
+        {
+            LeaveInterim();
+            throw;
+        }
+
+        if (interim == stored)
+        {
+            DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+            return interim;
+        }
+
+        if (isRead)
+        {
+            LeaveInterim();
+            DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+            return normal;
+        }
+
+        DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+        LeaveInterim();
+        return interim;
     }
 
     private void LeaveInterim()
@@ -245,7 +306,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     });
 
     // Decodes the coded samples chunk by chunk and returns the CRC the decoded audio has (APEDecompressCore.cpp, StartFrame and EndFrame).
-    private uint DecodeBody(in CodedFrame frame, int blocks, Mode mode, int at, int length, bool isHeld)
+    private uint DecodeBody(in CodedFrame frame, int blocks, Mode mode, int at, int length, Output output)
     {
         foreach (Predictor32 predictor in _narrow ?? [])
         {
@@ -273,7 +334,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         int codedChannels = mode == Mode.BothSilent ? 0 : mode == Mode.PseudoStereo ? 1 : _channels;
-        long perSample = (DecodeWork.ForSample(_bits / 8) * _channels) + (codedChannels * (RangeUnits + PredictorUnits + _taps)) + (mode == Mode.BothSilent ? _channels * SilentUnits : 0);
+        long perSample = (DecodeWork.ForSample(_bits / 8) * _channels) + (codedChannels * (RangeUnits + PredictorUnits + _taps));
         uint crc = Crc32.Initial;
         int lastX = 0;
         for (int done = 0; done < blocks; done += Chunk)
@@ -283,14 +344,14 @@ internal sealed class FrameDecoder : IFrameDecoder
             _context.CancellationToken.ThrowIfCancellationRequested();
             lastX = DecodeChunk(n, mode, lastX);
             crc = Crc32.Update(crc, _pcm.AsSpan(0, n * _channels * (_bits / 8)));
-            if (isHeld)
+            if (output == Output.Hold)
             {
                 for (int c = 0; c < _channels; c++)
                 {
                     _samples.AsSpan(c * Chunk, n).CopyTo(_held.AsSpan((c * _heldStride) + done, n));
                 }
             }
-            else
+            else if (output == Output.Sink)
             {
                 WriteChunk(frame.FirstSample + done, n);
             }
@@ -340,13 +401,31 @@ internal sealed class FrameDecoder : IFrameDecoder
     private int DecodeChunk(int n, Mode mode, int lastX)
     {
         Span<int> values = _values;
+        if (mode == Mode.BothSilent)
+        {
+            // All values are zero, which makes every sample the same: the first one is made as usual and the rest copies of it.
+            values.Clear();
+            _unprepare.Write(values, 0, Chunk, _samples, _pcm);
+            int width = _bits / 8;
+            int block = _channels * width;
+            for (int c = 0; c < _channels; c++)
+            {
+                _samples.AsSpan((c * Chunk) + 1, n - 1).Fill(_samples[c * Chunk]);
+            }
+
+            Span<byte> pcm = _pcm.AsSpan(0, n * block);
+            for (int filled = block; filled < pcm.Length; filled <<= 1)
+            {
+                pcm[..Math.Min(filled, pcm.Length - filled)].CopyTo(pcm[filled..]);
+            }
+
+            return lastX;
+        }
+
         for (int i = 0; i < n; i++)
         {
             switch (mode)
             {
-                case Mode.BothSilent:
-                    values.Clear();
-                    break;
                 case Mode.PseudoStereo:
                     values.Clear();
                     values[0] = Predict(0, _range.DecodeValue(ref _states[0]), 0);

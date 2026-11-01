@@ -1375,7 +1375,12 @@ public class MemoryTests(ITestOutputHelper output)
 
         double heldPerSlice = (held - fewerHeld) / (double)(slices - fewer);
         output.WriteLine($"{kept} bytes kept {(isMeasuring ? "with measuring" : "with decoding")} and {plainKept} without; held above the end state at the last slice: {fewerHeld} at {fewer} slices and {held} at {slices} ({Hundredths(heldPerSlice)} per further slice)");
-        Assert.True(heldPerSlice < DecodingFrameBound, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with. {RuntimeSettings()}");
+        // Exact loudness gating keeps the energy of each gating block and each short-term value, up to LoudnessMeter.MaxExact of each (1 MiB each, an
+        // array that doubles; docs/design/spectral-analysis.md, "Loudness and loudness range"): this file's noise gives 16,384 / 4,410 = 3.7 blocks a slice,
+        // each a block and a short-term value of 8 bytes, twice for the doubling. The 2,400 further slices stay under the cap (about 9,500 values), where
+        // the growth stops (LoudnessMeterTests holds the cap itself); any other retention still shows against DecodingFrameBound.
+        double keptByGating = isMeasuring ? 2 * 2 * 8 * 16384 / 4410.0 : 0;
+        Assert.True(heldPerSlice < DecodingFrameBound + keptByGating, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with ({DecodingFrameBound + keptByGating:F0} allowed). {RuntimeSettings()}");
         Assert.True(held < (isMeasuring ? 5_000_000 : 500_000), $"The analysis held {held} bytes at the last slice above what it ends with.");
         Assert.True(kept < plainKept + (isMeasuring ? 1_000_000 : 100_000), $"The report keeps {kept - plainKept} bytes more.");
     }

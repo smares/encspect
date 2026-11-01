@@ -160,7 +160,7 @@ internal sealed class State
             {
                 case WalkFault.Truncated:
                     Findings.Add(Severity.Warning, "alac.frame-overrun", At(at), count =>
-                        $"The frame at 0x{offset:X} needs more bits than its packet of {Counts.Of(length, "byte", "bytes")} holds: the walk runs out of data {(inElement ? "inside " + place : "after " + place)}, with {read} of the cookie's {Counts.Of(channels, "channel", "channels")} read{More(count, "does the same", "do the same")}.");
+                        $"The frame at 0x{offset:X} needs more bits than its packet of {Counts.Of(length, "byte", "bytes")} holds: the walk runs out of data {(inElement ? "inside " + place : "after " + place)}, with {read} of the cookie's {Counts.Of(channels, "channel", "channels")} read{(isBeyond ? "; the element follows the stream's channels, which the reference decoder does not read past" : string.Empty)}{More(count, "does the same", "do the same")}.");
                     break;
                 case WalkFault.UnknownElement:
                     Findings.Add(Severity.Warning, "alac.element-unknown", At(at), count =>

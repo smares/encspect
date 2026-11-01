@@ -263,7 +263,7 @@ internal static partial class Summary
                 if (i == 0 || s.AssignmentFrames[i] > 0)
                 {
                     statistics.Add(cover(names[i], $"{StreamFigures.Counted(s.AssignmentFrames[i], "frame", "frames")} of {StreamFigures.Counted(stereo, "stereo frame", "stereo frames")} ({StreamFigures.Share(s.AssignmentFrames[i], stereo)})",
-                        descriptions[i], i == 0 ? Topics.ChannelAssignment : i == 3 ? Topics.MidSideStereo : Topics.ChannelAssignment));
+                        descriptions[i], i == 3 ? Topics.MidSideStereo : i == 1 ? "left-side-stereo" : Topics.ChannelAssignment));
                 }
             }
         }

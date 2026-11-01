@@ -61,6 +61,10 @@ internal readonly struct ApeHeader
     // The stored WAV header data: the descriptor's count, or the old header's.
     public uint HeaderDataBytes { get; init; }
 
+    // What the field states. An old header with the flag for a header created on decompression is laid out as if it stated 0 (HeaderDataBytes), but the
+    // field keeps its value.
+    public uint StoredHeaderDataBytes { get; init; }
+
     public ulong FrameDataBytes { get; init; }
 
     public uint TerminatingBytes { get; init; }
@@ -166,6 +170,7 @@ internal readonly struct ApeHeader
             HeaderBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[12..]),
             SeekTableBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[16..]),
             HeaderDataBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[20..]),
+            StoredHeaderDataBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[20..]),
             FrameDataBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[24..]) | ((ulong)BinaryPrimitives.ReadUInt32LittleEndian(bytes[28..]) << 32),
             TerminatingBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[32..]),
             Md5 = bytes.Slice(36, 16).ToArray(),
@@ -190,6 +195,7 @@ internal readonly struct ApeHeader
             HeaderBytes = HeaderBytes,
             SeekTableBytes = SeekTableBytes,
             HeaderDataBytes = HeaderDataBytes,
+            StoredHeaderDataBytes = StoredHeaderDataBytes,
             FrameDataBytes = FrameDataBytes,
             TerminatingBytes = TerminatingBytes,
             Md5 = Md5,
@@ -254,6 +260,7 @@ internal readonly struct ApeHeader
             Channels = BinaryPrimitives.ReadUInt16LittleEndian(bytes[10..]),
             SampleRate = BinaryPrimitives.ReadUInt32LittleEndian(bytes[12..]),
             HeaderDataBytes = (flags & FormatFlags.CreatesWavHeader) != 0 ? 0 : BinaryPrimitives.ReadUInt32LittleEndian(bytes[16..]),
+            StoredHeaderDataBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[16..]),
             TerminatingBytes = BinaryPrimitives.ReadUInt32LittleEndian(bytes[20..]),
             TotalFrames = totalFrames,
             FinalFrameBlocks = BinaryPrimitives.ReadUInt32LittleEndian(bytes[28..]),

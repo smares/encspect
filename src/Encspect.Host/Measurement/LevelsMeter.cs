@@ -466,6 +466,7 @@ internal sealed class LevelsMeter
         };
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static ChannelLevels FloatLevels(ChannelState state)
     {
         double peak = Math.Max(state.High, -state.Low);
@@ -501,6 +502,7 @@ internal sealed class LevelsMeter
         return squares == 0 ? MeasurementLimits.NoLevel : Tenths(ToDouble(squares) / ((double)count * _channels.Length * fullScale * fullScale));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int RmsOfFloats()
     {
         double squares = 0;

@@ -1,7 +1,7 @@
 ---
 id: flac-channel-assignment
 title: FLAC channel assignment
-related: mid-side-stereo, flac-frames, flac-subframes, channel-layouts
+related: mid-side-stereo, left-side-stereo, flac-frames, flac-subframes, channel-layouts
 references: RFC 9639 (FLAC), sections 9.1 and 9.2
 ---
 

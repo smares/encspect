@@ -72,7 +72,7 @@ internal static class Explain
     public const string UncompressedSamples = "The samples of the element, the channels of a pair alternating. A channel pair's samples are as many bits wide as the bit depth; a single channel's are the bit depth less 8 bits for each byte shifted (ALACDecoder.cpp).";
     public const string MixBits = "The number of bits of the mixing weights of a channel pair: with the mixing resolution it gives how the first channel mixes left and right (matrix_dec.c).";
     public const string MixBitsMono = "A byte the header of a single channel element carries, which the decoder reads and does not use.";
-    public const string MixResolutionMixed = "The weight of the left channel in the first channel's mix, out of 2 to the power of the mix bits; the second channel is left less right (matrix_dec.c). Mid/side stereo has the two weights equal.";
+    public const string MixResolutionMixed = "The weight of the left channel in the first channel's mix, out of 2 to the power of the mix bits; the second channel is left less right (matrix_dec.c). A weight of all of it makes the first channel the left channel (left/side stereo), half of it the mean of both (mid/side stereo).";
     public const string MixResolutionPlain = "The mixing resolution is 0: the two channels are coded as they are, left and right (matrix_dec.c).";
     public const string MixResolutionMono = "A byte the header of a single channel element carries, which the decoder reads and does not use.";
     public const string Predictor = "The prediction parameters of a channel: the type, the shift, the weight factor and the coefficients of its adaptive filter (ALACDecoder.cpp).";
@@ -99,6 +99,7 @@ internal static class Explain
     public const string StatUncompressedFrames = "The frames with an element that holds its samples uncompressed.";
     public const string StatUnreadableFrames = "The frames the analyzer could not read to their end.";
     public const string StatSamples = "The samples of each channel the frames hold, added up; a frame that was not read, or whose first element is cut off, adds none.";
+    public const string StatSamplesStated = "The samples of each channel that the container's duration states at the sample rate, since no frame was read.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the magic cookie.";
     public const string StatChannels = "The number of channels, from the magic cookie.";
@@ -107,7 +108,7 @@ internal static class Explain
     public const string StatElements = "The elements of all the frames, by their tags.";
     public const string StatElementCount = "The number of elements with this tag.";
     public const string StatElementCoding = "How the audio elements are coded: with a predictor and Golomb-coded residuals, or uncompressed.";
-    public const string StatStereoCoding = "How the channel pairs are coded: mixed as mid/side stereo, or as they are, left and right. An uncompressed pair is left/right.";
+    public const string StatStereoCoding = "How the channel pairs are coded by their mix: as they are, left and right (also an uncompressed pair), left and side, mid and side, or a weighted mix of the two (matrix_dec.c).";
     public const string StatChannelsCompressed = "The channels of compressed elements, which have a predictor.";
     public const string StatPredictionTypes = "The channels by the prediction type they state.";
     public const string StatPredictorOrders = "The channels by the number of coefficients of their filter.";
@@ -122,10 +123,12 @@ internal static class Explain
     public const string StatCount = "The number of channels or elements with this value, and their share.";
 
     public const string CodingLeftRight = "A channel pair coded as left and right: its mixing resolution is 0 or its samples are uncompressed (matrix_dec.c).";
-    public const string CodingMidSide = "A channel pair whose channels are mixed: the first is a weighted mix of left and right, the second their difference; with equal weights that is mid/side stereo (matrix_dec.c).";
+    public const string CodingLeftSide = "A channel pair whose mixing resolution equals 2 to the power of the mix bits: the first channel is the left channel and the second is left minus right, the side channel (matrix_dec.c).";
+    public const string CodingMidSide = "A channel pair whose mixing resolution is half of 2 to the power of the mix bits: the first channel is the mean of left and right and the second is left minus right (matrix_dec.c).";
+    public const string CodingWeightedMix = "A channel pair whose first channel weighs the left channel by a mixing resolution that is neither 0, all nor half of 2 to the power of the mix bits, and whose second is left minus right (matrix_dec.c).";
     public const string CodingCompressed = "An audio element coded with a predictor and Golomb-coded residuals.";
     public const string CodingUncompressed = "An audio element that holds its samples as they are, which Apple's encoder does when the compressed form would not be smaller (ALACEncoder.cpp).";
-    public const string StereoCodingSeries = "How each channel pair of each frame is coded: left/right, or mixed as mid/side stereo.";
+    public const string StereoCodingSeries = "How each channel pair of each frame is coded: left/right, left/side, mid/side or a weighted mix.";
     public const string ElementCodingSeries = "How each audio element of each frame is coded: compressed or uncompressed.";
 
     public const string AverageBitrate = "The bits of the frames over the time their samples last.";

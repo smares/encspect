@@ -457,6 +457,18 @@ def add_loudness():
     add("loudness-gates-8000", "A mono sine of 125 Hz at 8 kHz: 2 s at -12 dBFS, 2 s of digital silence, 2 s at -50 dBFS: the silence is below the absolute gate and the quiet tone below the relative gate, so only the loud tone's blocks count.",
         [gates], r8, 16, dict(unspecified, loudness={"gated_out": True}))
 
+    # Many blocks in the one 0.01 LU bin that holds the relative gate (BS.1770-5 equation 7 keeps or drops each block on its own; a histogram that takes the
+    # bin whole is wrong by up to -10 log10(1 - p) LU, here by 2 LU). 24-bit, so that two tones 0.02 % apart in amplitude are still different codes: 2 s at
+    # -6 dBFS, then 4 s each at amplitudes 580,220 x (1 + 1e-4) and x (1 - 1e-4) of 2^23 codes, 0.5 s of silence between. 580,220 was found by bisection on
+    # the gate: the gate (10 LU below the mean of the 105 blocks above -70 LUFS) lies between the two quiet tones' blocks, 4258.389 and 4258.563 in
+    # floor(1000 log10(z) + 6930.9) with the gate at 4258.468: one bin. 56 blocks pass (the loud tone's and the first quiet tone's): -14.9 LUFS; all 105
+    # would read -16.9 and the loud tone alone -10.6.
+    def quiet(amplitude, seconds):
+        return [round(amplitude * math.sin(2 * math.pi * low * i / r8)) for i in range(int(seconds * r8))]
+    straddle = quantize(tone(r8, 2.0, -6.0, low), 24) + [0] * (r8 // 2) + quiet(580220 * (1 + 1e-4), 4.0) + [0] * (r8 // 2) + quiet(580220 * (1 - 1e-4), 4.0)
+    add("loudness-gate-straddle-8000", "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -14.9 LUFS.",
+        [straddle], r8, 24, dict(unspecified, loudness={"straddle": True, "integrated": -14.9, "tolerance": 0.1, "source": "BS.1770-5 equation 7, each block on its own"}))
+
     # Back channels: 7.1 has a rear pair (weight 1.00) beside its side pair, 5.1 a surround pair (1.41); the same tone in the back pair reads 1.49 dB louder in 5.1.
     back = quantize(tone(r8, 0.8, -20.0, low), 16)
     silent = [0] * len(back)
@@ -566,6 +578,11 @@ def wav_only():
     huge[50], huge[51], huge[52], huge[900] = 1e300, -1e300, 5e-324, 1e-310
     items.append(("pcm-float64-huge", "64-bit floats with samples of 1e300 and -1e300 (clamped), a subnormal 5e-324 and a very small 1e-310: no figure is NaN.",
                   float_wav([huge], rate, 64), {"samples": 8192, "non_finite": 0, "clamped": True}))
+    # A relative gate above +30 LUFS, which the first version's histograms ended at: a sine of amplitude 251 (+48 dBFS, about +45 LUFS) for 2 s and one of amplitude 56
+    # (35 dBFS) for 1.5 s, which is below the gate 10 LU under the mean; the integrated loudness reads the loud tone's.
+    loud = [251.0 * math.sin(2 * math.pi * ((125 * i) % 8000) / 8000) for i in range(16000)] + [56.0 * math.sin(2 * math.pi * ((125 * i) % 8000) / 8000) for i in range(12000)]
+    items.append(("pcm-float32-loudness-above-30", "A mono sine of 125 Hz at 8 kHz as 32-bit floats: 2 s at amplitude 251 (+48 dBFS) and 1.5 s at amplitude 56: the quiet tone is below the relative gate, which lies above +30 LUFS.",
+                  float_wav([loud], 8000, 32), {"samples": 28000, "float_values": True, "loudness": {"integrated_above": 40}}))
     # Channels: the first 32 are measured.
     many = [[((c * 997 + i * 31) % 2001) - 1000 for i in range(1024)] for c in range(33)]
     items.append(("pcm-channels-33", "33 channels of 1,024 samples without a channel mask: 32 are measured.", wav_file(many, rate, 16), {"channels": 33, "measured": 32}))

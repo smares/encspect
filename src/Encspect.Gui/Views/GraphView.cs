@@ -480,7 +480,7 @@ public sealed partial class GraphView : Control
         int step = line.Axis == Core.SeriesAxis.Seconds ? NiceTimeStep(perLabel) : NiceStep(perLabel);
         double y = plot.Bottom + 4;
         double lastEnd = double.NegativeInfinity;
-        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text("frames", AxisSize, secondary) : null;
+        FormattedText? caption = line.Axis == Core.SeriesAxis.FrameOffset ? Text(line.Series.Runs is not null ? "runs of frames" : "frames", AxisSize, secondary) : null;
         double limit = plot.Right - (caption is null ? 0 : caption.Width + 12);
         for (long position = 0; position <= count; position += step)
         {
