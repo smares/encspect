@@ -12,11 +12,10 @@ pinned by their SHA-256, into a directory outside the repository, which may not 
 
     python3 scripts/fixtures/ac3_specs.py [directory]
 
-ETSI's server refuses curl's own user agent, so the download names a browser's.
+ETSI's and ATSC's servers refuse curl's own user agent; downloads.py names a browser's for them.
 """
 
 import pathlib
-import subprocess
 import sys
 
 import downloads
@@ -30,26 +29,13 @@ SPECS = [
      ["https://www.etsi.org/deliver/etsi_ts/103400_103499/103420/01.02.01_60/ts_103420v010201p.pdf"]),
 ]
 
-AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
-
 
 def main():
     target = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "ac3-specs")
     target.mkdir(parents=True, exist_ok=True)
-    original = downloads.download
-
-    def as_browser(url, path):
-        result = subprocess.run(["curl", "-fsSL", "--retry", "5", "--retry-delay", "15", "--connect-timeout", "30", "--speed-limit", "1024", "--speed-time", "60", "--max-time", "900", "-A", AGENT, "-o", str(path), url],
-                                capture_output=True, text=True)
-        return None if result.returncode == 0 else result.stderr.strip() or f"curl exit {result.returncode}"
-
-    downloads.download = as_browser
-    try:
-        for name, digest, addresses in SPECS:
-            downloads.fetch(addresses, digest, target / name)
-            print(f"{target / name}: SHA-256 {digest}")
-    finally:
-        downloads.download = original
+    for name, digest, addresses in SPECS:
+        downloads.fetch(addresses, digest, target / name)
+        print(f"{target / name}: SHA-256 {digest}")
     return 0
 
 

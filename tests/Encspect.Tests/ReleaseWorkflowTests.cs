@@ -280,7 +280,9 @@ public sealed class ReleaseWorkflowTests
         Assert.NotEmpty(uses);
         Assert.All(uses, u => Assert.Matches(@"^actions/[a-z-]+(/[a-z]+)?@v\d+$", u));
 
-        string ci = File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml"));
+        // CI reaches setup-dotnet through the composite action .github/actions/setup-dotnet, which release.yml cannot use.
+        string ci = File.ReadAllText(Path.Combine(Root, ".github", "workflows", "ci.yml"))
+            + string.Concat(Directory.EnumerateFiles(Path.Combine(Root, ".github", "actions"), "action.yml", SearchOption.AllDirectories).Select(File.ReadAllText));
         foreach (string action in uses.Where(u => !u.StartsWith("actions/download-artifact", StringComparison.Ordinal)))
         {
             Assert.Contains("uses: " + action, ci, StringComparison.Ordinal);
@@ -297,10 +299,14 @@ public sealed class ReleaseWorkflowTests
             .Where(l => l.Contains('=', StringComparison.Ordinal)).Select(l => l.Split('=', 2)).ToDictionary(p => p[0], p => p[1].Trim());
 
         string[] setup = [.. Job("build").Where(l => l.TrimStart().StartsWith("dotnet-version:", StringComparison.Ordinal))];
-        Assert.Single(setup);
-        string sdk = setup[0].Split(':', 2)[1].Trim();
-        Assert.Matches(@"^\d+\.\d+\.\d+$", sdk);
-        Assert.Equal(pin["sdk"], sdk);
+        // The setup and its repeat after a failed first attempt (see "Setting up .NET" in docs/development.md).
+        Assert.Equal(2, setup.Length);
+        foreach (string line in setup)
+        {
+            string sdk = line.Split(':', 2)[1].Trim();
+            Assert.Matches(@"^\d+\.\d+\.\d+$", sdk);
+            Assert.Equal(pin["sdk"], sdk);
+        }
 
         string notices = File.ReadAllText(Path.Combine(Root, "THIRD-PARTY-NOTICES.md"));
         Assert.Contains($"package, version {pin["runtime"]}.", notices, StringComparison.Ordinal);

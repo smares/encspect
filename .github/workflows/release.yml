@@ -14,6 +14,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/release.yml
+      - .github/actions/setup-dotnet/**
       - docs/releases/**
       - scripts/release/**
       - THIRD-PARTY-NOTICES.md
@@ -168,7 +169,18 @@ jobs:
 
       # Pinned to one SDK, unlike CI's 10.0.x: a self-contained publish bundles the runtime of the SDK it runs on, and
       # THIRD-PARTY-NOTICES.md names that runtime. Change the pin, scripts/release/dotnet-pin.txt and the notices together.
-      - uses: ./.github/actions/setup-dotnet
+      # Written out here, not through .github/actions/setup-dotnet: this job checks out the commit of an existing tag, which
+      # may predate that action. The same two steps as the action (reason there).
+      - name: Set up .NET
+        id: dotnet
+        uses: actions/setup-dotnet@v5
+        continue-on-error: true
+        with:
+          dotnet-version: 10.0.402
+
+      - name: Set up .NET again after a failed first attempt
+        if: steps.dotnet.outcome == 'failure'
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.402
 
