@@ -85,7 +85,7 @@ The header states a channel count and no speaker positions, so the stream names 
 - The reference figures, the run, and every difference with its status are in `tests/fixtures/tta/official-decoders.json`, which `TtaOfficialDecodersTests` holds the analyzer to. The 41 hand-built files hold bytes in place of coded samples: `tta -d` decodes two of them (counted from what it wrote), writes no data for a header of 0 channels, stops on 37, and crashes on one; FFmpeg has a count for one of the 37.
 - Derived damage variants (`scripts/fixtures/derive_variants.py tta`: cuts, a changed byte or CRC-32, a frame removed or repeated, the header's samples one more or fewer) are decoded the same way and matched by SHA-256; they are not committed.
 - The analyzer has not been changed to the reference. `built-channels-zero.tta`, a header with 0 channels and 100,000 samples, has no reference: `tta -d` exits 0 and writes no data, which gives no count (`noted`). No `pending` item is left in the committed file; the stop for fewer bytes than the header declares goes to the project lead to confirm.
-- The run is RUN (commit COMMIT); a second run on the same bytes reproduced it.
+- The run is 41338214809 (commit 54697b3); the first version of the run (41334418322, repeated as 41336001984) gave the same figures except for the stops added after review.
 
 ## Not covered
 

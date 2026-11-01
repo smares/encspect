@@ -532,7 +532,7 @@ Rollout step 2 ran as workflow run 41325618652 (commit e39069a, `ci/official-dec
 
 ## As built: step 3
 
-Rollout step 3 ran as workflow run RUN (commit COMMIT, `ci/official-decode-tta`), after an independent review of the first version (run 41334418322 at 35fc8c0 and its repeat 41336001984 at 4955f05, whose draft was identical). Figures, versions and the differences with their columns are in [development.md](../development.md) ("TTA decoding by libtta-c's tta -d") and in `tests/fixtures/tta/official-decoders.json`.
+Rollout step 3 ran as workflow run 41338214809 (commit 54697b3, `ci/official-decode-tta`), after an independent review of the first version (run 41334418322 at 35fc8c0 and its repeat 41336001984 at 4955f05, whose draft was identical). Figures, versions and the differences with their columns are in [development.md](../development.md) ("TTA decoding by libtta-c's tta -d") and in `tests/fixtures/tta/official-decoders.json`.
 
 - **Files:** `official_decode.py tta` (the TTA run: `tta_wav`, `tta_result`, `run_tta`), `derive_variants.py tta` (the TTA rules), the TTA part of `compare_official_decoders.py` (`compare_tta`, `render_tta`, `run_tta_comparison`; `write_official` takes the format), `tests/Encspect.Tests/TtaOfficialDecodersTests.cs`, and the `linux` and `compare` jobs of the workflow (a build step with `libtta_tool.build()` and a TTA decode step; the artifact holds `out` and `out-tta`; `compare` writes `comparison-tta.txt`, `comparison-tta.json` and `official-decoders.tta.draft.json`).
 - **Decisions made while building, for the review:**

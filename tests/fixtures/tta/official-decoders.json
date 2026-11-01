@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "tta",
  "run": {
-  "id": "41334418322",
-  "commit": "35fc8c05a73fdd1d74327fafdc73d5040520f515",
+  "id": "41338214809",
+  "commit": "54697b354b8b0a4c0b42ec2ed0e9f5e313af7172",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -170,27 +170,35 @@
       0
      ],
      "analyzer": 100000,
-     "reference": 0,
-     "referencePath": "tta -d",
-     "referenceKind": "official",
-     "witnesses": {
-      "ffmpeg": null
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {},
+     "ttaStopped": {
+      "stoppedBy": "end",
+      "exit": 0,
+      "signal": null,
+      "reason": "exit 0, 0 channels: the bytes written give no sample count"
      },
-     "format": {
-      "rate": 44100,
-      "channels": 0,
-      "bits": 16
-     }
+     "ttaNoCount": "0 channels: the bytes written give no sample count",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "noReference": "tta -d gave none (exit 0, 0 channels: the bytes written give no sample count); ffmpeg gave none (exit None: no audio stream)"
     }
    ],
    "differences": [
     {
      "figure": "samples",
      "decoder": "tta -d",
-     "value": 0,
+     "value": null,
      "analyzer": 100000,
-     "status": "pending",
-     "kind": "analyzer-differs",
+     "status": "noted",
+     "kind": "decoder-gives-no-count",
+     "reason": "tta -d accepts the header (exit 0) and writes no data; with 0 channels: the bytes written give no sample count",
      "statusSource": "rule"
     }
    ],
