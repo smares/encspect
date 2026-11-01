@@ -238,10 +238,10 @@ internal sealed class StdStream
             return;
         }
 
-        int bitOffset = (int)new Bits(buffer, 8 * align) { Position = 8 }.Read(p.BitOffsetBits);
-        record.BitOffset = bitOffset;
         int headerBits = 8 + p.BitOffsetBits;
-        if (bitOffset > (8 * align) - headerBits)
+        int bitOffset = headerBits <= 8 * align ? (int)new Bits(buffer, 8 * align) { Position = 8 }.Read(p.BitOffsetBits) : -1;
+        record.BitOffset = bitOffset;
+        if (bitOffset < 0 || bitOffset > (8 * align) - headerBits)
         {
             record.State = SuperframeState.BitOffsetRejected;
             reservoir.Bytes = 0;

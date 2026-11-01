@@ -115,7 +115,7 @@ internal static class StdText
         $"{(count == 1 ? "A superframe states" : $"{Number(count)} superframes state")} no frame ending in {(count == 1 ? "it" : "them")}, or fewer than none, with no room for the middle of a frame; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
 
     public static string BitOffset(int count, long offset) =>
-        $"{(count == 1 ? "A superframe gives" : $"{Number(count)} superframes give")} a last frame bit offset past {(count == 1 ? "its" : "their")} end; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
+        $"{(count == 1 ? "A superframe gives" : $"{Number(count)} superframes give")} a last frame bit offset past {(count == 1 ? "its" : "their")} end, or {(count == 1 ? "is" : "are")} too short to hold that field; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
 
     public static string Filler(int count, bool isStuffing, long bits, long offset) =>
         $"{(count == 1 ? "A frame that began in the superframe before is" : $"{Number(count)} frames that began in the superframe before are")} followed by {(isStuffing ? "zero bits" : "bits that are not zero")} up to the bit offset the superframe states, which a decoder skips; the first has {Number(bits)} (in the superframe at {Hex(offset)}).";

@@ -2762,7 +2762,7 @@
       {
         "severity": "Warning",
         "code": "wma.bit-offset",
-        "message": "A superframe gives a last frame bit offset past its end; a decoder rejects it. The first is at 0x24E.",
+        "message": "A superframe gives a last frame bit offset past its end, or is too short to hold that field; a decoder rejects it. The first is at 0x24E.",
         "offset": 590,
         "length": 100,
         "path": [
