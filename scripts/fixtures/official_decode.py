@@ -19,7 +19,7 @@ output are written to a temporary folder and deleted.
 
 TTA has one path, the reader `tta -d` (`tta -dp secret` for the file written with that password, beside a run without the password): TTA has no direct path
 (decision 6). Its samples are counted from the bytes written after the WAVE header with the channel count and bits per sample of the WAVE header it wrote, never
-from the declared size. A nonzero exit status, a crash, a time-out or a missing output file is a stop with its reason, and the sample count of what a stopped run
+from the declared size, which only checks completeness: fewer data bytes than the header declares is a stop. A nonzero exit status, a crash, a timeout or a missing output file is a stop with its reason, and the sample count of what a stopped run
 left is `partialSamples`, never a figure.
 """
 
@@ -353,58 +353,104 @@ def run_ogg(args):
 # ---- the TTA run -----------------------------------------------------------------------------------------------------
 
 TTA_PASSWORD = "secret"  # the password make_external_tta_fixtures.py wrote external-libtta-16-stereo-password.tta with
+TTA_PASSWORD_FILES = {"external-libtta-16-stereo-password.tta"}  # the files `tta -dp secret` decodes: this one and its derived variants
 TTA_CHATTER = re.compile(r"^(TTA1 lossless audio encoder/decoder, version [\d.]+|Decoding: .*|Progress: \d+%.*|Time: [\d.]+ sec\.)$")
 
 
+def tta_wav(path):
+    """What a WAVE file `tta` wrote says about itself: format tag, channels, rate, bits, block align, where the data chunk's bytes begin, the size it declares and how many
+    bytes were written for it (to the end of the file, or to the end of the declared size when a chunk follows it); None when the file is no WAVE file."""
+    data = pathlib.Path(path).read_bytes()
+    if data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        return None
+    pos, info = 12, {}
+    while pos + 8 <= len(data):
+        kind, size = data[pos:pos + 4], struct.unpack_from("<I", data, pos + 4)[0]
+        if kind == b"fmt " and pos + 24 <= len(data):
+            info["formatTag"], info["channels"], info["rate"], _, info["blockAlign"], info["bits"] = struct.unpack_from("<HHIIHH", data, pos + 8)
+        elif kind == b"data":
+            written = len(data) - pos - 8
+            info.update({"headerBytes": pos + 8, "declaredDataBytes": size, "writtenBytes": written, "trailingBytes": max(0, written - size) if size else 0})
+            info["dataBytes"] = min(written, size) if written > size else written
+            return info
+        pos += 8 + size + (size & 1)
+    info.update({"headerBytes": None, "declaredDataBytes": None, "writtenBytes": 0, "dataBytes": 0, "trailingBytes": 0})
+    return info
+
+
 def tta_result(program, path, tmp, password):
-    """One run of `tta -d` (or `-dp password`): the samples counted from the PCM bytes in the WAVE file it wrote, with its own channel count and bits per sample."""
+    """One run of `tta -d` (or `-dp password`): the samples counted from the PCM bytes in the WAVE file it wrote, with its own channel count and block align. Fewer data
+    bytes than its WAVE header declares is a stop (the tool exits 0 and says nothing); the declared size is a check of completeness, never the count."""
     target = pathlib.Path(tmp) / ("out-" + pathlib.Path(path).name + ".wav")
     if target.exists():
         target.unlink()
     arguments = [program, "-dp", password] if password else [program, "-d"]
     child = probe.run_child("tta -dp" if password else "tta -d", [*arguments, str(path), str(target)], jsonl=False)
     text = (child["stderr"] + child.get("stdout", "")).replace("\r", "\n").replace(str(path), pathlib.Path(path).name).replace(str(target), "OUTPUT").replace(str(program), "tta")
-    warnings = [l.strip() for l in text.splitlines() if l.strip() and not TTA_CHATTER.match(l.strip())]
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    warnings = [l for l in lines if not TTA_CHATTER.match(l)]
     left = target.exists()
-    info = wav_info(target) if left and target.stat().st_size else None
-    frame = info["channels"] * info["bits"] // 8 if info and info.get("channels") and info.get("bits") else None
-    # A WAVE header without channels and without data bytes (exit 0 on built-channels-zero.tta) writes no sample: 0, with the header's fields in the notes.
-    empty = bool(info) and info["headerBytes"] is not None and info["dataBytes"] == 0 and not frame
+    info = tta_wav(target) if left and target.stat().st_size else None
+    has_header = info is not None and info["headerBytes"] is not None
+    container = (info["bits"] + 7) // 8 if has_header and info.get("bits") else None
+    # The frame is the WAVE header's block align, valid only when it is channels x the bytes of one container; 0 channels leaves no frame to count by.
+    frame = info["blockAlign"] if has_header and container and info.get("channels") and info["blockAlign"] == info["channels"] * container else None
+    no_channels = has_header and info.get("channels") == 0
+    short = has_header and info["declaredDataBytes"] is not None and info["dataBytes"] < info["declaredDataBytes"]
     stopped = "end"
+    reason = None
     if child["timedOut"]:
         stopped = "timeout"
     elif child["signal"]:
         stopped = "crash"
-    elif child["exit"] != 0 or not left or not info or info["headerBytes"] is None or not (frame or empty):
+    elif child["exit"] != 0 or not left or not has_header:
         stopped = "error"
+    elif short:
+        stopped = "error"
+        reason = "wrote %d of the %d data bytes its WAVE header declares" % (info["dataBytes"], info["declaredDataBytes"])
+    elif not frame and not no_channels:
+        stopped = "error"
+        reason = "the WAVE header's block align %s does not fit %s channels of %s bits" % (info.get("blockAlign"), info.get("channels"), info.get("bits"))
     result = {
         "tool": "tta -dp" if password else "tta -d",
         "decoder": {"libtta-c": "2.3"},
-        "opened": info is not None,
-        "formats": [{"rate": info["rate"], "channels": info["channels"], "bits": info["bits"]}] if info and (frame or empty) else [],
-        "runs": [{"rate": info["rate"], "channels": info["channels"], "bits": info["bits"], "samples": info["dataBytes"] // frame if frame else 0, "outputBytes": info["dataBytes"],
-                  "remainder": info["dataBytes"] % frame if frame else 0, "declaredDataBytes": info["declaredDataBytes"]}] if (frame or empty) else [],
+        "wroteWaveHeader": has_header,
+        "formats": [{"rate": info["rate"], "channels": info["channels"], "bits": info["bits"], "formatTag": info["formatTag"], "blockAlign": info["blockAlign"]}] if has_header and "formatTag" in info else [],
+        "runs": [],
         "stoppedBy": stopped,
         "exit": child["exit"], "signal": child["signal"], "timedOut": child["timedOut"], "elapsedMs": child["elapsedMs"],
         "outputFileLeft": left,
         "warnings": warnings[:40],
+        "stderrLines": len(lines), "droppedLines": len(lines) - len(warnings), "stderrTail": "\n".join(lines)[-600:],
     }
+    if reason:
+        result["stopReason"] = reason
     notes = []
-    if stopped == "end":
+    if has_header and (frame or no_channels):
+        run = {"rate": info["rate"], "channels": info["channels"], "bits": info["bits"], "headerBytes": info["headerBytes"], "writtenBytes": info["writtenBytes"], "outputBytes": info["dataBytes"],
+               "declaredDataBytes": info["declaredDataBytes"]}
+        if frame:
+            run.update({"samples": info["dataBytes"] // frame, "remainder": info["dataBytes"] % frame})
+            result["runs"] = [run]
+        else:
+            result["runs"] = [run]
+            result["noSampleCount"] = "0 channels: the bytes written give no sample count"
+            notes.append("the WAVE header states 0 channels and %d data bytes follow: any sample count writes none, so the bytes give no count" % info["dataBytes"])
+    if stopped == "end" and result["runs"]:
         run = result["runs"][0]
-        if empty:
-            notes.append("the WAVE header states %s channels and %s bits per sample and no data follows: 0 samples" % (info["channels"], info["bits"]))
-        if run["remainder"]:
+        if run.get("remainder"):
             notes.append("%d bytes after the last whole sample" % run["remainder"])
-        if run["declaredDataBytes"] != run["outputBytes"]:
-            notes.append("the WAVE header declares %d data bytes and %d were written; the written bytes are counted" % (run["declaredDataBytes"], run["outputBytes"]))
+        if info["trailingBytes"]:
+            notes.append("%d bytes follow the data chunk's declared size and are not counted" % info["trailingBytes"])
     elif child["signal"]:
         notes.append("killed by %s; no reference" % child["signal"])
     elif child["exit"] not in (0, None):
         notes.append("exit status %d%s; no reference" % (child["exit"], "" if left else " and no output file"))
+    elif reason:
+        notes.append(reason + "; exit 0 and no message; the count is partial and no reference")
     if notes:
         result["notes"] = notes
-    samples = result["runs"][0]["samples"] if result["runs"] else None
+    samples = result["runs"][0].get("samples") if result["runs"] else None
     if samples is not None:
         result["totalSamples" if stopped == "end" else "partialSamples"] = samples
     if left:
@@ -433,7 +479,7 @@ def run_tta(args):
     def case(item):
         path, derived = item
         record = file_record(path, "tta", derived)
-        if "password" in path.name:
+        if path.name in TTA_PASSWORD_FILES or (derived and pathlib.Path(derived["from"]).name in TTA_PASSWORD_FILES):
             record["paths"] = {"reader": tta_result(args.tta, path, tmp, TTA_PASSWORD), "readerWithoutPassword": tta_result(args.tta, path, tmp, None)}
         else:
             record["paths"] = {"reader": tta_result(args.tta, path, tmp, None)}

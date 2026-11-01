@@ -122,6 +122,12 @@ public sealed class TtaOfficialDecodersTests(ITestOutputHelper output)
             }
 
             long? listed = difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null ? null : difference.GetProperty("analyzer").GetInt64();
+            if (kind == "decoder-gives-no-count")
+            {
+                Assert.True(actual == listed, $"{name}: the samples are {actual?.ToString() ?? "absent"}; the list has the analyzer's {listed?.ToString() ?? "absent"} beside the decoder's missing count");
+                continue;
+            }
+
             long value = difference.GetProperty("value").GetInt64();
             bool resolved = actual == value;
             Assert.True(resolved || actual == listed, $"{name}: the samples are {actual?.ToString() ?? "absent"}; the difference with {decoder} ({value}) lists the analyzer's {listed?.ToString() ?? "absent"}");

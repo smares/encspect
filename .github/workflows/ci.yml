@@ -419,7 +419,7 @@ jobs:
         shell: bash
         env:
           SHARD_FILTER: ${{ matrix.filter }}
-          # OggOfficialDecodersTests lists its pending, stale and new entries in the job summary of this one job.
+          # OggOfficialDecodersTests and TtaOfficialDecodersTests list their pending, stale and new entries in the job summary of this one job.
           ENCSPECT_OFFICIAL_SUMMARY: ${{ matrix.shard == 'rest' && matrix.os == 'ubuntu-26.04' && '1' || '' }}
         run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
 

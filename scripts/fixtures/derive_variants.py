@@ -33,7 +33,9 @@ last = F[-1] and middle = F[len(F) // 2]:
   flip-byte              the byte in the middle of the middle frame's coded bytes changed (XOR 0x55), so the frame fails its CRC-32
   flip-crc               the last byte of the middle frame (its CRC-32) changed (XOR 0x55), so the coded bytes are intact and the frame fails its CRC-32
   drop-frame             the middle frame removed from the data, the seek table as it was (a file of two or more frames)
-  drop-frame-table       the middle frame removed, its entry removed from the seek table and the table's CRC-32 rewritten, the header as it was (two or more frames)
+  drop-frame-table       the middle frame removed, its entry removed from the seek table and the table's CRC-32 rewritten, the header as it was (two or more frames): the table
+                         is 4 bytes shorter than the header calls for, so a reader takes the recomputed CRC-32 as the last entry and the next 4 bytes as the table's CRC-32,
+                         which fails
   repeat-frame           the middle frame written twice in a row, the seek table as it was (two or more frames)
   samples-plus-one       the header's samples one more, its CRC-32 rewritten
   samples-minus-one      the header's samples one fewer, its CRC-32 rewritten

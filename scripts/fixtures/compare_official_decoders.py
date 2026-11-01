@@ -19,7 +19,7 @@ what the owner's reader writes after the priming and padding of the format (the 
 TTA (comparison-tta.txt, comparison-tta.json, --write-official-tta): one figure per file, the stream's `samples` against the reference. TTA has no priming or padding
 (one stage) and `tta -d` is the only official path (decision 6): it gives per-file figures and no per-frame information, so units are not compared.
   reference  the samples `tta -d` wrote (`tta -dp secret` for the file written with that password), counted from the PCM bytes with the channel count and bits per
-             sample of the WAVE header it wrote, when it exited 0 and left the output; a nonzero exit, a crash or a time-out gives no official reference
+             sample of the WAVE header it wrote, when it exited 0 and left the output; a nonzero exit, a crash or a timeout gives no official reference
   fallback   ffmpeg's count, only when `tta -d` gave no reference and ffmpeg exited 0, labeled `ffmpeg (fallback)`; else none. A partial count is never a figure
 
 The reference rule for Ogg, per stage:
@@ -334,6 +334,9 @@ def figure_differences(figures):
             if value is not None and r is not None and value != r:
                 differences.append({"figure": figure["id"], "decoder": name, "value": value, "analyzer": a, "reference": r, "status": "explained" if a == r else "pending",
                                     "kind": "witness-differs"})
+        if figure.get("ttaNoCount"):
+            differences.append({"figure": figure["id"], "decoder": "tta -d", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-gives-no-count",
+                                "reason": "tta -d accepts the header (exit 0) and writes no data; with %s" % figure["ttaNoCount"]})
         if figure.get("refused"):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
@@ -427,11 +430,15 @@ def tta_stop_reason(reader):
     if reader["stoppedBy"] == "crash":
         parts.append("killed by %s" % reader["signal"])
     elif reader["stoppedBy"] == "timeout":
-        parts.append("timed out")
+        parts.append("timeout")
     elif reader["stoppedBy"] == "error":
         parts.append("exit status %s" % reader["exit"])
         if not reader.get("outputFileLeft"):
             parts.append("no output file")
+        if reader.get("stopReason"):
+            parts.append(reader["stopReason"])
+    elif reader.get("noSampleCount"):
+        parts.append("exit 0, " + reader["noSampleCount"])
     messages = [w for w in reader.get("warnings", []) if w.startswith("tta:")]
     if messages:
         parts.append('"%s"' % messages[0][len("tta: "):])
@@ -461,6 +468,8 @@ def compare_tta(record, analyzer, ffmpeg):
                 figure["witnessErrors"] = {"ffmpeg": ffmpeg_failure(ffmpeg, "default")}
     else:
         figure["ttaStopped"] = {"stoppedBy": reader["stoppedBy"], "exit": reader["exit"], "signal": reader["signal"], "reason": tta_stop_reason(reader)}
+        if reader.get("noSampleCount"):
+            figure["ttaNoCount"] = reader["noSampleCount"]
         if reader.get("partialSamples") is not None:
             figure["ttaPartialSamples"] = reader["partialSamples"]
         if ff and ff.get("samples") is not None:
@@ -491,7 +500,9 @@ def render_tta(results, not_run, unmatched, environment, ffmpeg_version, warning
             wit = "; ".join("%s %s" % (k, show(v)) for k, v in fig["witnesses"].items())
             note = fig.get("noReference") or fig.get("noOfficialReference") or ""
             if fig.get("ttaPartialSamples") is not None:
-                note += " (tta left %s samples, not a figure)" % show(fig["ttaPartialSamples"])
+                note += " (tta wrote %s samples before it stopped, not a figure)" % show(fig["ttaPartialSamples"])
+            if fig.get("fallbackErrors"):
+                note += " [ffmpeg printed: %s]" % fig["fallbackErrors"][0]
             tag = "" if fig["analyzer"] == fig["reference"] or fig["reference"] is None else "  DIFFERS"
             rows.append([r["file"], r["sha256"][:8], show(fig["analyzer"]), show(fig["reference"]), fig["referenceKind"] or "-", wit, (note + tag).strip(), ",".join(r["findings"]) or "-"])
     out += ["", table(rows, ["file", "sha256", "analyzer", "reference", "kind", "other decoders", "notes", "analyzer findings"])]
@@ -530,6 +541,9 @@ def render_tta(results, not_run, unmatched, environment, ffmpeg_version, warning
         rule_rows.append([rule, len(subset), "%d / %d / %d" % (same, differs, len(figs) - same - differs), sum(1 for f in figs if f["referenceKind"] == "ffmpeg (fallback)"),
                           sum(1 for f in figs if f["referenceKind"] == "official")])
     out.append(table(rule_rows, ["rule", "files", "analyzer = / differs / none", "ffmpeg fallback", "tta -d"]))
+    twins = [r for r in results if r.get("sameBytesAs")]
+    out += ["", "Variants with the same bytes as another (one row above stands for all of them; %d rows)" % len(twins)]
+    out += ["  %s = %s" % (r["file"], ", ".join(r["sameBytesAs"])) for r in twins] or ["  none"]
     out += ["", "Not run (selected files without a record): " + (", ".join(not_run) if not_run else "none")]
     if unmatched:
         out.append("Records without a file here (another version of a fixture or variant): " + ", ".join(unmatched))
@@ -542,11 +556,14 @@ def run_tta_comparison(args, records, environments, ffmpeg_version, warnings, tm
     if not tta_records:
         return None
     environment = next((e for e in environments if e.get("format") == "tta"), {})
-    files = {}
+    files, aliases = {}, {}
     for path in sorted(p for p in (FIXTURES / "tta").iterdir() if p.is_file() and p.suffix == ".tta"):
         files[sha256_of(path)] = (path, None)
     manifest = derive_variants.write_tta(tmp / "ttavariants")
     for entry in manifest:
+        if entry["sha256"] in files:
+            aliases.setdefault(entry["sha256"], [files[entry["sha256"]][0].name]).append(entry["name"])
+            continue
         files[entry["sha256"]] = (tmp / "ttavariants" / entry["name"], entry)
     cli_reports = run_cli(args.encspect, tmp / "ttavariants") if args.encspect else {}
 
@@ -558,9 +575,10 @@ def run_tta_comparison(args, records, environments, ffmpeg_version, warnings, tm
         analyzer, source = load_tta_analyzer(path, cli_reports)
         column = None
         if not args.no_ffmpeg:
-            column = ffmpeg_column(args.ffmpeg, args.ffprobe, path, tmp, runs=(("default", []),), input_flags=("-password", "secret") if "password" in path.name else ())
+            column = ffmpeg_column(args.ffmpeg, args.ffprobe, path, tmp, runs=(("default", []),), input_flags=("-password", "secret") if "readerWithoutPassword" in record["paths"] else ())
         compared = compare_tta(record, analyzer, column)
         return {"file": path.name, "sha256": sha, "derived": derived and {"from": derived["source"], "rule": derived["rule"]}, "bytes": record["bytes"],
+                "sameBytesAs": aliases.get(sha, [])[1:] if sha in aliases else [],
                 "analyzerSource": source, "analyzerStreams": analyzer["streams"] if analyzer else None, "ffmpeg": column, "record": summarize(record), **compared}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -790,7 +808,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
     if format_ == "ogg":
         tools = {"packages": environment.get("dpkg"), "oggdec": environment.get("oggdec"), "opusdec": environment.get("opusdec")}
     else:
-        tools = {"tta": environment.get("tta"), "ttaArchiveSha256": environment.get("ttaArchiveSha256")}
+        tools = {"tta": environment.get("tta"), "ttaArchiveSha256": environment.get("ttaArchiveSha256"), "gcc": environment.get("gcc")}
     packages_differ = any(previous_run.get(k) != v for k, v in tools.items())
     files, changed = [], []
     for r in results:
@@ -824,7 +842,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         print("changed figure, same packages (review): " + line, file=sys.stderr)
     doc = {"schema": SCHEMA, "format": format_, "run": {"id": run_id or environment.get("runId"), "commit": environment.get("commit"), "imageOS": environment.get("imageOS"),
                                                          "imageVersion": environment.get("imageVersion"), "ffmpeg": (ffmpeg_version or [None])[0], **tools,
-                                                         **({"gcc": environment.get("gcc")} if format_ == "tta" else {})},
+                                                         },
            "statuses": list(STATUSES), "changedFiguresForReview": changed, "files": files}
     target.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
