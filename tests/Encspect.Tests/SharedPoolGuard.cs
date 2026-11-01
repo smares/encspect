@@ -12,13 +12,14 @@ namespace Encspect.Tests;
 // (131,096 bytes with its header: the report kept that much more on macos-15-intel, and the analysis held 54.62 bytes more per further
 // slice on ubuntu-26.04), released about 30 s after MeasuringManyChainedStreamsStaysWithinTheBound had last read through ProbeStream.
 //
-// So the memory tests return no array of 8,192 elements or more to those pools: a test that does, through its own code or the analysis
+// So the memory tests return no array of 16,384 elements or more to those pools: a test that does, through its own code or the analysis
 // it runs, fails here with where it returned it. The usual sources are a LINQ ToArray over many elements (a collection expression that
 // spreads an IEnumerable is one), a Read(Span) on a class derived from MemoryStream (which reads through a pooled array of the span's
-// size) and System.Text.Json's documents. Smaller arrays move a reading by less than the bounds' margins.
+// size) and System.Text.Json's documents. Smaller arrays move a reading by less than the bounds' margins (19.2 KB over the further slices
+// of the WAVE test); the 8 KiB buffers of DeflateStream, which the Matroska and ID3v2 parsers inflate through, are among them.
 internal sealed class SharedPoolGuard : EventListener
 {
-    private const int Smallest = 8192;
+    private const int Smallest = 16384;
 
     private readonly ConcurrentQueue<string> _returns = new();
 
