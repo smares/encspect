@@ -137,10 +137,11 @@ internal static class Explain
     public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
     public const string DecodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
     public const string StartOffset = "The first audio page's granule position less the samples returned up to it: 0 for a stream that starts at its beginning, below 0 where samples are discarded at the start, above where the stream starts later (section A.2).";
-    public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned, at most what the first two blocks return (section A.2).";
+    public const string StartOffsetClamped = "The first audio page's granule position less the samples returned up to it, shown at the limit of a 64-bit figure: the position is at least that far from the samples returned (section A.2).";
+    public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned, at most what the packet that carries the position returns (libvorbis, vorbis_synthesis_blockin; section A.2 allows at most what the first two blocks return). After a refused packet or a gap before the first position, libvorbis counts the samples returned from there, so a start offset below 0 can come with no start trimming.";
     public const string EndTrimming = "Samples the packets return beyond the last granule position, which a decoder drops from the end (section A.2).";
     public const string GapTrimming = "Samples a decoder discards at a page whose granule position, after a gap or a refused packet, is below the samples returned since then, at most what the page's last packet returns (libvorbis, vorbis_synthesis_blockin); the Vorbis I specification does not describe it.";
-    public const string Samples = "The samples a decoder outputs: the decoded samples less what the start and end trimming drop.";
+    public const string Samples = "The samples a decoder outputs: the decoded samples less what the start, end and gap trimming drop.";
     public const string Duration = "The samples over the sample rate, in seconds.";
     public const string StatIsVbr = "Whether the audio packets differ in size, so the bitrate changes from packet to packet.";
     public const string AverageBitrate = "The bits of the audio packets over the samples they return.";

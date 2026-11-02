@@ -496,6 +496,17 @@ def vorbis_skip_then_small():
     f.write()
 
 
+def vorbis_short_start_trim():
+    # Four short blocks, a first position 900 below the packets, and the first page ending after the fifth audio packet: libvorbis
+    # discards no more than that packet returns (64 + 512), not the 128 of the first two blocks (oggdec 25,684).
+    blocks = [0] * 4 + [1] * 26
+    packets, granules = vorbis_stream(1, 44100, blocks, start_offset=-900, end_trim=300)
+    f = single("vorbis-short-start-trim", packets, granules, Cuts(1, 2, 5, 12, 13), serial=0x0B0B0015, codec="Vorbis")
+    f.finding("vorbis.start-page-layout", "ends after audio packet 5")
+    f.finding("vorbis.start-trimming-large", "discards 900 samples at the start, more than the 128")
+    f.write()
+
+
 def vorbis_packet_errors():
     # Three modes, so the mode takes two bits and 3 is undefined; window flags that contradict the
     # neighbors; a packet with the type bit set; and an empty packet.
@@ -1084,7 +1095,7 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_granule_extreme, vorbis_empty_carrier, vorbis_end_page_repeated, vorbis_eos_then_eos, vorbis_eos_mid_then_more, vorbis_first_extreme, vorbis_skip_before_first, vorbis_skip_then_small, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_granule_extreme, vorbis_empty_carrier, vorbis_end_page_repeated, vorbis_eos_then_eos, vorbis_eos_mid_then_more, vorbis_first_extreme, vorbis_skip_before_first, vorbis_skip_then_small, vorbis_short_start_trim, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,

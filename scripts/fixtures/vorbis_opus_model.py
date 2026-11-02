@@ -560,6 +560,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                     first_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, first_offset))
                     first_trim_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, granule - counted))
                     first_position_packet = index
+                    first_position_returned = last_returned
                 elif lost:
                     if not is_end and counted > granule:
                         gap_trim += min(counted - granule, last_returned)
@@ -586,7 +587,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
         elif first_trim_offset < 0:
             if -first_trim_offset > first_returned + second_returned:
                 findings.append("vorbis.start-trimming-large")
-            start_trim = min(-first_trim_offset, first_returned + second_returned, decoded)
+            start_trim = min(-first_trim_offset, first_position_returned, decoded)
     if beyond:
         findings.append("vorbis.granule-beyond-packets")
     if large:

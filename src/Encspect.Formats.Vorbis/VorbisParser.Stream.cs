@@ -146,6 +146,7 @@ public sealed partial class VorbisParser
         private int _blocks;
         private long? _firstOffset;
         private long _firstTrimOffset;
+        private long _firstPositionReturned;
 
         // The count libvorbis keeps: the granule position it last took (the first one, one after a gap, or the one of a page that
         // disagrees) and the samples decoded when it did; the position the packets give at a later point is the first plus the
@@ -593,6 +594,7 @@ public sealed partial class VorbisParser
                 Int128 offset = (Int128)position - _decoded;
                 _firstOffset = ClampOffset(isEnd ? Int128.Max(0, offset) : offset);
                 _firstTrimOffset = ClampOffset((Int128)position - counted);
+                _firstPositionReturned = _lastReturned;
                 _hasAnchor = true;
                 _firstPositionField = packet.EndPositionField;
                 _firstPositionPacket = _packets - 1;
@@ -758,22 +760,24 @@ public sealed partial class VorbisParser
                 return 0;
             }
 
-            // libvorbisfile discards no more than the limit, which oggdec's output confirms. After a refused packet before the first
-            // position, libvorbis measures the position by the samples since, which can leave nothing to discard.
+            // libvorbis trims the start in the branch of vorbis_synthesis_blockin that takes the first position, no more than it has
+            // buffered, which is what the packet carrying the position returns (oggdec's output confirms it). After a refused packet
+            // before the first position it measures the position by the samples since, which can leave nothing to discard.
             long discarded = _firstTrimOffset;
             if (discarded >= 0)
             {
                 return 0;
             }
 
+            long trim = Math.Min(Math.Min(-discarded, _firstPositionReturned), _decoded);
             long limit = _firstReturned + _secondReturned;
             if (-discarded > limit)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
-                    $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); libvorbisfile discards {limit}.");
+                    $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); the start trimming is taken as {trim}, the {_firstPositionReturned} the packet that carries the position returns at most.");
             }
 
-            return Math.Min(Math.Min(-discarded, limit), _decoded);
+            return trim;
         }
 
         // What the end-of-stream positions cut from the end: the end trimming.

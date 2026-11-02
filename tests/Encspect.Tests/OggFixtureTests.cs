@@ -96,7 +96,7 @@ public class OggFixtureTests
     }
 
     // The same, for the positions libvorbis takes at an end-of-stream page and after it loses its count (block.c, vorbis_synthesis_blockin).
-    // oggdec writes 28,896 for the first two files and 28,172 and 28,672 for the third and the last; the libvorbis run with the granule
+    // oggdec writes 28,896 for the first two files and 28,172, 28,672 and 25,684 for the third, the fifth and the last (the last trims what the fifth packet returns, 576, not the 128 of the first two blocks); the libvorbis run with the granule
     // positions writes 29,696 for vorbis-skip-before-first (oggdec 28,672, a reader behavior like the one of vorbis-packet-errors.ogg).
     [Theory]
     [InlineData("ogg/vorbis-eos-then-eos.ogg", 0, 800, 0, 28_896)]
@@ -104,6 +104,7 @@ public class OggFixtureTests
     [InlineData("ogg/vorbis-first-extreme.ogg", 1_024, 500, 0, 28_172)]
     [InlineData("ogg/vorbis-skip-before-first.ogg", 0, 0, 0, 29_696)]
     [InlineData("ogg/vorbis-skip-then-small.ogg", 0, 0, 1_024, 28_672)]
+    [InlineData("ogg/vorbis-short-start-trim.ogg", 576, 300, 0, 25_684)]
     public void The_trims_follow_where_libvorbis_counts_from(string name, long start, long end, long gap, long samples)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
@@ -112,7 +113,7 @@ public class OggFixtureTests
         Assert.Equal($"{start} samples", Find(report.Root, "Start Trimming")?.Value?.ToString());
         Assert.Equal($"{end} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
         Assert.Equal(gap == 0 ? null : $"{gap} samples", Find(report.Root, "Gap Trimming")?.Value?.ToString());
-        Assert.Equal(name.Contains("first-extreme", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.start-trimming-large"));
+        Assert.Equal(name.Contains("first-extreme", StringComparison.Ordinal) || name.Contains("short-start-trim", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.start-trimming-large"));
     }
 
     // The pages after an end-of-stream page follow from the position libvorbis took there, so none disagrees with it.
