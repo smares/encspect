@@ -683,8 +683,192 @@ def at_rate(samples, rate_from, rate_to):
     return int(exact + Fraction(1, 2)) if exact >= 0 else 0, exact.denominator == 1
 
 
-def compare_aac(record, analyzer, ffmpeg):
-    """The figures, differences and unit verdicts of one AAC record."""
+# ---- Core Audio's column (rollout step 5) ---------------------------------------------------------------------------------
+
+def ca_total(path):
+    """(total, format, why) of a Core Audio path that opened and reached the end: its single output format (None when it output nothing); else (None, None, the reason)."""
+    if not path:
+        return None, None, "not run"
+    if not path.get("opened"):
+        return None, None, "did not open (status %s)" % show(path.get("openStatus") if "openStatus" in path else path.get("converterStatus"))
+    if path["stoppedBy"] != "end":
+        return None, None, "stopped by " + path["stoppedBy"]
+    runs = path.get("runs") or []
+    if not runs:
+        return 0, None, None
+    return runs[0]["samples"], {"rate": runs[0]["rate"], "channels": runs[0]["channels"]}, None
+
+
+def ca_entry(path, total, fmt, rate):
+    value, exact = at_rate(total, fmt["rate"] if fmt else None, rate)
+    entry = {"samples": value, "decoderSamples": total, "format": fmt}
+    if not exact:
+        entry["exact"] = False
+    if "refusedUnits" in path:
+        entry.update({"input": path.get("input"), "refusedUnits": path["refusedUnits"], "noOutputUnits": path["noOutputUnits"], "drainFrames": path["drainFrames"]})
+        # The converter holds frames back at the start (its first calls give nothing); a unit that gives nothing after the first output is listed by index.
+        listed = {u["index"] for u in path["units"]}
+        first = next((i for i in range(path["unitCount"]) if i not in listed), None)
+        silent = [u["index"] for u in path["units"] if u["result"] == "no output" and first is not None and u["index"] > first]
+        if silent:
+            entry["silentUnits"] = silent[:8] + (["..."] if len(silent) > 8 else [])
+    else:
+        entry.update({"packetTable": path.get("packetTable"), "fileFormat": path.get("fileFormat")})
+    return entry
+
+
+def attach_coreaudio(figures, ca, analyzer, record, notes):
+    """Core Audio's two paths on the figures of a file. The converter is the second reference of the coded stage (where FDK gives none it becomes the reference, rule order of the
+    design); the reader (ExtAudioFile, which applies the packet table) is the reference of the trimmed figures and, in a file without them, a witness of the coded figure. The
+    reader's total counts at the core rate (the media timescale) for the gapless figures, as the analyzer's do; both totals of the coded figure count at the analyzer's rate."""
+    if not ca or ca.get("notFed") or not figures:
+        return
+    reader, conv = ca["paths"].get("reader"), ca["paths"].get("converter")
+    direct = record["paths"]["direct"]
+    blocks = max((u.get("blocks", 1) for u in direct.get("units", [])), default=1)
+    coded = [f for f in figures if f["stage"] == "coded"]
+    trimmed = [f for f in figures if f["stage"] == "trimmed"]
+    if len(coded) == 1:
+        fig = coded[0]
+        rate = (fig.get("unpaired") or {}).get("rate") or (fig["analyzerRates"][0] if len(fig["analyzerRates"]) == 1 else None)
+        column = {}
+        total, fmt, why = ca_total(conv)
+        if total is None:
+            column["converter"] = {"samples": None, "why": why}
+        else:
+            column["converter"] = ca_entry(conv, total, fmt, rate)
+            if blocks > 1:
+                column["converter"]["blocksPerFrame"] = blocks
+            if total == 0 and fig["analyzer"] and conv["unitCount"] > 0:
+                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused, the others held back)" % (conv["unitCount"], conv["refusedUnits"])
+        if not trimmed and reader:
+            total, fmt, why = ca_total(reader)
+            column["reader"] = {"samples": None, "why": why} if total is None else ca_entry(reader, total, fmt, rate)
+        fig["coreAudio"] = column
+        entry = column["converter"]
+        # Where FDK gives no reference, the next decoder of the rule is the reference: the converter, unless the frames declare several raw data blocks and it outputs one block of each
+        # (an observation of the totals, not a reading of the library).
+        if fig["reference"] is None and entry["samples"] is not None and blocks == 1 and not entry.get("refusesStream"):
+            fig.update({"reference": entry["samples"], "referencePath": "coreaudio converter", "referenceKind": "official", "format": entry["format"]})
+            if not entry.get("exact", True) and fmt:
+                fig["referenceAtAnalyzerRate"] = {"samples": entry["samples"], "exact": False}
+        elif fig["reference"] is None and entry["samples"] is not None and blocks > 1:
+            fig["coreAudio"]["converter"]["noReference"] = "the frames declare up to %d raw data blocks and the converter's total is %s samples (one block of each frame, as 1,024 per frame)" % (blocks, show(entry["decoderSamples"]))
+    elif coded:
+        coded[0]["coreAudio"] = {"converter": {"samples": None, "why": "the analyzer has %d runs of constant output format and the converter has one" % len(coded)}}
+    if trimmed:
+        total, fmt, why = ca_total(reader)
+        timescale = record["unitList"].get("timescale")
+        values = [f["analyzer"] for f in trimmed]
+        for fig in trimmed:
+            if total is None:
+                fig["coreAudio"] = {"reader": {"samples": None, "why": why}}
+                fig["noReference"] = "Core Audio's ExtAudioFile gave no complete total (%s)" % why
+                continue
+            entry = ca_entry(reader, total, fmt, timescale)
+            fig["coreAudio"] = {"reader": entry}
+            if len(trimmed) == 2 and values[0] != values[1] and any(v == entry["samples"] for v in values) and fig["analyzer"] != entry["samples"]:
+                other = next(f for f in trimmed if f is not fig)
+                fig["noReference"] = "the reader's total (%s) is the other source's figure (%s): where both sources are present and differ it applies that one" % (show(entry["samples"]), other["analyzerFigure"])
+                continue
+            fig.update({"reference": entry["samples"], "referencePath": "coreaudio reader", "referenceKind": "official", "format": fmt})
+            fig.pop("noReference", None)
+            if fmt and timescale and fmt["rate"] != timescale:
+                fig["referenceAtAnalyzerRate"] = {"samples": entry["samples"], "exact": entry.get("exact", True)}
+
+
+def coreaudio_unit_verdicts(ca, analyzer):
+    """The units Core Audio's converter refuses, beside the analyzer's findings at the same bytes. They are listed with the source, apart from FDK's, and the test counts the
+    findings of the FDK entries only (every unit with a finding is there)."""
+    conv = (ca or {}).get("paths", {}).get("converter")
+    if not conv or conv["stoppedBy"] != "end":
+        return []
+    findings = [f for f in analyzer["findings"] if aac_unit_finding(f)]
+    merged = any(f["count"] > 1 for f in findings) or any(f["code"] in MP4_EXTRA for f in analyzer["findings"])
+    result = []
+    for u in conv["units"]:
+        if u["result"] != "refused":
+            continue
+        start, end = u["offset"], u["offset"] + max(u["received"], 1)
+        mine = [f for f in findings if start <= f["offset"] < end]
+        entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"], "samples": 0,
+                 "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine], "source": "coreaudio converter"}
+        if mine:
+            entry.update({"verdict": "decoder refused, finding at the same bytes", "status": "agree"})
+        elif merged:
+            entry.update({"verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)", "status": "noted"})
+        else:
+            entry.update({"verdict": "decoder refused, no finding", "status": "pending"})
+        result.append(entry)
+    return result
+
+
+def coreaudio_differences(figures, analyzer, record, ca):
+    """The differences of Core Audio's columns from the analyzer, for the status rules of the design: the owners' decoders that disagree are marked, never dropped."""
+    differences = []
+    for figure in figures:
+        a, r = figure["analyzer"], figure.get("reference")
+        column = figure.get("coreAudio") or {}
+        if figure["stage"] == "trimmed":
+            if r is not None and a != r:
+                differences.append({"figure": figure["id"], "decoder": "coreaudio reader", "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
+                                    "reason": "ExtAudioFile outputs %s samples at the core rate where the analyzer's %s is %s" % (show(r), figure["analyzerFigure"], show(a))})
+            continue
+        reader = column.get("reader")
+        table = (reader or {}).get("packetTable") or {}
+        if reader and reader.get("samples") is not None and reader["samples"] != a and r is not None and table.get("primingFrames"):
+            # A file with no gapless data: ExtAudioFile makes a packet table of its own with the priming it assumes for the codec (2,112 frames for AAC, 240 for AAC-ELD, at the core rate)
+            differences.append({"figure": figure["id"], "decoder": "coreaudio reader", "value": reader["samples"], "analyzer": a, "reference": r, "status": "noted", "kind": "reader-priming",
+                                "reason": "ExtAudioFile outputs %s samples: the file states no priming or padding and the reader's own packet table drops %s frames of priming at the core rate (%s valid frames, %s remainder); "
+                                          "the coded stage is the converter's" % (show(reader["samples"]), show(table["primingFrames"]), show(table["validFrames"]), show(table["remainderFrames"]))})
+        elif reader and reader.get("samples") is not None and reader["samples"] != a and r is not None:
+            differences.append({"figure": figure["id"], "decoder": "coreaudio reader", "value": reader["samples"], "analyzer": a, "reference": r, "status": "explained" if a == r else "noted",
+                                "kind": "witness-differs", "reason": "ExtAudioFile outputs %s samples (the file has no gapless data, so the coded stage) against the analyzer's %s" % (show(reader["samples"]), show(a))})
+        entry = column.get("converter")
+        if not entry:
+            continue
+        if entry.get("noReference"):
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": entry["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-one-block-per-frame",
+                                "reason": entry["noReference"]})
+            continue
+        c = entry["samples"]
+        if c is None:
+            continue
+        analyzer_rates = figure.get("analyzerRates") or []
+        fmt = entry.get("format")
+        if entry.get("refusesStream") and figure["referencePath"] != "fdk direct":
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-refuses-stream",
+                                "reason": entry["refusesStream"] + "; neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference"})
+            continue
+        fdk_agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
+        if fmt and analyzer_rates and fmt["rate"] not in analyzer_rates:
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": entry["decoderSamples"], "analyzer": a, "status": "noted" if fdk_agrees else "pending",
+                                "kind": "rate-differs",
+                                "reason": "Core Audio outputs %s samples at %s Hz where the analyzer's runs are at %s Hz: the decoders disagree on whether SBR is applied%s" % (
+                                    show(entry["decoderSamples"]), fmt["rate"], "/".join(map(str, analyzer_rates)),
+                                    "; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)" if fdk_agrees else "")})
+        if c == a:
+            continue
+        if figure["referencePath"] == "coreaudio converter":
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": c, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
+                                "reason": "FDK gives no reference; Core Audio's converter outputs %s samples against the analyzer's %s" % (show(c), show(a))})
+        elif r is not None and a == r:
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": c, "analyzer": a, "reference": r, "status": "explained", "kind": "coreaudio-differs",
+                                "ownersDisagree": True,
+                                "reason": "the analyzer equals the reference (%s, %s) and Core Audio's converter outputs %s: the owners' decoders disagree%s" % (
+                                    figure["referencePath"], show(r), show(c),
+                                    "; it gives no output for unit %s after its first output" % ", ".join(map(str, entry["silentUnits"])) if entry.get("silentUnits") else "")})
+        elif r is not None and c != r:
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": c, "analyzer": a, "reference": r, "status": "pending", "kind": "coreaudio-differs",
+                                "ownersDisagree": True,
+                                "reason": "the owners' decoders disagree with each other and with the analyzer: %s %s, Core Audio's converter %s, the analyzer %s (the written rule gives keep unless a reading of the specification decides)" % (
+                                    figure["referencePath"], show(r), show(c), show(a))})
+    return differences
+
+
+
+def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
+    """The figures, differences and unit verdicts of one AAC record; coreaudio is the macOS run's record of the same file, if there is one."""
     if record.get("notFed"):
         return {"figures": [], "differences": [], "units": [], "notes": ["not fed: " + record["notFed"]], "notFed": record["notFed"]}
     direct = record["paths"]["direct"]
@@ -808,7 +992,12 @@ def compare_aac(record, analyzer, ffmpeg):
                             "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"})
     codecs = [s["codec"] for s in analyzer["streams"]]
     units = aac_unit_verdicts(direct, analyzer)
-    return {"figures": figures, "differences": aac_differences(figures, direct, codecs, analyzer, units), "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
+    attach_coreaudio(figures, coreaudio, analyzer, record, notes)
+    differences = aac_differences(figures, direct, codecs, analyzer, units)
+    if coreaudio and not coreaudio.get("notFed"):
+        differences += coreaudio_differences(figures, analyzer, record, coreaudio)
+        units = units + coreaudio_unit_verdicts(coreaudio, analyzer)
+    return {"figures": figures, "differences": differences, "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
 
 
 def aac_differences(figures, direct, codecs, analyzer, units):
@@ -845,7 +1034,7 @@ def aac_differences(figures, direct, codecs, analyzer, units):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": rd["decoderSamples"], "analyzer": a, "status": "pending", "kind": "rate-differs",
                                 "reason": "FDK outputs %s frames (%s samples) at %s Hz, from unit %d, where the analyzer's runs are at %s Hz (ratio %s): the decoders disagree on whether SBR is applied there" % (
                                     show(rd["frames"]), show(rd["decoderSamples"]), "/".join(map(str, rd["decoderRates"])), rd["firstUnit"], "/".join(map(str, rd["analyzerRates"])), rd["ratio"])})
-        if r is not None and a != r:
+        if r is not None and a != r and figure["referencePath"] == "fdk direct":
             concealed = figure.get("concealedSamples", 0)
             if r > (a or 0) and (figure.get("afterCap") or {}).get("exactExcess"):
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
@@ -913,10 +1102,12 @@ def aac_unit_verdicts(direct, analyzer):
 
 
 def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warnings, args):
-    out = ["Cross-checks by the official decoder: AAC (FDK AAC %s, concealment method 1; ffmpeg as the second column)" % ((environment.get("fdkAac") or {}).get("version") or "-"),
+    mac = environment.get("coreAudio") or {}
+    out = ["Cross-checks by the official decoders: AAC (FDK AAC %s, concealment method 1; Core Audio %s, run %s; ffmpeg as a further column)" % (
+               (environment.get("fdkAac") or {}).get("version") or "-", ("macOS %s (%s)" % (mac.get("macOS"), mac.get("build"))) if mac else "not run", mac.get("runId") or "-"),
            "run %s on %s (%s), ffmpeg %s, FDK commit %s" % (environment.get("runId") or args.run_id or "-", environment.get("imageOS") or "-", environment.get("imageVersion") or "-",
                                                          (ffmpeg_version or ["-"])[0], ((environment.get("fdkAac") or {}).get("commit") or "-")[:7]),
-           "the coded stage is compared (FDK direct against the stream's samples); the trimmed figures of MP4 files are listed with no reference until Core Audio (rollout step 5)"]
+           "the coded stage is compared (FDK direct against the stream's samples, Core Audio's converter beside it); the trimmed figures of MP4 files are held to ExtAudioFile's total at the core rate"]
     out += ["WARNING: " + w for w in warnings]
     rows = []
     for r in results:
@@ -936,12 +1127,15 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
             if fig.get("channelsDiffer"):
                 note += (" " if note else "") + "(channels: FDK %s, the analyzer %s)" % ("/".join(map(str, fig["channelsDiffer"]["decoder"])), "/".join(map(str, fig["channelsDiffer"]["analyzer"])))
             tag = "" if fig["analyzer"] == fig["reference"] or fig["reference"] is None else "  DIFFERS"
-            rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), wit, (note + tag).strip()])
-    out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "fdk", "other decoders", "notes"])]
+            column = fig.get("coreAudio") or {}
+            ca = "; ".join("%s %s" % (k, show(v["samples"]) if v.get("samples") is not None else "none (%s)" % (v.get("why") or v.get("noReference") or "-")[:60]) for k, v in column.items())
+            rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), (fig.get("referencePath") or "-").replace(" direct", ""), ca, wit,
+                         (note + tag).strip()])
+    out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "reference", "path", "core audio", "other decoders", "notes"])]
     agreeing = sum(1 for r in results for u in r["units"] if u["status"] == "agree")
     out += ["", "Notes per file"] + (["  %s/%s: %s" % (r["folder"], r["file"], n) for r in results for n in r["notes"]] or ["  none"])
     out += ["", "Units where a decoder's verdict differs from the analyzer's; %d more agree (the decoder refuses, conceals or errs and a finding is at the same bytes)" % agreeing]
-    unit_rows = [[r["folder"], r["file"], show(u.get("offset")), show(u.get("length")), u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]]
+    unit_rows = [[r["folder"], r["file"], show(u.get("offset")), show(u.get("length")), ("core audio: " if u.get("source") else "") + u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]]
                  for r in results for u in r["units"] if u["status"] != "agree"]
     out.append(table(unit_rows, ["folder", "file", "offset", "length", "decoder", "finding", "verdict", "status"]) if unit_rows else "none")
     out += ["", "Differences"]
@@ -1021,6 +1215,10 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
     if not aac_records:
         return None
     environment = next((e for e in environments if e.get("format") == "aac"), {})
+    ca_records = records.get("coreaudio-aac", {})
+    mac = next((e for e in environments if e.get("format") == "coreaudio"), None)
+    if mac:
+        environment = {**environment, "coreAudio": {k: mac.get(k) for k in ("macOS", "build", "machine", "imageOS", "imageVersion", "audioCodecs", "audioToolbox", "runId", "commit")}}
     items = []  # (sha, path, derived entry or None, folder)
     for folder in driver.AAC_FOLDERS:
         for path in probe.files(folder, driver.AAC_EXTENSIONS):
@@ -1058,7 +1256,7 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             return None
         analyzer, source = load_aac_analyzer(path, cli_reports)
         column = aac_ffmpeg(args, path, tmp, record)
-        compared = compare_aac(record, analyzer, column)
+        compared = compare_aac(record, analyzer, column, ca_records.get(sha))
         return {"file": path.name, "sha256": sha, "folder": folder, "derived": derived and ({"from": derived["source"], "rule": derived["rule"]} if "rule" in derived else {"downloaded": True}),
                 "bytes": record["bytes"], "sameBytesAs": aliases.get(sha, []), "analyzerSource": source, "analyzerStreams": analyzer["streams"] if analyzer else None,
                 "analyzerGapless": analyzer["gapless"] if analyzer else None, "ffmpeg": column, "unitList": record["unitList"], "record": summarize(record) if record["paths"] else {},
@@ -1080,6 +1278,241 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
     text = render_aac(results, not_run, unmatched, environment, ffmpeg_version, warnings, args)
     document = {"schema": SCHEMA, "environment": environment, "ffmpeg": ffmpeg_version, "warnings": warnings, "files": results, "notRun": not_run, "recordsWithoutFile": unmatched}
     return text, document, results, environment
+
+
+# ---- AC-3 and E-AC-3 by Core Audio (rollout step 5) -----------------------------------------------------------------------
+
+AC3_CODECS = ("AC-3", "E-AC-3")
+# Core Audio's converter outputs 288 frames fewer than the units code, on every file the probe ran (run 41312630570: 72 of 72, the first output of a file with 1,536-sample frames is
+# 1,248 frames): a property of this decoder, named in every record and checked on every file. The harness adds and subtracts nothing; the comparison holds the analyzer's coded
+# `samples` to the converter's total plus this constant.
+CORE_AUDIO_AC3_SHORT = 288
+
+
+def ac3_unit_finding(finding):
+    return finding["code"].startswith("ac3.") and finding["severity"] != "Info" and finding["offset"] is not None
+
+
+def ac3_analyzer(report):
+    """The AC-3 and E-AC-3 streams of a report (the first stream of an MP4 file's, whose first sound track the unit list holds), the gapless figures and the findings."""
+    mp4 = any(c.get("name") == "MP4" for c in report["root"].get("children", []))
+    streams = [{"index": i, "codec": s["codec"], "samples": s.get("samples"), "sampleRate": s.get("sampleRate"), "channels": s.get("channels")}
+               for i, s in enumerate(report.get("streams", [])) if s["codec"].startswith(AC3_CODECS)]
+    if mp4:
+        streams = [x for x in streams if x["index"] == 0]
+    gapless = find_node(report["root"], "Gapless")
+    figures = {}
+    if gapless:
+        for node in gapless.get("children", []):
+            if node.get("value") is not None:
+                figures[node["name"]] = node["value"]
+    findings = [{"code": f["code"], "severity": f["severity"], "offset": f.get("offset"), "length": f.get("length"), "count": f.get("count", 1)} for f in report.get("findings", [])]
+    return {"streams": streams, "gapless": figures, "findings": findings}
+
+
+def load_ac3_analyzer(path, encspect_reports):
+    golden = path.with_name(path.stem + ".report.json")
+    if golden.exists():
+        return ac3_analyzer(json.loads(golden.read_text(encoding="utf-8"))[0]), "golden"
+    report = encspect_reports.get(path.name)
+    return (ac3_analyzer(report), "CLI") if report else (None, None)
+
+
+def ac3_unit_verdicts(conv, analyzer):
+    """Every finding about a unit (warnings and errors of the ac3 codes) and every unit the converter refuses: the converter's verdict beside the analyzer's finding at the same bytes. A finding
+    is listed once, at its offset; the converter keeps no record of the units it decodes, so a finding where the converter decodes (it ignores the frames' CRCs as far as the records show)
+    has no unit."""
+    findings = [f for f in analyzer["findings"] if ac3_unit_finding(f)]
+    merged = any(f["count"] > 1 for f in findings)
+    refused = [u for u in (conv or {}).get("units", []) if u["result"] == "refused"] if conv and conv.get("stoppedBy") == "end" else []
+    result, matched = [], set()
+    for u in refused:
+        start, end = u["offset"], u["offset"] + max(u["received"], 1)
+        mine = [f for f in findings if start <= f["offset"] < end]
+        for f in mine:
+            matched.add((f["code"], f["offset"]))
+        entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"], "samples": 0,
+                 "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine]}
+        if mine:
+            entry.update({"verdict": "decoder refused, finding at the same bytes", "status": "agree"})
+        elif merged:
+            entry.update({"verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases: this may be one of them)", "status": "noted"})
+        else:
+            entry.update({"verdict": "decoder refused, no finding", "status": "pending"})
+        result.append(entry)
+    by_offset = {}
+    for f in findings:
+        if (f["code"], f["offset"]) not in matched:
+            by_offset.setdefault(f["offset"], []).append(f)
+    for offset, group in sorted(by_offset.items()):
+        result.append({"index": None, "offset": offset, "length": group[0]["length"], "ranges": None, "decoder": "decoded", "samples": None, "finding": group[0]["code"],
+                       "findings": [f["code"] for f in group], "verdict": "finding, decoder decodes", "status": "noted"})
+    return result
+
+
+def compare_ac3(record, analyzer, ffmpeg):
+    """The figures, differences and unit verdicts of one AC-3 or E-AC-3 record (Core Audio's two paths)."""
+    if record.get("notFed"):
+        return {"figures": [], "differences": [], "units": [], "notes": ["not fed: " + record["notFed"]], "notFed": record["notFed"]}
+    if analyzer is None:
+        return {"figures": [], "differences": [], "units": [], "notes": ["no analyzer report"]}
+    reader, conv = record["paths"].get("reader"), record["paths"].get("converter")
+    notes, differences, figures = [], [], []
+    runs = analyzer_runs(analyzer["streams"])
+    ff = None
+    if ffmpeg:
+        ff = (ffmpeg.get("coded") or ffmpeg.get("default") or {}).get("samples")
+    all_streams = [i for r in runs for i in r["streams"]]
+    a = sum_known(r["samples"] for r in runs) if runs else 0
+    rates = sorted({r["key"][0] for r in runs if r["key"][0]})
+    base = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": all_streams, "analyzer": a, "reference": None, "referencePath": None, "referenceKind": None,
+            "witnesses": {"ffmpeg": ff} if ffmpeg else {}, "analyzerRates": rates, "referenceOffset": -CORE_AUDIO_AC3_SHORT}
+    total, fmt, why = ca_total(conv)
+    column = {}
+    if len(runs) != 1:
+        base["noReference"] = "the analyzer has %d runs of constant output format and the converter has one" % len(runs)
+    elif total is None:
+        base["noReference"] = "Core Audio's converter gave no complete total (%s)" % why
+        column["converter"] = {"samples": None, "why": why}
+        if conv is not None and conv.get("stoppedBy") == "error" and not conv.get("opened") and a:
+            base["refused"] = "Core Audio's converter cannot be built for the stream (%s)" % why
+            differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-refuses-stream",
+                                "reason": base["refused"] + "; ffmpeg and liba52 stay the reference (decided 2026-11-01)"})
+    elif conv["unitCount"] > 0 and conv["refusedUnits"] == conv["unitCount"] and total == 0 and a:
+        codes = sorted({u["status"] for u in conv["units"] if u.get("status")})
+        column["converter"] = {"samples": None, "why": "refuses every unit (%s)" % ", ".join(codes)}
+        base["refused"] = "Core Audio's converter refuses every one of its %d units (%s)" % (conv["unitCount"], ", ".join(codes))
+        base["noReference"] = "Core Audio refuses the stream; ffmpeg and liba52 stay the reference (decided 2026-11-01)"
+        differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-refuses-stream", "reason": base["refused"] + "; " + base["noReference"]})
+    else:
+        entry = ca_entry(conv, total, fmt, rates[0] if rates else None)
+        column["converter"] = entry
+        base.update({"reference": entry["samples"], "referencePath": "coreaudio converter", "referenceKind": "official", "format": fmt})
+        if fmt and rates and fmt["rate"] != rates[0]:
+            base["referenceAtAnalyzerRate"] = {"samples": entry["samples"], "exact": entry.get("exact", True)}
+    rtotal, rfmt, rwhy = ca_total(reader)
+    if rtotal is not None and len(runs) == 1:
+        column["reader"] = ca_entry(reader, rtotal, rfmt, rates[0] if rates else None)
+    elif reader and len(runs) == 1:
+        column["reader"] = {"samples": None, "why": rwhy}
+    base["coreAudio"] = column
+    figures.append(base)
+    for name, ident in GAPLESS_FIGURES:
+        if name in analyzer["gapless"] and analyzer["streams"]:
+            table = (reader or {}).get("packetTable")
+            figures.append({"id": ident, "stage": "trimmed", "analyzerFigure": name, "streams": [analyzer["streams"][0]["index"]], "analyzer": analyzer["gapless"][name], "reference": None,
+                            "referencePath": None, "referenceKind": None, "countsAt": "the media timescale", "witnesses": {},
+                            "noReference": "ExtAudioFile applies no edit list or iTunSMPB to AC-3 and E-AC-3 in MP4%s: the trimming of the reader is not understood, so the trimmed stage is not compared" % (
+                                " (its packet table says %s valid frames, %s priming and %s remainder; it read %s)" % (show(table["validFrames"]), show(table["primingFrames"]), show(table["remainderFrames"]),
+                                                                                  show(rtotal)) if table and rtotal is not None else "")})
+    if base["reference"] is not None and a is not None:
+        r, offset = base["reference"], base["referenceOffset"]
+        if a + offset != r:
+            differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
+                                "reason": "the analyzer's samples less the converter's constant %d are %s; the converter outputs %s" % (CORE_AUDIO_AC3_SHORT, show(a + offset), show(r))})
+        entry = column.get("reader")
+        if entry and entry.get("samples") is not None and entry["samples"] != r:
+            difference = {"figure": "samples", "decoder": "coreaudio reader", "value": entry["samples"], "analyzer": a, "reference": r,
+                          "status": "explained" if a + offset == r else "noted", "kind": "witness-differs",
+                          "reason": "ExtAudioFile outputs %s samples where the converter outputs %s" % (show(entry["samples"]), show(r))}
+            cut = record["unitList"].get("cutUnits") or 0
+            if cut and r - entry["samples"] == cut * 1536:
+                difference["alignment"] = ("the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (%s), and the reader's total "
+                                           "is the converter's less that frame" % show(cut * 1536))
+            differences.append(difference)
+        if ff is not None and ff != a:
+            differences.append({"figure": "samples", "decoder": "ffmpeg", "value": ff, "analyzer": a, "reference": r, "status": "explained" if a + offset == r else "noted", "kind": "witness-differs",
+                                "reason": "ffmpeg outputs %s samples against the analyzer's %s" % (show(ff), show(a))})
+    elif ffmpeg and "ffmpeg" in base["witnesses"] and base["witnesses"]["ffmpeg"] is None:
+        base["witnessErrors"] = {"ffmpeg": ffmpeg_failure(ffmpeg, "coded" if "coded" in ffmpeg else "default")}
+    units = ac3_unit_verdicts(conv, analyzer)
+    codecs = [x["codec"] for x in analyzer["streams"]]
+    return {"figures": figures, "differences": differences, "units": units, "notes": notes, "codecs": codecs}
+
+
+def render_ac3(results, not_run, unmatched, environment, ffmpeg_version, warnings, args):
+    mac = environment.get("coreAudio") or {}
+    out = ["Cross-checks by the official decoder: AC-3 and E-AC-3 (Core Audio %s, run %s; ffmpeg as a further column)" % (("macOS %s (%s)" % (mac.get("macOS"), mac.get("build"))) if mac else "not run", mac.get("runId") or "-"),
+           "run %s on %s (%s), AudioCodecs %s, AudioToolbox %s, ffmpeg %s" % (mac.get("runId") or args.run_id or "-", mac.get("imageOS") or "-", mac.get("imageVersion") or "-",
+                                                                           mac.get("audioCodecs") or "-", mac.get("audioToolbox") or "-", (ffmpeg_version or ["-"])[0]),
+           "the coded stage is compared: the analyzer's samples less %d against the converter's total (the converter outputs %d frames fewer than the units code, on every file); ExtAudioFile and ffmpeg are witnesses" % (
+               CORE_AUDIO_AC3_SHORT, CORE_AUDIO_AC3_SHORT)]
+    out += ["WARNING: " + w for w in warnings]
+    rows = []
+    for r in results:
+        if r.get("notFed"):
+            continue
+        for fig in r["figures"]:
+            column = fig.get("coreAudio") or {}
+            ca = "; ".join("%s %s" % (k, show(v["samples"]) if v.get("samples") is not None else "none (%s)" % (v.get("why") or "-")[:50]) for k, v in column.items())
+            wit = "; ".join("%s %s" % (k, show(v)) for k, v in fig["witnesses"].items())
+            tag = ""
+            if fig["reference"] is not None and fig["analyzer"] + fig["referenceOffset"] != fig["reference"]:
+                tag = "  DIFFERS"
+            rows.append([r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), ca, wit, ((fig.get("noReference") or "") + tag).strip()[:120]])
+    out += ["", table(rows, ["file", "sha256", "figure", "stage", "analyzer", "converter", "core audio", "other decoders", "notes"])]
+    agreeing = sum(1 for r in results for u in r["units"] if u["status"] == "agree")
+    out += ["", "Units where a decoder's verdict differs from the analyzer's; %d more agree (the converter refuses and a finding is at the same bytes)" % agreeing]
+    unit_rows = [[r["file"], show(u.get("offset")), show(u.get("length")), u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]] for r in results for u in r["units"] if u["status"] != "agree"]
+    out.append(table(unit_rows, ["file", "offset", "length", "decoder", "finding", "verdict", "status"]) if unit_rows else "none")
+    out += ["", "Differences"]
+    diff_rows = [[r["file"], d["figure"], d["decoder"], show(d["value"]), show(d["analyzer"]), d["kind"], d["status"]] for r in results for d in r["differences"]]
+    out.append(table(diff_rows, ["file", "figure", "decoder", "value", "analyzer", "kind", "status"]) if diff_rows else "none")
+    out += ["", "Files not fed to the decoder (%d), with the reason" % sum(1 for r in results if r.get("notFed"))]
+    for r in results:
+        if r.get("notFed"):
+            out.append("  %s: %s" % (r["file"], r["notFed"]))
+    figs = [f for r in results for f in r["figures"] if f["stage"] == "coded"]
+    withref = [f for f in figs if f["reference"] is not None]
+    same = [f for f in withref if f["analyzer"] + f["referenceOffset"] == f["reference"]]
+    readers = [(f, f["coreAudio"]["reader"]["samples"]) for f in withref if (f.get("coreAudio") or {}).get("reader", {}).get("samples") is not None]
+    ff = [f for f in withref if f["witnesses"].get("ffmpeg") is not None]
+    out += ["", "Agreement (coded figures)", "  figures %d, with a reference %d, the analyzer less %d equals the converter in %d; ExtAudioFile equals the converter in %d of %d; ffmpeg equals the analyzer in %d of %d" % (
+        len(figs), len(withref), CORE_AUDIO_AC3_SHORT, len(same), sum(1 for f, v in readers if v == f["reference"]), len(readers), sum(1 for f in ff if f["witnesses"]["ffmpeg"] == f["analyzer"]), len(ff))]
+    out += ["", "Not run (selected files without a record): " + (", ".join(not_run) if not_run else "none")]
+    if unmatched:
+        out.append("Records without a file here: " + ", ".join(unmatched))
+    return "\n".join(out) + "\n"
+
+
+def run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp):
+    """The AC-3 section of a run: returns (text, JSON document, results, environment); None when there are no Core Audio records of the ac3 folder."""
+    ca_records = records.get("coreaudio-ac3", {})
+    if not ca_records:
+        return None
+    mac = next((e for e in environments if e.get("format") == "coreaudio"), {})
+    environment = {"coreAudio": {k: mac.get(k) for k in ("macOS", "build", "machine", "imageOS", "imageVersion", "audioCodecs", "audioToolbox", "runId", "commit")},
+                   "runId": mac.get("runId"), "commit": mac.get("commit"), "imageOS": mac.get("imageOS"), "imageVersion": mac.get("imageVersion")}
+    items = [(sha256_of(p), p) for p in probe.files("ac3", probe.AC3_EXTENSIONS)]
+    cli_reports = {}
+
+    def work(item):
+        sha, path = item
+        record = ca_records.get(sha)
+        if record is None:
+            return None
+        analyzer, source = load_ac3_analyzer(path, cli_reports)
+        column = aac_ffmpeg(args, path, tmp, record)
+        compared = compare_ac3(record, analyzer, column)
+        return {"file": path.name, "sha256": sha, "folder": "ac3", "derived": None, "bytes": record["bytes"], "analyzerSource": source, "analyzerStreams": analyzer["streams"] if analyzer else None,
+                "analyzerGapless": analyzer["gapless"] if analyzer else None, "ffmpeg": column, "unitList": record["unitList"], **compared}
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        futures = [(item, pool.submit(work, item)) for item in sorted(items, key=lambda i: i[1].name)]
+    results, not_run = [], []
+    for item, future in futures:
+        result = future.result()
+        if result is None:
+            not_run.append(item[1].name)
+        else:
+            results.append(result)
+    apply_reviewed(results, FIXTURES / "ac3" / "official-decoders.json")
+    known = {sha for sha, _ in items}
+    unmatched = sorted(r["file"] for sha, r in ca_records.items() if sha not in known)
+    text = render_ac3(results, not_run, unmatched, environment, ffmpeg_version, warnings, args)
+    document = {"schema": SCHEMA, "environment": environment, "ffmpeg": ffmpeg_version, "warnings": warnings, "files": results, "notRun": not_run, "recordsWithoutFile": unmatched}
+    return text, document, results, environment
+
 
 
 # ---- reading records ---------------------------------------------------------------------------------------------------
@@ -1127,6 +1560,7 @@ def main(argv):
     parser.add_argument("--write-official", help="write tests/fixtures/ogg/official-decoders.json here")
     parser.add_argument("--write-official-tta", help="write tests/fixtures/tta/official-decoders.json here (the previous file given with --previous-tta, default the same file)")
     parser.add_argument("--write-official-aac", help="write official-decoders.<folder>.draft.json for the committed AAC folders into this directory (the previous files are those in tests/fixtures/<folder>)")
+    parser.add_argument("--write-official-ac3", help="write tests/fixtures/ac3/official-decoders.json here (the previous file given with --previous-ac3, default tests/fixtures/ac3/official-decoders.json)")
     parser.add_argument("--downloaded", help="the folder of the downloaded AAC samples (never committed), for the AAC section")
     parser.add_argument("--previous-tta", help="the committed tests/fixtures/tta/official-decoders.json whose reviewed statuses and notes are kept")
     parser.add_argument("--previous", help="the committed official-decoders.json whose reviewed statuses and notes are kept (default: the file --write-official names, if it exists)")
@@ -1207,6 +1641,14 @@ def main(argv):
                 subset = [r for r in aac_results if r["folder"] == folder and not r["derived"]]
                 write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / folder / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
         print("comparison-aac.txt: %d files compared, %d not run" % (len(aac_results), len(aac_document["notRun"])))
+    ac3 = run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp)
+    if ac3:
+        ac3_text, ac3_document, ac3_results, ac3_environment = ac3
+        (out / "comparison-ac3.txt").write_text(ac3_text, encoding="utf-8")
+        (out / "comparison-ac3.json").write_text(json.dumps(ac3_document, indent=1) + "\n", encoding="utf-8")
+        if args.write_official_ac3:
+            write_official(pathlib.Path(args.write_official_ac3), FIXTURES / "ac3" / "official-decoders.json", ac3_results, ac3_environment, ffmpeg_version, args.run_id, "ac3")
+        print("comparison-ac3.txt: %d files compared, %d not run" % (len(ac3_results), len(ac3_document["notRun"])))
     return 0
 
 
@@ -1289,7 +1731,7 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
 # ---- the committed results ---------------------------------------------------------------------------------------------
 
 def unit_key(path, sha, d):
-    return (path, sha, d.get("figure") or "unit", d.get("decoder"), d.get("offset"), d.get("kind"), d.get("reference"))
+    return (path, sha, d.get("figure") or "unit", d.get("decoder"), d.get("offset"), d.get("kind"), d.get("reference"), d.get("source"))
 
 
 def write_official(target, previous_file, results, environment, ffmpeg_version, run_id, format_="ogg"):
@@ -1309,8 +1751,12 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         tools = {"packages": environment.get("dpkg"), "oggdec": environment.get("oggdec"), "opusdec": environment.get("opusdec")}
     elif format_ == "aac":
         tools = {"fdkAac": environment.get("fdkAac"), "concealMethod": environment.get("concealMethod"), "gcc": environment.get("gcc")}
+    elif format_ == "ac3":
+        tools = {}
     else:
         tools = {"tta": environment.get("tta"), "ttaArchiveSha256": environment.get("ttaArchiveSha256"), "gcc": environment.get("gcc")}
+    versions = ("macOS", "build", "machine", "audioCodecs", "audioToolbox")  # the run's own ID, commit and image version always differ
+    mac_differs = bool(environment.get("coreAudio")) and any((previous_run.get("coreAudio") or {}).get(k) != environment["coreAudio"].get(k) for k in versions)
     packages_differ = any(previous_run.get(k) != v for k, v in tools.items())
     files, changed = [], []
     for r in results:
@@ -1322,7 +1768,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         for fig in figures:
             old = previous_figures.get((rel, r["sha256"], fig["id"]))
             if old and old.get("reference") is not None and fig["reference"] is not None and old["reference"] != fig["reference"]:
-                if packages_differ:
+                if packages_differ or (mac_differs and (fig["referencePath"] or "").startswith("coreaudio")):
                     extra.append({"figure": fig["id"], "decoder": fig["referencePath"], "value": fig["reference"], "analyzer": fig["analyzer"], "reference": old["reference"],
                                   "status": "build-dependent", "kind": "build-dependent", "previousRun": previous_run.get("id"), "previousImage": previous_run.get("imageVersion"),
                                   "image": environment.get("imageVersion")})
@@ -1332,11 +1778,11 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         entry = {"path": rel, "sha256": r["sha256"], "figures": figures, "differences": [], "units": []}
         if r.get("notFed"):
             entry["notFed"] = r["notFed"]
-        if format_ == "aac":
+        if format_ in ("aac", "ac3"):
             entry["unitList"] = {k: r["unitList"].get(k) for k in ("kind", "codec", "units", "cutUnits", "skippedRanges", "skippedBytes", "timescale") if r["unitList"].get(k) is not None}
             if r.get("codecs"):
                 entry["codecs"] = r["codecs"]
-        for kind, listing in (("differences", r["differences"] if format_ == "aac" else figure_differences(figures) + extra), ("units", r["units"])):
+        for kind, listing in (("differences", r["differences"] if format_ in ("aac", "ac3") else figure_differences(figures) + extra), ("units", r["units"])):
             for d in listing:
                 old = previous.get(unit_key(rel, r["sha256"], d))
                 same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason"))
@@ -1350,9 +1796,11 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         files.append(entry)
     for line in changed:
         print("changed figure, same packages (review): " + line, file=sys.stderr)
-    doc = {"schema": SCHEMA, "format": format_, "run": {"id": run_id or environment.get("runId"), "commit": environment.get("commit"), "imageOS": environment.get("imageOS"),
-                                                         "imageVersion": environment.get("imageVersion"), "ffmpeg": (ffmpeg_version or [None])[0], **tools,
-                                                         },
+    run = {"id": run_id or environment.get("runId"), "commit": environment.get("commit"), "imageOS": environment.get("imageOS"),
+           "imageVersion": environment.get("imageVersion"), "ffmpeg": (ffmpeg_version or [None])[0], **tools}
+    if environment.get("coreAudio"):
+        run["coreAudio"] = environment["coreAudio"]
+    doc = {"schema": SCHEMA, "format": format_, "run": run,
            "statuses": list(STATUSES), "changedFiguresForReview": changed, "files": files}
     target.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 

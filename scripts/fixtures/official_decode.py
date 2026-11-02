@@ -750,6 +750,11 @@ def whole_rate(rate):
     return int(rate) if isinstance(rate, float) and rate == int(rate) else rate
 
 
+def os_status(status):
+    """An OSStatus as the hex code the headers and the logs show (0 stays 0)."""
+    return status if status in (0, None) else "0x%08X" % (status & 0xFFFFFFFF)
+
+
 def coreaudio_format(line):
     f = line.get("format") or {}
     return {"formatID": f.get("formatID"), "sampleRate": whole_rate(f.get("sampleRate")), "channels": f.get("channels"), "framesPerPacket": f.get("framesPerPacket")}
@@ -783,15 +788,15 @@ def coreaudio_reader_result(child):
     result = {
         "tool": "audiotoolbox_probe reader",
         "opened": bool(opened) and opened["status"] == 0,
-        "openStatus": opened["status"] if opened else None,
+        "openStatus": os_status(opened["status"]) if opened else None,
         "fileFormat": coreaudio_format(file_format) if file_format and file_format["status"] == 0 else None,
         "fileLengthFrames": (first("fileLengthFrames") or {}).get("frames"),
         "packetTable": {"validFrames": table["validFrames"], "primingFrames": table["primingFrames"], "remainderFrames": table["remainderFrames"]} if table and table["status"] == 0 else None,
         "packetCount": packets["packets"] if packets and packets["status"] == 0 else None,
-        "clientFormat": {**coreaudio_format(client), "status": client["status"]} if client else None,
+        "clientFormat": {**coreaudio_format(client), "status": os_status(client["status"])} if client else None,
         "runs": [{"rate": whole_rate(client["format"]["sampleRate"]), "channels": client["format"]["channels"], "samples": total, "outputs": len(reads)}] if ok and total else [],
         "readCount": len(reads),
-        "failedReads": [{"index": r["index"], "status": r["status"], "frames": r["frames"]} for r in failed][:8],
+        "failedReads": [{"index": r["index"], "status": os_status(r["status"]), "frames": r["frames"]} for r in failed][:8],
         "stoppedBy": stopped,
         "exit": child["exit"], "signal": child["signal"], "elapsedMs": child["elapsedMs"],
         "warnings": [l for l in child["stderr"].splitlines() if l.strip()][:8],
@@ -827,7 +832,7 @@ def coreaudio_converter_result(child, summary):
             nothing += 1
         if result != "decoded":
             units.append({"index": l["index"], "offset": l["offset"], "declared": l["declared"], "received": l["received"], "result": result, "frames": l["frames"],
-                          **({"status": "0x%08X" % (l["status"] & 0xFFFFFFFF)} if l["status"] not in (0,) and not l["noMoreData"] else {}), "consumed": l["consumed"]})
+                          **({"status": os_status(l["status"])} if l["status"] not in (0,) and not l["noMoreData"] else {}), "consumed": l["consumed"]})
     frames_units = sum(l["frames"] for l in calls)
     frames_drain = sum(l["frames"] for l in drains)
     total = frames_units + frames_drain
@@ -853,9 +858,9 @@ def coreaudio_converter_result(child, summary):
         "opened": created,
         "setup": {k: setup[k] for k in ("source", "audioFileOpen", "dataFormat", "formatListEntries", "firstPlayable", "firstPlayableIndex", "formatList", "formatInfo", "syncframe", "cookieBytes") if k in setup} if setup else None,
         "input": {k: whole_rate(setup["input"].get(k)) for k in ("formatID", "sampleRate", "channels", "framesPerPacket")} if setup and "input" in setup else None,
-        "converterStatus": made["status"] if made else None,
-        "primeMethod": [{"when": p["when"], "status": p["status"], "method": p.get("method")} for p in prime],
-        "primeInfo": {"status": prime_info["status"], "leadingFrames": prime_info["leadingFrames"], "trailingFrames": prime_info["trailingFrames"]} if prime_info else None,
+        "converterStatus": os_status(made["status"]) if made else None,
+        "primeMethod": [{"when": p["when"], "status": os_status(p["status"]), "method": p.get("method")} for p in prime],
+        "primeInfo": {"status": os_status(prime_info["status"]), "leadingFrames": prime_info["leadingFrames"], "trailingFrames": prime_info["trailingFrames"]} if prime_info else None,
         "runs": [{"rate": whole_rate(output["sampleRate"]), "channels": output["channels"], "samples": total, "outputs": decoded}] if created and output and total else [],
         "unitCount": len(calls),
         "decodedUnits": decoded, "noOutputUnits": nothing, "refusedUnits": sum(1 for u in units if u["result"] == "refused"),
@@ -866,7 +871,7 @@ def coreaudio_converter_result(child, summary):
         "exit": child["exit"], "signal": child["signal"], "elapsedMs": child["elapsedMs"],
         "warnings": [l for l in child["stderr"].splitlines() if l.strip()][:8],
     }
-    if end and not incomplete and end.get("codedFrames") != total:
+    if end and not incomplete and created and end.get("codedFrames") != total:
         result["stoppedBy"] = stopped = "limit"
         result["notes"] = ["the harness counted %s frames and the lines add up to %s" % (end.get("codedFrames"), total)]
     result["totalSamples" if stopped == "end" else "partialSamples"] = total
