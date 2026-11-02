@@ -1,0 +1,70 @@
+{
+ "description": "external-windows-wma92-cbr-stereo-44k-128.wma cut after frame 30 by make_wma_std_variants.py: the later media objects removed and the counts of the headers fixed. The stream is the Media Foundation transcoder's (see that file's provenance); the cut ends it where Microsoft's decoder is asked how many samples it outputs.",
+ "encoder": {
+  "tool": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+  "path": "media-foundation",
+  "codec": "Windows Media Audio (WMA8, Media Foundation)",
+  "format_index": null,
+  "achieved_bitrate": 147885,
+  "format_description": "Media Foundation WMA8 at 128000 bps",
+  "format_tag": "0x0161",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedBitrate": 128000
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 16,
+  "format_bitrate": 128016,
+  "config_bitrate": null,
+  "buffer_window_ms": null,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 3,
+  "frames": 132300,
+  "type": "plain PCM WAV",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma92-cbr-stereo-44k-128",
+ "actual": {
+  "format_tag": 353,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 16002,
+  "bits": 16
+ },
+ "bytes": 25587,
+ "sha256": "9fcecf368ed57cac678a984d285fcdfd13e7f6cc17da4a3c27dc5c0a350175e3",
+ "reproducible": false,
+ "note": "Cut from the committed file by the script above; the bytes equal the file the run decoded (SHA-256 of its record). The File Properties object's file ID and creation date are those of the source.",
+ "derived": {
+  "from": "external-windows-wma92-cbr-stereo-44k-128.wma",
+  "tool": "scripts/fixtures/windows/make_wma_std_variants.py",
+  "cut_after_frame": 30,
+  "run": 41375872453,
+  "workflow": ".github/workflows/windows-wma-std.yml",
+  "microsoft_decoder": {
+   "file": "wmadmod.dll 10.0.26100.33438",
+   "dmo_samples": 60160,
+   "source_reader_samples": 60160
+  }
+ }
+}

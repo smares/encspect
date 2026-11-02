@@ -124,7 +124,7 @@ def statistic_of(stream_node, name):
 
 
 # What Microsoft's decoder (WMADMOD.DLL 10.0.26100.33438, the DMO and the Source Reader agree) outputs for the committed standard files that
-# have a bit reservoir (records of windows-wma-decode.yml, run 41252306359), samples per channel.
+# have a bit reservoir (records of windows-wma-decode.yml, run 41252306359; the two cuts: windows-wma-std.yml, run 41375872453), samples per channel.
 MICROSOFT_STANDARD_SAMPLES = {
     "external-windows-wma92-cbr-mono-44k-48": 133632, "external-windows-wma92-cbr-stereo-22k-20-sdk": 66816,
     "external-windows-wma92-cbr-stereo-22k-32": 66816, "external-windows-wma92-cbr-stereo-44k-128-sdk": 133632,
@@ -134,6 +134,7 @@ MICROSOFT_STANDARD_SAMPLES = {
     "external-windows-wma92-vbr-stereo-44k-q10": 133632, "external-windows-wma92-vbr-stereo-44k-q25": 133632,
     "external-windows-wma92-vbr-stereo-44k-q75-tagged": 90112, "external-windows-wma92-vbr-stereo-44k-q75": 133632,
     "external-windows-wma92-vbr-stereo-44k-q90": 133632, "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk": 66816,
+    "external-windows-wma92-cbr-stereo-44k-128-cut-30": 60160, "external-windows-wma92-cbr-stereo-44k-128-cut-36": 72448,
     "external-remux-ffmpeg-wma92-cbr-stereo-22k-32": 66816,
 }
 
@@ -605,7 +606,22 @@ def check_wma_frames(path, codec, problems):
         problems.append(f"the golden report has {report['streams'][0]['samples']} samples, {'the rule of Microsoft' + chr(39) + 's decoder gives' if wanted != sum(durations) else 'ffmpeg outputs'} {wanted}")
 
 
+def check_pinned_standard():
+    """The golden reports' samples of the committed standard files equal what Microsoft's decoder output (MICROSOFT_STANDARD_SAMPLES). Needs no tool,
+    so it holds the external-windows-* files, which the loop below leaves to check_windows, as well as the remuxes."""
+    failures = 0
+    for name, wanted in sorted(MICROSOFT_STANDARD_SAMPLES.items()):
+        report = golden_report(DIRECTORY / (name + ".wma"))
+        analyzed = report["streams"][0]["samples"] if report and len(report["streams"]) == 1 else None
+        if analyzed != wanted:
+            print(f"{name}: FAIL the golden report has {analyzed} samples, Microsoft's decoder outputs {wanted}")
+            failures += 1
+    print(f"{len(MICROSOFT_STANDARD_SAMPLES) - failures} of {len(MICROSOFT_STANDARD_SAMPLES)} pinned figures of Microsoft's decoder equal the golden reports' samples")
+    return failures
+
+
 def main():
+    pinned_failures = check_pinned_standard()
     if not tool("ffprobe") or not tool("ffmpeg"):
         print("ffmpeg and ffprobe are needed.")
         return 1
@@ -645,7 +661,7 @@ def main():
     if not any(DIRECTORY.glob("external-windows-*.provenance.json")):
         skip("external-windows-*", "ffprobe, ffmpeg and MediaInfo", "no Microsoft-encoded fixtures are committed yet (import_windows_wma_fixtures.py)")
     print(f"{checked} fixtures checked, {failures} failed, {len(SKIPS)} checks skipped.")
-    return 1 if failures else 0
+    return 1 if failures or pinned_failures else 0
 
 
 if __name__ == "__main__":

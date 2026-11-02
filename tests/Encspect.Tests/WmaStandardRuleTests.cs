@@ -30,10 +30,10 @@ public class WmaStandardRuleTests
 
     public static TheoryData<string, long> WindowsCuts => new()
     {
-        // Ends after frame 30 (B = 2,048, L = 512): min(B, L) is L, and the last block alone would give 512 samples more.
-        { "wma-cuts/external-windows-wma92-cbr-stereo-44k-128-cut-30.wma", 60160 },
+        // Ends after frame 30 (B = 2,048, L = 512): min(B, L) is L, and the last block alone would give 768 samples fewer (59,392).
+        { "asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.wma", 60160 },
         // Ends after frame 36 (B = 512, L = 2,048): min(B, L) is B, and the next block size alone would give 768 samples less.
-        { "wma-cuts/external-windows-wma92-cbr-stereo-44k-128-cut-36.wma", 72448 },
+        { "asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.wma", 72448 },
     };
 
     [Theory]
@@ -275,6 +275,8 @@ public class WmaStandardRuleTests
     public void AVersion1StreamWithAReservoirFallsBack()
     {
         var v1 = StdParameters.Create(new AudioFormat(0x0160, 1, 8000, 1000, 400, 16), WmaStandardStreams.CodecData(1, 0x0007));
+        Assert.True(v1.UsesBitReservoir);
+        Assert.True(v1.UsesVariableBlocks);
         var w = new WmaBitWriter().Write(3, 8).Write(0, v1.BitOffsetBits);
         w.Write(0, v1.SizeIndexBits).Write(0, v1.SizeIndexBits);
         for (int n = 0; n < 3; n++)

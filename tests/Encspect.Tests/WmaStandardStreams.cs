@@ -49,10 +49,9 @@ internal static class WmaStandardStreams
         byte[] data = new byte[version == 1 ? 4 : 10];
         data[version == 1 ? 2 : 4] = (byte)options;
         data[version == 1 ? 3 : 5] = (byte)(options >> 8);
-        BitConverter.GetBytes(samplesPerBlock).CopyTo(data, 0);
-        if (version == 1)
+        if (version == 2)
         {
-            data[0] = data[1] = 0;
+            BitConverter.GetBytes(samplesPerBlock).CopyTo(data, 0);
         }
 
         return data;

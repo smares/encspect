@@ -42,6 +42,10 @@ def figure(record, path):
     return run.get("totalSamples")
 
 
+# The file reads, and has no standard stream of version 1 or 2 with statistics (Professional, Lossless, Voice, other formats): not compared, not unread.
+NOT_STANDARD = {}
+
+
 def read(analyzer, path):
     result = subprocess.run([analyzer, "--json", str(path)], capture_output=True, text=True)
     try:
@@ -52,12 +56,12 @@ def read(analyzer, path):
     walk(report["root"], nodes)
     streams = [n for n in nodes if n["name"] in WMA_NAMES]
     if len(streams) != 1:
-        return None
+        return NOT_STANDARD
     inner = []
     walk(streams[0], inner)
     stats = next((n for n in inner if n["name"] == "Statistics" and n.get("children")), None)
     if stats is None:
-        return None
+        return NOT_STANDARD
     values = {c["name"]: c["value"] for c in stats["children"]}
     return {"analyzer": int(values["Samples"]), "coded": values.get("Coded Samples"), "invalid": int(values.get("Invalid Frames", 0))}
 
@@ -99,6 +103,8 @@ def main():
             got = read(analyzer, path) if path else None
             if got is None:
                 unread.append(name)
+                continue
+            if got is NOT_STANDARD:
                 continue
             info = manifest.get(name)
             dmo, reader = figure(record, "direct"), figure(record, "sourceReader")
