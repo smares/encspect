@@ -58,7 +58,7 @@ public sealed class WmaStandardParser : ICodecParser
         var nodes = new StdNodes(parameters, stream);
         stream.Read(packets, MaxPackets, nodes, findings, context.CancellationToken);
 
-        long samples = Math.Max(0, stream.ValidFrames - 1) * parameters.FrameLength;
+        long samples = stream.Samples;
         double duration = (double)samples / parameters.SampleRate;
         var streamNode = new Node(codec, parent.Offset, parent.Length, Count(stream.ValidFrames, "frame", "frames"))
         {
@@ -103,7 +103,7 @@ public sealed class WmaStandardParser : ICodecParser
             long bits = (8L * stream.FinalReservoirBytes) - stream.FinalReservoirStartBit;
             if (stream.FinalReservoirBytes > 0 && bits > 0)
             {
-                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits), frames);
+                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits, stream.HasAnnouncedLast, stream.AnnouncedLastBits, stream.AnnouncedLastMargin), frames);
             }
         }
 
