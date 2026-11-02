@@ -1,0 +1,4584 @@
+{
+ "schema": 1,
+ "format": "aac",
+ "run": {
+  "id": "41368907326",
+  "commit": "0e61390ad0c86de7c38395da30b2d82d7f63e710",
+  "imageOS": "ubuntu26",
+  "imageVersion": "20261026.180.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "fdkAac": {
+   "commit": "801f67f671929311e0c9952c5f92d6e147c7b003",
+   "version": "v2.0.2"
+  },
+  "concealMethod": 1,
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "changedFiguresForReview": [],
+ "files": [
+  {
+   "path": "adif.aac",
+   "sha256": "bc1665b5ff129fa60d6fd424276a936d503110fa78d4e10a98f18376adcd47ed",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adif",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "blocks-missing.aac",
+   "sha256": "8365b6fc4e5879e957739a84a36ed9906f4108f330632d6a9055ca9700aab597",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 46,
+     "ranges": [
+      [
+       0,
+       46
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.blocks-missing",
+     "findings": [
+      "aac.blocks-missing"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "blocks-trailing-bytes.aac",
+   "sha256": "7bffb6e2b2f062f0d29736d6836cdabcfc99c301727d32391fdb7d82f72da2d2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 19456,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 19456,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 20480,
+     "analyzer": 20480,
+     "reference": 19456,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 88,
+     "ranges": [
+      [
+       0,
+       88
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.block-trailing-bytes",
+     "findings": [
+      "aac.block-trailing-bytes"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 1,
+     "offset": 88,
+     "length": 88,
+     "ranges": [
+      [
+       88,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 2,
+     "offset": 176,
+     "length": 88,
+     "ranges": [
+      [
+       176,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 3,
+     "offset": 264,
+     "length": 88,
+     "ranges": [
+      [
+       264,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 4,
+     "offset": 352,
+     "length": 88,
+     "ranges": [
+      [
+       352,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 5,
+     "offset": 440,
+     "length": 88,
+     "ranges": [
+      [
+       440,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 6,
+     "offset": 528,
+     "length": 88,
+     "ranges": [
+      [
+       528,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 7,
+     "offset": 616,
+     "length": 88,
+     "ranges": [
+      [
+       616,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 704,
+     "length": 88,
+     "ranges": [
+      [
+       704,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 792,
+     "length": 88,
+     "ranges": [
+      [
+       792,
+       88
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder decodes and reports an error (0x1001), no finding",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "cbr.aac",
+   "sha256": "df9addbbab9099fec623faae0c3f502f81912d5f3b3524f738c1c1726f4ef3a5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "corrupt-soft.aac",
+   "sha256": "e99fed20230e72cd4defea8c66a0df64d1fdba82fcf857d032229ed3e7b193c5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 21504,
+     "reference": 21504,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 17408
+     },
+     "concealedSamples": 3072,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 17408,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 1,
+     "offset": 92,
+     "length": 28,
+     "ranges": [
+      [
+       92,
+       28
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.ics-reserved-bit",
+     "findings": [
+      "aac.ics-reserved-bit"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 4,
+     "offset": 304,
+     "length": 46,
+     "ranges": [
+      [
+       304,
+       46
+      ]
+     ],
+     "decoder": "concealed 0x4004",
+     "samples": 1024,
+     "finding": "aac.elements-mismatch",
+     "findings": [
+      "aac.elements-mismatch",
+      "aac.ms-mask-reserved"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 7,
+     "offset": 534,
+     "length": 50,
+     "ranges": [
+      [
+       534,
+       50
+      ]
+     ],
+     "decoder": "concealed 0x4004",
+     "samples": 1024,
+     "finding": "aac.pulse-in-short-window",
+     "findings": [
+      "aac.pulse-in-short-window"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 10,
+     "offset": 768,
+     "length": 29,
+     "ranges": [
+      [
+       768,
+       29
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.scalefactor-out-of-range",
+     "findings": [
+      "aac.scalefactor-out-of-range"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 13,
+     "offset": 981,
+     "length": 35,
+     "ranges": [
+      [
+       981,
+       35
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.tns-order-too-high",
+     "findings": [
+      "aac.tns-order-too-high"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 16,
+     "offset": 1200,
+     "length": 35,
+     "ranges": [
+      [
+       1200,
+       35
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.fill-data-invalid",
+     "findings": [
+      "aac.fill-data-invalid"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 19,
+     "offset": 1419,
+     "length": 30,
+     "ranges": [
+      [
+       1419,
+       30
+      ]
+     ],
+     "decoder": "concealed 0x400A",
+     "samples": 1024,
+     "finding": "aac.gain-control-not-allowed",
+     "findings": [
+      "aac.gain-control-not-allowed"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 21,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "corrupt-syntax.aac",
+   "sha256": "b916d99ebfbb7e9ffebf531a25103658869c58c4c323c6553e2ebef21f593751",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 21504,
+     "reference": 21504,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 15360
+     },
+     "concealedSamples": 6144,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 15360,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 184,
+     "length": 13,
+     "ranges": [
+      [
+       184,
+       13
+      ]
+     ],
+     "decoder": "concealed 0x4006",
+     "samples": 1024,
+     "finding": "aac.codebook-reserved",
+     "findings": [
+      "aac.codebook-reserved"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 5,
+     "offset": 381,
+     "length": 13,
+     "ranges": [
+      [
+       381,
+       13
+      ]
+     ],
+     "decoder": "concealed 0x4004",
+     "samples": 1024,
+     "finding": "aac.section-overrun",
+     "findings": [
+      "aac.section-overrun"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 578,
+     "length": 19,
+     "ranges": [
+      [
+       578,
+       19
+      ]
+     ],
+     "decoder": "concealed 0x4002",
+     "samples": 1024,
+     "finding": "aac.max-sfb-too-large",
+     "findings": [
+      "aac.max-sfb-too-large"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 11,
+     "offset": 781,
+     "length": 71,
+     "ranges": [
+      [
+       781,
+       71
+      ]
+     ],
+     "decoder": "concealed 0x4004",
+     "samples": 1024,
+     "finding": "aac.element-past-end",
+     "findings": [
+      "aac.element-past-end"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 14,
+     "offset": 1036,
+     "length": 22,
+     "ranges": [
+      [
+       1036,
+       22
+      ]
+     ],
+     "decoder": "concealed 0x4002",
+     "samples": 1024,
+     "finding": "aac.escape-too-long",
+     "findings": [
+      "aac.escape-too-long"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 17,
+     "offset": 1242,
+     "length": 31,
+     "ranges": [
+      [
+       1242,
+       31
+      ]
+     ],
+     "decoder": "concealed 0x4007",
+     "samples": 1024,
+     "finding": "aac.prediction-not-allowed",
+     "findings": [
+      "aac.prediction-not-allowed"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 21,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "coupling.aac",
+   "sha256": "84733774801acec12b817f801ce066157e6e6abd7a2b90309bd8b3857bac68e7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 4096,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] channel element 2.0 is not allocated"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 80,
+     "ranges": [
+      [
+       0,
+       80
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.coupling-without-program",
+     "findings": [
+      "aac.coupling-without-program"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-blocks-damaged.aac",
+   "sha256": "e1ddf53139b87b65976cdb03dc07f56ded32557353994dc17db0a285dd3780b3",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 13312,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] Reserved bit set."
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 13312,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 648,
+     "length": 270,
+     "ranges": [
+      [
+       648,
+       270
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 3072,
+     "finding": "aac.crc-mismatch",
+     "findings": [
+      "aac.crc-mismatch"
+     ],
+     "verdict": "decoder decoded, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 4,
+     "offset": 1221,
+     "length": 337,
+     "ranges": [
+      [
+       1221,
+       337
+      ]
+     ],
+     "decoder": "concealed 0x4005",
+     "samples": 4096,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 5,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-blocks.aac",
+   "sha256": "9e4385be8990cd61fb5f68833f924f84067343b68e8b2578c0aa9fec6fbf2436",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 17408,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] Reserved bit set."
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 17408,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 5,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-mono-damaged.aac",
+   "sha256": "e354bff16baaaadc471164ba2c7527dbdf90b3802d63ed029865820d8efc122a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 5,
+     "offset": 428,
+     "length": 85,
+     "ranges": [
+      [
+       428,
+       85
+      ]
+     ],
+     "decoder": "concealed 0x4005",
+     "samples": 1024,
+     "finding": "aac.crc-mismatch",
+     "findings": [
+      "aac.crc-mismatch"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-mono.aac",
+   "sha256": "dbba86cda571ecb39e629f961f8b107ccdcdd35aa9af63c0a7cfd9731ce50309",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-short-element.aac",
+   "sha256": "80e9dfed26c3faa46555edc09b2ad76661b6e3581bb0933eab96eac6cd07a47e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-stereo-damaged.aac",
+   "sha256": "3acc6c64713295db20bb3848c45be5be6d1b33be2539839033e23fe4302036a8",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 3,
+     "offset": 1119,
+     "length": 373,
+     "ranges": [
+      [
+       1119,
+       373
+      ]
+     ],
+     "decoder": "concealed 0x4005",
+     "samples": 1024,
+     "finding": "aac.crc-mismatch",
+     "findings": [
+      "aac.crc-mismatch"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "crc-stereo.aac",
+   "sha256": "23ea745c9088aca54e1f48b4f705c3af3ef3e2a3af1284364b2a1abf46de4dc9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "damaged-header.aac",
+   "sha256": "7b3898e7c7d4077f2326ec6e05e8a749da0992603a642f6ce5732e8931ce58af",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 29696
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 10,
+     "offset": 396,
+     "length": 21,
+     "ranges": [
+      [
+       372,
+       45
+      ]
+     ],
+     "decoder": "decoded 0x1001",
+     "samples": 1024,
+     "finding": "aac.sync-lost",
+     "findings": [
+      "aac.sync-lost"
+     ],
+     "verdict": "decoder decoded, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 29,
+    "cutUnits": 0,
+    "skippedRanges": 1,
+    "skippedBytes": 24
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "damaged-length.aac",
+   "sha256": "19fdde9eb6d2c2ea81619f8a5c36583935f6175697165df820af63054b349cd0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 28672,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 28672
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 28672,
+     "analyzer": 30720,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 7,
+     "offset": 280,
+     "length": 34,
+     "ranges": [
+      [
+       280,
+       34
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
+     "finding": "aac.frame-damaged",
+     "findings": [
+      "aac.frame-damaged"
+     ],
+     "verdict": "decoder no output, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 314,
+     "length": 31,
+     "ranges": [
+      [
+       314,
+       31
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder no output, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 345,
+     "length": 27,
+     "ranges": [
+      [
+       345,
+       27
+      ]
+     ],
+     "decoder": "concealed 0x1001, 0x4002",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-style-coupling.aac",
+   "sha256": "0214f78328ebf011568f5bf4e05a2f995da66db6c9ea20f67d37896499262483",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-data-extra.aac",
+   "sha256": "d57deaa8c3b25743e44ad60605e73828f7774a4c1db6de4f52909585fc96c46a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-extended-data.aac",
+   "sha256": "465a50abbe8e4b7e0116a4c8447e44d22dad8bfc08d956bb3e48a37206dc557b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-fixvar.aac",
+   "sha256": "c9b263d9d32e6bc286e5d65efb809b2a89288e3fdefab9d6c499fa4db883d4b1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-harmonic.aac",
+   "sha256": "4b45ed150173140f29c11369750ce3c239e9eb933449c93a9c6cc1c64f442cbe",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-plain.aac",
+   "sha256": "d2a839cd7b87cdb06fd65543413370fb3e99d3318c8fa50946ba6dda5499fd92",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-time-envelope.aac",
+   "sha256": "656b9dffd86fa741950862bb8eacb09dd1450517dceae286c21d076eb434d5e6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-time-noise.aac",
+   "sha256": "30771b606aa1ed8a2fb4df2e0e76401218aa6e940733d1a5b02ca8218c9d5ffe",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-style-varvar.aac",
+   "sha256": "ceb20f445dcf16bf58d72b55e31649265254da0643637b13ff992594e64d9c8d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 65536,
+     "reference": 65536,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 65536
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 32,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "fill-and-data.aac",
+   "sha256": "694366e505a498b47a652a623e47c6948dcecc1fb5cb4305b503093abc3e8326",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 7168,
+     "reference": 7168,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 7168
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 7,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "implicit-sbr.aac",
+   "sha256": "7f0389043ba4c646340f688daf162825cbb263bd957199a8891048e01ad13c5e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "intensity-noise.aac",
+   "sha256": "f333c9d7340f63a83d3dfb04d25c94ab01b797f63dbb6f1c05329fb94b1ce5c9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 4096,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "junk-around.aac",
+   "sha256": "19932a171493be67171a8a7c9783e90861ea6a120506fa8c3daf86bc293ed87f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 100,
+     "length": 13,
+     "ranges": [
+      [
+       0,
+       113
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.leading-junk",
+     "findings": [
+      "aac.leading-junk"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 20,
+     "offset": 823,
+     "length": 14,
+     "ranges": [
+      [
+       823,
+       14
+      ]
+     ],
+     "decoder": "refused 0x1001",
+     "samples": 0,
+     "finding": "aac.trailing-data",
+     "findings": [
+      "aac.trailing-data"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 2,
+    "skippedBytes": 114
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ltp.aac",
+   "sha256": "fd2854e01aba6be946a39ad1d76ec3403c93a567a959d7eb77c84d05b890238e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC LTP",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LTP"
+   ]
+  },
+  {
+   "path": "main-prediction-bands.aac",
+   "sha256": "d50b567530d0fcf5780ee2a6623d26c2796ab4e73c5257d61e6c3cdda8578ad6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC Main",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC Main"
+   ]
+  },
+  {
+   "path": "main-prediction.aac",
+   "sha256": "020eb82c9a451ddd96fa7c805116b8b2d46f44a7b46ff243e3e4995e60cfca2c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC Main",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC Main"
+   ]
+  },
+  {
+   "path": "mpeg2.aac",
+   "sha256": "c73c980bcae1e2ea5b440a0ae0e2ac2051e0b3eb0834b248d27d8d9237644a60",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "pce.aac",
+   "sha256": "6ed1931292e76a0cae7fd708e593770672b13fe285b8461ee700f191e7c7e13b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ps-in-multichannel-sce.aac",
+   "sha256": "3d71f1ad92452921cb558610cbfa3bbf2c01354e08f3d0a3bf68a189f7d0b357",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 3
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 249,
+     "ranges": [
+      [
+       0,
+       249
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.ps-without-mono-core",
+     "findings": [
+      "aac.ps-without-mono-core"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "ps-in-pce-multichannel.aac",
+   "sha256": "f260b1eae1a9f4016c38246ff1d0dfa30db3068e8f6a624d730d8f1a0bfd5e76",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 3
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 256,
+     "ranges": [
+      [
+       0,
+       256
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.ps-without-mono-core",
+     "findings": [
+      "aac.ps-without-mono-core"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "raw-blocks.aac",
+   "sha256": "2b6f527bf82d783bbe9d1476ca2cd95665b4b9e79a4f4497c57053bf8023975c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 28672,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 28672,
+     "analyzer": 30720,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 30720,
+     "analyzer": 30720,
+     "reference": 28672,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-after-coupling-element.aac",
+   "sha256": "7802d99c00a6f408c54153721fc3459576f4a401c9ef7b89be898faabeba770a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] channel element 2.0 is not allocated"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 99,
+     "ranges": [
+      [
+       0,
+       99
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.coupling-without-program",
+     "findings": [
+      "aac.coupling-without-program",
+      "aac.sbr-without-channel-element"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-before-channel-element.aac",
+   "sha256": "9278d72f1517010e23b5004ede1df63f43be8c8385006296c3f036c4e9181ac5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] SBR was found before the first channel element."
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 40,
+     "ranges": [
+      [
+       0,
+       40
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.sbr-without-channel-element",
+     "findings": [
+      "aac.sbr-without-channel-element"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-cut-before-header.aac",
+   "sha256": "08bdd637b0c70ba3937423f76fc15187083feb5f18aa84d97eb88c28638493c1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-fixvar-resolutions.aac",
+   "sha256": "04d081f66cefe142b3faaff79c9becb508f661f36f7961c7db6a79f58f3e1a3f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-in-frames-failing-crc.aac",
+   "sha256": "50a63e59574d8dcbffd182a9f36ee554d30f86f7f0f59e840c06cf946a39ea89",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "refused": "FDK AAC outputs nothing for any of its 12 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 12288,
+     "status": "pending",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "reviewed",
+     "awaitingStep": 5,
+     "note": "2026-11-02: awaiting rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule (lead answer 8 to the new questions, 2026-11-01) Core Audio, which decodes it (24,576 at 44,100 Hz, the converter and the reader alike, against the analyzer's 12,288; probe run 41312630570), becomes the reference, so this stays pending until that run."
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 68,
+     "ranges": [
+      [
+       0,
+       68
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.crc-mismatch",
+     "findings": [
+      "aac.crc-mismatch"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-in-one-block.aac",
+   "sha256": "41fbf168175fbb580cfdc97178ace78b989f90a3ef8bc10fd80c78e28ad60921",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 11264,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "decoder": [
+       [
+        22050,
+        2,
+        4096
+       ],
+       [
+        44100,
+        2,
+        2048
+       ],
+       [
+        22050,
+        2,
+        5120
+       ]
+      ],
+      "analyzer": [
+       [
+        22050,
+        2,
+        10240
+       ]
+      ]
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 11264,
+     "analyzer": 10240,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 10240,
+     "analyzer": 10240,
+     "reference": 11264,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-in-three-blocks.aac",
+   "sha256": "4be6c8c16cd59a044ff14aa08f9783e8b11b0b3c647c5927ff42f6be099b3d6a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 13312,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "decoder": [
+       [
+        22050,
+        2,
+        1024
+       ],
+       [
+        44100,
+        2,
+        2048
+       ],
+       [
+        22050,
+        2,
+        2048
+       ],
+       [
+        44100,
+        2,
+        2048
+       ],
+       [
+        22050,
+        2,
+        2048
+       ],
+       [
+        44100,
+        2,
+        2048
+       ],
+       [
+        22050,
+        2,
+        2048
+       ]
+      ],
+      "analyzer": [
+       [
+        22050,
+        2,
+        10240
+       ]
+      ]
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 13312,
+     "analyzer": 10240,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 10240,
+     "analyzer": 10240,
+     "reference": 13312,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-in-truncated-frame.aac",
+   "sha256": "2b73a19041be0d0cfb015b2027f0f45e2f90d8998a7ab0b46a9caa3bac531929",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 2048,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 2048,
+     "analyzer": 4096,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 4096,
+     "analyzer": 4096,
+     "reference": 2048,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 92,
+     "length": 123,
+     "ranges": [
+      [
+       92,
+       123
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
+     "finding": "aac.frame-truncated",
+     "findings": [
+      "aac.frame-truncated"
+     ],
+     "verdict": "decoder no output, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 3,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ssr-gain-control.aac",
+   "sha256": "035a3a5df8684a19a38bec4b87e94cc2cc080d5c88b7d1dc121fabb0f9b573a0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC SSR",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC SSR"
+   ]
+  },
+  {
+   "path": "stereo-coding-elements.aac",
+   "sha256": "0a20c0883a6975c4f382b0061522d5add79eb282195ff293aaf10638bd0c9b8b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 3072,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 3072
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "stereo-coding-reserved.aac",
+   "sha256": "7cd412c2e68bec0a1fc330507e1f74e838b1370a0d491bcfd9455c1d5bd885ee",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 3072,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 1024
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 1024,
+     "analyzer": 3072,
+     "reference": 3072,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 372,
+     "ranges": [
+      [
+       0,
+       372
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.ms-mask-reserved",
+     "findings": [
+      "aac.ms-mask-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "stereo-coding.aac",
+   "sha256": "7d4c468d5e6f6be4a93a8611fff1e780d2236fe3d721c76a5e6b5506f9b7b118",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 16384,
+     "reference": 16384,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 16384
+     },
+     "concealedSamples": 2048,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 8,
+     "offset": 2566,
+     "length": 283,
+     "ranges": [
+      [
+       2566,
+       283
+      ]
+     ],
+     "decoder": "concealed 0x4006",
+     "samples": 1024,
+     "finding": "aac.intensity-without-common-window",
+     "findings": [
+      "aac.intensity-without-common-window"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 10,
+     "offset": 3223,
+     "length": 468,
+     "ranges": [
+      [
+       3223,
+       468
+      ]
+     ],
+     "decoder": "concealed 0x4006",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "stereo.aac",
+   "sha256": "f911f46d8beb93a0fb0ad78a8829d08a9e9bbeb2d5cb6a7391808fc31a2bf94a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "stream-change.aac",
+   "sha256": "e18ab1848e1da1eebb66b1d997e72f098bbeca1f5c078b477462c1078ccab3b4",
+   "figures": [
+    {
+     "id": "samples.run1",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 15360,
+     "reference": 15360,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {},
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.run2",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      1
+     ],
+     "analyzer": 15360,
+     "reference": 15360,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "witnesses": {},
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC",
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "streams-limited.aac",
+   "sha256": "3f35e5a3832ece12d31804b52c5da2c56672b6e3cf8af808e80d008061066998",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "analyzer": 196608,
+     "reference": 202752,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 193991
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "decoder": [
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ]
+      ],
+      "analyzer": [
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ],
+       [
+        44100,
+        1,
+        3072
+       ],
+       [
+        48000,
+        1,
+        3072
+       ]
+      ]
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 202752,
+     "analyzer": 196608,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 193991,
+     "analyzer": 196608,
+     "reference": 202752,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 192,
+     "offset": 17856,
+     "length": 93,
+     "ranges": [
+      [
+       17856,
+       93
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.streams-limited",
+     "findings": [
+      "aac.streams-limited"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 198,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC",
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "truncated.aac",
+   "sha256": "7b39d29ad05a6553b65b8e04f1d57a82f9145333302a49532cba23c9d176e819",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 11264,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 11264
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 11264,
+     "analyzer": 12288,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 11,
+     "offset": 396,
+     "length": 16,
+     "ranges": [
+      [
+       396,
+       16
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
+     "finding": "aac.frame-truncated",
+     "findings": [
+      "aac.frame-truncated"
+     ],
+     "verdict": "decoder no output, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "two-signature-streams.aac",
+   "sha256": "b5c39be5003f38e1b86cdd996efa4432c4ea9072f9a4d262c068141a4727574b",
+   "figures": [
+    {
+     "id": "samples.run1",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.run2",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      1
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {},
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC",
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "vbr.aac",
+   "sha256": "b965f61261602a1056f3753e3eff248d27038b51bf354453c766f584d5957b31",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "windows.aac",
+   "sha256": "df6b4a600f38d562ba2c93f57d5d6a8e95db17232dc8070d6dd8f4d2041d3cff",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 6144,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  }
+ ]
+}

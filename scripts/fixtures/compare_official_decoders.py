@@ -1216,6 +1216,8 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
                 same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason"))
                 if same and old.get("statusSource") == "reviewed":
                     d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
+                    if "awaitingStep" in old:
+                        d["awaitingStep"] = old["awaitingStep"]
                 else:
                     d["statusSource"] = "rule"
                 entry[kind].append(d)

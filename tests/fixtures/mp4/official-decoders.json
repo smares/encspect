@@ -1,0 +1,6127 @@
+{
+ "schema": 1,
+ "format": "aac",
+ "run": {
+  "id": "41368907326",
+  "commit": "0e61390ad0c86de7c38395da30b2d82d7f63e710",
+  "imageOS": "ubuntu26",
+  "imageVersion": "20261026.180.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "fdkAac": {
+   "commit": "801f67f671929311e0c9952c5f92d6e147c7b003",
+   "version": "v2.0.2"
+  },
+  "concealMethod": 1,
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "changedFiguresForReview": [],
+ "files": [
+  {
+   "path": "aac-too-lavc.m4a",
+   "sha256": "70de35634912b5fd6943cc215a1976e9037810ec7acc4e5f82a7de4f489c0a20",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "adrm-short.m4a",
+   "sha256": "2d9608aca5406fd19823a16d707f81216ba8b66ae8e4e1abc1b38782287bbb93",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "Audible's aavd sample entry (encrypted): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "audible-aavd.m4a",
+   "sha256": "66c0a35d6c0ffd21081042d6415e72aa37c6ee05d0c5a20abfac65a3be4e57a1",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "Audible's aavd sample entry (encrypted): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "box-overruns-parent.m4a",
+   "sha256": "0261c1443eb5e31a2abbdcfcec7ed9146293acc150e614aec3a61383a2d10ae1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "box-size-zero-and-small.m4a",
+   "sha256": "7a38199692c986060ede787609e4c44c057eee74ac7f55045b97c2cc4c891596",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "cbc1-iv16.m4a",
+   "sha256": "6ea172c60d3d7cf3ff706c0ceffa3bc5870645c4c57fb4042c07ed1704efeae5",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cbcs-constant-iv.m4a",
+   "sha256": "b94d84f62c2eaee48ae5e2a109820552f80f8202667847566d2f3cecbf90eb3f",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-aac.m4a",
+   "sha256": "f0f73a0d6dd684e171213814524dc10f1cbd1e9f1f2ae2abe1b880017be4b70b",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-ac3.m4a",
+   "sha256": "2895f246cca1aa48e39b6fa67615cd22b0a593b6c1a8bef45c0096cb8f99a55e",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   }
+  },
+  {
+   "path": "cenc-clear-default.m4a",
+   "sha256": "442d6f5cc57178ede5da750108e1686a0ba67c132019552889a2ada7288e6dd4",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-clear-unparsed.m4a",
+   "sha256": "bf55fef29f18824af436cdf6abb2607f7097dc91b7e9f468e804634d7b12bf04",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-decoy-group-in-edts.m4a",
+   "sha256": "ad5fa3f9e493eb1820d11034721f625a8b87d43e5e38d22d66500c208db80476",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-decoy-group-in-entry.m4a",
+   "sha256": "d95c4ca5780e2aac29f0d297975f93143fe18e5724ddcb5dd9a292c92d1f57a7",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-dts.m4a",
+   "sha256": "07e08fc3ebab0a92e55c1fb2ab92b3ecd5df18f923ba9df5c87159e273a78d1a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   }
+  },
+  {
+   "path": "cenc-eac3.m4a",
+   "sha256": "b4170d599bba5d7455090e65c9143092208a3e166af0f4237484e534788f00bc",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   }
+  },
+  {
+   "path": "cenc-entry-out-of-range.m4a",
+   "sha256": "e72e0e34ff21ef40746ac5eceba3232f6e9cda5837c05f476b6a310405223b24",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-fragment-default.mp4",
+   "sha256": "0911017aa91b916269b1ee61c8b9adaf3d0f5df38212c48f796989efde3db530",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-fragment-group-v0.mp4",
+   "sha256": "af0601e9bb823dea0745237b23ca5b2ad0923fe64d01c07823bdfe2d553b3d83",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-fragment-group-v2.mp4",
+   "sha256": "a877a7254e84fb0165e9be28ffecc6cd2ddd62a8d971f84df0ac059f3d9bed31",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-fragment-group.mp4",
+   "sha256": "ff2ab608c877f5c1cec284274b44cc245854a4dab6d5d7e866dfba13f3557dfd",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-misplaced-group.mp4",
+   "sha256": "f7ef9483fa56c616528cdaf714a879c3600d3ee110da27530c8e4e7bff5ec19a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-moof-in-moof.mp4",
+   "sha256": "76275bac121c6edf4e7a16d8665ed992b150edcaad82053d4330e17318841cdd",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-moof-in-trak.mp4",
+   "sha256": "f060e6c7079ed42f62df6fffdff249dd364ca869046978b51e651cd8272069b0",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-no-tfhd.mp4",
+   "sha256": "c4a8cccf4f9d81a80126a7409484b3456983a9fa790c6f223926ec1682e8a6fd",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-piff-senc.mp4",
+   "sha256": "cd80884ad86790f3c602c6d0c01213ad34ed1790673eef269792a340c25a2c3f",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-senc.mp4",
+   "sha256": "5434e78364f36be09503a6c245121f5c2c370c87a53ab10ac5633ff489f2d4d8",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-table-default.mp4",
+   "sha256": "b4769449ca006bd77064d6bf61b1eb81c2b4aecfac13abe81e0eacc771fc2e41",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-table-group.mp4",
+   "sha256": "936eb5aff3dfd7c7d50c5cd00dc8bd0e559cfc68fb42dcf0460d3325e73d53e5",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-traf-in-traf.mp4",
+   "sha256": "aa81e25c86d13356b04cdc2595368b62ff45da10e7e16baf3e7ce817f742dc8a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-traf-in-trak.mp4",
+   "sha256": "d2ddd7fc0159498a55a721b0d8021f5e95916e1e923681f6941cffafd5e66630",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-traf-missing-track.mp4",
+   "sha256": "3cab582f2380759f9c6a578c65bf861b24d24e00b6a39b5e9e9b3f6cab711799",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-two-tfhd-protecting.mp4",
+   "sha256": "3d2138541f7ce7781b1ac353c228f959060361b2c545594f8a302028a95e9eac",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented-two-tfhd.mp4",
+   "sha256": "e976bb1737905f45b043f52c631d02657e1a09135980bb323f36bc57885ef475",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-fragmented.mp4",
+   "sha256": "4cf18de8809ab072e306b5268edf9466e06eefd0ed59eae885ac0b915a707eef",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-groups-clear-tenc-protects.m4a",
+   "sha256": "c002c81c8de2f8f0186738003ab667d432389a803e92061fd4fbc3c44bbf3dfa",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-groups-in-edts.m4a",
+   "sha256": "f33ed2c6ededbb787c5eb98cc487089d6f45890c9f6f976f39f9edb583286784",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-groups-index-zero.m4a",
+   "sha256": "0dbf48a0081fdaa47bc598e3de686510bcb23b52f806dd7be544a822766bbfb5",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-groups-two-sbgp.m4a",
+   "sha256": "c65d3f141abd818281e61dcafb3887e490b4b68a2d72030bf0eb0f50fb7821c5",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-mpeg-audio.m4a",
+   "sha256": "0571546a67818096c39c052706b037b5e5f3d8cc01c9e02c1ab091cc53aa6dbb",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-no-tenc.m4a",
+   "sha256": "eb8be3f8ff7049b38e9d4c00b642d7a21ec3556ee0b45b0cd789dafb92becfc6",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-pssh-only-clear.m4a",
+   "sha256": "3f4ffefc0d5223b9302487219a01aa05aee4ea4f2629fd5b485b726247fd7481",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-saio-truncated-type.m4a",
+   "sha256": "63feb659464b708d315e176a7f51b275f6d735b1c548e0c99496e36c792d4955",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-saiz-empty.m4a",
+   "sha256": "b8c97a0850b39d17b2186957a236ffb147aefec47aa3ff319d23c6313c6b6d1d",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sample-group-default.m4a",
+   "sha256": "5dd9aba61286b8ccb22884560f8f93f9c587384567e5fdd3d481c69cedd7a581",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sample-group.m4a",
+   "sha256": "f9db25a4b66f2b3179427977da7a56f09218269c346dff8b435c6c9e2e759d75",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sbgp-in-trak.m4a",
+   "sha256": "265ef120152bb85292e7d104f30a910e043c1e207a6e04b01a4765c63abe18b3",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sbgp-in-udta.m4a",
+   "sha256": "e02dc13783ed53393f4d4f5c1647bbc2f3cf8c755636ce68ea5f186936a46f04",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-second-entry.m4a",
+   "sha256": "b899aba0c0cec0e5b374fb3cfe5c0b3e4ce9af0f21d9c24de68a44eb7b95ebe0",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-cut-count-v0.m4a",
+   "sha256": "40d87ef8ecd7f11cd3de3b8592650dbc80323c9a2e23f2800264f94469f9c9c9",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-cut-count-v1.m4a",
+   "sha256": "dfd36ec8cbcacc71840e65c8950f0b98a4dcd4de82c16270bd82ae3e6474ff13",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-cut-default-index.m4a",
+   "sha256": "cfd0ba2981744ad69905b759f02a4d3aebdf9b5cd31351cd7493049364caf490",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-cut-default-length.m4a",
+   "sha256": "49c45f4636dd27bb5a73cc765416acb59421030cfdfba51338965f55d4ed8db0",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-cut-grouping.m4a",
+   "sha256": "70111d2b4506bed368c1c3a2f84738ba2086ce524b02102082064678945ae573",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-seig-truncated-length.m4a",
+   "sha256": "fb0f4a6d95afa4a9369d2b1210f12e1988891c3c5619959ef9be62b6b19e0c0c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-senc-after-mdat.m4a",
+   "sha256": "088200e5490902a6903eca971e9a754d12a9c6cf9722a8de971b6a6733e54b47",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-senc-empty.m4a",
+   "sha256": "fc52f48649202fb2d710e2f769ffac00e569f2ab69f70b3225438481d3a45937",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-senc-tenc-clear.m4a",
+   "sha256": "e175705d7f940b88d996d311c8a7a40dd0ddf5f6e31d8da27644c0330ed7f58f",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sgpd-unknown-version.m4a",
+   "sha256": "a6079a20f79b0ffd2157b2f3e622dc89de1a161122ac1cac2c7e9a26679c7ce8",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sgpd-v2-default-length.m4a",
+   "sha256": "2c40b063ff94bc71e66935e9d43d1e6f11d99d96f79236df4492948eeb09fd80",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sgpd-v2-entry-lengths.m4a",
+   "sha256": "6ef6ff5658a72b4af844df32a504ccc9963c7b75e81767b2a7df7072fa783ccd",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sinf-in-mp4a-entry.m4a",
+   "sha256": "bd7f3fc30b148c43030eba39d1ad7b2dbbe2eaa2806620f14b17d019e30be7e4",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-sinf-in-trak.m4a",
+   "sha256": "768ac7a631a0efcf62bc1b1d1630d6b3be78968eb1e03005df5576859267960a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-schi-in-entry.m4a",
+   "sha256": "47d6a6f44f7f2abcb1177e966f1083dd967cca934181f26d4aca00db823a240f",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-schi-in-trak.m4a",
+   "sha256": "4182a5761449cde951680d1e1eeffa158409c5be6cb926bd94af2c04d104b08c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-sinf-frma-only.m4a",
+   "sha256": "5dfb31f660735aa21c2dcd3acaa2add626dccff635935cceda5c9bc1501d2501",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-sinf-in-trak.m4a",
+   "sha256": "7d64d3208e77a31a053f7a0d6d3991ba593efc8b9001669a7447cbe141374176",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-tenc-in-entry.m4a",
+   "sha256": "bf1d01f42a9fb2404463ff5ae76f365cf4a6ed7a55335c3706da6772c19aa2fd",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-stray-tenc-in-stbl.m4a",
+   "sha256": "f94aefa153f64641ab0666fe0f0f14ed1c12bde784e15e3f093d6257df883946",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-two-enca-entries.m4a",
+   "sha256": "098d7c3b5a24f9c5f2feee3297dc14c94951f4ac0752dcdafa56304ed7d9f382",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-two-sinf.m4a",
+   "sha256": "e98a375c1ad33adbe373ceb17f776f077bbed06df2d634f80cfe4567a6dc2a72",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-two-tenc.m4a",
+   "sha256": "e759b3e9c50f427d742a6787cf2631087492324557981eb64f4c361b5e64dd96",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cenc-unused-entry-run.m4a",
+   "sha256": "a4a12d9491558ea26134b950b945b0b9f105444b4136b3137e60097296e30bc8",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted track (a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "cens-pattern.m4a",
+   "sha256": "8e468163f8ba73a5304f26a4095682a8af2fc1ba5799cee5fbd0400378592b0c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "chan-7-1-rear.m4a",
+   "sha256": "30dbc307cb250201dbeda806717d76e5792cad602ce10b5ceb2d713adae973ea",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-bitmap-side.m4a",
+   "sha256": "1ece97d9c5dc0640bdf359e2a875e2bf0d0d689cdd61621d61be725b6c865ceb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-bitmap.m4a",
+   "sha256": "1dda0d538a674c7bfa40e0431575b62f367f8f66fd42ddb0830ca1a610e58914",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-completes-reserved.m4a",
+   "sha256": "55d64e020e932921618d91ef20ec48057b22a2d1748a55cae6e180760394bb0f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 492,
+     "length": 2,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.reserved-channel-configuration",
+     "findings": [
+      "aac.reserved-channel-configuration"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-descriptions.m4a",
+   "sha256": "533eb60cb6497c7dc48e2f0d81c6587bac7df848b50bde34e52648af316451bf",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-layout-tag.m4a",
+   "sha256": "cdaf7d6472016202c6fe35f260c94cccb0f29f70d7f71f57afce053fb622747a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chan-mono-core.m4a",
+   "sha256": "f4e4e7d00db59c74e5bdb449fbf9f1dcae620debe78f011c038da5b222cf6854",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chnl-defined.m4a",
+   "sha256": "6618c2c9dafae4515af8595b20ec53e14983e88d9017c9b845b6502ad22244cf",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chnl-omitted.m4a",
+   "sha256": "17d2fe8e82b832437eb6e0938dce76c6804681a392af02712550b6d08a322441",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chnl-positions.m4a",
+   "sha256": "c99be61cb9e9321394cdac405361dbb121150428bc9f2d9c3fbeda0439d33078",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chunk-outside-file.m4a",
+   "sha256": "9217afc1ebed288a7e3e71e2961c581a02d6be1723abddf92e4feafb8f82fae2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 10,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "chunk-sample-mismatch.m4a",
+   "sha256": "e13cf672229acfb81a825a91cebaccaa36d4c32008e09543999cad32cd32604c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 7168
+     },
+     "concealedSamples": 5120,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 7168,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 5,
+     "offset": 989,
+     "length": 33,
+     "ranges": [
+      [
+       989,
+       33
+      ]
+     ],
+     "decoder": "concealed 0x4002",
+     "samples": 1024,
+     "finding": "aac.unit-trailing-bytes",
+     "findings": [
+      "aac.unit-trailing-bytes"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 6,
+     "offset": 1022,
+     "length": 30,
+     "ranges": [
+      [
+       1022,
+       30
+      ]
+     ],
+     "decoder": "concealed 0x400C",
+     "samples": 1024,
+     "finding": "aac.tns-order-too-high",
+     "findings": [
+      "aac.tns-order-too-high",
+      "aac.element-past-end"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 7,
+     "offset": 1052,
+     "length": 27,
+     "ranges": [
+      [
+       1052,
+       27
+      ]
+     ],
+     "decoder": "concealed 0x4007",
+     "samples": 1024,
+     "finding": "aac.ics-reserved-bit",
+     "findings": [
+      "aac.ics-reserved-bit",
+      "aac.prediction-not-allowed"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 1079,
+     "length": 24,
+     "ranges": [
+      [
+       1079,
+       24
+      ]
+     ],
+     "decoder": "concealed 0x4007",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 1103,
+     "length": 20,
+     "ranges": [
+      [
+       1103,
+       20
+      ]
+     ],
+     "decoder": "concealed 0x4007",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "co64-largesize.m4a",
+   "sha256": "7668d87f6fa047675f923eb5c00d0ad64bb3599cb169bfa6f3de5d674281a33b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "deep-nesting.m4a",
+   "sha256": "e897f32cb0510409c424515c251ac6b9cb5504e88431548a30c499538c5582cf",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "duplicate-boxes.m4a",
+   "sha256": "045ebc221a53a45c5db8f170c432b2d73881d6a390029e02a9e841f753fa1b24",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "duration-mismatch.m4a",
+   "sha256": "b6bc658808de01d5d9eb5d9a465d19c061989ff661e3fecc3b1f56d5fab21a82",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "edit-list-beyond-unlisted.m4a",
+   "sha256": "1de1495fa833bf1ae11ad75310c53d4f765ea68a5248e0e878db4d632a455457",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "edit-list-invalid.m4a",
+   "sha256": "cfdc7e9d49a5e3ac03c08eebb32def63123006fd6ca0e45f7bdabab01fe99f72",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "edit-list-itunsmpb.m4a",
+   "sha256": "ef567d5185bdf52638583c7ffd281c25ef24c901bdf3a3963456f8b2663109e9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 47104,
+     "reference": 47104,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 47104
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 44992
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 44992
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 46,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-1.m4a",
+   "sha256": "10f9cc5224cfbdc5667fea9ff2526aa9f3ae21e53a36f2b529fdde094db6e109",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-13.m4a",
+   "sha256": "4db8e440c2dc49e2fd8f190381d6fe4e8c50508fa420eb406d1a6eff849d6518",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-2.m4a",
+   "sha256": "7d8020a3714def8f1e8dafa6568e26e07a9f7606ed2cc10eef6b2175177a09b7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-3.m4a",
+   "sha256": "e4ddede4cc7c7da3e1ba51f7277d43dd1fe5a03c7989bbd14a15bdd99239943b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-4.m4a",
+   "sha256": "a3bcaae457d78c3084cec0e44cbf703e7d9d4311a36df8f82f537ffda0a5c6d6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-5.m4a",
+   "sha256": "2d03f2fe6782b615de632ee67d6a5083709024e0bfe3633c80f4707d716202c3",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-6.m4a",
+   "sha256": "fbb5db28840547a432cd1672f230521b2c47b7a17d45cebdcf4cacad0eb922b7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld-ld-sbr-7.m4a",
+   "sha256": "05b18ba8fad0434f96d5020ace9a8b2b67afce11018542b8d53752f93656416f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD with SBR"
+   ]
+  },
+  {
+   "path": "eld.m4a",
+   "sha256": "912be84247c5ea898a9fb0bedd220420c93defff30df877643aee59f292674b8",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9600,
+     "reference": 9600,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "witnesses": {
+      "ffmpeg": 9600
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 39,
+      "extAot": 0,
+      "frameSize": 480
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "ER AAC ELD"
+   ]
+  },
+  {
+   "path": "enca-no-sinf.m4a",
+   "sha256": "7ededd75afbbed53310811bcde57c687b08467e8c6d86b9f74bab24c662682c2",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "explicit-sbr-implicit-ps.m4a",
+   "sha256": "fc446582a96320fb47fee7dc7ea53c9cf63b20a85be732760d59640aeba4238b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "ffmpeg-cenc-aac-fragmented.mp4",
+   "sha256": "bd323c1ee7a614b86cbd8d9831af4a13700c7664696b83521698e4212571de35",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-aac.m4a",
+   "sha256": "15c320f2b4dd4657db88cb84a998d0880943233a249afedeb3fe7a56298c1f4d",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-ac3.mp4",
+   "sha256": "9fc923d362876a204bac2927cbc24ca85f533822edf4727f9967915aa02f4fb9",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-alac.m4a",
+   "sha256": "7f472c1ff8fbfd7fa96eb0be24987a897d5c203ce4da5f1e9c01b4438bf7a173",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-eac3.mp4",
+   "sha256": "6cd2642ba8af64b511313f8ee015a3680a69323b813fb2e847d56b13f5798e4f",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-flac.mp4",
+   "sha256": "1da027b2d9ea7befac3514e9329f180dadc51605ca4b886ea6dc66af16e244f9",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-mp3.mp4",
+   "sha256": "400086fea23243dd3df6454c922440a938e2441c081ae43ee30abf87f14c2600",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-cenc-opus.mp4",
+   "sha256": "f5bdf55b08d181090a978890e4335f89afdf73b7b0c1b3f221df3c1e3cc7f132",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   }
+  },
+  {
+   "path": "fragmented.mp4",
+   "sha256": "b97112dd841d6e5a01a2cdb2a821729fdc1d927b42fc1d1922b1f63613921004",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "gapless-disagree.m4a",
+   "sha256": "1e863e001d7e2b858c6763948b4d2b84f2f05d662c0f1a346ab9fbb414e3a031",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 47104,
+     "reference": 47104,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 47104
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 43968
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 43968
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 46,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "he-aac-backward.m4a",
+   "sha256": "95ae210870c558c7167c977ae5703f7e0d832c66dc17d8a3ee090cbfdf387b9f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "he-aac-hierarchical.m4a",
+   "sha256": "a695a5bcc240f4f397f4af6fc9b6c19c7c75a9d3fc6a7dc5fd3dc555b686ad1e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "he-aac-mono.m4a",
+   "sha256": "b81712c229472c9c69c33207f18b7aa212e1a73c2e3079c81c94966209909310",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "he-aac-v2-backward.m4a",
+   "sha256": "557fcdba475ca748d22766bce967393250d921e920aea9c07c717edbd8d7d308",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "he-aac-v2-hierarchical.m4a",
+   "sha256": "5363683997fe2a5845829aedeb127672cc318871eaa7e21ad20ef3daa06aa5b4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "huge-sample-count.m4a",
+   "sha256": "f5db22671f055ce584316e631ea5a53c284ca8e8ff0f96b47b71013202e6d105",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "id32.m4a",
+   "sha256": "4d2c922dd4918b8b64f9abbecf24cb6240ccbfee5ea14ecb0bd75770be4ff5b3",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ilst-all-types.m4a",
+   "sha256": "bffabe4ccb4159fb9285a8a18a49867a45bacc89865ae091042602b853a0594e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "implicit-ps.m4a",
+   "sha256": "9ad8966192daa99389b51eb04a77497628d461b462057bb975027b85ef72f6cd",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "implicit-sbr.m4a",
+   "sha256": "03e3e40c211e7d9ee056759b326a2de9a7e4f743c9719571bbdbdf66c588a44c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "itunes-drms.m4a",
+   "sha256": "4dd6d18b40160aed2bfd5baf20b03e3fb1b0d576e0e7ad6fed7f19bed6c4df8a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "a drms sample entry (DRM-protected): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "itunes-purchase-clear.m4a",
+   "sha256": "3f18a3649e41ec8f6975c553209325fe2ca9427591ef752ff83d89f0e4e6d507",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "itunsmpb-only.m4a",
+   "sha256": "a2695ad01f9323867413595519f2a46b90e6ba6661e12259ce8c7027ba89a07a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 47104,
+     "reference": 47104,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 47104
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 44100,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 44992
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 46,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "lc-implicit.m4a",
+   "sha256": "09070038321ca3088f472bcb0fc223c29383ab24db671f36c8e48203cdefd0c7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "lc-sbr-absent.m4a",
+   "sha256": "d472466bad90af9c77eb510827f9b1c863edb44efb1eb26d84b3b8497044de0c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "moov-after-mdat.m4a",
+   "sha256": "17f44a7990a689e38d4c5fd845c8994312696e209493b19f3c51481ff7a3fc27",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": 30720,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "moov-in-mfra-before-moov.m4a",
+   "sha256": "99740e6c3aac95a51b1acb3513af7c8b4816e00688b4589f6625093dc48463bc",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "moov-in-mfra.m4a",
+   "sha256": "590901685ab6b18f044ffd32cfcc2d4d3dee8f9a2d1badfd536488c165e2e53a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "no moov box",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   }
+  },
+  {
+   "path": "moov-missing.m4a",
+   "sha256": "2ccef1a3f3b2281915879c91276c01de7b7c2eb93b63d84cb11b184ea5ddd358",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "no moov box",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   }
+  },
+  {
+   "path": "mp3-in-mp4.mp4",
+   "sha256": "3ce22b514e1d2c965f0b11eba69e8a3b47287d4ebb51bc7c87a54924f581f53e",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "mp4a with object type indication 0x6b is not AAC",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "other",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp3-two-chunks-gap.mp4",
+   "sha256": "11b9c9f27e8ddbf274a1c0794263d53ad354b08320cde59947083cf80811f9d4",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "mp4a with object type indication 0x6b is not AAC",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "other",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp4box-cbc1-aac.m4a",
+   "sha256": "4b1c35d7abbcb792279258480dbfd05597192a4361cfad021d3e9b1460684855",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp4box-cbcs-aac.m4a",
+   "sha256": "bdd3fc9acf9493bbdc89329e95d8e4e54fd4a64a20d083d08f733116e48c30a0",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp4box-cenc-aac.m4a",
+   "sha256": "9635fff8b300a5625bae862639f9d9f2fc3cca50f792b1678a7fcac9073325a8",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp4box-cenc-clear-samples.m4a",
+   "sha256": "934e78225bdb8d2204561e75b935e903c0df6767fd400612bdc702ebcc795046",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "mp4box-cens-aac.m4a",
+   "sha256": "f80d197a8b684ffd93cea7024f1507aa870a4ca62d41bc5ac79159bb59fcc482",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "nero-chapters.m4a",
+   "sha256": "2fcce5abbd6b2920c867d01a08e9c4bea42f4b6d792191acff4f6e20135a1151",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "pce-5-1.m4a",
+   "sha256": "ef31263223269d9b4854bab6e71f33ff4a93823743be250ff577d561856ab568",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "piff-scheme.m4a",
+   "sha256": "bf9e351fe6f0ad8e78c08c46122ddcf1339c41e1520940c0a0ab431163c0e255",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "piff-senc-in-stbl.m4a",
+   "sha256": "99a906e5c5ccfb2ee1708d15332b41aa698e843bddcd13a452c9d9bc57acdfb2",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "piff-tenc-beside-cenc.m4a",
+   "sha256": "e933467141535f910d09043cf17dc434ff38b4fd6e9e3dfb3ca545ee5a333000",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ps-in-channel-pair.m4a",
+   "sha256": "94e106839b0cea465070e465eca6d6fa387d1e8571b27db1c4e90928c607d23d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 652,
+     "length": 153,
+     "ranges": [
+      [
+       652,
+       153
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.ps-in-channel-pair",
+     "findings": [
+      "aac.ps-in-channel-pair"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "ps-signaled-absent.m4a",
+   "sha256": "e95afa85474010e7945dd9526d43f021c60a36ef5ce257c5b054383c12f9f399",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 492,
+     "length": 7,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.ps-signaled-absent",
+     "findings": [
+      "aac.ps-signaled-absent"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "ps-signaled-over-stereo-core.m4a",
+   "sha256": "27dc3be5b623cdebeed4efee5bd1f3c36271829f3c1fa9f465d606b6c6c0f0a0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 492,
+     "length": 4,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.ps-without-mono-core",
+     "findings": [
+      "aac.ps-without-mono-core"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "pssh-data-overrun.m4a",
+   "sha256": "43a34f4495b29141a3546e7b75efdaf368985a315d7a8b25f9dafb68cbd8373d",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "pssh-kids-overrun.m4a",
+   "sha256": "31f145f6d2568cc945d5f27e0ee01aad834cb3fb6ca5e81930d66f2c4170407c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "pssh-trailing-bytes.m4a",
+   "sha256": "d16e224fc111c523f7646ae1117ca13ce9a9ce6d26f5b16e462c8d3849e119b2",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "pssh-version-2.m4a",
+   "sha256": "27a7ef90c054f5298ea2a461a8f489ac74f628e292afd6a2ee68ed1cba15162a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "quicktime-sound-v1.mov",
+   "sha256": "2697d906590a6fc09f6b74102845a9e8fc789c2aa9550490b1bf2659743e636f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "quicktime-sound-v2.mov",
+   "sha256": "33864986b3c5971a5b548d5f2a6564afa1a1323a4699680bef510da320fbbca1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "quicktime-udta-terminator.mov",
+   "sha256": "36047f982d6eddae3412d0a4376b1e56aaa0a2557258a40ef297fbbd85733f7d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "quicktime-udta-text.mov",
+   "sha256": "41fa6fe2c4dacdd56b1516462dcf8865ad6771c413e3411c52ee25bf958d3d7f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "rate-1-hz.m4a",
+   "sha256": "9e2ee14c8284ca88841e9ee7a6d03b9e145b53fc8c20bbcbb90735489f47089b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 3 units (0x2008)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 3072,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 3 units (0x2008); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 492,
+     "length": 5,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.implausible-sample-rate",
+     "findings": [
+      "aac.implausible-sample-rate"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 1000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "saio-count-exceeds.m4a",
+   "sha256": "b16c0ea67303a6c155161f70022acfb7bbaa719056f5362ce63a3a9a72ce4acf",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "sample-count-mismatch.m4a",
+   "sha256": "25cb071461192aa8ed1e7828875ea4bd609bced40dc460614ed41ebdaf2692b5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sample-outside-mdat.m4a",
+   "sha256": "e7407bb792a671c2b3780c75344d1bfbb833548c82cee0802bb182ca7392b428",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 10240,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 36,
+     "length": 6,
+     "ranges": [
+      [
+       36,
+       6
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.prediction-not-allowed",
+     "findings": [
+      "aac.prediction-not-allowed"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 1,
+     "offset": 42,
+     "length": 45,
+     "ranges": [
+      [
+       42,
+       45
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.max-sfb-too-large",
+     "findings": [
+      "aac.max-sfb-too-large"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 2,
+     "offset": 87,
+     "length": 42,
+     "ranges": [
+      [
+       87,
+       42
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.element-past-end",
+     "findings": [
+      "aac.element-past-end"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 3,
+     "offset": 129,
+     "length": 39,
+     "ranges": [
+      [
+       129,
+       39
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 4,
+     "offset": 168,
+     "length": 36,
+     "ranges": [
+      [
+       168,
+       36
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 5,
+     "offset": 204,
+     "length": 33,
+     "ranges": [
+      [
+       204,
+       33
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.section-overrun",
+     "findings": [
+      "aac.section-overrun"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 6,
+     "offset": 237,
+     "length": 30,
+     "ranges": [
+      [
+       237,
+       30
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 7,
+     "offset": 267,
+     "length": 27,
+     "ranges": [
+      [
+       267,
+       27
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 294,
+     "length": 24,
+     "ranges": [
+      [
+       294,
+       24
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 318,
+     "length": 20,
+     "ranges": [
+      [
+       318,
+       20
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder refused, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "samples-overlap-chunks.m4a",
+   "sha256": "7f08d9cec39dec1c324a2e5be57c2f5c789a4611d668e59bef94c1295527184c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "Apple Lossless (an alac sample entry), not AAC",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "samples-overlap-fragments.m4a",
+   "sha256": "7b98ef488d0580091248310fb2650062651a0b6379de753d14922616489b6f73",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "Apple Lossless (an alac sample entry), not AAC",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "sbr-downsampled.m4a",
+   "sha256": "d22c4f88a0a82de33238e2def943dd1cc3183cae7ba27d835208b972e0e2b063",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-signaled-absent.m4a",
+   "sha256": "61654248a0f36f5010695b9f1d2908771d8daeb83e763fd491390efe6438ab97",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 24576,
+     "analyzer": 12288,
+     "status": "pending",
+     "kind": "analyzer-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 12288,
+     "analyzer": 12288,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 492,
+     "length": 5,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.sbr-signaled-absent",
+     "findings": [
+      "aac.sbr-signaled-absent"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "schm-truncated.m4a",
+   "sha256": "75754aacbf0459d4c46f984522de155e02f3e208157a9a6852079493afa06c9b",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "second-moov-with-track.m4a",
+   "sha256": "4c351445cd867704dd4dadfb118ce45cab3cb20ef9b6a50d0636b7aa6555742e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sinf-no-frma.m4a",
+   "sha256": "16fe1ff6a3bda8a0bd8be16d5b746f39d0611c5123d7a39126757511c87b386c",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "sinf-no-schm.m4a",
+   "sha256": "2a7fd122ab3d204201b7d1a669007da42dd9b5a2d9bd7c95dec783db4afefd8a",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "sinf-overruns-parent.m4a",
+   "sha256": "4049eb08872967c275747f7b261b4086fe80191a96c7340dba397235d9c4c0f5",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "tag-inside-mdat.m4a",
+   "sha256": "48ec8de3c5cb3cf09950b886571e4a1735846081165e3f409675a315a30bbde6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "tenc-constant-iv-size.m4a",
+   "sha256": "9f19382119dda386c83ba91b767239e427e44807ae2822acd77c46e1855686e4",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "tenc-iv-size.m4a",
+   "sha256": "3d62c3c0948b8460db269e1425d35e6e8b0b102910ffe45dff48456325c1e5e6",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "tenc-no-constant-iv.m4a",
+   "sha256": "5c8656225106e4d47550f34546ecc0c09b2f43c08d14715573787a121b91f490",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "tenc-truncated.m4a",
+   "sha256": "6b1e0f6a9612b5a019aa25620fa73e80e6967f63aca459c8a65a4600f26e0e4d",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "too-data-type-0.m4a",
+   "sha256": "79948ab740cfa1543989e731e65618cfc16abaef1558b0cd0b399e6ff9d0da95",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "track-meta-before-mdia.m4a",
+   "sha256": "9f367b3f42c3f1e62c667e1285177c20e94361aeacaab1afd1c87da6249d1ff2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "trailing-bytes.m4a",
+   "sha256": "845327aae60f0d92da6185e53a760199cbf1ffb7a33e3ee36539669669277764",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 8192,
+     "reference": 8192,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 8192
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 3,
+     "offset": 1740,
+     "length": 366,
+     "ranges": [
+      [
+       1740,
+       366
+      ]
+     ],
+     "decoder": "concealed 0x4002",
+     "samples": 1024,
+     "finding": "aac.unit-trailing-bytes",
+     "findings": [
+      "aac.unit-trailing-bytes"
+     ],
+     "verdict": "decoder concealed, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 8,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "trailing-id3v1.m4a",
+   "sha256": "9a2723c38c96dd687dcc80fbe922c1e1a91add3721bf9243f1705725d459e130",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "truncated-in-tenc.m4a",
+   "sha256": "0f151b5fad714ede2b297d4fa1985dfd3ee63b800e54ba6116958f120a5178a9",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+   "unitList": {
+    "kind": "mp4",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "truncated.m4a",
+   "sha256": "ce81019a850ddc7226962d3224030fadf4d214c15369282d5d787f386a551a91",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 10240,
+     "analyzer": 9216,
+     "status": "explained",
+     "kind": "analyzer-differs",
+     "reason": "FDK outputs 1,024 samples for concealed units and 9,216 cleanly decoded, no more than the analyzer's 9,216: the excess of 1,024 is concealed frames, which a future decoder leaves as gaps",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 9216,
+     "analyzer": 9216,
+     "reference": 10240,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 9,
+     "offset": 969,
+     "length": 1,
+     "ranges": [
+      [
+       969,
+       1
+      ]
+     ],
+     "decoder": "concealed 0x4004",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding",
+     "status": "pending",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 20,
+    "cutUnits": 11,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "two-tracks.m4a",
+   "sha256": "d9dc384506b102bbd1d34cddd69648c7ca69d2ef2a6df554e5d838fa461e6d68",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 24,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "usac-reserved-rate.m4a",
+   "sha256": "473b20caf8136f41de90d76544e01beb631b744fc0dcddb74804724b6623130f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 10 units (0x2007)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 10 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 494,
+     "length": 1,
+     "ranges": null,
+     "decoder": "no unit",
+     "samples": null,
+     "finding": "aac.reserved-sample-rate",
+     "findings": [
+      "aac.reserved-sample-rate"
+     ],
+     "verdict": "finding points into no unit the decoder was fed",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-config.m4a",
+   "sha256": "7df2be867f91c23b8f23b92e2c27701cbd9d9b8c468f03b90b7fc1405fbfba61",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": 61440,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "witnesses": {
+      "ffmpeg": 61440
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 42,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-exhale-layout-claim.m4a",
+   "sha256": "d6f2e07e52c5d0d1c01c6fec42a05921bf4601e1cfd0fd0c53d6b69b91b8d7b7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-exhale-layout.m4a",
+   "sha256": "79716c6567d00e4d873db11f7fe5d3ff4736ff0f7d7247e420a53c1957c6e245",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-fill-element.m4a",
+   "sha256": "093226bb9dba5f37779cdbc1c34e66b12b834e3df4c77224e378bc96729ec89c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-mps212.m4a",
+   "sha256": "0538c07a36717b51073918211ecf8f29401d291f4d8f70ae8aa1ebec72773acc",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 61440,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] Invalid vDk0[1]: 0"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 61440,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "xhe-aac-writer-other-format.m4a",
+   "sha256": "ab49ef4bf51f925d9d72697322030b1e7d8a59ebbc09bf3b1f66aa69a0670a7c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 30720,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 30720
+     },
+     "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  }
+ ]
+}
