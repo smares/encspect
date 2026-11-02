@@ -6,7 +6,8 @@
 The folder holds manifest.json (from make_wma_pro_variants.py) and records/<file>.json (from the probe). For each
 variant it prints the samples per channel the decoder DMO and the Source Reader gave, and:
 
-  analyzer   the analyzer's figure: frames * F less the first frame's start trim and the last frame's end trim
+  frames     the frames' count (FFmpeg's rule, the analyzer's for a stream the rule does not apply to): frames * F less the first
+             frame's start trim and the last frame's end trim
   rule       what the records of the stereo and 5.1 fixtures fit (docs/design/wma-pro-format.md, "What Microsoft's
              decoder outputs"). With N frames, the frame size F and the largest size, over the channels, of the last
              subframe of the last frame (L_last), of the first subframe of the first frame (L_first) and of the last
@@ -87,20 +88,19 @@ def public_rows(analyzer, folder, folders):
             continue
         frames = [c for c in frames_nodes[0]["children"] if c["name"] == "Frame"]
         f = int(stat["Frame Length"])
-        valid = frames
-        trim_first = next((c["value"] for c in valid[0]["children"] if c["name"] == "Trim"), "none")
-        trim_last = next((c["value"] for c in valid[-1]["children"] if c["name"] == "Trim"), "none")
+        trim_first = next((c["value"] for c in frames[0]["children"] if c["name"] == "Trim"), "none")
+        trim_last = next((c["value"] for c in frames[-1]["children"] if c["name"] == "Trim"), "none")
         m = re.match(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim_first)
         start, stated = (int(m[1]), True) if m and m[1] else (0, False)
         m = re.match(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim_last)
         end = int(m[2]) if m else 0
-        first, _ = sizes_of(valid[0], f)
-        _, last = sizes_of(valid[-1], f)
-        prev = sizes_of(valid[-2], f)[1] if len(valid) > 1 else None
-        n = len(valid)
+        first, _ = sizes_of(frames[0], f)
+        _, last = sizes_of(frames[-1], f)
+        prev = sizes_of(frames[-2], f)[1] if len(frames) > 1 else None
+        n = len(frames)
         info = {"frames": n, "startTrim": start, "endTrim": end, "lastSizes": last, "frameSize": f, "startStated": stated,
                 "firstSizes": first, "prevLastSizes": prev, "channels": stat.get("Channels")}
-        rows.append((path.name, info, figure(record, "direct"), figure(record, "sourceReader"), int(stat["Samples"]),
+        rows.append((path.name, info, figure(record, "direct"), figure(record, "sourceReader"), max(0, n * f - start - end),
                      rule_of(n, f, start, stated, end, first, last, prev)))
     return rows
 
@@ -137,7 +137,7 @@ def main():
     if analyzer and public:
         rows += public_rows(analyzer, public, folders)
     width = max((len(r[0]) for r in rows), default=10)
-    print(f"{'file':{width}}  frames start stated  end  last-sizes            dmo   reader  analyzer     rule  dmo-analyzer dmo-rule reader-rule")
+    print(f"{'file':{width}}  frames start stated  end  last-sizes            dmo   reader    frames     rule  dmo-frames dmo-rule reader-rule")
     matched = counted = 0
     for name, info, dmo, reader, analyzer_figure, rule in rows:
         d_a = None if dmo is None else dmo - analyzer_figure

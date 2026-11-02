@@ -39,7 +39,7 @@ This is the clean-room description that decision 10 of [decoders.md](decoders.md
 | `external-windows-wma10pro-vbr-stereo-44k-q98.wma` | `5438d78b072d458eb0010db6d92385d3701dfc7913bd567ad436e039adaf5e80` | SDK, quality 98, 24 bits, 17,833, 3 packets |
 | `protected-wma-pro.asf` | `2f3ab47efc5de55f28ce9300aee4645999a5838d7eb4d5c7dedc79dcfd24b662` | hand-built, encrypted; only its codec data is read |
 
-The stereo files have 66 frames of 2,048 samples and decode to 131,788 samples; the 5.1 files have 72 and decode to 144,000. All are in `tests/fixtures/asf`.
+The stereo files have 66 frames of 2,048 samples and give 131,788 samples by FFmpeg's count and 132,300 by Microsoft's decoder's; the 5.1 files have 72 and give 144,000 by both. All are in `tests/fixtures/asf`.
 
 **Public files** (downloaded, never committed). From `https://samples.ffmpeg.org/A-codecs/WMA9/` (folders `wmapro/` and `WMAPro_5dot1/`, and `8_Channel_ID.wma` at its top) and from `https://fate-suite.ffmpeg.org/wmapro/` (the two FATE files); spaces and parentheses are dropped from the names here:
 
@@ -419,23 +419,22 @@ Read from the source and checked with ffmpeg 6.1.1 on the files above and their 
   - **The first frame of a media object that fails inside its packet is output untrimmed,** since FFmpeg returns before it applies the trims. A frame whose last subframe runs past the frame's end is such a frame for FFmpeg ("would have to skip" with a negative count), though Encspect names it "it needs more bits than it has".
 - **A frame that fails before the end of its subframes** outputs nothing.
 - **At the end of the stream** nothing more is output: the overlap of the last frame is dropped, and without the length prefix the frames of the last packet are not read.
-- In every test file with the length prefix the first frame states a trim of F samples at the start and, where the file is not cut, the last frame a trim at the end (1,332 samples in the stereo committed files, 1,408 in the 5.1 ones), so the trims cut the stream to its source's length: 66 × 2,048 − 2,048 − 1,332 = 131,788.
+- In every test file with the length prefix the first frame states a trim of F samples at the start and, where the file is not cut, the last frame a trim at the end (1,332 samples in the stereo committed files, 1,408 in the 5.1 ones), so the trims cut FFmpeg's count to 66 × 2,048 − 2,048 − 1,332 = 131,788, which is 512 below the source's length (see [What Microsoft's decoder outputs](#what-microsofts-decoder-outputs)).
 
 ### What Encspect reports
 
 - **Samples, where Microsoft's rule applies** (project lead, 2026-11-02): the count of [What Microsoft's decoder outputs](#what-microsofts-decoder-outputs), computed from what the reader holds per frame: the number of frames, the largest, over the channels, of the first subframe's size in the first frame and of the last subframe's size in the last frame and in the one before, the first frame's start trim and whether it states one, and the last frame's end trim. The rule applies to a stream when all of these hold; the evidence runs are 41252306359, 41362454853 and 41363084542:
   - the frames have the length prefix;
-  - no loss is counted (a gap in the sequence numbers, a media object shorter than the block alignment, a frame or run a decoder refuses), no frame is invalid, no media object is longer than the block alignment, and the last packet ends with no unfinished frame (`wma.frame-unfinished`);
+  - no loss is counted (a gap in the sequence numbers, a media object shorter than the block alignment, a frame or run a decoder refuses), no frame is invalid, no media object is longer than the block alignment, and the last packet ends with no unfinished frame (`wma.frame-unfinished`; see below for these streams);
   - no media object was skipped for the limit (`wma.records-limit`);
   - the first packet read states no bits that finish a frame before it (the stream does not start inside a frame; a decoder drops those bits without counting a loss, and no run covers such a stream);
-  - at least one frame is read, a stream of one frame states no end trim (no run covers a one-frame stream with one), and no frame states a start trim except the first or an end trim except the last.
+  - at least one frame is read, a stream of one frame states no end trim (no run covers a one-frame stream with one), and no frame but the first has a start trim above 0 and no frame but the last an end trim above 0.
 - **Samples otherwise:** the count of [What FFmpeg outputs](#what-ffmpeg-outputs): (frames read without error × F) − the sum of their trims at the start and the end, and 0 where that is negative, with the first frame output as that section says. The first frame is not subtracted as such; its trim of F does it. This is the count of every stream without the length prefix and of every stream that fails a condition above.
-- **Differences to Microsoft's decoder that remain** (`keep`: the analyzer counts what the stream's frames give and the cases are undamaged or cut streams the runs have figures for; the investigation follows):
-  - the three public files without the length prefix: Windows 10,803, 33,331 and 1,921 samples more (`keep`: the analyzer does not read the last packet's frames without the prefix);
-  - `Classical_96_24_6_Q75_2_13.wma`, cut inside a media object: Windows 9,029,504, the analyzer 9,027,584 (1,920 fewer);
-  - the stream `pro-stereo-128-cut-open-3` of the variants (a frame says another follows and none does): Windows 7,104, the analyzer 6,144; `cut-open-27`: Windows 55,808, the analyzer 55,296 (with `wma.frame-unfinished`).
-  - Other damage (lost packets, invalid frames, short or long packets) has no run.
-- **The statistics name the basis:** the description of "Samples" says whether the count is Microsoft's rule or the frames' count. "Trimmed Samples" is the sum of the trims the frames state, as before (for Lossless too), and does not follow the cuts of the rule (a missing start trim cuts F / 2 + L / 2 and counts 0 here) (a decoder cuts the end trim only up to the last frame's output).
+- **Where the analyzer keeps the frames' count though Windows has a figure:**
+  - *Streams that end in an unfinished frame* (`wma.frame-unfinished`: a frame says another follows and no packet finishes one, or the file is cut inside a media object). The rule's prediction equals Windows' figure on all five inputs of this kind: `pro-stereo-128-cut-open-3` (Windows and the rule 7,104, the frames' count 6,144), `cut-open-27` (55,808 and 55,296), `Classical_96_24_6_Q75_2_13.wma` (9,029,504 and 9,027,584), and the public `Beethovens_9th-1_small.wma` (90,112) and `latin_192_mulitchannel_cut.wma` (208,896), where the frames' count is the same. The fallback is a choice to apply the rule only to streams with no finding of the parser; the samples definition now in review decides how cut streams count.
+  - *Streams without the length prefix:* the three public files give Windows 10,803, 33,331 and 1,921 samples more than the frames' count; the analyzer does not read the last packet's frames without the prefix, and the cause is not yet investigated.
+  - Other damage (lost packets, invalid frames, short or long packets) has no Windows run.
+- **The statistics name the basis:** the description of "Samples" says whether the count is Microsoft's rule or the frames' count. "Trimmed Samples" is the sum of the trims the frames state, as before (for Lossless too), and does not follow the cuts of the rule (a missing start trim cuts F / 2 + L / 2 and counts 0 here, and a decoder cuts the end trim only up to the last frame's output).
 - **Duration** = Samples / sampling rate.
 - Both counts are equal on the 5.1 fixtures and on 20 of the 24 public files. They differ on the nine stereo fixtures (132,300 and 131,788).
 
@@ -544,7 +543,7 @@ Each frame record is a "Frame" node over its bits (the ranges of both packets wh
 | "Tile Header" | the tile header | "N subframes", N the subframes read; with a child "Channel c Subframes" per channel (c from 1), over the same bytes, listing the lengths of the subframes read that hold the channel, comma-separated ("512, 256, 128") |
 | "Has Postprocessing Transform" | its bits | a boolean: the first bit (only where C > 1) |
 | "Dynamic Range Gain" | 8 bits | the gain (only with the flag) |
-| "Trim" | its bits | "none" where the trim bit is 0, else "S samples at the start, E at the end" ("1 sample" for 1; "none at the start" where the start flag is 0, which is not a stated 0 samples) |
+| "Trim" | its bits | "none" where the trim bit is 0, else "S samples at the start, E at the end" ("1 sample" for 1; "none at the start" where the start flag is 0, which is not a stated 0 samples; only the start flag is shown, since only it changes the count, so "0 at the end" covers an end trim of 0 and none) |
 | "Subframe" | one per subframe read | below |
 | "Frame Padding" | the bit before the trailer bit | 1, unit "bits" (only for a frame read without error) |
 | "Has More Frames" | the trailer bit | a boolean (only for a frame read without error) |
