@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41455336105",
-  "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2",
+  "id": "41463609030",
+  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41455336105",
-   "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2"
+   "runId": "41463609030",
+   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
   }
  },
  "statuses": [
@@ -4582,7 +4582,7 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): noted by the rule. FDK refuses every unit (0x0005), so Core Audio, which decodes it (24,576 samples at 44,100 Hz, 12,288 at the analyzer's 22,050 Hz: the same duration), is the reference of the coded stage, as the approved reference rule says. What is left is Core Audio's rate-differs entry, which is pending for the project lead.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): noted by the rule. FDK refuses every unit (0x0005), so Core Audio, which decodes it (24,576 samples at 44,100 Hz, 12,288 at the analyzer's 22,050 Hz: the same duration), is the reference of the coded stage, as the approved reference rule says. What was left, Core Audio's rate-differs entry, was decided in review (2026-11-02): keep.",
      "statusSource": "reviewed"
     },
     {
@@ -6895,6 +6895,7 @@
  ],
  "counts": {
   "files": 56,
-  "fed": 56
+  "fed": 56,
+  "coreAudioCarried": 0
  }
 }

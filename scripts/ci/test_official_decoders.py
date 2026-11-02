@@ -6,6 +6,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "fixtures"))
 import compare_official_decoders as compare  # noqa: E402
@@ -306,7 +307,7 @@ class WriteOfficialTests(unittest.TestCase):
         marked = next(d for d in entry["differences"] if d["kind"] == "build-dependent")
         self.assertEqual((9216, 8928, "build-dependent"), (marked["value"], marked["reference"], marked["status"]))
         self.assertEqual("24J1", written["run"]["coreAudio"]["build"])
-        self.assertEqual({"files": 1, "fed": 1}, written["counts"])
+        self.assertEqual({"files": 1, "fed": 1, "coreAudioCarried": 0}, written["counts"])
 
     def test_the_same_build_replaces_the_figure_and_lists_it_for_review(self):
         previous, mac = self.previous()
@@ -356,6 +357,130 @@ class CarryTests(unittest.TestCase):
         self.assertEqual([kept], result["differences"])
         self.assertEqual(1, len(result["units"]))
         self.assertTrue(result["coreAudioCarried"])
+
+
+class ProvenanceTests(unittest.TestCase):
+    def committed(self, tmp, carried_from=None):
+        entry = {"path": "a.m4a", "sha256": "ab", "figures": [{"id": "samples", "stage": "coded", "coreAudio": {"converter": {"samples": 5}}}], "differences": [], "units": []}
+        if carried_from:
+            entry["coreAudioFrom"] = carried_from
+        source = pathlib.Path(tmp) / "official-decoders.json"
+        source.write_text(json.dumps({"run": {"coreAudio": {"runId": "7", "commit": "abcdef0"}}, "files": [entry]}), encoding="utf-8")
+        return source, entry
+
+    def test_carried_data_say_which_run_they_come_from(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, _ = self.committed(tmp)
+            result = {"file": "a.m4a", "sha256": "ab", "coreAudioMissing": True, "figures": [{"id": "samples", "stage": "coded", "reference": 1}], "differences": [], "units": []}
+            compare.carry_coreaudio([result], source)
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, result["coreAudioFrom"])
+
+    def test_data_carried_twice_keep_their_first_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, entry = self.committed(tmp, {"run": "3", "commit": "1111111"})
+            self.assertEqual({"run": "3", "commit": "1111111"}, compare.carried_from(entry, json.loads(source.read_text(encoding="utf-8"))))
+
+    def test_write_official_records_the_provenance_and_counts_it(self):
+        mac = {"macOS": "15.8.2", "build": "b", "machine": "arm64", "audioCodecs": "7", "audioToolbox": "1", "runId": "9", "commit": "c"}
+        fresh = {"file": "b.ac3", "sha256": "cd", "derived": None, "figures": [], "differences": [], "units": [], "unitList": {"kind": "ac3"}}
+        carried = {"file": "a.ac3", "sha256": "ab", "derived": None, "carriedEntry": {"path": "a.ac3", "sha256": "ab", "figures": [], "differences": [], "units": [], "coreAudioFrom": {"run": "7", "commit": "abcdef0"}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            target = pathlib.Path(tmp) / "new.json"
+            compare.write_official(target, pathlib.Path(tmp) / "none.json", [carried, fresh], {"coreAudio": mac, "runId": "9"}, ["ffmpeg version 8.0.1"], "9", "ac3")
+            written = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual({"files": 2, "fed": 2, "coreAudioCarried": 1}, written["counts"])
+        self.assertEqual([True, False], ["coreAudioFrom" in f for f in written["files"]])
+
+    def test_write_official_keeps_the_provenance_of_an_aac_entry_that_carries_core_audio_data(self):
+        mac = {"macOS": "15.8.2", "build": "b", "machine": "arm64", "audioCodecs": "7", "audioToolbox": "1", "runId": "9", "commit": "c"}
+        result = {"file": "a.m4a", "sha256": "ab", "derived": None, "figures": [], "differences": [], "units": [], "unitList": {"kind": "mp4"}, "coreAudioFrom": {"run": "7", "commit": "abcdef0"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            target = pathlib.Path(tmp) / "new.json"
+            compare.write_official(target, pathlib.Path(tmp) / "none.json", [result], {"coreAudio": mac, "runId": "9"}, ["ffmpeg version 8.0.1"], "9", "aac")
+            written = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, written["files"][0]["coreAudioFrom"])
+        self.assertEqual(1, written["counts"]["coreAudioCarried"])
+
+    def test_files_missing_from_the_macos_run_are_listed_and_the_carried_ones_noted(self):
+        results = [{"folder": "aac", "file": "a.m4a", "coreAudioMissing": True, "coreAudioCarried": True}, {"folder": "mp4", "file": "b.m4a", "coreAudioMissing": True},
+                   {"folder": "aac", "file": "c.m4a", "coreAudioMissing": False}]
+        self.assertEqual(["coreaudio aac/a.m4a (carried from the committed file)", "coreaudio mp4/b.m4a"], compare.coreaudio_not_run(results))
+
+    def test_a_downloaded_sample_with_records_and_no_file_is_not_called_another_version(self):
+        records = {"s1": {"file": "gone.mp4", "derived": {"downloaded": True}}, "s2": {"file": "old.aac"}, "s3": {"file": "kept.mp4", "derived": {"downloaded": True}}}
+        self.assertEqual((["old.aac"], ["gone.mp4"]), compare.records_without_file(records, {"s3"}))
+
+    def result(self, folder, name, carried, converter):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 10, "reference": 10, "referencePath": "fdk direct", "witnesses": {}, "coreAudio": {"converter": {"samples": converter}}}
+        return {"folder": folder, "file": name, "sha256": "ab", "figures": [figure], "units": [], "differences": [], "notes": [], "derived": None, "coreAudioCarried": carried}
+
+    def test_the_agreement_lines_leave_out_carried_figures_and_list_them(self):
+        class Args:
+            run_id = "1"
+        text = compare.render_aac([self.result("aac", "fresh.m4a", False, 10), self.result("aac", "old.m4a", True, 99)], [], [], {}, ["ffmpeg"], [], Args())
+        line = next(l for l in text.splitlines() if l.strip().startswith("aac, apple") and "converter totals" in l)
+        self.assertIn("converter totals   1, equal to the analyzer   1", line)
+        self.assertIn("carried from the committed files, not counted above: 1 files (aac/old.m4a)", text)
+
+
+class DriverNotFedTests(unittest.TestCase):
+    def test_a_unit_with_no_byte_in_the_file_is_not_fed_and_not_a_unit_without_output(self):
+        lines = [
+            {"type": "setup", "source": "audiofile", "input": format_(44100.0, 2)},
+            {"type": "converter", "status": 0, "output": {"formatID": "lpcm", "sampleRate": 44100.0, "channels": 2}},
+            {"type": "unit", "index": 0, "offset": 0, "declared": 9, "received": 9, "consumed": True, "status": 0, "noMoreData": False, "frames": 1024},
+            {"type": "unit", "index": 1, "offset": 9, "declared": 9, "received": 0, "consumed": False, "notFed": True, "status": 0, "noMoreData": False, "frames": 0},
+            {"type": "end", "stoppedBy": "end", "calls": 2, "failedCalls": 0, "codedFrames": 1024},
+        ]
+        record = driver.coreaudio_converter_result(probe_child(lines))
+        self.assertEqual((1, 0, 0), (record["notFedUnits"], record["noOutputUnits"], record["refusedUnits"]))
+        self.assertEqual(["not fed"], [u["result"] for u in record["units"]])
+
+
+class Ac3ReaderTests(unittest.TestCase):
+    def test_the_reader_witness_is_only_explained_where_the_analyzer_equals_the_converters_total_plus_the_constant(self):
+        conv = {"opened": True, "stoppedBy": "end", "runs": [{"rate": 48000, "channels": 2, "samples": 7000}], "units": [], "unitCount": 6, "refusedUnits": 0, "noOutputUnits": 0, "drainFrames": 0, "input": format_(48000, 2, 1536)}
+        reader = {"opened": True, "stoppedBy": "end", "runs": [{"rate": 48000, "channels": 2, "samples": 7392}], "packetTable": None, "fileFormat": format_(48000, 2, 1536)}
+        analyzer = {"streams": [{"index": 0, "codec": "AC-3", "samples": 9216, "sampleRate": 48000, "channels": 2}], "gapless": {}, "findings": []}
+        compared = compare.compare_ac3({"paths": {"converter": conv, "reader": reader}, "unitList": {"cutUnits": 0}}, analyzer, None)
+        statuses = {d["decoder"]: d["status"] for d in compared["differences"]}
+        self.assertEqual("pending", statuses["coreaudio converter"])
+        self.assertEqual("noted", statuses["coreaudio reader"])
+
+
+class PartialRunTests(unittest.TestCase):
+    """run_aac_comparison on one synthetic fixture: the macOS run has no record of it, or of a downloaded sample the job cannot fetch."""
+
+    def run_comparison(self, ca_records):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            media = tmp / "aac" / "one.m4a"
+            media.parent.mkdir()
+            media.write_bytes(b"x")
+            sha = compare.sha256_of(media)
+            committed = {"files": [{"path": "one.m4a", "sha256": sha, "figures": [{"id": "samples", "stage": "coded", "coreAudio": {"converter": {"samples": 5}}}], "differences": [], "units": []}],
+                         "run": {"coreAudio": {"runId": "7", "commit": "abcdef0"}}}
+            (tmp / "aac" / "official-decoders.json").write_text(json.dumps(committed), encoding="utf-8")
+            record = {"bytes": 1, "unitList": {"kind": "mp4"}, "paths": {"direct": {"tool": "t", "stoppedBy": "end"}}, "file": "one.m4a"}
+            records = {"aac": {sha: record, "gone": {"file": "sample.mp4", "derived": {"downloaded": True}, "bytes": 1, "unitList": {}, "paths": {}}}, "coreaudio-aac": ca_records}
+            args = mock.Mock(no_ffmpeg=True, encspect=None, downloaded=None)
+            fresh = {"figures": [{"id": "samples", "stage": "coded", "reference": None}], "differences": [], "units": [], "notes": [], "codecs": []}
+            with mock.patch.multiple(compare, FIXTURES=tmp, compare_aac=lambda *a: dict(fresh), aac_ffmpeg=lambda *a: None, render_aac=lambda *a: "text",
+                                     load_aac_analyzer=lambda p, c: ({"streams": [], "gapless": {}, "findings": []}, "golden")), \
+                    mock.patch.object(driver, "AAC_FOLDERS", ("aac",)), mock.patch.object(compare.probe, "files", lambda folder, ext: [media] if folder == "aac" else []), \
+                    mock.patch.object(compare.derive_variants, "write_aac", lambda out: []):
+                return compare.run_aac_comparison(args, records, [{"format": "aac"}], ["ffmpeg version 8.0.1"], [], tmp)
+
+    def test_a_file_the_macos_run_has_no_record_of_is_listed_and_carries_its_provenance(self):
+        _, document, results, _ = self.run_comparison({"someone-else": {"file": "x"}})
+        self.assertIn("coreaudio aac/one.m4a (carried from the committed file)", document["notRun"])
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, results[0]["coreAudioFrom"])
+
+    def test_a_downloaded_sample_without_a_file_is_listed_as_not_fetched_with_a_warning(self):
+        _, document, _, _ = self.run_comparison({"someone-else": {"file": "x"}})
+        self.assertIn("downloaded/sample.mp4 (not fetched by this job)", document["notRun"])
+        self.assertEqual([], document["recordsWithoutFile"])
+        self.assertTrue(any("could not be fetched by this job" in w for w in document["warnings"]))
 
 
 if __name__ == "__main__":

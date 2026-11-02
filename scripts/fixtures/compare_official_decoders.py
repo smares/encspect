@@ -749,7 +749,8 @@ def attach_coreaudio(figures, ca, record):
             if blocks > 1:
                 column["converter"]["blocksPerFrame"] = blocks
             if total == 0 and fig["analyzer"] and conv["unitCount"] > 0:
-                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused, the others held back)" % (conv["unitCount"], conv["refusedUnits"])
+                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused%s, the others held back)" % (
+                    conv["unitCount"], conv["refusedUnits"], ", %d not fed" % conv["notFedUnits"] if conv.get("notFedUnits") else "")
         if not trimmed and reader:
             total, fmt, why = ca_total(reader)
             column["reader"] = {"samples": None, "why": why} if total is None else {**ca_entry(reader, total, fmt, rate)}
@@ -1205,8 +1206,10 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
         ff_analyzer = [f for f in ff if f["witnesses"]["ffmpeg"] == f["analyzer"]]
         out.append("  %-30s files %3d (not fed %3d): figures %3d, with a reference %3d, analyzer equals it %3d, refused or none %3d; ffmpeg equals the reference in %d of %d, the analyzer in %d" % (
             label, len(subset), sum(1 for r in subset if r.get("notFed")), len(figs), len(withref), len(same), len(figs) - len(withref), len(ff_same), len(ff), len(ff_analyzer)))
-    out += ["", "Core Audio (macOS) against the analyzer, in the same duration (the converter at the coded stage; the reader against the trimmed figures)"]
+    out += ["", "Core Audio (macOS) against the analyzer, in the same duration (the converter at the coded stage; the reader against the trimmed figures); this run's records only"]
+    carried = [r for r in results if r.get("coreAudioCarried")]
     for label, subset in groups:
+        subset = [r for r in subset if not r.get("coreAudioCarried")]
         coded = [f for r in subset for f in r["figures"] if f["stage"] == "coded" and (f.get("coreAudio") or {}).get("converter", {}).get("samples") is not None]
         same = [f for f in coded if f["coreAudio"]["converter"]["samples"] == f["analyzer"]]
         fdk = [f for f in coded if f["referencePath"] == "fdk direct"]
@@ -1215,6 +1218,7 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
         trimmed_same = [f for f in trimmed if f["reference"] == f["analyzer"]]
         out.append("  %-30s converter totals %3d, equal to the analyzer %3d, to FDK %3d of %3d; trimmed figures with a reader total %3d, equal to the analyzer's %3d" % (
             label, len(coded), len(same), len(fdk_same), len(fdk), len(trimmed), len(trimmed_same)))
+    out.append("  carried from the committed files, not counted above: %d files%s" % (len(carried), (" (" + ", ".join("%s/%s" % (r["folder"], r["file"]) for r in carried[:6]) + (", ..." if len(carried) > 6 else "") + ")") if carried else ""))
     out += ["", "Derived variants by rule (coded figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.AAC_RULES:
@@ -1262,16 +1266,38 @@ def apply_reviewed(results, source):
                     d["awaitingStep"] = old["awaitingStep"]
 
 
+def carried_from(entry, committed):
+    """The run and commit the Core Audio data of a committed entry come from: its own `coreAudioFrom` if it was carried before, else the committed file's Core Audio run."""
+    if entry.get("coreAudioFrom"):
+        return entry["coreAudioFrom"]
+    mac = (committed.get("run") or {}).get("coreAudio") or {}
+    return {"run": mac.get("runId"), "commit": mac.get("commit")}
+
+
+def records_without_file(records, known):
+    """(records of another version of a fixture or variant, records of downloaded samples this job could not fetch), by file name."""
+    other = sorted(r["file"] for sha, r in records.items() if sha not in known and not (r.get("derived") or {}).get("downloaded"))
+    unfetched = sorted(r["file"] for sha, r in records.items() if sha not in known and (r.get("derived") or {}).get("downloaded"))
+    return other, unfetched
+
+
+def coreaudio_not_run(results):
+    """The files a macOS run has no record of, for the 'not run' line: with a note when their Core Audio data were carried over from the committed file."""
+    return ["coreaudio %s/%s%s" % (r["folder"], r["file"], " (carried from the committed file)" if r.get("coreAudioCarried") else "") for r in results if r.get("coreAudioMissing")]
+
+
 def carry_coreaudio(results, source):
     """A file the macOS run has no record of keeps the Core Audio columns, differences and units of the committed file (the same bytes), so that a partial macOS run does not drop
     them or the reviewed statuses on them; the file is listed as not run."""
     if not source.exists():
         return
-    old_files = {(f["path"], f["sha256"]): f for f in json.loads(source.read_text(encoding="utf-8")).get("files", [])}
+    committed = json.loads(source.read_text(encoding="utf-8"))
+    old_files = {(f["path"], f["sha256"]): f for f in committed.get("files", [])}
     for r in results:
         old = old_files.get((r["file"], r["sha256"]))
         if not r.get("coreAudioMissing") or not old:
             continue
+        r["coreAudioFrom"] = carried_from(old, committed)
         for fig in r["figures"]:
             before = next((f for f in old["figures"] if f["id"] == fig["id"]), None)
             if not before:
@@ -1356,13 +1382,15 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
         apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")
         carry_coreaudio(committed_results, FIXTURES / folder / "official-decoders.json")
-    for r in results:
-        if r.get("coreAudioMissing"):
-            not_run.append("coreaudio %s/%s%s" % (r["folder"], r["file"], " (carried from the committed file)" if r.get("coreAudioCarried") else ""))
+    not_run += coreaudio_not_run(results)
     if not ca_records:
         warnings = warnings + ["no Core Audio records in the artifacts: the macos job did not run or uploaded nothing; the Core Audio columns of the committed files are carried over"]
     known = {sha for sha, *_ in items}
-    unmatched = sorted(r["file"] for sha, r in aac_records.items() if sha not in known)
+    unmatched, unfetched = records_without_file(aac_records, known)
+    if unfetched:
+        # the decode jobs had the sample and this job could not fetch it (the host was slow): not a variant of another fixture
+        not_run += ["downloaded/%s (not fetched by this job)" % name for name in unfetched]
+        warnings = warnings + ["%d downloaded samples have records and could not be fetched by this job (the fetch log is fetch.txt): %s" % (len(unfetched), ", ".join(unfetched))]
     text = render_aac(results, not_run, unmatched, environment, ffmpeg_version, warnings, args)
     document = {"schema": SCHEMA, "environment": environment, "ffmpeg": ffmpeg_version, "warnings": warnings, "files": results, "notRun": not_run, "recordsWithoutFile": unmatched}
     return text, document, results, environment
@@ -1596,17 +1624,18 @@ def run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tm
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         futures = [(item, pool.submit(work, item)) for item in sorted(items, key=lambda i: i[1].name)]
     results, not_run, carried = [], [], []
-    old_files = {}
+    old_files, old_doc = {}, {}
     committed = FIXTURES / "ac3" / "official-decoders.json"
     if committed.exists():
-        old_files = {(f["path"], f["sha256"]): f for f in json.loads(committed.read_text(encoding="utf-8")).get("files", [])}
+        old_doc = json.loads(committed.read_text(encoding="utf-8"))
+        old_files = {(f["path"], f["sha256"]): f for f in old_doc.get("files", [])}
     for item, future in futures:
         result = future.result()
         if result is None:
             old = old_files.get((item[1].name, item[0]))
             not_run.append(item[1].name + (" (carried from the committed file)" if old else ""))
             if old:  # the committed entry stays as it is, reviewed statuses included
-                carried.append({"file": item[1].name, "sha256": item[0], "derived": None, "carriedEntry": old})
+                carried.append({"file": item[1].name, "sha256": item[0], "derived": None, "carriedEntry": {**old, "coreAudioFrom": carried_from(old, old_doc)}})
         else:
             results.append(result)
     apply_reviewed(results, committed)
@@ -1893,6 +1922,8 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         entry = {"path": rel, "sha256": r["sha256"], "figures": figures, "differences": [], "units": []}
         if r.get("notFed"):
             entry["notFed"] = r["notFed"]
+        if r.get("coreAudioFrom"):
+            entry["coreAudioFrom"] = r["coreAudioFrom"]  # this run had no macOS record of the file: its Core Audio data are the committed ones, from that run
         if format_ in ("aac", "ac3"):
             entry["unitList"] = {k: r["unitList"].get(k) for k in ("kind", "codec", "units", "cutUnits", "skippedRanges", "skippedBytes", "timescale") if r["unitList"].get(k) is not None}
             if r.get("codecs"):
@@ -1919,7 +1950,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
            "statuses": list(STATUSES), "changedFiguresForReview": changed, "files": files}
     if format_ in ("aac", "ac3"):
         # what the run recorded, so that a test fails on an entry that was removed or turned into `notFed`
-        doc["counts"] = {"files": len(files), "fed": sum(1 for f in files if not f.get("notFed"))}
+        doc["counts"] = {"files": len(files), "fed": sum(1 for f in files if not f.get("notFed")), "coreAudioCarried": sum(1 for f in files if f.get("coreAudioFrom"))}
     target.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

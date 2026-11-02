@@ -73,6 +73,17 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
         JsonElement[] recorded = [.. document.RootElement.GetProperty("files").EnumerateArray()];
         Assert.Equal(recorded.Length, counts.GetProperty("files").GetInt32());
         Assert.Equal(recorded.Count(f => !f.TryGetProperty("notFed", out _)), counts.GetProperty("fed").GetInt32());
+
+        // Entries whose Core Audio data a partial macOS run carried over from an earlier run say where they come from; the run record counts them and they are listed here.
+        JsonElement[] carried = [.. recorded.Where(f => f.TryGetProperty("coreAudioFrom", out _))];
+        Assert.Equal(carried.Length, counts.GetProperty("coreAudioCarried").GetInt32());
+        foreach (JsonElement entry in carried)
+        {
+            JsonElement from = entry.GetProperty("coreAudioFrom");
+            Assert.False(string.IsNullOrEmpty(from.GetProperty("run").GetString()), "coreAudioFrom.run");
+            Assert.False(string.IsNullOrEmpty(from.GetProperty("commit").GetString()), "coreAudioFrom.commit");
+            Note($"official decoders: {entry.GetProperty("path").GetString()} carries Core Audio data of run {from.GetProperty("run").GetString()} ({from.GetProperty("commit").GetString()![..7]}), not of run {run.GetProperty("id").GetString()}");
+        }
         Assert.Equal(Statuses, document.RootElement.GetProperty("statuses").EnumerateArray().Select(s => s.GetString()));
         foreach (JsonElement file in document.RootElement.GetProperty("files").EnumerateArray())
         {
