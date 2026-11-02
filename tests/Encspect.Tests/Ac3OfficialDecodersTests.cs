@@ -51,7 +51,17 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
         JsonElement mac = run.GetProperty("coreAudio");
         Assert.False(string.IsNullOrEmpty(mac.GetProperty("macOS").GetString()));
         Assert.False(string.IsNullOrEmpty(mac.GetProperty("build").GetString()));
-        Assert.False(string.IsNullOrEmpty(mac.GetProperty("audioCodecs").GetString()));
+        foreach (string key in new[] { "audioCodecs", "audioToolbox", "machine", "imageVersion", "runId" })
+        {
+            Assert.False(string.IsNullOrEmpty(mac.GetProperty(key).GetString()), $"run.coreAudio.{key}");
+        }
+
+        // What the run recorded: an entry that was removed or turned into `notFed` fails here (a new fixture without an entry is only listed).
+        JsonElement counts = document.RootElement.GetProperty("counts");
+        JsonElement[] recorded = [.. document.RootElement.GetProperty("files").EnumerateArray()];
+        Assert.Equal(recorded.Length, counts.GetProperty("files").GetInt32());
+        Assert.Equal(recorded.Count(f => !f.TryGetProperty("notFed", out _)), counts.GetProperty("fed").GetInt32());
+        Assert.Equal(recorded.Length, counts.GetProperty("fed").GetInt32());
         Assert.Equal(Statuses, document.RootElement.GetProperty("statuses").EnumerateArray().Select(s => s.GetString()));
         foreach (JsonElement file in document.RootElement.GetProperty("files").EnumerateArray())
         {
@@ -110,6 +120,8 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
             string id = figure.GetProperty("id").GetString()!;
             if (figure.GetProperty("stage").GetString() != "coded")
             {
+                // ExtAudioFile applies no edit list to AC-3 in MP4: the trimmed stage is not compared, whatever the record says.
+                Assert.Equal(JsonValueKind.Null, figure.GetProperty("reference").ValueKind);
                 continue;
             }
 
@@ -138,6 +150,14 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
             long reference = figure.GetProperty("reference").GetInt64();
             long offset = figure.GetProperty("referenceOffset").GetInt64();
             Assert.Equal(-288, offset);
+
+            // The columns beside the reference: the converter's total is the reference, and the witnesses that differ from what the analyzer or the converter gives are listed with their values.
+            JsonElement column = figure.GetProperty("coreAudio");
+            Assert.Equal(reference, column.GetProperty("converter").GetProperty("samples").GetInt64());
+            JsonElement[] listed = [.. entry.GetProperty("differences").EnumerateArray().Where(d => d.GetProperty("figure").GetString() == id && d.GetProperty("kind").GetString() == "witness-differs")];
+            CheckWitness(name, listed, "coreaudio reader", column.TryGetProperty("reader", out JsonElement reader) && reader.TryGetProperty("samples", out JsonElement readerTotal) && readerTotal.ValueKind == JsonValueKind.Number
+                ? readerTotal.GetInt64() : null, reference);
+            CheckWitness(name, listed, "ffmpeg", figure.GetProperty("witnesses").TryGetProperty("ffmpeg", out JsonElement ffmpeg) && ffmpeg.ValueKind == JsonValueKind.Number ? ffmpeg.GetInt64() : null, actual);
             if (actual + offset == reference)
             {
                 continue;
@@ -157,6 +177,12 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
             Assert.True(actual is not null, $"{name}: the analyzer's samples of {id} are gone");
             long? listed = difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null ? null : difference.GetProperty("analyzer").GetInt64();
             Assert.True(actual == listed, $"{name}: the samples of {id} are {actual}; the list ({kind}) has the analyzer's {listed}");
+            if (kind == "build-dependent")
+            {
+                Note($"official decoders: build-dependent {name} {id}: {difference.GetProperty("decoder").GetString()} gives {difference.GetProperty("value")} on another build; the figure stays {difference.GetProperty("reference")}");
+                continue;
+            }
+
             if (kind == "witness-differs" && status == "explained")
             {
                 long reference = difference.GetProperty("reference").GetInt64();
@@ -202,6 +228,19 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
         Assert.True(
             listedFindings.OrderBy(k => k.Key, StringComparer.Ordinal).SequenceEqual(actualFindings.OrderBy(k => k.Key, StringComparer.Ordinal)),
             $"{name}: the unit findings of the report ({string.Join(", ", actualFindings.Select(k => $"{k.Key} {k.Value}"))}) are not the listed ones ({string.Join(", ", listedFindings.Select(k => $"{k.Key} {k.Value}"))})");
+    }
+
+    // A witness total that is not the value it is compared with is one witness-differs difference with that total; one that is the same has none.
+    private static void CheckWitness(string name, JsonElement[] listed, string decoder, long? total, long compared)
+    {
+        JsonElement[] mine = [.. listed.Where(d => d.GetProperty("decoder").GetString() == decoder)];
+        if (total is null || total == compared)
+        {
+            Assert.True(mine.Length == 0, $"{name}: {decoder} gives {total?.ToString() ?? "no total"}, as compared, and a witness-differs difference lists it");
+            return;
+        }
+
+        Assert.True(mine.Length == 1 && mine[0].GetProperty("value").GetInt64() == total, $"{name}: {decoder} gives {total} against {compared}, and no witness-differs difference lists exactly that");
     }
 
     private static bool IsUnitFinding(Finding finding) =>

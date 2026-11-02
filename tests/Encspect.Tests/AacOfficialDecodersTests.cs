@@ -64,7 +64,15 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
         JsonElement mac = run.GetProperty("coreAudio");
         Assert.False(string.IsNullOrEmpty(mac.GetProperty("macOS").GetString()));
         Assert.False(string.IsNullOrEmpty(mac.GetProperty("build").GetString()));
-        Assert.False(string.IsNullOrEmpty(mac.GetProperty("audioCodecs").GetString()));
+        foreach (string key in new[] { "audioCodecs", "audioToolbox", "machine", "imageVersion", "runId" })
+        {
+            Assert.False(string.IsNullOrEmpty(mac.GetProperty(key).GetString()), $"{folder}: run.coreAudio.{key}");
+        }
+
+        JsonElement counts = document.RootElement.GetProperty("counts");
+        JsonElement[] recorded = [.. document.RootElement.GetProperty("files").EnumerateArray()];
+        Assert.Equal(recorded.Length, counts.GetProperty("files").GetInt32());
+        Assert.Equal(recorded.Count(f => !f.TryGetProperty("notFed", out _)), counts.GetProperty("fed").GetInt32());
         Assert.Equal(Statuses, document.RootElement.GetProperty("statuses").EnumerateArray().Select(s => s.GetString()));
         foreach (JsonElement file in document.RootElement.GetProperty("files").EnumerateArray())
         {
@@ -146,6 +154,11 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                     $"{name}: Core Audio's converter gives {c} for {id}, the analyzer {actual?.ToString() ?? "absent"}, and no difference of the converter lists it");
             }
 
+            if (!trimmed)
+            {
+                CheckColumns(name, entry, figure, id, actual);
+            }
+
             // The rates the figure was converted with are the analyzer's streams' rates, and every kind of difference a figure carries is listed.
             HashSet<long> rates = figure.TryGetProperty("analyzerRates", out JsonElement recorded) ? [.. recorded.EnumerateArray().Select(r => r.GetInt64())] : [];
             if (rates.Count > 0)
@@ -197,6 +210,12 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                     Note($"official decoders: pending {name} {id}: the decoder refuses the stream, the analyzer counts {actual}");
                 }
 
+                continue;
+            }
+
+            if (kind == "build-dependent")
+            {
+                Note($"official decoders: build-dependent {name} {id}: {difference.GetProperty("decoder").GetString()} gives {difference.GetProperty("value")} on another build; the figure stays {difference.GetProperty("reference")}");
                 continue;
             }
 
@@ -324,6 +343,51 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
         }
 
         return rate is null ? total : total + AtRate(run, current?.Rate, rate.Value);
+    }
+
+    // Core Audio's columns beside a coded figure are held to the differences: a converter whose output format has a rate that none of the analyzer's runs has is listed as rate-differs; a
+    // reader total (a file without gapless data) that is not the analyzer's is listed with its total, as reader-priming only when the shortfall is exactly the priming of its packet table.
+    private static void CheckColumns(string name, JsonElement entry, JsonElement figure, string id, long? actual)
+    {
+        if (!figure.TryGetProperty("coreAudio", out JsonElement column))
+        {
+            return;
+        }
+
+        JsonElement[] differences = [.. entry.GetProperty("differences").EnumerateArray().Where(d => d.GetProperty("figure").GetString() == id)];
+        if (column.TryGetProperty("converter", out JsonElement converter) && converter.TryGetProperty("format", out JsonElement format) && format.ValueKind == JsonValueKind.Object
+            && figure.TryGetProperty("analyzerRates", out JsonElement rates) && rates.GetArrayLength() > 0 && !converter.TryGetProperty("refusesStream", out _))
+        {
+            long rate = format.GetProperty("rate").GetInt64();
+            bool known = rates.EnumerateArray().Any(r => r.GetInt64() == rate);
+            Assert.True(
+                known || differences.Any(d => d.GetProperty("decoder").GetString() == "coreaudio converter" && d.GetProperty("kind").GetString() == "rate-differs"),
+                $"{name}: the converter outputs {rate} Hz, which none of the analyzer's runs has, and no rate-differs difference lists it");
+            Assert.True(
+                !known || !differences.Any(d => d.GetProperty("decoder").GetString() == "coreaudio converter" && d.GetProperty("kind").GetString() == "rate-differs"),
+                $"{name}: a rate-differs difference of the converter for a rate the analyzer has");
+        }
+
+        if (column.TryGetProperty("reader", out JsonElement reader) && reader.TryGetProperty("samples", out JsonElement total) && total.ValueKind == JsonValueKind.Number
+            && figure.GetProperty("reference").ValueKind == JsonValueKind.Number)
+        {
+            long samples = total.GetInt64();
+            JsonElement[] listed = [.. differences.Where(d => d.GetProperty("decoder").GetString() == "coreaudio reader")];
+            if (samples == actual)
+            {
+                Assert.Empty(listed);
+                return;
+            }
+
+            JsonElement difference = Assert.Single(listed);
+            Assert.Equal(samples, difference.GetProperty("value").GetInt64());
+            Assert.Equal(actual, difference.GetProperty("analyzer").GetInt64());
+            string kind = difference.GetProperty("kind").GetString()!;
+            JsonElement table = reader.TryGetProperty("packetTable", out JsonElement t) ? t : default;
+            bool priming = table.ValueKind == JsonValueKind.Object && table.GetProperty("primingFrames").GetInt64() > 0 && table.GetProperty("validFrames").GetInt64() > 0
+                && actual - samples == (2 * table.GetProperty("primingFrames").GetInt64() * samples + table.GetProperty("validFrames").GetInt64()) / (2 * table.GetProperty("validFrames").GetInt64());
+            Assert.Equal(priming ? "reader-priming" : "witness-differs", kind);
+        }
     }
 
     // The figure of the first "Gapless" node of the report (the first track's) with the given name, as the comparison reads it.

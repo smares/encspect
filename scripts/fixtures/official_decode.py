@@ -743,7 +743,6 @@ MAC_VARIANT_SOURCES = (
     "ffmpeg-adts.aac", "ffmpeg-lc.m4a", "ffmpeg-mono-faststart.m4a", "mp4box-mux.m4a", "exhale.m4a",
 )
 AC3_FOLDERS = ("ac3",)
-NO_MORE_DATA = "nomo"
 
 
 def whole_rate(rate):
@@ -807,7 +806,7 @@ def coreaudio_reader_result(child):
     return result
 
 
-def coreaudio_converter_result(child, summary):
+def coreaudio_converter_result(child):
     """The record of one run of `audiotoolbox_probe convert`: AudioConverter fed one unit of the unit list per call (a cut unit from its first byte to the last byte the file
     holds, never padded), then the end of the stream. A unit is `refused` when the call returns an error other than 'nomo' (the input has no further unit), `decoded` when
     the call returns frames and `no output` otherwise; the converter holds frames back, so the frames of a call need not be the frames of its unit (the AC-3 converter
@@ -821,8 +820,12 @@ def coreaudio_converter_result(child, summary):
     calls = by_type.get("unit", [])
     drains = by_type.get("drain", [])
     units, decoded, nothing = [], 0, 0
+    not_fed = 0
     for l in calls:
-        if l["status"] not in (0,) and not l["noMoreData"]:
+        if l.get("notFed"):
+            result = "not fed"
+            not_fed += 1
+        elif l["status"] not in (0,) and not l["noMoreData"]:
             result = "refused"
         elif l["frames"] > 0:
             result = "decoded"
@@ -863,7 +866,7 @@ def coreaudio_converter_result(child, summary):
         "primeInfo": {"status": os_status(prime_info["status"]), "leadingFrames": prime_info["leadingFrames"], "trailingFrames": prime_info["trailingFrames"]} if prime_info else None,
         "runs": [{"rate": whole_rate(output["sampleRate"]), "channels": output["channels"], "samples": total, "outputs": decoded}] if created and output and total else [],
         "unitCount": len(calls),
-        "decodedUnits": decoded, "noOutputUnits": nothing, "refusedUnits": sum(1 for u in units if u["result"] == "refused"),
+        "decodedUnits": decoded, "noOutputUnits": nothing, "notFedUnits": not_fed, "refusedUnits": sum(1 for u in units if u["result"] == "refused"),
         "units": units,
         "unitFrames": frames_units, "drainFrames": frames_drain,
         "failedCalls": end.get("failedCalls") if end else None,
@@ -931,7 +934,7 @@ def run_coreaudio(args):
             return
         paths = {"reader": coreaudio_reader_result(probe.run_child("reader", [program, "reader", str(path)]))}
         if summary["units"]:
-            paths["converter"] = coreaudio_converter_result(probe.run_child("converter", [program, "convert", str(path), str(tsv), "default"]), summary)
+            paths["converter"] = coreaudio_converter_result(probe.run_child("converter", [program, "convert", str(path), str(tsv), "default"]))
         record["paths"] = paths
         records.write(format_, path, record)
 

@@ -153,7 +153,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # The same Python as the Linux job, so that the unit lists and the derived variants are made by the same interpreter.
+      # The same minor version of Python as the Linux job (3.12; the patch version differs and is recorded), so that the unit lists and the derived variants are made the same way.
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -236,7 +236,7 @@ jobs:
           python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
             --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json \
             --write-official-tta comparison/official-decoders.tta.draft.json --previous-tta tests/fixtures/tta/official-decoders.json \
-            --write-official-aac comparison/aac-drafts --write-official-ac3 comparison/aac-drafts/official-decoders.ac3.draft.json --downloaded aac-samples artifacts
+            --write-official-aac comparison/aac-drafts --write-official-ac3 comparison/official-decoders.ac3.draft.json --downloaded aac-samples artifacts
           { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           { echo 'TTA'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-tta.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           { echo 'AAC'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-aac.txt | grep -v '^derived ' | head -c 300000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

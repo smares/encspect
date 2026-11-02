@@ -3415,7 +3415,7 @@
      "kind": "analyzer-differs",
      "reason": "ExtAudioFile outputs 18,368 samples at the core rate where the analyzer's Samples (Edit List) is 44,100",
      "statusSource": "reviewed",
-     "note": "decided by the project lead (step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112."
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112."
     }
    ],
    "units": [],
@@ -8088,7 +8088,7 @@
      "ownersDisagree": true,
      "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 10,240, Core Audio's converter 11,264, the analyzer 20,480 (the written rule gives keep unless a reading of the specification decides)",
      "statusSource": "reviewed",
-     "note": "decided by the project lead (step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown."
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown."
     }
    ],
    "units": [
@@ -8619,7 +8619,7 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 12 frames (24,576 samples) at 44100 Hz, from unit 0, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK applies it (24,576 at 44,100 Hz); Core Audio's converter (12,288 at 22,050 Hz, built from the first playable entry of the file's format list), the analyzer and ffmpeg do not. The owners' decoders disagree and no reading of the specification decides, so the rule keeps it.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK applies it (24,576 at 44,100 Hz); Core Audio's converter (12,288 at 22,050 Hz, built from the first playable entry of the file's format list), the analyzer and ffmpeg do not. The keep stands by that decision, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here); FDK alone differs and no reading of the specification decides.",
      "statusSource": "reviewed"
     },
     {

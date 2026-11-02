@@ -1964,7 +1964,7 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 34 frames (34,816 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. Core Audio's converter outputs 69,632 samples at 44,100 Hz, as the analyzer and ffmpeg count; FDK alone decodes at the core rate without SBR (22,050 Hz, 34,816 samples, the same 34 frames). The owners' decoders disagree and no reading of the specification decides, so the rule keeps it.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. Core Audio's converter outputs 69,632 samples at 44,100 Hz, as the analyzer and ffmpeg count; FDK alone decodes at the core rate without SBR (22,050 Hz, 34,816 samples, the same 34 frames). The keep stands by that decision, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here); FDK alone differs and no reading of the specification decides.",
      "statusSource": "reviewed"
     }
    ],

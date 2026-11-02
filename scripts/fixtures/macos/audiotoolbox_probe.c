@@ -256,7 +256,7 @@ static OSStatus supply(AudioConverterRef converter, UInt32 *packets, AudioBuffer
     feed->have = 0;
     feed->delivered++;
     long skip = 0;
-    if (feed->adts) {
+    if (feed->adts && feed->unit->received >= 2) {
         skip = (feed->data[feed->unit->offset + 1] & 1) ? 7 : 9;
         if (skip > feed->unit->received) {
             skip = feed->unit->received;
@@ -530,6 +530,13 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     Feed feed = {data, NULL, 0, {0, 0, 0}, 0, 0, !strcmp(kind, "adts")};
     for (long i = 0; i <= count + 3; i++) {
         int is_unit = i < count;
+        if (is_unit && units[i].received == 0) {
+            /* A unit with no byte in the file (cut at its first byte, or outside the file) is not given to the converter: an empty packet would only measure the harness. */
+            printf("{\"type\":\"unit\",\"index\":%ld,\"offset\":%ld,\"declared\":%ld,\"received\":0,\"consumed\":false,\"notFed\":true,\"status\":0,\"noMoreData\":false,\"frames\":0}\n", i, units[i].offset, units[i].declared);
+            fflush(stdout);
+            calls++;
+            continue;
+        }
         if (is_unit) {
             feed.unit = &units[i];
             feed.have = 1;
