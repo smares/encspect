@@ -3658,7 +3658,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.granule-beyond-packets",
-        "message": "The last granule position, 29196 at 0x11D, is 9223372036854775807 samples beyond the count continued from the granule position before it; the packets end before it, so nothing is trimmed.",
+        "message": "The last granule position, 29196 at 0x11D, is at least 9223372036854775807 samples beyond the count continued from the granule position before it; the packets end before it, so nothing is trimmed.",
         "offset": 285,
         "length": 8,
         "path": [
