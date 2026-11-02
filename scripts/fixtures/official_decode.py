@@ -1082,7 +1082,7 @@ def windows_timeline(node):
             if time is None:
                 untimed += 1
             else:
-                if previous is not None and time != previous:
+                if previous is not None and abs(time - previous) > 1:  # the times are rounded down to 100 ns per unit: a step of one is no gap
                     gap_count += 1
                     if len(gaps) < MF_LIST_LIMIT:
                         gaps.append({**entry, "expected": previous})

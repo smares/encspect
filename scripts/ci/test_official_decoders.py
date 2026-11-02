@@ -483,7 +483,7 @@ class PartialRunTests(unittest.TestCase):
         self.assertIn("coreaudio aac/one.m4a (carried from the committed file)", document["notRun"])
         self.assertEqual({"run": "7", "commit": "abcdef0"}, results[0]["coreAudioFrom"])
 
-    def run_windows_comparison(self, mf_records, committed_figure, ca_records=None, fresh_reference=None, ca_reference=False):
+    def run_windows_comparison(self, mf_records, committed_figure, ca_records=None, fresh_reference=None, findings=()):
         """run_aac_comparison on one synthetic fixture with a committed entry that has Media Foundation (and Core Audio) data, the way a partial run meets it."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp = pathlib.Path(tmp)
@@ -500,7 +500,7 @@ class PartialRunTests(unittest.TestCase):
             figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 100, "reference": fresh_reference, "referencePath": "fdk direct" if fresh_reference else None,
                       "referenceKind": "official", "witnesses": {}, "analyzerRates": [44100], "noReference": "FDK refuses"}
             fresh = {"figures": [figure], "differences": [], "units": [], "notes": [], "codecs": []}
-            analyzer = {"streams": [{"index": 0, "codec": "AAC LC", "samples": 100, "sampleRate": 44100, "channels": 2}], "gapless": {}, "findings": []}
+            analyzer = {"streams": [{"index": 0, "codec": "AAC LC", "samples": 100, "sampleRate": 44100, "channels": 2}], "gapless": {}, "findings": list(findings)}
             with mock.patch.multiple(compare, FIXTURES=tmp, compare_aac=lambda *a: {**fresh, "figures": [dict(figure)]}, aac_ffmpeg=lambda *a: None, render_aac=lambda *a: "text",
                                      load_aac_analyzer=lambda p, c: (analyzer, "golden")), \
                     mock.patch.object(driver, "AAC_FOLDERS", ("aac",)), mock.patch.object(compare.probe, "files", lambda folder, ext: [media] if folder == "aac" else []), \
@@ -521,6 +521,21 @@ class PartialRunTests(unittest.TestCase):
         self.assertIn("mediafoundation aac/one.m4a (carried from the committed file)", document["notRun"])
         self.assertEqual({"run": "8", "commit": "1234567"}, results[0]["mediaFoundationFrom"])
         self.assertEqual({"transform": {"samples": 5}}, results[0]["figures"][0]["mediaFoundation"])
+
+    def test_the_facts_of_the_transforms_output_reach_the_column(self):
+        transform = {**mf_path(2048), "noOutputList": [0, 1], "streamChangeUnits": [1, 2], "timeline": {"first": {"unit": 2, "time": 5, "duration": 7, "frames": 1024}, "drain": [{"time": 9, "duration": 7, "frames": 1024}]}}
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 2048, "reference": 2048, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"transform": transform}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
+        entry = figure["mediaFoundation"]["transform"]
+        self.assertEqual(([0, 1], [1, 2], {"unit": 2, "time": 5, "duration": 7, "frames": 1024}, {"time": 9, "duration": 7, "frames": 1024}),
+                         (entry["noOutputList"], entry["streamChangeUnits"], entry["firstOutput"], entry["drainOutput"]))
+
+    def test_the_analyzers_findings_reach_the_documented_limits_of_a_file(self):
+        committed_figure = {"id": "samples", "stage": "coded", "reference": None}
+        _, _, results, _ = self.run_windows_comparison({"SHA": self.mf_record(0)}, committed_figure, fresh_reference=100, findings=[{"code": "aac.coupling-without-program", "severity": "Warning", "offset": 1, "length": 1, "count": 1}])
+        reasons = [d["reason"] for d in results[0]["differences"] if d["decoder"] == "media foundation transform"]
+        self.assertTrue(any("coupling channel elements" in reason for reason in reasons), reasons)
 
     def test_the_transform_is_the_reference_only_after_core_audios_carried_reference(self):
         committed_figure = {"id": "samples", "stage": "coded", "reference": 80, "referencePath": "coreaudio converter", "referenceKind": "official", "format": {"rate": 44100, "channels": 2},
@@ -889,6 +904,10 @@ class WindowsRecordTests(unittest.TestCase):
         self.assertEqual({"unit": 4, "time": 500000, "duration": 232199, "frames": 1024, "expected": 232199}, timeline["gaps"][0])
         self.assertEqual([{"time": 900000, "duration": 232199, "frames": 1024}], timeline["drain"])
 
+    def test_a_step_of_one_in_the_100_ns_times_is_no_gap(self):
+        units = [unit(0, 1024, samples=[[0, 232200, 1024]]), unit(1, 1024, samples=[[232199, 232200, 1024]]), unit(2, 1024, samples=[[464400, 232200, 1024]])]
+        self.assertEqual(0, driver.windows_transform_result(transform_node(units, coded=3072, drain=0, runs=[run44(3072)]), 3)["timeline"]["gapCount"])
+
     def test_unit_lists_of_two_cases_never_share_a_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             first, second = driver.case_directory(tmp, "units"), driver.case_directory(tmp, "units")
@@ -902,6 +921,31 @@ class WindowsUnitVerdictTests(unittest.TestCase):
         analyzer = {"findings": [{"code": "aac.crc-mismatch", "severity": "Warning", "offset": 10, "length": 1, "count": 1}]}
         units = compare.mediafoundation_unit_verdicts({"paths": {"transform": transform}}, analyzer)
         self.assertEqual([1], [u["index"] for u in units])
+
+
+class WindowsDriverRunTests(unittest.TestCase):
+    def test_two_files_with_the_same_bytes_get_unit_lists_in_directories_of_their_own(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            first, second = tmp / "one.m4a", tmp / "two.m4a"
+            first.write_bytes(b"same")
+            second.write_bytes(b"same")
+            seen = []
+
+            def unit_list(path, directory):
+                seen.append(pathlib.Path(directory))
+                return directory / "x.units.tsv", {"kind": "mp4", "codec": "aac", "units": 1, "encrypted": False, "note": None}
+
+            args = mock.Mock(out=str(tmp / "out"), probe=str(tmp / "probe.exe"), downloaded=None)
+            with mock.patch.object(driver.probe, "unit_list", unit_list), mock.patch.object(driver.probe, "files", lambda folder, ext: [first, second] if folder == "aac" else []), \
+                    mock.patch.object(driver.derive_variants, "write_aac", lambda out: []), mock.patch.object(driver, "windows_probe_run", lambda *a, **k: (None, {"error": "x"})), \
+                    mock.patch.object(driver, "aac_skip_reason", lambda summary: None), mock.patch.object(driver, "AAC_FOLDERS", ("aac",)):
+                driver.run_windows(args)
+            self.assertEqual(2, len(seen))
+            self.assertNotEqual(seen[0], seen[1])
+            records = sorted((tmp / "out" / "records" / "mf-aac").glob("*.json"))
+            self.assertEqual(2, len(records))
+            self.assertEqual("harness", json.loads(records[0].read_text(encoding="utf-8"))["paths"]["transform"]["stoppedBy"])
 
 
 class MediaFoundationProvenanceTests(unittest.TestCase):

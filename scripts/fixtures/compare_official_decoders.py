@@ -947,14 +947,12 @@ def mf_documented(analyzer, blocks=1):
 def mf_total(path):
     """(runs, why) of a Media Foundation path that reached the end: its runs of constant output format (none when it output nothing); else (None, the reason), which starts with
     `not run`, `not asked:` (the harness did not ask the decoder), `stopped by` (a crash, timeout, stall, limit or failed read: no figure, and no refusal) or `refused:` (the decoder
-    or the type it was offered, or the file, did not open). A stop is told before the refusal, as a crash has no open state."""
+    or the type it was offered, or the file, did not open). Only a stop kind `error` with no open state is a refusal; a crash, a timeout or a stall has no open state either and is a stop."""
     if not path:
         return None, "not run"
     stopped = path["stoppedBy"]
     if stopped == "harness":
         return None, "not asked: %s" % (path.get("reason") or "no reason")
-    if stopped not in ("end", "error"):
-        return None, "stopped by %s%s" % (stopped, " (%s)" % path["reason"] if path.get("reason") else "")
     if stopped == "error" and (not path.get("opened") or path.get("mediaTypeRefused")):
         return None, "refused: %s" % (path.get("reason") or path.get("openStatus") or "no reason")
     if stopped != "end":
@@ -981,6 +979,17 @@ def mf_entry(path, runs, rate):
             entry["notFedUnits"] = path["notFedUnits"]
         if path.get("silentUnits"):
             entry["silentUnits"] = path["silentUnits"][:8] + (["..."] if len(path["silentUnits"]) > 8 else [])
+        # what the records show of when the transform gave output: the units with none (the first eight), the units at which it signaled a stream change, the first output and the
+        # drain's first sample (100 ns times of the input samples)
+        if path.get("noOutputList"):
+            entry["noOutputList"] = path["noOutputList"][:8] + (["..."] if len(path["noOutputList"]) > 8 else [])
+        if path.get("streamChangeUnits"):
+            entry["streamChangeUnits"] = path["streamChangeUnits"][:8] + (["..."] if len(path["streamChangeUnits"]) > 8 else [])
+        timeline = path.get("timeline") or {}
+        if timeline.get("first"):
+            entry["firstOutput"] = {k: timeline["first"][k] for k in ("unit", "time", "duration", "frames")}
+        if timeline.get("drain"):
+            entry["drainOutput"] = timeline["drain"][0]
         entry["input"] = {k: v for k, v in (path.get("input") or {}).items() if k in ("config", "stored", "aot", "extAot")}
         entry["decoder"] = (path.get("decoder") or {}).get("dllVersion")
     else:
