@@ -28,7 +28,7 @@ internal static class ProReport
         }
 
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), ProExplain.StatFrameLength);
-        Add("Samples", NodeValue.Integer(reader.Samples, "samples", "sample"), ProExplain.StatSamples);
+        Add("Samples", NodeValue.Integer(reader.Samples, "samples", "sample"), reader.IsDecoderRule ? ProExplain.StatSamplesDecoder : ProExplain.StatSamples);
         if (reader.TrimmedSamples > 0)
         {
             Add("Trimmed Samples", NodeValue.Integer(reader.TrimmedSamples, "samples", "sample"), ProExplain.StatTrimmedSamples);

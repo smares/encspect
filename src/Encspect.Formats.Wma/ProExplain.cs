@@ -42,7 +42,7 @@ internal static class ProExplain
     public const string ChannelSubframes = "The lengths in samples of the subframes that hold this channel, in order.";
     public const string PostprocessingTransform = "A bit that says whether a postprocessing transform of the channels follows. Encspect reads and does not use it.";
     public const string DynamicRangeGain = "The gain for dynamic range compression the frame states, read and not used by Encspect.";
-    public const string Trim = "How many samples a decoder cuts from the start and the end of the frame's output.";
+    public const string Trim = "The samples the frame states to cut at the start and at the end of the output (\"none\" at the start where it states no start trim); how they apply to the stream's count is under Samples.";
     public const string FramePadding = "A bit between the last subframe and the trailer bit, which is 1 in the files seen.";
     public const string MoreFrames = "Whether another frame starts after this one in the same packet.";
 
@@ -64,8 +64,10 @@ internal static class ProExplain
     public const string StatFrames = "How many frames were read, including invalid ones.";
     public const string StatInvalidFrames = "How many frames failed one of the rules of the syntax and were dropped.";
     public const string StatFrameLength = "How many samples of each channel a frame holds.";
-    public const string StatSamples = "The samples a decoder outputs for the stream: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut.";
-    public const string StatTrimmedSamples = "The samples the trims of the frames cut at their starts and ends.";
+    public const string StatSamples = "The samples counted from the frames read as FFmpeg's decoder outputs them: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut. Used where the rule fitted to Microsoft's decoder does not apply.";
+    // The rule is in docs/design/wma-pro-format.md, "What Encspect reports".
+    public const string StatSamplesDecoder = "Counted by the rule fitted to the output of Microsoft's WMA decoder in black-box runs: frames × frame length + (frame length − the largest last subframe of the last frame) / 2, less the first frame's start trim (or half a frame and half its largest first subframe where it states none) and the last frame's end trim, at most that frame's output.";
+    public const string StatTrimmedSamples = "The sum of the start and end trims the frames state; what a decoder cuts can differ (see Samples).";
     public const string StatDuration = "The samples divided by the sampling rate.";
     public const string StatBlockAlignment = "The size of each packet, the container's block alignment.";
     public const string StatAverageBitrate = "The bytes of the full packets over the stream's duration, as a bitrate.";

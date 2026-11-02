@@ -49,8 +49,14 @@ static unsigned char *read_file(const char *path, long *length) {
     }
     fseek(file, 0, SEEK_END);
     *length = ftell(file);
+    if (*length < 0) {
+        exit(2);
+    }
     fseek(file, 0, SEEK_SET);
     unsigned char *data = malloc(*length ? *length : 1);
+    if (!data) {
+        exit(2);
+    }
     if (fread(data, 1, *length, file) != (size_t)*length) {
         exit(2);
     }
@@ -71,10 +77,10 @@ static int hex(const char *text, unsigned char *out, int max) {
 static struct {
     unsigned char *data;
     HANDLE_AACDECODER decoder;
-    long coded, outputs, calls;
-    int limit, raw;
+    long coded, outputs, calls, fed_end;
+    int limit, raw, adif, conceal, conceal_set;
     const char *stopped;
-} G = {NULL, NULL, 0, 0, 0, 0, 0, "end"};
+} G = {.stopped = "end"};
 
 /* Decodes what the library holds until it asks for more bits, and writes one line per call; numTotalBytes in each line says how
    many bytes of the input the library has used up to that call. */
@@ -85,6 +91,11 @@ static void decode_all(long index, long from, long to, unsigned fill, unsigned l
     int stuck = 0;
     for (int attempt = 0; attempt < 1000000; attempt++) {
         AAC_DECODER_ERROR error = aacDecoder_DecodeFrame(G.decoder, pcm, MAX_PCM, 0);
+        if (G.adif && !G.conceal_set) {
+            /* an ADIF header is read inside the library, so the method is set after the first decode call, which configures the stream */
+            G.conceal_set = 1;
+            printf("{\"type\":\"conceal\",\"when\":\"after the first decode call\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(G.decoder, AAC_CONCEAL_METHOD, G.conceal));
+        }
         long samples;
         int channels;
         int output = IS_OUTPUT_VALID(error);
@@ -137,6 +148,9 @@ static void feed(long index, long from, long to, long offset, long declared, lon
             return;
         }
         position += accepted;
+        if (position > G.fed_end) {
+            G.fed_end = position;
+        }
     }
 }
 
@@ -151,8 +165,11 @@ int main(int argc, char **argv) {
     unsigned char *data = read_file(argv[2], &length);
 
     Unit *units = calloc(1, sizeof(Unit));
+    if (!units) {
+        return 2;
+    }
     long unit_count = 0, unit_capacity = 0;
-    unsigned char config[256];
+    unsigned char config[4096];
     int config_length = 0;
     char kind[16] = "";
     FILE *tsv = fopen(argv[3], "r");
@@ -160,13 +177,17 @@ int main(int argc, char **argv) {
         perror(argv[3]);
         return 2;
     }
-    char line[1024];
+    char line[16384];
     while (fgets(line, sizeof line, tsv)) {
         Unit u;
         if (line[0] == 'U' && sscanf(line, "U %ld %ld %ld", &u.offset, &u.declared, &u.received) == 3) {
             if (unit_count == unit_capacity) {
                 unit_capacity = unit_capacity ? unit_capacity * 2 : 1024;
-                units = realloc(units, unit_capacity * sizeof(Unit));
+                Unit *grown = realloc(units, unit_capacity * sizeof(Unit));
+                if (!grown) {
+                    return 2;
+                }
+                units = grown;
             }
             units[unit_count++] = u;
         } else if (line[0] == 'C') {
@@ -207,18 +228,33 @@ int main(int argc, char **argv) {
 
     G.data = data;
     G.raw = raw;
+    G.adif = !strcmp(mode, "adif");
+    G.conceal = conceal;
     G.decoder = decoder;
     if (!strcmp(mode, "units")) {
         long fed_end = 0;
+        int conceal_after_unit = 0;
         for (long i = 0; i < unit_count && !G.limit; i++) {
             long start = units[i].offset;
+            if (start < 0 || start > length) {
+                continue;
+            }
             /* For ADTS everything from the end of the last fed unit is fed: the gap (junk, a resync gap) goes in front of the next unit.
                MP4 access units are fed alone. */
             long from = raw ? start : fed_end;
             long to = start + units[i].received;
+            if (to > length) {
+                to = length;
+            }
+            if (!raw && from > to) {
+                continue; /* a unit that ends before the bytes already fed */
+            }
             feed(i, from, to, start, units[i].declared, units[i].received);
-            fed_end = to;
-            if (i == 0) {
+            if (to > fed_end) {
+                fed_end = to;
+            }
+            if (!conceal_after_unit) {
+                conceal_after_unit = 1;
                 printf("{\"type\":\"conceal\",\"when\":\"after the first unit\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(decoder, AAC_CONCEAL_METHOD, conceal));
             }
         }
@@ -228,11 +264,24 @@ int main(int argc, char **argv) {
     } else {
         feed(0, 0, length, 0, length, length);
     }
+    /* what the library still holds when it answers 0x1002: the bytes fed that numTotalBytes has not counted (a frame of several raw data blocks keeps its last
+       blocks until more bits arrive, and the drain discards them) */
+    CStreamInfo *before = aacDecoder_GetStreamInfo(decoder);
+    long fed_end = G.fed_end, used_end = before ? (long)before->numTotalBytes : -1;
+    printf("{\"type\":\"held\",\"fedBytes\":%ld,\"usedBytes\":%ld,\"heldBytes\":%ld}\n", fed_end, used_end, used_end >= 0 ? fed_end - used_end : -1);
+    fflush(stdout);
     long coded = G.coded, flushed = 0, calls = G.calls, outputs = G.outputs;
 
-    /* AACDEC_FLUSH discards input still buffered (numTotalBytes in the line before shows it) and answered each of the four requests with a
-       valid frame; the harness asks for four and records each, so it is not known whether the library would stop. */
-    for (int i = 0; i < 4; i++) {
+    /* The drain: ceil(outputDelay / frameSize) frames of AACDEC_FLUSH, as the design fixes it (probe question 7, approved lead answer 5), counted apart as
+       flushedSamples and never in the coded total. AACDEC_FLUSH discards input still buffered (numTotalBytes in the last unit line shows it). */
+    CStreamInfo *last = aacDecoder_GetStreamInfo(decoder);
+    int drain = 0;
+    if (last && last->frameSize > 0 && last->outputDelay > 0) {
+        drain = (int)((last->outputDelay + (unsigned)last->frameSize - 1) / (unsigned)last->frameSize);
+    }
+    printf("{\"type\":\"drain\",\"outputDelay\":%u,\"frameSize\":%d,\"requests\":%d}\n", last ? last->outputDelay : 0, last ? last->frameSize : 0, drain);
+    fflush(stdout);
+    for (int i = 0; i < drain; i++) {
         AAC_DECODER_ERROR error = aacDecoder_DecodeFrame(decoder, pcm, MAX_PCM, AACDEC_FLUSH);
         long samples;
         int channels;

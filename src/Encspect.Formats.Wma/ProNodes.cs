@@ -79,7 +79,8 @@ internal sealed class ProNodes(StreamData data, ProParameters parameters)
                     bool hasTrim = trace.Get() != 0;
                     long trimStart = trace.Get();
                     long trimEnd = trace.Get();
-                    string trimText = hasTrim ? $"{Counts.Of(trimStart, "sample", "samples")} at the start, {trimEnd} at the end" : "none";
+                    bool hasStartTrim = trace.Get() != 0;
+                    string trimText = hasTrim ? $"{(hasStartTrim ? Counts.Of(trimStart, "sample", "samples") + " at the start" : "none at the start")}, {trimEnd} at the end" : "none";
                     children.Add(At("Trim", cursor, trimBits, NodeValue.Text(trimText), ProExplain.Trim));
                     cursor += trimBits;
                     break;
