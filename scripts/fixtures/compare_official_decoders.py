@@ -1039,7 +1039,8 @@ def attach_mediafoundation(result, mf, record):
                     transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], ", %d not fed" % transform["notFedUnits"] if transform.get("notFedUnits") else "")
     if reader is not None:
         runs, why = mf_total(reader)
-        column["reader"] = {"samples": None, "why": why} if runs is None else mf_entry(reader, runs, rate)
+        # a reader that has no figure says only how (the full reason is in the record): its stop, a failed read or a result that differs from run to run, varies with timing
+        column["reader"] = {"samples": None, "why": why.split(" (")[0]} if runs is None else mf_entry(reader, runs, rate)
     entry = column.get("transform")
     if entry is None:
         return

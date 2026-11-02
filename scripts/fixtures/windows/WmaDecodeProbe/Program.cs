@@ -140,6 +140,13 @@ public static class Program
                 ["direct"] = RunChild(aac ? "mft" : "dmo", file, timeout, modules, units),
                 ["directWithoutTimestamps"] = RunChild(aac ? "mft-nots" : "dmo-nots", file, timeout, modules, units),
             };
+            if (aac)
+            {
+                // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four runs and read to the end in a fifth),
+                // so it is read twice more; the driver takes a result as a figure only where the three agree.
+                record["sourceReaderRepeats"] = new JsonArray(RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null));
+            }
+
             var direct = record["direct"]?["decoder"];
             if (direct != null)
             {

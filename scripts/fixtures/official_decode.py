@@ -993,8 +993,32 @@ def windows_runs(node):
     return [{k: r[k] for k in ("rate", "channels", "samples", "bytes", "outputs") if k in r} for r in node.get("runs") or [] if r.get("samples")]
 
 
-def windows_reader_result(node):
-    """The record of the Source Reader run: the file opened by MFCreateSourceReaderFromURL, the first audio stream set to 16-bit PCM (then 32-bit float, then 24-bit), read
+def windows_reader_signature(result):
+    """What two runs of the Source Reader must share for the result to count: that it reached the end and the total, or that it did not reach the end (its partial count and
+    the number of samples it returned vary with timing)."""
+    if result["stoppedBy"] == "end":
+        return ("end", result["totalSamples"], [(r["rate"], r["channels"], r["samples"]) for r in result["runs"]])
+    return ("not the end",)
+
+
+def windows_reader_result(node, repeats=()):
+    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file twice more) differ from it in what windows_reader_signature compares, in which
+    case the reader has no figure (`error`, with the three runs' outcomes in the reason)."""
+    first = windows_reader_single(node)
+    others = [windows_reader_single(r) for r in repeats]
+    signatures = [windows_reader_signature(r) for r in [first] + others]
+    if all(sig == signatures[0] for sig in signatures):
+        if others:
+            first["repeats"] = len(others)
+        return first
+    summary = ["%s%s" % (r["stoppedBy"], " %s" % r["totalSamples"] if "totalSamples" in r else "") for r in [first] + others]
+    result = {k: v for k, v in first.items() if k not in ("totalSamples", "partialSamples", "runs", "notes")}
+    result.update({"stoppedBy": "error", "reason": "the Source Reader's runs differ (%s)" % ", ".join(summary), "runs": [], "partialSamples": 0, "repeats": len(others)})
+    return result
+
+
+def windows_reader_single(node):
+    """The record of one run of the Source Reader: the file opened by MFCreateSourceReaderFromURL, the first audio stream set to 16-bit PCM (then 32-bit float, then 24-bit), read
     to the end. The reader reaches the end when it returns the end-of-stream flag; the first failed read stops it (a ReadSample after one can stall). A reader whose output type
     changes its channel count has no figure: the frames it returned before the change were counted with the type it was asked for (pce.aac)."""
     stop = windows_stop(node)
@@ -1257,7 +1281,7 @@ def run_windows(args):
         if node is None:
             record["paths"] = windows_failed_paths(environment.get("error"), summary)
         else:
-            paths = {"reader": windows_reader_result(node["sourceReader"])}
+            paths = {"reader": windows_reader_result(node["sourceReader"], node.get("sourceReaderRepeats") or ())}
             if summary["units"]:
                 paths["transform"] = windows_transform_result(node["direct"], summary["units"])
                 paths["transformWithoutTimestamps"] = windows_transform_result(node["directWithoutTimestamps"], summary["units"])

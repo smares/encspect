@@ -885,6 +885,32 @@ class WindowsRecordTests(unittest.TestCase):
         self.assertEqual(("limit", 100), (record["stoppedBy"], record["partialSamples"]))
         self.assertNotIn("totalSamples", record)
 
+    def reader_node(self, ended, samples=4096, partial=0):
+        if ended:
+            return {"opened": True, "outputSet": True, "endOfStream": True, "totalSamples": samples, "runs": [run44(samples, 22050)], "reads": []}
+        return {"opened": True, "outputSet": True, "stoppedBy": "the first failed read, 0xC00D6D60", "totalSamples": partial, "runs": [run44(partial, 22050)] if partial else [], "reads": []}
+
+    def test_a_reader_whose_three_runs_agree_counts_and_one_whose_runs_differ_has_no_figure(self):
+        agreeing = driver.windows_reader_result(self.reader_node(True), [self.reader_node(True), self.reader_node(True)])
+        self.assertEqual(("end", 4096, 2), (agreeing["stoppedBy"], agreeing["totalSamples"], agreeing["repeats"]))
+        # sbr-in-three-blocks.aac: three runs that stop at the first failed read with 0 or 1,024 frames agree that the reader did not reach the end
+        stopping = driver.windows_reader_result(self.reader_node(False), [self.reader_node(False, partial=1024), self.reader_node(False)])
+        self.assertEqual("error", stopping["stoppedBy"])
+        self.assertIn("first failed read", stopping["reason"])
+        differing = driver.windows_reader_result(self.reader_node(False), [self.reader_node(True), self.reader_node(False)])
+        self.assertEqual(("error", [], 0), (differing["stoppedBy"], differing["runs"], differing["partialSamples"]))
+        self.assertNotIn("totalSamples", differing)
+        self.assertIn("runs differ (error, end 4096, error)", differing["reason"])
+        other_total = driver.windows_reader_result(self.reader_node(True), [self.reader_node(True, 2048), self.reader_node(True)])
+        self.assertEqual("error", other_total["stoppedBy"])
+
+    def test_a_reader_with_no_figure_says_only_how_in_the_column(self):
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 9600, "reference": 9600, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        reader = driver.windows_reader_result(self.reader_node(False), [self.reader_node(True), self.reader_node(False)])
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": reader, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
+        self.assertEqual({"samples": None, "why": "stopped by error"}, figure["mediaFoundation"]["reader"])
+
     def test_a_retry_that_succeeds_makes_a_decoded_unit_and_one_that_fails_a_refused_unit(self):
         self.assertEqual("decoded", driver.windows_unit_result(unit(0, 1024, inputHresult="0xC00D36B5", retryHresult="0x00000000")))
         self.assertEqual("refused", driver.windows_unit_result(unit(0, 0, inputHresult="0xC00D36B5", retryHresult="0xC00D36B5")))
@@ -947,6 +973,25 @@ class WindowsDriverRunTests(unittest.TestCase):
             self.assertEqual(2, len(records))
             self.assertEqual("harness", json.loads(records[0].read_text(encoding="utf-8"))["paths"]["transform"]["stoppedBy"])
 
+
+    def test_the_repeated_reader_runs_of_the_probe_reach_the_record(self):
+        ended = {"opened": True, "outputSet": True, "endOfStream": True, "totalSamples": 1024, "runs": [run44(1024)], "reads": []}
+        stopped = {"opened": True, "outputSet": True, "stoppedBy": "the first failed read, 0xC00D6D60", "totalSamples": 0, "runs": [], "reads": []}
+        node = {"sourceReader": ended, "sourceReaderRepeats": [stopped, stopped], "direct": transform_node([unit(0, 1024)], coded=1024, drain=0, runs=[run44(1024)]),
+                "directWithoutTimestamps": transform_node([unit(0, 1024)], coded=1024, drain=0, runs=[run44(1024)])}
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            media = tmp / "one.m4a"
+            media.write_bytes(b"x")
+            args = mock.Mock(out=str(tmp / "out"), probe=str(tmp / "probe.exe"), downloaded=None)
+            with mock.patch.object(driver.probe, "unit_list", lambda path, directory: (directory / "x.tsv", {"kind": "mp4", "codec": "aac", "units": 1, "encrypted": False, "note": None})), \
+                    mock.patch.object(driver.probe, "files", lambda folder, ext: [media] if folder == "aac" else []), mock.patch.object(driver.derive_variants, "write_aac", lambda out: []), \
+                    mock.patch.object(driver, "windows_probe_run", lambda *a, **k: (node, {})), mock.patch.object(driver, "aac_skip_reason", lambda summary: None), \
+                    mock.patch.object(driver, "AAC_FOLDERS", ("aac",)):
+                driver.run_windows(args)
+            record = json.loads(next((tmp / "out" / "records" / "mf-aac").glob("*.json")).read_text(encoding="utf-8"))
+        self.assertEqual(("error", 2), (record["paths"]["reader"]["stoppedBy"], record["paths"]["reader"]["repeats"]))
+        self.assertEqual("end", record["paths"]["transform"]["stoppedBy"])
 
 class MediaFoundationProvenanceTests(unittest.TestCase):
     def committed(self, tmp, carried_from=None):
