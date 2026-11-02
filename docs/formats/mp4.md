@@ -80,6 +80,13 @@ A protected track is reported on its stream (`StreamInfo.Protection`: the scheme
 - **iTunes purchases:** the account (`apID`), purchase date (`purd`), owner (`ownr`) and store IDs are metadata items of the iTunes tag, never protection; a file with them and an ordinary `mp4a` entry is not protected.
 - **Not covered:** the contents of `senc`, `saiz` and `saio` beyond their counts, the data of `pssh` boxes and the atoms of iTunes protection, PIFF's `uuid` boxes (no source at hand), item protection (`ipro`), and the encryption of video, text or metadata tracks, which the analyzer does not read.
 
+## Reference for sample counts
+
+- **AAC tracks:** the first sound track's samples (`stsz` or `stz2`, `stco` or `co64`, `stsc`, and `moof` and `trun` of fragments) are fed to Fraunhofer's FDK AAC decoder one by one, in file order, with the track's AudioSpecificConfig; its total at the coded stage is the reference for the stream's `samples` (see [aac.md](aac.md) and "AAC decoding by FDK AAC" in [development.md](../development.md)). A sample that is cut or outside the file is fed up to the last byte the file holds.
+- **Not fed (108 files of this folder):** tracks with an `enca` sample entry (93) or another protection scheme (6), `aavd` (2), `drms` (1), `alac` (2), MP3 in MP4 (2) and files without `moov` (2). They have no reference here.
+- **The gapless nodes wait for Core Audio** (rollout step 5): "Samples (iTunSMPB)" and "Samples (Edit List)" are recorded in `tests/fixtures/mp4/official-decoders.json` with no reference. The analyzer counts both at the core rate, the media timescale.
+- The check is `AacOfficialDecodersTests`; the figures, the run and the differences are in `official-decoders.json` (decoded and compared in run 41379699952).
+
 ## Apple Lossless
 
 An `alac` sample entry is shown with the container; its samples are not analyzed yet (`mp4.codec-not-analyzed`, phase 3).

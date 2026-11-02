@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derived damage variants of the encoder-written fixtures (docs/design/official-decoder-crosschecks.md, "Fixtures").
 
-  derive_variants.py ogg|tta --out DIR [--manifest FILE] [FILE...]
+  derive_variants.py ogg|tta|aac --out DIR [--manifest FILE] [FILE...]
 
 One script writes the variants, by fixed rules and without randomness, so that every job of the official-decoder workflow (Linux, the
 comparison, later macOS and Windows) decodes the same bytes. Each variant's SHA-256 is recorded in the manifest, and the comparison matches
@@ -41,6 +41,28 @@ last = F[-1] and middle = F[len(F) // 2]:
   samples-minus-one      the header's samples one fewer, its CRC-32 rewritten
 
 A variant that equals an earlier one (a one-frame file's first, middle and last frame are the same frame) is not written.
+
+AAC (the files of tests/fixtures/aac and tests/fixtures/apple, which encoders wrote). The units are those of unit_list.py, the one extractor of the direct paths, so a
+variant is cut where the decoders will be fed. A file with fewer than three units has no variants. With U the units, first = U[0], last = U[-1] and middle = U[len(U) // 2].
+
+ADTS files (the frames are the extractor's; the header is 7 bytes, 9 with a CRC):
+
+  cut-first-frame    the file cut in the middle of the first frame
+  cut-middle-frame   the file cut in the middle of the middle frame
+  cut-last-frame     the file cut in the middle of the last frame
+  flip-byte          the byte in the middle of the middle frame's payload changed (XOR 0x55)
+  flip-crc           the first CRC byte of the middle frame changed (XOR 0x55), the payload intact (a file whose middle frame has no CRC has no such variant)
+  drop-frame         the middle frame removed
+  repeat-frame       the middle frame written twice in a row
+
+MP4 files with one AAC sound track (the samples are the extractor's, in file order):
+
+  flip-byte          the byte in the middle of the middle sample changed (XOR 0x55), the tables as they were
+  cut-first-sample, cut-middle-sample, cut-last-sample
+                     the file cut in the middle of the first, middle or last sample, only for a file whose box tables come before its samples and whose last
+                     sample ends at the end of the file (so that the cut leaves the tables intact and the samples are what is cut)
+
+A variant that equals an earlier one is not written.
 """
 
 import argparse
@@ -51,10 +73,16 @@ import struct
 import sys
 import zlib
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import unit_list  # noqa: E402
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OGG_DIRECTORY = ROOT / "tests" / "fixtures" / "ogg"
 TTA_DIRECTORY = ROOT / "tests" / "fixtures" / "tta"
+AAC_DIRECTORIES = (ROOT / "tests" / "fixtures" / "aac", ROOT / "tests" / "fixtures" / "apple")
+AAC_EXTENSIONS = (".aac", ".m4a", ".mp4", ".m4b", ".3gp")
 TTA_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "drop-frame-table", "repeat-frame", "samples-plus-one", "samples-minus-one")
+AAC_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "repeat-frame", "cut-first-sample", "cut-middle-sample", "cut-last-sample")
 OGG_RULES = ("cut-first-page", "cut-middle-page", "cut-last-page", "flip-byte", "drop-page", "repeat-page", "drop-packet", "repeat-packet")
 
 
@@ -236,6 +264,55 @@ def tta_sources():
     return sorted(p for p in TTA_DIRECTORY.iterdir() if p.name.startswith("external-") and p.suffix == ".tta")
 
 
+def aac_variants(data):
+    """{rule: bytes} for the bytes of one AAC file (ADTS or one AAC sound track in MP4); empty when the extractor finds fewer than three units."""
+    found = unit_list.extract_bytes(data)
+    units = found["units"]
+    if found.get("codec") != "aac" or found.get("encrypted") or len(units) < 3:
+        return {}
+    first, middle, last = units[0], units[len(units) // 2], units[-1]
+    variants = {}
+    flipped = bytearray(data)
+    if found["kind"] == "adts":
+        header = 7 if data[middle[0] + 1] & 1 else 9
+        if middle[2] <= header:
+            return {}
+        flipped[middle[0] + header + (middle[2] - header) // 2] ^= 0x55
+        variants["cut-first-frame"] = data[:first[0] + first[2] // 2]
+        variants["cut-middle-frame"] = data[:middle[0] + middle[2] // 2]
+        variants["cut-last-frame"] = data[:last[0] + last[2] // 2]
+        variants["flip-byte"] = bytes(flipped)
+        if header == 9:
+            crc = bytearray(data)
+            crc[middle[0] + 7] ^= 0x55
+            variants["flip-crc"] = bytes(crc)
+        variants["drop-frame"] = data[:middle[0]] + data[middle[0] + middle[2]:]
+        variants["repeat-frame"] = data[:middle[0] + middle[2]] + data[middle[0]:middle[0] + middle[2]] + data[middle[0] + middle[2]:]
+    elif found["kind"] == "mp4":
+        if middle[2] < 1:
+            return {}
+        flipped[middle[0] + middle[2] // 2] ^= 0x55
+        variants["flip-byte"] = bytes(flipped)
+        moov = next((start for kind, _, _, start in unit_list.boxes(data, 0, len(data)) if kind == b"moov"), None)
+        ordered = sorted(units)
+        if moov is not None and moov < ordered[0][0] and ordered[-1][0] + ordered[-1][2] == len(data) and all(u[2] == u[1] for u in ordered):
+            variants["cut-first-sample"] = data[:ordered[0][0] + ordered[0][2] // 2]
+            variants["cut-middle-sample"] = data[:ordered[len(ordered) // 2][0] + ordered[len(ordered) // 2][2] // 2]
+            variants["cut-last-sample"] = data[:ordered[-1][0] + ordered[-1][2] // 2]
+    seen, unique = set(), {}
+    for rule, content in variants.items():
+        # A variant the extractor finds no unit in (a file cut in its first frame) gives the decoders nothing to be fed and is not written.
+        if content not in seen and content != data and unit_list.extract_bytes(content)["units"]:
+            seen.add(content)
+            unique[rule] = content
+    return unique
+
+
+def aac_sources():
+    """The fixtures the rules apply to: the AAC files of tests/fixtures/aac and tests/fixtures/apple, which encoders wrote."""
+    return sorted((p for directory in AAC_DIRECTORIES for p in directory.iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS), key=lambda p: (p.name, str(p)))
+
+
 def write_variants(out, sources, variants):
     """Writes the variants into out; returns the manifest entries (name, file written, source path and SHA-256, rule, SHA-256, size)."""
     out = pathlib.Path(out)
@@ -263,16 +340,20 @@ def write_tta(out, sources=None):
     return write_variants(out, sources or tta_sources(), tta_variants)
 
 
+def write_aac(out, sources=None):
+    return write_variants(out, sources or aac_sources(), aac_variants)
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("format", choices=["ogg", "tta"])
+    parser.add_argument("format", choices=["ogg", "tta", "aac"])
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
-    write = write_ogg if args.format == "ogg" else write_tta
+    write = {"ogg": write_ogg, "tta": write_tta, "aac": write_aac}[args.format]
     entries = write(args.out, [pathlib.Path(f) for f in args.files] or None)
-    manifest = json.dumps({"format": args.format, "rules": list(OGG_RULES if args.format == "ogg" else TTA_RULES), "variants": entries}, indent=1) + "\n"
+    manifest = json.dumps({"format": args.format, "rules": list({"ogg": OGG_RULES, "tta": TTA_RULES, "aac": AAC_RULES}[args.format]), "variants": entries}, indent=1) + "\n"
     if args.manifest:
         pathlib.Path(args.manifest).write_text(manifest, encoding="utf-8")
     print("%d variants of %d files" % (len(entries), len({e["source"] for e in entries})))

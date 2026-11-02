@@ -1,0 +1,3274 @@
+{
+ "schema": 1,
+ "format": "aac",
+ "run": {
+  "id": "41379699952",
+  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
+  "imageOS": "ubuntu26",
+  "imageVersion": "20261026.180.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "fdkAac": {
+   "commit": "801f67f671929311e0c9952c5f92d6e147c7b003",
+   "version": "v2.0.2"
+  },
+  "concealMethod": 1,
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "changedFiguresForReview": [],
+ "files": [
+  {
+   "path": "apple-aace-m4a-cbr-mono44.m4a",
+   "sha256": "494b39551ca98d894319e82ece1ce8ec7b6a9e1984c556be437d3a0201256b85",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 22528,
+     "reference": 22528,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 22528
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 39,
+      "extAot": 0,
+      "frameSize": 512
+     }
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 22200
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 44,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "ER AAC ELD"
+   ]
+  },
+  {
+   "path": "apple-aacl-m4a-cbr-mono44.m4a",
+   "sha256": "19b656e525687691b05347a4cac541ae8b07a73518e3db6edd7db6b8163bfb37",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 23040,
+     "reference": 23040,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 23040
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 23,
+      "extAot": 0,
+      "frameSize": 512
+     }
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 22456
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 45,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "ER AAC LD"
+   ]
+  },
+  {
+   "path": "apple-he-m4a-cbr-mono44.m4a",
+   "sha256": "88db89794447fe355707181ac44db30c607e2078cffe90db0500b6173d7e23d0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 51200,
+     "reference": 51200,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 44100,
+      "exact": true,
+      "decoder": [
+       [
+        44100,
+        2,
+        51200
+       ]
+      ],
+      "analyzer": [
+       [
+        44100,
+        1,
+        51200
+       ]
+      ]
+     },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 49088
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 51200,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 25,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "apple-he-m4a-cbr-st44.m4a",
+   "sha256": "bb712e4075347c2edeb3054179664104a856a15ac860e540825a3dee7a057ef7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 51200,
+     "reference": 51200,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 49088
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 25,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "apple-hev2-adts-cbr-st44.aac",
+   "sha256": "6ea2f1438dd0615f6974f30672d20367c5c3dbb4b79bd052ce3b874bf6989342",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 51200,
+     "reference": 51200,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 25,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "apple-hev2-m4a-cbr-st44.m4a",
+   "sha256": "241c994c3ca90b56eee75bccbbb964d7c53117cbb934988a22df933c4e9e7e77",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 51200,
+     "reference": 51200,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 49088
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 25,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "apple-lc-adts-cbr-st44.aac",
+   "sha256": "e4c5aacc88dc1d6dc6f164293ca3b52b80233efe2fb933499350a380053b02b5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 24,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "apple-lc-m4a-cbr-st44.m4a",
+   "sha256": "917e52282ca4e6377140dce41d386647d538153ad981f3084befb66038d79e04",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 22050,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 22464
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 24,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "exhale-sbr.m4a",
+   "sha256": "8c7d4a440811dd1e366e5441fae56fdc98ce32862a4da018652149772b038907",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 69632,
+     "reference": 69632,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 42,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 34,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "exhale.m4a",
+   "sha256": "bb669c0d901d623590cdd44e5eb97f62ee531bc41c6caea2eef996267be17c0f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 66560,
+     "reference": 66560,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 42,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 65,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "xHE-AAC (USAC)"
+   ]
+  },
+  {
+   "path": "faac-1.31.1-adts.aac",
+   "sha256": "0f683edc51857333f229cb48651ee0df060bf7e747abb6631a56dde0e1bc2cd4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 66560,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.31.1.m4a",
+   "sha256": "f56ed0e02a1e5b77ce48c120c7ebf7e505ffdcb7a4c29cbf85e87e4cedc26f87",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.40-adts.aac",
+   "sha256": "7b91c72f9f57bfc8c74de87e2ff46b838acb080c7cbe56339b5d0cc4a75f56ef",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 66560,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.40.m4a",
+   "sha256": "ee92206db26b0a1ee3ee1ba11324b9aa033d90e8f40848a96aee8ad50624ba06",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.50-adts.aac",
+   "sha256": "5456dc05b27020500182818cae3c4be5ecf6e13ce5a994bfa53ff93a2b65972d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 66560,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.50.m4a",
+   "sha256": "ac5e431c61030a7efc6e9df85d31fb0d4752bb8165162e8bb4a10ea377f94277",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-2.0-he-24k.m4a",
+   "sha256": "d70a4032168646a97b638ca38a698359a31fc454b50064966d226e9cbf3a803c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 69632,
+     "reference": 69632,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 34,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.1-he-24k-adts.aac",
+   "sha256": "4ab9fc5dc942cff6e2263bc96bc29733488bd514939a1f7fc68683d987ad4f64",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 69632,
+     "reference": 69632,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 34,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.1-he-51-adts.aac",
+   "sha256": "51f5e63ff65aa37abda702d76040c932ec56a9eaab7f7e5925e812eaee4a6d29",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 69632,
+     "reference": 69632,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 22050,
+      "channels": 6
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 69632,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 34816,
+      "frames": 34,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 34816,
+     "analyzer": 69632,
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 34 frames (34,816 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. The owners' decoders disagree: FDK decodes at the core rate without SBR (22,050 Hz), the analyzer, ffmpeg and Core Audio count SBR (44,100 Hz).",
+     "statusSource": "reviewed"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 226,
+     "ranges": [
+      [
+       0,
+       226
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.sbr-without-channel-element",
+     "findings": [
+      "aac.sbr-without-channel-element"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 34,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-adts.aac",
+   "sha256": "ec22e568b90747065c6f9be4b6ea9c8777964af80e241cbad10b96faf5c547e2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-24k-adts.aac",
+   "sha256": "f0ef6ab3c11c673ee6528303f0c8fe71da8de308e090b1c13c362f3e9e56700d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-24k.m4a",
+   "sha256": "0d8e5f96ec00c9d8bc74b50d5c77d57fc55aaa3be0758f4c184d4aef1d37cb80",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-51-adts.aac",
+   "sha256": "533eb9a81e75e274f33cf23e0930a5fe7171b71eb4ffe9e3d152e966c197ffd7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 6
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-adts.aac",
+   "sha256": "f7171784588cc2eb6037e6f695e5412c0222dd0b73b0811c5eb7d085a917736b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-mono-adts.aac",
+   "sha256": "39fb3dec9517721de6e72db6dfc1681c7725a2d09ef7731ac554412e51d8311e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 77824,
+     "reference": 77824,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 77824
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 48000,
+      "exact": true,
+      "decoder": [
+       [
+        48000,
+        2,
+        77824
+       ]
+      ],
+      "analyzer": [
+       [
+        48000,
+        1,
+        77824
+       ]
+      ]
+     },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 77824,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 38,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he-mono.m4a",
+   "sha256": "3a5f09a2e9915bf67c70cb09b7c4bba41f84658d9d93f65eee13cd8d715054ac",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 77824,
+     "reference": 77824,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 77824
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 48000,
+      "exact": true,
+      "decoder": [
+       [
+        48000,
+        2,
+        77824
+       ]
+      ],
+      "analyzer": [
+       [
+        48000,
+        1,
+        77824
+       ]
+      ]
+     },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 36000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 36000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 77824,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 38,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 24000
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-he.m4a",
+   "sha256": "c73378daa575a822dad9f31dea5464df5998c271cb0eb376ee22423c8cc932e5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "faac-2.2-tags.m4a",
+   "sha256": "efe551412158240880a20a89b1e38ea17fbbc424d0fb80f95e3d9e5290f944d1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-2.2.m4a",
+   "sha256": "6119723c4bbf96898512b49282adccf6ac29f2f746592b350488c472643c1c23",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-adts.aac",
+   "sha256": "0e756c81032aa526f6ded82b3bfb02ac9f18ebfaff07a8c092eae79ae2ebb99d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 66560,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac.m4a",
+   "sha256": "308cc0c45bdad2dcdfb73296c5ddc654d14604d9fb4cf5050521db1295d7606c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "fdkaac-crc-mono.aac",
+   "sha256": "833ce72d7b10a536cbc1308fb8b3cf2e2ed2ef1334d0cfb22816e5de36fc2d8f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 68608,
+     "reference": 68608,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 67,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "fdkaac-he-adts.aac",
+   "sha256": "5cf2b7d3fbe90014f6aae829e23a40954038de982841696624f411e930753c87",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "fdkaac-he-hierarchical.m4a",
+   "sha256": "38cd1c4f0a43b994178729083a31bb97cfde91b0e532aa7b9856197aef04f153",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "fdkaac-he-implicit.m4a",
+   "sha256": "9356bd35e4c8d7bf8aacb5c46d4efaeea40a47f0b5128fc809bb10464c9fbfbb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "fdkaac-he-v2-adts.aac",
+   "sha256": "f15df161cd5a2741b4b11e80078823b3008d8268c64a87fee1baf19585fbac72",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 73728,
+     "reference": 73728,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 36,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "fdkaac-he-v2-hierarchical.m4a",
+   "sha256": "d5f5129504b3cc80c4fb5bf82266a33af16f5e11398e4bedd900aa2f7c7db51f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 73728,
+     "reference": 73728,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 70656
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 36,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "fdkaac-he-v2-implicit.m4a",
+   "sha256": "2590886821209a3b2848357a1f4cc960325eec9aa61daf0cfbe3f27fd7a7527c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 73728,
+     "reference": 73728,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 70656
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 36,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "fdkaac-he-v2.m4a",
+   "sha256": "0a939d5729f14f5d4e2c8ac67d38a08fcea8fd0d332e6445427f1c59f61af0ab",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 73728,
+     "reference": 73728,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 70656
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 36,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC v2"
+   ]
+  },
+  {
+   "path": "fdkaac-he.m4a",
+   "sha256": "ba21f7a75274286e2b8b22a7e75ba0f3374e731f930b2f8e276ac2872abb3d3e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 71680,
+     "reference": 71680,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 33075,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 35,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 22050
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "fdkaac-lc-vbr.m4a",
+   "sha256": "63ad8699680509b74a951bccf81e92ff035bbde9dda1e5de784a791004ee2a70",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 68608,
+     "reference": 68608,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 67,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "fdkaac-lc.m4a",
+   "sha256": "8cb8e41437d9f1292d1c2c7edf1d3a44579887b63231b71211848c691010e52f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 68608,
+     "reference": 68608,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.iTunSMPB",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (iTunSMPB)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 67,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-adts.aac",
+   "sha256": "fa37b510baa3cb6b67387038b35f30f12ec5c9d48400f893ac526b1f5cd0aae5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-fast.aac",
+   "sha256": "908862d12894b34bf9f6c16c0fa078b7f4018081be98039f32654bc74c08f4b2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-fragmented.mp4",
+   "sha256": "fd8a5e3bb29a2ccd6346036c2b0cce41a345176d8935cb2cb0fd7c434fb0120b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-lc-vbr.m4a",
+   "sha256": "dfe5bc97bfdb4b72e68858876d35cac0e0ea662067e01d8fca312db2c1c11fe0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-lc.m4a",
+   "sha256": "dbe5a082f56f063180a53fb5f7ade6ce88995676477982edfc15eb7717ea1119",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 66150,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-ltp.aac",
+   "sha256": "d4f2fb19195f3eef991ec3a3bceea9c6ab977470f074d37f5ec194b142d4332f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 67584,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC LTP",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LTP"
+   ]
+  },
+  {
+   "path": "ffmpeg-main.aac",
+   "sha256": "03837f581b584ff285cf40deac4f220af1c726cfb6e012438ea526affd3abb9e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 67584,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC Main"
+   ]
+  },
+  {
+   "path": "ffmpeg-mono-faststart.m4a",
+   "sha256": "b1ea548db411c48b17c924c624bc560c61b6bf6b70e3324e3bdecbdc62c4da76",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 73728,
+     "reference": 73728,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 5,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 72000,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the core rate (the media timescale)",
+     "witnesses": {
+      "ffmpeg": 72704
+     },
+     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 72,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "ffmpeg-mp3.mp4",
+   "sha256": "698855bd56eda62829d5841d1a4bd4dbc8067072cb4673a5fa44a0ebb86da2c8",
+   "figures": [],
+   "differences": [],
+   "units": [],
+   "notFed": "mp4a with object type indication 0x6b is not AAC",
+   "unitList": {
+    "kind": "mp4",
+    "codec": "other",
+    "units": 0,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   }
+  },
+  {
+   "path": "ffmpeg-no-tools.aac",
+   "sha256": "ef147869dd664ea7259f4fd6394dd98ea9a2c4e7ab73e987ba78e004553b88a9",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "mp4box-mux.m4a",
+   "sha256": "71033e4515bf7a11bf61e98ef4c7b0b0599ad408c661f4e285097595a14f5d12",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 67584,
+     "reference": 67584,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "aac",
+    "units": 66,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 44100
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  }
+ ]
+}

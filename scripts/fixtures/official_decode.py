@@ -3,6 +3,8 @@
 
   official_decode.py ogg --out DIR --bin DIR     (DIR holds ogg_decode)
   official_decode.py tta --out DIR --tta PROGRAM (PROGRAM is libtta-c's `tta`)
+  official_decode.py aac --out DIR --fdk-decode PROGRAM --fdk-lib DIR [--downloaded DIR] [--fdk-commit SHA] [--fdk-version TAG]
+                                                 (PROGRAM is fdk_decode built against FDK AAC, DIR holds its libfdk-aac.so)
 
 Every decoder call is a child process of its own with a timeout, so that a crash or a stall is recorded and the run goes on. The C harness writes
 one JSON line per packet and flushes it, so a killed child leaves what it did; this script keeps those lines and assembles the file's record:
@@ -16,6 +18,10 @@ A path's result holds: whether it opened (and the failure), the output formats i
 (the packets: file ranges, bytes, result code, samples), what libogg dropped, the standard error of the tools apart from how the path stopped, and
 stoppedBy (end, error, timeout or crash); totalSamples only for end, partialSamples otherwise. Records hold no media: derived variants and decoded
 output are written to a temporary folder and deleted.
+
+AAC has one path, the direct path: fdk_decode feeds Fraunhofer's FDK AAC decoder one unit of the unit list (unit_list.py) at a time, concealment method 1 for every
+object type, and drains ceil(outputDelay / frameSize) frames at the end, counted apart (flushedSamples). The units of the record are the extractor's, each with the
+decoder's result (decoded, concealed, refused, no output), the samples it output and where the library's byte counter stood after it.
 
 TTA has one path, the reader `tta -d` (`tta -dp secret` for the file written with that password, beside a run without the password): TTA has no direct path
 (decision 6). Its samples are counted from the bytes written after the WAVE header with the channel count and bits per sample of the WAVE header it wrote, never
@@ -47,6 +53,7 @@ SCHEMA = 1
 FIXTURES = probe.FIXTURES
 LOG_LOCK = threading.Lock()
 UNIT_LIMIT = 20000
+AAC_UNIT_LIMIT = 100000  # the long fragmented files (about 41,000 units) are read whole; two lines per unit
 
 
 # ---- records ---------------------------------------------------------------------------------------------------------
@@ -503,6 +510,224 @@ def run_tta(args):
     return 0
 
 
+# ---- the AAC run -----------------------------------------------------------------------------------------------------
+
+AAC_EXTENSIONS = probe.AAC_EXTENSIONS | {".adts", ".mov"}
+AAC_FOLDERS = ("aac", "adts", "apple", "mp4")
+NEEDS_MORE_BITS = "0x1002"
+
+
+SAMPLE_ENTRIES = {
+    "enca": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+    "aavd": "Audible's aavd sample entry (encrypted): no reference",
+    "drms": "a drms sample entry (DRM-protected): no reference",
+    "alac": "Apple Lossless (an alac sample entry), not AAC",
+}
+
+
+def aac_skip_reason(summary):
+    """Why a file is not fed to the decoder, or None. The extractor's own note says it for most of them."""
+    note = summary.get("note") or ""
+    if note.startswith("sample entry ") and note[len("sample entry "):] in SAMPLE_ENTRIES:
+        return SAMPLE_ENTRIES[note[len("sample entry "):]]
+    if summary["encrypted"]:
+        return "encrypted track (a key the project does not have): no reference"
+    if summary["kind"] == "unknown":
+        return summary.get("note") or "the extractor finds neither ADTS, ADIF nor an MP4 sound track"
+    if summary["codec"] not in ("aac", None) or (summary["kind"] in ("mp4", "ac3", "eac3") and summary["codec"] != "aac"):
+        return summary.get("note") or "the sound track is %s, not AAC" % summary["codec"]
+    if not summary["units"] and summary["kind"] != "adif":
+        return summary.get("note") or "the extractor finds no unit"
+    return None
+
+
+def fdk_result(child, summary, mode, version, path):
+    """The record of one run of fdk_decode: its units (the extractor's, with the decoder's result), totals per run of constant output format, the drain."""
+    lines = child["lines"]
+    end = next((l for l in lines if l.get("type") == "end"), None)
+    env = next((l for l in lines if l.get("type") == "env"), {})
+    drain = next((l for l in lines if l.get("type") == "drain"), None)
+    calls = [l for l in lines if l.get("type") == "unit"]
+    flushes = [l for l in lines if l.get("type") == "flush"]
+    conceal = [l for l in lines if l.get("type") == "conceal"]
+    stuck = [l for l in lines if l.get("type") == "stuck"]
+    held = next((l for l in lines if l.get("type") == "held"), None)
+    # The units of the list, from the first line of each fill. An ADTS output is placed at the unit that holds the last byte the library had used when it gave the output
+    # (numTotalBytes): a frame of several raw data blocks gives its outputs over several calls, and the first of them can come with the fill of the next frame.
+    table = {}
+    for l in calls:
+        table.setdefault(l["index"], (l["offset"], l["received"], l["declared"], l["fedFrom"]))
+    adts = env.get("kind") == "adts"
+    data = pathlib.Path(path).read_bytes() if adts else b""
+    spans = sorted((offset, offset + received, index) for index, (offset, received, _, _) in table.items())
+
+    def placed(l):
+        if not adts or l["totalBytes"] <= 0 or (not l["outputValid"] and l["error"] in ("0x0000", NEEDS_MORE_BITS)):
+            return l["index"]
+        last = l["totalBytes"] - 1
+        for start, stop, index in spans:
+            if start <= last < stop:
+                return index
+        return l["index"]
+
+    by_unit = {index: [] for index in table}
+    for l in calls:
+        by_unit[placed(l)].append(l)
+    units, runs = [], []
+    codes = {}
+    for index in sorted(by_unit):
+        group = by_unit[index]
+        offset, received, declared, fed_from = table[index]
+        first = group[0] if group else {"fill": "0x0000"}
+        outputs = [l for l in group if l["outputValid"]]
+        errors = sorted({l["error"] for l in group if l["error"] not in ("0x0000", NEEDS_MORE_BITS)})
+        fills = sorted({l["fill"] for l in group if l["fill"] != "0x0000"})
+        concealed_codes = sorted({l["error"] for l in outputs if l["error"] != "0x0000"})
+        if outputs:
+            result = "concealed" if concealed_codes else "decoded"
+        elif errors:
+            result = "refused"
+        else:
+            result = "no output"
+        samples = sum(l["samples"] for l in outputs)
+        unit = {"index": index, "offset": offset, "declared": declared, "received": received, "fedFrom": fed_from, "result": result,
+                "samples": samples, "usedBytes": group[-1]["totalBytes"] if group else None, "calls": len(group)}
+        if adts and index < summary["units"] and offset + 6 < len(data) and data[offset] == 0xFF and data[offset + 1] & 0xF0 == 0xF0:
+            unit["blocks"] = (data[offset + 6] & 3) + 1  # number_of_raw_data_blocks_in_frame + 1 of the frame's header (frames of the unit list only)
+        if outputs:
+            unit["rate"] = outputs[0]["sampleRate"]
+        if errors:
+            unit["error"] = errors[0] if len(errors) == 1 else errors
+        if fills:
+            unit["fill"] = fills[0] if len(fills) == 1 else fills
+        if len(outputs) > 1:
+            unit["outputs"] = len(outputs)
+        units.append(unit)
+        for l in group:
+            codes[l["error"]] = codes.get(l["error"], 0) + 1
+        for l in outputs:
+            key = (l["sampleRate"], l["channels"])
+            if runs and runs[-1]["_key"] == key:
+                runs[-1]["samples"] += l["samples"]
+                runs[-1]["outputs"] += 1
+            else:
+                runs.append({"_key": key, "rate": l["sampleRate"], "channels": l["channels"], "samples": l["samples"], "outputs": 1, "firstUnit": index,
+                             "frameSize": l["frameSize"], "aot": l["aot"], "extAot": l["extAot"]})
+            if l["error"] != "0x0000":
+                runs[-1]["concealedSamples"] = runs[-1].get("concealedSamples", 0) + l["samples"]
+    for run in runs:
+        del run["_key"]
+    # Bytes fed that the library has not used when it answers 0x1002 with a whole frame fed last: it keeps the last raw data blocks of a frame of several until more bits come,
+    # and the drain discards them, so the total is short by those blocks.
+    # The last frame of the unit list, whole, with several raw data blocks: the library keeps the last blocks until more bits come and the drain discards them. The blocks held are
+    # those the frame declares less those it output (a block it refused is not held).
+    listed = [u for u in units if u["index"] < summary["units"]]
+    last_unit = listed[-1] if listed else None
+    held_blocks = 0
+    if last_unit is not None and last_unit.get("blocks", 1) > 1 and last_unit["received"] == last_unit["declared"] and runs and runs[-1]["frameSize"]:
+        held_blocks = max(0, last_unit["blocks"] - last_unit["samples"] // runs[-1]["frameSize"])
+        if last_unit["result"] != "decoded" and last_unit["samples"] == 0:
+            held_blocks = 0  # a frame the library refused as a whole is no held frame
+    held_back = bool(held) and held_blocks > 0 and held["heldBytes"] > 0 and env.get("kind") in ("adts", "adif")
+    stopped = stopped_by(child, end)
+    notes = []
+    incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
+    if incomplete and stopped == "end":
+        stopped = "limit"
+        notes.append("the output was cut (lines elided, truncated or not parseable); the figures are partial")
+    total = end["codedSamples"] if end and not incomplete else sum(r["samples"] for r in runs)
+    if end and not incomplete and total != sum(r["samples"] for r in runs):
+        stopped = "limit"
+        notes.append("the harness counted %d samples and the lines add up to %d" % (total, sum(r["samples"] for r in runs)))
+    if stuck:
+        notes.append("no progress in numTotalBytes for eight calls in a row at unit %d" % stuck[0]["index"])
+    configured = env.get("configRaw")
+    result = {
+        "tool": "fdk_decode " + mode,
+        "decoder": {"fdk-aac": version, "module": env.get("fdkVersion")},
+        "opened": bool(env) and configured in (None, "0x0000"),
+        "transport": {"adts": "TT_MP4_ADTS", "adif": "TT_MP4_ADIF", "mp4": "TT_MP4_RAW"}.get(env.get("kind"), env.get("kind")),
+        "concealMethod": env.get("concealMethod"),
+        "concealStatus": {"beforeConfiguration": env.get("setConceal"), "afterConfiguration": (conceal[0]["status"] if conceal else env.get("setConcealAfterConfig"))},
+        "runs": runs,
+        "stoppedBy": stopped,
+        "exit": child["exit"], "signal": child["signal"], "elapsedMs": child["elapsedMs"],
+        "unitCount": len(units),
+        "units": units if len(units) <= AAC_UNIT_LIMIT else units[:AAC_UNIT_LIMIT],
+        "errorCodes": dict(sorted(codes.items())),
+        "heldBytes": held["heldBytes"] if held and env.get("kind") in ("adts", "adif") else None,
+        "heldBlocks": held_blocks,
+        "heldBack": held_back,
+        "drain": {"outputDelay": drain["outputDelay"], "frameSize": drain["frameSize"], "requests": drain["requests"], "flushedSamples": end.get("flushedSamples") if end else None,
+                  "results": [f["error"] for f in flushes]} if drain else None,
+        "flushedSamples": end.get("flushedSamples") if end else None,
+        "warnings": [l for l in child["stderr"].splitlines() if l.strip()],
+    }
+    if held_back:
+        notes.append("the last frame has %d raw data blocks and the library output %d of them; it holds the rest when it answers 0x1002 (%d bytes fed and not used) and the drain discards them" % (
+            last_unit["blocks"], last_unit["blocks"] - held_blocks, held["heldBytes"]))
+    if configured is not None:
+        result["configRaw"] = {"status": configured, "bytes": env.get("configBytes")}
+    if len(units) > AAC_UNIT_LIMIT:
+        result["unitsElided"] = True
+        notes.append("units elided above %d" % AAC_UNIT_LIMIT)
+    if runs:
+        result["object"] = {k: runs[0][k] for k in ("aot", "extAot", "frameSize")}
+    result["totalSamples" if stopped == "end" else "partialSamples"] = total
+    if notes:
+        result["notes"] = notes
+    return result
+
+
+def run_aac(args):
+    probe.LINE_LIMIT = 4 * AAC_UNIT_LIMIT
+    out = pathlib.Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "records").mkdir(exist_ok=True)
+    records = Records(out)
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="odd-"))
+    started = time.time()
+    fdk_env = {"LD_LIBRARY_PATH": args.fdk_lib}
+    version = "%s %s" % (args.fdk_version or "unknown", (args.fdk_commit or "")[:7]) if args.fdk_commit else (args.fdk_version or "unknown")
+    env = {"platform": "linux", "python": sys.version, "kernel": platform.platform(), "imageOS": os.environ.get("ImageOS"), "imageVersion": os.environ.get("ImageVersion"),
+           "runId": os.environ.get("GITHUB_RUN_ID"), "commit": os.environ.get("GITHUB_SHA"), "format": "aac", "gcc": probe.tool_line(["gcc", "--version"]),
+           "fdkAac": {"version": args.fdk_version, "commit": args.fdk_commit}, "concealMethod": 1}
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    manifest = derive_variants.write_aac(tmp / "variants")
+    (out / "variants.json").write_text(json.dumps({"format": "aac", "rules": list(derive_variants.AAC_RULES), "variants": manifest}, indent=1) + "\n", encoding="utf-8")
+    committed = [p for folder in AAC_FOLDERS for p in probe.files(folder, AAC_EXTENSIONS)]
+    downloaded = sorted(p for p in pathlib.Path(args.downloaded).iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS) if args.downloaded else []
+    work = [(p, None) for p in committed] + [(tmp / "variants" / m["name"], {"from": m["source"], "fromSha256": m["sourceSha256"], "rule": m["rule"]}) for m in manifest] \
+        + [(p, {"downloaded": True}) for p in downloaded]
+
+    def case(item):
+        path, derived = item
+        record = file_record(path, "aac", derived)
+        record["folder"] = "derived" if derived and "rule" in derived else "downloaded" if derived else path.parent.name
+        tsv, summary = probe.unit_list(path, tmp)
+        record["unitList"] = summary
+        reason = aac_skip_reason(summary)
+        if reason:
+            record["notFed"] = reason
+            record["paths"] = {}
+            records.write("aac", path, record)
+            return
+        mode = "adif" if summary["kind"] == "adif" else "units"
+        child = probe.run_child("direct", [args.fdk_decode, mode, path, tsv, "1"], env=fdk_env)
+        record["paths"] = {"direct": fdk_result(child, summary, mode, version, path)}
+        records.write("aac", path, record)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        for future in [pool.submit(case, item) for item in work]:
+            future.result()
+    shutil.rmtree(tmp, ignore_errors=True)
+    env["elapsedSeconds"] = round(time.time() - started)
+    env["records"] = records.count
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="format", required=True)
@@ -513,8 +738,15 @@ def main(argv):
     tta.add_argument("--out", required=True)
     tta.add_argument("--tta", required=True)
     tta.add_argument("--archive-sha256")
+    aac = sub.add_parser("aac")
+    aac.add_argument("--out", required=True)
+    aac.add_argument("--fdk-decode", required=True)
+    aac.add_argument("--fdk-lib", required=True)
+    aac.add_argument("--fdk-commit")
+    aac.add_argument("--fdk-version")
+    aac.add_argument("--downloaded")
     args = parser.parse_args(argv)
-    return run_ogg(args) if args.format == "ogg" else run_tta(args)
+    return {"ogg": run_ogg, "tta": run_tta, "aac": run_aac}[args.format](args)
 
 
 if __name__ == "__main__":

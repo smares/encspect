@@ -476,7 +476,10 @@ def ac3_units(data, result):
 
 
 def extract(path):
-    data = open(path, "rb").read()
+    return extract_bytes(open(path, "rb").read(), path)
+
+
+def extract_bytes(data, path=""):
     result = {"file": path, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "kind": "unknown", "units": [], "skipped": []}
     try:
         if data[4:8] == b"ftyp" or data[4:8] in (b"moov", b"mdat", b"free", b"skip"):
