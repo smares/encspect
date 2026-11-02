@@ -123,16 +123,43 @@ def statistic_of(stream_node, name):
     return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
 
 
+# What Microsoft's decoder (WMADMOD.DLL 10.0.26100.33438, the DMO and the Source Reader agree) outputs for the committed standard files that
+# have a bit reservoir (records of windows-wma-decode.yml, run 41252306359), samples per channel.
+MICROSOFT_STANDARD_SAMPLES = {
+    "external-windows-wma92-cbr-mono-44k-48": 133632, "external-windows-wma92-cbr-stereo-22k-20-sdk": 66816,
+    "external-windows-wma92-cbr-stereo-22k-32": 66816, "external-windows-wma92-cbr-stereo-44k-128-sdk": 133632,
+    "external-windows-wma92-cbr-stereo-44k-128": 133632, "external-windows-wma92-cbr-stereo-44k-192": 133632,
+    "external-windows-wma92-cbr-stereo-44k-32-sdk": 133632, "external-windows-wma92-cbr-stereo-44k-48-sdk": 133632,
+    "external-windows-wma92-cbr-stereo-44k-64": 133632, "external-windows-wma92-cbr-stereo-48k-128": 145408,
+    "external-windows-wma92-vbr-stereo-44k-q10": 133632, "external-windows-wma92-vbr-stereo-44k-q25": 133632,
+    "external-windows-wma92-vbr-stereo-44k-q75-tagged": 90112, "external-windows-wma92-vbr-stereo-44k-q75": 133632,
+    "external-windows-wma92-vbr-stereo-44k-q90": 133632, "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk": 66816,
+    "external-remux-ffmpeg-wma92-cbr-stereo-22k-32": 66816,
+}
+
+
 def check_standard_frames(path, samples, problems):
     """For a stream of Windows Media Audio version 1 or 2 the analyzer reads the frames: the samples ffmpeg decodes (per channel) equal the
-    golden report's, and the frame statistics give them: the valid frames less the first, times the frame length."""
+    golden report's "Coded Samples" (the valid frames less the first, times the frame length) where the golden has them, else its samples;
+    where the golden has "Coded Samples", its samples follow the rule fitted to Microsoft's decoder, which the figures of
+    MICROSOFT_STANDARD_SAMPLES hold."""
     report = golden_report(path)
     streams = report_stream(report)
     if not streams or len(report["streams"]) != 1:
         return
     analyzed = report["streams"][0]["samples"]
-    if analyzed != samples:
-        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    coded = statistic_of(streams[0], "Coded Samples")
+    if coded is None:
+        if analyzed != samples:
+            problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    else:
+        if coded != samples:
+            problems.append(f"the analyzer's golden report has {coded} coded samples, ffmpeg decodes {samples}")
+        wanted = MICROSOFT_STANDARD_SAMPLES.get(path.stem)
+        if wanted is None:
+            problems.append("the golden report counts by the rule fitted to Microsoft's decoder, and no figure of Microsoft's decoder is pinned for the file")
+        elif analyzed != wanted:
+            problems.append(f"the analyzer's golden report has {analyzed} samples, Microsoft's decoder outputs {wanted}")
     frames, invalid, length = (statistic_of(streams[0], n) for n in ("Frames", "Invalid Frames", "Frame Length"))
     if frames is not None and not invalid and length and (frames - 1) * length != samples:
         problems.append(f"the golden report has {frames} frames of {length} samples, ffmpeg decodes {samples} samples")
