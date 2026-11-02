@@ -121,7 +121,7 @@ public class AsfContainerSamplesTests
 
     // A length that does not fit a signed 64-bit integer in samples, and a sampling rate of 0, state no samples.
     [Theory]
-    [InlineData(uint.MaxValue)] // 2^64 - 1 ticks x 4,294,967,295 samples per second / 10,000,000
+    [InlineData(uint.MaxValue)] // 2^64 - 1 ticks at a rate of 4,294,967,295 Hz, which the route clamps to int.MaxValue, / 10,000,000
     [InlineData(0u)]
     public void ALengthThatCannotBeConvertedIsNotStated(uint rate)
     {

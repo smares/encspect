@@ -7,12 +7,13 @@ Each artifact folder holds records/<file>.json (from the probe of windows-wma-de
 make_wma_std_variants.py or make_wma_std_probes.py), and the files themselves where the artifact carries them (probes/, encodes/).
 With --fixtures, files of that folder with a record in an artifact folder are read too. The analyzer is run on every file, and the
 table gives the samples per channel the decoder DMO and the Source Reader gave next to the analyzer's "Samples" and, where it has
-them, its "Coded Samples" (the frames' count: the valid frames less the first, times the frame length, which ffmpeg decodes):
+them, its "Coded Samples" (the valid frames times the frame length; ffmpeg decodes one frame less):
 
   dmo, reader  what Microsoft's decoder gave through the DMO and through the Source Reader
   analyzer     the analyzer's "Samples": the rule fitted to the decoder, (K - 2) * F + (F - min(B, L)) / 2 for K the frames whose bits are
                complete (the frame the last superframe announces and holds whole included), B the last block of frame K and L its
-               Next Block Size; the frames' count where the rule does not apply
+               Next Block Size, for version 2 streams with a bit reservoir and variable block lengths; the valid frames less the first,
+               times F, where the rule does not apply
   coded        the analyzer's "Coded Samples"
 
 Kinds of probe whose construction perturbs the decoder (la, sh, tf and hf shift bits and raise the bit offset; cnt changes the frame
@@ -87,7 +88,7 @@ def main():
         fixtures = pathlib.Path(args[1])
         args = args[2:]
     folders = [pathlib.Path(a) for a in args]
-    rows, apart = [], []
+    rows, apart, unread = [], [], []
     for folder in folders:
         manifest_path = folder / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))["files"] if manifest_path.exists() else {}
@@ -97,6 +98,7 @@ def main():
             path = locate(folder, name, fixtures)
             got = read(analyzer, path) if path else None
             if got is None:
+                unread.append(name)
                 continue
             info = manifest.get(name)
             dmo, reader = figure(record, "direct"), figure(record, "sourceReader")
@@ -121,7 +123,9 @@ def main():
         print("\nnot compared (kinds that perturb the decoder, or an invalid frame), with the files where the DMO equals the analyzer:")
         for kind, (equal, total) in sorted(by_kind.items()):
             print(f"  {kind}: {equal} of {total}")
-    return 0 if matched == len(rows) else 1
+    if unread:
+        print(f"\n{len(unread)} records have no file the analyzer could read, and are not compared: {', '.join(unread[:10])}{' ...' if len(unread) > 10 else ''}")
+    return 0 if matched == len(rows) and not unread else 1
 
 
 if __name__ == "__main__":

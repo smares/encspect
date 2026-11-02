@@ -247,8 +247,8 @@ def main():
             notes.append("; ".join("=".join(g) for g in groups.values()) + " differ")
         elif known:
             notes.append("agree")
-        # Standard WMA (versions 1 and 2): the analyzer keeps the frames' count and Microsoft's is higher on most Windows-written files (15 of the 27 compared in run 41252306359). The figures are
-        # printed and nothing is said about the cause: the records explain none (docs/development.md, "Differences found").
+        # Standard WMA (versions 1 and 2): the analyzer follows the rule fitted to Microsoft's decoder for version 2 streams with a bit reservoir and variable block lengths, and keeps the
+        # frames' count for the others (docs/development.md, "Differences found"). A difference is printed with the figures only.
         if tag in PER_OBJECT_TAGS and reference is not None and analyzer is not None and reference != analyzer:
             stated = container_samples(report)
             notes.append(f"differs: Microsoft {reference}, analyzer {analyzer}, header states {stated if stated is not None else 'none'}")

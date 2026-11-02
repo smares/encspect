@@ -140,7 +140,7 @@ MICROSOFT_STANDARD_SAMPLES = {
 
 def check_standard_frames(path, samples, problems):
     """For a stream of Windows Media Audio version 1 or 2 the analyzer reads the frames: the samples ffmpeg decodes (per channel) equal the
-    golden report's "Coded Samples" (the valid frames less the first, times the frame length) where the golden has them, else its samples;
+    golden report's "Coded Samples" (the valid frames times the frame length) less one frame where the golden has them, else its samples;
     where the golden has "Coded Samples", its samples follow the rule fitted to Microsoft's decoder, which the figures of
     MICROSOFT_STANDARD_SAMPLES hold."""
     report = golden_report(path)
@@ -149,18 +149,19 @@ def check_standard_frames(path, samples, problems):
         return
     analyzed = report["streams"][0]["samples"]
     coded = statistic_of(streams[0], "Coded Samples")
+    length = statistic_of(streams[0], "Frame Length")
     if coded is None:
         if analyzed != samples:
             problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
     else:
-        if coded != samples:
-            problems.append(f"the analyzer's golden report has {coded} coded samples, ffmpeg decodes {samples}")
+        if length and coded - length != samples:
+            problems.append(f"the analyzer's golden report has {coded} coded samples, ffmpeg decodes {samples}, which are one frame of {length} less")
         wanted = MICROSOFT_STANDARD_SAMPLES.get(path.stem)
         if wanted is None:
             problems.append("the golden report counts by the rule fitted to Microsoft's decoder, and no figure of Microsoft's decoder is pinned for the file")
         elif analyzed != wanted:
             problems.append(f"the analyzer's golden report has {analyzed} samples, Microsoft's decoder outputs {wanted}")
-    frames, invalid, length = (statistic_of(streams[0], n) for n in ("Frames", "Invalid Frames", "Frame Length"))
+    frames, invalid = (statistic_of(streams[0], n) for n in ("Frames", "Invalid Frames"))
     if frames is not None and not invalid and length and (frames - 1) * length != samples:
         problems.append(f"the golden report has {frames} frames of {length} samples, ffmpeg decodes {samples} samples")
 
