@@ -3630,7 +3630,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.granule-inconsistent",
-        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xEA, is 19156 where the packets give 19456. Only the last page may end the stream early (section A.2). The later pages are compared with the count continued from this position.",
+        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xEA, is 19156 where the packets give 19456. Only the last page may end the stream early (section A.2). Each later page is compared with the count continued from the position before it.",
         "offset": 234,
         "length": 8,
         "path": [
