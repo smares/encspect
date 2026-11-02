@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ogg",
  "run": {
-  "id": "41428897228",
-  "commit": "1515c5ee7cc6c33d0f3d07728e8b5f2359a3b998",
+  "id": "41440433645",
+  "commit": "cb79af7725b36e4a94d544752a1c07171b64ef15",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -2913,6 +2913,157 @@
    "units": []
   },
   {
+   "path": "vorbis-eos-mid-then-more.ogg",
+   "sha256": "d2e0688923c85d45d3ea2e4905f0d6cf69b9f8c3eb6555a78befbefe96a6e2b8",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28896,
+     "reference": 28896,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 28896,
+      "ffmpeg": 28896
+     },
+     "readerTotal": 28896,
+     "readerTool": "oggdec",
+     "lastGranule": 28896,
+     "consistentRange": [
+      28896,
+      29696
+     ]
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-eos-then-eos.ogg",
+   "sha256": "616a3a9a764337fabf445d72cabacc4f8eb193ad1e64a018474efcdeb9c8a5a5",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28896,
+     "reference": 28896,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 28896,
+      "ffmpeg": 28896
+     },
+     "readerTotal": 28896,
+     "readerTool": "oggdec",
+     "lastGranule": 28896,
+     "consistentRange": [
+      28896,
+      29696
+     ]
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-first-extreme.ogg",
+   "sha256": "4db88f19417035cdc4acfc20363555e138df5fa91179ef12ed3678d8e0744e53",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28172,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 28172,
+      "ffmpeg": 29196
+     },
+     "readerTotal": 28172,
+     "readerTool": "oggdec",
+     "lastGranule": 29196,
+     "consistentRange": [
+      29196,
+      29696
+     ],
+     "noReference": "the reader's 28172 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow"
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
    "path": "vorbis-granule-errors.ogg",
    "sha256": "30306ba0451cdac1068f77b5cf737f7e1db3cc0440d40b1de93d250d89b79e13",
    "figures": [
@@ -3801,6 +3952,162 @@
     }
    ],
    "units": []
+  },
+  {
+   "path": "vorbis-skip-before-first.ogg",
+   "sha256": "eec96d700c98cf9c9c7c1276b6980af161d1b6e9ad9baeaced4061f9fec43e7b",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 29696,
+      "ffmpeg": 29696
+     },
+     "readerTotal": 28672,
+     "readerTool": "oggdec",
+     "lastGranule": 29196,
+     "consistentRange": [
+      29196,
+      29696
+     ],
+     "noReference": "the reader's 28672 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "oggdec",
+     "value": 28672,
+     "analyzer": 29696,
+     "status": "keep",
+     "kind": "reader-not-accepted",
+     "reason": "the reader's 28672 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow",
+     "note": "oggdec writes fewer samples than the analyzer (28,672 against 29,696), the same reader behavior at a refused packet as in vorbis-packet-errors.ogg (keep, the project lead, 2026-11-01); the analyzer agrees with libvorbis fed packet by packet with the real granule positions (29,696), measuring the first position by the samples since the empty packet. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Applied to this fixture on the request of 2026-11-02.",
+     "statusSource": "reviewed"
+    }
+   ],
+   "units": [
+    {
+     "index": 4,
+     "stream": 0,
+     "offset": 216,
+     "length": 0,
+     "ranges": [
+      [
+       216,
+       0
+      ]
+     ],
+     "decoder": "error -135",
+     "finding": "vorbis.empty-packet",
+     "findings": [
+      "vorbis.empty-packet"
+     ],
+     "verdict": "decoder refuses, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ]
+  },
+  {
+   "path": "vorbis-skip-then-small.ogg",
+   "sha256": "37d0a1ef84c8eaa67dd5aec5b4ce0d8dfc1ce412dc3b87a12aa531fa9923d454",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 29696,
+     "reference": 29696,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28672,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 28672,
+      "ffmpeg": 29696
+     },
+     "readerTotal": 28672,
+     "readerTool": "oggdec",
+     "lastGranule": 29196,
+     "consistentRange": [
+      29196,
+      29696
+     ],
+     "noReference": "the reader's 28672 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow"
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 13,
+     "stream": 0,
+     "offset": 270,
+     "length": 0,
+     "ranges": [
+      [
+       270,
+       0
+      ]
+     ],
+     "decoder": "error -135",
+     "finding": "vorbis.empty-packet",
+     "findings": [
+      "vorbis.empty-packet"
+     ],
+     "verdict": "decoder refuses, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ]
   },
   {
    "path": "vorbis-start-offset.ogg",
