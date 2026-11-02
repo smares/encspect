@@ -1002,8 +1002,8 @@ def windows_reader_signature(result):
 
 
 def windows_reader_result(node, repeats=()):
-    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file twice more) differ from it in what windows_reader_signature compares, in which
-    case the reader has no figure (`error`, with the three runs' outcomes in the reason)."""
+    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file four times more) differ from it in what windows_reader_signature compares, in which
+    case the reader has no figure (`error`, with the runs' outcomes in the reason)."""
     first = windows_reader_single(node)
     others = [windows_reader_single(r) for r in repeats]
     signatures = [windows_reader_signature(r) for r in [first] + others]

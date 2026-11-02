@@ -142,9 +142,10 @@ public static class Program
             };
             if (aac)
             {
-                // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four runs and read to the end in a fifth),
-                // so it is read twice more; the driver takes a result as a figure only where the three agree.
-                record["sourceReaderRepeats"] = new JsonArray(RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null));
+                // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four whole runs and read to the end in others),
+                // so it is read four times more; the driver takes a result as a figure only where the five agree.
+                record["sourceReaderRepeats"] = new JsonArray(RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null),
+                    RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null));
             }
 
             var direct = record["direct"]?["decoder"];
