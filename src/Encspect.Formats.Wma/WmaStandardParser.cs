@@ -103,7 +103,7 @@ public sealed class WmaStandardParser : ICodecParser
             long bits = (8L * stream.FinalReservoirBytes) - stream.FinalReservoirStartBit;
             if (stream.FinalReservoirBytes > 0 && bits > 0)
             {
-                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits, stream.HasAnnouncedLast, stream.AnnouncedLastBits, stream.AnnouncedLastMargin), frames);
+                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits, stream.IsRuleApplicable && stream.HasAnnouncedLast, stream.AnnouncedLastBits, stream.AnnouncedLastMargin), frames);
             }
         }
 

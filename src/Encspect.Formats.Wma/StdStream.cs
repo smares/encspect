@@ -235,14 +235,18 @@ internal sealed class StdStream
 
     public int FinalNextBlockSize { get; private set; }
 
-    // Whether the last superframe announces a frame it holds whole, and its bits and the bits after it up to the superframe's end.
+    // Whether the last frame the final superframes announce is whole in their bytes, and its bits and the bits after it up to the superframe's end.
     public bool HasAnnouncedLast { get; private set; }
 
     public int AnnouncedLastBits { get; private set; }
 
     public int AnnouncedLastMargin { get; private set; }
 
-    public long CodedSamples => Math.Max(0, ValidFrames - 1) * Parameters.FrameLength;
+    // The valid frames less the first, times the frame length: what FFmpeg's decoder outputs, and the count where the rule does not apply.
+    public long FramesCountSamples => Math.Max(0, ValidFrames - 1) * Parameters.FrameLength;
+
+    // The valid frames times the frame length, before any overlap is taken off (the frame the last superframe announces is not among them).
+    public long CodedSamples => ValidFrames * Parameters.FrameLength;
 
     // The frames whose bits are complete: the valid frames and the announced last one.
     public long CompleteFrames => ValidFrames + (HasAnnouncedLast ? 1 : 0);
@@ -251,7 +255,7 @@ internal sealed class StdStream
     {
         get
         {
-            if (!Parameters.UsesBitReservoir || InvalidFrames > 0 || Skipped > 0 || CompleteFrames < 2)
+            if (!Parameters.UsesBitReservoir || !Parameters.UsesVariableBlocks || Parameters.Version != 2 || InvalidFrames > 0 || Skipped > 0 || CompleteFrames < 2)
             {
                 return false;
             }
@@ -269,14 +273,15 @@ internal sealed class StdStream
     }
 
     // What Microsoft's decoder outputs, per the records: (K - 2) * F + (F - min(B, L)) / 2, for K the frames complete so far,
-    // B the last block of frame K and L its Next Block Size; the valid frames' count where the rule does not apply.
+    // B the last block of frame K and L its Next Block Size; the valid frames' count where the rule does not apply (records back it for version 2 with
+    // variable block lengths and a bit reservoir only).
     public long Samples
     {
         get
         {
             if (!IsRuleApplicable)
             {
-                return CodedSamples;
+                return FramesCountSamples;
             }
 
             int f = Parameters.FrameLength;
@@ -284,8 +289,6 @@ internal sealed class StdStream
             return ((CompleteFrames - 2) * f) + ((f - smaller) / 2);
         }
     }
-
-    public bool IsDecoderRule => IsRuleApplicable;
 
     // The frame in progress: the reservoir's bytes from a start bit on, held in the superframes from First, whose bit FirstBit it starts at.
     private struct Reservoir

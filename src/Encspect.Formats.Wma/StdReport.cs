@@ -21,8 +21,8 @@ internal static class StdReport
         }
 
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), StdText.StatFrameLength);
-        Add("Samples", NodeValue.Integer(samples, "samples"), stream.IsDecoderRule ? StdText.StatSamplesDecoder : StdText.StatSamples);
-        if (stream.IsDecoderRule)
+        Add("Samples", NodeValue.Integer(samples, "samples"), stream.IsRuleApplicable ? StdText.StatSamplesDecoder : StdText.StatSamples);
+        if (stream.IsRuleApplicable)
         {
             Add("Coded Samples", NodeValue.Integer(stream.CodedSamples, "samples"), StdText.StatCodedSamples);
         }

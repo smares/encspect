@@ -55,10 +55,12 @@ public class WmaFixtureTests
         // (WmaStandardRuleTests holds it to the Windows figures); the others have the container's duration at the rate (the Voice frames are held by the golden reports and VoiceFixtureTests).
         if (codec is "wmav1" or "wmav2")
         {
+            // Where the statistics have Coded Samples (the complete frames times the frame length) the samples follow the rule fitted to Microsoft's
+            // decoder, and ffmpeg outputs one frame less than the coded samples (WmaStandardRuleTests holds the samples to the Windows figures).
             Node statistics = Child(report.Streams[0].Nodes[0], "Statistics");
-            if (Child(statistics, "Samples").Description!.StartsWith("Counted by the rule", StringComparison.Ordinal))
+            if (statistics.Children.Any(c => c.Name == "Coded Samples"))
             {
-                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger());
+                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger() - Child(statistics, "Frame Length").Value!.AsInteger());
             }
             else
             {
