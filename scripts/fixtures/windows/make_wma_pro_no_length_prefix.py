@@ -44,13 +44,13 @@ def rewrite(raw):
             bits = packets[s_index][s_pos:] + packets[e_index][header:e_pos]
         assert len(bits) == s_len, (k, len(bits), s_len)
         starts.append(sum(len(x) for x in stripped))
-        stripped.append(bits[w:-1])
+        stripped.append(bits[w:])
     size = pro.block_align * 8 - header
     # Microsoft's convention in the public files without the prefix: the trailer bit is 0 on the last frame that starts in a packet (the
     # frame that crosses out of it, or ends at its end) and 1 on the others.
     for k in range(len(stripped)):
         is_last = k + 1 == len(stripped) or starts[k + 1] // size != starts[k] // size
-        stripped[k] += "0" if is_last else "1"
+        stripped[k] = stripped[k][:-1] + ("0" if is_last else "1")
     stream = "".join(stripped)
     count = -(-len(stream) // size)
     out = bytearray(raw)
