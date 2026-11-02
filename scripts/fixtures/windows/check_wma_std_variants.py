@@ -81,28 +81,29 @@ def main():
         args = args[2:]
     folders = [pathlib.Path(a) for a in args]
     rows, apart = [], []
-    candidates = []
     for folder in folders:
         manifest_path = folder / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))["files"] if manifest_path.exists() else {}
         for record_path in sorted((folder / "records").glob("*.json")):
             name = record_path.name[:-5]
+            record = json.loads(record_path.read_text(encoding="utf-8"))
             path = folder / name if (folder / name).exists() else (fixtures / name if fixtures and (fixtures / name).exists() else None)
-            if path is None:
+            got = read(analyzer, path) if path else None
+            info = manifest.get(name)
+            if got is None and info and "next" in info:
+                # The variants are made in the job and are not in the artifact: what the maker found stands in for the analyzer's reading.
+                got = {"valid": info["frames"], "invalid": 0, "frameLength": info["frameLength"], "next": info["next"], "analyzer": None}
+            elif got is not None and info and "next" in info and (got["valid"], got["next"]) != (info["frames"], info["next"]):
+                print(f"{name}: the analyzer reads {got['valid']} frames and next size {got['next']}, the maker found {info['frames']} and {info['next']}", file=sys.stderr)
+            if got is None:
                 continue
-            candidates.append((name, path, json.loads(record_path.read_text(encoding="utf-8")), manifest.get(name)))
-    for name, path, record, info in candidates:
-        got = read(analyzer, path)
-        if got is None:
-            continue
-        dmo, reader = figure(record, "direct"), figure(record, "sourceReader")
-        if got["invalid"] or got["valid"] < 2:
-            apart.append((name, got, dmo, reader))
-            continue
-        f = got["frameLength"]
-        coded = (got["valid"] - 1) * f
-        rule = coded + (f - got["next"]) // 2
-        rows.append((name, got, dmo, reader, coded, rule))
+            dmo, reader = figure(record, "direct"), figure(record, "sourceReader")
+            if got["invalid"] or got["valid"] < 2:
+                apart.append((name, got, dmo, reader))
+                continue
+            f = got["frameLength"]
+            coded = (got["valid"] - 1) * f
+            rows.append((name, got, dmo, reader, coded, coded + (f - got["next"]) // 2))
     width = max((len(r[0]) for r in rows), default=10)
     print(f"{'file':{width}} frames    F   next      dmo   reader    coded     rule analyzer  dmo-coded dmo-rule reader-rule")
     matched = counted = reader_matched = reader_counted = 0
@@ -116,7 +117,7 @@ def main():
         if reader is not None:
             reader_counted += 1
             reader_matched += r_r == 0
-        print(f"{name:{width}} {got['valid']:>6} {got['frameLength']:>4} {got['next']:>6} {dmo!s:>8} {reader!s:>8} {coded:>8} {rule:>8} {got['analyzer']:>8} {d_c!s:>10} {d_r!s:>8} {r_r!s:>11}")
+        print(f"{name:{width}} {got['valid']:>6} {got['frameLength']:>4} {got['next']:>6} {dmo!s:>8} {reader!s:>8} {coded:>8} {rule:>8} {got['analyzer']!s:>8} {d_c!s:>10} {d_r!s:>8} {r_r!s:>11}")
     print(f"\ndecoder DMO = rule in {matched} of {counted} files; Source Reader = rule in {reader_matched} of {reader_counted}")
     if apart:
         print("\nnot compared (an invalid frame, or fewer than two valid frames):")

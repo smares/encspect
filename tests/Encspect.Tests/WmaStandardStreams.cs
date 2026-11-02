@@ -62,7 +62,7 @@ internal static class WmaStandardStreams
     {
         var parent = new Node("Stream", 0, 100_000_000);
         var format = new AudioFormat(version == 1 ? 0x0160 : 0x0161, channels, rate, bytesPerSecond, align, 16);
-        var configuration = new CodecConfiguration(new MappedBytes(data, 100), parent) { Format = format, AreSamplesEncrypted = encrypted, Duration = 1 };
+        var configuration = new CodecConfiguration(new MappedBytes(data, 100), parent) { Format = format, AreSamplesEncrypted = encrypted, Duration = 1, DurationSamples = rate };
         long offset = 1000;
         List<MappedBytes> packets = [];
         foreach (byte[] o in objects)

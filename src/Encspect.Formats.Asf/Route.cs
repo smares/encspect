@@ -350,29 +350,29 @@ public sealed partial class AsfParser
         return parts.Count == 0 ? string.Empty : $". The writer states {string.Join("; ", parts)}";
     }
 
-    // The play duration less the preroll (section 3.2), where the file states them.
-    private static double? DurationOf(State state)
+    // The play duration less the preroll (section 3.2), in 100 ns ticks and integers, where the file states them and a length is left.
+    private static ulong? LengthTicks(State state)
     {
         if (state.FilePropertiesNode is null || state.IsBroadcast || state.PlayDuration == 0)
         {
             return null;
         }
 
-        // In 100 ns ticks and integers until the one division, so the figure carries no rounding noise.
         ulong preroll = state.Preroll > ulong.MaxValue / 10_000 ? ulong.MaxValue : state.Preroll * 10_000;
-        return state.PlayDuration > preroll ? (state.PlayDuration - preroll) / 10_000_000.0 : null;
+        return state.PlayDuration > preroll ? state.PlayDuration - preroll : null;
     }
 
-    // The same length in samples per channel at the stream's rate, in integers: (play duration less preroll) x rate / 10,000,000 ticks, rounded to the nearest with halves up.
+    private static double? DurationOf(State state) => LengthTicks(state) / 10_000_000.0;
+
+    // The same length in samples per channel at the stream's rate, in integers: ticks x rate / 10,000,000, rounded to the nearest with halves up.
     private static long? SamplesOf(State state, int rate)
     {
-        if (rate <= 0 || DurationOf(state) is null)
+        if (rate <= 0 || LengthTicks(state) is not { } ticks)
         {
             return null;
         }
 
-        ulong preroll = state.Preroll > ulong.MaxValue / 10_000 ? ulong.MaxValue : state.Preroll * 10_000;
-        UInt128 samples = (((UInt128)(state.PlayDuration - preroll) * (uint)rate) + 5_000_000) / 10_000_000;
+        UInt128 samples = (((UInt128)ticks * (uint)rate) + 5_000_000) / 10_000_000;
         return samples > long.MaxValue ? null : (long)samples;
     }
 

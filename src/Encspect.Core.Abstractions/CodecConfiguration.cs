@@ -41,7 +41,7 @@ public sealed record CodecConfiguration
     public double? Duration { get; init; }
 
     // The same length in samples per channel at the sample rate of the container's format for the stream, rounded to the nearest sample with halves up; null
-    // where Duration is null or the format states no rate.
+    // where Duration is null, the format states no rate or the figure does not fit a long.
     public long? DurationSamples { get; init; }
 
     // True where the container knows the stream's samples are encrypted: it hands over no packets,

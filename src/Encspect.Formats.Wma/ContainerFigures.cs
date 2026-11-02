@@ -9,7 +9,7 @@ internal static class ContainerFigures
     {
         if (configuration?.DurationSamples is { } samples)
         {
-            statistics.Add("Container Samples", parent.Offset, parent.Length, NodeValue.Integer(samples, "samples", "sample"), Explain.StatContainerSamples);
+            statistics.Add("Container Samples", parent.Offset, parent.Length, NodeValue.Integer(samples, "samples"), Explain.StatContainerSamples);
         }
     }
 }

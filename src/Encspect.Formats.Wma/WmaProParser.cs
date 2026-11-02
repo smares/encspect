@@ -145,7 +145,7 @@ internal static class WmaStreams
             Channels = format.Channels,
             ChannelMode = ModeOf(format.Channels),
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
-            Samples = (long)Math.Round(duration * format.SampleRate),
+            Samples = configuration.DurationSamples ?? 0,
             Duration = duration,
             AverageBitrate = format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });

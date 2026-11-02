@@ -237,7 +237,7 @@ def main():
             name = f"std-{stem}-base.wma"
             (output / name).write_bytes(raw)
             manifest[name] = {"base": path.name, "kind": "base", "frames": len(structure_["nexts"]), "frameLength": structure_["frameLength"],
-                              "reservoir": structure_["reservoir"], "superframes": len(structure_["superframes"])}
+                              "reservoir": structure_["reservoir"], "superframes": len(structure_["superframes"]), "next": structure_["nexts"][-1] if structure_["nexts"] else None}
             made = 0
             for k in choose_cuts(structure_):
                 try:

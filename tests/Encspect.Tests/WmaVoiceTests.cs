@@ -93,8 +93,8 @@ public class WmaVoiceTests
         Assert.Equal(superframes * 3, Child(statistics, "Blocks per Frame").Children.Sum(Frames));
         Assert.Equal(stream.Duration, stream.Samples / (double)stream.SampleRate);
 
-        // The container states the duration the audio lasts, less the preroll.
-        Assert.Equal(Child(statistics, "Container Duration").Value!.AsDouble()!.Value, stream.Duration, 3);
+        // The container states the length the audio lasts, less the preroll, in samples.
+        Assert.Equal(stream.Duration, Integer(statistics, "Container Samples") / (double)stream.SampleRate, 3);
         Assert.NotNull(stream.AverageBitrate);
         Assert.All(stream.Series, s => Assert.False(s.Values.IsEmpty));
     }
@@ -496,7 +496,7 @@ public class WmaVoiceTests
             "Superframe Start", "Unfinished Superframe", "Unread Bits",
             "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
             "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
-            "Writer", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
+            "Writer", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Samples", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
             "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
             "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
             "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",

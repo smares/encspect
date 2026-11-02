@@ -154,7 +154,7 @@ public sealed class WmaStandardParser : ICodecParser
             Channels = format.Channels,
             ChannelMode = format.Channels == 1 ? "Mono" : format.Channels == 2 ? "Stereo" : null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
-            Samples = isEncrypted ? (long)Math.Round(duration * format.SampleRate) : 0,
+            Samples = isEncrypted ? configuration?.DurationSamples ?? 0 : 0,
             Duration = duration,
             AverageBitrate = isEncrypted && format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });
