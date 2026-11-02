@@ -773,7 +773,7 @@ def aac_differences(figures, direct, codecs, analyzer):
 def aac_unit_verdicts(direct, analyzer):
     """Every unit FDK refuses, conceals or gives an error for, or outputs nothing for, and every unit that holds a finding about a unit (warnings and errors of the aac codes), with
     the decoder's result and the analyzer's finding at the same bytes; and every such finding that points into no unit. A unit's bytes are those fed with it, the gap in front of it
-    included. The units of a stream FDK refuses entirely are not listed one by one: the figure carries the refusal."""
+    included. The units of a stream FDK refuses entirely are listed only where they hold a finding: the figure carries the refusal."""
     result = []
     findings = [f for f in analyzer["findings"] if aac_unit_finding(f)]
     units = [u for u in direct.get("units", []) if direct.get("transport") != "TT_MP4_ADIF"]
@@ -785,7 +785,7 @@ def aac_unit_verdicts(direct, analyzer):
         for f in mine:
             matched.add((f["code"], f["offset"]))
         flagged = u["result"] != "decoded" or "error" in u or "fill" in u
-        if all_refused or (not flagged and not mine):
+        if not mine and (all_refused or not flagged):
             continue
         what = u["result"] + (" " + ", ".join(u["error"] if isinstance(u["error"], list) else [u["error"]]) if "error" in u else "")
         entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": what,

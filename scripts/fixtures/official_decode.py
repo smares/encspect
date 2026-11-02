@@ -517,8 +517,19 @@ AAC_FOLDERS = ("aac", "adts", "apple", "mp4")
 NEEDS_MORE_BITS = "0x1002"
 
 
+SAMPLE_ENTRIES = {
+    "enca": "encrypted audio (an enca sample entry, a key the project does not have): no reference",
+    "aavd": "Audible's aavd sample entry (encrypted): no reference",
+    "drms": "a drms sample entry (DRM-protected): no reference",
+    "alac": "Apple Lossless (an alac sample entry), not AAC",
+}
+
+
 def aac_skip_reason(summary):
     """Why a file is not fed to the decoder, or None. The extractor's own note says it for most of them."""
+    note = summary.get("note") or ""
+    if note.startswith("sample entry ") and note[len("sample entry "):] in SAMPLE_ENTRIES:
+        return SAMPLE_ENTRIES[note[len("sample entry "):]]
     if summary["encrypted"]:
         return "encrypted track (a key the project does not have): no reference"
     if summary["kind"] == "unknown":
