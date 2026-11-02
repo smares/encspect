@@ -4071,7 +4071,7 @@
      "status": "keep",
      "kind": "reader-not-accepted",
      "reason": "the reader's 28672 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow",
-     "note": "oggdec writes fewer samples than the analyzer (28,672 against 29,696). The analyzer agrees with libvorbis fed packet by packet with the real granule positions (29,696), measuring the first position by the samples counted since the empty packet. oggdec's figure looks like the reader behavior of vorbis-packet-errors.ogg at a refused packet, but the mechanism is not shown. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Decided in review (2026-11-02), for the project lead to confirm.",
+     "note": "oggdec writes fewer samples than the analyzer (28,672 against 29,696). The analyzer agrees with libvorbis fed packet by packet with the real granule positions (29,696), measuring the first position by the samples counted since the empty packet. oggdec's figure looks like the reader behavior of vorbis-packet-errors.ogg at a refused packet, but the mechanism is not shown. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Decided in review (2026-11-02).",
      "statusSource": "reviewed"
     }
    ],

@@ -774,7 +774,7 @@ public sealed partial class VorbisParser
             if (-discarded > limit)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
-                    $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); the start trimming is taken as {trim}, the {_firstPositionReturned} the packet that carries the position returns at most.");
+                    $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); the packet that carries the position returns {_firstPositionReturned}, and the start trimming is taken as {trim}.");
             }
 
             return trim;
