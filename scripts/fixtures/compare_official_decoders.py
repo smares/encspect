@@ -752,8 +752,9 @@ def attach_coreaudio(figures, ca, analyzer, record, notes):
             fig.update({"reference": entry["samples"], "referencePath": "coreaudio converter", "referenceKind": "official", "format": entry["format"]})
             if not entry.get("exact", True) and fmt:
                 fig["referenceAtAnalyzerRate"] = {"samples": entry["samples"], "exact": False}
-        elif fig["reference"] is None and entry["samples"] is not None and blocks > 1:
-            fig["coreAudio"]["converter"]["noReference"] = "the frames declare up to %d raw data blocks and the converter's total is %s samples (one block of each frame, as 1,024 per frame)" % (blocks, show(entry["decoderSamples"]))
+        elif fig["reference"] is None and entry["samples"] is not None and blocks > 1 and not entry.get("refusesStream"):
+            fig["coreAudio"]["converter"]["noReference"] = "the frames declare up to %d raw data blocks and the converter outputs %s samples for %d frames (an observation of the totals: %s per frame)" % (
+                blocks, show(entry["decoderSamples"]), conv["unitCount"], show(entry["decoderSamples"] // max(conv["unitCount"], 1)))
     elif coded:
         coded[0]["coreAudio"] = {"converter": {"samples": None, "why": "the analyzer has %d runs of constant output format and the converter has one" % len(coded)}}
     if trimmed:
@@ -1162,6 +1163,16 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
         ff_analyzer = [f for f in ff if f["witnesses"]["ffmpeg"] == f["analyzer"]]
         out.append("  %-30s files %3d (not fed %3d): figures %3d, with a reference %3d, analyzer equals it %3d, refused or none %3d; ffmpeg equals the reference in %d of %d, the analyzer in %d" % (
             label, len(subset), sum(1 for r in subset if r.get("notFed")), len(figs), len(withref), len(same), len(figs) - len(withref), len(ff_same), len(ff), len(ff_analyzer)))
+    out += ["", "Core Audio (macOS) against the analyzer, in the same duration (the converter at the coded stage; the reader against the trimmed figures)"]
+    for label, subset in groups:
+        coded = [f for r in subset for f in r["figures"] if f["stage"] == "coded" and (f.get("coreAudio") or {}).get("converter", {}).get("samples") is not None]
+        same = [f for f in coded if f["coreAudio"]["converter"]["samples"] == f["analyzer"]]
+        fdk = [f for f in coded if f["referencePath"] == "fdk direct"]
+        fdk_same = [f for f in fdk if f["coreAudio"]["converter"]["samples"] == f["reference"]]
+        trimmed = [f for r in subset for f in r["figures"] if f["stage"] == "trimmed" and f["reference"] is not None]
+        trimmed_same = [f for f in trimmed if f["reference"] == f["analyzer"]]
+        out.append("  %-30s converter totals %3d, equal to the analyzer %3d, to FDK %3d of %3d; trimmed figures with a reader total %3d, equal to the analyzer's %3d" % (
+            label, len(coded), len(same), len(fdk_same), len(fdk), len(trimmed), len(trimmed_same)))
     out += ["", "Derived variants by rule (coded figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.AAC_RULES:
