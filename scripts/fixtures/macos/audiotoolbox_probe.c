@@ -426,6 +426,9 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             if (id == kAudioFormatAC3) {
                 int fscod = d[4] >> 6;
                 rate = rates_ac3[fscod];
+                if ((d[5] >> 3) > 8) {
+                    rate /= (double)(1 << ((d[5] >> 3) - 8)); /* bsid 9 and 10: half and quarter sample rate */
+                }
                 unsigned bits = ((unsigned)d[6] << 8) | d[7];
                 int at = 15;
                 acmod = (bits >> (at - 2)) & 7;

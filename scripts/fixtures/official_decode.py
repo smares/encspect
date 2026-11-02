@@ -23,6 +23,11 @@ AAC has one path, the direct path: fdk_decode feeds Fraunhofer's FDK AAC decoder
 object type, and drains ceil(outputDelay / frameSize) frames at the end, counted apart (flushedSamples). The units of the record are the extractor's, each with the
 decoder's result (decoded, concealed, refused, no output), the samples it output and where the library's byte counter stood after it.
 
+Core Audio (macOS) has two paths per file (rollout step 5): the reader, ExtAudioFile on the file (which applies the packet table: iTunSMPB or the edit list), and the converter,
+AudioConverter fed the units of the unit list one at a time with the file's stream description and magic cookie; the records are `coreaudio-aac` and `coreaudio-ac3`:
+
+  official_decode.py coreaudio --out DIR --probe PROGRAM [--downloaded DIR]   (PROGRAM is macos/audiotoolbox_probe built with clang)
+
 TTA has one path, the reader `tta -d` (`tta -dp secret` for the file written with that password, beside a run without the password): TTA has no direct path
 (decision 6). Its samples are counted from the bytes written after the WAVE header with the channel count and bits per sample of the WAVE header it wrote, never
 from the declared size, which only checks completeness: fewer data bytes than the header declares is a stop. A nonzero exit status, a crash, a timeout or a missing output file is a stop with its reason, and the sample count of what a stopped run
@@ -728,6 +733,213 @@ def run_aac(args):
     return 0
 
 
+# ---- Core Audio (macOS) ------------------------------------------------------------------------------------------------------
+
+# The undamaged files whose derived variants macOS runs (the design's subset of at most 20 per format: one per encoder and object type); the other variants run on Linux only.
+MAC_VARIANT_SOURCES = (
+    "apple-lc-adts-cbr-st44.aac", "apple-lc-m4a-cbr-st44.m4a", "apple-lc-m4a-cbr-mono44.m4a", "apple-he-m4a-cbr-st44.m4a", "apple-hev2-m4a-cbr-st44.m4a",
+    "faac-1.40-adts.aac", "faac-2.2.m4a", "faac-2.2-he-adts.aac", "faac-2.2-he.m4a",
+    "fdkaac-lc.m4a", "fdkaac-he.m4a", "fdkaac-he-v2.m4a", "fdkaac-he-adts.aac", "fdkaac-crc-mono.aac",
+    "ffmpeg-adts.aac", "ffmpeg-lc.m4a", "ffmpeg-mono-faststart.m4a", "mp4box-mux.m4a", "exhale.m4a",
+)
+AC3_FOLDERS = ("ac3",)
+NO_MORE_DATA = "nomo"
+
+
+def whole_rate(rate):
+    return int(rate) if isinstance(rate, float) and rate == int(rate) else rate
+
+
+def coreaudio_format(line):
+    f = line.get("format") or {}
+    return {"formatID": f.get("formatID"), "sampleRate": whole_rate(f.get("sampleRate")), "channels": f.get("channels"), "framesPerPacket": f.get("framesPerPacket")}
+
+
+def coreaudio_reader_result(child):
+    """The record of one run of `audiotoolbox_probe reader`: ExtAudioFile opens the file, the client format is the file's rate with 16-bit samples, and it reads to the end."""
+    lines = child["lines"]
+    by_type = {}
+    for l in lines:
+        by_type.setdefault(l.get("type"), []).append(l)
+    first = lambda kind: (by_type.get(kind) or [None])[0]  # noqa: E731
+    end = first("end")
+    opened = first("open")
+    file_format, client, packets, table = first("fileFormat"), first("clientFormat"), first("packetCount"), first("packetTableInfo")
+    reads = by_type.get("read", [])
+    total = sum(r["frames"] for r in reads)
+    failed = [r for r in reads if r["status"] != 0]
+    incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
+    if child["timedOut"]:
+        stopped = "timeout"
+    elif child["signal"]:
+        stopped = "crash"
+    elif incomplete:
+        stopped = "limit"
+    elif end is None or child["exit"] != 0:
+        stopped = "error"
+    else:
+        stopped = end["stoppedBy"]
+    ok = bool(opened) and opened["status"] == 0 and bool(client) and client["status"] == 0
+    result = {
+        "tool": "audiotoolbox_probe reader",
+        "opened": bool(opened) and opened["status"] == 0,
+        "openStatus": opened["status"] if opened else None,
+        "fileFormat": coreaudio_format(file_format) if file_format and file_format["status"] == 0 else None,
+        "fileLengthFrames": (first("fileLengthFrames") or {}).get("frames"),
+        "packetTable": {"validFrames": table["validFrames"], "primingFrames": table["primingFrames"], "remainderFrames": table["remainderFrames"]} if table and table["status"] == 0 else None,
+        "packetCount": packets["packets"] if packets and packets["status"] == 0 else None,
+        "clientFormat": {**coreaudio_format(client), "status": client["status"]} if client else None,
+        "runs": [{"rate": whole_rate(client["format"]["sampleRate"]), "channels": client["format"]["channels"], "samples": total, "outputs": len(reads)}] if ok and total else [],
+        "readCount": len(reads),
+        "failedReads": [{"index": r["index"], "status": r["status"], "frames": r["frames"]} for r in failed][:8],
+        "stoppedBy": stopped,
+        "exit": child["exit"], "signal": child["signal"], "elapsedMs": child["elapsedMs"],
+        "warnings": [l for l in child["stderr"].splitlines() if l.strip()][:8],
+    }
+    if stopped == "end" and not ok:
+        result["stoppedBy"] = stopped = "error"
+    result["totalSamples" if stopped == "end" else "partialSamples"] = total
+    return result
+
+
+def coreaudio_converter_result(child, summary):
+    """The record of one run of `audiotoolbox_probe convert`: AudioConverter fed one unit of the unit list per call (a cut unit from its first byte to the last byte the file
+    holds, never padded), then the end of the stream. A unit is `refused` when the call returns an error other than 'nomo' (the input has no further unit), `decoded` when
+    the call returns frames and `no output` otherwise; the converter holds frames back, so the frames of a call need not be the frames of its unit (the AC-3 converter
+    outputs 1,248 frames for its first 1,536)."""
+    lines = child["lines"]
+    by_type = {}
+    for l in lines:
+        by_type.setdefault(l.get("type"), []).append(l)
+    first = lambda kind: (by_type.get(kind) or [None])[0]  # noqa: E731
+    setup, made, end = first("setup"), first("converter"), first("end")
+    calls = by_type.get("unit", [])
+    drains = by_type.get("drain", [])
+    units, decoded, nothing = [], 0, 0
+    for l in calls:
+        if l["status"] not in (0,) and not l["noMoreData"]:
+            result = "refused"
+        elif l["frames"] > 0:
+            result = "decoded"
+            decoded += 1
+        else:
+            result = "no output"
+            nothing += 1
+        if result != "decoded":
+            units.append({"index": l["index"], "offset": l["offset"], "declared": l["declared"], "received": l["received"], "result": result, "frames": l["frames"],
+                          **({"status": "0x%08X" % (l["status"] & 0xFFFFFFFF)} if l["status"] not in (0,) and not l["noMoreData"] else {}), "consumed": l["consumed"]})
+    frames_units = sum(l["frames"] for l in calls)
+    frames_drain = sum(l["frames"] for l in drains)
+    total = frames_units + frames_drain
+    incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
+    if child["timedOut"]:
+        stopped = "timeout"
+    elif child["signal"]:
+        stopped = "crash"
+    elif incomplete:
+        stopped = "limit"
+    elif end is None or child["exit"] != 0:
+        stopped = "error"
+    else:
+        stopped = end["stoppedBy"]
+    created = bool(made) and made["status"] == 0
+    if stopped == "end" and not created:
+        stopped = "error"
+    output = made["output"] if made else None
+    prime = [l for l in by_type.get("primeMethod", [])]
+    prime_info = first("primeInfo")
+    result = {
+        "tool": "audiotoolbox_probe convert",
+        "opened": created,
+        "setup": {k: setup[k] for k in ("source", "audioFileOpen", "dataFormat", "formatListEntries", "firstPlayable", "firstPlayableIndex", "formatList", "formatInfo", "syncframe", "cookieBytes") if k in setup} if setup else None,
+        "input": {k: whole_rate(setup["input"].get(k)) for k in ("formatID", "sampleRate", "channels", "framesPerPacket")} if setup and "input" in setup else None,
+        "converterStatus": made["status"] if made else None,
+        "primeMethod": [{"when": p["when"], "status": p["status"], "method": p.get("method")} for p in prime],
+        "primeInfo": {"status": prime_info["status"], "leadingFrames": prime_info["leadingFrames"], "trailingFrames": prime_info["trailingFrames"]} if prime_info else None,
+        "runs": [{"rate": whole_rate(output["sampleRate"]), "channels": output["channels"], "samples": total, "outputs": decoded}] if created and output and total else [],
+        "unitCount": len(calls),
+        "decodedUnits": decoded, "noOutputUnits": nothing, "refusedUnits": sum(1 for u in units if u["result"] == "refused"),
+        "units": units,
+        "unitFrames": frames_units, "drainFrames": frames_drain,
+        "failedCalls": end.get("failedCalls") if end else None,
+        "stoppedBy": stopped,
+        "exit": child["exit"], "signal": child["signal"], "elapsedMs": child["elapsedMs"],
+        "warnings": [l for l in child["stderr"].splitlines() if l.strip()][:8],
+    }
+    if end and not incomplete and end.get("codedFrames") != total:
+        result["stoppedBy"] = stopped = "limit"
+        result["notes"] = ["the harness counted %s frames and the lines add up to %s" % (end.get("codedFrames"), total)]
+    result["totalSamples" if stopped == "end" else "partialSamples"] = total
+    return result
+
+
+def coreaudio_skip_reason(summary, ac3):
+    """Why a file is not given to Core Audio, or None. AAC files follow the FDK run's rules; an AC-3 or E-AC-3 file needs units of that codec."""
+    if ac3:
+        if summary["encrypted"]:
+            return "encrypted track (a key the project does not have): no reference"
+        if summary["codec"] not in ("ac-3", "ec-3"):
+            return summary.get("note") or "the extractor finds no AC-3 or E-AC-3 syncframe in a chain or an MP4 sound track of those codecs"
+        if not summary["units"]:
+            return summary.get("note") or "the extractor finds no unit"
+        return None
+    return aac_skip_reason(summary)
+
+
+def run_coreaudio(args):
+    probe.LINE_LIMIT = 4 * AAC_UNIT_LIMIT
+    out = pathlib.Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "records").mkdir(exist_ok=True)
+    records = Records(out)
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="odm-"))
+    started = time.time()
+    program = str(pathlib.Path(args.probe).resolve())
+    env = {"platform": "macos", "format": "coreaudio", "machine": platform.machine(), "macOS": probe.tool_line(["sw_vers", "-productVersion"]), "build": probe.tool_line(["sw_vers", "-buildVersion"]),
+           "imageOS": os.environ.get("ImageOS"), "imageVersion": os.environ.get("ImageVersion"), "runId": os.environ.get("GITHUB_RUN_ID"), "commit": os.environ.get("GITHUB_SHA"),
+           "python": sys.version, "clang": probe.tool_line(["clang", "--version"]),
+           "audioCodecs": probe.plist_version("/System/Library/Components/AudioCodecs.component/Contents/Info.plist"),
+           "audioToolbox": probe.plist_version("/System/Library/Frameworks/AudioToolbox.framework/Resources/Info.plist"),
+           "primeMethod": "default (kAudioConverterPrimeMethod can be neither read nor set for the AAC decoder, see the records)"}
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    manifest = [m for m in derive_variants.write_aac(tmp / "variants") if pathlib.Path(m["source"]).name in MAC_VARIANT_SOURCES]
+    (out / "variants.json").write_text(json.dumps({"format": "aac", "rules": list(derive_variants.AAC_RULES), "sources": list(MAC_VARIANT_SOURCES), "variants": manifest}, indent=1) + "\n",
+                                       encoding="utf-8")
+    committed = [(p, False) for folder in AAC_FOLDERS for p in probe.files(folder, AAC_EXTENSIONS)] + [(p, True) for folder in AC3_FOLDERS for p in probe.files(folder, probe.AC3_EXTENSIONS)]
+    downloaded = sorted(p for p in pathlib.Path(args.downloaded).iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS) if args.downloaded else []
+    work = [(p, None, ac3) for p, ac3 in committed] + [(tmp / "variants" / m["name"], {"from": m["source"], "fromSha256": m["sourceSha256"], "rule": m["rule"]}, False) for m in manifest] \
+        + [(p, {"downloaded": True}, False) for p in downloaded]
+
+    def case(item):
+        path, derived, ac3 = item
+        format_ = "coreaudio-ac3" if ac3 else "coreaudio-aac"
+        record = file_record(path, format_, derived)
+        record["folder"] = "derived" if derived and "rule" in derived else "downloaded" if derived else path.parent.name
+        tsv, summary = probe.unit_list(path, tmp)
+        record["unitList"] = summary
+        reason = coreaudio_skip_reason(summary, ac3)
+        if reason:
+            record["notFed"] = reason
+            record["paths"] = {}
+            records.write(format_, path, record)
+            return
+        paths = {"reader": coreaudio_reader_result(probe.run_child("reader", [program, "reader", str(path)]))}
+        if summary["units"]:
+            paths["converter"] = coreaudio_converter_result(probe.run_child("converter", [program, "convert", str(path), str(tsv), "default"]), summary)
+        record["paths"] = paths
+        records.write(format_, path, record)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        for future in [pool.submit(case, item) for item in work]:
+            future.result()
+    shutil.rmtree(tmp, ignore_errors=True)
+    env["elapsedSeconds"] = round(time.time() - started)
+    env["records"] = records.count
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="format", required=True)
@@ -745,8 +957,12 @@ def main(argv):
     aac.add_argument("--fdk-commit")
     aac.add_argument("--fdk-version")
     aac.add_argument("--downloaded")
+    mac = sub.add_parser("coreaudio")
+    mac.add_argument("--out", required=True)
+    mac.add_argument("--probe", required=True)
+    mac.add_argument("--downloaded")
     args = parser.parse_args(argv)
-    return {"ogg": run_ogg, "tta": run_tta, "aac": run_aac}[args.format](args)
+    return {"ogg": run_ogg, "tta": run_tta, "aac": run_aac, "coreaudio": run_coreaudio}[args.format](args)
 
 
 if __name__ == "__main__":

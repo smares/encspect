@@ -11,6 +11,8 @@ name: Cross-checks by the formats' official decoders
 #             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3);
 #             Fraunhofer's FDK AAC 2.0.2 through fdk_decode.c over every AAC fixture of tests/fixtures/{aac,adts,apple,mp4}, its variants and the downloaded
 #             samples (rollout step 4)
+#   macos     Core Audio (AudioToolbox) through macos/audiotoolbox_probe.c: ExtAudioFile on the file and AudioConverter fed the units, over every AAC, AC-3 and E-AC-3 fixture,
+#             the variants of a fixed list of undamaged files and the downloaded samples (rollout step 5)
 #   compare   the comparison of the records of every decoder job
 #   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
@@ -144,10 +146,49 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+  macos:
+    name: Core Audio on macos-15
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      # The same Python as the Linux job, so that the unit lists and the derived variants are made by the same interpreter.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build the AudioToolbox harness
+        run: |
+          mkdir -p build
+          clang -O2 -Wall scripts/fixtures/macos/audiotoolbox_probe.c -framework AudioToolbox -framework CoreFoundation -o build/audiotoolbox_probe
+
+      # The samples that are pinned by SHA-256 and never committed; one that no address serves is listed and skipped. The folder holds media and is not uploaded.
+      - name: Download the AAC samples
+        timeout-minutes: 15
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples | tee out-aac-fetch.txt
+
+      - name: Decode the AAC, AC-3 and E-AC-3 files, the variants and the samples with Core Audio
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 40
+        run: |
+          python3 -I scripts/fixtures/official_decode.py coreaudio --out out-coreaudio --probe build/audiotoolbox_probe --downloaded build/aac-samples
+          cp out-aac-fetch.txt out-coreaudio/fetch.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-macos
+          path: out-coreaudio
+          retention-days: 30
+          if-no-files-found: error
+
   compare:
     name: Comparison with the analyzer and ffmpeg on ubuntu-26.04
     runs-on: ubuntu-26.04
-    needs: [linux]
+    needs: [linux, macos]
     if: always()
     timeout-minutes: 60
     steps:

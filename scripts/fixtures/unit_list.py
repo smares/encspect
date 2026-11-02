@@ -407,11 +407,11 @@ def crc16(data):
 
 
 def ac3_header(data, pos):
-    """(length, is_eac3, independent, key) of the AC-3 or E-AC-3 syncframe at pos, or None; bsid 9 and 10 are not read."""
+    """(length, is_eac3, independent, key) of the AC-3 or E-AC-3 syncframe at pos, or None; bsid 9 and 10 (the half and quarter sample rates of AC-3) have the frame sizes of bsid 8."""
     if pos + 8 > len(data) or data[pos] != 0x0B or data[pos + 1] != 0x77:
         return None
     bsid = data[pos + 5] >> 3
-    if bsid <= 8:
+    if bsid <= 10:
         fscod, code = data[pos + 4] >> 6, data[pos + 4] & 0x3F
         if fscod < 3 and code < 38:
             return WORDS[fscod][code] * 2, False, True, (False, fscod)
@@ -489,9 +489,6 @@ def extract_bytes(data, path=""):
             result["kind"] = "adif"
             result["codec"] = "aac"
             result["note"] = "ADIF has no frame lengths; the harness uses FDK's own transport"
-        elif len(data) >= 6 and data[:2] == b"\x0b\x77" and data[5] >> 3 in (9, 10):
-            result["codec"] = "ac-3"
-            result["note"] = "bsid %d (not read by this extractor)" % (data[5] >> 3)
         else:
             # Neither ADIF nor MP4: the format whose chain of frames covers more bytes of the file decides, and the record says what the other covered.
             candidates = {}
