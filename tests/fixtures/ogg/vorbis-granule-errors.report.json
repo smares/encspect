@@ -3658,7 +3658,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.granule-inconsistent",
-        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xE4, is 12437 where the packets give 12360. Only the last page may end the stream early (section A.2).",
+        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xE4, is 12437 where the packets give 12360. Only the last page may end the stream early (section A.2). The later pages are compared with the count continued from this position.",
         "offset": 228,
         "length": 8,
         "path": [
@@ -3672,7 +3672,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.granule-beyond-packets",
-        "message": "The last granule position, 28696 at 0x115, is 2000 samples beyond what the packets before it return; decoders end the stream earlier than it says.",
+        "message": "The last granule position, 28696 at 0x115, is 1923 samples beyond what the packets before it return; decoders end the stream earlier than it says.",
         "offset": 277,
         "length": 8,
         "path": [
