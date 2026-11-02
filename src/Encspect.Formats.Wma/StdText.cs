@@ -54,7 +54,9 @@ internal static class StdText
     public const string StatFrames = "How many frames were read, valid or not.";
     public const string StatInvalidFrames = "How many frames broke a rule of the syntax and ended their superframe.";
     public const string StatFrameLength = "The samples per channel in a frame, from the sampling rate.";
-    public const string StatSamples = "The valid frames less the first, times the frame length: what a decoder outputs, which drops the first frame's overlap.";
+    public const string StatSamples = "The valid frames less the first, times the frame length: what FFmpeg's decoder outputs, which drops the first frame's overlap. Used where the rule fitted to Microsoft's decoder is not applied: a stream of version 1, one without a bit reservoir or without variable block lengths, one with an invalid frame or superframe, one over the records limit, or one with fewer than two complete frames.";
+    public const string StatSamplesDecoder = "The samples per channel Microsoft's decoder outputs (wmadmod.dll 10.0.26100.33438), by the rule fitted to its output for Windows-written version 2 streams: the complete frames, the frame the last superframe announces included, less two, times the frame length, plus half of the frame length less the smaller of the last block and its next block size. It assumes the stream starts at its first coded frame.";
+    public const string StatCodedSamples = "The valid frames times the frame length, before any overlap is taken off; the frame the last superframe announces is not among them. FFmpeg's decoder outputs one frame less.";
     public const string StatDuration = "The samples at the sampling rate.";
     public const string StatBlockAlignment = "The size of each superframe, the container's block alignment.";
     public const string StatAverageBitrate = "The bytes of the superframes over the duration.";
@@ -126,8 +128,10 @@ internal static class StdText
     public static string FrameInvalid(int count, FrameFault fault, long offset) =>
         $"{(count == 1 ? "A frame is" : $"{Number(count)} frames are")} invalid: {Reason(fault)}; a decoder drops the superframe and its bit reservoir. The first is at {Hex(offset)}.";
 
-    public static string ReservoirAtEnd(long bits) =>
-        $"The last superframe ends with {Counts.Of(bits, "bit", "bits")} after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.";
+    public static string ReservoirAtEnd(long bits, bool isCounted, long frameBits, long unusedBits) =>
+        isCounted
+            ? $"The bytes after the last frame the superframes finish hold the frame they announce last, whole, in {Counts.Of(frameBits, "bit", "bits")}, {(unusedBits > 0 ? $"and then {Counts.Of(unusedBits, "bit", "bits")} that no frame uses" : "and nothing after it")}; the frame is counted in the samples."
+            : $"The last superframe ends with {Counts.Of(bits, "bit", "bits")} after its last frame; they are not counted in the samples.";
 
     public static string RecordsLimit(long skipped, int limit) =>
         $"The stream has more than {Number(limit)} media objects; the {Number(skipped)} after them are not read, so the statistics and the series cover the first {Number(limit)}.";

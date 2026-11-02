@@ -266,12 +266,12 @@ Consequences:
 
 - A frame may span any number of superframes inside a frame: its bits are the tail of the superframe it began in, then A − 1 bytes of each superframe inside a frame after its first byte, then the bit-offset bits of the superframe where it ends.
 - Encspect keeps the reservoir up to 65,536 bytes; appending past that empties it silently (no finding), and the superframe leaves no reservoir. FFmpeg rejects a superframe inside a frame that would take its reservoir past 32,768 of its units (see below) and empties it.
-- In the fixtures two of Microsoft's files end with a superframe inside a frame (quality 25 and quality 90): their last frame never ends.
+- In the fixtures two of Microsoft's files end with a superframe inside a frame (quality 25 and quality 90): the last frame announced is whole in the last full superframe and that one together.
 
 ### The end of the stream
 
-- The reservoir after the last superframe holds bits that no frame uses: a frame that was begun and never finished. A decoder drops them; Encspect reports their number (`wma.reservoir-at-end`, info): 8 × reservoir bytes − start bit.
-- In every Microsoft fixture these bits are not all zero.
+- The reservoir after the last superframe holds the frame the superframe's count announces last, and after it bits no frame uses. In every Microsoft fixture (and in the 7 new encodes of the clicks and tones signals) that frame is whole in the bytes: Encspect reads it from the reservoir's first bit (and from the superframes inside a frame that follow) and, when it ends within the bytes, counts it (see [Samples and duration](#samples-and-duration)); the finding `wma.reservoir-at-end` (info) says so, with the bits of the frame and the bits after it, or, where the frame is not whole, the number of the bits (8 × reservoir bytes − start bit) that are not counted.
+- In every Microsoft fixture the bits after the frame are not all zero.
 
 ## Frames and blocks
 
@@ -431,7 +431,7 @@ What FFmpeg 6.1.1 does with each broken rule and what Encspect reports today. "R
 ## Samples and duration
 
 - FFmpeg outputs F samples per channel for every frame of a superframe that decodes without error, then one frame of F at the end of the stream (the transform's overlap), and drops 2 × F at the start. A stream of n such frames outputs (n − 1) × F samples, and 0 for none.
-- Encspect counts the frames read without error, also those before a failed frame in the same superframe, which FFmpeg drops: "Samples" is max(0, valid frames − 1) × F, and "Duration" is that over r. On every real fixture this equals FFmpeg's output (`WmaFixtureTests` holds it to ffprobe's decoded samples); on a damaged stream the two can differ.
+- Encspect reports two figures. "Coded Samples" is the valid frames (read without error, also those before a failed frame in the same superframe, which FFmpeg drops) times F, before any overlap is taken off, as in other formats; FFmpeg outputs one frame less, (valid frames − 1) × F, which `WmaFixtureTests` holds to ffprobe's decoded samples on every real fixture. "Samples", and the "Duration" over r, follow Microsoft's decoder for a version 2 stream with a bit reservoir and variable block lengths and no damage: (K − 2) × F + (F − min(B, L)) / 2, K the frames whose bits are complete in the media objects, the frame the last superframe announces and holds whole included; B the last block of frame K in samples, L its Next Block Size in samples. Every record that backs the rule is of such a stream. Otherwise (version 1, no bit reservoir, no variable block lengths, an invalid frame, a superframe short or rejected, the records limit hit or fewer than two frames complete) "Samples" is (valid frames − 1) × F and has no "Coded Samples" beside it. The figure assumes that the stream starts at its first coded frame. The evidence is in [development.md](../development.md), "Differences found".
 
 ## What Encspect reports
 
@@ -508,7 +508,9 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 | "Frames" | frames read, valid or not |
 | ["Invalid Frames"] | frames that failed, where any |
 | "Frame Length" | F |
-| "Samples", "Duration" | see [Samples and duration](#samples-and-duration) |
+| "Samples", "Coded Samples", "Duration" | see [Samples and duration](#samples-and-duration); "Coded Samples" only where "Samples" follows Microsoft's decoder |
+| ["Container Duration"] | where the container states a length above 0: seconds, 3 decimals; see asf-wma.md |
+| ["Container Samples"] | where the container states a length; see asf-wma.md |
 | "Block Alignment" | A |
 | ["Average Bitrate"] | 8 × A × (superframes not short) / duration / 1000, where the duration is above 0 |
 | ["Smallest Frame", "Largest Frame"] | the bits of the shortest and longest valid frame / 8, in bytes |
@@ -557,7 +559,7 @@ Messages, with the alternatives for a count of 1 and for more in braces ({singul
 | `wma.frame-stuffing`, `wma.frame-filler` | info | the frame | "{A frame that began in the superframe before is\|N frames that began in the superframe before are} followed by {zero bits\|bits that are not zero} up to the bit offset the superframe states, which a decoder skips; the first has B (in the superframe at 0xOFFSET)." B is the first case's bits; the middle braces are by code, not count |
 | `wma.reservoir-length` | warning | the superframe | "{The last frame of a superframe ends\|The last frame of N superframes ends} {past its end\|leaving more than 32,768 bytes}; a decoder rejects {it\|them}." (the second braces by the first case; the first alternative cannot occur in Encspect, whose frame that needs bits past the superframe is invalid) |
 | `wma.frame-invalid` | warning | the frame | "{A frame is\|N frames are} invalid: REASON; a decoder drops the superframe and its bit reservoir. The first is at 0xOFFSET." |
-| `wma.reservoir-at-end` | info | the stream's "Frames" node | "The last superframe ends with B bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them." ("1 bit" for one), only where a valid frame exists |
+| `wma.reservoir-at-end` | info | the stream's "Frames" node | Where the samples follow the rule and the frame is whole: "The bytes after the last frame the superframes finish hold the frame they announce last, whole, in B bits, and then U bits that no frame uses; the frame is counted in the samples." ("and nothing after it" for U = 0). Otherwise: "The last superframe ends with B bits after its last frame; they are not counted in the samples." ("1 bit" for one). Only where a valid frame exists |
 | `wma.records-limit` | info | the container's node for the stream | "The stream has more than 262144 media objects; the N after them are not read, so the statistics and the series cover the first 262144." |
 | `wma.codec-data-size` | warning or info | the codec data's holder | "The codec-specific data of Windows Media Audio V is B bytes; {FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout\|the ASF specification, section 11.1.1, has 10}, and FFmpeg's decoder reads the options from {4\|6} bytes on[, so it takes none here]." (braces by version; the bracket where the data is too short, which is also when the severity is warning) |
 | `wma.variable-blocks-disabled` | info | "Encode Options" | "The encode options are 0x000D with variable block length. FFmpeg's decoder disables variable block length for them (wmadec.c, its issue 1503), so frames are read with one block size." |
@@ -595,7 +597,7 @@ The first superframes of `external-windows-wma92-cbr-stereo-44k-128.wma`: codec 
 - The first block of frame 0 (bits 21 to 192): the previous, current and next size indexes at 21–29 (2,048, 2,048 and 512 samples), mid/side 1 at 30, coded flags 1 and 1 at 31–32, total gain 64 (one 7-bit value) at 33–39, the exponents of channel 1 at 40–110 and of channel 2 at 111–181 (scale factor codes, 25 bands each for a block of 2,048 at 44.1 kHz), and an end-of-block code for each channel at 182–187 (codebook 4) and 188–191 (codebook 5, channel 2 under mid/side).
 - Frame 1's first three blocks code no channel (no gain is read), which is where the statistic "Blocks without Coded Channels = 3" comes from.
 - After superframe 2's frame spanning superframes no bits are left before the bit offset. The file has stuffing and filler elsewhere: three frames spanning superframes are followed by 7,395 bits in all ("Frames Followed by Filler = 3", "Filler Bits = 7,395").
-- Over the file: 9 superframes, 66 frames, 204 blocks, 8 frames spanning superframes, the largest reservoir 5,543 bytes; the last superframe leaves 44,343 bits (`wma.reservoir-at-end`), and the 65 valid frames after the first give 133,120 samples, which ffmpeg decodes too.
+- Over the file: 9 superframes, 66 frames, 204 blocks, 8 frames spanning superframes, the largest reservoir 5,543 bytes; the last superframe leaves 44,343 bits (`wma.reservoir-at-end`), and the 66 valid frames give 135,168 coded samples (ffmpeg decodes 133,120, one frame less), and the announced 67th frame (7,897 bits, then 36,446 bits no frame uses) makes the samples 133,632, which Microsoft's decoder outputs; "Coded Samples" is 66 × 2,048 = 135,168.
 
 And one superframe of `external-ffmpeg-wmav2-stereo-44k-32k.wma` (A = 185, no reservoir, noise substitution with H_0 = 4, pair 0): frame 0 is bits 0 to 1,262 of the superframe: mid/side 1, both channels coded, total gain 104 at 3–9, noise flags at 10–17 (8 bits, none set: "0 of 8 high bands"), exponents at 18–53 and 54–89, coefficients at 90–737 (106 non-zero, 1 escape) and 738–1,261 (72 non-zero, 1 escape); the 27 bytes from byte 158 on are 'N'.
 

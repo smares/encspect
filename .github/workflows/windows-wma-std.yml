@@ -1,0 +1,76 @@
+name: Standard WMA cut and encoded variants through Microsoft's decoder
+
+# Asks Microsoft's decoder for standard Windows Media Audio (versions 1 and 2) how many samples it outputs, as a rule computable
+# from the coded stream. scripts/fixtures/windows/make_wma_std_probes.py keeps one media object of a committed or newly encoded
+# file whole and moves the bits inside it (what follows the last frame the decoder can read, the frame that begins in the
+# object's last bits, the frame count of the header), and marks the end of the stream differently (packet counts, the end of the
+# Data Object, an empty packet, the play duration and the preroll). scripts/fixtures/windows/make_wma_std_variants.py cuts files
+# after chosen frames (run 41375872453 decoded them; the step is not in this job), and
+# make_windows_wma_fixtures.ps1 -Set std encodes the further files (the clicks signal, other rates and channel counts, as far as
+# the Windows encoders offer them). The probe of windows-wma-decode.yml decodes every file with the Source Reader and the decoder
+# DMO (see docs/development.md, "WMA decoding by Microsoft's decoder"); the artifact carries the files as well as the records.
+# scripts/fixtures/windows/check_wma_std_variants.py compares records with the rule under test and runs on Linux.
+# Run by hand (Actions, Run workflow) or by pushing the branch ci/windows-wma-std. Not part of ci.yml and not a check.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ci/windows-wma-std]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+jobs:
+  decode:
+    name: decode variants on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the probe and the analyzer
+        shell: bash
+        run: |
+          dotnet publish scripts/fixtures/windows/WmaDecodeProbe -c Release -o probe-bin
+          dotnet publish src/Encspect.Cli -c Release -o analyzer-bin
+
+      - name: Encode further standard files with Microsoft's encoders
+        shell: powershell
+        continue-on-error: true
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/make_windows_wma_fixtures.ps1 -Out wma-out -Set std
+
+      - name: Write the variants
+        shell: bash
+        run: |
+          BASES="tests/fixtures/asf:external-windows-wma92-cbr-stereo-44k-128.wma,external-windows-wma92-cbr-stereo-22k-32.wma,external-windows-wma92-cbr-stereo-48k-128.wma,external-windows-wma92-cbr-mono-44k-48.wma,external-windows-wma92-vbr-stereo-44k-q10.wma,external-windows-wma92-vbr-stereo-44k-q75.wma,external-windows-wma92-cbr-stereo-44k-32-sdk.wma,external-ffmpeg-wmav1-stereo-44k-128k.wma,external-ffmpeg-wmav2-stereo-44k-64k.wma,external-ffmpeg-wmav1-mono-22k-24k.wma,external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma"
+          python scripts/fixtures/windows/make_wma_std_probes.py analyzer-bin/encspect.exe probes "$BASES" wma-out/wma
+          mkdir -p encodes
+          cp wma-out/wma/*.wma encodes/ || true
+          cp encodes/*.wma probes/ || true
+
+      - name: Decode every file (three runs each)
+        shell: bash
+        timeout-minutes: 70
+        run: |
+          mkdir -p decode-out
+          ./probe-bin/wma-decode-probe.exe --out decode-out --timeout 30 probes 2>&1 | tee decode-out/log.txt
+          cp probes/manifest.json decode-out/manifest.json
+          mkdir -p decode-out/probes decode-out/encodes
+          cp probes/*.wma decode-out/probes/
+          cp encodes/*.wma decode-out/encodes/ || true
+          cp wma-out/encodes.json wma-out/environment.json wma-out/formats.txt decode-out/ || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-wma-std-variants
+          path: decode-out
+          retention-days: 7
+          if-no-files-found: error

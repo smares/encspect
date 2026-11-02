@@ -58,7 +58,7 @@ public sealed class WmaStandardParser : ICodecParser
         var nodes = new StdNodes(parameters, stream);
         stream.Read(packets, MaxPackets, nodes, findings, context.CancellationToken);
 
-        long samples = Math.Max(0, stream.ValidFrames - 1) * parameters.FrameLength;
+        long samples = stream.Samples;
         double duration = (double)samples / parameters.SampleRate;
         var streamNode = new Node(codec, parent.Offset, parent.Length, Count(stream.ValidFrames, "frame", "frames"))
         {
@@ -85,7 +85,7 @@ public sealed class WmaStandardParser : ICodecParser
         double? averageBitrate = duration > 0 ? 8.0 * parameters.BlockAlign * stream.NotShortSuperframes / duration / 1000 : null;
         if (statistics is not null)
         {
-            StdReport.AddStatistics(statistics, parent, parameters, stream, samples, duration, averageBitrate);
+            StdReport.AddStatistics(statistics, parent, parameters, stream, samples, duration, averageBitrate, configuration);
         }
 
         if (stream.Skipped > 0)
@@ -103,7 +103,7 @@ public sealed class WmaStandardParser : ICodecParser
             long bits = (8L * stream.FinalReservoirBytes) - stream.FinalReservoirStartBit;
             if (stream.FinalReservoirBytes > 0 && bits > 0)
             {
-                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits), frames);
+                findings.AddNow(Severity.Info, "wma.reservoir-at-end", StdText.ReservoirAtEnd(bits, stream.IsRuleApplicable && stream.HasAnnouncedLast, stream.AnnouncedLastBits, stream.AnnouncedLastMargin), frames);
             }
         }
 
@@ -154,7 +154,7 @@ public sealed class WmaStandardParser : ICodecParser
             Channels = format.Channels,
             ChannelMode = format.Channels == 1 ? "Mono" : format.Channels == 2 ? "Stereo" : null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
-            Samples = isEncrypted ? (long)Math.Round(duration * format.SampleRate) : 0,
+            Samples = isEncrypted ? configuration?.DurationSamples ?? 0 : 0,
             Duration = duration,
             AverageBitrate = isEncrypted && format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });

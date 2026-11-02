@@ -21,7 +21,7 @@ internal static class VoiceReport
         return $"{Count(count, singular, plural)} ({percent.ToString("F1", CultureInfo.InvariantCulture)}%)";
     }
 
-    public static Node Statistics(VoiceStream stream, AudioFormat format, double? containerDuration, Node container, out double duration)
+    public static Node Statistics(VoiceStream stream, AudioFormat format, CodecConfiguration? configuration, Node container, out double duration)
     {
         VoiceParameters p = stream.Parameters;
         VoiceTotals t = stream.Totals;
@@ -48,10 +48,7 @@ internal static class VoiceReport
         Add("Frame Length", NodeValue.Integer(VoiceParameters.FrameSamples, "samples"), VoiceExplain.StatFrameLength);
         Add("Samples", NodeValue.Integer(t.Samples, "samples"), VoiceExplain.StatSamples);
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), VoiceExplain.StatDuration);
-        if (containerDuration is > 0)
-        {
-            Add("Container Duration", NodeValue.Decimal(containerDuration.Value, 3, "s"), VoiceExplain.StatContainerDuration);
-        }
+        ContainerFigures.AddLength(node, container, configuration);
 
         Add("Block Alignment", NodeValue.Integer(p.BlockAlign, "bytes"), VoiceExplain.StatBlockAlignment);
         Add("Packet Bytes", NodeValue.Integer(t.PacketBytes, "bytes"), VoiceExplain.StatPacketBytes);

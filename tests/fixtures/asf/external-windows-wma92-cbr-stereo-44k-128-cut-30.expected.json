@@ -1,0 +1,23 @@
+{
+ "description": "external-windows-wma92-cbr-stereo-44k-128.wma cut after frame 30 by make_wma_std_variants.py: the later media objects removed and the counts of the headers fixed. The stream is the Media Foundation transcoder's (see that file's provenance); the cut ends it where Microsoft's decoder is asked how many samples it outputs.",
+ "format": "ASF",
+ "encoder": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+ "encoder_path": "media-foundation",
+ "mode": "cbr",
+ "sha256": "9fcecf368ed57cac678a984d285fcdfd13e7f6cc17da4a3c27dc5c0a350175e3",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmav2",
+  "channels": 2,
+  "rate": 44100,
+  "block_align": null,
+  "bit_rate": 128016,
+  "extradata_size": 10,
+  "packets": 4,
+  "packet_sizes": [
+   5945
+  ],
+  "decoded_samples": 61440,
+  "file_bytes": 25587
+ }
+}
