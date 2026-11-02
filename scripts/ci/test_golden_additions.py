@@ -125,6 +125,14 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(self.check(old, other, change))
         self.assertTrue(self.check(old, new, {"changed": [{"scope": "stream", "fields": ["samples"]}]}))
 
+    def test_a_finding_field_that_the_change_lists_may_differ_for_that_code_only(self):
+        old = report(OLD_STATS, findings=[{"code": "a.b", "message": "one", "severity": "warning"}, {"code": "c.d", "message": "same", "severity": "warning"}])
+        new = report(OLD_STATS, findings=[{"code": "a.b", "message": "two", "severity": "warning"}, {"code": "c.d", "message": "same", "severity": "warning"}])
+        change = {"changed": [{"scope": "finding", "code": "a.b", "fields": ["message"]}]}
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "c.d", "fields": ["message"]}]}))
+        self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "a.b", "fields": ["severity"]}]}))
+
     def test_a_rename_that_did_not_happen_fails_whatever_the_value(self):
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
                   "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Coded Bandwidth"}],
