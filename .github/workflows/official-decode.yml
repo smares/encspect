@@ -120,6 +120,7 @@ jobs:
       # The samples that are pinned by SHA-256 and never committed (sbr-samples.json, usac-samples.json); one that no address serves is listed and skipped. The folder holds media
       # and is not uploaded.
       - name: Download the AAC samples
+        continue-on-error: true
         timeout-minutes: 15
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
@@ -173,6 +174,7 @@ jobs:
 
       # The downloaded samples again (the artifacts hold records, never media), for the analyzer's figures and ffmpeg's column.
       - name: Download the AAC samples
+        continue-on-error: true
         timeout-minutes: 15
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
