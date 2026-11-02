@@ -1274,6 +1274,11 @@ def carried_from(entry, committed):
     return {"run": mac.get("runId"), "commit": mac.get("commit")}
 
 
+def carried_ac3(name, sha, old, committed):
+    """A committed AC-3 entry this run has no macOS record of, kept as it is and marked with the run its Core Audio data come from."""
+    return {"file": name, "sha256": sha, "derived": None, "carriedEntry": {**old, "coreAudioFrom": carried_from(old, committed)}}
+
+
 def records_without_file(records, known):
     """(records of another version of a fixture or variant, records of downloaded samples this job could not fetch), by file name."""
     other = sorted(r["file"] for sha, r in records.items() if sha not in known and not (r.get("derived") or {}).get("downloaded"))
@@ -1635,7 +1640,7 @@ def run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tm
             old = old_files.get((item[1].name, item[0]))
             not_run.append(item[1].name + (" (carried from the committed file)" if old else ""))
             if old:  # the committed entry stays as it is, reviewed statuses included
-                carried.append({"file": item[1].name, "sha256": item[0], "derived": None, "carriedEntry": {**old, "coreAudioFrom": carried_from(old, old_doc)}})
+                carried.append(carried_ac3(item[1].name, item[0], old, old_doc))
         else:
             results.append(result)
     apply_reviewed(results, committed)

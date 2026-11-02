@@ -380,6 +380,13 @@ class ProvenanceTests(unittest.TestCase):
             source, entry = self.committed(tmp, {"run": "3", "commit": "1111111"})
             self.assertEqual({"run": "3", "commit": "1111111"}, compare.carried_from(entry, json.loads(source.read_text(encoding="utf-8"))))
 
+    def test_a_carried_ac3_entry_is_marked_with_its_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, entry = self.committed(tmp)
+            carried = compare.carried_ac3("a.ac3", "ab", entry, json.loads(source.read_text(encoding="utf-8")))
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, carried["carriedEntry"]["coreAudioFrom"])
+        self.assertEqual(entry["figures"], carried["carriedEntry"]["figures"])
+
     def test_write_official_records_the_provenance_and_counts_it(self):
         mac = {"macOS": "15.8.2", "build": "b", "machine": "arm64", "audioCodecs": "7", "audioToolbox": "1", "runId": "9", "commit": "c"}
         fresh = {"file": "b.ac3", "sha256": "cd", "derived": None, "figures": [], "differences": [], "units": [], "unitList": {"kind": "ac3"}}
