@@ -141,17 +141,26 @@ public sealed partial class VorbisParser
         private int _previousIndex = -1;
         private long _decoded;
         private long _lastReturned;
-        private long _lastPositionReturned;
         private long _firstReturned;
         private long _secondReturned;
         private int _blocks;
         private long? _firstOffset;
-        private long? _offset;
+        private long _firstTrimOffset;
+        private long _firstPositionReturned;
+
+        // The count libvorbis keeps: the granule position it last took (the first one, one after a gap, or the one of a page that
+        // disagrees) and the samples decoded when it did; the position the packets give at a later point is the first plus the
+        // samples decoded since. Two values and no difference, so that a position of any size cannot overflow.
+        private bool _hasAnchor;
+        private long _anchorPosition;
+        private long _anchorDecoded;
         private bool _afterGap;
-        private long? _lastPosition;
-        private long _lastPositionDecoded;
-        private bool _lastIsEnd;
-        private Node? _lastPositionField;
+        private bool _afterSkipped;
+        private long? _countBase;
+        private long _endTrim;
+        private long _gapTrim;
+        private EndCut? _beyondPackets;
+        private EndCut? _largeTrim;
         private Node? _firstPositionField;
         private int _firstPositionPacket;
 
@@ -418,6 +427,8 @@ public sealed partial class VorbisParser
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
 
+            // libvorbis loses its count at the packet after one it refuses (the sequence numbers are not consecutive).
+            _afterSkipped |= (record.Flags & PacketFlags.NoBlock) != PacketFlags.None;
             switch (record.Flags & PacketFlags.NoBlock)
             {
                 case PacketFlags.Empty:
@@ -434,10 +445,12 @@ public sealed partial class VorbisParser
                     break;
                 case PacketFlags.None:
                     AddBlock(index, record);
+
+                    // libvorbis is given a granule position only with a packet it accepts as audio, so a position on an empty, a
+                    // not-audio or an invalid packet is not taken.
+                    TrackPosition(packet);
                     break;
             }
-
-            TrackPosition(packet);
         }
 
         // Section 4.3.1: the packet type bit, the mode number in ilog(modes - 1) bits, and for a
@@ -518,6 +531,12 @@ public sealed partial class VorbisParser
             _firstReturned = _blocks == 1 ? returned : _firstReturned;
             _lastReturned = returned;
             _decoded += returned;
+            if (_afterGap || _afterSkipped)
+            {
+                // libvorbis counts the samples of a page from the first block after a gap, which it does not count itself.
+                _countBase ??= _decoded;
+            }
+
             _previousIndex = index;
         }
 
@@ -561,33 +580,96 @@ public sealed partial class VorbisParser
                 return;
             }
 
-            long offset = position - _decoded;
-            if (_firstOffset is null)
+            bool isEnd = packet.IsEndOfStream;
+
+            // libvorbis loses its count at a gap and at the packet after a refused one, and counts again from the first block after it
+            // (the first block of the stream is the same case). The first position taken is then measured by those samples.
+            bool lost = !_hasAnchor || _afterGap || _afterSkipped;
+            Int128 counted = _decoded - (_countBase ?? (_hasAnchor ? _decoded : 0));
+            if (!_hasAnchor)
             {
                 // A stream whose only position is the last one: a smaller position trims the end.
-                _firstOffset = _offset = packet.IsEndOfStream ? Math.Max(0, offset) : offset;
+                // The offset is measured from the start of the stream; what libvorbis trims by it is measured from where its count
+                // began, which is later after a refused packet.
+                Int128 offset = (Int128)position - _decoded;
+                _firstOffset = ClampOffset(isEnd ? Int128.Max(0, offset) : offset);
+                _firstTrimOffset = ClampOffset((Int128)position - counted);
+                _firstPositionReturned = _lastReturned;
+                _hasAnchor = true;
                 _firstPositionField = packet.EndPositionField;
                 _firstPositionPacket = _packets - 1;
             }
-            else if (_afterGap)
+            else if (lost)
             {
-                _offset = offset;
+                // A position below the samples counted since the count was lost discards samples at the start of the page, at most
+                // what the packet returns (block.c, "trim the beginning").
+                if (!isEnd && counted > position)
+                {
+                    _gapTrim += (long)Int128.Min(counted - position, _lastReturned);
+                }
             }
-            else if (offset != _offset && !packet.IsEndOfStream)
+            else if (!isEnd && Expected() != position)
             {
-                long expected = _decoded + _offset!.Value;
+                // The count continues from the page's position (libvorbis takes every position it is given), so that the surplus
+                // or the shortfall of a repeated, missing or miscounted packet is not charged to the end trimming.
+                Int128 expected = Expected();
                 Node field = packet.EndPositionField ?? _parent;
                 _findings.Add(Severity.Warning, "vorbis.granule-inconsistent", field, count =>
-                    $"{Count(count, "granule position does", "granule positions do")} not match the samples the packets before {(count == 1 ? "it" : "them")} return: the first, at 0x{field.Offset:X}, is {position} where the packets give {expected}. Only the last page may end the stream early (section A.2).");
+                    $"{Count(count, "granule position does", "granule positions do")} not match the samples the packets before {(count == 1 ? "it" : "them")} return: the first, at 0x{field.Offset:X}, is {position} where the packets give {expected}. Only the last page may end the stream early (section A.2). Each later page is compared with the count continued from the position before it.");
             }
 
+            if (isEnd)
+            {
+                TrimEnd(packet, position, lost, lost ? counted : Expected());
+            }
+
+            // libvorbis takes the position of every page, the end-of-stream page included, as its count.
+            SetAnchor(position);
             _afterGap = false;
-            _lastPosition = position;
-            _lastPositionDecoded = _decoded;
-            _lastPositionReturned = _lastReturned;
-            _lastIsEnd = packet.IsEndOfStream;
-            _lastPositionField = packet.EndPositionField;
+            _afterSkipped = false;
+            _countBase = null;
         }
+
+        private Int128 Expected() => (Int128)_anchorPosition + (_decoded - _anchorDecoded);
+
+        private void SetAnchor(long position)
+        {
+            _anchorPosition = position;
+            _anchorDecoded = _decoded;
+        }
+
+        private static long Clamp(Int128 value) => (long)Int128.Clamp(value, long.MinValue, long.MaxValue);
+
+        // Clamped so that its negation cannot overflow.
+        private static long ClampOffset(Int128 value) => (long)Int128.Clamp(value, -long.MaxValue, long.MaxValue);
+
+        // A figure at the clamp is a lower bound.
+        private static string Samples(long count) => count == long.MaxValue ? $"at least {Count(count, "sample", "samples")}" : Count(count, "sample", "samples");
+
+        // What an end-of-stream page's position cuts from the last packet, at the first such page and at any later one (a repeated
+        // page follows a gap, and libvorbis then counts from the first block after it).
+        private void TrimEnd(MappedBytes packet, long position, bool lost, Int128 reached)
+        {
+            Int128 trim = reached - position;
+            Node field = packet.EndPositionField ?? _parent;
+            if (trim < 0 && !lost)
+            {
+                _beyondPackets ??= new EndCut(position, field, Clamp(-trim), 0);
+            }
+
+            // Section A.2 lets the granule position indicate "less audio data than the final packet would normally return", so at
+            // most the samples of the last packet; libvorbis strips no more than it has buffered for it (vorbis_synthesis_blockin),
+            // which oggdec's output confirms.
+            if (trim > _lastReturned)
+            {
+                _largeTrim ??= new EndCut(position, field, Clamp(trim), _lastReturned);
+                trim = _lastReturned;
+            }
+
+            _endTrim += trim > 0 ? (long)trim : 0;
+        }
+
+        private sealed record EndCut(long Position, Node Field, long Trim, long Limit);
 
         public void Finish()
         {
@@ -599,7 +681,7 @@ public sealed partial class VorbisParser
             CheckPackets();
             long startTrim = StartTrimming();
             long trim = EndTrimming();
-            long samples = HasTime ? Math.Clamp(_decoded - startTrim - trim, 0, _decoded) : 0;
+            long samples = HasTime ? Math.Clamp(_decoded - startTrim - trim - _gapTrim, 0, _decoded) : 0;
             Node? encoder = AddEncoder();
             Node? writer = AddWriter();
             ClaimRoles.CompleteVersion(encoder, CommentClaims());
@@ -678,46 +760,42 @@ public sealed partial class VorbisParser
                 return 0;
             }
 
-            // libvorbisfile discards no more than the limit, which oggdec's output confirms.
+            // libvorbis trims the start in the branch of vorbis_synthesis_blockin that takes the first position, no more than it has
+            // buffered, which is what the packet carrying the position returns (oggdec's output confirms it). After a refused packet
+            // before the first position it measures the position by the samples since, which can leave nothing to discard.
+            long discarded = _firstTrimOffset;
+            if (discarded >= 0)
+            {
+                return 0;
+            }
+
+            long trim = Math.Min(Math.Min(-discarded, _firstPositionReturned), _decoded);
             long limit = _firstReturned + _secondReturned;
-            if (-offset > limit)
+            if (-discarded > limit)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
-                    $"The first granule position discards {Count(-offset, "sample", "samples")} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); libvorbisfile discards {limit}.");
-            }
-
-            return Math.Min(Math.Min(-offset, limit), _decoded);
-        }
-
-        // What the last granule position cuts from the end: the end trimming.
-        private long EndTrimming()
-        {
-            if (_lastPosition is not { } position || _offset is not { } offset || !_lastIsEnd)
-            {
-                return 0;
-            }
-
-            long trim = _lastPositionDecoded + offset - position;
-            Node field = _lastPositionField ?? _parent;
-            if (trim < 0)
-            {
-                _findings.Add(Severity.Warning, "vorbis.granule-beyond-packets", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, is {Count(-trim, "sample", "samples")} beyond what the packets before it return; decoders end the stream earlier than it says.");
-                return 0;
-            }
-
-            // Section A.2 lets the granule position indicate "less audio data than the final packet would normally return", so at
-            // most the samples of the last packet; libvorbis strips no more than it has buffered for it (vorbis_synthesis_blockin),
-            // which oggdec's output confirms.
-            if (trim > _lastPositionReturned)
-            {
-                long limit = _lastPositionReturned;
-                _findings.Add(Severity.Warning, "vorbis.end-trimming-large", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {limit} the last audio packet returns, which the Vorbis I specification allows at most (section A.2); libvorbis trims {limit}.");
-                return limit;
+                    $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); the packet that carries the position returns {_firstPositionReturned}, and the start trimming is taken as {trim}.");
             }
 
             return trim;
+        }
+
+        // What the end-of-stream positions cut from the end: the end trimming.
+        private long EndTrimming()
+        {
+            if (_beyondPackets is { } beyond)
+            {
+                _findings.Add(Severity.Warning, "vorbis.granule-beyond-packets", beyond.Field, _ =>
+                    $"The last granule position, {beyond.Position} at 0x{beyond.Field.Offset:X}, is {Samples(beyond.Trim)} beyond the count continued from the granule position before it; the packets end before it, so nothing is trimmed.");
+            }
+
+            if (_largeTrim is { } large)
+            {
+                _findings.Add(Severity.Warning, "vorbis.end-trimming-large", large.Field, _ =>
+                    $"The last granule position, {large.Position} at 0x{large.Field.Offset:X}, trims {Samples(large.Trim)} from the end, more than the {large.Limit} the last audio packet returns, which the Vorbis I specification allows at most (section A.2); the end trimming is taken as {large.Limit}.");
+            }
+
+            return _endTrim;
         }
     }
 }
