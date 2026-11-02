@@ -203,7 +203,7 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 - **Microsoft's decoder is the reference** for the number of samples and the duration of a WMA stream: the figure of Media Foundation's Source Reader where it reached the end of the stream without a failed read or a stall, else that of the WMA decoder DMO fed the media objects directly. Both are recorded on a Windows runner by `.github/workflows/windows-wma-decode.yml` (see "WMA decoding by Microsoft's decoder" in [development.md](../development.md), which also lists the differences found).
 - **FFmpeg is the second cross-check.** Where its count differs from Microsoft's, the difference is listed per file in the run's `comparison.txt`, not hidden by agreement with the analyzer.
 - Damaged-input behavior (refused buffers, dropped runs, cut files) is to be derived from black-box runs of Microsoft's decoder, not from FFmpeg's. Until then the analyzer follows FFmpeg's decoder, as the checks of the Voice codec data do.
-- The analyzer's counts have not been changed to the reference yet.
+- **Professional follows Microsoft's decoder** where the stream has the length prefix and no damage: no lost packet, invalid frame, short, long or unfinished packet, at least two frames, and trims only in the first and last frame. The rule and its evidence are in [wma-pro-format.md](../design/wma-pro-format.md#what-encspect-reports). Every other Professional stream, and the Standard, Lossless and Voice streams, keep the count of FFmpeg's decoder. The difference to Microsoft for the streams without the length prefix (three public files) and for damaged streams is `noted` until understood.
 
 ## Observed in Microsoft's files
 

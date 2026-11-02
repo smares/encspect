@@ -9,11 +9,11 @@ namespace Encspect.Tests;
 public class WmaProTests
 {
     [Theory]
-    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 131788, 8, 209)]
-    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 131788, 7, 209)]
-    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-384-sdk.wma", 9, 66, 131788, 0, 209)]
-    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma", 11, 66, 131788, 9, 160)]
-    [InlineData("asf/external-windows-wma10pro-vbr-stereo-44k-q98.wma", 3, 66, 131788, 2, 209)]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 132300, 8, 209)]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 132300, 7, 209)]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-384-sdk.wma", 9, 66, 132300, 0, 209)]
+    [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-64.wma", 11, 66, 132300, 9, 160)]
+    [InlineData("asf/external-windows-wma10pro-vbr-stereo-44k-q98.wma", 3, 66, 132300, 2, 209)]
     [InlineData("asf/external-windows-wma10pro-cbr-5.1-48k-384.wma", 9, 72, 144000, 0, 493)]
     [InlineData("asf/external-windows-wma10pro-vbr-5.1-48k-q50.wma", 5, 72, 144000, 4, 493)]
     public void FixturesGiveTheirPacketsFramesAndSamples(string name, int packets, int frames, long samples, int spanning, int subframes)
@@ -87,6 +87,118 @@ public class WmaProTests
         CodecContext context = stream.RunPro();
         Node changed = Assert.Single(Count(WmaStream.StreamNode(context), "Frames")).Children[1];
         Assert.Equal(90L, WmaStream.Child(WmaStream.Child(changed, "Subframe"), "Quantization Step").Value!.AsInteger());
+    }
+
+    // Microsoft's decoder outputs the samples the transform has completed (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs"). The stereo
+    // files end in two subframes of 1,024 samples, which gives (2,048 - 1,024) / 2 = 512 more than the frames' count; 66 x 2,048 + 512 - 2,048 - 1,332.
+    [Fact]
+    public void TheStereoFileCountsTheSamplesTheTransformHasCompleted()
+    {
+        CodecContext context = WmaStream.LoadPro().RunPro();
+        Assert.Equal(132300, context.Streams[0].Samples);
+        Node statistics = WmaStream.Child(WmaStream.StreamNode(context), "Statistics");
+        Assert.StartsWith("The samples Microsoft's decoder outputs", WmaStream.Child(statistics, "Samples").Description, StringComparison.Ordinal);
+        Assert.Equal("3380 samples", WmaStream.Child(statistics, "Trimmed Samples").Value!.ToString());
+    }
+
+    // The figures of the Windows runs (docs/development.md): variants of the fixtures and what the decoder gave for them.
+    [Theory]
+    [InlineData(66, 2048, 512, 1024, 2048, true, 2048, 1332, 132300)] // the fixture
+    [InlineData(72, 2048, 2048, 2048, 2048, true, 2048, 1408, 144000)] // the 5.1 fixture: the low-frequency channel's subframe is a whole frame
+    [InlineData(66, 2048, 512, 1024, 2048, true, 2048, 3000, 131072)] // an end trim above the last frame's output (2,560) cuts that output only
+    [InlineData(66, 2048, 512, 1024, 2048, true, 2048, 2561, 131072)]
+    [InlineData(66, 2048, 512, 1024, 2048, true, 2048, 2559, 131073)]
+    [InlineData(66, 2048, 512, 1024, 2048, true, 0, 1332, 134348)] // a stated start trim of 0 cuts nothing
+    [InlineData(66, 2048, 512, 1024, 2048, true, 4095, 1332, 130253)] // a start trim is not limited to the first frame's output
+    [InlineData(66, 2048, 512, 1024, 2048, false, 0, 1332, 133068)] // none stated: 2,048 / 2 + 512 / 2 = 1,280
+    [InlineData(72, 2048, 2048, 2048, 2048, false, 0, 1408, 144000)] // none stated, first size 2,048: 2,048
+    [InlineData(58, 2048, 512, 1024, 2048, false, 0, 1332, 116684)] // `from-1` of the stereo file
+    [InlineData(2, 2048, 512, 2048, 512, true, 2048, 1500, 768)] // `cut-1-end-1500`: the last frame's output is 1,280
+    [InlineData(35, 2048, 512, 256, 2048, true, 2048, 500, 70028)] // `cut-34-end-500`: a last size of 256 gives 896 more
+    [InlineData(2205, 4096, 256, 256, 256, true, 4096, 0, 9029504)] // `Classical_96_24_6_Q75_2_13.wma`: (4,096 - 256) / 2 = 1,920 more than 9,027,584
+    public void TheRuleGivesTheFiguresOfMicrosoftsDecoder(long frames, long frame, int firstSize, int lastSize, int previousLastSize, bool hasStart, long start, long end, long expected)
+    {
+        Assert.Equal(expected, WmaPacketReader.DecoderRule(frames, frame, firstSize, lastSize, previousLastSize, hasStart, start, end));
+    }
+
+    // An end trim written into the last frame is cut from that frame's output, at most all of it: 3,000 samples remove the 2,560 the frame outputs.
+    [Theory]
+    [InlineData(1332u, 132300)]
+    [InlineData(2000u, 131632)]
+    [InlineData(3000u, 131072)]
+    public void AnEndTrimOfTheLastFrameIsCutFromItsOutput(uint trim, long expected)
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        Node root = WmaStream.StreamNode(stream.RunPro());
+        Node at = WmaStream.Child(Assert.Single(Count(root, "Frames")).Children[^1], "Trim");
+        Node packet = Assert.Single(Count(root, "Packets")).Children[^1];
+        WmaStream.SetBits(stream.Objects[9], (int)((at.Offset - packet.Offset) * 8) + (at.BitOffset ?? 0) + 3, 12, trim);
+        Assert.Equal(expected, stream.RunPro().Streams[0].Samples);
+    }
+
+    // The conditions of the rule: a stream that fails one keeps the frames' count (the first frame is not output, then the trims). Each damaged copy
+    // is also what the Windows runs have no figures for.
+    [Fact]
+    public void ALossKeepsTheFramesCount()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        stream.Objects[2][0] = (byte)((stream.Objects[2][0] & 0x0F) | 0xA0);
+        CodecContext context = stream.RunPro();
+        Assert.Equal(131788 - (2 * 2048), context.Streams[0].Samples);
+        Assert.StartsWith("The samples counted from the frames", WmaStream.Child(WmaStream.Child(WmaStream.StreamNode(context), "Statistics"), "Samples").Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AShortObjectKeepsTheFramesCount()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        stream.Objects[9] = stream.Objects[9][..100];
+        CodecContext context = stream.RunPro();
+        Assert.StartsWith("The samples counted from the frames", WmaStream.Child(WmaStream.Child(WmaStream.StreamNode(context), "Statistics"), "Samples").Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ALongObjectKeepsTheFramesCount()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        stream.Objects[1] = [.. stream.Objects[1], .. new byte[50]];
+        Assert.Equal(131788, stream.RunPro().Streams[0].Samples);
+    }
+
+    [Fact]
+    public void AnInvalidFrameKeepsTheFramesCount()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        uint length = WmaStream.GetBits(stream.Objects[0], 22, 16);
+        WmaStream.SetBits(stream.Objects[0], 22, 16, length + 1);
+        CodecContext context = stream.RunPro();
+        Assert.StartsWith("The samples counted from the frames", WmaStream.Child(WmaStream.Child(WmaStream.StreamNode(context), "Statistics"), "Samples").Description, StringComparison.Ordinal);
+    }
+
+    // The stream cut to its first packet: the frames in it end with a trailer bit of 0, so nothing is lost, and the count is the rule's for eight frames.
+    [Fact]
+    public void AStreamCutAfterAWholeFrameStillFollowsTheRule()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        stream.Objects = [stream.Objects[0]];
+        CodecContext context = stream.RunPro();
+        Assert.StartsWith("The samples Microsoft's decoder outputs", WmaStream.Child(WmaStream.Child(WmaStream.StreamNode(context), "Statistics"), "Samples").Description, StringComparison.Ordinal);
+    }
+
+    // A stream of one frame has no frame before the last to take its output from: the frames' count stays. The first packet's first frame is made the
+    // last: its trailer bit cleared and the length prefix of the frame after it zeroed.
+    [Fact]
+    public void AStreamOfOneFrameKeepsTheFramesCount()
+    {
+        WmaStream stream = WmaStream.LoadPro();
+        int frameBits = (int)WmaStream.GetBits(stream.Objects[0], 22, 16);
+        WmaStream.SetBits(stream.Objects[0], 22 + frameBits - 1, 1, 0);
+        stream.Objects = [stream.Objects[0]];
+        CodecContext context = stream.RunPro();
+        Node statistics = WmaStream.Child(WmaStream.StreamNode(context), "Statistics");
+        Assert.Equal("1", WmaStream.Child(statistics, "Frames").Value!.ToString());
+        Assert.StartsWith("The samples counted from the frames", WmaStream.Child(statistics, "Samples").Description, StringComparison.Ordinal);
+        Assert.Equal(0, context.Streams[0].Samples);
     }
 
     // The sequence number of packet 2 changed: the packet and the one after it show a gap, and a decoder drops the frame that crosses into each
