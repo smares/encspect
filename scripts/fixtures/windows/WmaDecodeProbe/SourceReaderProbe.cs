@@ -107,6 +107,9 @@ public static class SourceReaderProbe
         }
 
         int blockAlign = 0;
+        // The runs of constant output format in reading order; a change of the current media type starts a new one.
+        var runs = new List<Dictionary<string, object?>>();
+        Set("runs", runs);
         void ReadOutputType()
         {
             if (reader.GetCurrentMediaType(Native.FirstAudioStream, out var current) >= 0)
@@ -117,6 +120,14 @@ public static class SourceReaderProbe
                 {
                     blockAlign = (int)d["blockAlign"]!;
                     Set("outputFormat", d);
+                    string key = $"{d.GetValueOrDefault("sampleRate")} Hz, {d.GetValueOrDefault("channels")} channels";
+                    lock (Gate)
+                    {
+                        if (runs.Count == 0 || (string)runs[^1]["key"]! != key)
+                        {
+                            runs.Add(new Dictionary<string, object?> { ["key"] = key, ["rate"] = d.GetValueOrDefault("sampleRate"), ["channels"] = d.GetValueOrDefault("channels"), ["samples"] = 0L, ["outputs"] = 0 });
+                        }
+                    }
                 }
             }
         }
@@ -157,6 +168,14 @@ public static class SourceReaderProbe
                 read["frames"] = frames;
                 totalFrames += frames;
                 totalBytes += length;
+                lock (Gate)
+                {
+                    if (runs.Count > 0)
+                    {
+                        runs[^1]["samples"] = (long)runs[^1]["samples"]! + frames;
+                        runs[^1]["outputs"] = (int)runs[^1]["outputs"]! + 1;
+                    }
+                }
                 samples++;
                 sample.GetSampleFlags(out uint sampleFlags);
                 if (sampleFlags != 0)

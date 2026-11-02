@@ -13,6 +13,8 @@ name: Cross-checks by the formats' official decoders
 #             samples (rollout step 4)
 #   macos     Core Audio (AudioToolbox) through macos/audiotoolbox_probe.c: ExtAudioFile on the file and AudioConverter fed the units, over every AAC, AC-3 and E-AC-3 fixture,
 #             the variants of a fixed list of undamaged files and the downloaded samples (rollout step 5)
+#   windows   Media Foundation (windows-2025) through scripts/fixtures/windows/WmaDecodeProbe: the Source Reader on the file and the AAC decoder MFT fed the units, over every
+#             AAC fixture, the variants of a fixed list of undamaged files and the downloaded samples (rollout step 6)
 #   compare   the comparison of the records of every decoder job
 #   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
@@ -186,10 +188,55 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+  windows:
+    name: Media Foundation on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      # The same minor version of Python as the other jobs (3.12; the patch version differs and is recorded), so that the unit lists and the derived variants are made the same way.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      # The probe of the WMA check, grown by the AAC decoder MFT path of rollout step 1: Microsoft's decoders are black boxes, only their documented interfaces and return codes are used.
+      - name: Build the probe
+        shell: bash
+        run: dotnet publish scripts/fixtures/windows/WmaDecodeProbe -c Release -o probe-bin
+
+      # The samples that are pinned by SHA-256 and never committed; one that no address serves is listed and skipped. The folder holds media and is not uploaded.
+      - name: Download the AAC samples
+        shell: bash
+        timeout-minutes: 30
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python -I scripts/fixtures/fetch_aac_samples.py build/aac-samples 1200 | tee out-aac-fetch.txt
+
+      - name: Decode the AAC files, the variants and the samples with Media Foundation
+        shell: bash
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 20
+        run: |
+          python -I scripts/fixtures/official_decode.py windows --out out-mf --probe probe-bin/wma-decode-probe.exe --downloaded build/aac-samples
+          cp out-aac-fetch.txt out-mf/fetch.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-windows
+          path: out-mf
+          retention-days: 30
+          if-no-files-found: error
+
   compare:
     name: Comparison with the analyzer and ffmpeg on ubuntu-26.04
     runs-on: ubuntu-26.04
-    needs: [linux, macos]
+    needs: [linux, macos, windows]
     if: always()
     timeout-minutes: 80
     steps:

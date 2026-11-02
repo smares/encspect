@@ -28,6 +28,11 @@ AudioConverter fed the units of the unit list one at a time with the file's stre
 
   official_decode.py coreaudio --out DIR --probe PROGRAM [--downloaded DIR]   (PROGRAM is macos/audiotoolbox_probe built with clang)
 
+Media Foundation (Windows) has three runs per file (rollout step 6), each in a process of its own: the Source Reader on the file (the reader), and the AAC decoder MFT fed the
+units of the unit list one at a time, with timestamps on the input samples (`transform`) and without (`transformWithoutTimestamps`, the control run); the records are `mf-aac`:
+
+  official_decode.py windows --out DIR --probe PROGRAM [--downloaded DIR]   (PROGRAM is scripts/fixtures/windows/WmaDecodeProbe published: wma-decode-probe.exe)
+
 TTA has one path, the reader `tta -d` (`tta -dp secret` for the file written with that password, beside a run without the password): TTA has no direct path
 (decision 6). Its samples are counted from the bytes written after the WAVE header with the channel count and bits per sample of the WAVE header it wrote, never
 from the declared size, which only checks completeness: fewer data bytes than the header declares is a stop. A nonzero exit status, a crash, a timeout or a missing output file is a stop with its reason, and the sample count of what a stopped run
@@ -735,13 +740,14 @@ def run_aac(args):
 
 # ---- Core Audio (macOS) ------------------------------------------------------------------------------------------------------
 
-# The undamaged files whose derived variants macOS runs (the design's subset of at most 20 per format: one per encoder and object type); the other variants run on Linux only.
-MAC_VARIANT_SOURCES = (
+# The undamaged files whose derived variants macOS and Windows run (the design's subset of at most 20 per format: one per encoder and object type); the other variants run on Linux only.
+PLATFORM_VARIANT_SOURCES = (
     "apple-lc-adts-cbr-st44.aac", "apple-lc-m4a-cbr-st44.m4a", "apple-lc-m4a-cbr-mono44.m4a", "apple-he-m4a-cbr-st44.m4a", "apple-hev2-m4a-cbr-st44.m4a",
     "faac-1.40-adts.aac", "faac-2.2.m4a", "faac-2.2-he-adts.aac", "faac-2.2-he.m4a",
     "fdkaac-lc.m4a", "fdkaac-he.m4a", "fdkaac-he-v2.m4a", "fdkaac-he-adts.aac", "fdkaac-crc-mono.aac",
     "ffmpeg-adts.aac", "ffmpeg-lc.m4a", "ffmpeg-mono-faststart.m4a", "mp4box-mux.m4a", "exhale.m4a",
 )
+MAC_VARIANT_SOURCES = PLATFORM_VARIANT_SOURCES
 AC3_FOLDERS = ("ac3",)
 
 
@@ -948,6 +954,289 @@ def run_coreaudio(args):
     return 0
 
 
+# ---- Media Foundation (Windows) ----------------------------------------------------------------------------------------------
+
+HRESULT_FAILED = 0x80000000
+
+
+def failed_hresult(text):
+    """True for an HRESULT written as the probe writes it (0xC00D6D72) that is a failure."""
+    return isinstance(text, str) and text.startswith("0x") and len(text) == 10 and int(text, 16) & HRESULT_FAILED != 0
+
+
+def windows_stop(node):
+    """How a probe child ended when it did not finish by itself: crash, timeout (the parent's) or stall (the child's own budget), else None."""
+    if node.get("crashed"):
+        return "crash"
+    if node.get("timedOut"):
+        return "timeout"
+    if node.get("stalled"):
+        return "stall"
+    return None
+
+
+def windows_runs(node):
+    return [{"rate": r["rate"], "channels": r["channels"], "samples": r["samples"], "outputs": r["outputs"]} for r in node.get("runs") or [] if r.get("samples")]
+
+
+def windows_reader_result(node):
+    """The record of the Source Reader run: the file opened by MFCreateSourceReaderFromURL, the first audio stream set to 16-bit PCM (then 32-bit float, then 24-bit), read
+    to the end. The reader reaches the end when it returns the end-of-stream flag; the first failed read stops it (a ReadSample after one can stall)."""
+    stop = windows_stop(node)
+    opened = bool(node.get("opened"))
+    ok = opened and bool(node.get("outputSet"))
+    total = node.get("totalSamples", 0)
+    reason = None
+    if stop:
+        stopped = stop
+    elif "exception" in node:
+        stopped, reason = "error", node["exception"]
+    elif not opened:
+        stopped, reason = "error", "the file did not open (%s)" % node.get("openHresult", node.get("startupHresult"))
+    elif not ok:
+        stopped, reason = "error", "no PCM output type could be set for the first audio stream (%s)" % ", ".join(
+            "%s/%s-bit %s" % (a.get("tag"), a.get("bits"), a.get("setHresult")) for a in node.get("outputAttempts", [])) if node.get("outputAttempts") else "no PCM output type could be set"
+    elif node.get("endOfStream"):
+        stopped = "end"
+    elif str(node.get("stoppedBy", "")).startswith("the first failed read"):
+        stopped, reason = "error", node["stoppedBy"]
+    else:
+        stopped, reason = "limit", node.get("stoppedBy")
+    result = {
+        "tool": "wma-decode-probe sr",
+        "opened": opened,
+        "openStatus": node.get("openHresult"),
+        "outputSet": ok,
+        "nativeType": node.get("nativeType"),
+        "outputFormat": node.get("outputFormat"),
+        "runs": windows_runs(node) if ok else [],
+        "readCount": node.get("calls"),
+        "sampleCount": node.get("sampleCount"),
+        "errorCount": node.get("errorCount"),
+        "failedReads": [{"index": i, "hresult": r["hresult"], "flags": r.get("flagNames")} for i, r in enumerate(node.get("reads", [])) if failed_hresult(r.get("hresult")) or "error" in (r.get("flagNames") or [])][:8],
+        "stoppedBy": stopped,
+        "elapsedMs": node.get("elapsedMs"),
+    }
+    if reason:
+        result["reason"] = reason
+    if stop == "crash":
+        result["exit"] = node.get("exitCode")
+        result["output"] = (node.get("output") or "")[-400:]
+    elif stop == "stall":
+        result["stalledInReadSample"] = node.get("inReadSample")
+        result["stalledAfterReads"] = node.get("calls")
+    result["totalSamples" if stopped == "end" else "partialSamples"] = total if ok else 0
+    if stopped == "end" and ok and sum(r["samples"] for r in result["runs"]) != total:
+        result["stoppedBy"] = "limit"
+        result["notes"] = ["the probe counted %s frames and its runs add up to %s" % (total, sum(r["samples"] for r in result["runs"]))]
+        result.pop("totalSamples")
+        result["partialSamples"] = total
+    return result
+
+
+MF_NOTE_LIMIT = 2000
+
+
+def windows_unit_result(u):
+    """decoded, no output, refused (the input call failed, after the retry), error (the output call failed) or not fed (no byte in the file) for a unit of the transform run."""
+    if u.get("fed") is False or u.get("lockFailed"):
+        return "not fed"
+    status = u.get("retryHresult") or u.get("inputHresult")
+    if failed_hresult(status):
+        return "refused"
+    if any(failed_hresult(t) for t in (u.get("output") or "").split(",")):
+        return "error"
+    return "decoded" if u.get("frames", 0) > 0 else "no output"
+
+
+def windows_transform_result(node, units_expected):
+    """The record of one run of the AAC decoder transform fed the unit list (MSAudDecMFT, CLSID 32d186a7-218f-4c75-8876-dd77273a8999): one unit per ProcessInput (a cut unit from its
+    first byte to the last the file holds, never padded), the output read after every unit, the end of the stream and the drain. A transform holds one frame back, so its last frame
+    comes with the drain; the total is the units' frames and the drain's."""
+    stop = windows_stop(node)
+    decoder = node.get("decoder")
+    media_type_refused = bool(node.get("refusedMediaType"))
+    output_set = bool(node.get("outputSet"))
+    opened = bool(decoder) and output_set
+    reason = None
+    if stop:
+        stopped = stop
+    elif "exception" in node:
+        stopped, reason = "error", node["exception"]
+    elif node.get("skipped"):
+        stopped, reason = "error", node["skipped"]
+    elif media_type_refused:
+        stopped, reason = "error", "no decoder accepts the input media type (%s)" % "; ".join("%s: %s" % (a.get("config"), a.get("setInputHresult") or a.get("error") or "type not built") for a in node.get("inputAttempts", []))
+    elif not output_set:
+        stopped, reason = "error", "no 16-bit PCM output type was accepted (%s)" % (node.get("outputSetHresult") or "none offered")
+    elif node.get("stoppedBy") not in (None, "end"):
+        stopped, reason = "limit", node["stoppedBy"]
+    elif "totalSamples" not in node:
+        stopped, reason = "error", "the run left no total"
+    else:
+        stopped = "end"
+    units, decoded, nothing, not_fed, refused, errors = [], 0, 0, 0, 0, 0
+    silent, first_output = [], None
+    for i, u in enumerate(node.get("units", [])):
+        result = windows_unit_result(u)
+        if result == "decoded":
+            decoded += 1
+            first_output = i if first_output is None else first_output
+        elif result == "no output":
+            nothing += 1
+            if first_output is not None:
+                silent.append(u["index"])
+        elif result == "not fed":
+            not_fed += 1
+        elif result == "refused":
+            refused += 1
+        else:
+            errors += 1
+        if result not in ("decoded", "no output") and len(units) < MF_NOTE_LIMIT:
+            entry = {"index": u["index"], "offset": u["offset"], "declared": u["declared"], "received": u["received"], "result": result, "frames": u.get("frames", 0)}
+            if result == "refused":
+                entry["status"] = u.get("retryHresult") or u.get("inputHresult")
+            elif result == "error":
+                entry["status"] = next(t for t in u["output"].split(",") if failed_hresult(t))
+            units.append(entry)
+    drain = node.get("drain") or {}
+    total = node.get("totalSamples", node.get("partialSamples", 0))
+    result = {
+        "tool": "wma-decode-probe " + ("mft" if node.get("withTimestamps", True) else "mft-nots"),
+        "opened": opened,
+        "mediaTypeRefused": media_type_refused,
+        "decoder": decoder,
+        "input": {"config": node.get("inputConfigUsed"), **(node.get("asc") or {})} if node.get("asc") else None,
+        "outputFormat": node.get("outputFormat"),
+        "withTimestamps": node.get("withTimestamps"),
+        "runs": windows_runs(node) if opened else [],
+        "unitCount": units_expected,
+        "unitsFed": node.get("unitsFed", 0),
+        "decodedUnits": decoded, "noOutputUnits": nothing, "notFedUnits": not_fed, "refusedUnits": refused, "errorUnits": errors,
+        "silentUnits": silent[:64],
+        "units": units,
+        "unitFrames": node.get("codedSamples"),
+        "drainFrames": drain.get("frames"),
+        "errorCount": node.get("errorCount"),
+        "stoppedBy": stopped,
+    }
+    if reason:
+        result["reason"] = reason
+    if stop == "crash":
+        result["exit"] = node.get("exitCode")
+        result["output"] = (node.get("output") or "")[-400:]
+    if stopped == "end" and opened:
+        if sum(r["samples"] for r in result["runs"]) != total:
+            result["stoppedBy"] = stopped = "limit"
+            result["notes"] = ["the probe counted %s frames and its runs add up to %s" % (total, sum(r["samples"] for r in result["runs"]))]
+    result["totalSamples" if stopped == "end" else "partialSamples"] = total if opened else 0
+    return result
+
+
+def windows_probe_run(exe, path, units_dir, work, timeout=30):
+    """One call of the probe on one file: its three children (Source Reader, transform with timestamps, transform without) each get `timeout` seconds. Returns (record, environment)."""
+    import subprocess
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        completed = subprocess.run([str(exe), "--format", "aac", "--units", str(units_dir), "--out", str(work), "--timeout", str(timeout), str(path)],
+                                   capture_output=True, text=True, errors="replace", timeout=3 * timeout + 60)
+        output = (completed.stdout + completed.stderr)[-400:]
+        code = completed.returncode
+    except subprocess.TimeoutExpired:
+        return None, {"error": "the probe did not finish within %d seconds" % (3 * timeout + 60)}
+    except OSError as error:
+        return None, {"error": str(error)}
+    found = sorted((work / "records").glob("*.json")) if (work / "records").is_dir() else []
+    env_file = work / "environment.json"
+    environment = json.loads(env_file.read_text(encoding="utf-8")) if env_file.exists() else {}
+    if not found:
+        return None, {"error": "the probe wrote no record (exit %s): %s" % (code, output), **environment}
+    return json.loads(found[0].read_text(encoding="utf-8")), environment
+
+
+def windows_failed_paths(why, summary):
+    failed = {"opened": False, "stoppedBy": "error", "reason": why, "runs": [], "partialSamples": 0}
+    paths = {"reader": {**failed, "tool": "wma-decode-probe sr"}}
+    if summary["units"]:
+        paths["transform"] = {**failed, "tool": "wma-decode-probe mft", "unitCount": summary["units"]}
+        paths["transformWithoutTimestamps"] = {**failed, "tool": "wma-decode-probe mft-nots", "unitCount": summary["units"]}
+    return paths
+
+
+def run_windows(args):
+    out = pathlib.Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "records").mkdir(exist_ok=True)
+    records = Records(out)
+    tmp = pathlib.Path(tempfile.mkdtemp(prefix="odw-"))
+    units_dir = tmp / "units"
+    units_dir.mkdir()
+    started = time.time()
+    exe = pathlib.Path(args.probe).resolve()
+    env = {"platform": "windows", "format": "mediafoundation", "machine": platform.machine(), "windows": platform.platform(), "version": platform.version(),
+           "imageOS": os.environ.get("ImageOS"), "imageVersion": os.environ.get("ImageVersion"), "runId": os.environ.get("GITHUB_RUN_ID"), "commit": os.environ.get("GITHUB_SHA"),
+           "python": sys.version, "probe": str(exe.name)}
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    manifest = [m for m in derive_variants.write_aac(tmp / "variants") if pathlib.Path(m["source"]).name in PLATFORM_VARIANT_SOURCES]
+    (out / "variants.json").write_text(json.dumps({"format": "aac", "rules": list(derive_variants.AAC_RULES), "sources": list(PLATFORM_VARIANT_SOURCES), "variants": manifest}, indent=1) + "\n",
+                                       encoding="utf-8")
+    committed = [p for folder in AAC_FOLDERS for p in probe.files(folder, AAC_EXTENSIONS)]
+    downloaded = sorted(p for p in pathlib.Path(args.downloaded).iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS) if args.downloaded else []
+    work = [(p, None) for p in committed] + [(tmp / "variants" / m["name"], {"from": m["source"], "fromSha256": m["sourceSha256"], "rule": m["rule"]}) for m in manifest] \
+        + [(p, {"downloaded": True}) for p in downloaded]
+    environments, counter = [], [0]
+    lock = threading.Lock()
+
+    def case(item):
+        path, derived = item
+        record = file_record(path, "mf-aac", derived)
+        record["folder"] = "derived" if derived and "rule" in derived else "downloaded" if derived else path.parent.name
+        tsv, summary = probe.unit_list(path, units_dir)
+        record["unitList"] = summary
+        reason = aac_skip_reason(summary)
+        if reason:
+            record["notFed"] = reason
+            record["paths"] = {}
+            records.write("mf-aac", path, record)
+            return
+        with lock:
+            counter[0] += 1
+            work_dir = tmp / ("probe-%d" % counter[0])
+        node, environment = windows_probe_run(exe, path, units_dir, work_dir)
+        with lock:
+            environments.append(environment)
+        if node is None:
+            record["paths"] = windows_failed_paths(environment.get("error"), summary)
+        else:
+            paths = {"reader": windows_reader_result(node["sourceReader"])}
+            if summary["units"]:
+                paths["transform"] = windows_transform_result(node["direct"], summary["units"])
+                paths["transformWithoutTimestamps"] = windows_transform_result(node["directWithoutTimestamps"], summary["units"])
+            record["paths"] = paths
+        shutil.rmtree(work_dir, ignore_errors=True)
+        records.write("mf-aac", path, record)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        for future in [pool.submit(case, item) for item in work]:
+            future.result()
+    shutil.rmtree(tmp, ignore_errors=True)
+    good = next((e for e in environments if "windows" in e and "error" not in e), {})
+    decoders, modules = {}, {}
+    for e in environments:
+        decoders.update(e.get("decodersUsed") or {})
+        modules.update(e.get("loadedModules") or {})
+    for key in ("productName", "displayVersion", "currentBuild", "updateBuildRevision", "osVersion", "architecture", "dotnet", "systemDlls"):
+        env[key] = good.get(key)
+    env["osDescription"] = good.get("windows")
+    env["decodersUsed"] = decoders
+    env["loadedModules"] = modules
+    env["elapsedSeconds"] = round(time.time() - started)
+    env["records"] = records.count
+    (out / "environment.json").write_text(json.dumps(env, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return 0
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="format", required=True)
@@ -969,8 +1258,12 @@ def main(argv):
     mac.add_argument("--out", required=True)
     mac.add_argument("--probe", required=True)
     mac.add_argument("--downloaded")
+    win = sub.add_parser("windows")
+    win.add_argument("--out", required=True)
+    win.add_argument("--probe", required=True)
+    win.add_argument("--downloaded")
     args = parser.parse_args(argv)
-    return {"ogg": run_ogg, "tta": run_tta, "aac": run_aac, "coreaudio": run_coreaudio}[args.format](args)
+    return {"ogg": run_ogg, "tta": run_tta, "aac": run_aac, "coreaudio": run_coreaudio, "windows": run_windows}[args.format](args)
 
 
 if __name__ == "__main__":

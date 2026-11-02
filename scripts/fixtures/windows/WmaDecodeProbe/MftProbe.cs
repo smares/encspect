@@ -295,7 +295,11 @@ public static class MftProbe
 
         int blockAlign = 4;
         string formatKey = "";
+        int outRate = 0, outChannels = 0;
         var byFormat = new Dictionary<string, long>();
+        // The runs of constant output format in output order (a stream change starts a new one); byFormat adds a format that comes back to its earlier total.
+        var runs = new List<Dictionary<string, object?>>();
+        set("runs", runs);
         var offered = new List<Dictionary<string, object?>>();
         set("offeredOutputTypes", offered);
 
@@ -322,6 +326,8 @@ public static class MftProbe
                     {
                         blockAlign = Math.Max(1, (int)d["blockAlign"]!);
                         formatKey = $"{d.GetValueOrDefault("sampleRate")} Hz, {d.GetValueOrDefault("channels")} channels";
+                        outRate = d.GetValueOrDefault("sampleRate") is int rateValue ? rateValue : 0;
+                        outChannels = d.GetValueOrDefault("channels") is int channelsValue ? channelsValue : 0;
                         set("outputFormat", d);
                         Marshal.ReleaseComObject(type);
                         return true;
@@ -401,6 +407,17 @@ public static class MftProbe
                         sample.GetTotalLength(out uint length);
                         frames += length / blockAlign;
                         byFormat[formatKey] = byFormat.GetValueOrDefault(formatKey) + length / blockAlign;
+                        lock (SourceReaderProbe.Gate)
+                        {
+                            if (runs.Count == 0 || (string)runs[^1]["key"]! != formatKey)
+                            {
+                                runs.Add(new Dictionary<string, object?> { ["key"] = formatKey, ["rate"] = outRate, ["channels"] = outChannels, ["samples"] = 0L, ["outputs"] = 0 });
+                            }
+
+                            runs[^1]["samples"] = (long)runs[^1]["samples"]! + length / blockAlign;
+                            runs[^1]["outputs"] = (int)runs[^1]["outputs"]! + 1;
+                        }
+
                         Marshal.ReleaseComObject(sample);
                         results.Add("ok");
                     }
