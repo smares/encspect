@@ -285,6 +285,15 @@ internal struct FrameOutcome
 
     public int TrimStart;
 
+    // Whether the frame states a start trim (also one of 0).
+    public bool HasStartTrim;
+
+    // The largest, over the channels, of the first and of the last subframe's size (Professional): the only choice the Windows runs could not reject
+    // (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
+    public int FirstSize;
+
+    public int LastSize;
+
     public int TrimEnd;
 
     // The samples of the subframes read to their end that hold channel 0 (the samples a decoder outputs before the one that failed).

@@ -116,6 +116,15 @@ class CheckTests(unittest.TestCase):
         new = report([OLD_STATS[0], node("Coded Bandwidth", value="none"), *OLD_STATS[2:]])
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
 
+    def test_a_stream_field_that_the_change_lists_may_differ_and_no_other(self):
+        old = report(OLD_STATS, streams=[{"nodes": [[1]], "samples": 10, "duration": 1.0, "codec": "WMA"}])
+        new = report(OLD_STATS, streams=[{"nodes": [[1]], "samples": 12, "duration": 1.2, "codec": "WMA"}])
+        change = {"changed": [{"scope": "stream", "fields": ["samples", "duration"]}]}
+        self.assertEqual(self.check(old, new, change), [])
+        other = report(OLD_STATS, streams=[{"nodes": [[1]], "samples": 12, "duration": 1.2, "codec": "WMB"}])
+        self.assertTrue(self.check(old, other, change))
+        self.assertTrue(self.check(old, new, {"changed": [{"scope": "stream", "fields": ["samples"]}]}))
+
     def test_a_rename_that_did_not_happen_fails_whatever_the_value(self):
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
                   "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Coded Bandwidth"}],

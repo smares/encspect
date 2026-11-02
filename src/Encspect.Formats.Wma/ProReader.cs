@@ -103,6 +103,12 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
             return Finish(ref result, ProFault.TileHeader, start);
         }
 
+        for (int c = 0; c < _channels; c++)
+        {
+            result.FirstSize = Math.Max(result.FirstSize, _lengths[c * (MaxPerChannel + 1)]);
+            result.LastSize = Math.Max(result.LastSize, _lengths[(c * (MaxPerChannel + 1)) + _count[c] - 1]);
+        }
+
         if (_channels > 1)
         {
             int at = bits.Position;
@@ -131,6 +137,7 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
         {
             if (bits.ReadBit() != 0)
             {
+                result.HasStartTrim = true;
                 result.TrimStart = (int)bits.Read(p.TrimBits);
             }
 
@@ -145,6 +152,7 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
         trace.Put(hasTrim ? 1 : 0);
         trace.Put(result.TrimStart);
         trace.Put(result.TrimEnd);
+        trace.Put(result.HasStartTrim ? 1 : 0);
 
         ProFault fault = ReadSubframes();
         if (fault != ProFault.None)

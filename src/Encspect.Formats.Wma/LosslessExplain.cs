@@ -45,7 +45,7 @@ internal static class LosslessExplain
     public const string StatLpc = "How many subframes carry an LPC filter.";
     public const string StatCascaded = "How many cascaded filters each channel has in seekable subframes.";
     public const string StatSamples = "The samples a decoder outputs for the stream: each frame's samples less its trim at the end. The first frame is output as the others are.";
-    public const string StatTrimmedSamples = "The samples the trims at the ends of the frames cut.";
+    public const string StatTrimmedSamples = "The sum of the end trims the frames state.";
     public const string StatSampleSize = "The sample size the codec-specific data states.";
 
     public static string Reason(LosslessFault fault) => fault switch

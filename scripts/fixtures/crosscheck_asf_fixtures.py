@@ -51,7 +51,9 @@ reading every superframe without error and outputting exactly the analyzer's sam
 read. Professional and Lossless are read, and for their Microsoft-encoded fixtures the golden report is held to ffmpeg's
 decoder by the sample count of each frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc)
 are the frame's samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the
-overlap; Lossless outputs it), and their total is the stream's samples. Frame boundaries in the file are not compared: framecrc
+overlap; Lossless outputs it), and their total is ffmpeg's count. The golden report's samples are that total, except for a Professional stream with
+the length prefix and no finding of the WMA parser, whose samples are the rule of Microsoft's decoder (pro_rule_samples), which is 512 more where the
+last frame ends in two subframes of 1,024 samples (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs"). Frame boundaries in the file are not compared: framecrc
 gives no input offsets, and every frame but the last outputs the same number of samples.
 """
 
@@ -493,15 +495,52 @@ def trim_of(frame):
     trim = next((c.get("value", "none") for c in frame.get("children", []) if c["name"] == "Trim"), "none")
     if trim == "none":
         return 0, 0
-    match = re.fullmatch(r"(\d+) samples? at the start, (\d+) at the end", trim)
-    return int(match.group(1)), int(match.group(2))
+    match = re.fullmatch(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim)
+    return int(match.group(1) or 0), int(match.group(2))
+
+
+def frame_sizes(frame, length):
+    """The first and last subframe size of each channel of a Professional Frame node: the Tile Header's "Channel c Subframes" lists,
+    or one subframe of the whole frame where it has none."""
+    tile = next(c for c in frame["children"] if c["name"] == "Tile Header")
+    lists = [[int(x) for x in c["value"].split(",")] for c in tile.get("children", [])] or [[length]]
+    return [x[0] for x in lists], [x[-1] for x in lists]
+
+
+def pro_rule_samples(report, frames, length):
+    """The samples Microsoft's decoder outputs by the rule of docs/design/wma-pro-format.md ("What Encspect reports"), worked out from the golden
+    report's frames, or None where the rule does not apply to the stream: no length prefix, a finding of the WMA parser, no frame read, an end trim
+    in a frame but the last or a start trim in a frame but the first, or a one-frame stream with an end trim."""
+    codec = "Windows Media Audio Professional"
+    if named(report, "Has Length Prefix", codec) is not True or any(f["code"].startswith("wma.") for f in report["findings"]):
+        return None
+    valid = [f for f in frames if not str(f.get("value", "")).startswith("invalid")]
+    if not valid:
+        return None
+    trims = [trim_of(f) for f in valid]
+    stated = next((c.get("value", "none") for c in valid[0]["children"] if c["name"] == "Trim"), "none")
+    has_start = bool(re.match(r"\d+ samples? at the start", stated))
+    if any(t[0] for t in trims[1:]) or any(t[1] for t in trims[:-1]) or (len(valid) == 1 and trims[0][1]):
+        return None
+    n = len(valid)
+    first, last = frame_sizes(valid[0], length)[0], frame_sizes(valid[-1], length)[1]
+    end = n * length + (length - max(last)) // 2
+    if n >= 2:
+        previous_end = (n - 1) * length + (length - max(frame_sizes(valid[-2], length)[1])) // 2
+        end_cut = min(trims[-1][1], end - previous_end)
+    else:
+        end_cut = trims[-1][1]
+    start_cut = trims[0][0] if has_start else length // 2 + max(first) // 2
+    return max(0, end - start_cut - end_cut)
 
 
 def check_wma_frames(path, codec, problems):
     """The sample count of each frame ffmpeg's decoder outputs (framecrc's duration column) against the golden report's frames; where the
-    frames start and end in the file is not compared.
+    frames start and end in the file is not compared. Their total is ffmpeg's count, which the frames give (the frames' count).
     Professional's first frame only fills the overlap of the transform and is not output; a trim of a frame's whole length or more removes
-    the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied)."""
+    the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied).
+    The golden report's samples are ffmpeg's count, except for a Professional stream the rule of Microsoft's decoder applies to (pro_rule_samples):
+    there they are that rule's figure, which differs from ffmpeg's where the last frame ends in subframes smaller than the frame."""
     report = golden_report(path)
     if report is None:
         return
@@ -531,9 +570,11 @@ def check_wma_frames(path, codec, problems):
     if durations != expected:
         first = next((i for i, (a, b) in enumerate(zip(durations, expected)) if a != b), min(len(durations), len(expected)))
         problems.append(f"ffmpeg outputs {len(durations)} frames of {sum(durations)} samples, the golden report's frames give {len(expected)} of {sum(expected)} (the first difference is frame {first})")
-    samples = sum(durations)
-    if report["streams"][0]["samples"] != samples:
-        problems.append(f"the golden report has {report['streams'][0]['samples']} samples, ffmpeg outputs {samples}")
+    wanted = pro_rule_samples(report, frames.get("children", []), length) if codec == "Windows Media Audio Professional" else None
+    if wanted is None:
+        wanted = sum(durations)
+    if report["streams"][0]["samples"] != wanted:
+        problems.append(f"the golden report has {report['streams'][0]['samples']} samples, {'the rule of Microsoft' + chr(39) + 's decoder gives' if wanted != sum(durations) else 'ffmpeg outputs'} {wanted}")
 
 
 def main():
