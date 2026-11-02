@@ -490,10 +490,10 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     sizes, long_bytes, short_bytes, long_sizes, short_sizes = set(), 0, 0, [], []
     mode_counts = {}
     after_gap = after_skip = False
-    first_offset = None
+    first_offset = first_trim_offset = None
     anchor = None  # (position, decoded) of the last granule position taken
     count_base = None
-    end_trim = 0
+    end_trim = gap_trim = 0
     beyond = large = False
     first_position_packet = None
     for index, (offset_in_file, data, ranges) in enumerate(packets):
@@ -552,44 +552,47 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             for at, granule, is_end in positions:
                 if at != index or not has_time:
                     continue
-                gap = after_gap or after_skip
+                lost = anchor is None or after_gap or after_skip
+                counted = decoded - (count_base if count_base is not None else (decoded if anchor is not None else 0))
                 if anchor is None:
-                    first_offset = max(0, granule - decoded) if is_end else granule - decoded
-                    anchor = (decoded if is_end and granule < decoded else granule, decoded)
+                    offset = granule - decoded
+                    first_offset = max(0, offset) if is_end else offset
+                    first_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, first_offset))
+                    first_trim_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, granule - counted))
                     first_position_packet = index
-                elif gap:
-                    anchor = (granule, decoded)
+                elif lost:
+                    if not is_end and counted > granule:
+                        gap_trim += min(counted - granule, last_returned)
                 elif not is_end and anchor[0] + (decoded - anchor[1]) != granule:
                     findings.append("vorbis.granule-inconsistent")
-                    anchor = (granule, decoded)
                 if is_end:
-                    trim = (decoded - (count_base if count_base is not None else decoded)) - granule if gap else anchor[0] + (decoded - anchor[1]) - granule
-                    if trim < 0 and not gap:
+                    trim = (counted if lost else anchor[0] + (decoded - anchor[1])) - granule
+                    if trim < 0 and not lost:
                         beyond = True
                     # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
                     if trim > last_returned:
                         large = True
                         trim = last_returned
                     end_trim += max(trim, 0)
+                anchor = (granule, decoded)
                 after_gap = after_skip = False
                 count_base = None
-
     start_trim = 0
     if first_offset:
         if first_position_packet != 1:
             findings.append("vorbis.start-page-layout")
         if first_offset > 0:
             findings.append("vorbis.start-offset")
-        else:
-            if -first_offset > first_returned + second_returned:
+        elif first_trim_offset < 0:
+            if -first_trim_offset > first_returned + second_returned:
                 findings.append("vorbis.start-trimming-large")
-            start_trim = min(-first_offset, first_returned + second_returned, decoded)
+            start_trim = min(-first_trim_offset, first_returned + second_returned, decoded)
     if beyond:
         findings.append("vorbis.granule-beyond-packets")
     if large:
         findings.append("vorbis.end-trimming-large")
     trim = end_trim
-    samples = min(max(decoded - start_trim - trim, 0), decoded) if has_time else 0
+    samples = min(max(decoded - start_trim - trim - gap_trim, 0), decoded) if has_time else 0
 
     statistics = None
     long_count, short_count = len(long_sizes), len(short_sizes)
@@ -605,6 +608,8 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 statistics["Start Offset"] = plural(first_offset, "sample", "samples")
                 statistics["Start Trimming"] = plural(start_trim, "sample", "samples")
                 statistics["End Trimming"] = plural(trim, "sample", "samples")
+                if gap_trim:
+                    statistics["Gap Trimming"] = plural(gap_trim, "sample", "samples")
             statistics["Samples"] = plural(samples, "sample", "samples")
             statistics["Duration"] = fmt(samples / rate, 3) + " s"
             statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"

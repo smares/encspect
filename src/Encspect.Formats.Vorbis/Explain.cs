@@ -139,6 +139,7 @@ internal static class Explain
     public const string StartOffset = "The first audio page's granule position less the samples returned up to it: 0 for a stream that starts at its beginning, below 0 where samples are discarded at the start, above where the stream starts later (section A.2).";
     public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned, at most what the first two blocks return (section A.2).";
     public const string EndTrimming = "Samples the packets return beyond the last granule position, which a decoder drops from the end (section A.2).";
+    public const string GapTrimming = "Samples a decoder discards at a page whose granule position, after a gap or a refused packet, is below the samples returned since then, at most what the page's last packet returns (libvorbis, vorbis_synthesis_blockin); the Vorbis I specification does not describe it.";
     public const string Samples = "The samples a decoder outputs: the decoded samples less what the start and end trimming drop.";
     public const string Duration = "The samples over the sample rate, in seconds.";
     public const string StatIsVbr = "Whether the audio packets differ in size, so the bitrate changes from packet to packet.";
