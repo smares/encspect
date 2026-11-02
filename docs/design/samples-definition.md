@@ -1,6 +1,6 @@
 # Samples: what a stream's units declare, and lost samples
 
-Status: draft, revised twice on 2026-11-02 after independent reviews, for the project lead; nothing in it is built.
+Status: approved by the project lead on 2026-11-02, after three independent reviews, with every recommendation of the [open questions](#open-questions) as listed, the two departures from written rules included (question 1: a checksum failure alone is not lost, status `noted`; question 2: packets of damaged Ogg pages are handed over flagged). Nothing in it is built.
 
 - **Checked at:** `main` 465988f (it holds the Ogg and TTA cross-checks, #209 and #210), `fix/wma-pro-trim` 57ed8cb (PR #212), `feat/wma-container-duration` f95f188, `ci/official-decode-aac` fea550f (a change to the comparison script only; the committed `official-decoders.json` equal b03bdfc's).
 - **Figures** were computed by scripts over the committed goldens (`*.report.json`, `*.expected.json`, `*.decode.json`) and the `official-decoders.json` files. A claim no code, golden or document confirms is marked **unverified**.
@@ -8,6 +8,7 @@ Status: draft, revised twice on 2026-11-02 after independent reviews, for the pr
 ## Decided
 
 - **The lead, 2026-11-02:** a stream's `samples` are the samples its units declare, at the sample rate the analyzer determines. Units that are damaged or cannot be decoded stay in `samples`, and their declared samples are reported apart as lost samples. One pull request aligns the formats with goldens.
+- **The lead, 2026-11-02:** every recommendation of the [open questions](#open-questions), as listed there; the status rules of the AAC step stay scoped to AAC, and the [cross-check statuses](#cross-check-statuses) below apply to every format once the alignment lands.
 - **Consequences of it, not separate decisions:** the TTA cut-last-frame `keep` of 2026-11-01 is revisited; WMA Professional's rule (Microsoft's decoder on undamaged streams, PR #212) is the owner's decoder rule that this definition takes for WMA.
 - **Standing rules** that settle two questions the earlier draft left open:
   - [PLAN.md](../PLAN.md) (gaps rule): the measurements count a lost frame's positions as lost samples, a lost first or last frame included. The measurer must therefore see the stream's coded-stage start and end (Decision A below).
@@ -188,7 +189,7 @@ Every format gains `LostSamples`; goldens change only where it is above 0 or `sa
 
 ## Cross-check statuses
 
-**Scope.** The rules decided on 2026-11-02 in [official-decoder-crosschecks.md](official-decoder-crosschecks.md) say "they apply to every format", and that text is unchanged on `ci/official-decode-aac` (fea550f). Narrowing them to AAC (step 4), with this note as the rules for the other formats, is a proposal for the lead; the AAC branch states it that way. The rules below are the proposal for every format. They agree with the decided rules except where marked.
+**Scope.** The rules decided on 2026-11-02 in [official-decoder-crosschecks.md](official-decoder-crosschecks.md) apply to AAC (step 4) only, as #213 states there. The rules below, approved with this note, apply to every format once the alignment lands; they agree with the AAC rules except where marked.
 
 1. **A unit counted by its declared samples and flagged lost, which the reference refuses or outputs nothing for:** `explained`. The script checks that the reference's total equals the coded stage less `LostSamples` and that the refused units are the lost units, matched by offset and length. *Differs from the AAC rule,* which says "flagged" and not "flagged lost": the AAC rule gives `explained` for any flagged unit the reference refuses, a CRC-failing one included.
 2. **The same unit, which the reference conceals:** totals equal, the unit's verdict (concealed against lost) `explained`. A reader that writes audio over a cut (`tta -d` writing a header's count) is this rule.
