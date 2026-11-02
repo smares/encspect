@@ -4,8 +4,45 @@
     "tests/fixtures/ogg/vorbis-granule-errors.report.json"
   ],
   "changed": [
-    {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"], "goldens": ["tests/fixtures/ogg/vorbis-end-trimming-large.report.json"]},
-    {"scope": "finding", "code": "vorbis.granule-inconsistent", "fields": ["message"], "goldens": ["tests/fixtures/ogg/vorbis-granule-errors.report.json"]},
-    {"scope": "finding", "code": "vorbis.granule-beyond-packets", "fields": ["message"], "goldens": ["tests/fixtures/ogg/vorbis-granule-errors.report.json"]}
+    {
+      "scope": "finding",
+      "code": "vorbis.end-trimming-large",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "vorbis.granule-inconsistent",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "vorbis.granule-beyond-packets",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "vorbis.start-trimming-large",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
+      ]
+    }
   ]
 }
