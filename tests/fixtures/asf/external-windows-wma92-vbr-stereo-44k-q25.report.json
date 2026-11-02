@@ -3835,7 +3835,7 @@
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "66 frames, 3.019 s",
+                      "value": "66 frames, 3.030 s",
                       "offset": 4943,
                       "length": 24082,
                       "children": [
@@ -3860,6 +3860,13 @@
                         },
                         {
                           "name": "Samples",
+                          "value": 133632,
+                          "unit": "samples",
+                          "offset": 4943,
+                          "length": 24082
+                        },
+                        {
+                          "name": "Coded Samples",
                           "value": 133120,
                           "unit": "samples",
                           "offset": 4943,
@@ -3867,7 +3874,7 @@
                         },
                         {
                           "name": "Duration",
-                          "value": 3.01859410430839,
+                          "value": 3.030204081632653,
                           "unit": "s",
                           "offset": 4943,
                           "length": 24082
@@ -3895,7 +3902,7 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 63.03331730769231,
+                          "value": 62.79181034482759,
                           "unit": "kbps",
                           "offset": 4943,
                           "length": 24082
@@ -23103,9 +23110,9 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 133120,
-        "duration": 3.01859410430839,
-        "averageBitrate": 63.03331730769231,
+        "samples": 133632,
+        "duration": 3.030204081632653,
+        "averageBitrate": 62.79181034482759,
         "isVbr": true,
         "playbackGroup": 1,
         "encoder": "Microsoft's Windows Media Audio encoder",
@@ -23303,7 +23310,7 @@
       {
         "severity": "Info",
         "code": "wma.reservoir-at-end",
-        "message": "The last superframe ends with 24618 bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.",
+        "message": "The last superframe announces a frame it holds whole, in 1596 bits, and then 23022 bits that no frame uses; the frame is counted in the samples.",
         "offset": 4943,
         "length": 24082,
         "path": [
