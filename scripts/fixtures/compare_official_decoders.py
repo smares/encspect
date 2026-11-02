@@ -28,10 +28,14 @@ apple folder has no goldens, so nothing reads its entries and they stay in the r
 output when IS_OUTPUT_VALID holds, concealed frames included; the frames AACDEC_FLUSH drains are counted apart), compared with the stream's `samples`, per run of constant output
 format. The trimmed stage waits for Core Audio (rollout step 5): the analyzer's "Samples (iTunSMPB)" and "Samples (Edit List)" are listed with no reference. The units FDK
 refuses, conceals or outputs nothing for, and the units with an analyzer finding, are listed at their byte ranges.
-  explained   an excess of FDK's total over the analyzer's that cannot come from the cleanly decoded frames (those alone are no more than the analyzer counts): the rest
-              is concealed frames, which the analyzer's future decoder leaves as gaps (decision of the project lead, 2026-11-01); FDK refusing an object type its header says
-              it does not decode (AAC Main, LTP, SSR)
-  pending     every other difference of the analyzer's figure from the reference, and a stream FDK refuses that the analyzer reads without a finding
+  Totals are compared in the same duration, never as sums across output rates: a run counts at the analyzer's rate (FDK's 1,024 samples at 22,050 Hz are 2,048 at 44,100 Hz), runs
+  that cannot be paired are compared as one figure at one rate, and a run whose rate differs from the analyzer's (SBR applied by one and not the other) is also listed as `rate-differs`.
+  A total with raw data blocks the library still holds when it answers 0x1002 (frames of several blocks) is no reference (`decoder-holds-blocks`).
+  explained   FDK's excess over the analyzer is exactly the samples of the frames it conceals (a future decoder leaves them as gaps, decision of the project lead, 2026-11-01); FDK's
+              shortfall is exactly the blocks of units the analyzer flags (a finding at their bytes or covering them) and counts by their declared positions, for which FDK refuses
+              or outputs nothing; the 64-stream cap (aac.streams-limited); AAC Main, LTP and SSR, which FDK AAC does not document
+  noted       no reference, the analyzer has nothing wrong to change; a unit the analyzer flags through a merged finding, a sample-table finding or the declared length of a damaged unit
+  pending     every other difference of the analyzer from FDK, rate differences, and every unit FDK refuses, conceals or outputs nothing for with no finding that covers it
 
 The reference rule for Ogg, per stage:
   trimmed   the reader's total (oggdec, opusdec) when the reader reached the end without a failed read or a stop condition, the direct path fed every
@@ -47,6 +51,7 @@ the project lead on 2026-11-01: both runs share libvorbis's granule handling, so
 """
 
 import argparse
+from fractions import Fraction
 import concurrent.futures
 import hashlib
 import json
@@ -670,6 +675,14 @@ def aac_stop_reason(direct):
     return ", ".join(parts)
 
 
+def at_rate(samples, rate_from, rate_to):
+    """samples counted at rate_from as a count at rate_to: the same duration (never a sum across rates), rounded to the nearest with halves up; (value, exact)."""
+    if rate_from in (None, 0) or rate_to in (None, 0) or rate_from == rate_to:
+        return samples, True
+    exact = Fraction(samples * rate_to, rate_from)
+    return int(exact + Fraction(1, 2)) if exact >= 0 else 0, exact.denominator == 1
+
+
 def compare_aac(record, analyzer, ffmpeg):
     """The figures, differences and unit verdicts of one AAC record."""
     if record.get("notFed"):
@@ -680,12 +693,8 @@ def compare_aac(record, analyzer, ffmpeg):
         return {"figures": [], "differences": [], "units": [], "notes": ["no analyzer report"]}
     figures = []
     a_runs = analyzer_runs(analyzer["streams"])
-    if not a_runs:
-        notes.append("the analyzer reports no AAC stream: its figure is 0")
-        a_runs = [{"key": (None, None), "streams": [], "samples": 0}]
     d_runs = direct.get("runs", [])
     complete = direct["stoppedBy"] == "end"
-    d_total = direct.get("totalSamples") if complete else None
     # No output at all from a stream the analyzer counts no samples in (a file cut in its first sample) is a total of 0, which equals the analyzer's; no output from a stream
     # it counts samples in is a refusal.
     refused_all = complete and not d_runs and direct["unitCount"] > 0 and sum_known(r["samples"] for r in a_runs) != 0
@@ -693,46 +702,65 @@ def compare_aac(record, analyzer, ffmpeg):
     if ffmpeg:
         ff_entry = ffmpeg.get("coded") or ffmpeg.get("default") or {}
         ff = ff_entry.get("samples")
+    all_streams = [i for r in a_runs for i in r["streams"]]
+    base = {"stage": "coded", "analyzerFigure": "samples", "streams": all_streams, "analyzer": sum_known(r["samples"] for r in a_runs), "reference": None,
+            "referencePath": None, "referenceKind": None, "witnesses": {"ffmpeg": ff} if ffmpeg else {}}
+    if not a_runs:
+        notes.append("the analyzer reports no AAC stream: its figure is 0")
+        a_runs = [{"key": (None, None), "streams": [], "samples": 0}]
+        base.update({"analyzer": 0})
     if refused_all:
         codes = sorted({c for c in direct["errorCodes"] if c not in ("0x0000", "0x1002")})
-        figures.append({"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [i for r in a_runs for i in r["streams"]],
-                        "analyzer": sum_known(r["samples"] for r in a_runs), "reference": None, "referencePath": None, "referenceKind": None,
-                        "witnesses": {"ffmpeg": ff} if ffmpeg else {}, "refused": "FDK AAC outputs nothing for any of its %d units (%s)" % (
-                            direct["unitCount"], ", ".join(codes) if codes else "0x1002, it never has enough bits"),
+        figures.append({"id": "samples", **base, "refused": "FDK AAC outputs nothing for any of its %d units (%s)" % (direct["unitCount"], ", ".join(codes) if codes else "0x1002, it never has enough bits"),
                         "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"})
     elif not complete:
-        figures.append({"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [i for r in a_runs for i in r["streams"]],
-                        "analyzer": sum_known(r["samples"] for r in a_runs), "reference": None, "referencePath": None, "referenceKind": None,
-                        "witnesses": {"ffmpeg": ff} if ffmpeg else {}, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (
-                            aac_stop_reason(direct), show(direct.get("partialSamples")))})
-    elif len(a_runs) == len(d_runs) or not analyzer["streams"] or not d_runs:
-        if not d_runs:  # the decoder output nothing and the analyzer counts nothing (see refused_all)
-            d_runs = [{"rate": None, "channels": None, "samples": 0, "aot": None, "extAot": None, "frameSize": None}]
-            a_runs = [{"key": None, "streams": [i for r in a_runs for i in r["streams"]], "samples": 0}]
-        elif len(a_runs) != len(d_runs):
-            a_runs = a_runs * len(d_runs)
-        for n, (a, d) in enumerate(zip(a_runs, d_runs)):
-            figures.append({"id": "samples" if len(a_runs) == 1 else "samples.run%d" % (n + 1), "stage": "coded", "analyzerFigure": "samples", "streams": a["streams"],
-                            "analyzer": a["samples"], "reference": d["samples"], "referencePath": "fdk direct", "referenceKind": "official",
-                            "format": {"rate": d["rate"], "channels": d["channels"]}, "witnesses": {}, "concealedSamples": d.get("concealedSamples", 0),
-                            "object": {"aot": d["aot"], "extAot": d["extAot"], "frameSize": d["frameSize"]}})
-        if len(figures) == 1 and ffmpeg:
-            figures[0]["witnesses"]["ffmpeg"] = ff
+        figures.append({"id": "samples", **base, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
+    elif direct.get("heldBack"):
+        figures.append({"id": "samples", **base, "heldBack": True, "decoderSamples": direct.get("totalSamples"), "heldBytes": direct.get("heldBytes"),
+                        "noReference": "FDK holds the last raw data blocks of the last frame (%s bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of %s is short by those blocks" % (
+                            show(direct.get("heldBytes")), show(direct.get("totalSamples")))})
     else:
-        reference = sum(r["samples"] for r in d_runs)
-        figures.append({"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [i for r in a_runs for i in r["streams"]],
-                        "analyzer": sum_known(r["samples"] for r in a_runs), "reference": reference, "referencePath": "fdk direct", "referenceKind": "official",
-                        "witnesses": {}, "concealedSamples": sum(r.get("concealedSamples", 0) for r in d_runs), "unpaired": {
-                            "decoder": [[r["rate"], r["channels"], r["samples"]] for r in d_runs], "analyzer": [[r["key"][0], r["key"][1], r["samples"]] for r in a_runs]}})
-        notes.append("the decoder has %d runs of constant output format and the analyzer %d: the figures are sums over all runs" % (len(d_runs), len(a_runs)))
-        if ffmpeg:
-            figures[0]["witnesses"]["ffmpeg"] = ff
-    if ffmpeg and figures and figures[0]["witnesses"].get("ffmpeg") is None and "ffmpeg" in figures[0]["witnesses"]:
+        if not d_runs:  # the decoder output nothing and the analyzer counts nothing
+            d_runs = [{"rate": None, "channels": None, "samples": 0, "aot": None, "extAot": None, "frameSize": None}]
+            a_runs = [{"key": (None, None), "streams": all_streams, "samples": 0}]
+        pairs = len(a_runs) == len(d_runs) and all(a["key"][1] == d["channels"] or a["key"][1] is None or d["channels"] is None for a, d in zip(a_runs, d_runs))
+        if pairs:
+            for n, (a, d) in enumerate(zip(a_runs, d_runs)):
+                rate = a["key"][0]
+                value, exact = at_rate(d["samples"], d["rate"], rate)
+                concealed, _ = at_rate(d.get("concealedSamples", 0), d["rate"], rate)
+                figure = {"id": "samples" if len(a_runs) == 1 else "samples.run%d" % (n + 1), **base, "streams": a["streams"], "analyzer": a["samples"], "reference": value,
+                          "referencePath": "fdk direct", "referenceKind": "official", "format": {"rate": d["rate"], "channels": d["channels"]}, "concealedSamples": concealed,
+                          "object": {"aot": d["aot"], "extAot": d["extAot"], "frameSize": d["frameSize"]}}
+                if len(a_runs) > 1:
+                    figure["witnesses"] = {}
+                if d["rate"] != rate and rate is not None and d["rate"] is not None:
+                    figure["rateDiffers"] = {"analyzerRate": rate, "decoderRate": d["rate"], "decoderSamples": d["samples"], "ratio": "%d/%d" % (d["rate"], rate)}
+                    figure["referenceAtAnalyzerRate"] = {"samples": value, "exact": exact}
+                figures.append(figure)
+        else:
+            rate = next((a["key"][0] for a in a_runs if a["key"][0]), None) or d_runs[0]["rate"]
+            analyzer_total = exact_all = 0
+            exact_all = True
+            for a in a_runs:
+                value, exact = at_rate(a["samples"], a["key"][0], rate)
+                analyzer_total += value
+                exact_all = exact_all and exact
+            reference = concealed = 0
+            for d in d_runs:
+                value, exact = at_rate(d["samples"], d["rate"], rate)
+                reference += value
+                exact_all = exact_all and exact
+                concealed += at_rate(d.get("concealedSamples", 0), d["rate"], rate)[0]
+            figures.append({"id": "samples", **base, "analyzer": analyzer_total, "reference": reference, "referencePath": "fdk direct", "referenceKind": "official",
+                            "format": {"rate": rate, "channels": d_runs[0]["channels"]}, "concealedSamples": concealed,
+                            "unpaired": {"rate": rate, "exact": exact_all, "decoder": [[r["rate"], r["channels"], r["samples"]] for r in d_runs],
+                                         "analyzer": [[r["key"][0], r["key"][1], r["samples"]] for r in a_runs]}})
+            notes.append("the decoder has %d runs of constant output format and the analyzer %d: both are counted at %s Hz (the same durations) and compared as one figure" % (len(d_runs), len(a_runs), show(rate)))
+    if ffmpeg and figures and "ffmpeg" in figures[0]["witnesses"] and figures[0]["witnesses"]["ffmpeg"] is None:
         figures[0]["witnessErrors"] = {"ffmpeg": ffmpeg_failure(ffmpeg, "coded" if "coded" in ffmpeg else "default")}
     if complete and direct.get("flushedSamples"):
-        for fig in figures:
-            fig["flushedSamples"] = direct["flushedSamples"]
-            break
+        figures[0]["flushedSamples"] = direct["flushedSamples"]
     # the trimmed stage: Core Audio's ExtAudioFile is its reference (rollout step 5); the analyzer's gapless figures are listed as they stand
     for name, ident in GAPLESS_FIGURES:
         if name in analyzer["gapless"] and analyzer["streams"]:
@@ -741,31 +769,50 @@ def compare_aac(record, analyzer, ffmpeg):
                             "witnesses": {"ffmpeg": ffmpeg["default"].get("samples")} if ffmpeg and ffmpeg.get("default") else {},
                             "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"})
     codecs = [s["codec"] for s in analyzer["streams"]]
-    return {"figures": figures, "differences": aac_differences(figures, direct, codecs, analyzer), "units": aac_unit_verdicts(direct, analyzer), "notes": notes,
-            "codecs": codecs, "object": direct.get("object")}
+    units = aac_unit_verdicts(direct, analyzer)
+    return {"figures": figures, "differences": aac_differences(figures, direct, codecs, analyzer, units), "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
 
 
-def aac_differences(figures, direct, codecs, analyzer):
+def aac_differences(figures, direct, codecs, analyzer, units):
     differences = []
+    capped = any(f["code"] == "aac.streams-limited" for f in analyzer["findings"])
+    # units the analyzer flags and counts by their declared positions, for which the reference refuses or outputs nothing
+    blocks = {u["index"]: u.get("blocks", 1) for u in direct.get("units", [])}
+    missing = sum(blocks.get(u["index"], 1) for u in units if u["decoder"].split(" ")[0] in ("refused", "no") and u["status"] in ("agree", "noted") and u["index"] is not None)
+    # The analyzer counts every unit by its declared raw data blocks, so one block is its samples over all the blocks: the shortfall is exactly the flagged units' blocks.
+    total_blocks = sum(u.get("blocks", 1) for u in direct.get("units", []))
     for figure in figures:
         a, r = figure["analyzer"], figure["reference"]
         if figure["stage"] != "coded":
             continue
         if figure.get("refused"):
             if any(c in FDK_UNSUPPORTED_PROFILES for c in codecs):
-                status, why = "explained", "FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is %s" % ", ".join(sorted(set(codecs)))
+                status, why = "explained", "AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is %s" % ", ".join(sorted(set(codecs)))
             else:
                 status, why = "noted", "FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it"
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": None, "analyzer": a, "status": status, "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"] + "; " + why})
             continue
+        if figure.get("heldBack"):
+            differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": figure["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-holds-blocks",
+                                "reason": figure["noReference"]})
+            continue
+        if figure.get("rateDiffers"):
+            rd = figure["rateDiffers"]
+            differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": rd["decoderSamples"], "analyzer": a, "status": "pending", "kind": "rate-differs",
+                                "reason": "FDK outputs %s samples at %s Hz where the analyzer counts %s at %s Hz (the rate ratio is %s: the same duration when the counts are in that ratio); the decoders disagree on whether SBR is applied" % (
+                                    show(rd["decoderSamples"]), show(rd["decoderRate"]), show(a), show(rd["analyzerRate"]), rd["ratio"])})
         if r is not None and a != r:
             concealed = figure.get("concealedSamples", 0)
-            clean = r - concealed
-            if r > (a or 0) and clean <= (a or 0):
+            if r > (a or 0) and capped:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
-                                    "reason": "FDK outputs %s samples for concealed units and %s cleanly decoded, no more than the analyzer's %s: the excess of %s is concealed frames, which a future decoder leaves as gaps" % (
-                                        show(concealed), show(clean), show(a), show(r - a))})
+                                    "reason": "the analyzer keeps 64 streams and counts no sample of the frames after them (aac.streams-limited, documented in aac.md); FDK decodes them all"})
+            elif r > (a or 0) and r - a == concealed:
+                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
+                                    "reason": "the excess of %s samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps" % show(r - a)})
+            elif r < (a or 0) and missing and total_blocks and (a - r) * total_blocks == a * missing:
+                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
+                                    "reason": "the shortfall of %s samples is %d frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for" % (show(a - r), missing)})
             else:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs"})
         for name, value in figure["witnesses"].items():
@@ -778,18 +825,25 @@ def aac_differences(figures, direct, codecs, analyzer):
 def aac_unit_verdicts(direct, analyzer):
     """Every unit FDK refuses, conceals or gives an error for, or outputs nothing for, and every unit that holds a finding about a unit (warnings and errors of the aac codes), with
     the decoder's result and the analyzer's finding at the same bytes; and every such finding that points into no unit. A unit's bytes are those fed with it, the gap in front of it
-    included. The units of a stream FDK refuses entirely are listed only where they hold a finding: the figure carries the refusal."""
+    included. The units of a stream FDK refuses entirely are listed only where they hold a finding: the figure carries the refusal. A finding that merges several cases points to the
+    first only, so a flagged unit with no finding is `noted` in a file with such findings, in a file with sample-table findings of the MP4 (which name samples outside the file or
+    the mdat) and inside the declared length of a damaged unit that has one (the library takes the declared bytes as the frame)."""
     result = []
     findings = [f for f in analyzer["findings"] if aac_unit_finding(f)]
+    merged = any(f["count"] > 1 for f in findings) or any(f["code"] in MP4_EXTRA for f in analyzer["findings"])
     units = [u for u in direct.get("units", []) if direct.get("transport") != "TT_MP4_ADIF"]
     all_refused = direct.get("stoppedBy") == "end" and not direct.get("runs") and direct.get("unitCount", 0) > 0
     matched = set()
+    damaged = []  # (offset, declared length, finding) of the units with a finding
     for u in units:
         start, end = u["fedFrom"], u["offset"] + max(u["received"], 1)
         mine = [f for f in findings if start <= f["offset"] < end]
         for f in mine:
             matched.add((f["code"], f["offset"]))
         flagged = u["result"] != "decoded" or "error" in u or "fill" in u
+        swallowed = next((d for d in damaged if d[0] < u["offset"] < d[0] + d[1]), None)
+        if mine:
+            damaged.append((u["offset"], u["declared"], mine[0]["code"]))
         if not mine and (all_refused or not flagged):
             continue
         what = u["result"] + (" " + ", ".join(u["error"] if isinstance(u["error"], list) else [u["error"]]) if "error" in u else "")
@@ -799,6 +853,10 @@ def aac_unit_verdicts(direct, analyzer):
             entry.update({"verdict": "decoder %s, finding at the same bytes" % u["result"], "status": "agree"})
         elif flagged and u["result"] == "decoded":
             entry.update({"verdict": "decoder decodes and reports an error (%s), no finding" % what.split(" ", 1)[1], "status": "noted"})
+        elif flagged and swallowed:
+            entry.update({"verdict": "decoder %s, inside the declared length of the damaged unit at %d (%s)" % (u["result"], swallowed[0], swallowed[2]), "status": "noted"})
+        elif flagged and merged:
+            entry.update({"verdict": "decoder %s, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)" % u["result"], "status": "noted"})
         elif flagged:
             entry.update({"verdict": "decoder %s, no finding" % u["result"], "status": "pending"})
         else:
@@ -828,6 +886,9 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
                 note = fig["refused"]
             if fig.get("concealedSamples"):
                 note += (" " if note else "") + "(%s concealed)" % show(fig["concealedSamples"])
+            if fig.get("rateDiffers"):
+                note += (" " if note else "") + "(FDK %s samples at %s Hz, the analyzer's rate %s Hz: ratio %s)" % (
+                    show(fig["rateDiffers"]["decoderSamples"]), show(fig["rateDiffers"]["decoderRate"]), show(fig["rateDiffers"]["analyzerRate"]), fig["rateDiffers"]["ratio"])
             tag = "" if fig["analyzer"] == fig["reference"] or fig["reference"] is None else "  DIFFERS"
             rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), wit, (note + tag).strip()])
     out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "fdk", "other decoders", "notes"])]
@@ -844,7 +905,7 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
     reasons = {}
     for r in results:
         if r.get("notFed"):
-            reasons.setdefault(re.sub(r"[0-9]+", "N", r["notFed"])[:110], []).append("%s/%s" % (r["folder"], r["file"]))
+            reasons.setdefault(r["notFed"][:110], []).append("%s/%s" % (r["folder"], r["file"]))
     out += ["  %3d  %s  (%s)" % (len(v), k, ", ".join(v[:4]) + (", ..." if len(v) > 4 else "")) for k, v in sorted(reasons.items(), key=lambda kv: -len(kv[1]))] or ["  none"]
     out += ["", "Agreement (coded figures with a reference; groups counted apart)"]
     groups = (("aac, apple (encoder-written)", [r for r in results if r["folder"] in ("aac", "apple")]),
@@ -889,6 +950,23 @@ def aac_ffmpeg(args, path, tmp, record):
         coded = ffmpeg_column(args.ffmpeg, args.ffprobe, path, tmp, runs=(("coded", ["-flags2", "+skip_manual"]),), input_flags=("-ignore_editlist", "1"))
         column["coded"] = coded.get("coded")
     return column
+
+
+def apply_reviewed(results, source):
+    """Puts the statuses and notes a person set in the committed file onto the fresh differences and units whose values are unchanged, so that the text shows what the JSON will say."""
+    if not source.exists():
+        return
+    previous = {}
+    for f in json.loads(source.read_text(encoding="utf-8")).get("files", []):
+        for d in f.get("differences", []) + f.get("units", []):
+            previous[unit_key(f["path"], f["sha256"], d)] = d
+    for r in results:
+        for d in r["differences"] + r["units"]:
+            old = previous.get(unit_key(r["file"], r["sha256"], d))
+            if old and old.get("statusSource") == "reviewed" and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason")):
+                d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
+                if "awaitingStep" in old:
+                    d["awaitingStep"] = old["awaitingStep"]
 
 
 def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tmp):
@@ -949,6 +1027,8 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             not_run.append("%s/%s" % (item[3], item[1].name))
         else:
             results.append(result)
+    for folder in ("aac", "adts", "mp4"):
+        apply_reviewed([r for r in results if r["folder"] == folder and not r["derived"]], FIXTURES / folder / "official-decoders.json")
     known = {sha for sha, *_ in items}
     unmatched = sorted(r["file"] for sha, r in aac_records.items() if sha not in known)
     text = render_aac(results, not_run, unmatched, environment, ffmpeg_version, warnings, args)

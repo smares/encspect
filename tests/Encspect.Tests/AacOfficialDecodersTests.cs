@@ -154,6 +154,17 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                 continue;
             }
 
+            if (kind is "decoder-holds-blocks" or "rate-differs")
+            {
+                Assert.True(actual == listed, $"{name}: the samples of {id} are {actual}; the list ({kind}) has the analyzer's {listed}");
+                if (status == "pending")
+                {
+                    Note($"official decoders: pending {name} {id}: {kind}, the analyzer counts {actual}");
+                }
+
+                continue;
+            }
+
             if (kind == "witness-differs")
             {
                 if (status == "explained")
@@ -167,6 +178,11 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
 
             long value = difference.GetProperty("value").GetInt64();
             bool resolved = actual == value;
+            if (resolved)
+            {
+                Note($"official decoders: {name} {id} now equals {difference.GetProperty("decoder").GetString()} ({value}); update the JSON from a new run");
+            }
+
             Assert.True(resolved || actual == listed, $"{name}: the samples of {id} are {actual}; the difference with {difference.GetProperty("decoder").GetString()} ({value}) lists the analyzer's {listed}");
             if (status == "follow" && !resolved)
             {
@@ -218,9 +234,14 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
     private static bool IsUnitFinding(Finding finding) =>
         finding.Node is not null && finding.Severity != Severity.Info && finding.Code.StartsWith("aac.", StringComparison.Ordinal);
 
+    // The stream samples of the figure's streams; where the figure counts at one rate (the decoder's runs and the analyzer's cannot be paired), each run of consecutive
+    // streams of one format is converted to that rate, to the nearest with halves up, as the comparison does.
     private static long? AnalyzerFigure(Report report, JsonElement figure)
     {
+        long? rate = figure.TryGetProperty("unpaired", out JsonElement unpaired) ? unpaired.GetProperty("rate").GetInt64() : null;
         long total = 0;
+        long run = 0;
+        (long Rate, long Channels)? current = null;
         foreach (JsonElement index in figure.GetProperty("streams").EnumerateArray())
         {
             if (index.ValueKind != JsonValueKind.Number || index.GetInt32() >= report.Streams.Count)
@@ -228,15 +249,25 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                 return null;
             }
 
-            long? value = report.Streams[index.GetInt32()].Samples;
-            if (value is null)
+            StreamInfo stream = report.Streams[index.GetInt32()];
+            if (rate is null)
             {
-                return null;
+                total += stream.Samples;
+                continue;
             }
 
-            total += value.Value;
+            if (current != (stream.SampleRate, stream.Channels))
+            {
+                total += AtRate(run, current?.Rate, rate.Value);
+                run = 0;
+                current = (stream.SampleRate, stream.Channels);
+            }
+
+            run += stream.Samples;
         }
 
-        return total;
+        return rate is null ? total : total + AtRate(run, current?.Rate, rate.Value);
     }
+
+    private static long AtRate(long samples, long? from, long to) => from is null or 0 || from == to ? samples : (2 * samples * to + from.Value) / (2 * from.Value);
 }

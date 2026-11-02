@@ -51,6 +51,9 @@ static unsigned char *read_file(const char *path, long *length) {
     *length = ftell(file);
     fseek(file, 0, SEEK_SET);
     unsigned char *data = malloc(*length ? *length : 1);
+    if (!data) {
+        exit(2);
+    }
     if (fread(data, 1, *length, file) != (size_t)*length) {
         exit(2);
     }
@@ -71,10 +74,10 @@ static int hex(const char *text, unsigned char *out, int max) {
 static struct {
     unsigned char *data;
     HANDLE_AACDECODER decoder;
-    long coded, outputs, calls;
+    long coded, outputs, calls, fed_end;
     int limit, raw;
     const char *stopped;
-} G = {NULL, NULL, 0, 0, 0, 0, 0, "end"};
+} G = {NULL, NULL, 0, 0, 0, 0, 0, 0, "end"};
 
 /* Decodes what the library holds until it asks for more bits, and writes one line per call; numTotalBytes in each line says how
    many bytes of the input the library has used up to that call. */
@@ -137,6 +140,9 @@ static void feed(long index, long from, long to, long offset, long declared, lon
             return;
         }
         position += accepted;
+        if (position > G.fed_end) {
+            G.fed_end = position;
+        }
     }
 }
 
@@ -152,7 +158,7 @@ int main(int argc, char **argv) {
 
     Unit *units = calloc(1, sizeof(Unit));
     long unit_count = 0, unit_capacity = 0;
-    unsigned char config[256];
+    unsigned char config[4096];
     int config_length = 0;
     char kind[16] = "";
     FILE *tsv = fopen(argv[3], "r");
@@ -160,13 +166,17 @@ int main(int argc, char **argv) {
         perror(argv[3]);
         return 2;
     }
-    char line[1024];
+    char line[16384];
     while (fgets(line, sizeof line, tsv)) {
         Unit u;
         if (line[0] == 'U' && sscanf(line, "U %ld %ld %ld", &u.offset, &u.declared, &u.received) == 3) {
             if (unit_count == unit_capacity) {
                 unit_capacity = unit_capacity ? unit_capacity * 2 : 1024;
-                units = realloc(units, unit_capacity * sizeof(Unit));
+                Unit *grown = realloc(units, unit_capacity * sizeof(Unit));
+                if (!grown) {
+                    return 2;
+                }
+                units = grown;
             }
             units[unit_count++] = u;
         } else if (line[0] == 'C') {
@@ -216,6 +226,12 @@ int main(int argc, char **argv) {
                MP4 access units are fed alone. */
             long from = raw ? start : fed_end;
             long to = start + units[i].received;
+            if (start < 0 || start > length) {
+                continue;
+            }
+            if (to > length) {
+                to = length;
+            }
             feed(i, from, to, start, units[i].declared, units[i].received);
             fed_end = to;
             if (i == 0) {
@@ -227,7 +243,15 @@ int main(int argc, char **argv) {
         }
     } else {
         feed(0, 0, length, 0, length, length);
+        /* an ADIF header is read inside the library, so the method is set again after the data (the status is recorded) */
+        printf("{\"type\":\"conceal\",\"when\":\"after the data\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(decoder, AAC_CONCEAL_METHOD, conceal));
     }
+    /* what the library still holds when it answers 0x1002: the bytes fed that numTotalBytes has not counted (a frame of several raw data blocks keeps its last
+       blocks until more bits arrive, and the drain discards them) */
+    CStreamInfo *before = aacDecoder_GetStreamInfo(decoder);
+    long fed_end = G.fed_end, used_end = before ? (long)before->numTotalBytes : -1;
+    printf("{\"type\":\"held\",\"fedBytes\":%ld,\"usedBytes\":%ld,\"heldBytes\":%ld}\n", fed_end, used_end, used_end >= 0 ? fed_end - used_end : -1);
+    fflush(stdout);
     long coded = G.coded, flushed = 0, calls = G.calls, outputs = G.outputs;
 
     /* The drain: ceil(outputDelay / frameSize) frames of AACDEC_FLUSH, as the design fixes it (probe question 7, approved lead answer 5), counted apart as

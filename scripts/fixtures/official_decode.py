@@ -541,7 +541,7 @@ def aac_skip_reason(summary):
     return None
 
 
-def fdk_result(child, summary, mode, version):
+def fdk_result(child, summary, mode, version, path):
     """The record of one run of fdk_decode: its units (the extractor's, with the decoder's result), totals per run of constant output format, the drain."""
     lines = child["lines"]
     end = next((l for l in lines if l.get("type") == "end"), None)
@@ -551,14 +551,34 @@ def fdk_result(child, summary, mode, version):
     flushes = [l for l in lines if l.get("type") == "flush"]
     conceal = [l for l in lines if l.get("type") == "conceal"]
     stuck = [l for l in lines if l.get("type") == "stuck"]
-    by_unit = {}
+    held = next((l for l in lines if l.get("type") == "held"), None)
+    # The units of the list, from the first line of each fill. An ADTS output is placed at the unit that holds the last byte the library had used when it gave the output
+    # (numTotalBytes): a frame of several raw data blocks gives its outputs over several calls, and the first of them can come with the fill of the next frame.
+    table = {}
     for l in calls:
-        by_unit.setdefault(l["index"], []).append(l)
+        table.setdefault(l["index"], (l["offset"], l["received"], l["declared"], l["fedFrom"]))
+    adts = env.get("kind") == "adts"
+    data = pathlib.Path(path).read_bytes() if adts else b""
+    spans = sorted((offset, offset + received, index) for index, (offset, received, _, _) in table.items())
+
+    def placed(l):
+        if not adts or l["totalBytes"] <= 0 or (not l["outputValid"] and l["error"] in ("0x0000", NEEDS_MORE_BITS)):
+            return l["index"]
+        last = l["totalBytes"] - 1
+        for start, stop, index in spans:
+            if start <= last < stop:
+                return index
+        return l["index"]
+
+    by_unit = {index: [] for index in table}
+    for l in calls:
+        by_unit[placed(l)].append(l)
     units, runs = [], []
     codes = {}
     for index in sorted(by_unit):
         group = by_unit[index]
-        first = group[0]
+        offset, received, declared, fed_from = table[index]
+        first = group[0] if group else {"fill": "0x0000"}
         outputs = [l for l in group if l["outputValid"]]
         errors = sorted({l["error"] for l in group if l["error"] not in ("0x0000", NEEDS_MORE_BITS)})
         fills = sorted({l["fill"] for l in group if l["fill"] != "0x0000"})
@@ -570,8 +590,10 @@ def fdk_result(child, summary, mode, version):
         else:
             result = "no output"
         samples = sum(l["samples"] for l in outputs)
-        unit = {"index": index, "offset": first["offset"], "declared": first["declared"], "received": first["received"], "fedFrom": first["fedFrom"], "result": result,
-                "samples": samples, "endsAt": group[-1]["totalBytes"], "calls": len(group)}
+        unit = {"index": index, "offset": offset, "declared": declared, "received": received, "fedFrom": fed_from, "result": result,
+                "samples": samples, "usedBytes": group[-1]["totalBytes"] if group else None, "calls": len(group)}
+        if adts and offset + 6 < len(data):
+            unit["blocks"] = (data[offset + 6] & 3) + 1  # number_of_raw_data_blocks_in_frame + 1 of the frame's header
         if errors:
             unit["error"] = errors[0] if len(errors) == 1 else errors
         if fills:
@@ -593,6 +615,12 @@ def fdk_result(child, summary, mode, version):
                 runs[-1]["concealedSamples"] = runs[-1].get("concealedSamples", 0) + l["samples"]
     for run in runs:
         del run["_key"]
+    # Bytes fed that the library has not used when it answers 0x1002 with a whole frame fed last: it keeps the last raw data blocks of a frame of several until more bits come,
+    # and the drain discards them, so the total is short by those blocks.
+    listed = [u for u in units if u["index"] < summary["units"]]  # the bytes after the last unit are fed as one more, which is no frame
+    last_unit = listed[-1] if listed else None
+    multi = last_unit is not None and last_unit.get("blocks", 1) > 1
+    held_back = bool(held) and held["heldBytes"] > 0 and last_unit is not None and last_unit["received"] == last_unit["declared"] and multi
     stopped = stopped_by(child, end)
     notes = []
     incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
@@ -619,11 +647,15 @@ def fdk_result(child, summary, mode, version):
         "unitCount": len(units),
         "units": units if len(units) <= AAC_UNIT_LIMIT else units[:AAC_UNIT_LIMIT],
         "errorCodes": dict(sorted(codes.items())),
+        "heldBytes": held["heldBytes"] if held else None,
+        "heldBack": held_back,
         "drain": {"outputDelay": drain["outputDelay"], "frameSize": drain["frameSize"], "requests": drain["requests"], "flushedSamples": end.get("flushedSamples") if end else None,
                   "results": [f["error"] for f in flushes]} if drain else None,
         "flushedSamples": end.get("flushedSamples") if end else None,
         "warnings": [l for l in child["stderr"].splitlines() if l.strip()],
     }
+    if held_back:
+        notes.append("%d bytes fed are not used when the library answers 0x1002: it holds the last raw data blocks of a frame and the drain discards them" % held["heldBytes"])
     if configured is not None:
         result["configRaw"] = {"status": configured, "bytes": env.get("configBytes")}
     if len(units) > AAC_UNIT_LIMIT:
@@ -673,7 +705,7 @@ def run_aac(args):
             return
         mode = "adif" if summary["kind"] == "adif" else "units"
         child = probe.run_child("direct", [args.fdk_decode, mode, path, tsv, "1"], env=fdk_env)
-        record["paths"] = {"direct": fdk_result(child, summary, mode, version)}
+        record["paths"] = {"direct": fdk_result(child, summary, mode, version, path)}
         records.write("aac", path, record)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
