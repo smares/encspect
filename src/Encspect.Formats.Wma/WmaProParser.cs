@@ -13,6 +13,9 @@ public sealed class WmaProParser : ICodecParser
 
     private const string Name = "Windows Media Audio Professional";
 
+    // The most media objects read; tests lower it.
+    internal int PacketLimit { get; init; } = WmaPacketReader.MaxPackets;
+
     public string Id => CodecId;
 
     public void Parse(CodecContext context)
@@ -69,7 +72,7 @@ public sealed class WmaProParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new ProTally();
-        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings);
+        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings, PacketLimit, new ProFrameReader(p, new ProTally()));
         reader.Run(packets);
 
         var nodes = new ProNodes(reader.Data, p);
@@ -91,7 +94,7 @@ public sealed class WmaProParser : ICodecParser
         if (reader.Skipped > 0)
         {
             findings.AddNow(Severity.Info, "wma.records-limit",
-                $"The stream has more than {WmaPacketReader.MaxPackets} media objects; the {reader.Skipped} after them are not read, so the statistics and the series cover the first {WmaPacketReader.MaxPackets}.", parent);
+                $"The stream has more than {PacketLimit} media objects; the {reader.Skipped} after them are not read, so the statistics and the series cover the first {PacketLimit}.", parent);
         }
 
         if (reader.UnfinishedBits > 0 && reader.ValidFrames > 0)

@@ -44,6 +44,115 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         return context;
     }
 
+    // The same Professional stream written without the length prefix: its frames are found by their prefixes, which are removed (the skipped
+    // bit before the trailer bit ends a frame), joined one after another with the trailer bits of Microsoft's files (0 on the last frame that starts in a packet, 1 on the others), and cut again into
+    // packets of the block alignment, each with its sequence number, the two bits and the count of bits that finish the frame before. The
+    // last packet is padded with zero bits (isLastTrailerSet: the last frame's trailer bit says another frame follows). The frames that start in the last packet are whole in its payload
+    // (docs/design/wma-pro-format.md, "Frames without the length prefix").
+    public WmaStream WithoutLengthPrefix(bool isLastTrailerSet = false)
+    {
+        int width = 31 - int.LeadingZeroCount(Format.BlockAlign) + 4;
+        int headerBits = 6 + width;
+        var frames = new List<List<bool>>();
+        List<bool>? open = null;
+        int openLength = 0;
+        foreach (byte[] packet in Objects)
+        {
+            Assert.Equal(Format.BlockAlign, packet.Length);
+            var payload = new List<bool>();
+            for (int bit = headerBits; bit < packet.Length * 8; bit++)
+            {
+                payload.Add(GetBits(packet, bit, 1) != 0);
+            }
+
+            // The walk of make_wma_pro_variants.py (ProFile.walk): a frame that crosses into the packet ends where its length prefix says, whatever
+            // the count states (it may cover the payload); frames follow until a prefix of 0, one the packet cannot hold, or a trailer bit of 0.
+            int count = (int)GetBits(packet, 6, width);
+            int position = count;
+            bool isCovered = false;
+            if (open is not null)
+            {
+                int remaining = openLength - open.Count;
+                open.AddRange(payload.GetRange(0, remaining));
+                frames.Add(open);
+                position = remaining;
+                isCovered = count >= payload.Count;
+                open = null;
+            }
+
+            while (!isCovered && payload.Count - position > width)
+            {
+                int length = 0;
+                for (int i = 0; i < width; i++)
+                {
+                    length = (length << 1) | (payload[position + i] ? 1 : 0);
+                }
+
+                if (length == 0)
+                {
+                    break;
+                }
+
+                if (length > payload.Count - position)
+                {
+                    open = payload.GetRange(position, payload.Count - position);
+                    openLength = length;
+                    break;
+                }
+
+                frames.Add(payload.GetRange(position, length));
+                bool isTrailerSet = payload[position + length - 1];
+                position += length;
+                if (!isTrailerSet)
+                {
+                    break;
+                }
+            }
+        }
+
+        var stripped = new List<bool>();
+        var starts = new List<int>();
+        foreach (List<bool> frame in frames)
+        {
+            starts.Add(stripped.Count);
+            stripped.AddRange(frame.GetRange(width, frame.Count - width));
+        }
+
+        int size = (Format.BlockAlign * 8) - headerBits;
+
+        // Microsoft's convention in the public files without the prefix: the trailer bit is 0 on the last frame that starts in a packet (the
+        // frame that crosses out of it, or ends inside it and leaves its remaining bits unused) and 1 on the others. isLastTrailerSet: the last frame's says another follows.
+        for (int k = 0; k < starts.Count; k++)
+        {
+            bool isLast = k + 1 == starts.Count || starts[k + 1] / size != starts[k] / size;
+            int end = (k + 1 == starts.Count ? stripped.Count : starts[k + 1]) - 1;
+            stripped[end] = !isLast || (k + 1 == starts.Count && isLastTrailerSet);
+        }
+
+        var objects = new List<byte[]>();
+        for (int k = 0; (long)k * size < stripped.Count; k++)
+        {
+            var packet = new byte[Format.BlockAlign];
+            SetBits(packet, 0, 4, (uint)(k & 15));
+            SetBits(packet, 4, 2, 2);
+            int next = starts.FirstOrDefault(s => s >= k * size, stripped.Count);
+            SetBits(packet, 6, width, (uint)Math.Min(next - (k * size), size));
+            for (int i = 0; i < size && (k * size) + i < stripped.Count; i++)
+            {
+                if (stripped[(k * size) + i])
+                {
+                    SetBits(packet, headerBits + i, 1, 1);
+                }
+            }
+
+            objects.Add(packet);
+        }
+
+        byte[] data = (byte[])Data.Clone();
+        data[14] &= 0xBF;
+        return new WmaStream(objects, Format, data);
+    }
+
     public CodecContext RunPro() => Run(new WmaProParser());
 
     public CodecContext RunLossless() => Run(new WmaLosslessParser());
