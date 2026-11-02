@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ac3",
  "run": {
-  "id": "41423202796",
-  "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2",
+  "id": "41455336105",
+  "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2",
   "imageOS": "macos15",
   "imageVersion": "20261028.0489.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -15,8 +15,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41423202796",
-   "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2"
+   "runId": "41455336105",
+   "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2"
   }
  },
  "statuses": [
@@ -404,7 +404,7 @@
      ],
      "referenceOffset": -288,
      "noReference": "Core Audio's converter gave no complete total (did not open (status 0x666D743F))",
-     "refused": "Core Audio's converter cannot be built for the stream (did not open (status 0x666D743F))",
+     "refused": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (12,000 Hz, 2 channels)",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -425,7 +425,7 @@
      "analyzer": 6144,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter cannot be built for the stream (did not open (status 0x666D743F)); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "reason": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (12,000 Hz, 2 channels); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
      "statusSource": "rule"
     }
    ],
@@ -465,7 +465,7 @@
      ],
      "referenceOffset": -288,
      "noReference": "Core Audio's converter gave no complete total (did not open (status 0x666D743F))",
-     "refused": "Core Audio's converter cannot be built for the stream (did not open (status 0x666D743F))",
+     "refused": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (24,000 Hz, 2 channels)",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -486,7 +486,7 @@
      "analyzer": 6144,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter cannot be built for the stream (did not open (status 0x666D743F)); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "reason": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (24,000 Hz, 2 channels); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
      "statusSource": "rule"
     }
    ],
@@ -1731,18 +1731,23 @@
    "differences": [],
    "units": [
     {
-     "index": null,
+     "index": 0,
      "offset": 0,
      "length": 320,
-     "ranges": null,
-     "decoder": "decoded",
-     "samples": null,
+     "ranges": [
+      [
+       0,
+       320
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
      "finding": "ac3.dependent-without-independent",
      "findings": [
       "ac3.dependent-without-independent"
      ],
-     "verdict": "finding, decoder decodes",
-     "status": "noted",
+     "verdict": "decoder gave no output, finding at the same bytes",
+     "status": "agree",
      "statusSource": "rule"
     }
    ],
@@ -6535,5 +6540,9 @@
     "E-AC-3"
    ]
   }
- ]
+ ],
+ "counts": {
+  "files": 78,
+  "fed": 78
+ }
 }

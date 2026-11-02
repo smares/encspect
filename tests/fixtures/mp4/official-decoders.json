@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41423202796",
-  "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2",
+  "id": "41455336105",
+  "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41423202796",
-   "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2"
+   "runId": "41455336105",
+   "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2"
   }
  },
  "statuses": [
@@ -1809,7 +1809,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -2520,14 +2520,10 @@
         "channels": 2,
         "framesPerPacket": 1024
        },
-       "refusedUnits": 7,
-       "noOutputUnits": 3,
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
        "drainFrames": 0,
-       "silentUnits": [
-        10,
-        11,
-        12
-       ]
+       "notFedUnits": 10
       },
       "reader": {
        "samples": null,
@@ -2537,141 +2533,7 @@
     }
    ],
    "differences": [],
-   "units": [
-    {
-     "index": 13,
-     "offset": 2312,
-     "length": 0,
-     "ranges": [
-      [
-       2312,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 14,
-     "offset": 2320,
-     "length": 0,
-     "ranges": [
-      [
-       2320,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 15,
-     "offset": 2366,
-     "length": 0,
-     "ranges": [
-      [
-       2366,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 16,
-     "offset": 2409,
-     "length": 0,
-     "ranges": [
-      [
-       2409,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 17,
-     "offset": 2449,
-     "length": 0,
-     "ranges": [
-      [
-       2449,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 18,
-     "offset": 2486,
-     "length": 0,
-     "ranges": [
-      [
-       2486,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 19,
-     "offset": 2520,
-     "length": 0,
-     "ranges": [
-      [
-       2520,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    }
-   ],
+   "units": [],
    "unitList": {
     "kind": "mp4",
     "codec": "aac",
@@ -3414,8 +3276,8 @@
      "status": "noted",
      "kind": "analyzer-differs",
      "reason": "ExtAudioFile outputs 18,368 samples at the core rate where the analyzer's Samples (Edit List) is 44,100",
-     "statusSource": "reviewed",
-     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112."
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [],
@@ -3703,7 +3565,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -3791,7 +3653,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -3868,7 +3730,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -3956,7 +3818,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4044,7 +3906,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4132,7 +3994,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4220,7 +4082,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4308,7 +4170,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -7784,7 +7646,6 @@
       1
      ],
      "refused": "FDK AAC outputs nothing for any of its 3 units (0x2008)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -8087,8 +7948,8 @@
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
      "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 10,240, Core Audio's converter 11,264, the analyzer 20,480 (the written rule gives keep unless a reading of the specification decides)",
-     "statusSource": "reviewed",
-     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown."
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -9469,13 +9330,12 @@
         "channels": 2,
         "framesPerPacket": 1024
        },
-       "refusedUnits": 8,
-       "noOutputUnits": 3,
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
        "drainFrames": 0,
+       "notFedUnits": 10,
        "silentUnits": [
-        9,
-        10,
-        11
+        9
        ]
       },
       "reader": {
@@ -9524,158 +9384,6 @@
      "finding": null,
      "findings": [],
      "verdict": "decoder concealed, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 12,
-     "offset": 1020,
-     "length": 0,
-     "ranges": [
-      [
-       1020,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 13,
-     "offset": 1031,
-     "length": 0,
-     "ranges": [
-      [
-       1031,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 14,
-     "offset": 1039,
-     "length": 0,
-     "ranges": [
-      [
-       1039,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 15,
-     "offset": 1085,
-     "length": 0,
-     "ranges": [
-      [
-       1085,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 16,
-     "offset": 1128,
-     "length": 0,
-     "ranges": [
-      [
-       1128,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 17,
-     "offset": 1168,
-     "length": 0,
-     "ranges": [
-      [
-       1168,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 18,
-     "offset": 1205,
-     "length": 0,
-     "ranges": [
-      [
-       1205,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
-     "status": "noted",
-     "statusSource": "rule"
-    },
-    {
-     "index": 19,
-     "offset": 1239,
-     "length": 0,
-     "ranges": [
-      [
-       1239,
-       1
-      ]
-     ],
-     "decoder": "refused 0x62616461",
-     "samples": 0,
-     "finding": null,
-     "findings": [],
-     "source": "coreaudio converter",
-     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
      "status": "noted",
      "statusSource": "rule"
     }
@@ -9812,7 +9520,7 @@
      },
      "analyzerRates": [],
      "refused": "FDK AAC outputs nothing for any of its 10 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -9999,7 +9707,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -10081,7 +9789,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -10163,7 +9871,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -10245,7 +9953,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -10333,7 +10041,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -10393,5 +10101,9 @@
     "xHE-AAC (USAC)"
    ]
   }
- ]
+ ],
+ "counts": {
+  "files": 187,
+  "fed": 79
+ }
 }

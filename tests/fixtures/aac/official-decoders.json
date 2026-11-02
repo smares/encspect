@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41423202796",
-  "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2",
+  "id": "41455336105",
+  "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41423202796",
-   "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2"
+   "runId": "41455336105",
+   "commit": "52099d763fa027391845907d01b8c9bbb7d70fe2"
   }
  },
  "statuses": [
@@ -5142,7 +5142,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -5212,7 +5212,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -5567,5 +5567,9 @@
     "AAC LC"
    ]
   }
- ]
+ ],
+ "counts": {
+  "files": 53,
+  "fed": 52
+ }
 }

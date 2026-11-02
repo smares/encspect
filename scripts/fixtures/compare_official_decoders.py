@@ -794,7 +794,7 @@ def attach_trimmed(trimmed, reader, record):
 
 
 def coreaudio_unit_verdicts(ca, analyzer):
-    """The units Core Audio's converter refuses or gives no output for where the analyzer has a finding, and those it refuses, beside the analyzer's findings at the same bytes. They are listed with the source, apart from FDK's, and the test counts the
+    """The units Core Audio's converter refuses, beside the analyzer's findings at the same bytes. They are listed with the source, apart from FDK's, and the test counts the
     findings of the FDK entries only (every unit with a finding is there)."""
     conv = (ca or {}).get("paths", {}).get("converter")
     if not conv or conv["stoppedBy"] != "end":
@@ -804,16 +804,16 @@ def coreaudio_unit_verdicts(ca, analyzer):
     result = []
     all_refused = not conv.get("runs") and conv["unitCount"] > 0  # a stream the converter gives nothing for: its units are listed only where they hold a finding, the figure carries the refusal
     for u in conv["units"]:
-        if u["result"] not in ("refused", "no output"):  # a unit with no byte in the file was not given to the converter ("not fed") and has no verdict
+        if u["result"] != "refused":  # a unit that gives no output is the converter holding frames back; a unit with no byte in the file was not given to it ("not fed")
             continue
         start, end = u["offset"], u["offset"] + max(u["received"], 1)
         mine = [f for f in findings if start <= f["offset"] < end]
-        if (all_refused or u["result"] == "no output") and not mine:
-            continue  # the converter holds frames back at the start: a unit that gives nothing counts only where the analyzer has a finding at its bytes
-        entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"] if u["result"] == "refused" else "no output",
-                 "samples": 0, "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine], "source": "coreaudio converter"}
+        if all_refused and not mine:
+            continue
+        entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"], "samples": 0,
+                 "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine], "source": "coreaudio converter"}
         if mine:
-            entry.update({"verdict": "decoder %s, finding at the same bytes" % ("refused" if u["result"] == "refused" else "gave no output"), "status": "agree"})
+            entry.update({"verdict": "decoder refused, finding at the same bytes", "status": "agree"})
         elif merged:
             entry.update({"verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)", "status": "noted"})
         else:

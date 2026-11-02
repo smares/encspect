@@ -252,9 +252,9 @@ class UnitVerdictTests(unittest.TestCase):
         self.assertEqual([("agree", "refused 0x62616461", "aac.crc-mismatch")], [(u["status"], u["decoder"], u["finding"]) for u in units])
         self.assertEqual("coreaudio converter", units[0]["source"])
 
-    def test_a_unit_that_gives_no_output_agrees_only_at_a_finding_and_a_unit_not_fed_has_no_verdict(self):
-        units = compare.coreaudio_unit_verdicts({"paths": {"converter": self.conv([self.unit(0, 5, "no output"), self.unit(1, 100, "no output"), self.unit(2, 200, "not fed", received=0)])}}, self.analyzer)
-        self.assertEqual([(0, "agree", "no output")], [(u["index"], u["status"], u["decoder"]) for u in units])
+    def test_a_unit_that_gives_no_output_or_was_not_fed_has_no_verdict_in_aac(self):
+        units = compare.coreaudio_unit_verdicts({"paths": {"converter": self.conv([self.unit(0, 5, "no output"), self.unit(2, 200, "not fed", received=0)])}}, self.analyzer)
+        self.assertEqual([], units)
 
     def test_a_refused_unit_without_a_finding_is_pending_unless_the_file_has_merged_findings_or_the_stream_is_refused(self):
         refused = self.unit(3, 300, "refused", "0x62616461")
