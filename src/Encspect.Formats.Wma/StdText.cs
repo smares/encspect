@@ -131,7 +131,7 @@ internal static class StdText
     public static string ReservoirAtEnd(long bits, bool isCounted, long frameBits, long unusedBits) =>
         isCounted
             ? $"The bytes after the last frame the superframes finish hold the frame they announce last, whole, in {Counts.Of(frameBits, "bit", "bits")}, {(unusedBits > 0 ? $"and then {Counts.Of(unusedBits, "bit", "bits")} that no frame uses" : "and nothing after it")}; the frame is counted in the samples."
-            : $"The last superframe ends with {Counts.Of(bits, "bit", "bits")} after its last frame that no frame uses; they are not counted in the samples.";
+            : $"The last superframe ends with {Counts.Of(bits, "bit", "bits")} after its last frame; they are not counted in the samples.";
 
     public static string RecordsLimit(long skipped, int limit) =>
         $"The stream has more than {Number(limit)} media objects; the {Number(skipped)} after them are not read, so the statistics and the series cover the first {Number(limit)}.";
