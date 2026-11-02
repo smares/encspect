@@ -38,7 +38,7 @@ jobs:
   linux:
     name: libopus, libvorbis, libtta-c and FDK AAC on ubuntu-26.04
     runs-on: ubuntu-26.04
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v5
 
@@ -121,8 +121,9 @@ jobs:
 
       # The samples that are pinned by SHA-256 and never committed (sbr-samples.json, usac-samples.json); one that no address serves is listed and skipped. The folder holds media
       # and is not uploaded.
+      # fate-suite.ffmpeg.org was slow for hours on 2026-11-02 (one sample took 12 minutes): the retry budget of downloads.py is 20 minutes, so the step has 30.
       - name: Download the AAC samples
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples | tee out-aac-fetch.txt
@@ -165,14 +166,14 @@ jobs:
 
       # The samples that are pinned by SHA-256 and never committed; one that no address serves is listed and skipped. The folder holds media and is not uploaded.
       - name: Download the AAC samples
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples | tee out-aac-fetch.txt
 
       - name: Decode the AAC, AC-3 and E-AC-3 files, the variants and the samples with Core Audio
         # The artifact is uploaded even if this step runs out of time (environment.json is written first).
-        timeout-minutes: 40
+        timeout-minutes: 10
         run: |
           python3 -I scripts/fixtures/official_decode.py coreaudio --out out-coreaudio --probe build/audiotoolbox_probe --downloaded build/aac-samples
           cp out-aac-fetch.txt out-coreaudio/fetch.txt
@@ -190,7 +191,7 @@ jobs:
     runs-on: ubuntu-26.04
     needs: [linux, macos]
     if: always()
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v5
 
@@ -214,7 +215,7 @@ jobs:
 
       # The downloaded samples again (the artifacts hold records, never media), for the analyzer's figures and ffmpeg's column.
       - name: Download the AAC samples
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 -I scripts/fixtures/fetch_aac_samples.py aac-samples
