@@ -16,6 +16,16 @@ decoder under test, a black box. The kinds, for a media object j:
            from the analyzer's frame list); a negative t cuts the end of the frame off (the bits fall out of the object)
   hf<t>    the same for the last media object of the file and the frame that begins in its last bits (found by reading the file
            with one more media object appended, which the probe does not keep)
+  sh<s>    the frames that begin after the frame the object before began moved later by s bits (the same shift as la, but the
+           bits that fall out of the end of the object are the last bits of the original tail, not the ones after a chosen frame)
+  tz<t>    nothing moved; the tail (the bits after the last frame that ends in j) keeps its first t bits and is zero from there
+  tr<t>    the same with pseudo-random bits instead of zero bits
+  mz<t>, mo<t>
+           for objects whose last frame ends at most 80 bits before the end: the first t bits of the tail kept, the rest of
+           the tail zero bits (mz) or one bits (mo); nothing else moved
+  from<j>  the first j media objects removed (j chosen so that the object j starts with a frame and its frame count includes
+           one frame whose bits lie in the removed object, which the count loses); the stream is not cut at the end
+  id       the object as it is (a control: the stream ends after j)
   cnt<d>   the frame count in the header of j raised or lowered by d, nothing moved
   eos-...  the end of the stream marked differently (see end_markers): data packet count of the headers raised or lowered by one,
            the end of the Data Object before the last packet, an empty packet after the last, the play duration or the preroll
@@ -28,6 +38,7 @@ indices and bit counts involved, and t. Nothing is guessed.
 import fnmatch
 import json
 import pathlib
+import re
 import struct
 import sys
 
@@ -42,6 +53,10 @@ LOOKAHEADS = (0, 6, 10, 12, 13, 14, 17, 20, 26, 32, 48, 64)
 TAIL_FRAME_AFTER = (-1, 0, 8, 16, 24, 32, 64)
 HIDDEN_AFTER = (-1, 0, 8, 16, 32, 64)
 COUNT_DELTAS = (-1, 1)
+SHIFTS = (1, 8, 64, 512)
+TAIL_KEEPS = (0, 16)
+MARGIN_KEEPS = (0, 4, 8, 12, 16, 20, 24, 32)
+MARGIN_MAX = 80
 OBJECTS_PER_BASE = 2
 
 
@@ -70,8 +85,8 @@ def layout(report):
         objects.append(entry)
     frame_bits = []
     for frame in kids["Frames"]["children"]:
-        text = str(frame["value"])
-        frame_bits.append(int(text.split(",")[1].split()[0]) if "," in text else None)
+        match = re.match(r"\d+ blocks?, (\d+) bits", str(frame["value"]))
+        frame_bits.append(int(match.group(1)) if match else None)
     done = []
     total = 0
     for sf in kids["Superframes"]["children"]:
@@ -119,6 +134,46 @@ def shifted(bits, offset_bits, lfbo, frames_end, t):
         raise Unreadable("the shift does not fit the bit offset field")
     header = bits[:8] + format(lfbo + shift, f"0{offset_bits}b") + bits[8 + offset_bits:start]
     return header + "0" * shift + bits[start:total - shift]
+
+
+def tail_replaced(bits, tail, keep, mode):
+    """bits with everything after the first keep bits of the tail replaced by zero bits or by pseudo-random bits."""
+    total = len(bits)
+    if tail + keep > total:
+        raise Unreadable("no room for the kept bits")
+    if mode == "z":
+        filler = "0" * (total - tail - keep)
+    else:
+        state = 0x2545F491 ^ tail
+        out = []
+        for _ in range(total - tail - keep):
+            state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+            out.append("1" if state & 0x10000 else "0")
+        filler = "".join(out)
+    return bits[:tail + keep] + filler
+
+
+def tail_set(bits, tail, keep, bit):
+    total = len(bits)
+    if tail + keep > total:
+        raise Unreadable("no room for the kept bits")
+    return bits[:tail + keep] + bit * (total - tail - keep)
+
+
+def drop_first(raw, j, new_count):
+    file = StdFile(raw)
+    first = file.object_packet[j]
+    if file.object_packet[j - 1] == first:
+        raise Unreadable("the media object shares its packet with the one before")
+    start = file.packets[0][0]
+    at = file.packets[first][0]
+    del file.data[start:at]
+    pro.fix_counts(file, len(file.packets) - first, len(file.data))
+    moved = StdFile(bytes(file.data))
+    obj_at, size = moved.objects[0][4][0]
+    bits = to_bits(bytes(moved.data[obj_at:obj_at + size]))
+    moved.data[obj_at:obj_at + size] = from_bits(with_count(bits, new_count))
+    return bytes(moved.data)
 
 
 def with_count(bits, count):
@@ -225,6 +280,49 @@ def probes_for(analyzer, path, raw, stem):
             except Unreadable:
                 continue
             out[name] = (data, {"kind": f"la{t}", "object": j, "frame": done[j] - 1, "tailBits": o["bits"] - o["tail"], "t": t})
+    for j in spread(la, OBJECTS_PER_BASE):
+        o = objects[j]
+        room = o["bits"] - o["tail"]
+        for shift in SHIFTS:
+            if shift >= room:
+                continue
+            name = f"probe-{stem}-j{j}-sh{shift}"
+            try:
+                data = edit_object(raw, j, lambda b, o=o, shift=shift: shifted(b, o["offsetBits"], o["lfbo"], o["tail"], room - shift))
+            except Unreadable:
+                continue
+            out[name] = (data, {"kind": f"sh{shift}", "object": j, "frame": done[j] - 1, "tailBits": room, "shift": shift})
+        for keep in TAIL_KEEPS:
+            for mode in ("z", "r"):
+                name = f"probe-{stem}-j{j}-t{mode}{keep}"
+                try:
+                    data = edit_object(raw, j, lambda b, o=o, keep=keep, mode=mode: tail_replaced(b, o["tail"], keep, mode))
+                except Unreadable:
+                    continue
+                out[name] = (data, {"kind": f"t{mode}{keep}", "object": j, "frame": done[j] - 1, "tailBits": room, "keep": keep})
+        out[f"probe-{stem}-j{j}-id"] = (edit_object(raw, j, lambda b: b), {"kind": "id", "object": j, "frame": done[j] - 1})
+    small = [j for j, o in enumerate(objects[:-1]) if o["tail"] is not None and 0 < o["bits"] - o["tail"] <= MARGIN_MAX and o["offsetBits"] is not None]
+    for j in spread(small, 6):
+        o = objects[j]
+        room = o["bits"] - o["tail"]
+        for keep in MARGIN_KEEPS:
+            if keep > room:
+                continue
+            for letter, bit in (("z", "0"), ("o", "1")):
+                name = f"probe-{stem}-j{j}-m{letter}{keep}"
+                try:
+                    data = edit_object(raw, j, lambda b, o=o, keep=keep, bit=bit: tail_set(b, o["tail"], keep, bit))
+                except Unreadable:
+                    continue
+                out[name] = (data, {"kind": f"m{letter}{keep}", "object": j, "frame": done[j] - 1, "tailBits": room, "keep": keep})
+        out[f"probe-{stem}-j{j}-mid"] = (edit_object(raw, j, lambda b: b), {"kind": "mid", "object": j, "frame": done[j] - 1, "tailBits": room})
+    starts = [j for j in range(2, len(objects) - 1) if objects[j]["lfbo"] == 0 and in_progress[j] and objects[j]["count"] >= 2]
+    for j in spread(starts, 2):
+        try:
+            data = drop_first(raw, j, objects[j]["count"] - 1)
+        except Unreadable:
+            continue
+        out[f"probe-{stem}-from{j}"] = (data, {"kind": f"from{j}", "object": j, "frame": done[j - 1], "count": objects[j]["count"]})
     for j in tf:
         o = objects[j]
         k = done[j]
