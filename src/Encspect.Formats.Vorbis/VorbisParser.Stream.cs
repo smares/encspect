@@ -575,10 +575,13 @@ public sealed partial class VorbisParser
             }
             else if (offset != _offset && !packet.IsEndOfStream)
             {
+                // The count continues from the page's position (as libvorbis does at every page), so that the surplus or the
+                // shortfall of a repeated, missing or miscounted packet is not charged to the end trimming.
                 long expected = _decoded + _offset!.Value;
                 Node field = packet.EndPositionField ?? _parent;
                 _findings.Add(Severity.Warning, "vorbis.granule-inconsistent", field, count =>
-                    $"{Count(count, "granule position does", "granule positions do")} not match the samples the packets before {(count == 1 ? "it" : "them")} return: the first, at 0x{field.Offset:X}, is {position} where the packets give {expected}. Only the last page may end the stream early (section A.2).");
+                    $"{Count(count, "granule position does", "granule positions do")} not match the samples the packets before {(count == 1 ? "it" : "them")} return: the first, at 0x{field.Offset:X}, is {position} where the packets give {expected}. Only the last page may end the stream early (section A.2). The later pages are compared with the count continued from this position.");
+                _offset = offset;
             }
 
             _afterGap = false;
@@ -713,7 +716,7 @@ public sealed partial class VorbisParser
             {
                 long limit = _lastPositionReturned;
                 _findings.Add(Severity.Warning, "vorbis.end-trimming-large", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {limit} the last audio packet returns, which the Vorbis I specification allows at most (section A.2); libvorbis trims {limit}.");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {limit} the last audio packet returns, which the Vorbis I specification allows at most (section A.2); the end trimming is taken as {limit}.");
                 return limit;
             }
 

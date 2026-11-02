@@ -330,6 +330,34 @@ def vorbis_granule_errors():
     f.write()
 
 
+def vorbis_packet_repeated():
+    # An audio packet written twice in the middle of a page, the granule positions as they were before the repeat (so from the
+    # page that holds it they are 1024 below what the packets return), and the last position 500 below its page's: libvorbis
+    # continues its count from every page's position, so it trims the 500 and writes the repeated packet's 1024 samples, which
+    # oggdec's output confirms. Counted from the first page, the trim would be 1524, more than the 1024 the last packet returns.
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
+    at = 3 + 14
+    packets.insert(at + 1, packets[at])
+    granules.insert(at + 1, granules[at])
+    f = single("vorbis-packet-repeated", packets, granules, Cuts(1, 2, 8, 12, 11), serial=0x0B0B000B, codec="Vorbis")
+    f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
+    f.write()
+
+
+def vorbis_granule_midstream():
+    # The positions from the page that ends at the 16th audio packet on are 300 above what the packets return, and the last is
+    # 500 below its page's: the end trimming is counted from the latest page's position (libvorbis does so at every page), so it
+    # is the 500, not the 200 that counting from the first page would give.
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
+    for i in range(3 + 15, len(granules)):
+        granules[i] += 300
+    f = single("vorbis-granule-midstream", packets, granules, Cuts(1, 2, 8, 12, 11), serial=0x0B0B000C, codec="Vorbis")
+    f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
+    f.write()
+
+
 def vorbis_packet_errors():
     # Three modes, so the mode takes two bits and 3 is undefined; window flags that contradict the
     # neighbors; a packet with the type bit set; and an empty packet.
@@ -918,7 +946,7 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,

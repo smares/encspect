@@ -59,6 +59,23 @@ public class OggFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    // libvorbis continues its sample count from every page's granule position, so a repeated packet or a jump of the positions in
+    // the middle is not charged to the end trimming (oggdec writes 30,220 and 29,196 samples for these two files). Counted from the
+    // first page, the trims would be 1,524 (capped at the 1,024 the last packet returns, with vorbis.end-trimming-large) and 200.
+    [Theory]
+    [InlineData("ogg/vorbis-packet-repeated.ogg", 30_720, 500, 30_220)]
+    [InlineData("ogg/vorbis-granule-midstream.ogg", 29_696, 500, 29_196)]
+    public void The_end_trimming_is_counted_from_the_latest_granule_position(string name, long decoded, long trim, long samples)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(samples, report.Streams.Single().Samples);
+        Assert.Equal($"{decoded} samples", Find(report.Root, "Decoded Samples")?.Value?.ToString());
+        Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
+        Assert.Contains(report.Findings, f => f.Code == "vorbis.granule-inconsistent");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
+    }
+
     private static void CheckPages(JsonElement expected, Node pages)
     {
         Assert.Equal(Kind(NodeKind.Stream), Kind(pages.Kind));
@@ -452,6 +469,9 @@ public class OggFixtureTests
     }
 
     private static string Describe(IEnumerable<Finding> findings) => string.Join("; ", findings.Select(f => $"{f.Code}: {f.Message}"));
+
+    private static Node? Find(Node node, string name) =>
+        node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null);
 
     private static string? Field(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value?.ToString();
 

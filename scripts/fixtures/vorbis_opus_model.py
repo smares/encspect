@@ -551,6 +551,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 offset = o
             elif o != offset and not is_end:
                 findings.append("vorbis.granule-inconsistent")
+                offset = o
             after_gap = False
             last = (decoded, granule, is_end, last_returned)
 
