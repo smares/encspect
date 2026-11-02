@@ -1,11 +1,12 @@
 name: WMA Professional variants through Microsoft's decoder
 
-# Asks Microsoft's WMA Professional decoder one question at a time: scripts/fixtures/windows/make_wma_pro_variants.py
+# Asks Microsoft's WMA Professional decoder one question at a time. scripts/fixtures/windows/make_wma_pro_variants.py
 # writes copies of three Windows-written Professional fixtures that differ in one thing each (the stream cut after
-# frame k, a trim value or flag, the ASF header's play duration or preroll), and the probe of windows-wma-decode.yml
-# decodes them, and the public Professional files of tests/conformance/wma-samples.json, with the Source Reader and the decoder DMO
-# (see docs/development.md, "WMA decoding by Microsoft's decoder"). The variants are generated in the job and not committed. scripts/fixtures/windows/check_wma_pro_variants.py
-# compares the records with the rule under test and runs on Linux.
+# frame k, a trim value or flag, the ASF header's play duration or preroll). The probe of windows-wma-decode.yml
+# decodes them, and the public Professional files of tests/conformance/wma-samples.json, with the Source Reader
+# and the decoder DMO (docs/development.md, "WMA decoding by Microsoft's decoder"). The variants are generated in
+# the job and not committed. scripts/fixtures/windows/check_wma_pro_variants.py compares the records with the rule
+# under test and runs on Linux.
 # Run by hand (Actions, Run workflow) or by pushing the branch ci/windows-wma-pro. Not part of ci.yml and not a check.
 on:
   workflow_dispatch:

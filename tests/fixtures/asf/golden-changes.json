@@ -1,5 +1,5 @@
 {
-  "note": "WMA Professional follows Microsoft's decoder for the sample count of undamaged streams with the length prefix (docs/design/wma-pro-format.md, \"What Encspect reports\"). The nine stereo Windows fixtures end in two subframes of 1,024 samples, so Samples go from 131,788 to 132,300 (+512), and the duration, the average bitrate and the statistics' label follow. The Trim node of the frame the goldens list now reads \"none at the start\" where the start flag is 0 (it read \"0 samples at the start\"), so the 5.1 goldens change in that value alone.",
+  "note": "WMA Professional follows Microsoft's decoder for the sample count of undamaged streams with the length prefix (docs/design/wma-pro-format.md, \"What Encspect reports\"). The nine stereo Windows fixtures end in two subframes of 1,024 samples, so Samples go from 131,788 to 132,300 (+512), and the duration, the average bitrate and the Statistics node's value follow. The Trim node of the frame the goldens list now reads \"none at the start\" where the start flag is 0 (it read \"0 samples at the start\"), so the 5.1 goldens change in that value alone.",
   "goldens": [
     "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.report.json",

@@ -859,8 +859,8 @@ How the diffs stay reviewable:
     - **added:** keys and nodes (`categorySeries`, the "Coded Bandwidth" series and node, the new tally nodes), with parent and position;
     - **renamed:** old name, new name, parent;
     - **moved:** the node, its old parent, its new parent and position (Vorbis' "Long Blocks" and "Short Blocks");
-    - **changed:** the path and field whose value may differ (AAC's "Channel Pairs" counts).
-    The script itself is not edited per pull request.
+    - **changed:** the path and field whose value may differ (AAC's "Channel Pairs" counts); with `"scope": "stream"` and `fields`, fields of every stream (`samples`, `duration`; the WMA Professional step).
+    The script itself is not edited per pull request; the stream scope of `changed` is the one general entry kind added later, with a test (`test_golden_additions.py`).
   - **Who runs it:** a step of the CI workflow's test job, only when the pull request's diff adds or changes a change file. It reads only those files; change files of earlier pull requests stay committed and are ignored. A reviewer can run it locally with the same arguments. Adding the step changes the CI workflow, which Decision 10 puts to the lead.
 - `golden_hides` (development.md) does not hide category series: they are small, and the golden is where a per-frame change shows.
 
