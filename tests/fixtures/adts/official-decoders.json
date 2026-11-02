@@ -23,11 +23,7 @@
   "build-dependent",
   "stale"
  ],
- "changedFiguresForReview": [
-  "sbr-in-one-block.aac samples: 11264 -> 10240",
-  "sbr-in-three-blocks.aac samples: 13312 -> 10240",
-  "streams-limited.aac samples: 202752 -> 194502"
- ],
+ "changedFiguresForReview": [],
  "files": [
   {
    "path": "adif.aac",
@@ -2767,8 +2763,8 @@
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): stays pending for rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule Core Audio, which decodes it (24,576 at 44,100 Hz against the analyzer's 12,288; probe run 41312630570), becomes the reference.",
-     "awaitingStep": 5,
-     "statusSource": "reviewed"
+     "statusSource": "reviewed",
+     "awaitingStep": 5
     }
    ],
    "units": [
