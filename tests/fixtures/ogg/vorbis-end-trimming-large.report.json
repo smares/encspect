@@ -3730,7 +3730,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.end-trimming-large",
-        "message": "The last granule position, 26596 at 0x144, trims 3100 samples from the end, more than the 1024 the last audio packet returns, which the Vorbis I specification allows at most (section A.2); libvorbis trims 1024.",
+        "message": "The last granule position, 26596 at 0x144, trims 3100 samples from the end, more than the 1024 the last audio packet returns, which the Vorbis I specification allows at most (section A.2); the end trimming is taken as 1024.",
         "offset": 324,
         "length": 8,
         "path": [

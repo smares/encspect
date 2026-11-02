@@ -229,9 +229,13 @@ public sealed partial class VorbisParser
                 Add("Decoded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.DecodedSamples, Topics.VorbisBlocks);
                 if (_firstOffset is { } offset)
                 {
-                    Add("Start Offset", NodeValue.Integer(offset, "samples", "sample"), Explain.StartOffset, Topics.GranulePosition);
+                    Add("Start Offset", NodeValue.Integer(offset, "samples", "sample"), Math.Abs(offset) == long.MaxValue ? Explain.StartOffsetClamped : Explain.StartOffset, Topics.GranulePosition);
                     Add("Start Trimming", NodeValue.Integer(startTrim, "samples", "sample"), Explain.StartTrimming, Topics.GranulePosition);
                     Add("End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimming, Topics.GranulePosition);
+                    if (_gapTrim > 0)
+                    {
+                        Add("Gap Trimming", NodeValue.Integer(_gapTrim, "samples", "sample"), Explain.GapTrimming, Topics.GranulePosition);
+                    }
                 }
 
                 Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
