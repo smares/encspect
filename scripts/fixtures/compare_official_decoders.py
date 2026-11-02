@@ -998,6 +998,15 @@ def aac_ffmpeg(args, path, tmp, record):
     return column
 
 
+def carry_reviewed(d, old):
+    """The reviewed status and note of the committed record, with the keys in the order the committed file has them (a hand edit put
+    the status source first in some), so that a regenerated file differs only where the content does."""
+    d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
+    keys = list(old)
+    if "note" in old and "statusSource" in old and keys.index("statusSource") < keys.index("note"):
+        d["note"] = d.pop("note")
+
+
 def apply_reviewed(results, source):
     """Puts the statuses and notes a person set in the committed file onto the fresh differences and units whose values are unchanged, so that the text shows what the JSON will say."""
     if not source.exists():
@@ -1010,7 +1019,7 @@ def apply_reviewed(results, source):
         for d in r["differences"] + r["units"]:
             old = previous.get(unit_key(r["file"], r["sha256"], d))
             if old and old.get("statusSource") == "reviewed" and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason")):
-                d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
+                carry_reviewed(d, old)
                 if "awaitingStep" in old:
                     d["awaitingStep"] = old["awaitingStep"]
 
@@ -1264,9 +1273,9 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
             ffsame = [f for f in ff if all(v == f["reference"] for k, v in f["witnesses"].items() if k.startswith("ffmpeg") and v is not None)]
             out.append("  %-16s %-8s figures %3d, with a reference %3d, analyzer equals it %3d, no reference %3d; ffmpeg equals the reference in %d of %d" % (
                 label, stage, len(figs), len(withref), len(same), len(figs) - len(withref), len(ffsame), len(ff)))
-    out += ["", "Variant groups, decided by the project lead on 2026-11-01 (recorded here and in the docs, not in the JSON)",
-            "  (a) noted: a repeated page, which opusdec and oggdec skip while the analyzer and libogg count it (14 of 24 files); the analyzer equals libogg's own packet stream",
-            "  (b) a repeated packet: the analyzer equals oggdec, opusdec and libvorbis with the granule positions in all 24 files, since its end trimming is counted from the latest granule position (it was 38 to 128 samples below oggdec in 10 of 24 files)"]
+    out += ["", "Variant groups (recorded here and in the docs, not in the JSON)",
+            "  (a) 2026-11-01, noted: a repeated page of an Opus file, which opusdec skips while the analyzer and libogg count it (10 of 24 files); the analyzer equals libogg's own packet stream",
+            "  (b) 2026-11-02: a repeated packet, and the repeated end-of-stream page of the 4 Vorbis files that have one, equal oggdec in the 14 Vorbis files and opusdec in the 10 Opus files; the Vorbis end trimming is counted from the latest granule position and trims at the first end-of-stream page, as libvorbis does (a repeated packet was 38 to 128 samples below oggdec in 10 of the 14 Vorbis files, a repeated page 384 to 986)"]
     out += ["", "Derived variants by rule (figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.OGG_RULES:
@@ -1341,7 +1350,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
                 old = previous.get(unit_key(rel, r["sha256"], d))
                 same = old and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason"))
                 if same and old.get("statusSource") == "reviewed":
-                    d["status"], d["note"], d["statusSource"] = old["status"], old.get("note", ""), "reviewed"
+                    carry_reviewed(d, old)
                     if "awaitingStep" in old:
                         d["awaitingStep"] = old["awaitingStep"]
                 else:

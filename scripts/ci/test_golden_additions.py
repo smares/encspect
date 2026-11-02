@@ -133,6 +133,13 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "c.d", "fields": ["message"]}]}))
         self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "a.b", "fields": ["severity"]}]}))
 
+    def test_a_finding_entry_without_a_code_is_a_readable_error(self):
+        old = report(OLD_STATS, findings=[{"code": "a.b", "message": "one"}])
+        new = report(OLD_STATS, findings=[{"code": "a.b", "message": "two"}])
+        problems = self.check(old, new, {"changed": [{"scope": "finding", "fields": ["message"]}]})
+        self.assertEqual(len(problems), 1)
+        self.assertIn("needs a code", problems[0])
+
     def test_a_rename_that_did_not_happen_fails_whatever_the_value(self):
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
                   "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Coded Bandwidth"}],
