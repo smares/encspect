@@ -697,7 +697,7 @@ def compare_aac(record, analyzer, ffmpeg):
     complete = direct["stoppedBy"] == "end"
     # No output at all from a stream the analyzer counts no samples in (a file cut in its first sample) is a total of 0, which equals the analyzer's; no output from a stream
     # it counts samples in is a refusal.
-    refused_all = complete and not d_runs and direct["unitCount"] > 0 and sum_known(r["samples"] for r in a_runs) != 0
+    refused_all = complete and not d_runs and direct["unitCount"] > 0 and (sum_known(r["samples"] for r in a_runs) or 0) != 0
     ff = None
     if ffmpeg:
         ff_entry = ffmpeg.get("coded") or ffmpeg.get("default") or {}

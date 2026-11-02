@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41368907326",
-  "commit": "0e61390ad0c86de7c38395da30b2d82d7f63e710",
+  "id": "41374581383",
+  "commit": "a2c479da3f9614f007a11a41492190c2daa4378d",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -23,7 +23,9 @@
   "build-dependent",
   "stale"
  ],
- "changedFiguresForReview": [],
+ "changedFiguresForReview": [
+  "faac-2.1-he-51-adts.aac samples: 34816 -> 69632"
+ ],
  "files": [
   {
    "path": "apple-aace-m4a-cbr-mono44.m4a",
@@ -40,12 +42,12 @@
      "reference": 22528,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 22528
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 22528
      },
      "concealedSamples": 0,
      "object": {
@@ -102,12 +104,12 @@
      "reference": 23040,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 23040
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 23040
      },
      "concealedSamples": 0,
      "object": {
@@ -164,18 +166,31 @@
      "reference": 51200,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
      "format": {
       "rate": 44100,
       "channels": 2
      },
-     "witnesses": {
-      "ffmpeg": 51200
-     },
      "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 5,
-      "frameSize": 2048
+     "unpaired": {
+      "rate": 44100,
+      "exact": true,
+      "decoder": [
+       [
+        44100,
+        2,
+        51200
+       ]
+      ],
+      "analyzer": [
+       [
+        44100,
+        1,
+        51200
+       ]
+      ]
      },
      "flushedSamples": 2048
     },
@@ -227,12 +242,12 @@
      "reference": 51200,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 51200
      },
      "concealedSamples": 0,
      "object": {
@@ -290,12 +305,12 @@
      "reference": 51200,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 51200
      },
      "concealedSamples": 0,
      "object": {
@@ -335,12 +350,12 @@
      "reference": 51200,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 51200
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 51200
      },
      "concealedSamples": 0,
      "object": {
@@ -398,12 +413,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -443,12 +458,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -506,12 +521,12 @@
      "reference": 69632,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 69632
      },
      "concealedSamples": 0,
      "object": {
@@ -569,12 +584,12 @@
      "reference": 66560,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 66560
      },
      "concealedSamples": 0,
      "object": {
@@ -632,12 +647,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 66560
      },
      "concealedSamples": 0,
      "object": {
@@ -688,12 +703,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -734,12 +749,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 66560
      },
      "concealedSamples": 0,
      "object": {
@@ -790,12 +805,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -836,12 +851,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 66560
      },
      "concealedSamples": 0,
      "object": {
@@ -892,12 +907,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -938,12 +953,12 @@
      "reference": 69632,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 69632
      },
      "concealedSamples": 0,
      "object": {
@@ -984,12 +999,12 @@
      "reference": 69632,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 69632
      },
      "concealedSamples": 0,
      "object": {
@@ -1026,21 +1041,31 @@
       0
      ],
      "analyzer": 69632,
-     "reference": 34816,
+     "reference": 69632,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 69632
+     },
      "format": {
       "rate": 22050,
       "channels": 6
-     },
-     "witnesses": {
-      "ffmpeg": 69632
      },
      "concealedSamples": 0,
      "object": {
       "aot": 2,
       "extAot": 0,
       "frameSize": 1024
+     },
+     "rateDiffers": {
+      "analyzerRate": 44100,
+      "decoderRate": 22050,
+      "decoderSamples": 34816,
+      "ratio": "22050/44100"
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 69632,
+      "exact": true
      },
      "flushedSamples": 1024
     }
@@ -1051,19 +1076,11 @@
      "decoder": "fdk direct",
      "value": 34816,
      "analyzer": 69632,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
-    },
-    {
-     "figure": "samples",
-     "decoder": "ffmpeg",
-     "value": 69632,
-     "analyzer": 69632,
-     "reference": 34816,
-     "status": "noted",
-     "kind": "witness-differs",
-     "statusSource": "rule"
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 34,816 samples at 22,050 Hz where the analyzer counts 69,632 at 44,100 Hz (the rate ratio is 22050/44100: the same duration when the counts are in that ratio); the decoders disagree on whether SBR is applied",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep for now. The owners' decoders disagree: FDK decodes at the core rate without SBR (22,050 Hz), the analyzer, ffmpeg and Core Audio count SBR (44,100 Hz). Revisited with Core Audio's column in step 5.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -1115,12 +1132,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -1160,12 +1177,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1205,12 +1222,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1285,12 +1302,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 6
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1330,12 +1347,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1375,18 +1392,31 @@
      "reference": 77824,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 77824
+     },
      "format": {
       "rate": 48000,
       "channels": 2
      },
-     "witnesses": {
-      "ffmpeg": 77824
-     },
      "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 0,
-      "frameSize": 2048
+     "unpaired": {
+      "rate": 48000,
+      "exact": true,
+      "decoder": [
+       [
+        48000,
+        2,
+        77824
+       ]
+      ],
+      "analyzer": [
+       [
+        48000,
+        1,
+        77824
+       ]
+      ]
      },
      "flushedSamples": 2048
     }
@@ -1420,18 +1450,31 @@
      "reference": 77824,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 77824
+     },
      "format": {
       "rate": 48000,
       "channels": 2
      },
-     "witnesses": {
-      "ffmpeg": 77824
-     },
      "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 5,
-      "frameSize": 2048
+     "unpaired": {
+      "rate": 48000,
+      "exact": true,
+      "decoder": [
+       [
+        48000,
+        2,
+        77824
+       ]
+      ],
+      "analyzer": [
+       [
+        48000,
+        1,
+        77824
+       ]
+      ]
      },
      "flushedSamples": 2048
     },
@@ -1500,12 +1543,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1580,12 +1623,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -1660,12 +1703,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -1740,12 +1783,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 66560
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 66560
      },
      "concealedSamples": 0,
      "object": {
@@ -1796,12 +1839,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -1842,12 +1885,12 @@
      "reference": 68608,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 68608
      },
      "concealedSamples": 0,
      "object": {
@@ -1887,12 +1930,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1932,12 +1975,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -1995,12 +2038,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -2058,12 +2101,12 @@
      "reference": 73728,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 73728
      },
      "concealedSamples": 0,
      "object": {
@@ -2103,12 +2146,12 @@
      "reference": 73728,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 73728
      },
      "concealedSamples": 0,
      "object": {
@@ -2166,12 +2209,12 @@
      "reference": 73728,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 73728
      },
      "concealedSamples": 0,
      "object": {
@@ -2229,12 +2272,12 @@
      "reference": 73728,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 73728
      },
      "concealedSamples": 0,
      "object": {
@@ -2292,12 +2335,12 @@
      "reference": 71680,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 71680
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 71680
      },
      "concealedSamples": 0,
      "object": {
@@ -2355,12 +2398,12 @@
      "reference": 68608,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 68608
      },
      "concealedSamples": 0,
      "object": {
@@ -2418,12 +2461,12 @@
      "reference": 68608,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 68608
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 68608
      },
      "concealedSamples": 0,
      "object": {
@@ -2498,12 +2541,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2543,12 +2586,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2588,12 +2631,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2634,12 +2677,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2697,12 +2740,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2775,7 +2818,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC LTP",
+     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC LTP",
      "statusSource": "rule"
     }
    ],
@@ -2822,7 +2865,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC Main",
+     "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
      "statusSource": "rule"
     }
    ],
@@ -2854,12 +2897,12 @@
      "reference": 73728,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 73728
+     },
      "format": {
       "rate": 48000,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 73728
      },
      "concealedSamples": 0,
      "object": {
@@ -2934,12 +2977,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {
@@ -2979,12 +3022,12 @@
      "reference": 67584,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 67584
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 67584
      },
      "concealedSamples": 0,
      "object": {

@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41368907326",
-  "commit": "0e61390ad0c86de7c38395da30b2d82d7f63e710",
+  "id": "41374581383",
+  "commit": "a2c479da3f9614f007a11a41492190c2daa4378d",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -23,7 +23,11 @@
   "build-dependent",
   "stale"
  ],
- "changedFiguresForReview": [],
+ "changedFiguresForReview": [
+  "sbr-in-one-block.aac samples: 11264 -> 10240",
+  "sbr-in-three-blocks.aac samples: 13312 -> 10240",
+  "streams-limited.aac samples: 202752 -> 194502"
+ ],
  "files": [
   {
    "path": "adif.aac",
@@ -40,12 +44,12 @@
      "reference": 20480,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": null
      },
      "concealedSamples": 0,
      "object": {
@@ -91,12 +95,12 @@
      "reference": 10240,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 10240
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 10240
      },
      "concealedSamples": 0,
      "object": {
@@ -154,22 +158,16 @@
       0
      ],
      "analyzer": 20480,
-     "reference": 19456,
-     "referencePath": "fdk direct",
-     "referenceKind": "official",
-     "format": {
-      "rate": 44100,
-      "channels": 2
-     },
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
      "witnesses": {
       "ffmpeg": 20480
      },
-     "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 0,
-      "frameSize": 1024
-     },
+     "heldBack": true,
+     "decoderSamples": 19456,
+     "heldBytes": 42,
+     "noReference": "FDK holds the last raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those blocks",
      "flushedSamples": 1024
     }
    ],
@@ -179,19 +177,11 @@
      "decoder": "fdk direct",
      "value": 19456,
      "analyzer": 20480,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
-    },
-    {
-     "figure": "samples",
-     "decoder": "ffmpeg",
-     "value": 20480,
-     "analyzer": 20480,
-     "reference": 19456,
-     "status": "noted",
-     "kind": "witness-differs",
-     "statusSource": "rule"
+     "status": "keep",
+     "kind": "decoder-holds-blocks",
+     "reason": "FDK holds the last raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those blocks",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The analyzer keeps its figure.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -205,14 +195,14 @@
        88
       ]
      ],
-     "decoder": "decoded",
-     "samples": 1024,
+     "decoder": "decoded 0x1001",
+     "samples": 2048,
      "finding": "aac.block-trailing-bytes",
      "findings": [
       "aac.block-trailing-bytes"
      ],
-     "verdict": "finding, decoder decodes",
-     "status": "noted",
+     "verdict": "decoder decoded, finding at the same bytes",
+     "status": "agree",
      "statusSource": "rule"
     },
     {
@@ -358,24 +348,6 @@
      "verdict": "decoder decodes and reports an error (0x1001), no finding",
      "status": "noted",
      "statusSource": "rule"
-    },
-    {
-     "index": 9,
-     "offset": 792,
-     "length": 88,
-     "ranges": [
-      [
-       792,
-       88
-      ]
-     ],
-     "decoder": "decoded 0x1001",
-     "samples": 2048,
-     "finding": null,
-     "findings": [],
-     "verdict": "decoder decodes and reports an error (0x1001), no finding",
-     "status": "noted",
-     "statusSource": "rule"
     }
    ],
    "unitList": {
@@ -405,12 +377,12 @@
      "reference": 30720,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 30720
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 30720
      },
      "concealedSamples": 0,
      "object": {
@@ -450,12 +422,12 @@
      "reference": 21504,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 17408
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 17408
      },
      "concealedSamples": 3072,
      "object": {
@@ -648,12 +620,12 @@
      "reference": 21504,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 15360
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 15360
      },
      "concealedSamples": 6144,
      "object": {
@@ -825,12 +797,12 @@
      "reference": 4096,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": null
      },
      "concealedSamples": 0,
      "object": {
@@ -894,22 +866,16 @@
       0
      ],
      "analyzer": 20480,
-     "reference": 13312,
-     "referencePath": "fdk direct",
-     "referenceKind": "official",
-     "format": {
-      "rate": 44100,
-      "channels": 1
-     },
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
      "witnesses": {
       "ffmpeg": null
      },
-     "concealedSamples": 1024,
-     "object": {
-      "aot": 2,
-      "extAot": 0,
-      "frameSize": 1024
-     },
+     "heldBack": true,
+     "decoderSamples": 13312,
+     "heldBytes": 237,
+     "noReference": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those blocks",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -925,9 +891,11 @@
      "decoder": "fdk direct",
      "value": 13312,
      "analyzer": 20480,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "status": "keep",
+     "kind": "decoder-holds-blocks",
+     "reason": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those blocks",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the positions the stream's units declare, with lost samples reported apart.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -941,32 +909,32 @@
        270
       ]
      ],
-     "decoder": "decoded 0x1001",
-     "samples": 3072,
+     "decoder": "refused 0x1001",
+     "samples": 0,
      "finding": "aac.crc-mismatch",
      "findings": [
       "aac.crc-mismatch"
      ],
-     "verdict": "decoder decoded, finding at the same bytes",
+     "verdict": "decoder refused, finding at the same bytes",
      "status": "agree",
      "statusSource": "rule"
     },
     {
-     "index": 4,
-     "offset": 1221,
-     "length": 337,
+     "index": 3,
+     "offset": 918,
+     "length": 303,
      "ranges": [
       [
-       1221,
-       337
+       918,
+       303
       ]
      ],
      "decoder": "concealed 0x4005",
      "samples": 4096,
      "finding": null,
      "findings": [],
-     "verdict": "decoder concealed, no finding",
-     "status": "pending",
+     "verdict": "decoder concealed, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
      "statusSource": "rule"
     }
    ],
@@ -994,22 +962,16 @@
       0
      ],
      "analyzer": 20480,
-     "reference": 17408,
-     "referencePath": "fdk direct",
-     "referenceKind": "official",
-     "format": {
-      "rate": 44100,
-      "channels": 1
-     },
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
      "witnesses": {
       "ffmpeg": null
      },
-     "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 0,
-      "frameSize": 1024
-     },
+     "heldBack": true,
+     "decoderSamples": 17408,
+     "heldBytes": 237,
+     "noReference": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those blocks",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -1025,9 +987,11 @@
      "decoder": "fdk direct",
      "value": 17408,
      "analyzer": 20480,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "status": "keep",
+     "kind": "decoder-holds-blocks",
+     "reason": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those blocks",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The analyzer keeps its figure.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [],
@@ -1058,12 +1022,12 @@
      "reference": 20480,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 20480
      },
      "concealedSamples": 1024,
      "object": {
@@ -1124,12 +1088,12 @@
      "reference": 20480,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 20480
      },
      "concealedSamples": 0,
      "object": {
@@ -1169,12 +1133,12 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 6144
      },
      "concealedSamples": 0,
      "object": {
@@ -1214,12 +1178,12 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 6144
      },
      "concealedSamples": 1024,
      "object": {
@@ -1280,12 +1244,12 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 6144
      },
      "concealedSamples": 0,
      "object": {
@@ -1325,12 +1289,12 @@
      "reference": 29696,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 29696
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 29696
      },
      "concealedSamples": 0,
      "object": {
@@ -1391,12 +1355,12 @@
      "reference": 28672,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 28672
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 28672
      },
      "concealedSamples": 1024,
      "object": {
@@ -1413,9 +1377,11 @@
      "decoder": "fdk direct",
      "value": 28672,
      "analyzer": 30720,
-     "status": "pending",
+     "status": "keep",
      "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "reason": "the shortfall of 2,048 samples is 2 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. The analyzer recovers the two frames FDK swallows by trusting the damaged length (a frame declares 84 bytes and holds 34); Core Audio's converter agrees with the analyzer (30,720).",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -1453,8 +1419,8 @@
      "samples": 0,
      "finding": null,
      "findings": [],
-     "verdict": "decoder no output, no finding",
-     "status": "pending",
+     "verdict": "decoder no output, inside the declared length of the damaged unit at 280 (aac.frame-damaged)",
+     "status": "noted",
      "statusSource": "rule"
     },
     {
@@ -1471,8 +1437,8 @@
      "samples": 1024,
      "finding": null,
      "findings": [],
-     "verdict": "decoder concealed, no finding",
-     "status": "pending",
+     "verdict": "decoder concealed, inside the declared length of the damaged unit at 280 (aac.frame-damaged)",
+     "status": "noted",
      "statusSource": "rule"
     }
    ],
@@ -1503,12 +1469,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1548,12 +1514,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1593,12 +1559,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1638,12 +1604,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1683,12 +1649,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1728,12 +1694,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1773,12 +1739,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1818,12 +1784,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1863,12 +1829,12 @@
      "reference": 65536,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 65536
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 65536
      },
      "concealedSamples": 0,
      "object": {
@@ -1908,12 +1874,12 @@
      "reference": 7168,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 7168
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 7168
      },
      "concealedSamples": 0,
      "object": {
@@ -1953,12 +1919,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -1998,12 +1964,12 @@
      "reference": 4096,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4096
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 4096
      },
      "concealedSamples": 0,
      "object": {
@@ -2043,12 +2009,12 @@
      "reference": 20480,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": null
      },
      "concealedSamples": 0,
      "object": {
@@ -2150,7 +2116,7 @@
      "analyzer": 4096,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC LTP",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC LTP",
      "statusSource": "rule"
     }
    ],
@@ -2197,7 +2163,7 @@
      "analyzer": 4096,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC Main",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
      "statusSource": "rule"
     }
    ],
@@ -2244,7 +2210,7 @@
      "analyzer": 4096,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC Main",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
      "statusSource": "rule"
     }
    ],
@@ -2276,12 +2242,12 @@
      "reference": 20480,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 20480
      },
      "concealedSamples": 0,
      "object": {
@@ -2321,12 +2287,12 @@
      "reference": 12288,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
      "format": {
       "rate": 48000,
       "channels": 6
-     },
-     "witnesses": {
-      "ffmpeg": 12288
      },
      "concealedSamples": 0,
      "object": {
@@ -2366,12 +2332,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 3
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -2432,12 +2398,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 3
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -2495,22 +2461,16 @@
       0
      ],
      "analyzer": 30720,
-     "reference": 28672,
-     "referencePath": "fdk direct",
-     "referenceKind": "official",
-     "format": {
-      "rate": 44100,
-      "channels": 2
-     },
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
      "witnesses": {
       "ffmpeg": 30720
      },
-     "concealedSamples": 0,
-     "object": {
-      "aot": 2,
-      "extAot": 0,
-      "frameSize": 1024
-     },
+     "heldBack": true,
+     "decoderSamples": 28672,
+     "heldBytes": 85,
+     "noReference": "FDK holds the last raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those blocks",
      "flushedSamples": 1024
     }
    ],
@@ -2520,19 +2480,11 @@
      "decoder": "fdk direct",
      "value": 28672,
      "analyzer": 30720,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
-    },
-    {
-     "figure": "samples",
-     "decoder": "ffmpeg",
-     "value": 30720,
-     "analyzer": 30720,
-     "reference": 28672,
-     "status": "noted",
-     "kind": "witness-differs",
-     "statusSource": "rule"
+     "status": "keep",
+     "kind": "decoder-holds-blocks",
+     "reason": "FDK holds the last raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those blocks",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them (the byte counter lags), so its total is short by those blocks and is no reference. The analyzer keeps its figure.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [],
@@ -2563,12 +2515,12 @@
      "reference": 12288,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
      "format": {
       "rate": 22050,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": null
      },
      "concealedSamples": 0,
      "object": {
@@ -2636,12 +2588,12 @@
      "reference": 12288,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
      "format": {
       "rate": 22050,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": null
      },
      "concealedSamples": 0,
      "object": {
@@ -2708,12 +2660,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -2753,12 +2705,12 @@
      "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 24576
      },
      "concealedSamples": 0,
      "object": {
@@ -2814,9 +2766,9 @@
      "status": "pending",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
-     "statusSource": "reviewed",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): stays pending for rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule Core Audio, which decodes it (24,576 at 44,100 Hz against the analyzer's 12,288; probe run 41312630570), becomes the reference.",
      "awaitingStep": 5,
-     "note": "2026-11-02: awaiting rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule (lead answer 8 to the new questions, 2026-11-01) Core Audio, which decodes it (24,576 at 44,100 Hz, the converter and the reader alike, against the analyzer's 12,288; probe run 41312630570), becomes the reference, so this stays pending until that run."
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -2865,14 +2817,20 @@
       0
      ],
      "analyzer": 10240,
-     "reference": 11264,
+     "reference": 10240,
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {
       "ffmpeg": 10240
      },
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
      "concealedSamples": 0,
      "unpaired": {
+      "rate": 22050,
+      "exact": true,
       "decoder": [
        [
         22050,
@@ -2901,27 +2859,7 @@
      "flushedSamples": 1024
     }
    ],
-   "differences": [
-    {
-     "figure": "samples",
-     "decoder": "fdk direct",
-     "value": 11264,
-     "analyzer": 10240,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
-    },
-    {
-     "figure": "samples",
-     "decoder": "ffmpeg",
-     "value": 10240,
-     "analyzer": 10240,
-     "reference": 11264,
-     "status": "noted",
-     "kind": "witness-differs",
-     "statusSource": "rule"
-    }
-   ],
+   "differences": [],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -2947,14 +2885,20 @@
       0
      ],
      "analyzer": 10240,
-     "reference": 13312,
+     "reference": 10240,
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {
       "ffmpeg": 10240
      },
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
      "concealedSamples": 0,
      "unpaired": {
+      "rate": 22050,
+      "exact": true,
       "decoder": [
        [
         22050,
@@ -3003,27 +2947,7 @@
      "flushedSamples": 1024
     }
    ],
-   "differences": [
-    {
-     "figure": "samples",
-     "decoder": "fdk direct",
-     "value": 13312,
-     "analyzer": 10240,
-     "status": "pending",
-     "kind": "analyzer-differs",
-     "statusSource": "rule"
-    },
-    {
-     "figure": "samples",
-     "decoder": "ffmpeg",
-     "value": 10240,
-     "analyzer": 10240,
-     "reference": 13312,
-     "status": "noted",
-     "kind": "witness-differs",
-     "statusSource": "rule"
-    }
-   ],
+   "differences": [],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -3052,12 +2976,12 @@
      "reference": 2048,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4096
+     },
      "format": {
       "rate": 22050,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 4096
      },
      "concealedSamples": 0,
      "object": {
@@ -3074,9 +2998,11 @@
      "decoder": "fdk direct",
      "value": 2048,
      "analyzer": 4096,
-     "status": "pending",
+     "status": "explained",
      "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "reason": "the shortfall of 2,048 samples is 2 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions (two blocks) and FDK outputs nothing for it.",
+     "statusSource": "reviewed"
     },
     {
      "figure": "samples",
@@ -3153,7 +3079,7 @@
      "analyzer": 4096,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); FDK AAC's header documents that it decodes the AAC Low Complexity profile (AAC_DEC_UNSUPPORTED_PREDICTION, AAC_DEC_UNSUPPORTED_GAIN_CONTROL_DATA); the stream is AAC SSR",
+     "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC SSR",
      "statusSource": "rule"
     }
    ],
@@ -3185,12 +3111,12 @@
      "reference": 3072,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 3072
+     },
      "format": {
       "rate": 44100,
       "channels": 6
-     },
-     "witnesses": {
-      "ffmpeg": 3072
      },
      "concealedSamples": 0,
      "object": {
@@ -3230,12 +3156,12 @@
      "reference": 3072,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 1024
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 1024
      },
      "concealedSamples": 0,
      "object": {
@@ -3307,12 +3233,12 @@
      "reference": 16384,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 16384
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 16384
      },
      "concealedSamples": 2048,
      "object": {
@@ -3359,8 +3285,8 @@
      "samples": 1024,
      "finding": null,
      "findings": [],
-     "verdict": "decoder concealed, no finding",
-     "status": "pending",
+     "verdict": "decoder concealed, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
      "statusSource": "rule"
     }
    ],
@@ -3391,12 +3317,12 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 6144
      },
      "concealedSamples": 0,
      "object": {
@@ -3436,11 +3362,11 @@
      "reference": 15360,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {},
      "format": {
       "rate": 44100,
       "channels": 2
      },
-     "witnesses": {},
      "concealedSamples": 0,
      "object": {
       "aot": 2,
@@ -3460,11 +3386,11 @@
      "reference": 15360,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {},
      "format": {
       "rate": 48000,
       "channels": 2
      },
-     "witnesses": {},
      "concealedSamples": 0,
      "object": {
       "aot": 2,
@@ -3562,15 +3488,21 @@
       62,
       63
      ],
-     "analyzer": 196608,
-     "reference": 202752,
+     "analyzer": 188608,
+     "reference": 194502,
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {
       "ffmpeg": 193991
      },
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
      "concealedSamples": 0,
      "unpaired": {
+      "rate": 44100,
+      "exact": false,
       "decoder": [
        [
         44100,
@@ -4233,18 +4165,20 @@
     {
      "figure": "samples",
      "decoder": "fdk direct",
-     "value": 202752,
-     "analyzer": 196608,
-     "status": "pending",
+     "value": 194502,
+     "analyzer": 188608,
+     "status": "explained",
      "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "reason": "the analyzer keeps 64 streams and counts no sample of the frames after them (aac.streams-limited, documented in aac.md); FDK decodes them all",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained by the documented 64-stream cap (aac.streams-limited): the analyzer counts no sample of the frames after the 64th stream.",
+     "statusSource": "reviewed"
     },
     {
      "figure": "samples",
      "decoder": "ffmpeg",
      "value": 193991,
-     "analyzer": 196608,
-     "reference": 202752,
+     "analyzer": 188608,
+     "reference": 194502,
      "status": "noted",
      "kind": "witness-differs",
      "statusSource": "rule"
@@ -4362,12 +4296,12 @@
      "reference": 11264,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 11264
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 11264
      },
      "concealedSamples": 0,
      "object": {
@@ -4384,9 +4318,11 @@
      "decoder": "fdk direct",
      "value": 11264,
      "analyzer": 12288,
-     "status": "pending",
+     "status": "explained",
      "kind": "analyzer-differs",
-     "statusSource": "rule"
+     "reason": "the shortfall of 1,024 samples is 1 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions and FDK outputs nothing for it.",
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -4438,11 +4374,11 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {},
      "format": {
       "rate": 44100,
       "channels": 1
      },
-     "witnesses": {},
      "concealedSamples": 0,
      "object": {
       "aot": 2,
@@ -4462,11 +4398,11 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {},
      "format": {
       "rate": 48000,
       "channels": 1
      },
-     "witnesses": {},
      "concealedSamples": 0,
      "object": {
       "aot": 2,
@@ -4505,12 +4441,12 @@
      "reference": 30720,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 30720
+     },
      "format": {
       "rate": 44100,
       "channels": 2
-     },
-     "witnesses": {
-      "ffmpeg": 30720
      },
      "concealedSamples": 0,
      "object": {
@@ -4550,12 +4486,12 @@
      "reference": 6144,
      "referencePath": "fdk direct",
      "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
      "format": {
       "rate": 44100,
       "channels": 1
-     },
-     "witnesses": {
-      "ffmpeg": 6144
      },
      "concealedSamples": 0,
      "object": {
