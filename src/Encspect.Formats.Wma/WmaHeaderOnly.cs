@@ -73,10 +73,7 @@ internal static class WmaHeaderOnly
             statistics.Add("Largest Packet", parent.Offset, parent.Length, NodeValue.Integer(largest, "bytes"), Explain.StatLargestPacket);
         }
 
-        if (duration is > 0)
-        {
-            statistics.Add("Duration", parent.Offset, parent.Length, NodeValue.Decimal(duration.Value, 3, "s"), Explain.StatContainerDuration);
-        }
+        ContainerFigures.AddLength(statistics, parent, config);
 
         double nominal = format.BytesPerSecond * 8.0 / 1000;
         if (nominal > 0)
@@ -115,7 +112,7 @@ internal static class WmaHeaderOnly
             ChannelMode = channels == 1 ? "Mono" : channels == 2 ? "Stereo" : null,
             ChannelLayout = layout,
             BitsPerSample = null,
-            Samples = duration is > 0 ? (long)Math.Round(duration.Value * format.SampleRate) : 0,
+            Samples = duration is > 0 ? config.DurationSamples ?? 0 : 0,
             Duration = duration ?? 0,
             AverageBitrate = average,
             IsVbr = context.Configuration?.IsVbr ?? false,
@@ -147,7 +144,7 @@ internal static class WmaHeaderOnly
             Channels = format.Channels,
             ChannelMode = format.Channels == 1 ? "Mono" : format.Channels == 2 ? "Stereo" : null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
-            Samples = (long)Math.Round(duration * format.SampleRate),
+            Samples = configuration.DurationSamples ?? 0,
             Duration = duration,
             AverageBitrate = format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });

@@ -3237,7 +3237,7 @@
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "66 frames, 3.019 s",
+                      "value": "66 frames, 3.030 s",
                       "offset": 701,
                       "length": 16050,
                       "children": [
@@ -3262,15 +3262,36 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 66560,
+                          "value": 66816,
+                          "unit": "samples",
+                          "offset": 701,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Coded Samples",
+                          "value": 67584,
                           "unit": "samples",
                           "offset": 701,
                           "length": 16050
                         },
                         {
                           "name": "Duration",
-                          "value": 3.01859410430839,
+                          "value": 3.030204081632653,
                           "unit": "s",
+                          "offset": 701,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Container Duration",
+                          "value": 3.224,
+                          "unit": "s",
+                          "offset": 701,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 71089,
+                          "unit": "samples",
                           "offset": 701,
                           "length": 16050
                         },
@@ -3283,7 +3304,7 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 39.409074519230764,
+                          "value": 39.25808189655172,
                           "unit": "kbps",
                           "offset": 701,
                           "length": 16050
@@ -16474,9 +16495,9 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 66560,
-        "duration": 3.01859410430839,
-        "averageBitrate": 39.409074519230764,
+        "samples": 66816,
+        "duration": 3.030204081632653,
+        "averageBitrate": 39.25808189655172,
         "isVbr": false,
         "playbackGroup": 1,
         "encoder": "Microsoft's Windows Media Audio encoder",
@@ -16693,7 +16714,7 @@
       {
         "severity": "Info",
         "code": "wma.reservoir-at-end",
-        "message": "The last superframe ends with 4082 bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.",
+        "message": "The bytes after the last frame the superframes finish hold the frame they announce last, whole, in 1003 bits, and then 3079 bits that no frame uses; the frame is counted in the samples.",
         "offset": 701,
         "length": 16050,
         "path": [

@@ -8,6 +8,9 @@ the Windows Media Format SDK on a Windows runner encode the same audio.
   samples every 9000, at about a third of full scale.
 - "quiet": the same tone at a tenth, with faint noise throughout, for the lossless coding, which a
   loud noise burst would make large.
+- "clicks": per channel a tone of 220 Hz plus 35 Hz per channel number at a tenth of full scale, with
+  a decaying noise burst of 160 samples every 2500 to 7000 samples (irregular, from the same generator), so
+  that a transform codec switches block sizes at other places than the "tones" signal does.
 - "speech": for the speech coder, a second that repeats: a vowel of a pulse train (110 Hz gliding
   to 150 Hz) through three resonances, a pause with faint noise, a fricative of noise, a second
   vowel with other resonances (the pulses 130 Hz gliding to 100 Hz) and a pause. The same for every
@@ -29,6 +32,7 @@ def samples(rate, channels, bits, seconds, kind):
     """Yields the interleaved samples as integers."""
     full = (1 << (bits - 1)) - 1
     seed = 12345
+    click_at = [0] * channels
     for i in range(int(rate * seconds)):
         t = i / rate
         for ch in range(channels):
@@ -37,6 +41,13 @@ def samples(rate, channels, bits, seconds, kind):
             tone = math.sin(2 * math.pi * (330 + 55 * ch) * t)
             if kind == "quiet":
                 value = 0.1 * tone + 0.004 * noise
+            elif kind == "clicks":
+                value = 0.1 * math.sin(2 * math.pi * (220 + 35 * ch) * t) + 0.004 * noise
+                since = (i + ch * 977) - click_at[ch]
+                if since >= 0:
+                    value += 0.7 * noise * math.exp(-since / 40.0) if since < 160 else 0
+                    if since >= 160:
+                        click_at[ch] += 2500 + (seed >> 8) % 4500
             else:
                 burst = 0.3 if (i + ch * 1777) % 9000 < 400 else 0
                 value = 0.35 * tone + burst * noise
@@ -112,7 +123,7 @@ def main():
     parser.add_argument("--rate", type=int, default=44100)
     parser.add_argument("--bits", type=int, default=16)
     parser.add_argument("--seconds", type=float, default=3)
-    parser.add_argument("--kind", choices=("tones", "quiet", "speech"), default="tones")
+    parser.add_argument("--kind", choices=("tones", "quiet", "clicks", "speech"), default="tones")
     args = parser.parse_args()
     write(pathlib.Path(args.output), args.rate, args.channels, args.bits, args.seconds, args.kind)
     return 0

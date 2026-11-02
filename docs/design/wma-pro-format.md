@@ -586,6 +586,8 @@ The "Statistics" node (value "N frames, D s", N every frame record, D the durati
 | "Samples" | as above |
 | "Trimmed Samples" | where above 0: the sum of the trims of the frames read without error |
 | "Duration" | seconds |
+| ["Container Duration"] | where the container states a length above 0: seconds, 3 decimals; see asf-wma.md |
+| ["Container Samples"] | where the container states a length; see asf-wma.md |
 | "Block Alignment" | bytes |
 | "Average Bitrate" | where the duration is above 0: block alignment × 8 × (packets of at least the block alignment) / duration / 1,000, kbps |
 | "Smallest Frame", "Largest Frame" | the fewest and most bits of a frame read without error, over 8, bytes |

@@ -4,7 +4,7 @@
 # offers them. Runs under Windows PowerShell 5.1 (powershell.exe), which the Windows runners have,
 # and needs Python 3 for the test signals (wma_signals.py).
 #
-#   powershell -File scripts/fixtures/windows/make_windows_wma_fixtures.ps1 -Out wma-out
+#   powershell -File scripts/fixtures/windows/make_windows_wma_fixtures.ps1 -Out wma-out [-Set std]
 #
 # Writes into -Out:
 #   wma/<name>.wma      the encoded files
@@ -19,7 +19,9 @@
 # SDK offers even where the plan below asks for more than it has.
 param(
     [string]$Out = (Join-Path (Get-Location) 'wma-out'),
-    [string]$Python = 'python'
+    [string]$Python = 'python',
+    # 'fixtures' (the files the project commits) or 'std' (further standard files for windows-wma-std.yml, below)
+    [ValidateSet('fixtures', 'std')][string]$Set = 'fixtures'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -133,6 +135,27 @@ $plan = @(
     @{ Name = 'wma92-vbr-stereo-44k-q10'; Optional = $true;         Codec = $standard; Vbr = $true;  Channels = 2; Rates = @(44100); Quality = 10; Seconds = 3; Signal = 'tones' }
     @{ Name = 'wma92-vbr-stereo-44k-q75-tagged'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 75; Seconds = 2; Signal = 'tones'; Title = 'Encspect test tone'; Author = 'Encspect' }
 )
+
+# The plan of windows-wma-std.yml: standard files whose block sizes follow the clicks signal, at the rates and channel counts the Windows
+# encoders offer, so that cutting them (scripts/fixtures/windows/make_wma_std_variants.py) ends the stream after frames of different block
+# sizes. Everything is optional: the run records what the encoders offered. The V1 and V7 names are tried to find out whether the SDK writes
+# format tag 0x0160.
+$stdPlan = @(
+    @{ Name = 'std-vbr-stereo-44k-q50-clicks'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-stereo-44k-q10-clicks'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 10; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-stereo-48k-q75-clicks'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(48000); Quality = 75; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-stereo-32k-q50-clicks'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(32000); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-stereo-22k-q50-clicks'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(22050); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-mono-44k-q50-clicks'; Codec = $standard; Vbr = $true; Channels = 1; Rates = @(44100, 22050); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-cbr-stereo-44k-64-clicks'; Path = 'mf'; Codec = $standard; Vbr = $false; Channels = 2; Rates = @(44100); Bitrate = 64000; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-cbr-stereo-48k-128-clicks'; Path = 'mf'; Codec = $standard; Vbr = $false; Channels = 2; Rates = @(48000); Bitrate = 128000; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-cbr-stereo-22k-32-clicks'; Path = 'mf'; Codec = $standard; Vbr = $false; Channels = 2; Rates = @(22050); Bitrate = 32000; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-cbr-mono-44k-48-clicks'; Path = 'mf'; Codec = $standard; Vbr = $false; Channels = 1; Rates = @(44100, 22050); Bitrate = 48000; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-vbr-stereo-44k-q75-tones-long'; Codec = $standard; Vbr = $true; Channels = 2; Rates = @(44100); Quality = 75; Seconds = 8; Signal = 'tones'; Optional = $true }
+    @{ Name = 'std-v1-vbr-stereo-44k-clicks'; Codec = 'Windows Media Audio V1'; Vbr = $true; Channels = 2; Rates = @(44100, 22050); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+    @{ Name = 'std-v7-vbr-stereo-44k-clicks'; Codec = 'Windows Media Audio V7'; Vbr = $true; Channels = 2; Rates = @(44100, 22050); Quality = 50; Seconds = 4; Signal = 'clicks'; Optional = $true }
+)
+if ($Set -eq 'std') { $plan = $stdPlan }
 
 function New-Signal($entry, $channels, $rate, $bits, $path) {
     & $Python $signals $path --channels $channels --rate $rate --bits $bits --seconds $entry.Seconds --kind $entry.Signal

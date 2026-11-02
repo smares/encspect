@@ -3367,9 +3367,30 @@
                           "length": 26990
                         },
                         {
+                          "name": "Coded Samples",
+                          "value": 92160,
+                          "unit": "samples",
+                          "offset": 5033,
+                          "length": 26990
+                        },
+                        {
                           "name": "Duration",
                           "value": 2.043356009070295,
                           "unit": "s",
+                          "offset": 5033,
+                          "length": 26990
+                        },
+                        {
+                          "name": "Container Duration",
+                          "value": 2.043,
+                          "unit": "s",
+                          "offset": 5033,
+                          "length": 26990
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 90096,
+                          "unit": "samples",
                           "offset": 5033,
                           "length": 26990
                         },
@@ -16524,7 +16545,7 @@
       {
         "severity": "Info",
         "code": "wma.reservoir-at-end",
-        "message": "The last superframe ends with 19734 bits after its last frame that no frame uses, since no superframe follows to finish a frame begun in them; a decoder drops them.",
+        "message": "The bytes after the last frame the superframes finish hold the frame they announce last, whole, in 6 bits, and then 19728 bits that no frame uses; the frame is counted in the samples.",
         "offset": 5033,
         "length": 26990,
         "path": [

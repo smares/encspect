@@ -6,7 +6,7 @@ namespace Encspect.Formats.Wma;
 // The statistics and the series over everything the stream's reader counted.
 internal static class StdReport
 {
-    public static void AddStatistics(Node statistics, Node parent, StdParameters p, StdStream stream, long samples, double duration, double? averageBitrate)
+    public static void AddStatistics(Node statistics, Node parent, StdParameters p, StdStream stream, long samples, double duration, double? averageBitrate, CodecConfiguration? configuration)
     {
         StdTotals totals = stream.Totals;
 
@@ -21,8 +21,14 @@ internal static class StdReport
         }
 
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), StdText.StatFrameLength);
-        Add("Samples", NodeValue.Integer(samples, "samples"), StdText.StatSamples);
+        Add("Samples", NodeValue.Integer(samples, "samples"), stream.IsRuleApplicable ? StdText.StatSamplesDecoder : StdText.StatSamples);
+        if (stream.IsRuleApplicable)
+        {
+            Add("Coded Samples", NodeValue.Integer(stream.CodedSamples, "samples"), StdText.StatCodedSamples);
+        }
+
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), StdText.StatDuration);
+        ContainerFigures.AddLength(statistics, parent, configuration);
         Add("Block Alignment", NodeValue.Integer(p.BlockAlign, "bytes"), StdText.StatBlockAlignment);
         if (averageBitrate is { } average)
         {

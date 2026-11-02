@@ -51,10 +51,21 @@ public class WmaFixtureTests
         Assert.Equal(tools.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.NotNull(stream.ChannelLayout);
 
-        // The frames of versions 1 and 2 are read, and the samples equal the ones ffmpeg decodes; the others have the container's duration at the rate (the Voice frames are held by the golden reports and VoiceFixtureTests).
+        // The frames of versions 1 and 2 are read, and the samples equal the ones ffmpeg decodes where the rule fitted to Microsoft's decoder does not apply
+        // (WmaStandardRuleTests holds it to the Windows figures); the others have the container's duration at the rate (the Voice frames are held by the golden reports and VoiceFixtureTests).
         if (codec is "wmav1" or "wmav2")
         {
-            Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), stream.Samples);
+            // Where the statistics have Coded Samples (the complete frames times the frame length) the samples follow the rule fitted to Microsoft's
+            // decoder, and ffmpeg outputs one frame less than the coded samples (WmaStandardRuleTests holds the samples to the Windows figures).
+            Node statistics = Child(report.Streams[0].Nodes[0], "Statistics");
+            if (statistics.Children.Any(c => c.Name == "Coded Samples"))
+            {
+                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger() - Child(statistics, "Frame Length").Value!.AsInteger());
+            }
+            else
+            {
+                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), stream.Samples);
+            }
         }
         else
         {

@@ -39,7 +39,6 @@ internal static class VoiceExplain
     public const string StatPacketBytes = "The bytes of all the packets.";
     public const string StatBlockAlignment = "The size of each packet, the container's block alignment.";
     public const string StatAverageBitrate = "The packets' bytes over the duration.";
-    public const string StatContainerDuration = "The length of the stream as the container states it, the play duration less the preroll.";
     public const string StatNominalBitrate = "The average bytes per second the container states for the stream (the WAVEFORMATEX's nAvgBytesPerSec), as a bitrate. The packets cover more than the duration where the stream starts with a preroll, so the packets' bytes over the duration would overstate it.";
     public const string StatSuperframes = "How many superframes were read: those that did not fail.";
     public const string StatInvalidSuperframes = "How many superframes failed: music, more than 480 samples, a frame type code with no type, or more bits than the packets give.";
