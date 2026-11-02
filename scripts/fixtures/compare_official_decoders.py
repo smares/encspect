@@ -697,6 +697,8 @@ def ca_total(path):
     """(total, format, why) of a Core Audio path that opened and reached the end: its single output format (None when it output nothing); else (None, None, the reason)."""
     if not path:
         return None, None, "not run"
+    if path["stoppedBy"] not in ("end", "error"):  # a crash, a timeout or a cut-off output is no refusal to open
+        return None, None, "stopped by " + path["stoppedBy"]
     if not path.get("opened"):
         return None, None, "did not open (status %s)" % show(path.get("openStatus") if "openStatus" in path else path.get("converterStatus"))
     if path["stoppedBy"] != "end":
@@ -757,7 +759,7 @@ def attach_coreaudio(figures, ca, record):
             if blocks > 1:
                 column["converter"]["blocksPerFrame"] = blocks
             if total == 0 and fig["analyzer"] and conv["unitCount"] > 0:
-                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused%s, the others held back)" % (
+                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused%s, the others and the drain gave no output)" % (
                     conv["unitCount"], conv["refusedUnits"], ", %d not fed" % conv["notFedUnits"] if conv.get("notFedUnits") else "")
         if not trimmed and reader:
             total, fmt, why = ca_total(reader)
@@ -919,29 +921,44 @@ MF_READER = "media foundation reader"
 MF_UNSUPPORTED_PROFILES = ("AAC Main", "AAC LTP", "AAC SSR")
 
 
-def mf_documented(analyzer):
-    """The documented limit of the AAC decoder that the analyzer's streams show (profile, channel count, sample rate), or None."""
+def mf_documented(analyzer, blocks=1):
+    """The documented limits of the AAC decoder (Learn, "AAC Decoder") that the file shows, joined, or None: the profile, ER object types, the channel count and the sample rate of the
+    analyzer's streams (approximations of Learn's lists: 7,350 Hz is outside its rates too, and the test is over all streams of the file), the raw data blocks per frame the file
+    declares and the analyzer's finding of a coupling channel element. Learn's page lists no xHE-AAC either; it predates the decoder's xHE-AAC support (the transform decodes
+    exhale.m4a), so xHE-AAC is not treated as a documented limit."""
     streams = analyzer["streams"] if analyzer else []
     codecs = sorted({s["codec"] for s in streams})
+    limits = []
     if any(c in MF_UNSUPPORTED_PROFILES for c in codecs):
-        return "Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is %s" % ", ".join(codecs)
+        limits.append("Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is %s" % ", ".join(codecs))
     if any(c.startswith("ER AAC") for c in codecs):
-        return "Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is %s" % ", ".join(codecs)
+        limits.append("Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is %s" % ", ".join(codecs))
     if any((s["channels"] or 0) > 6 for s in streams):
-        return "Learn gives at most 6 channels for the AAC decoder; the stream has %s" % "/".join(str(s["channels"]) for s in streams)
+        limits.append("Learn gives at most 6 channels for the AAC decoder; the stream has %s" % "/".join(str(s["channels"]) for s in streams))
     if any((s["sampleRate"] or 0) > 48000 for s in streams):
-        return "Learn gives at most 48 kHz for the AAC decoder; the stream is at %s Hz" % "/".join(str(s["sampleRate"]) for s in streams)
-    return None
+        limits.append("Learn gives at most 48 kHz for the AAC decoder; the stream is at %s Hz" % "/".join(str(s["sampleRate"]) for s in streams))
+    if blocks > 1:
+        limits.append("Learn allows one raw data block per ADTS frame; the frames declare up to %d" % blocks)
+    if any(f["code"] == "aac.coupling-without-program" for f in (analyzer or {}).get("findings", [])):
+        limits.append("Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program")
+    return "; ".join(limits) or None
 
 
 def mf_total(path):
-    """(runs, why) of a Media Foundation path that opened and reached the end: its runs of constant output format (none when it output nothing); else (None, the reason)."""
+    """(runs, why) of a Media Foundation path that reached the end: its runs of constant output format (none when it output nothing); else (None, the reason), which starts with
+    `not run`, `not asked:` (the harness did not ask the decoder), `stopped by` (a crash, timeout, stall, limit or failed read: no figure, and no refusal) or `refused:` (the decoder
+    or the type it was offered, or the file, did not open). A stop is told before the refusal, as a crash has no open state."""
     if not path:
         return None, "not run"
-    if not path.get("opened") or path.get("mediaTypeRefused"):
-        return None, "did not open (%s)" % (path.get("reason") or path.get("openStatus") or "no reason")
-    if path["stoppedBy"] != "end":
-        return None, "stopped by %s%s" % (path["stoppedBy"], " (%s)" % path["reason"] if path.get("reason") else "")
+    stopped = path["stoppedBy"]
+    if stopped == "harness":
+        return None, "not asked: %s" % (path.get("reason") or "no reason")
+    if stopped not in ("end", "error"):
+        return None, "stopped by %s%s" % (stopped, " (%s)" % path["reason"] if path.get("reason") else "")
+    if stopped == "error" and (not path.get("opened") or path.get("mediaTypeRefused")):
+        return None, "refused: %s" % (path.get("reason") or path.get("openStatus") or "no reason")
+    if stopped != "end":
+        return None, "stopped by %s%s" % (stopped, " (%s)" % path["reason"] if path.get("reason") else "")
     return path.get("runs") or [], None
 
 
@@ -997,7 +1014,7 @@ def attach_mediafoundation(result, mf, record):
     if transform is not None:
         runs, why = mf_total(transform)
         if runs is None:
-            column["transform"] = {"samples": None, "why": why}
+            column["transform"] = {"samples": None, "why": why, **({"blocksPerFrame": blocks} if blocks > 1 else {})}
         else:
             entry = mf_entry(transform, runs, rate)
             column["transform"] = entry
@@ -1009,7 +1026,7 @@ def attach_mediafoundation(result, mf, record):
             if blocks > 1:
                 entry["blocksPerFrame"] = blocks
             if not runs and fig["analyzer"] and transform["unitCount"] > 0:
-                entry["refusesStream"] = "Media Foundation's transform outputs nothing for any of its %d units (%d refused, %d with an output error%s, the others held back)" % (
+                entry["refusesStream"] = "Media Foundation's transform outputs nothing for any of its %d units (%d refused, %d with an output error%s, the others and the drain gave no output)" % (
                     transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], ", %d not fed" % transform["notFedUnits"] if transform.get("notFedUnits") else "")
     if reader is not None:
         runs, why = mf_total(reader)
@@ -1060,16 +1077,16 @@ def mediafoundation_differences(figures, analyzer):
     """The differences of Media Foundation's columns from the analyzer and the reference, for the status rules of the design. The Source Reader is a witness of the coded stage only;
     the documented limits of the AAC decoder (Learn) are named in the reason and make a refusal `explained`."""
     differences = []
-    documented = mf_documented(analyzer)
     for figure in figures:
         if figure["stage"] != "coded":
             continue
         a, r = figure["analyzer"], figure.get("reference")
         column = figure.get("mediaFoundation") or {}
+        documented = mf_documented(analyzer, (column.get("transform") or {}).get("blocksPerFrame", 1))
         reader = column.get("reader")
         if reader and reader.get("samples") is not None and reader["samples"] != a and r is not None and reader["samples"] != r:
             differences.append({"figure": figure["id"], "decoder": MF_READER, "value": reader["samples"], "analyzer": a, "reference": r, "status": "explained" if a == r else "noted",
-                                "kind": "witness-differs", "reason": "the Source Reader outputs %s samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's %s and the reference's %s" % (
+                                "kind": "witness-differs", "reason": "the Source Reader reads to the end and outputs %s samples against the analyzer's %s and the reference's %s" % (
                                     show(reader["samples"]), show(a), show(r))})
         entry = column.get("transform")
         if not entry:
@@ -1077,18 +1094,21 @@ def mediafoundation_differences(figures, analyzer):
         fdk_agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
         if entry.get("samples") is None:
             why = entry.get("why") or ""
-            if why.startswith("did not open"):
+            if why.startswith("refused:"):
                 differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "explained" if documented or fdk_agrees else "noted",
                                     "kind": "decoder-refuses-stream", **({"ownersDisagree": True} if fdk_agrees and not documented else {}),
-                                    "reason": "Media Foundation's transform cannot be set up for the stream (%s)%s" % (why, "; " + documented if documented else (
+                                    "reason": "Media Foundation's transform is not set up for the stream, %s%s" % (why, "; " + documented if documented else (
                                         "; the analyzer equals the reference (fdk direct, %s): the owners' decoders disagree" % show(r) if fdk_agrees else "; no reference from it"))})
+            elif why.startswith("not asked:"):
+                differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "noted", "kind": "decoder-not-asked",
+                                    "reason": "Media Foundation's transform was not asked (%s): the harness's limit, not a refusal by the decoder" % why[len("not asked: "):]})
             elif why.startswith("stopped by"):
                 differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "noted", "kind": "decoder-stopped",
                                     "reason": "Media Foundation's transform did not reach the end of the stream (%s); its partial count is no figure" % why})
             continue
         if entry.get("noReference"):
-            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": entry["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-one-block-per-frame",
-                                "reason": entry["noReference"]})
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": entry["decoderSamples"], "analyzer": a, "status": "explained" if documented else "noted",
+                                "kind": "decoder-one-block-per-frame", "reason": entry["noReference"]})
             continue
         c = entry["samples"]
         if entry.get("withoutTimestamps") is not None and entry["withoutTimestamps"] != c:
@@ -1157,7 +1177,7 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
     if refused_all:
         codes = sorted({c for c in direct["errorCodes"] if c not in ("0x0000", "0x1002")})
         figures.append({"id": "samples", **base, "refused": "FDK AAC outputs nothing for any of its %d units (%s)" % (direct["unitCount"], ", ".join(codes) if codes else "0x1002, it never has enough bits"),
-                        "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg"})
+                        "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg"})
     elif not complete:
         figures.append({"id": "samples", **base, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
     elif direct.get("heldBack"):
@@ -1663,8 +1683,8 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         analyzer, source = load_aac_analyzer(path, cli_reports)
         column = aac_ffmpeg(args, path, tmp, record)
         ca = ca_records.get(sha)
-        # the macOS job decodes every file FDK is fed, the variants of MAC_VARIANT_SOURCES and the downloaded samples
-        expected = not record.get("notFed") and (folder != "derived" or pathlib.Path(derived["source"]).name in driver.MAC_VARIANT_SOURCES)
+        # the macOS job decodes every file FDK is fed, the variants of PLATFORM_VARIANT_SOURCES and the downloaded samples
+        expected = not record.get("notFed") and (folder != "derived" or pathlib.Path(derived["source"]).name in driver.PLATFORM_VARIANT_SOURCES)
         compared = compare_aac(record, analyzer, column, ca)
         compared["coreAudioMissing"] = expected and ca is None
         mf = mf_records.get(sha)
@@ -1673,7 +1693,8 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             compared["units"] = compared["units"] + mediafoundation_unit_verdicts(mf, analyzer)
         return {"file": path.name, "sha256": sha, "folder": folder, "derived": derived and ({"from": derived["source"], "rule": derived["rule"]} if "rule" in derived else {"downloaded": True}),
                 "bytes": record["bytes"], "sameBytesAs": aliases.get(sha, []), "analyzerSource": source, "analyzerStreams": analyzer["streams"] if analyzer else None,
-                "analyzerGapless": analyzer["gapless"] if analyzer else None, "ffmpeg": column, "unitList": record["unitList"], "record": summarize(record) if record["paths"] else {},
+                "analyzerGapless": analyzer["gapless"] if analyzer else None, "analyzerFindingCodes": sorted({f["code"] for f in analyzer["findings"]}) if analyzer else [],
+                "ffmpeg": column, "unitList": record["unitList"], "record": summarize(record) if record["paths"] else {},
                 **compared}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
@@ -1695,7 +1716,7 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         mf = mf_records.get(r["sha256"])
         if mf and not mf.get("notFed") and not r.get("notFed"):
             attach_mediafoundation(r, mf, aac_records[r["sha256"]])
-            r["differences"] = r["differences"] + mediafoundation_differences(r["figures"], {"streams": r["analyzerStreams"] or []})
+            r["differences"] = r["differences"] + mediafoundation_differences(r["figures"], {"streams": r["analyzerStreams"] or [], "findings": [{"code": c} for c in r.get("analyzerFindingCodes", [])]})
     for folder in ("aac", "adts", "mp4"):
         committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
         apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")

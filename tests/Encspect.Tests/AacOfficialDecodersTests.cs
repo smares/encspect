@@ -242,7 +242,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             long? actual = figures.GetValueOrDefault(id);
             Assert.True(actual is not null, $"{name}: the analyzer's samples of {id} are gone");
             long? listed = difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null ? null : difference.GetProperty("analyzer").GetInt64();
-            if (kind is "decoder-refuses-stream" or "decoder-stopped")
+            if (kind is "decoder-refuses-stream" or "decoder-stopped" or "decoder-not-asked")
             {
                 Assert.True(actual == listed, $"{name}: the samples of {id} are {actual}; the decoder refuses the stream and the list has the analyzer's {listed}");
                 if (status == "pending")

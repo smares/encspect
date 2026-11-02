@@ -359,8 +359,9 @@ public static class MftProbe
         set("units", units);
         var data = File.ReadAllBytes(path);
 
-        // Reads everything the decoder has for the input it was given; returns the frames and the results.
-        (long Frames, string Results) Pull()
+        // Reads everything the decoder has for the input it was given; returns the frames and the results, and adds the sample time and duration (100 ns units; null when the
+        // sample has none) and the frames of every output sample to outs.
+        (long Frames, string Results) Pull(List<(long? Time, long? Duration, long Frames)> outs)
         {
             long frames = 0;
             var results = new List<string>();
@@ -405,6 +406,9 @@ public static class MftProbe
                     {
                         var sample = (IMFSample)Marshal.GetObjectForIUnknown(buffer.Sample);
                         sample.GetTotalLength(out uint length);
+                        long? sampleTime = sample.GetSampleTime(out long timeValue) >= 0 ? timeValue : null;
+                        long? sampleDuration = sample.GetSampleDuration(out long durationValue) >= 0 ? durationValue : null;
+                        outs.Add((sampleTime, sampleDuration, length / blockAlign));
                         frames += length / blockAlign;
                         byFormat[formatKey] = byFormat.GetValueOrDefault(formatKey) + length / blockAlign;
                         lock (SourceReaderProbe.Gate)
@@ -490,12 +494,13 @@ public static class MftProbe
             }
 
             long frames = 0;
+            var outputs = new List<(long? Time, long? Duration, long Frames)>();
             int result = mft.ProcessInput(0, sample, 0);
             entry["inputHresult"] = Format.Hr(result);
             if (result == NotAccepting)
             {
                 // A refused first call is not a failing unit: read the output and offer the same unit once more.
-                var (more, text) = Pull();
+                var (more, text) = Pull(outputs);
                 frames += more;
                 entry["drainedBeforeRetry"] = text;
                 result = mft.ProcessInput(0, sample, 0);
@@ -504,7 +509,7 @@ public static class MftProbe
 
             if (result >= 0)
             {
-                var (more, text) = Pull();
+                var (more, text) = Pull(outputs);
                 frames += more;
                 entry["output"] = text;
                 consecutiveFailures = 0;
@@ -516,6 +521,11 @@ public static class MftProbe
             }
 
             entry["frames"] = frames;
+            if (outputs.Count > 0)
+            {
+                entry["samples"] = outputs.Select(o => new object?[] { o.Time, o.Duration, o.Frames }).ToList();
+            }
+
             total += frames;
             Marshal.ReleaseComObject(mb);
             Marshal.ReleaseComObject(sample);
@@ -536,8 +546,9 @@ public static class MftProbe
         set("stoppedBy", stopped);
         set("endOfStreamMessage", Format.Hr(mft.ProcessMessage(0x10000002, IntPtr.Zero)));
         set("drainMessage", Format.Hr(mft.ProcessMessage(1, IntPtr.Zero)));
-        var (drained, drainText) = Pull();
-        set("drain", new { frames = drained, results = drainText });
+        var drainOutputs = new List<(long? Time, long? Duration, long Frames)>();
+        var (drained, drainText) = Pull(drainOutputs);
+        set("drain", new { frames = drained, results = drainText, samples = drainOutputs.Select(o => new object?[] { o.Time, o.Duration, o.Frames }).ToList() });
         set("errorCount", errors);
         set("totalsByOutputFormat", byFormat);
         // The complete total only for a stream fed to its end and drained; a loop that stopped early leaves partialSamples.
