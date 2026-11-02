@@ -224,6 +224,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     manifest, skipped = {}, {}
     bases = 0
+    header_bases = 0
     for spec in sys.argv[3:]:
         for path in candidates(spec):
             raw = path.read_bytes()
@@ -239,6 +240,7 @@ def main():
             manifest[name] = {"base": path.name, "kind": "base", "frames": len(structure_["nexts"]), "frameLength": structure_["frameLength"],
                               "reservoir": structure_["reservoir"], "superframes": len(structure_["superframes"]), "next": structure_["nexts"][-1] if structure_["nexts"] else None}
             made = 0
+            headered = False
             for k in choose_cuts(structure_):
                 try:
                     std = cut(raw, structure_, k)
@@ -251,7 +253,8 @@ def main():
                 manifest[name] = {"base": path.name, "kind": f"cut-{k}", "frames": k + 1, "frameLength": structure_["frameLength"],
                                   "superframe": j, "kept": kept, "next": structure_["nexts"][k]}
                 made += 1
-                if bases < HEADER_BASES and structure_["reservoir"] and k in header_ks(structure_):
+                if header_bases < HEADER_BASES and structure_["reservoir"] and k in header_ks(structure_):
+                    headered = True
                     for field, ms in HEADER_VARIANTS:
                         copy = StdFile(bytes(std.data))
                         set_header(copy, field, ms)
@@ -259,6 +262,7 @@ def main():
                         (output / header_name).write_bytes(bytes(copy.data))
                         manifest[header_name] = dict(manifest[name], kind=f"cut-{k}-{field}-{ms}")
             bases += 1 if made else 0
+            header_bases += 1 if headered else 0
     (output / "manifest.json").write_text(json.dumps({"files": manifest, "skipped": skipped}, indent=1) + "\n", encoding="utf-8")
     print(f"{len(manifest)} files from {bases} bases, skipped: {json.dumps(skipped)}")
     return 0

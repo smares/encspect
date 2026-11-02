@@ -8,7 +8,7 @@ make_wma_std_variants.py). With --fixtures, files of that folder with a record i
 run on every file; for each one that has no damage the table gives the samples per channel the decoder DMO and the Source Reader
 gave, and:
 
-  coded    the frames' count: (valid frames - 1) * F, the count the analyzer gave before it followed the decoder
+  coded    the frames' count: (valid frames - 1) * F, the frames' count, the analyzer's count for standard WMA
   rule     coded + (F - L) / 2, where F is the frame length and L the block size that the last block of the last frame announces
            for the block after it (its "Next Block Size"; F for a stream without variable block lengths)
   analyzer the analyzer's "Samples" in this build

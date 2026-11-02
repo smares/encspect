@@ -509,6 +509,8 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 | ["Invalid Frames"] | frames that failed, where any |
 | "Frame Length" | F |
 | "Samples", "Duration" | see [Samples and duration](#samples-and-duration) |
+| ["Container Duration"] | where the container states a length above 0: seconds, 3 decimals; see asf-wma.md |
+| ["Container Samples"] | where the container states a length; see asf-wma.md |
 | "Block Alignment" | A |
 | ["Average Bitrate"] | 8 × A × (superframes not short) / duration / 1000, where the duration is above 0 |
 | ["Smallest Frame", "Largest Frame"] | the bits of the shortest and longest valid frame / 8, in bytes |

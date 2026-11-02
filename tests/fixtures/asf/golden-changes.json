@@ -1,5 +1,5 @@
 {
-  "note": "WMA Professional follows Microsoft's decoder for the sample count of undamaged streams with the length prefix (docs/design/wma-pro-format.md, \"What Encspect reports\"). The nine stereo Windows fixtures end in two subframes of 1,024 samples, so Samples go from 131,788 to 132,300 (+512), and the duration, the average bitrate and the Statistics node's value follow. The Trim node of the frame the goldens list now reads \"none at the start\" where the start flag is 0 (it read \"0 samples at the start\"), so the 5.1 goldens change in that value alone. Every Windows Media Audio stream whose header states a length gets \"Container Duration\" (seconds) before \"Container Samples\" (samples, already there); the header-only Voice streams' \"Duration\" is renamed \"Container Duration\". \"Container Samples\" is new in every such statistics.",
+  "note": "Every Windows Media Audio stream whose header states a length gets \"Container Duration\" (seconds) and \"Container Samples\" (samples) in its statistics, both new in every such statistics; the header-only Voice streams' \"Duration\" is renamed \"Container Duration\".",
   "goldens": [
     "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
     "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
@@ -80,76 +80,7 @@
     "tests/fixtures/asf/writer-stamp-last.report.json",
     "tests/fixtures/asf/writer-stamp-not-last.report.json"
   ],
-  "changed": [
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Professional",
-        "Statistics"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Professional",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Professional",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Professional",
-        "Statistics",
-        "Average Bitrate"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "averageBitrate"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Professional",
-        "Frames",
-        "Frame",
-        "Trim"
-      ],
-      "fields": [
-        "value"
-      ]
-    }
-  ],
+  "changed": [],
   "added": [
     {
       "scope": "node",

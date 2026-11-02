@@ -37,7 +37,7 @@ public class AsfContainerSamplesTests
 
     [Theory]
     [InlineData(1_050_000UL, 0UL, 4631L)] // 4,630.5 samples: halves up
-    [InlineData(1_049_999UL, 0UL, 4630L)] // one tick less: 4,630.4995
+    [InlineData(1_049_999UL, 0UL, 4630L)] // one tick less: 4,630.49559
     [InlineData(1_050_001UL, 0UL, 4631L)]
     [InlineData(61_050_000UL, 6000UL, 4631L)] // the preroll is milliseconds: 6,000 ms = 60,000,000 ticks
     [InlineData(10_000_000UL, 0UL, 44100L)]
@@ -89,5 +89,46 @@ public class AsfContainerSamplesTests
         Assert.Null(Find(report.Root, "Container Samples"));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate, MidpointRounding.AwayFromZero), stream.Samples);
+    }
+
+    // The streams whose Samples are the header's length (encrypted ones, and Voice with a configuration the description rejects) take the integer figure,
+    // halves up: a length of exactly 4,630.5 (44.1 kHz) or 800.5 (8 kHz) samples is 4,631 or 801, where rounding a double to even would give 4,630 or 800.
+    [Theory]
+    [InlineData("protected-advanced-data-size.asf", 1_050_000UL, 4631L)]
+    [InlineData("protected-wma-pro.asf", 1_050_000UL, 4631L)]
+    [InlineData("protected-wma-lossless.asf", 1_050_000UL, 4631L)]
+    [InlineData("protected-wma-voice.asf", 1_000_625UL, 801L)]
+    [InlineData("voice-config-align.asf", 1_000_625UL, 801L)]
+    public void SamplesTakenFromTheHeaderRoundHalvesUp(string fixture, ulong playTicks, long expected)
+    {
+        byte[] data = Patched(fixture, playTicks, 0);
+        Report report = Analyzer.CreateDefault().Analyze("p.asf", new MemoryStream(data));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
+        Assert.Equal(expected, Assert.Single(report.Streams).Samples);
+    }
+
+    private static readonly byte[] StreamPropertiesId = Guid.Parse("B7DC0791-A9B7-11CF-8EE6-00C00C205365").ToByteArray();
+
+    // Replaces the sampling rate (8,000) in the first stream's type-specific data, a WAVEFORMATEX.
+    private static byte[] WithRate(byte[] data, uint rate)
+    {
+        int stream = data.AsSpan().IndexOf(StreamPropertiesId);
+        byte[] old = BitConverter.GetBytes(8000u);
+        int at = stream + data.AsSpan(stream).IndexOf(old);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(at), rate);
+        return data;
+    }
+
+    // A length that does not fit a signed 64-bit integer in samples, and a sampling rate of 0, state no samples.
+    [Theory]
+    [InlineData(uint.MaxValue)] // 2^64 - 1 ticks x 4,294,967,295 samples per second / 10,000,000
+    [InlineData(0u)]
+    public void ALengthThatCannotBeConvertedIsNotStated(uint rate)
+    {
+        byte[] data = WithRate(Patched("voice-config-align.asf", ulong.MaxValue, 0), rate);
+        Report report = Analyzer.CreateDefault().Analyze("a.asf", new MemoryStream(data));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
+        Assert.NotNull(Find(report.Root, "Container Duration"));
+        Assert.Null(Find(report.Root, "Container Samples"));
     }
 }
