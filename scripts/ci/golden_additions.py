@@ -27,8 +27,8 @@ every child of that name. A change file:
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
                    "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
-                  {"scope": "stream", "fields": ["samples", "duration"]},   # fields of every stream whose values may differ
-                  {"scope": "finding", "code": "wma.reservoir-at-end", "fields": ["message"]}]  # fields of every finding of that code
+                  {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
+                  {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}]  # fields of every finding of the code
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -155,16 +155,18 @@ def reverse_renames(report, renamed):
 
 def drop_changed(report, changed):
     for entry in changed:
-        if entry.get("scope") == "finding":
-            for finding in report.get("findings", []):
-                if finding.get("code") == entry["code"]:
-                    for field in entry["fields"]:
-                        finding.pop(field, None)
-            continue
         if entry.get("scope") == "stream":
             for stream in report.get("streams", []):
                 for field in entry["fields"]:
                     stream.pop(field, None)
+            continue
+        if entry.get("scope") == "finding":
+            if "code" not in entry or "fields" not in entry:
+                raise ChangeError(f"a changed entry with the scope finding needs a code and fields: {json.dumps(entry)}")
+            for finding in report.get("findings", []):
+                if finding.get("code") == entry["code"]:
+                    for field in entry["fields"]:
+                        finding.pop(field, None)
             continue
         for node in matching(report["root"], entry["path"][:-1]):
             for child in node.get("children", []):
@@ -283,8 +285,8 @@ def check_golden(old, new, change):
                         problems.append(f"[{index}]: the node {entry['from']} is still there under {'/'.join(entry['parent'])}, which the change renames to {entry['to']}")
                     if entry["to"] not in names:
                         problems.append(f"[{index}]: the node {entry['to']} is missing under {'/'.join(entry['parent'])}, where the change renames {entry['from']} to it")
-        drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
         try:
+            drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
             expected = transform(after, change, before)
         except ChangeError as error:
             return [str(error)]

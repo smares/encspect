@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests of golden_additions.py: python3 scripts/ci/test_golden_additions.py"""
 
-import copy
 import json
 import pathlib
 import subprocess
@@ -125,6 +124,21 @@ class CheckTests(unittest.TestCase):
         other = report(OLD_STATS, streams=[{"nodes": [[1]], "samples": 12, "duration": 1.2, "codec": "WMB"}])
         self.assertTrue(self.check(old, other, change))
         self.assertTrue(self.check(old, new, {"changed": [{"scope": "stream", "fields": ["samples"]}]}))
+
+    def test_a_finding_field_that_the_change_lists_may_differ_for_that_code_only(self):
+        old = report(OLD_STATS, findings=[{"code": "a.b", "message": "one", "severity": "warning"}, {"code": "c.d", "message": "same", "severity": "warning"}])
+        new = report(OLD_STATS, findings=[{"code": "a.b", "message": "two", "severity": "warning"}, {"code": "c.d", "message": "same", "severity": "warning"}])
+        change = {"changed": [{"scope": "finding", "code": "a.b", "fields": ["message"]}]}
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "c.d", "fields": ["message"]}]}))
+        self.assertTrue(self.check(old, new, {"changed": [{"scope": "finding", "code": "a.b", "fields": ["severity"]}]}))
+
+    def test_a_finding_entry_without_a_code_is_a_readable_error(self):
+        old = report(OLD_STATS, findings=[{"code": "a.b", "message": "one"}])
+        new = report(OLD_STATS, findings=[{"code": "a.b", "message": "two"}])
+        problems = self.check(old, new, {"changed": [{"scope": "finding", "fields": ["message"]}]})
+        self.assertEqual(len(problems), 1)
+        self.assertIn("needs a code", problems[0])
 
     def test_a_rename_that_did_not_happen_fails_whatever_the_value(self):
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],
@@ -294,32 +308,6 @@ class RepositoryTests(unittest.TestCase):
         self.write("tests/fixtures/mpeg/b.report.json", [report(OLD_STATS)])
         self.commit()
         self.assertEqual(self.run_check(), 0)
-
-    def test_a_changed_finding_message_is_allowed_where_the_file_lists_the_code(self):
-        old = report(OLD_STATS)
-        old["findings"] = [{"severity": "Info", "code": "x.note", "message": "old words", "offset": 0, "length": 1}]
-        new = copy.deepcopy(old)
-        new["findings"][0]["message"] = "new words"
-        self.write("tests/fixtures/mpeg/a.report.json", [old])
-        self.git("add", "-A")
-        self.git("commit", "-qm", "findings base")
-        self.git("branch", "-f", "main")
-        self.write("tests/fixtures/mpeg/a.report.json", [new])
-        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/a.report.json"], "changed": []})
-        self.commit()
-        self.assertEqual(self.run_check(), 1)
-
-        self.write("tests/fixtures/mpeg/golden-changes.json", {
-            "goldens": ["tests/fixtures/mpeg/a.report.json"],
-            "changed": [{"scope": "finding", "code": "x.note", "fields": ["message"]}]})
-        self.commit()
-        self.assertEqual(self.run_check(), 0)
-
-        self.write("tests/fixtures/mpeg/golden-changes.json", {
-            "goldens": ["tests/fixtures/mpeg/a.report.json"],
-            "changed": [{"scope": "finding", "code": "x.other", "fields": ["message"]}]})
-        self.commit()
-        self.assertEqual(self.run_check(), 1)
 
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
