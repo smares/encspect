@@ -72,7 +72,7 @@ public sealed class WmaProParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new ProTally();
-        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings, PacketLimit);
+        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings, PacketLimit, new ProFrameReader(p, new ProTally()));
         reader.Run(packets);
 
         var nodes = new ProNodes(reader.Data, p);

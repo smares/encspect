@@ -353,6 +353,9 @@ def check_hand_built(name, manifest, path, problems):
                 problems.append(f"ffmpeg decoding: {errors or code}")
             else:
                 check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
+    if crosscheck.get("wma_frames"):
+        # The frames of a Professional stream written without the length prefix, which ffmpeg reads one packet late (flushed_frames).
+        check_wma_frames(path, crosscheck["wma_frames"], problems)
     if audio and all(s["tag"] == 0x000A for s in audio):
         check_mediainfo(name, path, data["streams"][0], problems, golden_report(path), count_samples=crosscheck.get("decode") == "ok")
 

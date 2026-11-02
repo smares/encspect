@@ -19,6 +19,9 @@ internal sealed class WmaPacketReader
     private readonly CodecContext _context;
     private readonly FindingCollector _findings;
     private readonly IFrameSyntax _reader;
+
+    // Reads a frame to see whether it runs out of bits, without adding to the statistics the reader tallies (a reader with a tally of its own).
+    private readonly IFrameSyntax _probe;
     private readonly bool _isLossless;
     private readonly Func<int, string> _reason;
     private readonly int _bufferBytes;
@@ -61,8 +64,9 @@ internal sealed class WmaPacketReader
     private readonly List<int> _secondFrames = [];
     private int _lastValidSecond = -1;
 
-    public WmaPacketReader(IStreamParameters parameters, IFrameSyntax syntax, bool isLossless, int channels, Func<int, string> reason, CodecContext context, FindingCollector findings, int maxPackets = MaxPackets)
+    public WmaPacketReader(IStreamParameters parameters, IFrameSyntax syntax, bool isLossless, int channels, Func<int, string> reason, CodecContext context, FindingCollector findings, int maxPackets = MaxPackets, IFrameSyntax? probe = null)
     {
+        _probe = probe ?? syntax;
         _maxPackets = maxPackets;
         _p = parameters;
         _context = context;
@@ -496,8 +500,8 @@ internal sealed class WmaPacketReader
 
     // The frames that start in the last packet: no packet follows to supply their last bits, but the saved run holds whole frames and is read
     // as every other run is (docs/design/wma-pro-format.md, "Frames without the length prefix"). A run is dropped where a loss is pending or a
-    // packet was skipped (its last frame goes on in a packet nobody read). A frame the run cannot finish, and zero bits after a frame that says
-    // another follows, are an unfinished frame as with the length prefix, not an invalid one. FFmpeg never reads these frames, so they stay
+    // packet was skipped (its last frame goes on in a packet nobody read). A frame the run cannot finish, which includes the zero padding after a frame
+    // that says another follows (read from zeros, a frame runs out of bits), is an unfinished frame as with the length prefix, not an invalid one. FFmpeg never reads these frames, so they stay
     // out of the count it gives (the fallback).
     private void FlushWithoutPrefix()
     {
@@ -520,7 +524,7 @@ internal sealed class WmaPacketReader
         while (position < total)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
-            FrameOutcome probe = _reader.Read(joined, position, total, 0, _trace);
+            FrameOutcome probe = _probe.Read(joined, position, total, 0, _trace);
             if (probe.Fault != 0 && position + probe.Bits >= total)
             {
                 unfinished = total - position;
@@ -540,31 +544,12 @@ internal sealed class WmaPacketReader
                 break;
             }
 
-            if (position < total && IsZero(joined, position, total))
-            {
-                unfinished = total - position;
-                break;
-            }
         }
 
         _isFlush = false;
         ClearSaved();
         UnfinishedBits = _isLoss ? 0 : unfinished;
         MostFramesInPacket = Math.Max(MostFramesInPacket, _framesInCall);
-    }
-
-    private static bool IsZero(Bits bits, int from, int to)
-    {
-        bits.Position = from;
-        while (bits.Position < to)
-        {
-            if (bits.ReadBit() != 0)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private void ReadWithoutPrefix(int packet, int end, int payloadStart, int count, bool isDropped)
