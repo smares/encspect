@@ -48,7 +48,7 @@ internal static class VoiceReport
         Add("Frame Length", NodeValue.Integer(VoiceParameters.FrameSamples, "samples"), VoiceExplain.StatFrameLength);
         Add("Samples", NodeValue.Integer(t.Samples, "samples"), VoiceExplain.StatSamples);
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), VoiceExplain.StatDuration);
-        ContainerFigures.AddSamples(node, container, configuration);
+        ContainerFigures.AddLength(node, container, configuration);
 
         Add("Block Alignment", NodeValue.Integer(p.BlockAlign, "bytes"), VoiceExplain.StatBlockAlignment);
         Add("Packet Bytes", NodeValue.Integer(t.PacketBytes, "bytes"), VoiceExplain.StatPacketBytes);

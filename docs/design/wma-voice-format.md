@@ -426,7 +426,7 @@ The series are the bitrate of each superframe (bits × R / its samples; 0 for on
 
 - **The node:** "Statistics" is added when the stream has at least one packet; its value is "N superframes, D.DDD s". Its entries come in this order, each only where its condition holds:
   - "Packets" (integer), "Superframes", "Invalid Superframes" (where any), "Frames", "Frame Length" (160 samples);
-  - "Samples" (unit samples), "Duration" (decimal, 3 places, s), "Container Samples" (where the container states a length; see asf-wma.md);
+  - "Samples" (unit samples), "Duration" (decimal, 3 places, s), "Container Duration" (where the container states one above 0; decimal, 3 places, s), "Container Samples" (where the container states a length; see asf-wma.md);
   - "Block Alignment" (bytes), "Packet Bytes" (bytes);
   - "Average Bitrate" and "Average Superframe Bitrate" (where the duration is above 0; decimal, 1 place, kbps);
   - "Nominal Bitrate" (where above 0: the container's average bytes per second × 8 / 1,000; 1 place, kbps);

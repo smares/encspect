@@ -35,7 +35,7 @@ internal static class ProReport
         }
 
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), ProExplain.StatDuration);
-        ContainerFigures.AddSamples(statistics, parent, configuration);
+        ContainerFigures.AddLength(statistics, parent, configuration);
         Add("Block Alignment", NodeValue.Integer(p.BlockAlignment, "bytes"), ProExplain.StatBlockAlignment);
         if (duration > 0)
         {

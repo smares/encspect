@@ -23,7 +23,7 @@ internal static class StdReport
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), StdText.StatFrameLength);
         Add("Samples", NodeValue.Integer(samples, "samples"), StdText.StatSamples);
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), StdText.StatDuration);
-        ContainerFigures.AddSamples(statistics, parent, configuration);
+        ContainerFigures.AddLength(statistics, parent, configuration);
         Add("Block Alignment", NodeValue.Integer(p.BlockAlign, "bytes"), StdText.StatBlockAlignment);
         if (averageBitrate is { } average)
         {

@@ -65,12 +65,19 @@ public class AsfContainerSamplesTests
     }
 
     [Theory]
+    [InlineData("external-windows-wma92-cbr-stereo-44k-128.wma", 4631L)]
     [InlineData("external-windows-wma10pro-cbr-stereo-44k-128.wma", 4631L)]
     [InlineData("external-windows-wma92lossless-stereo-44k-16.wma", 4631L)]
     [InlineData("external-windows-wmavoice-cbr-mono-16k-16.wma", 1680L)]
     public void EveryWindowsMediaAudioCodecStatesIt(string fixture, long expected)
     {
-        Assert.Equal(expected, ContainerSamples(Patched(fixture, 1_050_000UL, 0)));
+        byte[] data = Patched(fixture, 1_050_000UL, 0);
+        Assert.Equal(expected, ContainerSamples(data));
+
+        // The same length in seconds stands before it.
+        Node statistics = Find(Analyzer.CreateDefault().Analyze("a.wma", new MemoryStream(data)).Root, "Container Duration")!;
+        Assert.Equal(0.105, statistics.Value!.AsDouble()!.Value, 3);
+        Assert.Equal("s", statistics.Value.Unit);
     }
 
     // An encrypted stream has no statistics, so no Container Samples; its Samples take the header's length instead.
