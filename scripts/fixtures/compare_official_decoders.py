@@ -1266,7 +1266,7 @@ def render(results, not_run, unmatched, other_files, environment, ffmpeg_version
                 label, stage, len(figs), len(withref), len(same), len(figs) - len(withref), len(ffsame), len(ff)))
     out += ["", "Variant groups, decided by the project lead on 2026-11-01 (recorded here and in the docs, not in the JSON)",
             "  (a) noted: a repeated page, which opusdec and oggdec skip while the analyzer and libogg count it (14 of 24 files); the analyzer equals libogg's own packet stream",
-            "  (b) to be looked into in a follow-up, no conclusion yet: a repeated packet, where the analyzer is 38 to 128 samples below oggdec and ffmpeg agrees with oggdec (10 of 24 files)"]
+            "  (b) a repeated packet: the analyzer equals oggdec, opusdec and libvorbis with the granule positions in all 24 files, since its end trimming is counted from the latest granule position (it was 38 to 128 samples below oggdec in 10 of 24 files)"]
     out += ["", "Derived variants by rule (figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.OGG_RULES:

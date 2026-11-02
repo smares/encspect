@@ -13,6 +13,7 @@ Vorbis in [Ogg](ogg.md).
 
 - long and short blocks;
 - the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at the first two blocks, the end trimming at the last block, as libvorbis does; a larger one is a finding);
+  - the count continues from every page's granule position, as libvorbis does, so the samples of a repeated packet, or a position that jumps in the middle, are not charged to the end trimming; a page whose position disagrees with the packets is `vorbis.granule-inconsistent`, and the end trimming is what the last page cuts from the last packet's samples counted from the page before it;
 - the bitrate of every packet and per second, and packet sizes.
 
 ## Channel layout
@@ -33,7 +34,7 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 - The reference for Vorbis sample counts is Xiph's decoder (libvorbis fed packet by packet; `oggdec`), run by `.github/workflows/official-decode.yml` and held to the analyzer by `OggOfficialDecodersTests`. How it is driven, what the reference rule is and the differences found are described under "Reference for sample counts" in [ogg.md](ogg.md).
 - Start and end trimming are compared with `oggdec`'s output, the packets' samples (the overlap of the blocks) with libvorbis's, and libvorbis's own granule handling is a third witness.
-- The analyzer's counts have not been changed to the reference yet.
+- The analyzer's end trimming follows libvorbis's granule handling (run 41418800021): a repeated packet in the middle of a file, which put the analyzer 38 to 128 samples below `oggdec` in 10 of 24 derived files, now equals `oggdec`. The Vorbis I specification (A.2) says only that the last page's position may be below what the final packet returns; it does not say from which earlier position the count runs, so this follows the reference implementation (`vorbis_synthesis_blockin` sets its count to each page's position).
 
 ## Not yet covered
 
