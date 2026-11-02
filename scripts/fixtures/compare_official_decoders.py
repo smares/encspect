@@ -37,6 +37,14 @@ refuses, conceals or outputs nothing for, and the units with an analyzer finding
   noted       no reference, the analyzer has nothing wrong to change; a unit the analyzer flags through a merged finding, a sample-table finding or the declared length of a damaged unit
   pending     every other difference of the analyzer from FDK, rate differences, and every unit FDK refuses, conceals or outputs nothing for with no finding that covers it
 
+  Media Foundation (rollout step 6, the `mediaFoundation` column of the coded figure): the AAC decoder transform fed the unit list (with timestamps on the input samples; the control run
+  without them is recorded as `withoutTimestamps`) is the third decoder of the rule, after FDK and Core Audio's converter, and the reference of a stream only where neither gives one and it
+  decodes the stream with one raw data block per frame (Learn documents one per ADTS frame); the Source Reader is a coded-stage witness, because it applies neither iTunSMPB nor the edit list.
+  explained   the analyzer equals the reference and Media Foundation differs (`mediafoundation-differs`, `ownersDisagree`, or the Source Reader as `witness-differs`); a refusal that a documented
+              limit of the decoder (Learn, "AAC Decoder": no Main, SSR or LTP, only AAC-LC and HE-AAC, at most 6 channels and 48 kHz) names or where FDK equals the analyzer
+  noted       a stream the transform refuses or outputs nothing for otherwise, a transform that did not reach the end, one block per frame, a rate difference that FDK has too or FDK equals the analyzer
+  pending     every other difference, a differing control run without timestamps, and a unit the transform refuses with no finding at its bytes
+
 The reference rule for Ogg, per stage:
   trimmed   the reader's total (oggdec, opusdec) when the reader reached the end without a failed read or a stop condition, the direct path fed every
             page, and the reader's count is consistent with the stream's last granule position (below); else none
@@ -874,7 +882,7 @@ def coreaudio_differences(figures):
         fmt = entry.get("format")
         if entry.get("refusesStream") and figure["referencePath"] != "fdk direct":
             differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-refuses-stream",
-                                "reason": entry["refusesStream"] + "; neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference"})
+                                "reason": entry["refusesStream"] + "; neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)"})
             continue
         fdk_agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
         if fmt and analyzer_rates and fmt["rate"] not in analyzer_rates:
@@ -899,6 +907,223 @@ def coreaudio_differences(figures):
                                 "ownersDisagree": True,
                                 "reason": "the owners' decoders disagree with each other and with the analyzer: %s %s, Core Audio's converter %s, the analyzer %s (the written rule gives keep unless a reading of the specification decides)" % (
                                     figure["referencePath"], show(r), show(c), show(a))})
+    return differences
+
+
+# ---- Media Foundation's column (rollout step 6) ---------------------------------------------------------------------------
+
+MF_TRANSFORM = "media foundation transform"
+MF_READER = "media foundation reader"
+# Microsoft Learn, "AAC Decoder": no Main, SSR or LTP profile; only AAC-LC, HE-AAC and HE-AAC v2 are listed (no AAC-LD or AAC-ELD); at most 6 channels and 48 kHz; no ADIF; frames with coupling
+# channel elements are skipped and one raw data block is decoded per ADTS frame. The first three are read from the analyzer's stream, the others have their own rules.
+MF_UNSUPPORTED_PROFILES = ("AAC Main", "AAC LTP", "AAC SSR")
+
+
+def mf_documented(analyzer):
+    """The documented limit of the AAC decoder that the analyzer's streams show (profile, channel count, sample rate), or None."""
+    streams = analyzer["streams"] if analyzer else []
+    codecs = sorted({s["codec"] for s in streams})
+    if any(c in MF_UNSUPPORTED_PROFILES for c in codecs):
+        return "Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is %s" % ", ".join(codecs)
+    if any(c.startswith("ER AAC") for c in codecs):
+        return "Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is %s" % ", ".join(codecs)
+    if any((s["channels"] or 0) > 6 for s in streams):
+        return "Learn gives at most 6 channels for the AAC decoder; the stream has %s" % "/".join(str(s["channels"]) for s in streams)
+    if any((s["sampleRate"] or 0) > 48000 for s in streams):
+        return "Learn gives at most 48 kHz for the AAC decoder; the stream is at %s Hz" % "/".join(str(s["sampleRate"]) for s in streams)
+    return None
+
+
+def mf_total(path):
+    """(runs, why) of a Media Foundation path that opened and reached the end: its runs of constant output format (none when it output nothing); else (None, the reason)."""
+    if not path:
+        return None, "not run"
+    if not path.get("opened") or path.get("mediaTypeRefused"):
+        return None, "did not open (%s)" % (path.get("reason") or path.get("openStatus") or "no reason")
+    if path["stoppedBy"] != "end":
+        return None, "stopped by %s%s" % (path["stoppedBy"], " (%s)" % path["reason"] if path.get("reason") else "")
+    return path.get("runs") or [], None
+
+
+def mf_entry(path, runs, rate):
+    """A path's total at the analyzer's rate (the same duration, run by run), the raw total and the output format of its first run."""
+    total = sum(r["samples"] for r in runs)
+    value, exact = 0, True
+    for r in runs:
+        v, e = at_rate(r["samples"], r["rate"], rate or runs[0]["rate"])
+        value += v
+        exact = exact and e
+    entry = {"samples": value, "decoderSamples": total, "format": {"rate": runs[0]["rate"], "channels": runs[0]["channels"]} if runs else None}
+    if len(runs) > 1:
+        entry["runs"] = [[r["rate"], r["channels"], r["samples"]] for r in runs]
+    if not exact:
+        entry["exact"] = False
+    if "unitCount" in path:
+        entry.update({"refusedUnits": path["refusedUnits"], "errorUnits": path["errorUnits"], "noOutputUnits": path["noOutputUnits"], "drainFrames": path["drainFrames"]})
+        if path.get("notFedUnits"):
+            entry["notFedUnits"] = path["notFedUnits"]
+        if path.get("silentUnits"):
+            entry["silentUnits"] = path["silentUnits"][:8] + (["..."] if len(path["silentUnits"]) > 8 else [])
+        entry["input"] = {k: v for k, v in (path.get("input") or {}).items() if k in ("config", "stored", "aot", "extAot")}
+        entry["decoder"] = (path.get("decoder") or {}).get("dllVersion")
+    else:
+        entry["outputFormat"] = {k: path["outputFormat"].get(k) for k in ("sampleRate", "channels")} if path.get("outputFormat") else None
+        entry["nativeType"] = {k: path["nativeType"].get(k) for k in ("sampleRate", "channels")} if path.get("nativeType") else None
+    return entry
+
+
+def attach_mediafoundation(result, mf, record):
+    """Media Foundation's runs on the coded figure of a file: the transform (fed the units) is the third reference of the rule, after FDK and Core Audio's converter, and becomes the
+    reference where they give none and it decodes the stream; the Source Reader is a coded-stage witness (it applies neither iTunSMPB nor the edit list). The control run without
+    timestamps is recorded beside the transform's total."""
+    figures = result["figures"]
+    if not mf or mf.get("notFed") or not figures:
+        return
+    reader, transform, control = mf["paths"].get("reader"), mf["paths"].get("transform"), mf["paths"].get("transformWithoutTimestamps")
+    direct = record["paths"]["direct"]
+    blocks = max((u.get("blocks", 1) for u in direct.get("units", [])), default=1)
+    coded = [f for f in figures if f["stage"] == "coded"]
+    if len(coded) != 1:
+        if coded:
+            coded[0]["mediaFoundation"] = {"transform": {"samples": None, "why": "the analyzer has %d runs of constant output format and Media Foundation's runs cannot be paired" % len(coded)}}
+        return
+    fig = coded[0]
+    rate = (fig.get("unpaired") or {}).get("rate") or (fig["analyzerRates"][0] if len(fig["analyzerRates"]) == 1 else None)
+    column = {}
+    fig["mediaFoundation"] = column
+    if rate is None and len(fig["analyzerRates"]) > 1:
+        column["transform"] = {"samples": None, "why": "the analyzer's runs are at %s Hz and have no common rate" % "/".join(map(str, fig["analyzerRates"]))}
+        return
+    if transform is not None:
+        runs, why = mf_total(transform)
+        if runs is None:
+            column["transform"] = {"samples": None, "why": why}
+        else:
+            entry = mf_entry(transform, runs, rate)
+            column["transform"] = entry
+            if control is not None:
+                control_runs, control_why = mf_total(control)
+                entry["withoutTimestamps"] = mf_entry(control, control_runs, rate)["samples"] if control_runs is not None else None
+                if control_runs is None:
+                    entry["withoutTimestampsWhy"] = control_why
+            if blocks > 1:
+                entry["blocksPerFrame"] = blocks
+            if not runs and fig["analyzer"] and transform["unitCount"] > 0:
+                entry["refusesStream"] = "Media Foundation's transform outputs nothing for any of its %d units (%d refused, %d with an output error%s, the others held back)" % (
+                    transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], ", %d not fed" % transform["notFedUnits"] if transform.get("notFedUnits") else "")
+    if reader is not None:
+        runs, why = mf_total(reader)
+        column["reader"] = {"samples": None, "why": why} if runs is None else mf_entry(reader, runs, rate)
+    entry = column.get("transform")
+    if entry is None:
+        return
+    if fig["reference"] is None and entry["samples"] is not None and blocks == 1 and not entry.get("refusesStream"):
+        fig.update({"reference": entry["samples"], "referencePath": MF_TRANSFORM, "referenceKind": "official", "format": entry["format"]})
+        fig.pop("noReference", None)
+        if not entry.get("exact", True) and entry["format"]:
+            fig["referenceAtAnalyzerRate"] = {"samples": entry["samples"], "exact": False}
+    elif fig["reference"] is None and entry["samples"] is not None and blocks > 1 and not entry.get("refusesStream"):
+        entry["noReference"] = ("the frames declare up to %d raw data blocks and the transform documents one raw data block per ADTS frame (Learn, AAC Decoder); it outputs %s samples for %d frames "
+                                "(an observation of the totals)" % (blocks, show(entry["decoderSamples"]), transform["unitCount"]))
+
+
+def mediafoundation_unit_verdicts(mf, analyzer):
+    """The units Media Foundation's transform refuses or fails on, beside the analyzer's findings at the same bytes, as Core Audio's are listed: with the source, apart from FDK's."""
+    transform = (mf or {}).get("paths", {}).get("transform")
+    if not transform or transform["stoppedBy"] != "end" or not transform.get("opened"):
+        return []
+    findings = [f for f in analyzer["findings"] if aac_unit_finding(f)]
+    merged = any(f["count"] > 1 for f in findings) or any(f["code"] in MP4_EXTRA for f in analyzer["findings"])
+    result = []
+    all_refused = not transform.get("runs") and transform["unitCount"] > 0
+    for u in transform["units"]:
+        if u["result"] not in ("refused", "error"):
+            continue
+        start, end = u["offset"], u["offset"] + max(u["received"], 1)
+        mine = [f for f in findings if start <= f["offset"] < end]
+        if all_refused and not mine:
+            continue
+        entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "%s %s" % (u["result"], u["status"]), "samples": u["frames"],
+                 "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine], "source": MF_TRANSFORM}
+        if mine:
+            entry.update({"verdict": "decoder %s, finding at the same bytes" % u["result"], "status": "agree"})
+        elif merged:
+            entry.update({"verdict": "decoder %s, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)" % u["result"],
+                          "status": "noted"})
+        else:
+            entry.update({"verdict": "decoder %s, no finding" % u["result"], "status": "pending"})
+        result.append(entry)
+    return result
+
+
+def mediafoundation_differences(figures, analyzer):
+    """The differences of Media Foundation's columns from the analyzer and the reference, for the status rules of the design. The Source Reader is a witness of the coded stage only;
+    the documented limits of the AAC decoder (Learn) are named in the reason and make a refusal `explained`."""
+    differences = []
+    documented = mf_documented(analyzer)
+    for figure in figures:
+        if figure["stage"] != "coded":
+            continue
+        a, r = figure["analyzer"], figure.get("reference")
+        column = figure.get("mediaFoundation") or {}
+        reader = column.get("reader")
+        if reader and reader.get("samples") is not None and reader["samples"] != a and r is not None and reader["samples"] != r:
+            differences.append({"figure": figure["id"], "decoder": MF_READER, "value": reader["samples"], "analyzer": a, "reference": r, "status": "explained" if a == r else "noted",
+                                "kind": "witness-differs", "reason": "the Source Reader outputs %s samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's %s and the reference's %s" % (
+                                    show(reader["samples"]), show(a), show(r))})
+        entry = column.get("transform")
+        if not entry:
+            continue
+        fdk_agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
+        if entry.get("samples") is None:
+            why = entry.get("why") or ""
+            if why.startswith("did not open"):
+                differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "explained" if documented or fdk_agrees else "noted",
+                                    "kind": "decoder-refuses-stream", **({"ownersDisagree": True} if fdk_agrees and not documented else {}),
+                                    "reason": "Media Foundation's transform cannot be set up for the stream (%s)%s" % (why, "; " + documented if documented else (
+                                        "; the analyzer equals the reference (fdk direct, %s): the owners' decoders disagree" % show(r) if fdk_agrees else "; no reference from it"))})
+            elif why.startswith("stopped by"):
+                differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "noted", "kind": "decoder-stopped",
+                                    "reason": "Media Foundation's transform did not reach the end of the stream (%s); its partial count is no figure" % why})
+            continue
+        if entry.get("noReference"):
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": entry["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-one-block-per-frame",
+                                "reason": entry["noReference"]})
+            continue
+        c = entry["samples"]
+        if entry.get("withoutTimestamps") is not None and entry["withoutTimestamps"] != c:
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": entry["withoutTimestamps"], "analyzer": a, "status": "pending", "kind": "timestamps-differ",
+                                "reason": "the control run without timestamps on the input samples outputs %s samples where the run with them outputs %s" % (show(entry["withoutTimestamps"]), show(c))})
+        analyzer_rates = figure.get("analyzerRates") or []
+        fmt = entry.get("format")
+        if entry.get("refusesStream") and figure["referencePath"] != "fdk direct":
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "explained" if documented else "noted", "kind": "decoder-refuses-stream",
+                                "reason": entry["refusesStream"] + ("; " + documented if documented else "") + "; " + (
+                                    "the reference stands (%s)" % figure["referencePath"] if r is not None else "no official decoder gives a reference here, and ffmpeg stays the reference")})
+            continue
+        if fmt and analyzer_rates and fmt["rate"] not in analyzer_rates:
+            same_as_reference = not fdk_agrees and fmt["rate"] in ((figure.get("rateDiffers") or {}).get("decoderRates") or [])
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": entry["decoderSamples"], "analyzer": a,
+                                "status": "noted" if fdk_agrees or same_as_reference else "pending", "kind": "rate-differs",
+                                "reason": "Media Foundation outputs %s samples at %s Hz where the analyzer's runs are at %s Hz: the decoders disagree on whether SBR is applied%s" % (
+                                    show(entry["decoderSamples"]), fmt["rate"], "/".join(map(str, analyzer_rates)),
+                                    "; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list the other decoder's figure as noted (probe question 3)" if fdk_agrees
+                                    else "; FDK's output has the same rate, which its own rate-differs entry lists" if same_as_reference else "")})
+        if c == a:
+            continue
+        if figure["referencePath"] == MF_TRANSFORM:
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
+                                "reason": "FDK and Core Audio's converter give no reference; Media Foundation's transform outputs %s samples against the analyzer's %s" % (show(c), show(a))})
+        elif r is not None and a == r:
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "reference": r, "status": "explained", "kind": "mediafoundation-differs", "ownersDisagree": True,
+                                "reason": "the analyzer equals the reference (%s, %s) and Media Foundation's transform outputs %s: the owners' decoders disagree%s%s" % (
+                                    figure["referencePath"], show(r), show(c), "; " + documented if documented else "",
+                                    "; it gives no output for unit %s after its first output" % ", ".join(map(str, entry["silentUnits"])) if entry.get("silentUnits") else "")})
+        elif r is not None and c != r:
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "reference": r, "status": "explained" if documented else "pending",
+                                "kind": "mediafoundation-differs", "ownersDisagree": True,
+                                "reason": "the owners' decoders disagree with each other and with the analyzer: %s %s, Media Foundation's transform %s, the analyzer %s%s" % (
+                                    figure["referencePath"], show(r), show(c), show(a), "; " + documented if documented else " (the written rule gives keep unless a reading of the specification decides)")})
     return differences
 
 
@@ -1147,11 +1372,13 @@ def aac_unit_verdicts(direct, analyzer):
 
 def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warnings, args):
     mac = environment.get("coreAudio") or {}
-    out = ["Cross-checks by the official decoders: AAC (FDK AAC %s, concealment method 1; Core Audio %s, run %s; ffmpeg as a further column)" % (
-               (environment.get("fdkAac") or {}).get("version") or "-", ("macOS %s (%s)" % (mac.get("macOS"), mac.get("build"))) if mac else "not run", mac.get("runId") or "-"),
+    win = environment.get("mediaFoundation") or {}
+    out = ["Cross-checks by the official decoders: AAC (FDK AAC %s, concealment method 1; Core Audio %s, run %s; Media Foundation %s, run %s; ffmpeg as a further column)" % (
+               (environment.get("fdkAac") or {}).get("version") or "-", ("macOS %s (%s)" % (mac.get("macOS"), mac.get("build"))) if mac else "not run", mac.get("runId") or "-",
+               ("%s build %s, MSAudDecMFT %s" % (win.get("windows"), win.get("build"), win.get("msAudDecMft"))) if win else "not run", win.get("runId") or "-"),
            "run %s on %s (%s), ffmpeg %s, FDK commit %s" % (environment.get("runId") or args.run_id or "-", environment.get("imageOS") or "-", environment.get("imageVersion") or "-",
                                                          (ffmpeg_version or ["-"])[0], ((environment.get("fdkAac") or {}).get("commit") or "-")[:7]),
-           "the coded stage is compared (FDK direct against the stream's samples, Core Audio's converter beside it); the trimmed figures of MP4 files are held to ExtAudioFile's total at the core rate"]
+           "the coded stage is compared (FDK direct against the stream's samples, Core Audio's converter and Media Foundation's transform beside it, the Source Reader as a witness); the trimmed figures of MP4 files are held to ExtAudioFile's total at the core rate"]
     out += ["WARNING: " + w for w in warnings]
     rows = []
     for r in results:
@@ -1173,13 +1400,15 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
             tag = "" if fig["analyzer"] == fig["reference"] or fig["reference"] is None else "  DIFFERS"
             column = fig.get("coreAudio") or {}
             ca = "; ".join("%s %s" % (k, show(v["samples"]) if v.get("samples") is not None else "none (%s)" % (v.get("why") or v.get("noReference") or "-")[:60]) for k, v in column.items())
-            rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), (fig.get("referencePath") or "-").replace(" direct", ""), ca, wit,
+            mf = "; ".join("%s %s" % (k, show(v["samples"]) if v.get("samples") is not None else "none (%s)" % (v.get("why") or v.get("noReference") or "-")[:60])
+                           for k, v in (fig.get("mediaFoundation") or {}).items())
+            rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), (fig.get("referencePath") or "-").replace(" direct", ""), ca, mf, wit,
                          (note + tag).strip()])
-    out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "reference", "path", "core audio", "other decoders", "notes"])]
+    out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "reference", "path", "core audio", "media foundation", "other decoders", "notes"])]
     agreeing = sum(1 for r in results for u in r["units"] if u["status"] == "agree")
     out += ["", "Notes per file"] + (["  %s/%s: %s" % (r["folder"], r["file"], n) for r in results for n in r["notes"]] or ["  none"])
     out += ["", "Units where a decoder's verdict differs from the analyzer's; %d more agree (the decoder refuses, conceals or errs and a finding is at the same bytes)" % agreeing]
-    unit_rows = [[r["folder"], r["file"], show(u.get("offset")), show(u.get("length")), ("core audio: " if u.get("source") else "") + u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]]
+    unit_rows = [[r["folder"], r["file"], show(u.get("offset")), show(u.get("length")), (u["source"] + ": " if u.get("source") else "") + u["decoder"], u.get("finding") or "-", u["verdict"], u["status"]]
                  for r in results for u in r["units"] if u["status"] != "agree"]
     out.append(table(unit_rows, ["folder", "file", "offset", "length", "decoder", "finding", "verdict", "status"]) if unit_rows else "none")
     out += ["", "Differences"]
@@ -1219,6 +1448,19 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
         out.append("  %-30s converter totals %3d, equal to the analyzer %3d, to FDK %3d of %3d; trimmed figures with a reader total %3d, equal to the analyzer's %3d" % (
             label, len(coded), len(same), len(fdk_same), len(fdk), len(trimmed), len(trimmed_same)))
     out.append("  carried from the committed files, not counted above: %d files%s" % (len(carried), (" (" + ", ".join("%s/%s" % (r["folder"], r["file"]) for r in carried[:6]) + (", ..." if len(carried) > 6 else "") + ")") if carried else ""))
+    out += ["", "Media Foundation (Windows) against the analyzer, in the same duration (the transform at the coded stage; the Source Reader, a coded-stage witness, beside it); this run's records only"]
+    mf_carried = [r for r in results if r.get("mediaFoundationCarried")]
+    for label, subset in groups:
+        subset = [r for r in subset if not r.get("mediaFoundationCarried")]
+        coded = [f for r in subset for f in r["figures"] if f["stage"] == "coded" and (f.get("mediaFoundation") or {}).get("transform", {}).get("samples") is not None]
+        same = [f for f in coded if f["mediaFoundation"]["transform"]["samples"] == f["analyzer"]]
+        fdk = [f for f in coded if f["referencePath"] == "fdk direct"]
+        fdk_same = [f for f in fdk if f["mediaFoundation"]["transform"]["samples"] == f["reference"]]
+        readers = [f for r in subset for f in r["figures"] if f["stage"] == "coded" and (f.get("mediaFoundation") or {}).get("reader", {}).get("samples") is not None]
+        readers_same = [f for f in readers if f["mediaFoundation"]["reader"]["samples"] == f["analyzer"]]
+        out.append("  %-30s transform totals %3d, equal to the analyzer %3d, to FDK %3d of %3d; Source Reader totals %3d, equal to the analyzer's %3d" % (
+            label, len(coded), len(same), len(fdk_same), len(fdk), len(readers), len(readers_same)))
+    out.append("  carried from the committed files, not counted above: %d files%s" % (len(mf_carried), (" (" + ", ".join("%s/%s" % (r["folder"], r["file"]) for r in mf_carried[:6]) + (", ..." if len(mf_carried) > 6 else "") + ")") if mf_carried else ""))
     out += ["", "Derived variants by rule (coded figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.AAC_RULES:
@@ -1275,12 +1517,13 @@ def apply_reviewed(results, source):
                     d["awaitingStep"] = old["awaitingStep"]
 
 
-def carried_from(entry, committed):
-    """The run and commit the Core Audio data of a committed entry come from: its own `coreAudioFrom` if it was carried before, else the committed file's Core Audio run."""
-    if entry.get("coreAudioFrom"):
-        return entry["coreAudioFrom"]
-    mac = (committed.get("run") or {}).get("coreAudio") or {}
-    return {"run": mac.get("runId"), "commit": mac.get("commit")}
+def carried_from(entry, committed, key="coreAudio"):
+    """The run and commit the Core Audio (or, with key `mediaFoundation`, Media Foundation) data of a committed entry come from: its own `<key>From` if it was carried before, else the
+    committed file's run of that platform."""
+    if entry.get(key + "From"):
+        return entry[key + "From"]
+    platform_run = (committed.get("run") or {}).get(key) or {}
+    return {"run": platform_run.get("runId"), "commit": platform_run.get("commit")}
 
 
 def carried_ac3(name, sha, old, committed):
@@ -1322,8 +1565,50 @@ def carry_coreaudio(results, source):
                 fig.update({k: before[k] for k in ("reference", "referencePath", "referenceKind", "format", "referenceAtAnalyzerRate") if k in before})
                 fig.pop("noReference", None)
         r["differences"] = r["differences"] + [d for d in old["differences"] if d["decoder"].startswith("coreaudio")]
-        r["units"] = r["units"] + [u for u in old["units"] if u.get("source")]
+        r["units"] = r["units"] + [u for u in old["units"] if (u.get("source") or "").startswith("coreaudio")]
         r["coreAudioCarried"] = True
+
+
+def mediafoundation_not_run(results):
+    """The files a Windows run has no record of, for the 'not run' line: with a note when their Media Foundation data were carried over from the committed file."""
+    return ["mediafoundation %s/%s%s" % (r["folder"], r["file"], " (carried from the committed file)" if r.get("mediaFoundationCarried") else "") for r in results if r.get("mediaFoundationMissing")]
+
+
+def carry_mediafoundation(results, source):
+    """A file the Windows run has no record of keeps the Media Foundation columns, differences and units of the committed file (the same bytes), so that a partial Windows run does
+    not drop them or the reviewed statuses on them; the file is listed as not run."""
+    if not source.exists():
+        return
+    committed = json.loads(source.read_text(encoding="utf-8"))
+    old_files = {(f["path"], f["sha256"]): f for f in committed.get("files", [])}
+    for r in results:
+        old = old_files.get((r["file"], r["sha256"]))
+        if not r.get("mediaFoundationMissing") or not old:
+            continue
+        r["mediaFoundationFrom"] = carried_from(old, committed, "mediaFoundation")
+        for fig in r["figures"]:
+            before = next((f for f in old["figures"] if f["id"] == fig["id"]), None)
+            if not before:
+                continue
+            if "mediaFoundation" in before:
+                fig["mediaFoundation"] = before["mediaFoundation"]
+            if (before.get("referencePath") or "").startswith("media foundation") and fig["reference"] is None:
+                fig.update({k: before[k] for k in ("reference", "referencePath", "referenceKind", "format", "referenceAtAnalyzerRate") if k in before})
+                fig.pop("noReference", None)
+        r["differences"] = r["differences"] + [d for d in old["differences"] if d["decoder"].startswith("media foundation")]
+        r["units"] = r["units"] + [u for u in old["units"] if (u.get("source") or "").startswith("media foundation")]
+        r["mediaFoundationCarried"] = True
+
+
+def mf_environment(mf):
+    """The Windows run's versions as the committed files record them."""
+    decoders = mf.get("decodersUsed") or {}
+    aac = next((v for k, v in decoders.items() if k.lower().endswith("msauddecmft.dll")), None) or next(iter(decoders.values()), None)
+    dlls = mf.get("systemDlls") or {}
+    return {"windows": " ".join(x for x in (mf.get("productName"), mf.get("displayVersion")) if x) or mf.get("osDescription"),
+            "build": "%s.%s" % (mf.get("currentBuild"), mf.get("updateBuildRevision")) if mf.get("currentBuild") else None, "machine": mf.get("machine"),
+            "imageOS": mf.get("imageOS"), "imageVersion": mf.get("imageVersion"), "msAudDecMft": aac, "mfreadwrite": dlls.get("mfreadwrite.dll"), "mfplat": dlls.get("mfplat.dll"),
+            "runId": mf.get("runId"), "commit": mf.get("commit")}
 
 
 def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tmp):
@@ -1333,9 +1618,13 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         return None
     environment = next((e for e in environments if e.get("format") == "aac"), {})
     ca_records = records.get("coreaudio-aac", {})
+    mf_records = records.get("mf-aac", {})
     mac = next((e for e in environments if e.get("format") == "coreaudio"), None)
     if mac:
         environment = {**environment, "coreAudio": {k: mac.get(k) for k in ("macOS", "build", "machine", "imageOS", "imageVersion", "audioCodecs", "audioToolbox", "runId", "commit")}}
+    windows = next((e for e in environments if e.get("format") == "mediafoundation"), None)
+    if windows:
+        environment = {**environment, "mediaFoundation": mf_environment(windows)}
     items = []  # (sha, path, derived entry or None, folder)
     for folder in driver.AAC_FOLDERS:
         for path in probe.files(folder, driver.AAC_EXTENSIONS):
@@ -1378,6 +1667,10 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         expected = not record.get("notFed") and (folder != "derived" or pathlib.Path(derived["source"]).name in driver.MAC_VARIANT_SOURCES)
         compared = compare_aac(record, analyzer, column, ca)
         compared["coreAudioMissing"] = expected and ca is None
+        mf = mf_records.get(sha)
+        compared["mediaFoundationMissing"] = expected and mf is None
+        if mf and not mf.get("notFed") and analyzer:
+            compared["units"] = compared["units"] + mediafoundation_unit_verdicts(mf, analyzer)
         return {"file": path.name, "sha256": sha, "folder": folder, "derived": derived and ({"from": derived["source"], "rule": derived["rule"]} if "rule" in derived else {"downloaded": True}),
                 "bytes": record["bytes"], "sameBytesAs": aliases.get(sha, []), "analyzerSource": source, "analyzerStreams": analyzer["streams"] if analyzer else None,
                 "analyzerGapless": analyzer["gapless"] if analyzer else None, "ffmpeg": column, "unitList": record["unitList"], "record": summarize(record) if record["paths"] else {},
@@ -1396,9 +1689,22 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
         committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
         apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")
         carry_coreaudio(committed_results, FIXTURES / folder / "official-decoders.json")
-    not_run += coreaudio_not_run(results)
+    # Media Foundation is the third decoder of the rule: its column and its reference (where FDK and Core Audio give none) are set once the Core Audio data of every file, carried ones
+    # included, are final.
+    for r in results:
+        mf = mf_records.get(r["sha256"])
+        if mf and not mf.get("notFed") and not r.get("notFed"):
+            attach_mediafoundation(r, mf, aac_records[r["sha256"]])
+            r["differences"] = r["differences"] + mediafoundation_differences(r["figures"], {"streams": r["analyzerStreams"] or []})
+    for folder in ("aac", "adts", "mp4"):
+        committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
+        apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")
+        carry_mediafoundation(committed_results, FIXTURES / folder / "official-decoders.json")
+    not_run += coreaudio_not_run(results) + mediafoundation_not_run(results)
     if not ca_records:
         warnings = warnings + ["no Core Audio records in the artifacts: the macos job did not run or uploaded nothing; the Core Audio columns of the committed files are carried over"]
+    if not mf_records:
+        warnings = warnings + ["no Media Foundation records in the artifacts: the windows job did not run or uploaded nothing; the Media Foundation columns of the committed files are carried over"]
     known = {sha for sha, *_ in items}
     unmatched, unfetched = records_without_file(aac_records, known)
     if unfetched:
@@ -1905,6 +2211,9 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         tools = {"tta": environment.get("tta"), "ttaArchiveSha256": environment.get("ttaArchiveSha256"), "gcc": environment.get("gcc")}
     versions = ("macOS", "build", "machine", "audioCodecs", "audioToolbox")  # the run's own ID, commit and image version always differ
     mac_differs = bool(environment.get("coreAudio")) and any((previous_run.get("coreAudio") or {}).get(k) != environment["coreAudio"].get(k) for k in versions)
+    windows_versions = ("windows", "build", "machine", "msAudDecMft", "mfreadwrite", "mfplat")
+    windows_differs = bool(environment.get("mediaFoundation")) and bool(previous_run.get("mediaFoundation")) \
+        and any(previous_run["mediaFoundation"].get(k) != environment["mediaFoundation"].get(k) for k in windows_versions)
     packages_differ = any(previous_run.get(k) != v for k, v in tools.items())
     files, changed = [], []
     for r in results:
@@ -1921,7 +2230,7 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
         for index, fig in enumerate(figures):
             old = previous_figures.get((rel, r["sha256"], fig["id"]))
             if old and old.get("reference") is not None and fig["reference"] is not None and old["reference"] != fig["reference"]:
-                if packages_differ or (mac_differs and (fig["referencePath"] or "").startswith("coreaudio")):
+                if packages_differ or (mac_differs and (fig["referencePath"] or "").startswith("coreaudio")) or (windows_differs and (fig["referencePath"] or "").startswith("media foundation")):
                     extra.append({"figure": fig["id"], "decoder": fig["referencePath"], "value": fig["reference"], "analyzer": fig["analyzer"], "reference": old["reference"],
                                   "status": "build-dependent", "kind": "build-dependent", "previousRun": previous_run.get("id"), "previousImage": previous_run.get("imageVersion"),
                                   "image": environment.get("imageVersion")})
@@ -1939,6 +2248,8 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
             entry["notFed"] = r["notFed"]
         if r.get("coreAudioFrom"):
             entry["coreAudioFrom"] = r["coreAudioFrom"]  # this run had no macOS record of the file: its Core Audio data are the committed ones, from that run
+        if r.get("mediaFoundationFrom"):
+            entry["mediaFoundationFrom"] = r["mediaFoundationFrom"]  # the same for Media Foundation and the Windows run
         if format_ in ("aac", "ac3"):
             entry["unitList"] = {k: r["unitList"].get(k) for k in ("kind", "codec", "units", "cutUnits", "skippedRanges", "skippedBytes", "timescale") if r["unitList"].get(k) is not None}
             if r.get("codecs"):
@@ -1961,11 +2272,15 @@ def write_official(target, previous_file, results, environment, ffmpeg_version, 
            "imageVersion": environment.get("imageVersion"), "ffmpeg": (ffmpeg_version or [None])[0], **tools}
     if environment.get("coreAudio"):
         run["coreAudio"] = environment["coreAudio"]
+    if environment.get("mediaFoundation"):
+        run["mediaFoundation"] = environment["mediaFoundation"]
     doc = {"schema": SCHEMA, "format": format_, "run": run,
            "statuses": list(STATUSES), "changedFiguresForReview": changed, "files": files}
     if format_ in ("aac", "ac3"):
         # what the run recorded, so that a test fails on an entry that was removed or turned into `notFed`
         doc["counts"] = {"files": len(files), "fed": sum(1 for f in files if not f.get("notFed")), "coreAudioCarried": sum(1 for f in files if f.get("coreAudioFrom"))}
+        if format_ == "aac":
+            doc["counts"]["mediaFoundationCarried"] = sum(1 for f in files if f.get("mediaFoundationFrom"))
     target.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 

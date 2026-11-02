@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests of the Core Audio columns of the official-decoder comparison (rollout step 5): python3 scripts/ci/test_official_decoders.py"""
+"""Tests of the Core Audio and Media Foundation columns of the official-decoder comparison (rollout steps 5 and 6): python3 scripts/ci/test_official_decoders.py"""
 
 import json
 import pathlib
@@ -488,6 +488,318 @@ class PartialRunTests(unittest.TestCase):
         self.assertIn("downloaded/sample.mp4 (not fetched by this job)", document["notRun"])
         self.assertEqual([], document["recordsWithoutFile"])
         self.assertTrue(any("could not be fetched by this job" in w for w in document["warnings"]))
+
+
+def transform_node(units, coded, drain, runs, **extra):
+    """What the Windows probe writes for the AAC decoder transform: units with their input results and frames, the runs of constant output format, the drain."""
+    node = {"withTimestamps": True, "decoder": {"clsid": "32d186a7", "dll": "MSAudDecMFT.dll", "dllVersion": "10.0.26100.1"}, "outputSet": True, "asc": {"stored": "1210", "aot": 2},
+            "inputConfigUsed": "asStored", "units": units, "runs": runs, "stoppedBy": "end", "drain": {"frames": drain, "results": "ok"}, "codedSamples": coded, "totalSamples": coded + drain,
+            "errorCount": 0, "unitsFed": len(units)}
+    node.update(extra)
+    return node
+
+
+def unit(index, frames, **extra):
+    return {"index": index, "offset": index * 9, "declared": 9, "received": 9, "inputHresult": "0x00000000", "output": "ok" if frames else "", "frames": frames, **extra}
+
+
+def run44(samples, rate=44100, channels=2):
+    return {"key": "%d Hz, %d channels" % (rate, channels), "rate": rate, "channels": channels, "samples": samples, "outputs": max(samples // 1024, 1)}
+
+
+class WindowsDriverTests(unittest.TestCase):
+    def test_the_transform_record_adds_the_drain_to_the_units_frames_and_lists_what_it_refuses(self):
+        node = transform_node([unit(0, 0), unit(1, 1024), unit(2, 0, inputHresult="0xC00D36B5", retryHresult="0xC00D3E8C"), unit(3, 1024), unit(4, 0, output="0xC00D6D60")],
+                              coded=2048, drain=1024, runs=[run44(3072)])
+        record = driver.windows_transform_result(node, 5)
+        self.assertEqual(("end", 3072), (record["stoppedBy"], record["totalSamples"]))
+        self.assertEqual([("refused", 2, "0xC00D3E8C"), ("error", 4, "0xC00D6D60")], [(u["result"], u["index"], u["status"]) for u in record["units"]])
+        self.assertEqual((2, 1, 1, 1), (record["decodedUnits"], record["noOutputUnits"], record["refusedUnits"], record["errorUnits"]))
+        self.assertEqual([], record["silentUnits"])
+
+    def test_a_unit_that_gives_nothing_after_the_first_output_is_silent_and_one_before_it_is_not(self):
+        node = transform_node([unit(0, 0), unit(1, 1024), unit(2, 0), unit(3, 1024)], coded=2048, drain=0, runs=[run44(2048)])
+        record = driver.windows_transform_result(node, 4)
+        self.assertEqual(([2], 2), (record["silentUnits"], record["noOutputUnits"]))
+
+    def test_a_media_type_the_decoder_refuses_is_an_error_with_no_total(self):
+        node = {"withTimestamps": True, "refusedMediaType": True, "inputAttempts": [{"config": "asStored", "setInputHresult": "0xC00D36B4"}]}
+        record = driver.windows_transform_result(node, 10)
+        self.assertEqual(("error", False, True), (record["stoppedBy"], record["opened"], record["mediaTypeRefused"]))
+        self.assertNotIn("totalSamples", record)
+        self.assertIn("0xC00D36B4", record["reason"])
+
+    def test_a_stalled_or_crashed_run_leaves_a_partial_count_never_a_total(self):
+        stalled = driver.windows_transform_result(transform_node([unit(0, 1024)], coded=1024, drain=0, runs=[run44(1024)], stalled=True, partialSamples=1024), 5)
+        self.assertEqual(("stall", 1024), (stalled["stoppedBy"], stalled["partialSamples"]))
+        self.assertNotIn("totalSamples", stalled)
+        crashed = driver.windows_reader_result({"crashed": True, "exitCode": "0xC0000005", "output": "x"})
+        self.assertEqual(("crash", "0xC0000005"), (crashed["stoppedBy"], crashed["exit"]))
+        self.assertNotIn("totalSamples", crashed)
+
+    def test_the_reader_reaches_the_end_only_with_the_end_of_stream_flag_and_stops_at_the_first_failed_read(self):
+        done = {"opened": True, "outputSet": True, "endOfStream": True, "totalSamples": 2048, "runs": [run44(2048, 22050)], "calls": 3, "reads": []}
+        record = driver.windows_reader_result(done)
+        self.assertEqual(("end", 2048, [{"rate": 22050, "channels": 2, "samples": 2048, "outputs": 2}]), (record["stoppedBy"], record["totalSamples"], record["runs"]))
+        failed = driver.windows_reader_result({**done, "endOfStream": False, "stoppedBy": "the first failed read, 0xC00D6D60", "reads": [{"hresult": "0xC00D6D60", "flagNames": ["error"]}]})
+        self.assertEqual(("error", 2048), (failed["stoppedBy"], failed["partialSamples"]))
+        self.assertNotIn("totalSamples", failed)
+        self.assertEqual("0xC00D6D60", failed["failedReads"][0]["hresult"])
+        no_type = driver.windows_reader_result({"opened": True, "outputSet": False, "outputAttempts": [{"tag": 1, "bits": 16, "setHresult": "0xC00D36B4"}]})
+        self.assertEqual(("error", False), (no_type["stoppedBy"], no_type["outputSet"]))
+
+    def test_runs_that_do_not_add_up_to_the_total_are_no_total(self):
+        record = driver.windows_transform_result(transform_node([unit(0, 1024)], coded=1024, drain=1024, runs=[run44(1024)]), 1)
+        self.assertEqual(("limit", 2048), (record["stoppedBy"], record["partialSamples"]))
+        self.assertNotIn("totalSamples", record)
+
+
+def mf_path(samples, rate=44100, **extra):
+    runs = [{"rate": rate, "channels": 2, "samples": samples, "outputs": 10}] if samples else []
+    return {"opened": True, "stoppedBy": "end", "runs": runs, "unitCount": 10, "refusedUnits": 0, "errorUnits": 0, "noOutputUnits": 0, "drainFrames": 1024, "notFedUnits": 0,
+            "silentUnits": [], "units": [], **extra}
+
+
+class MediaFoundationColumnTests(unittest.TestCase):
+    def figure(self, analyzer, reference, path="fdk direct", rate=44100, **extra):
+        return {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": analyzer, "reference": reference, "referencePath": path if reference is not None else None,
+                "referenceKind": "official", "witnesses": {}, "analyzerRates": [rate], **extra}
+
+    def attach(self, figure, transform=None, reader=None, control=None, blocks=1):
+        paths = {}
+        if transform is not None:
+            paths["transform"] = transform
+        if reader is not None:
+            paths["reader"] = reader
+        if control is not None:
+            paths["transformWithoutTimestamps"] = control
+        record = {"paths": {"direct": {"units": [{"index": 0, "blocks": blocks}]}}, "unitList": {}}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": paths}, record)
+        return figure
+
+    def differences(self, figure, codecs=("AAC LC",), channels=2, rate=44100):
+        analyzer = {"streams": [{"codec": c, "channels": channels, "sampleRate": rate} for c in codecs]}
+        return compare.mediafoundation_differences([figure], analyzer)
+
+    def test_a_total_counts_only_when_the_path_reached_the_end(self):
+        done = mf_path(9000)
+        self.assertEqual(([{"rate": 44100, "channels": 2, "samples": 9000, "outputs": 10}], None), compare.mf_total(done))
+        self.assertIsNone(compare.mf_total({**done, "stoppedBy": "stall"})[0])
+        self.assertIsNone(compare.mf_total({**done, "opened": False})[0])
+        self.assertIsNone(compare.mf_total({**done, "mediaTypeRefused": True})[0])
+        self.assertEqual(([], None), compare.mf_total(mf_path(0)))
+
+    def test_the_sbr_rate_of_the_source_reader_counts_in_the_same_duration(self):
+        figure = self.figure(71680, 71680)
+        self.attach(figure, mf_path(71680), reader=mf_path(35840, rate=22050))
+        column = figure["mediaFoundation"]
+        self.assertEqual((71680, 71680), (column["transform"]["samples"], column["reader"]["samples"]))
+        self.assertEqual(22050, column["reader"]["format"]["rate"])
+        self.assertEqual([], self.differences(figure))
+
+    def test_a_transform_that_equals_the_reference_adds_no_difference(self):
+        figure = self.figure(10240, 12288)
+        self.attach(figure, mf_path(12288))
+        self.assertEqual([], self.differences(figure))
+
+    def test_the_owners_that_disagree_are_explained_where_the_analyzer_equals_the_reference(self):
+        figure = self.figure(65536, 65536)
+        self.attach(figure, mf_path(0), control=mf_path(0))
+        differences = self.differences(figure)
+        self.assertEqual([("mediafoundation-differs", "explained", True)], [(d["kind"], d["status"], d.get("ownersDisagree")) for d in differences])
+
+    def test_decoders_that_all_disagree_are_left_pending_for_the_lead(self):
+        figure = self.figure(10000, 9000)
+        self.attach(figure, mf_path(8000))
+        self.assertEqual([("mediafoundation-differs", "pending")], [(d["kind"], d["status"]) for d in self.differences(figure)])
+
+    def test_a_documented_limit_explains_a_disagreement_and_is_named(self):
+        figure = self.figure(10000, 9000)
+        self.attach(figure, mf_path(8000))
+        differences = self.differences(figure, codecs=("AAC LTP",))
+        self.assertEqual("explained", differences[0]["status"])
+        self.assertIn("Learn lists no Main, SSR or LTP profile", differences[0]["reason"])
+        self.assertIn("at most 6 channels", compare.mf_documented({"streams": [{"codec": "AAC LC", "channels": 8, "sampleRate": 48000}]}))
+        self.assertIsNone(compare.mf_documented({"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 44100}]}))
+
+    def test_where_fdk_and_core_audio_give_none_the_transform_is_the_reference(self):
+        figure = self.figure(12288, None, rate=22050, noReference="FDK refuses", refused="x")
+        self.attach(figure, mf_path(24576))
+        self.assertEqual((12288, "media foundation transform"), (figure["reference"], figure["referencePath"]))
+        self.assertNotIn("noReference", figure)
+        self.assertEqual(["rate-differs"], [d["kind"] for d in self.differences(figure, rate=22050)])
+
+    def test_the_transform_is_no_reference_when_core_audio_gave_one(self):
+        figure = self.figure(100, 100, path="coreaudio converter")
+        self.attach(figure, mf_path(90))
+        self.assertEqual("coreaudio converter", figure["referencePath"])
+
+    def test_a_transform_that_outputs_nothing_for_any_unit_is_no_reference(self):
+        figure = self.figure(30720, None, noReference="FDK refuses", refused="x")
+        self.attach(figure, mf_path(0, refusedUnits=0, errorUnits=3))
+        self.assertIsNone(figure["reference"])
+        self.assertEqual([("decoder-refuses-stream", "noted")], [(d["kind"], d["status"]) for d in self.differences(figure)])
+
+    def test_frames_of_several_blocks_keep_the_transform_from_being_the_reference(self):
+        figure = self.figure(30720, None, noReference="FDK holds blocks", heldBack=True)
+        self.attach(figure, mf_path(10240), blocks=3)
+        self.assertIsNone(figure["reference"])
+        differences = self.differences(figure)
+        self.assertEqual([("decoder-one-block-per-frame", "noted")], [(d["kind"], d["status"]) for d in differences])
+
+    def test_a_refused_media_type_is_explained_by_a_documented_limit_or_by_fdk_agreeing_and_noted_otherwise(self):
+        refused = {"opened": False, "mediaTypeRefused": True, "stoppedBy": "error", "reason": "no decoder accepts the input media type", "unitCount": 10}
+        figure = self.figure(9600, 9600)
+        self.attach(figure, refused)
+        agreeing = self.differences(figure)[0]
+        self.assertEqual(("decoder-refuses-stream", "explained", True), (agreeing["kind"], agreeing["status"], agreeing.get("ownersDisagree")))
+        figure = self.figure(9600, 9000)
+        self.attach(figure, refused)
+        self.assertEqual("noted", self.differences(figure)[0]["status"])
+        self.assertEqual("explained", self.differences(figure, codecs=("ER AAC ELD",))[0]["status"])
+
+    def test_a_transform_that_stalled_is_noted_and_gives_no_figure(self):
+        figure = self.figure(9600, 9600)
+        self.attach(figure, {"opened": True, "stoppedBy": "stall", "unitCount": 10})
+        self.assertIsNone(figure["mediaFoundation"]["transform"]["samples"])
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in self.differences(figure)])
+
+    def test_a_rate_differs_is_noted_where_fdk_equals_the_analyzer_or_has_the_same_rate_and_pending_otherwise(self):
+        figure = self.figure(71680, 71680)
+        self.attach(figure, mf_path(35840, rate=22050))
+        self.assertEqual("noted", next(d for d in self.differences(figure) if d["kind"] == "rate-differs")["status"])
+        figure = self.figure(12288, 24576, rate=22050, rateDiffers={"decoderRates": [44100]})
+        self.attach(figure, mf_path(24576, rate=44100))
+        self.assertEqual("noted", next(d for d in self.differences(figure, rate=22050) if d["kind"] == "rate-differs")["status"])
+        figure = self.figure(12288, 12288, rate=22050)
+        figure["referencePath"] = "coreaudio converter"
+        self.attach(figure, mf_path(24576, rate=44100))
+        self.assertEqual("pending", next(d for d in self.differences(figure, rate=22050) if d["kind"] == "rate-differs")["status"])
+
+    def test_a_control_run_without_timestamps_that_differs_is_pending(self):
+        figure = self.figure(9000, 9000)
+        self.attach(figure, mf_path(9000), control=mf_path(8000))
+        self.assertEqual("8,000", compare.show(figure["mediaFoundation"]["transform"]["withoutTimestamps"]))
+        self.assertEqual([("timestamps-differ", "pending")], [(d["kind"], d["status"]) for d in self.differences(figure)])
+        figure = self.figure(9000, 9000)
+        self.attach(figure, mf_path(9000), control=mf_path(9000))
+        self.assertEqual([], self.differences(figure))
+
+    def test_the_source_reader_is_a_witness_that_is_explained_only_where_the_analyzer_equals_the_reference(self):
+        figure = self.figure(9000, 9000)
+        self.attach(figure, mf_path(9000), reader=mf_path(8000))
+        self.assertEqual([("media foundation reader", "explained")], [(d["decoder"], d["status"]) for d in self.differences(figure)])
+        figure = self.figure(9000, 9500)
+        self.attach(figure, mf_path(9500), reader=mf_path(8000))
+        self.assertEqual("noted", self.differences(figure)[0]["status"])
+        figure = self.figure(9000, 9500)
+        self.attach(figure, mf_path(9500), reader=mf_path(9500))
+        self.assertEqual([], self.differences(figure))
+
+    def test_the_units_the_transform_refuses_are_listed_with_their_source_and_the_findings_at_their_bytes(self):
+        transform = {**mf_path(2048), "units": [{"index": 1, "offset": 9, "received": 9, "result": "refused", "frames": 0, "status": "0xC00D3E8C"},
+                                                {"index": 2, "offset": 18, "received": 9, "result": "error", "frames": 0, "status": "0xC00D6D60"},
+                                                {"index": 3, "offset": 27, "received": 9, "result": "not fed", "frames": 0}]}
+        analyzer = {"findings": [{"code": "aac.crc-mismatch", "severity": "Warning", "offset": 10, "length": 1, "count": 1}]}
+        units = compare.mediafoundation_unit_verdicts({"paths": {"transform": transform}}, analyzer)
+        self.assertEqual([(1, "agree", "media foundation transform"), (2, "pending", "media foundation transform")], [(u["index"], u["status"], u["source"]) for u in units])
+        merged = {"findings": [{"code": "aac.crc-mismatch", "severity": "Warning", "offset": 100, "length": 1, "count": 2}]}
+        self.assertEqual({"noted"}, {u["status"] for u in compare.mediafoundation_unit_verdicts({"paths": {"transform": transform}}, merged)})
+        self.assertEqual([], compare.mediafoundation_unit_verdicts({"paths": {"transform": {**transform, "stoppedBy": "stall"}}}, analyzer))
+
+
+class MediaFoundationProvenanceTests(unittest.TestCase):
+    def committed(self, tmp, carried_from=None):
+        entry = {"path": "a.m4a", "sha256": "ab", "figures": [{"id": "samples", "stage": "coded", "referencePath": "media foundation transform", "reference": 9, "referenceKind": "official",
+                                                               "format": {"rate": 44100, "channels": 2}, "mediaFoundation": {"transform": {"samples": 9}}}],
+                 "differences": [{"decoder": "media foundation transform", "kind": "analyzer-differs", "status": "keep"}, {"decoder": "coreaudio converter", "kind": "x", "status": "noted"}],
+                 "units": [{"source": "media foundation transform", "offset": 1}, {"source": "coreaudio converter", "offset": 2}]}
+        if carried_from:
+            entry["mediaFoundationFrom"] = carried_from
+        source = pathlib.Path(tmp) / "official-decoders.json"
+        source.write_text(json.dumps({"run": {"mediaFoundation": {"runId": "7", "commit": "abcdef0"}}, "files": [entry]}), encoding="utf-8")
+        return source, entry
+
+    def fresh(self):
+        return {"file": "a.m4a", "sha256": "ab", "mediaFoundationMissing": True, "figures": [{"id": "samples", "stage": "coded", "reference": None, "noReference": "x"}], "differences": [], "units": []}
+
+    def test_a_file_without_a_windows_record_keeps_the_media_foundation_data_of_the_committed_file_and_only_those(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, _ = self.committed(tmp)
+            result = self.fresh()
+            compare.carry_mediafoundation([result], source)
+        self.assertEqual((9, "media foundation transform"), (result["figures"][0]["reference"], result["figures"][0]["referencePath"]))
+        self.assertEqual({"transform": {"samples": 9}}, result["figures"][0]["mediaFoundation"])
+        self.assertEqual(["media foundation transform"], [d["decoder"] for d in result["differences"]])
+        self.assertEqual(["media foundation transform"], [u["source"] for u in result["units"]])
+        self.assertTrue(result["mediaFoundationCarried"])
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, result["mediaFoundationFrom"])
+
+    def test_data_carried_twice_keep_their_first_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, entry = self.committed(tmp, {"run": "3", "commit": "1111111"})
+            self.assertEqual({"run": "3", "commit": "1111111"}, compare.carried_from(entry, json.loads(source.read_text(encoding="utf-8")), "mediaFoundation"))
+
+    def test_the_core_audio_carry_leaves_the_media_foundation_units_alone(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, _ = self.committed(tmp)
+            document = json.loads(source.read_text(encoding="utf-8"))
+            document["files"][0]["figures"][0]["coreAudio"] = {"converter": {"samples": 9}}
+            source.write_text(json.dumps(document), encoding="utf-8")
+            result = {**self.fresh(), "coreAudioMissing": True}
+            compare.carry_coreaudio([result], source)
+        self.assertEqual(["coreaudio converter"], [u["source"] for u in result["units"]])
+
+    def test_files_missing_from_the_windows_run_are_listed_and_the_carried_ones_noted(self):
+        results = [{"folder": "aac", "file": "a.m4a", "mediaFoundationMissing": True, "mediaFoundationCarried": True}, {"folder": "mp4", "file": "b.m4a", "mediaFoundationMissing": True},
+                   {"folder": "aac", "file": "c.m4a", "mediaFoundationMissing": False}]
+        self.assertEqual(["mediafoundation aac/a.m4a (carried from the committed file)", "mediafoundation mp4/b.m4a"], compare.mediafoundation_not_run(results))
+
+    def test_write_official_records_the_windows_run_and_counts_the_carried_entries(self):
+        windows = {"windows": "Windows Server 2025 Datacenter", "build": "26100.1", "machine": "AMD64", "msAudDecMft": "10.0.26100.1", "mfreadwrite": "10.0.26100.1", "mfplat": "10.0.26100.1",
+                   "imageOS": "win25", "imageVersion": "1", "runId": "9", "commit": "c"}
+        result = {"file": "a.m4a", "sha256": "ab", "derived": None, "figures": [], "differences": [], "units": [], "unitList": {"kind": "mp4"}, "mediaFoundationFrom": {"run": "7", "commit": "abcdef0"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            target = pathlib.Path(tmp) / "new.json"
+            compare.write_official(target, pathlib.Path(tmp) / "none.json", [result], {"mediaFoundation": windows, "runId": "9"}, ["ffmpeg version 8.0.1"], "9", "aac")
+            written = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(windows, written["run"]["mediaFoundation"])
+        self.assertEqual({"run": "7", "commit": "abcdef0"}, written["files"][0]["mediaFoundationFrom"])
+        self.assertEqual(1, written["counts"]["mediaFoundationCarried"])
+
+    def test_a_reference_of_the_transform_that_changes_with_the_windows_build_is_build_dependent_and_stays(self):
+        windows = {"windows": "Windows Server 2025 Datacenter", "build": "26100.1", "machine": "AMD64", "msAudDecMft": "10.0.26100.1", "mfreadwrite": "10.0.26100.1", "mfplat": "10.0.26100.1"}
+        figure = {"id": "samples", "stage": "coded", "analyzer": 9, "reference": 9, "referencePath": "media foundation transform", "referenceKind": "official", "witnesses": {}}
+        old = {"path": "a.m4a", "sha256": "ab", "figures": [{**figure, "reference": 8}], "differences": [], "units": []}
+        fresh = {"file": "a.m4a", "sha256": "ab", "derived": None, "figures": [figure], "differences": [], "units": [], "unitList": {"kind": "mp4"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            previous = pathlib.Path(tmp) / "old.json"
+            previous.write_text(json.dumps({"run": {"id": "1", "mediaFoundation": windows}, "files": [old]}), encoding="utf-8")
+            target = pathlib.Path(tmp) / "new.json"
+            compare.write_official(target, previous, [fresh], {"mediaFoundation": {**windows, "build": "26100.2"}, "runId": "2"}, ["ffmpeg version 8.0.1"], "2", "aac")
+            written = json.loads(target.read_text(encoding="utf-8"))
+        self.assertEqual(8, written["files"][0]["figures"][0]["reference"])
+        self.assertIn("build-dependent", [d["kind"] for d in written["files"][0]["differences"]])
+
+    def test_the_run_environment_is_read_from_the_drivers_environment(self):
+        environment = compare.mf_environment({"productName": "Windows Server 2025 Datacenter", "displayVersion": "24H2", "currentBuild": "26100", "updateBuildRevision": 33650, "machine": "AMD64",
+                                              "decodersUsed": {"C:\\Windows\\System32\\MSAudDecMFT.dll": "10.0.26100.33438"}, "systemDlls": {"mfreadwrite.dll": "10.0.26100.1", "mfplat.dll": "10.0.26100.2"},
+                                              "runId": "5", "commit": "c", "imageOS": "win25", "imageVersion": "9"})
+        self.assertEqual(("Windows Server 2025 Datacenter 24H2", "26100.33650", "10.0.26100.33438", "10.0.26100.1"),
+                         (environment["windows"], environment["build"], environment["msAudDecMft"], environment["mfreadwrite"]))
+
+    def test_the_agreement_lines_leave_out_carried_figures_and_list_them(self):
+        class Args:
+            run_id = "1"
+
+        def result(name, carried, transform):
+            figure = {"id": "samples", "stage": "coded", "analyzer": 10, "reference": 10, "referencePath": "fdk direct", "witnesses": {},
+                      "mediaFoundation": {"transform": {"samples": transform}, "reader": {"samples": 10}}}
+            return {"folder": "aac", "file": name, "sha256": "ab", "figures": [figure], "units": [], "differences": [], "notes": [], "derived": None, "mediaFoundationCarried": carried}
+        text = compare.render_aac([result("fresh.m4a", False, 10), result("old.m4a", True, 99)], [], [], {}, ["ffmpeg"], [], Args())
+        line = next(l for l in text.splitlines() if l.strip().startswith("aac, apple") and "transform totals" in l)
+        self.assertIn("transform totals   1, equal to the analyzer   1", line)
+        self.assertIn("carried from the committed files, not counted above: 1 files (aac/old.m4a)", text)
 
 
 if __name__ == "__main__":
