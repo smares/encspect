@@ -223,6 +223,13 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             }
 
             long value = difference.GetProperty("value").GetInt64();
+            if (difference.GetProperty("decoder").GetString() == "coreaudio converter" && kind == "coreaudio-differs")
+            {
+                // The value of the converter's difference is the total recorded beside the figure.
+                JsonElement figure = entry.GetProperty("figures").EnumerateArray().Single(f => f.GetProperty("id").GetString() == id);
+                Assert.Equal(value, figure.GetProperty("coreAudio").GetProperty("converter").GetProperty("samples").GetInt64());
+            }
+
             bool resolved = actual == value;
             if (resolved)
             {

@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41379699952",
-  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
+  "id": "41423202796",
+  "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -12,7 +12,18 @@
    "version": "v2.0.2"
   },
   "concealMethod": 1,
-  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "coreAudio": {
+   "macOS": "15.8.2",
+   "build": "24H232",
+   "machine": "arm64",
+   "imageOS": "macos15",
+   "imageVersion": "20261028.0489.1",
+   "audioCodecs": "7.0",
+   "audioToolbox": "1.14",
+   "runId": "41423202796",
+   "commit": "f5d01b224a8bc98ae8795dda198569ded45a67f2"
+  }
  },
  "statuses": [
   "explained",
@@ -62,7 +73,17 @@
        "error": "no audio stream"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "not run"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x73796E63)"
+      }
+     }
     }
    ],
    "differences": [],
@@ -110,7 +131,31 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "blocksPerFrame": 4
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [],
@@ -174,7 +219,32 @@
      "heldBytes": 42,
      "heldBlocks": 1,
      "noReference": "FDK holds the last 1 raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those 1 held blocks (1,024 samples)",
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "blocksPerFrame": 2,
+       "noReference": "the frames declare up to 2 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -188,6 +258,16 @@
      "reason": "FDK holds the last 1 raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those 1 held blocks (1,024 samples)",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 10240,
+     "analyzer": 20480,
+     "status": "noted",
+     "kind": "decoder-one-block-per-frame",
+     "reason": "the frames declare up to 2 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -399,7 +479,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -447,7 +561,47 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 17408,
+       "decoderSamples": 17408,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "silentUnits": [
+        4,
+        7,
+        13,
+        19
+       ]
+      },
+      "reader": {
+       "samples": 17408,
+       "decoderSamples": 17408,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -459,6 +613,29 @@
      "reference": 21504,
      "status": "explained",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 17408,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 17,408 samples (the file has no gapless data, so the coded stage) against the analyzer's 21,504",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 17408,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 21,504) and Core Audio's converter outputs 17,408: the owners' decoders disagree; it gives no output for unit 4, 7, 13, 19 after its first output",
      "statusSource": "rule"
     }
    ],
@@ -648,7 +825,49 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 6,
+       "drainFrames": 0,
+       "silentUnits": [
+        2,
+        5,
+        8,
+        11,
+        14,
+        17
+       ]
+      },
+      "reader": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -660,6 +879,29 @@
      "reference": 21504,
      "status": "explained",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 15360,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 15,360 samples (the file has no gapless data, so the coded stage) against the analyzer's 21,504",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 15360,
+     "analyzer": 21504,
+     "reference": 21504,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 21,504) and Core Audio's converter outputs 15,360: the owners' decoders disagree; it gives no output for unit 2, 5, 8, 11, 14, 17 after its first output",
      "statusSource": "rule"
     }
    ],
@@ -834,10 +1076,44 @@
        "error": "[aac] channel element 2.0 is not allocated"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 1,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 4 units (1 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 0,
+     "analyzer": 4096,
+     "reference": 4096,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 4,096) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -904,7 +1180,29 @@
        "error": "[aac] Reserved bit set."
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 2,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "blocksPerFrame": 4,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -918,6 +1216,16 @@
      "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those 3 held blocks (3,072 samples), and by the blocks of the units it refused or gave no output for",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the positions the stream's units declare, with lost samples reported apart.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 20480,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -1004,7 +1312,29 @@
        "error": "[aac] Reserved bit set."
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 2,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "blocksPerFrame": 4,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -1018,6 +1348,16 @@
      "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those 3 held blocks (3,072 samples)",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 20480,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
+     "statusSource": "rule"
     }
    ],
    "units": [],
@@ -1064,7 +1404,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1133,7 +1507,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1181,7 +1589,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1229,7 +1671,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1298,7 +1774,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1346,10 +1856,56 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 29696,
+       "decoderSamples": 29696,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 10240,
+     "analyzer": 29696,
+     "reference": 29696,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 10,240 samples (the file has no gapless data, so the coded stage) against the analyzer's 29,696",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 10,
@@ -1415,7 +1971,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8192,
+       "decoderSamples": 8192,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -1429,6 +2019,17 @@
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (3,072) are exactly the 3 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK takes the declared 84 bytes of the damaged frame at 280 (it holds 34) as the frame, outputs nothing for units 7 and 8 and a concealed frame for unit 9; the analyzer resynchronizes at 314 and counts every frame by its header (Core Audio's converter: 30,720, probe run 41312630570).",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 8192,
+     "analyzer": 30720,
+     "reference": 28672,
+     "status": "noted",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 8,192 samples (the file has no gapless data, so the coded stage) against the analyzer's 30,720",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -1532,10 +2133,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1580,10 +2244,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1628,10 +2355,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1676,10 +2466,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1724,10 +2577,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1772,10 +2688,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1820,10 +2799,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1868,10 +2910,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1916,10 +3021,73 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        3,
+        31
+       ]
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 61,440 samples (the file has no gapless data, so the coded stage) against the analyzer's 65,536",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 61440,
+     "analyzer": 65536,
+     "reference": 65536,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 65,536) and Core Audio's converter outputs 61,440: the owners' decoders disagree; it gives no output for unit 3, 31 after its first output",
+     "statusSource": "reviewed",
+     "note": "explained as approved in step 4 (run 41423202796): FDK equals the analyzer (65,536 samples at 44,100 Hz); Core Audio's converter outputs 61,440 and gives no output for units 3 and 31 (2,048 samples each); its reader gives 61,440 too. The rule picks FDK as the reference, and the file is marked as one where the owners' decoders disagree."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1964,7 +3132,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 7168,
+       "decoderSamples": 7168,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 7168,
+       "decoderSamples": 7168,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2012,7 +3214,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2060,7 +3296,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2114,7 +3384,30 @@
        "error": "no audio stream"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x73796E63)"
+      }
+     }
     }
    ],
    "differences": [],
@@ -2194,7 +3487,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -2206,6 +3509,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC LTP",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4096,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -2244,7 +3557,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -2256,6 +3579,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4096,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -2294,7 +3627,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -2306,6 +3649,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4096,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -2353,7 +3706,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2401,7 +3788,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2449,10 +3870,32 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 24576,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "ownersDisagree": true,
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); the analyzer equals the reference (fdk direct, 24,576): the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -2518,10 +3961,32 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 24576,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "ownersDisagree": true,
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); the analyzer equals the reference (fdk direct, 24,576): the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -2582,7 +4047,32 @@
      "heldBytes": 85,
      "heldBlocks": 2,
      "noReference": "FDK holds the last 2 raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those 2 held blocks (2,048 samples)",
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "blocksPerFrame": 3,
+       "noReference": "the frames declare up to 3 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -2596,6 +4086,16 @@
      "reason": "FDK holds the last 2 raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those 2 held blocks (2,048 samples)",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them (the byte counter lags), so its total is short by those blocks and is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 10240,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-one-block-per-frame",
+     "reason": "the frames declare up to 3 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)",
+     "statusSource": "rule"
     }
    ],
    "units": [],
@@ -2648,10 +4148,44 @@
        "error": "[aac] channel element 2.0 is not allocated"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 9,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 12 units (9 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 0,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 12,288) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -2724,7 +4258,30 @@
        "error": "[aac] SBR was found before the first channel element."
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [],
@@ -2793,7 +4350,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2841,10 +4432,72 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 19394,
+       "decoderSamples": 19394,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 3,
+       "drainFrames": 962,
+       "silentUnits": [
+        4,
+        8
+       ]
+      },
+      "reader": {
+       "samples": 19394,
+       "decoderSamples": 19394,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 19394,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 19,394 samples (the file has no gapless data, so the coded stage) against the analyzer's 24,576",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 19394,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 24,576) and Core Audio's converter outputs 19,394: the owners' decoders disagree; it gives no output for unit 4, 8 after its first output",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -2870,9 +4523,9 @@
       0
      ],
      "analyzer": 12288,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 12288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
      "witnesses": {
       "ffmpeg": 24576
      },
@@ -2880,7 +4533,45 @@
       22050
      ],
      "refused": "FDK AAC outputs nothing for any of its 12 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [
@@ -2889,12 +4580,21 @@
      "decoder": "fdk direct",
      "value": null,
      "analyzer": 12288,
-     "status": "pending",
+     "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): stays pending for rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule Core Audio, which decodes it (24,576 at 44,100 Hz against the analyzer's 12,288; probe run 41312630570), becomes the reference.",
-     "statusSource": "reviewed",
-     "awaitingStep": 5
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): noted by the rule. FDK refuses every unit (0x0005), so Core Audio, which decodes it (24,576 samples at 44,100 Hz, 12,288 at the analyzer's 22,050 Hz: the same duration), is the reference of the coded stage, as the approved reference rule says. What is left is Core Audio's rate-differs entry, which is pending for the project lead.",
+     "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 24576,
+     "analyzer": 12288,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 24,576 samples at 44100 Hz where the analyzer's runs are at 22050 Hz: the decoders disagree on whether SBR is applied",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -2997,7 +4697,41 @@
       "firstUnit": 4,
       "ratio": "44100/22050"
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -3009,7 +4743,7 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 1 frames (2,048 samples) at 44100 Hz, from unit 4, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. One raw data block per frame; FDK applies SBR in frame 4 (2,048 samples at 44,100 Hz) and outputs the other frames at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz. The totals agree in the same duration; the owners' decoders disagree on SBR in that frame.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. One raw data block per frame; FDK applies SBR in frame 4 and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz, and so does Core Audio's converter (10,240 samples at 22,050 Hz, no frame at 44,100 Hz). The totals agree in the same duration; the owners' decoders disagree on SBR there and no reading of the specification decides, so the rule keeps it.",
      "statusSource": "reviewed"
     }
    ],
@@ -3112,7 +4846,41 @@
       "firstUnit": 1,
       "ratio": "44100/22050"
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -3124,7 +4892,7 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 3 frames (6,144 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. One raw data block per frame; FDK applies SBR in three runs of frames (44,100 Hz) and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz. The totals agree in the same duration; the owners' decoders disagree on SBR there.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. One raw data block per frame; FDK applies SBR in three runs of frames and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz, and so does Core Audio's converter (10,240 samples at 22,050 Hz, no frame at 44,100 Hz). The totals agree in the same duration; the owners' decoders disagree on SBR there and no reading of the specification decides, so the rule keeps it.",
      "statusSource": "reviewed"
     }
    ],
@@ -3172,7 +4940,31 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "blocksPerFrame": 2
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -3195,6 +4987,18 @@
      "reference": 2048,
      "status": "noted",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 3072,
+     "analyzer": 4096,
+     "reference": 2048,
+     "status": "pending",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 2,048, Core Audio's converter 3,072, the analyzer 4,096 (the written rule gives keep unless a reading of the specification decides)",
      "statusSource": "rule"
     }
    ],
@@ -3254,7 +5058,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -3266,6 +5080,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC SSR",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4096,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -3313,7 +5137,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -3361,7 +5219,30 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 1024,
+       "decoderSamples": 1024,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -3373,6 +5254,18 @@
      "reference": 3072,
      "status": "explained",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 1024,
+     "analyzer": 3072,
+     "reference": 3072,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 3,072) and Core Audio's converter outputs 1,024: the owners' decoders disagree",
      "statusSource": "rule"
     }
    ],
@@ -3441,7 +5334,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 16384,
+       "decoderSamples": 16384,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 16384,
+       "decoderSamples": 16384,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -3528,7 +5455,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -3574,7 +5535,13 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "the analyzer has 2 runs of constant output format and the converter has one"
+      }
+     }
     },
     {
      "id": "samples.run2",
@@ -4371,7 +6338,41 @@
       "samples": 5894,
       "exactExcess": true
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 202752,
+       "decoderSamples": 202752,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 202752,
+       "decoderSamples": 202752,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -4394,6 +6395,29 @@
      "reference": 194502,
      "status": "noted",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 202752,
+     "analyzer": 188608,
+     "reference": 194502,
+     "status": "noted",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 202,752 samples (the file has no gapless data, so the coded stage) against the analyzer's 188,608",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 202752,
+     "analyzer": 188608,
+     "reference": 194502,
+     "status": "pending",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 194,502, Core Audio's converter 202,752, the analyzer 188,608 (the written rule gives keep unless a reading of the specification decides)",
      "statusSource": "rule"
     }
    ],
@@ -4525,7 +6549,44 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 11264,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 0,
+       "silentUnits": [
+        11
+       ]
+      },
+      "reader": {
+       "samples": 11264,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -4539,6 +6600,17 @@
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (1,024) are exactly the 1 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions and FDK outputs nothing for it.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 11264,
+     "analyzer": 12288,
+     "reference": 11264,
+     "status": "noted",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 11,264 samples (the file has no gapless data, so the coded stage) against the analyzer's 12,288",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -4604,7 +6676,13 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "the analyzer has 2 runs of constant output format and the converter has one"
+      }
+     }
     },
     {
      "id": "samples.run2",
@@ -4679,7 +6757,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -4727,7 +6839,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
