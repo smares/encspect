@@ -128,7 +128,7 @@ public class WmaStandardRuleTests
     private static void AssertNotCounted(WmaStandardStreams.Result run)
     {
         Finding finding = Assert.Single(run.Findings, f => f.Code == "wma.reservoir-at-end");
-        Assert.DoesNotContain("counted in the samples", finding.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("the frame is counted in the samples", finding.Message, StringComparison.Ordinal);
     }
 
     // The superframe states three frames, begun in it; the third is whole in it. The valid frames are two (the analyzer defers the third),
@@ -142,7 +142,7 @@ public class WmaStandardRuleTests
         Assert.Equal(2 * F, Value(statistics, "Coded Samples"));
         Assert.StartsWith("The samples per channel Microsoft's decoder outputs", Child(statistics, "Samples").Description, StringComparison.Ordinal);
         Finding finding = Assert.Single(run.Findings, f => f.Code == "wma.reservoir-at-end");
-        Assert.Contains("counted in the samples", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("the frame is counted in the samples", finding.Message, StringComparison.Ordinal);
     }
 
     [Fact]
