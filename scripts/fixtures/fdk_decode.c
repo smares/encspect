@@ -230,9 +230,16 @@ int main(int argc, char **argv) {
     }
     long coded = G.coded, flushed = 0, calls = G.calls, outputs = G.outputs;
 
-    /* AACDEC_FLUSH discards input still buffered (numTotalBytes in the line before shows it) and answered each of the four requests with a
-       valid frame; the harness asks for four and records each, so it is not known whether the library would stop. */
-    for (int i = 0; i < 4; i++) {
+    /* The drain: ceil(outputDelay / frameSize) frames of AACDEC_FLUSH, as the design fixes it (probe question 7, approved lead answer 5), counted apart as
+       flushedSamples and never in the coded total. AACDEC_FLUSH discards input still buffered (numTotalBytes in the last unit line shows it). */
+    CStreamInfo *last = aacDecoder_GetStreamInfo(decoder);
+    int drain = 0;
+    if (last && last->frameSize > 0 && last->outputDelay > 0) {
+        drain = (int)((last->outputDelay + (unsigned)last->frameSize - 1) / (unsigned)last->frameSize);
+    }
+    printf("{\"type\":\"drain\",\"outputDelay\":%u,\"frameSize\":%d,\"requests\":%d}\n", last ? last->outputDelay : 0, last ? last->frameSize : 0, drain);
+    fflush(stdout);
+    for (int i = 0; i < drain; i++) {
         AAC_DECODER_ERROR error = aacDecoder_DecodeFrame(decoder, pcm, MAX_PCM, AACDEC_FLUSH);
         long samples;
         int channels;

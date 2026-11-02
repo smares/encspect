@@ -8,7 +8,9 @@ name: Cross-checks by the formats' official decoders
 # a finding, not a failure.
 #
 #   linux     libopus and libvorbis through ogg_decode.c and through oggdec and opusdec, over every Opus and Vorbis fixture and its variants (rollout step 2);
-#             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3)
+#             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3);
+#             Fraunhofer's FDK AAC 2.0.2 through fdk_decode.c over every AAC fixture of tests/fixtures/{aac,adts,apple,mp4}, its variants and the downloaded
+#             samples (rollout step 4)
 #   compare   the comparison of the records of every decoder job
 #   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
@@ -45,7 +47,7 @@ jobs:
       - name: Install the decoders' packages and the compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y opus-tools vorbis-tools libogg-dev libopus-dev libvorbis-dev build-essential
+          sudo apt-get install -y opus-tools vorbis-tools libogg-dev libopus-dev libvorbis-dev build-essential cmake git
 
       # A different version is a warning, not a failure: the records name what ran, and a moved image is one of the reasons to run this again.
       - name: Check the tool versions
@@ -91,6 +93,46 @@ jobs:
           python3 -I scripts/fixtures/official_decode.py tta --out out-tta --tta "$(tail -n 1 build/tta-path.txt)" \
             --archive-sha256 "$(python3 -I -c "import sys; sys.path.insert(0, 'scripts/fixtures'); import libtta_tool; print(libtta_tool.SHA256)")"
 
+      - name: Cache the FDK AAC build
+        id: fdk-cache
+        uses: actions/cache@v6
+        with:
+          path: build/inst-v2.0.2
+          key: fdk-aac-801f67f-${{ runner.os }}-ubuntu26-gcc15
+
+      # The pinned version of fdk_tool.py (v2.0.2), built from the commit of its tag; the harness is compiled against its own headers. The probe found 2.0.2, 2.0.3 and
+      # 3.0.0 identical on every file (open question 6).
+      - name: Build FDK AAC 2.0.2 and its harness
+        run: |
+          set -euo pipefail
+          commit=801f67f671929311e0c9952c5f92d6e147c7b003
+          if [ ! -d build/inst-v2.0.2/lib ]; then
+            git clone -q https://github.com/mstorsjo/fdk-aac build/fdk-v2.0.2
+            git -C build/fdk-v2.0.2 checkout -q "$commit"
+            test "$(git -C build/fdk-v2.0.2 rev-parse HEAD)" = "$commit"
+            cmake -S build/fdk-v2.0.2 -B build/fdk-v2.0.2/build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_PROGRAMS=OFF > /dev/null
+            cmake --build build/fdk-v2.0.2/build -j4 > /dev/null
+            cmake --install build/fdk-v2.0.2/build --prefix "$PWD/build/inst-v2.0.2" > /dev/null
+          fi
+          gcc -O2 -w -Ibuild/inst-v2.0.2/include scripts/fixtures/fdk_decode.c -Lbuild/inst-v2.0.2/lib -lfdk-aac -o build/bin/fdk_decode
+          echo "$commit" > build/fdk-commit.txt
+
+      # The samples that are pinned by SHA-256 and never committed (sbr-samples.json, usac-samples.json); one that no address serves is listed and skipped. The folder holds media
+      # and is not uploaded.
+      - name: Download the AAC samples
+        timeout-minutes: 15
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples | tee out-aac-fetch.txt
+
+      - name: Decode the AAC files, their variants and the samples with FDK AAC
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 15
+        run: |
+          python3 -I scripts/fixtures/official_decode.py aac --out out-aac --fdk-decode build/bin/fdk_decode --fdk-lib "$PWD/build/inst-v2.0.2/lib" \
+            --fdk-version v2.0.2 --fdk-commit "$(cat build/fdk-commit.txt)" --downloaded build/aac-samples
+          cp out-aac-fetch.txt out-aac/fetch.txt
+
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -98,6 +140,7 @@ jobs:
           path: |
             out
             out-tta
+            out-aac
           retention-days: 30
           if-no-files-found: error
 
@@ -128,6 +171,13 @@ jobs:
           pattern: official-decode-*
           path: artifacts
 
+      # The downloaded samples again (the artifacts hold records, never media), for the analyzer's figures and ffmpeg's column.
+      - name: Download the AAC samples
+        timeout-minutes: 15
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 -I scripts/fixtures/fetch_aac_samples.py aac-samples
+
       # The analyzer's figures of the derived variants come from the command line program; the committed fixtures use their golden reports.
       - name: Build the command line program
         run: dotnet publish src/Encspect.Cli -c Release -o cli-out
@@ -144,9 +194,11 @@ jobs:
           find artifacts -maxdepth 2 | sort | head -30
           python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
             --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json \
-            --write-official-tta comparison/official-decoders.tta.draft.json --previous-tta tests/fixtures/tta/official-decoders.json artifacts
+            --write-official-tta comparison/official-decoders.tta.draft.json --previous-tta tests/fixtures/tta/official-decoders.json \
+            --write-official-aac comparison/aac-drafts --downloaded aac-samples artifacts
           { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           { echo 'TTA'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-tta.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo 'AAC'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-aac.txt | grep -v '^derived ' | head -c 300000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         if: always()
