@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41529430187",
-  "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d",
+  "id": "41545312868",
+  "commit": "b3ffb037fcaefde222728b89eecc91ad698be661",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41529430187",
-   "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d"
+   "runId": "41545312868",
+   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41529430187",
-   "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d"
+   "runId": "41545312868",
+   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
   }
  },
  "statuses": [
@@ -101,11 +101,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     },
@@ -159,7 +159,7 @@
      "analyzer": 22528,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
      "statusSource": "rule"
     }
    ],
@@ -230,11 +230,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     },
@@ -288,7 +288,7 @@
      "analyzer": 23040,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC LD",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC LD",
      "statusSource": "rule"
     }
    ],
@@ -390,6 +390,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 11145578,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "138856E5A0",
@@ -552,6 +566,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 11145578,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -718,6 +746,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 11145578,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1388",
@@ -823,6 +868,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 11145578,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "138856E5A54880",
@@ -989,6 +1048,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 5340589,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -1094,6 +1167,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 5340590,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -1241,6 +1328,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 232199,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 8126984,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "F94844621CC051F210A00040014C208CE160",
@@ -1388,6 +1489,17 @@
        "errorUnits": 0,
        "noOutputUnits": 0,
        "drainFrames": 1024,
+       "firstOutput": {
+        "unit": 0,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "F94844221CC05852002000A6104670B800",
@@ -1466,8 +1578,9 @@
      "reference": 66560,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader outputs 67,584 samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's 66,560 and the reference's 66,560",
-     "statusSource": "rule"
+     "reason": "the Source Reader reads to the end and outputs 67,584 samples against the analyzer's 66,560 and the reference's 66,560",
+     "statusSource": "reviewed",
+     "note": "The Source Reader reads to the end of the stream and returns 67,584 samples, the transform's total. Facts from the Windows records (no PCM was compared; the cause is not established). The transform gives output for every one of the 65 units from unit 0, each at its own unit's time (units 0 to 64 at 0 to 14,860,770 in 100 ns units, 232,200 per unit), and the drain returns one more frame of 1,024 samples at 15,092,970: 66 frames, 67,584, where FDK, Core Audio and the analyzer have 65 (66,560). The same holds for exhale.flip-byte.m4a and for 11 of the 12 downloaded xHE-AAC files that output 1,024 samples per unit (the twelfth, xHEchID.mp4, has no drain frame and equals the analyzer). The three files that output 2,048 samples per unit (exhale-sbr.m4a, xhe-aac-config.m4a, Sintel_24kbps_rap5s.mp4) give nothing for unit 0, return their last frame of 2,048 with the drain and equal the analyzer. The Source Reader returns 67,584 for exhale.m4a too."
     },
     {
      "figure": "samples",
@@ -1479,7 +1592,8 @@
      "kind": "mediafoundation-differs",
      "ownersDisagree": true,
      "reason": "the analyzer equals the reference (fdk direct, 66,560) and Media Foundation's transform outputs 67,584: the owners' decoders disagree",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "Facts from the Windows records (no PCM was compared; the cause is not established). The transform gives output for every one of the 65 units from unit 0, each at its own unit's time (units 0 to 64 at 0 to 14,860,770 in 100 ns units, 232,200 per unit), and the drain returns one more frame of 1,024 samples at 15,092,970: 66 frames, 67,584, where FDK, Core Audio and the analyzer have 65 (66,560). The same holds for exhale.flip-byte.m4a and for 11 of the 12 downloaded xHE-AAC files that output 1,024 samples per unit (the twelfth, xHEchID.mp4, has no drain frame and equals the analyzer). The three files that output 2,048 samples per unit (exhale-sbr.m4a, xhe-aac-config.m4a, Sintel_24kbps_rap5s.mp4) give nothing for unit 0, return their last frame of 2,048 with the drain and equal the analyzer. The Source Reader returns 67,584 for exhale.m4a too."
     }
    ],
    "units": [],
@@ -1574,6 +1688,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -1709,6 +1837,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -1842,6 +1984,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -1977,6 +2133,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -2110,6 +2280,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -2245,6 +2429,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -2382,6 +2580,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15325169,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -2515,6 +2727,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15325170,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -2648,6 +2877,17 @@
        "errorUnits": 0,
        "noOutputUnits": 34,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "13B0",
@@ -2656,7 +2896,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 34 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 34 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -2694,8 +2934,9 @@
      "reference": 69632,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader outputs 0 samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's 69,632 and the reference's 69,632",
-     "statusSource": "rule"
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 69,632 and the reference's 69,632",
+     "statusSource": "reviewed",
+     "note": "The Source Reader (native type 6 channels at 22,050 Hz) reads to the end of the stream with its first read and returns no sample, as the transform returns none (see its entry)."
     },
     {
      "figure": "samples",
@@ -2707,7 +2948,8 @@
      "kind": "mediafoundation-differs",
      "ownersDisagree": true,
      "reason": "the analyzer equals the reference (fdk direct, 69,632) and Media Foundation's transform outputs 0: the owners' decoders disagree",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "Facts from the Windows records; the cause is not established and no variant of the file was run. The transform gives no output for any of the 34 units, signals no stream change, returns nothing at the drain and reports no error. The analyzer reports aac.sbr-without-channel-element for it (34 raw data blocks hold SBR data that follows no single channel or channel pair element), and FDK outputs the file at the core rate, 22,050 Hz, without SBR. faac-2.2-he-51-adts.aac (HE-AAC 5.1, 35 units, no such finding) is decoded by the transform: 71,680 samples at 44,100 Hz, 2 channels (the first 16-bit type it offers), with a stream change at unit 0."
     }
    ],
    "units": [
@@ -2822,6 +3064,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -2942,6 +3198,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -3047,6 +3320,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -3258,6 +3545,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "13B0",
@@ -3378,6 +3682,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -3519,6 +3840,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 426667,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15786666,
+        "duration": 426667,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1308",
@@ -3656,6 +3994,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 426667,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15786667,
+        "duration": 426667,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "130856E59D4800",
@@ -3863,6 +4215,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -4059,6 +4425,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -4247,6 +4627,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -4450,6 +4844,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -4585,6 +4993,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -4718,6 +5140,24 @@
        "errorUnits": 0,
        "noOutputUnits": 5,
        "drainFrames": 5120,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "firstOutput": {
+        "unit": 5,
+        "time": 928797,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15325170,
+        "duration": 1161000,
+        "frames": 5120
+       },
        "input": {
         "config": "asStored",
         "stored": "1208",
@@ -4838,6 +5278,28 @@
        "errorUnits": 0,
        "noOutputUnits": 6,
        "drainFrames": 12288,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+       ],
+       "streamChangeUnits": [
+        5
+       ],
+       "firstOutput": {
+        "unit": 6,
+        "time": 2321995,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 1393197,
+        "frames": 6144
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -4943,6 +5405,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "2B920800",
@@ -5094,6 +5570,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -5267,6 +5757,27 @@
        "errorUnits": 0,
        "noOutputUnits": 5,
        "drainFrames": 10240,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "streamChangeUnits": [
+        4
+       ],
+       "firstOutput": {
+        "unit": 5,
+        "time": 1857596,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 16253968,
+        "duration": 1393197,
+        "frames": 6144
+       },
        "input": {
         "config": "asStored",
         "stored": "1388",
@@ -5301,8 +5812,9 @@
      "reference": 73728,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader outputs 0 samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's 73,728 and the reference's 73,728",
-     "statusSource": "rule"
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 73,728 and the reference's 73,728",
+     "statusSource": "reviewed",
+     "note": "The Source Reader was asked for the file's native type, 1 channel at 22,050 Hz (the transform outputs 44,100 Hz, 2 channels: 73,728 samples, the analyzer's); it reads to the end of the stream with its first read and returns no sample. Whether the type asked for is the cause is not established."
     }
    ],
    "units": [],
@@ -5381,6 +5893,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 16253968,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "EB8A0800",
@@ -5532,6 +6058,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 16253968,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1388",
@@ -5690,6 +6230,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 16253968,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "138856E5A54880",
@@ -5841,6 +6395,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 15789569,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -5992,6 +6560,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15325170,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -6139,6 +6721,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15325170,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -6342,6 +6938,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -6462,6 +7072,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -6586,6 +7210,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6704,6 +7342,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6851,6 +7503,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6957,7 +7623,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -6977,6 +7643,17 @@
        "errorUnits": 0,
        "noOutputUnits": 66,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "2210",
@@ -6985,11 +7662,11 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -7022,7 +7699,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others held back); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC LTP; no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC LTP; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -7061,7 +7738,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -7081,6 +7758,17 @@
        "errorUnits": 0,
        "noOutputUnits": 66,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "0A10",
@@ -7089,11 +7777,11 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -7126,7 +7814,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others held back); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -7206,6 +7894,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15146666,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "118856E500",
@@ -7385,6 +8087,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -7509,6 +8225,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 15092970,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",

@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41529430187",
-  "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d",
+  "id": "41545312868",
+  "commit": "b3ffb037fcaefde222728b89eecc91ad698be661",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41529430187",
-   "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d"
+   "runId": "41545312868",
+   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41529430187",
-   "commit": "09d55d4e3abd864ebe522a58d0d6d4c17b14ba0d"
+   "runId": "41545312868",
+   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
   }
  },
  "statuses": [
@@ -130,6 +130,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -299,6 +313,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -436,6 +464,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -1679,11 +1721,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D5212, 3/32-bit 0xC00D5212, 1/24-bit 0xC00D5212))"
+       "why": "stopped by error"
       }
      }
     }
@@ -1717,7 +1759,7 @@
      "analyzer": 20480,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn gives at most 6 channels for the AAC decoder; the stream has 8",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn gives at most 6 channels for the AAC decoder; the stream has 8",
      "statusSource": "rule"
     }
    ],
@@ -1817,6 +1859,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "11B0",
@@ -1954,6 +2010,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -2031,7 +2101,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -2051,11 +2121,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D5212, 3/32-bit 0xC00D5212, 1/24-bit 0xC00D5212))"
+       "why": "stopped by error"
       }
      }
     }
@@ -2088,7 +2158,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); no reference from it",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -2204,6 +2274,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "11B0",
@@ -2341,6 +2425,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "11B0",
@@ -2478,6 +2576,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1208",
@@ -2615,6 +2727,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "11B0",
@@ -2752,6 +2878,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "11B0",
@@ -2889,6 +3029,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -3013,6 +3167,20 @@
        "noOutputUnits": 1,
        "drainFrames": 1024,
        "notFedUnits": 10,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2089796,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3128,6 +3296,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2089796,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3184,8 +3366,9 @@
      "reference": 10240,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader outputs 0 samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's 10,240 and the reference's 10,240",
-     "statusSource": "rule"
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 10,240 and the reference's 10,240",
+     "statusSource": "reviewed",
+     "note": "The Source Reader reads to the end of the stream with its first read and returns no sample; the transform returns 10,240 samples, the analyzer's and FDK's. The cause is not established."
     }
    ],
    "units": [
@@ -3402,6 +3585,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3545,6 +3742,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3688,6 +3899,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3699,7 +3924,7 @@
       },
       "reader": {
        "samples": null,
-       "why": "did not open (the file did not open (0xC00D36C4))"
+       "why": "refused: the file did not open"
       }
      }
     }
@@ -3813,6 +4038,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -3931,6 +4170,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -4109,6 +4362,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -4227,6 +4494,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 10448980,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -4374,7 +4655,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4395,7 +4676,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -4405,11 +4686,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4432,7 +4713,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -4442,7 +4723,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -4482,7 +4763,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4502,11 +4783,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D5212, 3/32-bit 0xC00D5212, 1/24-bit 0xC00D5212))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4539,7 +4820,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR; Learn gives at most 6 channels for the AAC decoder; the stream has 24",
      "statusSource": "rule"
     }
    ],
@@ -4579,7 +4860,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4600,7 +4881,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -4610,11 +4891,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4637,7 +4918,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -4647,7 +4928,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -4687,7 +4968,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4708,7 +4989,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -4718,11 +4999,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4745,7 +5026,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -4755,7 +5036,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -4795,7 +5076,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4816,7 +5097,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -4826,11 +5107,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4853,7 +5134,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -4863,7 +5144,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -4903,7 +5184,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -4924,7 +5205,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -4934,11 +5215,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -4961,7 +5242,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -4971,7 +5252,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -5011,7 +5292,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -5032,7 +5313,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -5042,11 +5323,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -5069,7 +5350,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -5079,7 +5360,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
      "statusSource": "rule"
     }
    ],
@@ -5119,7 +5400,7 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -5140,7 +5421,7 @@
        "refusedUnits": 20,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -5150,11 +5431,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -5177,7 +5458,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -5187,7 +5468,7 @@
      "analyzer": 10240,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD with SBR; Learn gives at most 6 channels for the AAC decoder; the stream has 8",
      "statusSource": "rule"
     }
    ],
@@ -5277,11 +5558,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))"
+       "why": "refused: the transform refuses the input media type (asStored 0xC00D36B4)"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -5305,7 +5586,7 @@
      "analyzer": 9600,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (no decoder accepts the input media type (asStored: 0xC00D36B4))); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
+     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
      "statusSource": "rule"
     }
    ],
@@ -5421,6 +5702,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "2B8A0800",
@@ -5686,6 +5981,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -5804,6 +6113,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 10448980,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6011,6 +6334,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 13467573,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E5A0",
@@ -6148,6 +6485,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 13467573,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "2B920800",
@@ -6306,6 +6657,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 13467573,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "2B8A0800",
@@ -6453,6 +6818,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 13467573,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "138856E5A54880",
@@ -6590,6 +6969,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 13467573,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "EB8A0800",
@@ -6718,6 +7111,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6729,7 +7136,7 @@
       },
       "reader": {
        "samples": null,
-       "why": "did not open (the file did not open (0xC00D36C4))"
+       "why": "refused: the file did not open"
       }
      }
     }
@@ -6831,6 +7238,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -6968,6 +7389,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -7105,6 +7540,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1388",
@@ -7252,6 +7701,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -7415,6 +7878,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -7533,6 +8010,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 10448980,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -7699,6 +8190,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -7836,6 +8341,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -7973,6 +8492,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733787,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -8110,6 +8643,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -8391,6 +8938,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -8528,6 +9089,23 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4053333,
+        "duration": 213333,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "118004C8050001088000",
@@ -8713,6 +9291,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "1390",
@@ -8902,6 +9494,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "138856E5A54800",
@@ -9065,6 +9671,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "EB920800",
@@ -9277,6 +9897,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -9402,6 +10036,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -9512,6 +10160,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -9622,6 +10284,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -9738,11 +10414,11 @@
      "mediaFoundation": {
       "transform": {
        "samples": null,
-       "why": "did not open (the configuration could not be read)"
+       "why": "not asked: Media Foundation was not asked: the configuration could not be read"
       },
       "reader": {
        "samples": null,
-       "why": "stopped by error (no PCM output type could be set for the first audio stream (1/16-bit 0xC00D36B4, 3/32-bit 0xC00D36B4, 1/24-bit 0xC00D36B4))"
+       "why": "stopped by error"
       }
      }
     }
@@ -9775,8 +10451,8 @@
      "value": null,
      "analyzer": 3072,
      "status": "noted",
-     "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform cannot be set up for the stream (did not open (the configuration could not be read)); no reference from it",
+     "kind": "decoder-not-asked",
+     "reason": "Media Foundation's transform was not asked (Media Foundation was not asked: the configuration could not be read): the harness's limit, not a refusal by the decoder",
      "statusSource": "rule"
     }
    ],
@@ -9908,6 +10584,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -9953,8 +10643,9 @@
      "reference": 20480,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader outputs 0 samples (it applies neither iTunSMPB nor the edit list, so the coded stage) against the analyzer's 20,480 and the reference's 20,480",
-     "statusSource": "rule"
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 20,480 and the reference's 20,480",
+     "statusSource": "reviewed",
+     "note": "The Source Reader reads to the end of the stream with its first read and returns no sample; the transform returns 20,480 samples, the analyzer's and FDK's. The cause is not established."
     }
    ],
    "units": [],
@@ -10043,6 +10734,28 @@
        "errorUnits": 0,
        "noOutputUnits": 11,
        "drainFrames": 1024,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "firstOutput": {
+        "unit": 11,
+        "time": 2321995,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -10511,6 +11224,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 928798,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 5572788,
+        "duration": 928798,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "2B938800",
@@ -10664,6 +11391,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108389,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "139056E500",
@@ -10854,6 +11595,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11039,6 +11794,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11240,6 +12009,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11377,6 +12160,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11514,6 +12311,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1625397,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "1210",
@@ -11672,6 +12483,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11815,6 +12640,20 @@
        "noOutputUnits": 1,
        "drainFrames": 1024,
        "notFedUnits": 10,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2089796,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -11981,6 +12820,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 5340590,
+        "duration": 232200,
+        "frames": 1024
+       },
        "input": {
         "config": "asStored",
         "stored": "121056E500",
@@ -12056,7 +12909,7 @@
      },
      "analyzerRates": [],
      "refused": "FDK AAC outputs nothing for any of its 10 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
@@ -12077,7 +12930,7 @@
        "refusedUnits": 10,
        "noOutputUnits": 0,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12093,6 +12946,17 @@
        "errorUnits": 0,
        "noOutputUnits": 10,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F9462D210000",
@@ -12101,7 +12965,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 10 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 10 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12137,7 +13001,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12147,7 +13011,7 @@
      "analyzer": 10240,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 10 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 10 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -12259,6 +13123,20 @@
        "errorUnits": 0,
        "noOutputUnits": 1,
        "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 232199,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 7198185,
+        "duration": 464399,
+        "frames": 2048
+       },
        "input": {
         "config": "asStored",
         "stored": "F9484462050B20",
@@ -12324,7 +13202,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -12339,7 +13217,7 @@
        "refusedUnits": 27,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12355,6 +13233,17 @@
        "errorUnits": 0,
        "noOutputUnits": 30,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F94844221CC05852002000A6104670B800",
@@ -12363,7 +13252,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12399,7 +13288,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12409,7 +13298,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -12449,7 +13338,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -12464,7 +13353,7 @@
        "refusedUnits": 27,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12480,6 +13369,17 @@
        "errorUnits": 0,
        "noOutputUnits": 30,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F94844221CC05852002000A6104670B800",
@@ -12488,7 +13388,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12524,7 +13424,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12534,7 +13434,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -12574,7 +13474,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -12589,7 +13489,7 @@
        "refusedUnits": 27,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12605,6 +13505,17 @@
        "errorUnits": 0,
        "noOutputUnits": 30,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F94844222CC05C00852002000A6104670B8000",
@@ -12613,7 +13524,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12649,7 +13560,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12659,7 +13570,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -12699,7 +13610,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -12720,7 +13631,7 @@
        "refusedUnits": 27,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12736,6 +13647,17 @@
        "errorUnits": 0,
        "noOutputUnits": 30,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F94844622CC051F24845396C0000",
@@ -12744,7 +13666,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12780,7 +13702,7 @@
      "analyzer": 61440,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12790,7 +13712,7 @@
      "analyzer": 61440,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -12830,7 +13752,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": 0,
@@ -12845,7 +13767,7 @@
        "refusedUnits": 27,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -12861,6 +13783,17 @@
        "errorUnits": 0,
        "noOutputUnits": 30,
        "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
        "input": {
         "config": "asStored",
         "stored": "F94844221CC05852002000A6104670B800",
@@ -12869,7 +13802,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -12905,7 +13838,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
      "statusSource": "rule"
     },
     {
@@ -12915,7 +13848,7 @@
      "analyzer": 30720,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others held back); no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 30 units (0 refused, 0 with an output error, the others and the drain gave no output); no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
