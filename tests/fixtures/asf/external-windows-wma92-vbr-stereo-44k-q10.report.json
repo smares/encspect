@@ -3867,7 +3867,7 @@
                         },
                         {
                           "name": "Coded Samples",
-                          "value": 133120,
+                          "value": 135168,
                           "unit": "samples",
                           "offset": 4943,
                           "length": 18138
@@ -23395,7 +23395,7 @@
       {
         "severity": "Info",
         "code": "wma.reservoir-at-end",
-        "message": "The last superframe announces a frame it holds whole, in 1409 bits, and then 7977 bits that no frame uses; the frame is counted in the samples.",
+        "message": "The bytes after the last frame the superframes finish hold the frame they announce last, whole, in 1409 bits, and then 7977 bits that no frame uses; the frame is counted in the samples.",
         "offset": 4943,
         "length": 18138,
         "path": [
