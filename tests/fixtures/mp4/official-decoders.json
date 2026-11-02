@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41374581383",
-  "commit": "a2c479da3f9614f007a11a41492190c2daa4378d",
+  "id": "41379699952",
+  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -43,6 +43,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -121,6 +124,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -167,6 +173,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1307,6 +1316,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1330,10 +1342,29 @@
        ]
       ]
      },
+     "channelsDiffer": {
+      "analyzer": [
+       8
+      ],
+      "decoder": [
+       6
+      ]
+     },
      "flushedSamples": 1024
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 20480,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 6 channels where the analyzer reports 8; not explained by a reading of FDK's source",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1366,6 +1397,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1412,6 +1446,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1458,6 +1495,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -1528,6 +1568,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1574,6 +1617,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1620,6 +1666,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1666,6 +1715,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1712,6 +1764,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -1758,6 +1813,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1804,6 +1862,9 @@
      "witnesses": {
       "ffmpeg": 10240
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1850,6 +1911,9 @@
      "witnesses": {
       "ffmpeg": 7168
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2006,6 +2070,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2052,6 +2119,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2104,6 +2174,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2156,6 +2229,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2202,6 +2278,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2265,6 +2344,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2311,6 +2393,9 @@
      "witnesses": {
       "ffmpeg": 47104
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2391,6 +2476,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2445,6 +2533,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2499,6 +2590,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2553,6 +2647,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2607,6 +2704,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2661,6 +2761,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2715,6 +2818,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2769,6 +2875,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      48000
+     ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -2823,6 +2932,9 @@
      "witnesses": {
       "ffmpeg": 9600
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 1
@@ -2884,6 +2996,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3058,6 +3173,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3104,6 +3222,9 @@
      "witnesses": {
       "ffmpeg": 47104
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3184,6 +3305,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3230,6 +3354,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3276,6 +3403,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3299,10 +3429,29 @@
        ]
       ]
      },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
      "flushedSamples": 2048
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 61440,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3335,6 +3484,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3381,6 +3533,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3427,6 +3582,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3479,6 +3637,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3525,6 +3686,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3571,6 +3735,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3617,6 +3784,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3679,6 +3849,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3725,6 +3898,9 @@
      "witnesses": {
       "ffmpeg": 47104
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3788,6 +3964,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3834,6 +4013,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3880,6 +4062,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3926,6 +4111,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4116,6 +4304,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4162,6 +4353,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -4256,6 +4450,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4323,6 +4520,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4346,10 +4546,29 @@
        ]
       ]
      },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
      "flushedSamples": 2048
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": null,
@@ -4398,6 +4617,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4524,6 +4746,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4570,6 +4795,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4616,6 +4844,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4662,6 +4893,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4708,6 +4942,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      1
+     ],
      "refused": "FDK AAC outputs nothing for any of its 3 units (0x2008)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -4794,6 +5031,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4840,6 +5080,9 @@
      "witnesses": {
       "ffmpeg": 10240
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4861,7 +5104,7 @@
      "analyzer": 20480,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the shortfall of 10,240 samples is 10 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared positions; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
      "statusSource": "reviewed"
     }
@@ -5119,6 +5362,9 @@
      "witnesses": {
       "ffmpeg": 12288
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 2
@@ -5165,6 +5411,9 @@
      "witnesses": {
       "ffmpeg": 12288
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5175,15 +5424,21 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "rateDiffers": {
-      "analyzerRate": 22050,
-      "decoderRate": 44100,
-      "decoderSamples": 24576,
-      "ratio": "44100/22050"
-     },
      "referenceAtAnalyzerRate": {
       "samples": 12288,
       "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       22050
+      ],
+      "decoderRates": [
+       44100
+      ],
+      "decoderSamples": 24576,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "44100/22050"
      },
      "flushedSamples": 2048
     }
@@ -5196,8 +5451,8 @@
      "analyzer": 12288,
      "status": "keep",
      "kind": "rate-differs",
-     "reason": "FDK outputs 24,576 samples at 44,100 Hz where the analyzer counts 12,288 at 22,050 Hz (the rate ratio is 44100/22050: the same duration when the counts are in that ratio); the decoders disagree on whether SBR is applied",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep for now. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK and the Windows transform apply it (24,576), the analyzer, ffmpeg and Core Audio do not (12,288). The owners' decoders disagree; revisited with Core Audio's column in step 5.",
+     "reason": "FDK outputs 12 frames (24,576 samples) at 44100 Hz, from unit 0, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK and the Windows transform apply it (24,576), the analyzer, ffmpeg and Core Audio do not (12,288). The owners' decoders disagree.",
      "statusSource": "reviewed"
     }
    ],
@@ -5265,6 +5520,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5359,6 +5617,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5469,6 +5730,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5515,6 +5779,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5561,6 +5828,9 @@
      "witnesses": {
       "ffmpeg": 8192
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5628,6 +5898,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5690,6 +5963,9 @@
      "witnesses": {
       "ffmpeg": 9216
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5776,6 +6052,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5822,6 +6101,7 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [],
      "refused": "FDK AAC outputs nothing for any of its 10 units (0x2007)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -5892,6 +6172,9 @@
      "witnesses": {
       "ffmpeg": 61440
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -5938,6 +6221,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -5986,6 +6272,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -6034,6 +6323,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -6082,6 +6374,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
@@ -6136,6 +6431,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }

@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41374581383",
-  "commit": "a2c479da3f9614f007a11a41492190c2daa4378d",
+  "id": "41379699952",
+  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -43,6 +43,9 @@
      "witnesses": {
       "ffmpeg": 22528
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -105,6 +108,9 @@
      "witnesses": {
       "ffmpeg": 23040
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -167,6 +173,9 @@
      "witnesses": {
       "ffmpeg": 51200
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -190,6 +199,14 @@
        ]
       ]
      },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
      "flushedSamples": 2048
     },
     {
@@ -210,7 +227,18 @@
      "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 51200,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -243,6 +271,9 @@
      "witnesses": {
       "ffmpeg": 51200
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -306,6 +337,9 @@
      "witnesses": {
       "ffmpeg": 51200
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -351,6 +385,9 @@
      "witnesses": {
       "ffmpeg": 51200
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -414,6 +451,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -459,6 +499,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -522,6 +565,9 @@
      "witnesses": {
       "ffmpeg": 69632
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -585,6 +631,9 @@
      "witnesses": {
       "ffmpeg": 66560
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -648,6 +697,9 @@
      "witnesses": {
       "ffmpeg": 66560
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -704,6 +756,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -750,6 +805,9 @@
      "witnesses": {
       "ffmpeg": 66560
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -806,6 +864,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -852,6 +913,9 @@
      "witnesses": {
       "ffmpeg": 66560
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -908,6 +972,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -954,6 +1021,9 @@
      "witnesses": {
       "ffmpeg": 69632
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1000,6 +1070,9 @@
      "witnesses": {
       "ffmpeg": 69632
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1045,6 +1118,9 @@
      "witnesses": {
       "ffmpeg": 69632
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 22050,
       "channels": 6
@@ -1055,15 +1131,21 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "rateDiffers": {
-      "analyzerRate": 44100,
-      "decoderRate": 22050,
-      "decoderSamples": 34816,
-      "ratio": "22050/44100"
-     },
      "referenceAtAnalyzerRate": {
       "samples": 69632,
       "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 34816,
+      "frames": 34,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
      },
      "flushedSamples": 1024
     }
@@ -1076,8 +1158,8 @@
      "analyzer": 69632,
      "status": "keep",
      "kind": "rate-differs",
-     "reason": "FDK outputs 34,816 samples at 22,050 Hz where the analyzer counts 69,632 at 44,100 Hz (the rate ratio is 22050/44100: the same duration when the counts are in that ratio); the decoders disagree on whether SBR is applied",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep for now. The owners' decoders disagree: FDK decodes at the core rate without SBR (22,050 Hz), the analyzer, ffmpeg and Core Audio count SBR (44,100 Hz). Revisited with Core Audio's column in step 5.",
+     "reason": "FDK outputs 34 frames (34,816 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. The owners' decoders disagree: FDK decodes at the core rate without SBR (22,050 Hz), the analyzer, ffmpeg and Core Audio count SBR (44,100 Hz).",
      "statusSource": "reviewed"
     }
    ],
@@ -1133,6 +1215,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1178,6 +1263,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1223,6 +1311,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1303,6 +1394,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 6
@@ -1348,6 +1442,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1393,6 +1490,9 @@
      "witnesses": {
       "ffmpeg": 77824
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 2
@@ -1416,10 +1516,29 @@
        ]
       ]
      },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
+      ]
+     },
      "flushedSamples": 2048
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 77824,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -1451,6 +1570,9 @@
      "witnesses": {
       "ffmpeg": 77824
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 2
@@ -1472,6 +1594,14 @@
         1,
         77824
        ]
+      ]
+     },
+     "channelsDiffer": {
+      "analyzer": [
+       1
+      ],
+      "decoder": [
+       2
       ]
      },
      "flushedSamples": 2048
@@ -1511,7 +1641,18 @@
      "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": null,
+     "analyzer": 77824,
+     "status": "noted",
+     "kind": "channels-differ",
+     "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1544,6 +1685,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1624,6 +1768,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1704,6 +1851,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1784,6 +1934,9 @@
      "witnesses": {
       "ffmpeg": 66560
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1840,6 +1993,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1886,6 +2042,9 @@
      "witnesses": {
       "ffmpeg": 68608
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1931,6 +2090,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1976,6 +2138,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2039,6 +2204,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2102,6 +2270,9 @@
      "witnesses": {
       "ffmpeg": 73728
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2147,6 +2318,9 @@
      "witnesses": {
       "ffmpeg": 73728
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2210,6 +2384,9 @@
      "witnesses": {
       "ffmpeg": 73728
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2273,6 +2450,9 @@
      "witnesses": {
       "ffmpeg": 73728
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2336,6 +2516,9 @@
      "witnesses": {
       "ffmpeg": 71680
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2399,6 +2582,9 @@
      "witnesses": {
       "ffmpeg": 68608
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2462,6 +2648,9 @@
      "witnesses": {
       "ffmpeg": 68608
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2542,6 +2731,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2587,6 +2779,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2632,6 +2827,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2678,6 +2876,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2741,6 +2942,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2804,6 +3008,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2851,6 +3058,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2898,6 +3108,9 @@
      "witnesses": {
       "ffmpeg": 73728
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 1
@@ -2978,6 +3191,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3023,6 +3239,9 @@
      "witnesses": {
       "ffmpeg": 67584
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2

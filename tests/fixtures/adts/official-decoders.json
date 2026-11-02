@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41374581383",
-  "commit": "a2c479da3f9614f007a11a41492190c2daa4378d",
+  "id": "41379699952",
+  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -43,6 +43,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -94,6 +97,9 @@
      "witnesses": {
       "ffmpeg": 10240
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -160,10 +166,14 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "heldBack": true,
      "decoderSamples": 19456,
      "heldBytes": 42,
-     "noReference": "FDK holds the last raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those blocks",
+     "heldBlocks": 1,
+     "noReference": "FDK holds the last 1 raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those 1 held blocks (1,024 samples)",
      "flushedSamples": 1024
     }
    ],
@@ -175,8 +185,8 @@
      "analyzer": 20480,
      "status": "keep",
      "kind": "decoder-holds-blocks",
-     "reason": "FDK holds the last raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those blocks",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The analyzer keeps its figure.",
+     "reason": "FDK holds the last 1 raw data blocks of the last frame (42 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 19,456 is short by those 1 held blocks (1,024 samples)",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
     }
    ],
@@ -376,6 +386,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -421,6 +434,9 @@
      "witnesses": {
       "ffmpeg": 17408
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -619,6 +635,9 @@
      "witnesses": {
       "ffmpeg": 15360
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -796,6 +815,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -868,10 +890,14 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "heldBack": true,
      "decoderSamples": 13312,
      "heldBytes": 237,
-     "noReference": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those blocks",
+     "heldBlocks": 3,
+     "noReference": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those 3 held blocks (3,072 samples), and by the blocks of the units it refused or gave no output for",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -889,8 +915,8 @@
      "analyzer": 20480,
      "status": "keep",
      "kind": "decoder-holds-blocks",
-     "reason": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those blocks",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the positions the stream's units declare, with lost samples reported apart.",
+     "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those 3 held blocks (3,072 samples), and by the blocks of the units it refused or gave no output for",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the positions the stream's units declare, with lost samples reported apart.",
      "statusSource": "reviewed"
     }
    ],
@@ -964,10 +990,14 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "heldBack": true,
      "decoderSamples": 17408,
      "heldBytes": 237,
-     "noReference": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those blocks",
+     "heldBlocks": 3,
+     "noReference": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those 3 held blocks (3,072 samples)",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -985,8 +1015,8 @@
      "analyzer": 20480,
      "status": "keep",
      "kind": "decoder-holds-blocks",
-     "reason": "FDK holds the last raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those blocks",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. The analyzer keeps its figure.",
+     "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 17,408 is short by those 3 held blocks (3,072 samples)",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
     }
    ],
@@ -1021,6 +1051,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1087,6 +1120,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1132,6 +1168,9 @@
      "witnesses": {
       "ffmpeg": 6144
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1177,6 +1216,9 @@
      "witnesses": {
       "ffmpeg": 6144
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1243,6 +1285,9 @@
      "witnesses": {
       "ffmpeg": 6144
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1288,6 +1333,9 @@
      "witnesses": {
       "ffmpeg": 29696
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1354,6 +1402,9 @@
      "witnesses": {
       "ffmpeg": 28672
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1375,8 +1426,8 @@
      "analyzer": 30720,
      "status": "keep",
      "kind": "analyzer-differs",
-     "reason": "the shortfall of 2,048 samples is 2 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. The analyzer recovers the two frames FDK swallows by trusting the damaged length (a frame declares 84 bytes and holds 34); Core Audio's converter agrees with the analyzer (30,720).",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (3,072) are exactly the 3 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK takes the declared 84 bytes of the damaged frame at 280 (it holds 34) as the frame, outputs nothing for units 7 and 8 and a concealed frame for unit 9; the analyzer resynchronizes at 314 and counts every frame by its header (Core Audio's converter: 30,720, probe run 41312630570).",
      "statusSource": "reviewed"
     }
    ],
@@ -1468,6 +1519,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1513,6 +1567,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1558,6 +1615,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1603,6 +1663,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1648,6 +1711,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1693,6 +1759,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1738,6 +1807,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1783,6 +1855,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1828,6 +1903,9 @@
      "witnesses": {
       "ffmpeg": 65536
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1873,6 +1951,9 @@
      "witnesses": {
       "ffmpeg": 7168
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -1918,6 +1999,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -1963,6 +2047,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2008,6 +2095,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2100,6 +2190,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2147,6 +2240,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2194,6 +2290,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2241,6 +2340,9 @@
      "witnesses": {
       "ffmpeg": 20480
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2286,6 +2388,9 @@
      "witnesses": {
       "ffmpeg": 12288
      },
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 6
@@ -2331,6 +2436,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 3
@@ -2397,6 +2505,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 3
@@ -2463,10 +2574,14 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "heldBack": true,
      "decoderSamples": 28672,
      "heldBytes": 85,
-     "noReference": "FDK holds the last raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those blocks",
+     "heldBlocks": 2,
+     "noReference": "FDK holds the last 2 raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those 2 held blocks (2,048 samples)",
      "flushedSamples": 1024
     }
    ],
@@ -2478,8 +2593,8 @@
      "analyzer": 30720,
      "status": "keep",
      "kind": "decoder-holds-blocks",
-     "reason": "FDK holds the last raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those blocks",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them (the byte counter lags), so its total is short by those blocks and is no reference. The analyzer keeps its figure.",
+     "reason": "FDK holds the last 2 raw data blocks of the last frame (85 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 28,672 is short by those 2 held blocks (2,048 samples)",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. A harness artifact: FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them (the byte counter lags), so its total is short by those blocks and is no reference. A total that is no reference leaves the analyzer's figure, so the status is keep.",
      "statusSource": "reviewed"
     }
    ],
@@ -2514,6 +2629,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 2
@@ -2587,6 +2705,9 @@
      "witnesses": {
       "ffmpeg": null
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 1
@@ -2659,6 +2780,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2704,6 +2828,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -2749,6 +2876,9 @@
      "witnesses": {
       "ffmpeg": 24576
      },
+     "analyzerRates": [
+      22050
+     ],
      "refused": "FDK AAC outputs nothing for any of its 12 units (0x0005)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -2763,8 +2893,8 @@
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 12 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): stays pending for rollout step 5. FDK refuses every unit (0x0005); under the approved reference rule Core Audio, which decodes it (24,576 at 44,100 Hz against the analyzer's 12,288; probe run 41312630570), becomes the reference.",
-     "statusSource": "reviewed",
-     "awaitingStep": 5
+     "awaitingStep": 5,
+     "statusSource": "reviewed"
     }
    ],
    "units": [
@@ -2819,6 +2949,9 @@
      "witnesses": {
       "ffmpeg": 10240
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 2
@@ -2852,10 +2985,34 @@
        ]
       ]
      },
+     "rateDiffers": {
+      "analyzerRates": [
+       22050
+      ],
+      "decoderRates": [
+       44100
+      ],
+      "decoderSamples": 2048,
+      "frames": 1,
+      "firstUnit": 4,
+      "ratio": "44100/22050"
+     },
      "flushedSamples": 1024
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 2048,
+     "analyzer": 10240,
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 1 frames (2,048 samples) at 44100 Hz, from unit 4, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. One raw data block per frame; FDK applies SBR in frame 4 (2,048 samples at 44,100 Hz) and outputs the other frames at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz. The totals agree in the same duration; the owners' decoders disagree on SBR in that frame.",
+     "statusSource": "reviewed"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -2887,6 +3044,9 @@
      "witnesses": {
       "ffmpeg": 10240
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 2
@@ -2940,10 +3100,34 @@
        ]
       ]
      },
+     "rateDiffers": {
+      "analyzerRates": [
+       22050
+      ],
+      "decoderRates": [
+       44100
+      ],
+      "decoderSamples": 6144,
+      "frames": 3,
+      "firstUnit": 1,
+      "ratio": "44100/22050"
+     },
      "flushedSamples": 1024
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 6144,
+     "analyzer": 10240,
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 3 frames (6,144 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. One raw data block per frame; FDK applies SBR in three runs of frames (44,100 Hz) and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz. The totals agree in the same duration; the owners' decoders disagree on SBR there.",
+     "statusSource": "reviewed"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -2975,6 +3159,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      22050
+     ],
      "format": {
       "rate": 22050,
       "channels": 2
@@ -2996,7 +3183,7 @@
      "analyzer": 4096,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the shortfall of 2,048 samples is 2 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (2,048) are exactly the 2 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions (two blocks) and FDK outputs nothing for it.",
      "statusSource": "reviewed"
     },
@@ -3063,6 +3250,9 @@
      "witnesses": {
       "ffmpeg": 4096
      },
+     "analyzerRates": [
+      44100
+     ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
      "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
     }
@@ -3110,6 +3300,9 @@
      "witnesses": {
       "ffmpeg": 3072
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 6
@@ -3155,6 +3348,9 @@
      "witnesses": {
       "ffmpeg": 1024
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3232,6 +3428,9 @@
      "witnesses": {
       "ffmpeg": 16384
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3316,6 +3515,9 @@
      "witnesses": {
       "ffmpeg": 6144
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3359,6 +3561,9 @@
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {},
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -3383,6 +3588,9 @@
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {},
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 2
@@ -3491,6 +3699,10 @@
      "witnesses": {
       "ffmpeg": 193991
      },
+     "analyzerRates": [
+      44100,
+      48000
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -4154,6 +4366,11 @@
        ]
       ]
      },
+     "afterCap": {
+      "unit": 192,
+      "samples": 5894,
+      "exactExcess": true
+     },
      "flushedSamples": 1024
     }
    ],
@@ -4165,7 +4382,7 @@
      "analyzer": 188608,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the analyzer keeps 64 streams and counts no sample of the frames after them (aac.streams-limited, documented in aac.md); FDK decodes them all",
+     "reason": "the analyzer keeps 64 streams and counts no sample of the frames from the unit with aac.streams-limited on (documented in aac.md); the excess is exactly FDK's samples from unit 192 on",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained by the documented 64-stream cap (aac.streams-limited): the analyzer counts no sample of the frames after the 64th stream.",
      "statusSource": "reviewed"
     },
@@ -4295,6 +4512,9 @@
      "witnesses": {
       "ffmpeg": 11264
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4316,7 +4536,7 @@
      "analyzer": 12288,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the shortfall of 1,024 samples is 1 frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (1,024) are exactly the 1 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions and FDK outputs nothing for it.",
      "statusSource": "reviewed"
     }
@@ -4371,6 +4591,9 @@
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {},
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1
@@ -4395,6 +4618,9 @@
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {},
+     "analyzerRates": [
+      48000
+     ],
      "format": {
       "rate": 48000,
       "channels": 1
@@ -4440,6 +4666,9 @@
      "witnesses": {
       "ffmpeg": 30720
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 2
@@ -4485,6 +4714,9 @@
      "witnesses": {
       "ffmpeg": 6144
      },
+     "analyzerRates": [
+      44100
+     ],
      "format": {
       "rate": 44100,
       "channels": 1

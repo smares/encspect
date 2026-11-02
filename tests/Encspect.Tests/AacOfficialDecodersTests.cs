@@ -73,6 +73,15 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             {
                 string status = difference.GetProperty("status").GetString()!;
                 Assert.True(Statuses.Contains(status) || status == "agree", $"{path}: status {status}");
+                if (status is "keep" or "follow")
+                {
+                    Assert.False(string.IsNullOrWhiteSpace(difference.TryGetProperty("note", out JsonElement note) ? note.GetString() : null), $"{path}: a {status} entry has no note with its reason");
+                }
+
+                if (difference.TryGetProperty("awaitingStep", out JsonElement step))
+                {
+                    Assert.Equal(JsonValueKind.Number, step.ValueKind);
+                }
             }
         }
     }
@@ -119,6 +128,26 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             string id = figure.GetProperty("id").GetString()!;
             long? actual = AnalyzerFigure(report, figure);
             figures[id] = actual;
+
+            // The rates the figure was converted with are the analyzer's streams' rates, and every kind of difference a figure carries is listed.
+            HashSet<long> rates = [.. figure.GetProperty("analyzerRates").EnumerateArray().Select(r => r.GetInt64())];
+            if (rates.Count > 0)
+            {
+                Assert.True(
+                    figure.GetProperty("streams").EnumerateArray().Select(i => (long)report.Streams[i.GetInt32()].SampleRate).ToHashSet().SetEquals(rates),
+                    $"{name}: the rates of the streams of {id} are not the recorded {string.Join("/", rates)}");
+            }
+
+            foreach ((string property, string kind) in new[] { ("heldBack", "decoder-holds-blocks"), ("refused", "decoder-refuses-stream"), ("rateDiffers", "rate-differs"), ("channelsDiffer", "channels-differ") })
+            {
+                if (figure.TryGetProperty(property, out _))
+                {
+                    Assert.True(
+                        entry.GetProperty("differences").EnumerateArray().Any(d => d.GetProperty("figure").GetString() == id && d.GetProperty("kind").GetString() == kind),
+                        $"{name}: {id} carries {property} and no {kind} difference lists it");
+                }
+            }
+
             if (figure.GetProperty("reference").ValueKind == JsonValueKind.Null)
             {
                 continue;
@@ -154,7 +183,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                 continue;
             }
 
-            if (kind is "decoder-holds-blocks" or "rate-differs")
+            if (kind is "decoder-holds-blocks" or "rate-differs" or "channels-differ")
             {
                 Assert.True(actual == listed, $"{name}: the samples of {id} are {actual}; the list ({kind}) has the analyzer's {listed}");
                 if (status == "pending")
