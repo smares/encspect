@@ -45,7 +45,7 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
     }
 
     // The same Professional stream written without the length prefix: its frames are found by their prefixes, which are removed (the skipped
-    // bit before the trailer bit ends a frame), joined one after another with every trailer bit set but the last one's, and cut again into
+    // bit before the trailer bit ends a frame), joined one after another with the trailer bits of Microsoft's files (0 on the last frame that starts in a packet, 1 on the others), and cut again into
     // packets of the block alignment, each with its sequence number, the two bits and the count of bits that finish the frame before. The
     // last packet is padded with zero bits (isLastTrailerSet: the last frame's trailer bit says another frame follows). The frames that start in the last packet are whole in its payload
     // (docs/design/wma-pro-format.md, "Frames without the length prefix").
@@ -116,10 +116,19 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         {
             starts.Add(stripped.Count);
             stripped.AddRange(frame.GetRange(width, frame.Count - width));
-            stripped[^1] = frame != frames[^1] || isLastTrailerSet;
         }
 
         int size = (Format.BlockAlign * 8) - headerBits;
+
+        // Microsoft's convention in the public files without the prefix: the trailer bit is 0 on the last frame that starts in a packet (the
+        // frame that crosses out of it, or ends at its end) and 1 on the others. isLastTrailerSet: the last frame's says another follows.
+        for (int k = 0; k < starts.Count; k++)
+        {
+            bool isLast = k + 1 == starts.Count || starts[k + 1] / size != starts[k] / size;
+            int end = (k + 1 == starts.Count ? stripped.Count : starts[k + 1]) - 1;
+            stripped[end] = !isLast || (k + 1 == starts.Count && isLastTrailerSet);
+        }
+
         var objects = new List<byte[]>();
         for (int k = 0; (long)k * size < stripped.Count; k++)
         {

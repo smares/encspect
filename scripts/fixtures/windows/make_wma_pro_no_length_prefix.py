@@ -5,11 +5,11 @@
 
 The source is external-windows-wma10pro-cbr-stereo-44k-128.wma. Its frames are found by their length prefixes
 (docs/design/wma-pro-format.md, "Packets" and "Frame"), each prefix is removed (the skipped bit before the trailer bit ends a
-frame, as the format description has it for a stream without the prefix), the trailer bit of every frame is set but the last
-frame's, and the frames are joined and cut again into packets of the block alignment, each with its sequence number, its two
+frame, as the format description has it for a stream without the prefix), the frames are joined and cut again into packets of the block alignment, each with its sequence number, its two
 bits and the count of bits that finish the frame before. The last packet is padded with zero bits; the decode flags of the codec
 data lose the length prefix bit; the media objects keep the headers of the source's first packets, and the counts of the file
-are fixed. Writes <fixtures folder>/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.asf and its provenance.json (make_asf_fixtures.py writes the same file with its manifest).
+are fixed. The trailer bit follows what the public files without the prefix show: 0 on the last frame that starts in a packet,
+1 on the others. Writes <fixtures folder>/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.asf and its provenance.json (make_asf_fixtures.py writes the same file with its manifest).
 The bytes are deterministic: the source's File Properties object (file ID, creation date) is kept.
 
 Not an encoder's output: the frames are the source's. The streams of a writer without the prefix are in the public files of
@@ -44,9 +44,14 @@ def rewrite(raw):
             bits = packets[s_index][s_pos:] + packets[e_index][header:e_pos]
         assert len(bits) == s_len, (k, len(bits), s_len)
         starts.append(sum(len(x) for x in stripped))
-        stripped.append(bits[w:-1] + ("0" if k == len(frames) - 1 else "1"))
-    stream = "".join(stripped)
+        stripped.append(bits[w:-1])
     size = pro.block_align * 8 - header
+    # Microsoft's convention in the public files without the prefix: the trailer bit is 0 on the last frame that starts in a packet (the
+    # frame that crosses out of it, or ends at its end) and 1 on the others.
+    for k in range(len(stripped)):
+        is_last = k + 1 == len(stripped) or starts[k + 1] // size != starts[k] // size
+        stripped[k] += "0" if is_last else "1"
+    stream = "".join(stripped)
     count = -(-len(stream) // size)
     out = bytearray(raw)
     for k in range(count):

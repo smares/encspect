@@ -27,9 +27,6 @@ internal sealed class WmaPacketReader
     private readonly int _bufferBytes;
     private bool _isFirstOfRun;
     private bool _isFlush;
-
-    // Whether the last frame read without error said that no frame follows it.
-    private bool _isLastTrailerClear;
     private readonly int _maxPackets;
     private readonly TraceWriter _trace = new();
     private readonly byte[] _packetBuffer;
@@ -530,8 +527,8 @@ internal sealed class WmaPacketReader
             FrameOutcome probe = _probe.Read(joined, position, total, 0, _trace);
             if (probe.Fault != 0 && position + probe.Bits >= total)
             {
-                // The frame before the run said no frame follows it: a run that is only padding (no frame starts in the last packet) is nothing.
-                unfinished = position == 0 && _isLastTrailerClear ? 0 : total - position;
+                // A run that is only zero bits (no frame starts in the last packet; the frame that ends in it is followed by padding) is nothing.
+                unfinished = position == 0 && IsZero(joined, total) ? 0 : total - position;
                 break;
             }
 
@@ -554,6 +551,20 @@ internal sealed class WmaPacketReader
         ClearSaved();
         UnfinishedBits = _isLoss ? 0 : unfinished;
         MostFramesInPacket = Math.Max(MostFramesInPacket, _framesInCall);
+    }
+
+    private static bool IsZero(Bits bits, int total)
+    {
+        bits.Position = 0;
+        while (bits.Position < total)
+        {
+            if (bits.ReadBit() != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void ReadWithoutPrefix(int packet, int end, int payloadStart, int count, bool isDropped)
@@ -1050,7 +1061,6 @@ internal sealed class WmaPacketReader
             return;
         }
 
-        _isLastTrailerClear = !result.Trailer;
         if (!_isLossless)
         {
             if (ValidFrames == 0)
