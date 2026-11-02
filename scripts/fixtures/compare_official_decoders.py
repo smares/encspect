@@ -686,7 +686,9 @@ def compare_aac(record, analyzer, ffmpeg):
     d_runs = direct.get("runs", [])
     complete = direct["stoppedBy"] == "end"
     d_total = direct.get("totalSamples") if complete else None
-    refused_all = complete and not d_runs and direct["unitCount"] > 0
+    # No output at all from a stream the analyzer counts no samples in (a file cut in its first sample) is a total of 0, which equals the analyzer's; no output from a stream
+    # it counts samples in is a refusal.
+    refused_all = complete and not d_runs and direct["unitCount"] > 0 and sum_known(r["samples"] for r in a_runs) != 0
     ff = None
     if ffmpeg:
         ff_entry = ffmpeg.get("coded") or ffmpeg.get("default") or {}
@@ -703,8 +705,11 @@ def compare_aac(record, analyzer, ffmpeg):
                         "analyzer": sum_known(r["samples"] for r in a_runs), "reference": None, "referencePath": None, "referenceKind": None,
                         "witnesses": {"ffmpeg": ff} if ffmpeg else {}, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (
                             aac_stop_reason(direct), show(direct.get("partialSamples")))})
-    elif len(a_runs) == len(d_runs) or not analyzer["streams"]:
-        if len(a_runs) != len(d_runs):
+    elif len(a_runs) == len(d_runs) or not analyzer["streams"] or not d_runs:
+        if not d_runs:  # the decoder output nothing and the analyzer counts nothing (see refused_all)
+            d_runs = [{"rate": None, "channels": None, "samples": 0, "aot": None, "extAot": None, "frameSize": None}]
+            a_runs = [{"key": None, "streams": [i for r in a_runs for i in r["streams"]], "samples": 0}]
+        elif len(a_runs) != len(d_runs):
             a_runs = a_runs * len(d_runs)
         for n, (a, d) in enumerate(zip(a_runs, d_runs)):
             figures.append({"id": "samples" if len(a_runs) == 1 else "samples.run%d" % (n + 1), "stage": "coded", "analyzerFigure": "samples", "streams": a["streams"],
@@ -842,10 +847,10 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
             reasons.setdefault(re.sub(r"[0-9]+", "N", r["notFed"])[:110], []).append("%s/%s" % (r["folder"], r["file"]))
     out += ["  %3d  %s  (%s)" % (len(v), k, ", ".join(v[:4]) + (", ..." if len(v) > 4 else "")) for k, v in sorted(reasons.items(), key=lambda kv: -len(kv[1]))] or ["  none"]
     out += ["", "Agreement (coded figures with a reference; groups counted apart)"]
-    groups = (("aac, apple (encoder-written)", [r for r in results if r["folder"] in ("aac", "apple") and not r["derived"]]),
+    groups = (("aac, apple (encoder-written)", [r for r in results if r["folder"] in ("aac", "apple")]),
               ("adts (hand-built)", [r for r in results if r["folder"] == "adts"]),
               ("mp4", [r for r in results if r["folder"] == "mp4"]),
-              ("derived variants", [r for r in results if r["derived"]]),
+              ("derived variants", [r for r in results if r["folder"] == "derived"]),
               ("downloaded", [r for r in results if r["folder"] == "downloaded"]))
     for label, subset in groups:
         figs = [f for r in subset for f in r["figures"] if f["stage"] == "coded"]
@@ -859,7 +864,7 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
     out += ["", "Derived variants by rule (coded figures: analyzer equals the reference / differs / no reference)"]
     rule_rows = []
     for rule in derive_variants.AAC_RULES:
-        subset = [r for r in results if r["derived"] and r["derived"].get("rule") == rule]
+        subset = [r for r in results if r["folder"] == "derived" and r["derived"].get("rule") == rule]
         figs = [f for r in subset for f in r["figures"] if f["stage"] == "coded"]
         same = sum(1 for f in figs if f["reference"] is not None and f["analyzer"] == f["reference"])
         differs = sum(1 for f in figs if f["reference"] is not None and f["analyzer"] != f["reference"])
