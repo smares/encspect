@@ -572,7 +572,9 @@ def check_mediainfo(name, path, tally):
             milliseconds = math.floor(granule * 1000 / rate + 0.5)
             tally.compare("duration", track.get("Duration"), f"{milliseconds / 1000:.3f}")
             output = int(track.get("SamplingRate") or 0)
-            tally.compare("samples from that duration", track.get("SamplingCount"), str(math.floor(milliseconds * output / 1000 + 0.5)) if output else None)
+            # In double precision, seconds first: 575 ms at 44.1 kHz gives 25,357 (0.575 * 44100 is just
+            # below 25,357.5), where exact arithmetic would give 25,358 (vorbis-short-start-trim.ogg).
+            tally.compare("samples from that duration", track.get("SamplingCount"), str(math.floor(milliseconds / 1000 * output + 0.5)) if output else None)
     general = info["General"] if info else {}
     if streams and streams[0][0]["codec"].startswith("Speex"):
         tally.compare("Speex comments (" + MEDIAINFO_SPEEX_COMMENTS + ")", tuple(general.get(f) for f in ("Title", "Track", "Performer", "Album")), (None,) * 4)

@@ -489,10 +489,13 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     decoded, previous, blocks, first_returned, second_returned, last_returned = 0, None, 0, 0, 0, 0
     sizes, long_bytes, short_bytes, long_sizes, short_sizes = set(), 0, 0, [], []
     mode_counts = {}
-    after_gap = False
-    first_offset = offset = None
+    after_gap = after_skip = False
+    first_offset = first_trim_offset = None
+    anchor = None  # (position, decoded) of the last granule position taken
+    count_base = None
+    end_trim = gap_trim = 0
+    beyond = large = False
     first_position_packet = None
-    last = None
     for index, (offset_in_file, data, ranges) in enumerate(packets):
         sizes.add(len(data))
         after_gap |= index in gaps
@@ -518,6 +521,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 findings.append("vorbis.mode-invalid")
         if kind:
             records.append(kind)
+            after_skip = True
         else:
             records.append(f"{'L' if is_long else 'S'}{mode}")
             size = b1 if is_long else b0
@@ -540,41 +544,56 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             last_returned = returned
             decoded += returned
             previous = (is_long, flags, index)
-        for at, granule, is_end in positions:
-            if at != index or not has_time:
-                continue
-            o = granule - decoded
-            if first_offset is None:
-                first_offset = offset = max(0, o) if is_end else o
-                first_position_packet = index
-            elif after_gap:
-                offset = o
-            elif o != offset and not is_end:
-                findings.append("vorbis.granule-inconsistent")
-            after_gap = False
-            last = (decoded, granule, is_end, last_returned)
-
+            if (after_gap or after_skip) and count_base is None:
+                count_base = decoded
+            # Follows the parser (VorbisParser.TrackPosition), which follows libvorbis's vorbis_synthesis_blockin: a position
+            # counts only on a packet that codes a block, the count continues from the last position taken, and every
+            # end-of-stream position trims. The independent witnesses are the oggdec constants of OggFixtureTests.
+            for at, granule, is_end in positions:
+                if at != index or not has_time:
+                    continue
+                lost = anchor is None or after_gap or after_skip
+                counted = decoded - (count_base if count_base is not None else (decoded if anchor is not None else 0))
+                if anchor is None:
+                    offset = granule - decoded
+                    first_offset = max(0, offset) if is_end else offset
+                    first_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, first_offset))
+                    first_trim_offset = max(-(2 ** 63 - 1), min(2 ** 63 - 1, granule - counted))
+                    first_position_packet = index
+                    first_position_returned = last_returned
+                elif lost:
+                    if not is_end and counted > granule:
+                        gap_trim += min(counted - granule, last_returned)
+                elif not is_end and anchor[0] + (decoded - anchor[1]) != granule:
+                    findings.append("vorbis.granule-inconsistent")
+                if is_end:
+                    trim = (counted if lost else anchor[0] + (decoded - anchor[1])) - granule
+                    if trim < 0 and not lost:
+                        beyond = True
+                    # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
+                    if trim > last_returned:
+                        large = True
+                        trim = last_returned
+                    end_trim += max(trim, 0)
+                anchor = (granule, decoded)
+                after_gap = after_skip = False
+                count_base = None
     start_trim = 0
     if first_offset:
         if first_position_packet != 1:
             findings.append("vorbis.start-page-layout")
         if first_offset > 0:
             findings.append("vorbis.start-offset")
-        else:
-            if -first_offset > first_returned + second_returned:
+        elif first_trim_offset < 0:
+            if -first_trim_offset > first_returned + second_returned:
                 findings.append("vorbis.start-trimming-large")
-            start_trim = min(-first_offset, first_returned + second_returned, decoded)
-    trim = 0
-    if last and offset is not None and last[2]:
-        trim = last[0] + offset - last[1]
-        if trim < 0:
-            findings.append("vorbis.granule-beyond-packets")
-            trim = 0
-        elif trim > last[3]:
-            # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
-            findings.append("vorbis.end-trimming-large")
-            trim = last[3]
-    samples = min(max(decoded - start_trim - trim, 0), decoded) if has_time else 0
+            start_trim = min(-first_trim_offset, first_position_returned, decoded)
+    if beyond:
+        findings.append("vorbis.granule-beyond-packets")
+    if large:
+        findings.append("vorbis.end-trimming-large")
+    trim = end_trim
+    samples = min(max(decoded - start_trim - trim - gap_trim, 0), decoded) if has_time else 0
 
     statistics = None
     long_count, short_count = len(long_sizes), len(short_sizes)
@@ -590,6 +609,8 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 statistics["Start Offset"] = plural(first_offset, "sample", "samples")
                 statistics["Start Trimming"] = plural(start_trim, "sample", "samples")
                 statistics["End Trimming"] = plural(trim, "sample", "samples")
+                if gap_trim:
+                    statistics["Gap Trimming"] = plural(gap_trim, "sample", "samples")
             statistics["Samples"] = plural(samples, "sample", "samples")
             statistics["Duration"] = fmt(samples / rate, 3) + " s"
             statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
