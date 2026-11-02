@@ -1187,6 +1187,7 @@ def main(argv):
             results.append(result)
     unmatched = sorted(r["file"] for sha, r in ogg_records.items() if sha not in selected)
 
+    apply_reviewed([r for r in results if not r["derived"]], pathlib.Path(args.previous) if args.previous else FIXTURES / "ogg" / "official-decoders.json")
     text = render(results, not_run, unmatched, other_files, environment, ffmpeg_version, warnings, args)
     (out / "comparison.txt").write_text(text, encoding="utf-8")
     (out / "comparison.json").write_text(json.dumps({"schema": SCHEMA, "environment": environment, "ffmpeg": ffmpeg_version, "warnings": warnings, "files": results,
