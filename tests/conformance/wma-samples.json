@@ -1,5 +1,5 @@
 {
- "description": "Real Windows Media Audio Professional and Lossless files from the FFmpeg sample archive (samples.ffmpeg.org: A-codecs/WMA9, A-codecs/lossless) and the FATE suite (fate-suite.ffmpeg.org: wmapro, lossless-audio): 24 Professional files and 6 Lossless files. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what ffprobe, ffmpeg (the samples and frames it outputs, and the messages it prints) and MediaInfo must report, and what the analyzer must report (its samples, which equal ffmpeg's unless the sample says \"samples_differ\", its frames and packets, and the codes of its warnings and errors \"findings\" and of its infos \"info_findings\", each as a set). \"archived\": false marks a file whose Wayback Machine capture was not looked for, so no Wayback address is listed.",
+ "description": "Real Windows Media Audio Professional and Lossless files from the FFmpeg sample archive (samples.ffmpeg.org: A-codecs/WMA9, A-codecs/lossless) and the FATE suite (fate-suite.ffmpeg.org: wmapro, lossless-audio): 24 Professional files and 6 Lossless files. None may be redistributed here, so they are downloaded and checked against their SHA-256 rather than committed. Per file: what ffprobe, ffmpeg (the samples and frames it outputs, and the messages it prints) and MediaInfo must report, and what the analyzer must report (its samples, which equal ffmpeg's unless the sample says \"samples_differ\" and why (Microsoft's rule gives Windows' count where ffmpeg's differs), its frames and packets, and the codes of its warnings and errors \"findings\" and of its infos \"info_findings\", each as a set). \"archived\": false marks a file whose Wayback Machine capture was not looked for, so no Wayback address is listed.",
  "sources": {
   "ffmpeg": {
    "page": "https://samples.ffmpeg.org/A-codecs/WMA9/",
@@ -181,11 +181,12 @@
    "ffmpeg_samples": 8353792,
    "ffmpeg_frames": 4079,
    "ffmpeg_errors": [],
-   "samples": 8353792,
-   "frames": 4080,
+   "samples": 8364595,
+   "frames": 4086,
    "packets": 511,
    "findings": [],
-   "info_findings": []
+   "info_findings": [],
+   "samples_differ": "the last packet's frames are read and Microsoft's rule gives what Windows outputs, 8,364,595 (Source Reader and decoder); ffmpeg never reads them"
   },
   {
    "file": "Classical_44_24_6_440000_1_20.wma",
@@ -205,11 +206,12 @@
    "ffmpeg_samples": 8331264,
    "ffmpeg_frames": 4068,
    "ffmpeg_errors": [],
-   "samples": 8331264,
-   "frames": 4069,
+   "samples": 8364595,
+   "frames": 4086,
    "packets": 511,
    "findings": [],
-   "info_findings": []
+   "info_findings": [],
+   "samples_differ": "the last packet's frames are read and Microsoft's rule gives what Windows outputs, 8,364,595 (Source Reader and decoder); ffmpeg never reads them"
   },
   {
    "file": "Classical_96_24_6_256000_1_20.wma",
@@ -229,11 +231,12 @@
    "ffmpeg_samples": 18206720,
    "ffmpeg_frames": 4445,
    "ffmpeg_errors": [],
-   "samples": 18206720,
-   "frames": 4446,
+   "samples": 18208641,
+   "frames": 4447,
    "packets": 557,
    "findings": [],
-   "info_findings": []
+   "info_findings": [],
+   "samples_differ": "the last packet's frames are read and Microsoft's rule gives what the Windows Source Reader outputs, 18,208,641; ffmpeg never reads them"
   },
   {
    "file": "Classical_48_24_6_Q25_2_3.wma",
@@ -304,7 +307,7 @@
     "[aist#0:0/wmapro] [dec:wmapro] Error submitting packet to decoder: Invalid data found when processing input",
     "[wmapro] Input packet too small (3006 < 10923)"
    ],
-   "samples": 9027584,
+   "samples": 9029504,
    "frames": 2205,
    "packets": 514,
    "findings": [
@@ -317,7 +320,8 @@
    ],
    "info_findings": [
     "wma.frame-unfinished"
-   ]
+   ],
+   "samples_differ": "the file ends in an unfinished frame and Microsoft's rule gives what Windows outputs, 9,029,504; ffmpeg's count is the frames'"
   },
   {
    "file": "classical_16_16_1_8000_off_0_off_1_29.wma",

@@ -189,6 +189,11 @@ internal sealed class WmaPacketReader
             DecodeRun(true, false, false);
         }
 
+        if (!_isLossless && !_p.HasLengthPrefix && Data.Packets.Count > 0)
+        {
+            FlushWithoutPrefix();
+        }
+
         Packets = Data.Packets.Count;
         if (!_isLossless)
         {
@@ -208,14 +213,15 @@ internal sealed class WmaPacketReader
     }
 
     // Microsoft's decoder outputs every sample the transform has completed (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
-    // The rule was found on streams with the length prefix and without damage and is applied to those only: no loss, no invalid frame, no long
-    // packet, no unfinished frame, nothing skipped, the first packet starting at a frame, for a stream of one frame no end trim, and trims only where
-    // the files had them (a start trim in the first frame, an end trim in the last). A short packet, a refused run and a gap are all counted in Losses.
-    // Any other stream keeps the frames' count.
+    // The rule is applied to streams without damage: no loss, no invalid frame, no long packet, nothing skipped, the first packet starting at a
+    // frame, for a stream of one frame no end trim, and trims only where the files had them (a start trim in the first frame, an end trim in the
+    // last). A short packet, a refused run and a gap are all counted in Losses. A stream with the length prefix that ends in an unfinished frame
+    // (wma.frame-unfinished) and one without the length prefix, whose last packet's frames are read, are counted by it too. Any other stream keeps
+    // the frames' count.
     private void SetDecoderRule()
     {
         IStreamParameters p = _p;
-        if (!p.HasLengthPrefix || Losses > 0 || InvalidFrames > 0 || LongPackets > 0 || Skipped > 0 || UnfinishedBits > 0 || ValidFrames < 1 || _isFirstPacketContinued
+        if (Losses > 0 || InvalidFrames > 0 || LongPackets > 0 || Skipped > 0 || ValidFrames < 1 || _isFirstPacketContinued
             || (ValidFrames == 1 && _lastTrimEnd != 0) || _sumTrimStart != _firstTrimStart || _sumTrimEnd != _lastTrimEnd)
         {
             return;
@@ -483,6 +489,15 @@ internal sealed class WmaPacketReader
         }
 
         UnfinishedBits = isTrailerOne && !_isLoss ? tail : 0;
+    }
+
+    // The frames that start in the last packet: no packet follows to supply their last bits, but the saved run holds whole frames and is read
+    // as every other run is (docs/design/wma-pro-format.md, "Frames without the length prefix").
+    private void FlushWithoutPrefix()
+    {
+        _framesInCall = 0;
+        _isReturnedInCall = false;
+        ReadWithoutPrefix(Data.Packets.Count - 1, 0, 0, 0, false);
     }
 
     private void ReadWithoutPrefix(int packet, int end, int payloadStart, int count, bool isDropped)

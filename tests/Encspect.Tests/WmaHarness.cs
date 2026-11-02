@@ -44,6 +44,93 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         return context;
     }
 
+    // The same Professional stream written without the length prefix: its frames are found by their prefixes, which are removed (the skipped
+    // bit before the trailer bit ends a frame), joined one after another with every trailer bit set but the last one's, and cut again into
+    // packets of the block alignment, each with its sequence number, the two bits and the count of bits that finish the frame before. The
+    // last packet is padded with zero bits. The frames that start in the last packet are whole in its payload
+    // (docs/design/wma-pro-format.md, "Frames without the length prefix").
+    public WmaStream WithoutLengthPrefix()
+    {
+        int width = 31 - int.LeadingZeroCount(Format.BlockAlign) + 4;
+        int headerBits = 6 + width;
+        var frames = new List<List<bool>>();
+        List<bool>? open = null;
+        foreach (byte[] packet in Objects)
+        {
+            Assert.Equal(Format.BlockAlign, packet.Length);
+            var payload = new List<bool>();
+            for (int bit = headerBits; bit < packet.Length * 8; bit++)
+            {
+                payload.Add(GetBits(packet, bit, 1) != 0);
+            }
+
+            int count = (int)GetBits(packet, 6, width);
+            if (open is not null && count > 0)
+            {
+                open.AddRange(payload.GetRange(0, count));
+                frames.Add(open);
+            }
+
+            open = null;
+            int position = count;
+            while (payload.Count - position > width)
+            {
+                int length = 0;
+                for (int i = 0; i < width; i++)
+                {
+                    length = (length << 1) | (payload[position + i] ? 1 : 0);
+                }
+
+                if (length == 0)
+                {
+                    break;
+                }
+
+                if (length > payload.Count - position)
+                {
+                    open = payload.GetRange(position, payload.Count - position);
+                    break;
+                }
+
+                frames.Add(payload.GetRange(position, length));
+                position += length;
+            }
+        }
+
+        var stripped = new List<bool>();
+        var starts = new List<int>();
+        foreach (List<bool> frame in frames)
+        {
+            starts.Add(stripped.Count);
+            stripped.AddRange(frame.GetRange(width, frame.Count - width));
+            stripped[^1] = frame != frames[^1];
+        }
+
+        int size = (Format.BlockAlign * 8) - headerBits;
+        var objects = new List<byte[]>();
+        for (int k = 0; (long)k * size < stripped.Count; k++)
+        {
+            var packet = new byte[Format.BlockAlign];
+            SetBits(packet, 0, 4, (uint)(k & 15));
+            SetBits(packet, 4, 2, 2);
+            int next = starts.FirstOrDefault(s => s >= k * size, stripped.Count);
+            SetBits(packet, 6, width, (uint)Math.Min(next - (k * size), size));
+            for (int i = 0; i < size && (k * size) + i < stripped.Count; i++)
+            {
+                if (stripped[(k * size) + i])
+                {
+                    SetBits(packet, headerBits + i, 1, 1);
+                }
+            }
+
+            objects.Add(packet);
+        }
+
+        byte[] data = (byte[])Data.Clone();
+        data[14] &= 0xBF;
+        return new WmaStream(objects, Format, data);
+    }
+
     public CodecContext RunPro() => Run(new WmaProParser());
 
     public CodecContext RunLossless() => Run(new WmaLosslessParser());

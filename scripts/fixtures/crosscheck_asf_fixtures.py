@@ -52,8 +52,10 @@ read. Professional and Lossless are read, and for their Microsoft-encoded fixtur
 decoder by the sample count of each frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc)
 are the frame's samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the
 overlap; Lossless outputs it), and their total is ffmpeg's count. The golden report's samples are that total, except for a Professional stream with
-the length prefix and no finding of the WMA parser, whose samples are the rule of Microsoft's decoder (pro_rule_samples), which is 512 more where the
-last frame ends in two subframes of 1,024 samples (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs"). Frame boundaries in the file are not compared: framecrc
+no finding of the WMA parser but the information that its last packet ends in an unfinished frame (wma.frame-unfinished), whose samples are the rule of
+Microsoft's decoder (pro_rule_samples), which is 512 more where the last frame ends in two subframes of 1,024 samples, and for a stream without the
+length prefix, whose last packet's frames the analyzer reads and ffmpeg never does (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
+Frame boundaries in the file are not compared: framecrc
 gives no input offsets, and every frame but the last outputs the same number of samples.
 """
 
@@ -538,10 +540,10 @@ def frame_sizes(frame, length):
 
 def pro_rule_samples(report, frames, length):
     """The samples Microsoft's decoder outputs by the rule of docs/design/wma-pro-format.md ("What Encspect reports"), worked out from the golden
-    report's frames, or None where the rule does not apply to the stream: no length prefix, a finding of the WMA parser, no frame read, an end trim
-    in a frame but the last or a start trim in a frame but the first, or a one-frame stream with an end trim."""
-    codec = "Windows Media Audio Professional"
-    if named(report, "Has Length Prefix", codec) is not True or any(f["code"].startswith("wma.") for f in report["findings"]):
+    report's frames, or None where the rule does not apply to the stream: a finding of the WMA parser other than the information that the last packet
+    ends in an unfinished frame, no frame read, an end trim in a frame but the last or a start trim in a frame but the first, or a one-frame stream
+    with an end trim. Streams without the length prefix are counted by it, their last packet's frames read."""
+    if any(f["code"].startswith("wma.") and f["code"] != "wma.frame-unfinished" for f in report["findings"]):
         return None
     valid = [f for f in frames if not str(f.get("value", "")).startswith("invalid")]
     if not valid:

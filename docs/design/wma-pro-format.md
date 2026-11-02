@@ -74,7 +74,7 @@ The stereo files have 66 frames of 2,048 samples and give 131,788 samples by FFm
 
 - On the 11 committed Microsoft files and the 21 public files with the length prefix, it found the same packets and frames, every frame's length, subframe count and end, every subframe's position, length and channels, every channel group, transform and band count, every quantization step, scale factor mode and step, and every channel's non-zero and escape counts, as the names and values of every node under Packets and Frames; the byte offsets and lengths of every packet, frame and subframe node and of every packet field; and every figure of the Statistics node, the stream's sample count and its frame count.
 - The cut public files end with a short media object that ffmpeg's ASF demuxer returns and Encspect's ASF parser does not hand over (`asf.object-incomplete`); FFmpeg's decoder rejects it as too small, so the walker was given the media objects the report lists.
-- On the 3 public files without the length prefix, which the former reader did not read, the walker, reading them by [Frames without the length prefix](#frames-without-the-length-prefix), decoded 4,080, 4,069 and 4,446 frames, and the samples that [Samples and duration](#samples-and-duration) derives from them equal ffmpeg's decoded sample count.
+- On the 3 public files without the length prefix, which the former reader did not read, the walker, reading them by [Frames without the length prefix](#frames-without-the-length-prefix), decoded 4,080, 4,069 and 4,446 frames, and the samples that [Samples and duration](#samples-and-duration) derives from them equal ffmpeg's decoded sample count. (The frames that start in the last packet of each of the three, which ffmpeg never reads, were added later; see [Frames without the length prefix](#frames-without-the-length-prefix).)
 - The samples ffmpeg 6.1.1 decodes equal what this description predicts for every file and for 68 damaged copies: 30 targeted changes to three committed files (a sequence number; the length prefix of a frame inside a packet, of a crossing frame and of the first frame; the reserved bit of such frames), 36 random single-bit flips in three committed files, and 2 changes to `Classical_44_16_6_256000_0_20.wma`, which has no length prefix.
 
 ## Conventions
@@ -210,7 +210,10 @@ FFmpeg reads such streams one packet late. The former reader did not read their 
 - Frames are read from the buffer while it has bits left and until a frame's trailer bit is 0.
 - Then the rest of packet k + 1's payload becomes the new saved run.
 - **A count of 0 does not drop the saved run.** Where packet k + 1 states 0 bits that finish the frame before, the saved run alone is the buffer of whole frames and is read all the same (with the length prefix a count of 0 drops it). `Classical_44_16_6_256000_0_20.wma` has 27 such packets, and a reader reaches ffmpeg's 8,353,792 samples for it only by decoding them.
-- **A count that covers the packet's whole payload** is cut to the payload's length, as with the length prefix: the whole payload is added to the saved run, which is read at once. No test file has such a packet, and the case was not checked.- The frames that start in the last packet are never read, since no packet follows (FFmpeg's decoder has no call that would flush them).
+- **A count that covers the packet's whole payload** is cut to the payload's length, as with the length prefix: the whole payload is added to the saved run, which is read at once. No test file has such a packet, and the case was not checked.
+- **The frames that start in the last packet** are never read by FFmpeg, since no packet follows (its decoder has no call that would flush them). Microsoft's decoder outputs them: the three public files without the length prefix give Windows 10,803, 33,331 and 1,921 samples more than the frames before the last packet's (`docs/development.md`, "WMA decoding by Microsoft's decoder"), and reading them as follows gives exactly Windows' figures (below).
+  - **They are whole in the saved run** that the last packet leaves: its bits from where the frames that start in the packet begin (after the bits of the frame that crosses into it) to the end of the payload. The run is read as the buffer of whole frames after the last packet, as every other run is: from its start, a frame after a frame while bits are left and until a frame's trailer bit is 0. The bits after that frame are padding.
+  - **Observed:** the last packet of `Classical_44_16_6_256000_0_20.wma` (index 510) leaves 6 frames, that of `Classical_44_24_6_440000_1_20.wma` 17 and that of `Classical_96_24_6_256000_1_20.wma` 1. All are read without a finding, the last frame of each file states an end trim and a trailer bit of 0, and the stream then has 4,086, 4,086 and 4,447 frames (4,080, 4,069 and 4,446 before the last packet's). The two 44.1 kHz files, encodes of one source, now have the same frames and the same samples.
 
 ### Sequence numbers, errors and loss
 
@@ -418,21 +421,40 @@ Read from the source and checked with ffmpeg 6.1.1 on the files above and their 
   - **The crossing frame is output with its trims applied:** FFmpeg clears the loss before it applies them. Checked on `external-windows-wma10pro-cbr-stereo-44k-64.wma`: frame 65 crosses into packet 10 and states an end trim of 1,332; with its length prefix raised by 2 it fails the length check, and ffmpeg decodes 131,788 samples in all (133,120 if it were untrimmed).
   - **The first frame of a media object that fails inside its packet is output untrimmed,** since FFmpeg returns before it applies the trims. A frame whose last subframe runs past the frame's end is such a frame for FFmpeg ("would have to skip" with a negative count), though Encspect names it "it needs more bits than it has".
 - **A frame that fails before the end of its subframes** outputs nothing.
-- **At the end of the stream** nothing more is output: the overlap of the last frame is dropped, and without the length prefix the frames of the last packet are not read.
+- **At the end of the stream** nothing more is output: the overlap of the last frame is dropped, and without the length prefix the frames of the last packet are not read (Microsoft's decoder reads them).
 - In every test file with the length prefix the first frame states a trim of F samples at the start and, where the file is not cut, the last frame a trim at the end (1,332 samples in the stereo committed files, 1,408 in the 5.1 ones), so the trims cut FFmpeg's count to 66 × 2,048 − 2,048 − 1,332 = 131,788, which is 512 below the source's length (see [What Microsoft's decoder outputs](#what-microsofts-decoder-outputs)).
 
 ### What Encspect reports
 
 - **Samples, where Microsoft's rule applies** (project lead, 2026-11-02): the count of [What Microsoft's decoder outputs](#what-microsofts-decoder-outputs), computed from what the reader holds per frame: the number of frames, the largest, over the channels, of the first subframe's size in the first frame and of the last subframe's size in the last frame and in the one before, the first frame's start trim and whether it states one, and the last frame's end trim. The rule applies to a stream when all of these hold; the evidence runs are 41252306359, 41362454853 and 41363084542:
-  - the frames have the length prefix;
-  - no loss is counted (a gap in the sequence numbers, a media object shorter than the block alignment, a frame or run a decoder refuses), no frame is invalid, no media object is longer than the block alignment, and the last packet ends with no unfinished frame (`wma.frame-unfinished`; see below for these streams);
+  - the frames have the length prefix or, without it, the frames of the last packet are read and none is invalid;
+  - no loss is counted (a gap in the sequence numbers, a media object shorter than the block alignment, a frame or run a decoder refuses), no frame is invalid, and no media object is longer than the block alignment (a stream that ends in an unfinished frame, `wma.frame-unfinished`, is counted by the rule: its frames are the ones read, and the bits of the unfinished frame are not in the count);
   - no media object was skipped for the limit (`wma.records-limit`);
   - the first packet read states no bits that finish a frame before it (the stream does not start inside a frame; a decoder drops those bits without counting a loss, and no run covers such a stream);
   - at least one frame is read, a stream of one frame states no end trim (no run covers a one-frame stream with one), and no frame but the first has a start trim above 0 and no frame but the last an end trim above 0.
-- **Samples otherwise:** the count of [What FFmpeg outputs](#what-ffmpeg-outputs): (frames read without error × F) − the sum of their trims at the start and the end, and 0 where that is negative, with the first frame output as that section says. The first frame is not subtracted as such; its trim of F does it. This is the count of every stream without the length prefix and of every stream that fails a condition above.
-- **Where the analyzer keeps the frames' count though Windows has a figure:**
-  - *Streams that end in an unfinished frame* (`wma.frame-unfinished`: a frame says another follows and no packet finishes one, or the file is cut inside a media object). The rule's prediction equals Windows' figure on all five inputs of this kind: `pro-stereo-128-cut-open-3` (Windows and the rule 7,104, the frames' count 6,144), `cut-open-27` (55,808 and 55,296), `Classical_96_24_6_Q75_2_13.wma` (9,029,504 and 9,027,584), and the public `Beethovens_9th-1_small.wma` (90,112) and `latin_192_mulitchannel_cut.wma` (208,896), where the frames' count is the same. The fallback is a choice to apply the rule only to streams with no finding of the parser; the samples definition now in review decides how cut streams count.
-  - *Streams without the length prefix:* the three public files give Windows 10,803, 33,331 and 1,921 samples more than the frames' count; the analyzer does not read the last packet's frames without the prefix, and the cause is not yet investigated.
+- **Samples otherwise:** the count of [What FFmpeg outputs](#what-ffmpeg-outputs): (frames read without error × F) − the sum of their trims at the start and the end, and 0 where that is negative, with the first frame output as that section says. The first frame is not subtracted as such; its trim of F does it. This is the count of every stream that fails a condition above.
+- **Streams that end in an unfinished frame** (`wma.frame-unfinished`: a frame says another follows and no packet finishes one, or the file is cut inside a media object) are counted by the rule, and keep the finding. The rule's prediction equals Windows' figure on all five inputs of this kind (the Source Reader's; the decoder's equals it but for the downmixed 96 kHz file); the analyzer's samples before this change were the frames' count:
+
+  | Input | Windows and the rule | Before |
+  | --- | --- | --- |
+  | `pro-stereo-128-cut-open-3` | 7,104 | 6,144 |
+  | `pro-stereo-128-cut-open-27` | 55,808 | 55,296 |
+  | `Classical_96_24_6_Q75_2_13.wma` | 9,029,504 | 9,027,584 |
+  | `Beethovens_9th-1_small.wma` | 90,112 | 90,112 |
+  | `latin_192_mulitchannel_cut.wma` | 208,896 | 208,896 |
+
+  - The 13 further `cut-open-<k>` variants of the same two files (run 41363084542) fit as well.
+  - The bits of the unfinished frame are not in the count (Windows does not output them either). The samples definition ([samples-definition.md](samples-definition.md), question 9) says that the unfinished frame's F is reported apart as lost samples. A `LostSamples` field is not built yet: it waits for the samples alignment, and nothing here reports those F samples.
+- **Streams without the length prefix** are counted by the rule too, now that the frames of the last packet are read ([Frames without the length prefix](#frames-without-the-length-prefix)). The three public files, Windows' figures against the analyzer's before (the frames before the last packet's) and after (the rule over all frames):
+
+  | File | Windows | Before | After |
+  | --- | --- | --- | --- |
+  | `Classical_44_16_6_256000_0_20.wma` | 8,364,595 | 8,353,792 | 8,364,595 |
+  | `Classical_44_24_6_440000_1_20.wma` | 8,364,595 | 8,331,264 | 8,364,595 |
+  | `Classical_96_24_6_256000_1_20.wma` | 18,208,641 (Source Reader) | 18,206,720 | 18,208,641 |
+
+  - For the 96 kHz file the decoder DMO gives 9,104,321: its output type is 48 kHz with two channels (a downmix and a resample), so the Source Reader's figure at 96 kHz with six channels is the reference.
+  - In all three the last frame, the last of the last packet's frames, is one subframe of F samples in every channel and states the end trim (1,485, 1,485 and 2,175 samples) and a trailer bit of 0. The rule's end of the output is then N × F, and the count is N × F less the first frame's start trim (F) and that end trim: the same as the frames' count over all frames. The files before this change had no frame with an end trim, which is how the stream looked cut short.
   - Other damage (lost packets, invalid frames, short or long packets) has no Windows run.
 - **The statistics name the basis:** the description of "Samples" says whether the count is Microsoft's rule or the frames' count. "Trimmed Samples" is the sum of the trims the frames state, as before (for Lossless too), and does not follow the cuts of the rule (a missing start trim cuts F / 2 + L / 2 and counts 0 here, and a decoder cuts the end trim only up to the last frame's output).
 - **Duration** = Samples / sampling rate.
@@ -467,7 +489,7 @@ Evidence, with the file or variant that tells each part apart:
 What stays unexplained or untested:
 
 - **Why the start trim counts from F / 2 before the first frame:** a stated start trim S cuts S samples of an output that begins F / 2 before the first frame's own samples (a stated 0 gives E − end cut), while an absent one cuts the first F / 2 + L_first / 2. That is a description of the numbers, not a reason.
-- **Streams without the length prefix:** the three public files (`Classical_44_16_6_256000_0_20.wma`, `Classical_44_24_6_440000_1_20.wma`, `Classical_96_24_6_256000_1_20.wma`) give 10,803, 33,331 and 1,921 samples more than the analyzer and FFmpeg (the two 44.1 kHz files, encodes of one source, give the same figure, 8,364,595). They are the files whose last packets' frames FFmpeg's late reading never reads (see "Frames without the length prefix"); the rule was not applied to them, since the analyzer does not know the frames of the last packet.
+- **Streams without the length prefix** with a loss, a frame the last packet's run cannot finish, or a frame that spans three packets: no Windows run. The three public files are explained (see [What Encspect reports](#what-encspect-reports)).
 - **Damage:** no variant has a lost packet, a failing frame, a short packet or a frame that spans three packets. The cuts end a stream after a whole frame; the two `cut-open` streams and `Classical_96_24_6_Q75_2_13.wma` are in [What Encspect reports](#what-encspect-reports).
 - **Other Windows builds and the Source Reader's version:** one image (build 10.0.26100.33650, `wmadmod.dll` 10.0.26100.33438).
 - **The probe's DMO output for 96 kHz files:** the DMO path took a 48 kHz stereo output type for the two public 96 kHz files with a length prefix and gave half the Source Reader's figure (9,104,321 against 18,208,641; for `Classical_96_24_6_Q75_2_13.wma` exactly half the rule's 9,029,504). The Source Reader's figures are the ones that fit.
@@ -756,7 +778,7 @@ These are choices of FFmpeg's decoder, not rules of the format; a cross-check mu
 
 - **Errors drop packets:** an error in a frame that lies in a packet drops the rest of the media object and the frame that crosses into the next one.
 - **Output of failed frames:** see [What FFmpeg outputs](#what-ffmpeg-outputs).
-- **Late reading without the length prefix,** and no flush at the end.
+- **Late reading without the length prefix,** and no flush at the end (Microsoft's decoder outputs the frames of the last packet).
 - **Ignored fields:** the two header bits, the postprocessing transform, the dynamic range gain, the extended header's bits, decode flags bits 0 and 8–15.
 - **Scale factors of silent channels** are read and kept, also where the channel sends no coefficients.
 - **Damaged codes:** ignored in the coefficients; see [Coefficient codes](#coefficient-codes).
