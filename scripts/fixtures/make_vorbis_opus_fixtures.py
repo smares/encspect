@@ -326,7 +326,7 @@ def vorbis_granule_errors():
     f.finding("vorbis.start-page-layout", "ends after audio packet 5")
     f.finding("vorbis.start-trimming-large", "discards 3000 samples at the start, more than the 1024")
     f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
-    f.finding("vorbis.granule-beyond-packets", "samples beyond what the packets before it return")
+    f.finding("vorbis.granule-beyond-packets", "samples beyond the count continued from the granule position before it")
     f.write()
 
 
@@ -346,7 +346,7 @@ def vorbis_packet_repeated():
 
 
 def vorbis_granule_midstream():
-    # The positions from the page that ends at the 16th audio packet on are 300 below what the packets return, and the last is
+    # The positions from the 16th audio packet on (the page that ends at the 20th and the last) are 300 below what the packets return, and the last is
     # 500 below its page's: the end trimming is counted from the latest page's position (libvorbis does so at every page), so it
     # is the 500, not the 800 that counting from the first page would give.
     blocks = [1] * 30
@@ -355,6 +355,53 @@ def vorbis_granule_midstream():
         granules[i] -= 300
     f = single("vorbis-granule-midstream", packets, granules, Cuts(1, 2, 8, 12, 11), serial=0x0B0B000C, codec="Vorbis")
     f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
+    f.write()
+
+
+def vorbis_granule_extreme():
+    # A position in the middle at the smallest 64-bit value: the count continues from it, and the last position is far beyond it,
+    # so nothing is trimmed and no figure overflows (libvorbis writes all 29,696 samples).
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
+    granules[3 + 19] = -(1 << 63)
+    f = single("vorbis-granule-extreme", packets, granules, Cuts(1, 2, 8, 12, 10), serial=0x0B0B000D, codec="Vorbis")
+    f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
+    f.finding("vorbis.granule-beyond-packets", "beyond the count continued from the granule position before it")
+    f.finding("ogg.granule-backwards", "goes back once")
+    f.crosscheck = {"valid": False, "oggz_validate": ["Granulepos decreasing within track"], "not_compared": {
+        "oggdec, ogginfo and ffprobe": "oggz validate refuses the position that decreases; oggdec writes the 29,696 samples the manifest expects (OggFixtureTests holds that constant)"}}
+    f.write()
+
+
+def vorbis_empty_carrier():
+    # The last packet of a page is empty and carries a position 1,024 low: libvorbis is given no position with a packet it refuses,
+    # and loses its count at the packet after it, so the position is not taken and the last page cuts nothing (29,696 samples).
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
+    packets.insert(3 + 20, b"")
+    granules.insert(3 + 20, granules[3 + 19] - 1024)
+    f = single("vorbis-empty-carrier", packets, granules, Cuts(1, 2, 8, 13, 10), serial=0x0B0B000E, codec="Vorbis")
+    f.finding("vorbis.empty-packet", "empty")
+    f.write()
+
+
+def vorbis_end_page_repeated():
+    # The end-of-stream page written twice: libvorbis trims the 500 at the first, loses its count at the hole libogg reports for the
+    # copy, and trims nothing at the copy (30,720 less 500 plus the copy's packets).
+    blocks = [1] * 30
+    packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
+    serial = 0x0B0B000F
+    pages = pages_for(serial, packets, granules, Cuts(1, 2, 8, 12, 10))
+    pages = pages + [pages[-1]]
+    f = Fixture("vorbis-end-page-repeated", ".ogg")
+    f.crosscheck = {"valid": True, "skip": {}}
+    for page in pages:
+        f.w.write(page)
+    f.stream(serial, pages, codec="Vorbis")
+    f.finding("ogg.page-after-eos", "comes after its end-of-stream page")
+    f.finding("ogg.sequence-repeat", "pages are repeated or out of order")
+    f.crosscheck = {"valid": False, "oggz_validate": ["missing *** bos"], "not_compared": {
+        "oggz dump, ogginfo and ffprobe": "oggz validate refuses the copy of the last page (it reads it as a second stream's first page); oggdec writes the 39,436 samples the manifest expects (OggFixtureTests holds that constant)"}}
     f.write()
 
 
@@ -946,7 +993,7 @@ def opus_tags_variants():
 
 
 FIXTURES = [
-    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_packet_errors,
+    vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_granule_extreme, vorbis_empty_carrier, vorbis_end_page_repeated, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,

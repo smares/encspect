@@ -76,6 +76,25 @@ public class OggFixtureTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
     }
 
+    // The same, for what libvorbis does not take: a position at the smallest 64-bit value (the count continues from it, so the last
+    // position is beyond it and nothing is trimmed, with no figure that overflows), a position on an empty packet (libvorbis is not
+    // given it and loses its count at the packet after), and an end-of-stream page written twice (it trims at the first and loses
+    // its count at the hole libogg reports for the copy). The samples are those oggdec writes.
+    [Theory]
+    [InlineData("ogg/vorbis-granule-extreme.ogg", 29_696, 0, 29_696)]
+    [InlineData("ogg/vorbis-empty-carrier.ogg", 29_696, 0, 29_696)]
+    [InlineData("ogg/vorbis-end-page-repeated.ogg", 39_936, 500, 39_436)]
+    public void The_end_trimming_follows_the_positions_libvorbis_takes(string name, long decoded, long trim, long samples)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(samples, report.Streams.Single().Samples);
+        Assert.Equal($"{decoded} samples", Find(report.Root, "Decoded Samples")?.Value?.ToString());
+        Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
+        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
+        Assert.Equal(name.Contains("extreme", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.granule-beyond-packets"));
+    }
+
     private static void CheckPages(JsonElement expected, Node pages)
     {
         Assert.Equal(Kind(NodeKind.Stream), Kind(pages.Kind));

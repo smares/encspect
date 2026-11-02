@@ -489,10 +489,13 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     decoded, previous, blocks, first_returned, second_returned, last_returned = 0, None, 0, 0, 0, 0
     sizes, long_bytes, short_bytes, long_sizes, short_sizes = set(), 0, 0, [], []
     mode_counts = {}
-    after_gap = False
-    first_offset = offset = None
+    after_gap = after_skip = False
+    first_offset = None
+    anchor = None  # (position, decoded) of the last granule position taken
+    count_base = None
+    end_trim = 0
+    beyond = large = False
     first_position_packet = None
-    last = None
     for index, (offset_in_file, data, ranges) in enumerate(packets):
         sizes.add(len(data))
         after_gap |= index in gaps
@@ -518,6 +521,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 findings.append("vorbis.mode-invalid")
         if kind:
             records.append(kind)
+            after_skip = True
         else:
             records.append(f"{'L' if is_long else 'S'}{mode}")
             size = b1 if is_long else b0
@@ -540,20 +544,35 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             last_returned = returned
             decoded += returned
             previous = (is_long, flags, index)
-        for at, granule, is_end in positions:
-            if at != index or not has_time:
-                continue
-            o = granule - decoded
-            if first_offset is None:
-                first_offset = offset = max(0, o) if is_end else o
-                first_position_packet = index
-            elif after_gap:
-                offset = o
-            elif o != offset and not is_end:
-                findings.append("vorbis.granule-inconsistent")
-                offset = o
-            after_gap = False
-            last = (decoded, granule, is_end, last_returned)
+            if (after_gap or after_skip) and count_base is None:
+                count_base = decoded
+            # Follows the parser (VorbisParser.TrackPosition), which follows libvorbis's vorbis_synthesis_blockin: a position
+            # counts only on a packet that codes a block, the count continues from the last position taken, and every
+            # end-of-stream position trims. The independent witnesses are the oggdec constants of OggFixtureTests.
+            for at, granule, is_end in positions:
+                if at != index or not has_time:
+                    continue
+                gap = after_gap or after_skip
+                if anchor is None:
+                    first_offset = max(0, granule - decoded) if is_end else granule - decoded
+                    anchor = (decoded if is_end and granule < decoded else granule, decoded)
+                    first_position_packet = index
+                elif gap:
+                    anchor = (granule, decoded)
+                elif not is_end and anchor[0] + (decoded - anchor[1]) != granule:
+                    findings.append("vorbis.granule-inconsistent")
+                    anchor = (granule, decoded)
+                if is_end:
+                    trim = (decoded - (count_base if count_base is not None else decoded)) - granule if gap else anchor[0] + (decoded - anchor[1]) - granule
+                    if trim < 0 and not gap:
+                        beyond = True
+                    # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
+                    if trim > last_returned:
+                        large = True
+                        trim = last_returned
+                    end_trim += max(trim, 0)
+                after_gap = after_skip = False
+                count_base = None
 
     start_trim = 0
     if first_offset:
@@ -565,16 +584,11 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             if -first_offset > first_returned + second_returned:
                 findings.append("vorbis.start-trimming-large")
             start_trim = min(-first_offset, first_returned + second_returned, decoded)
-    trim = 0
-    if last and offset is not None and last[2]:
-        trim = last[0] + offset - last[1]
-        if trim < 0:
-            findings.append("vorbis.granule-beyond-packets")
-            trim = 0
-        elif trim > last[3]:
-            # Section A.2 allows trimming within the last packet's samples, and libvorbis strips no more than it has buffered for it.
-            findings.append("vorbis.end-trimming-large")
-            trim = last[3]
+    if beyond:
+        findings.append("vorbis.granule-beyond-packets")
+    if large:
+        findings.append("vorbis.end-trimming-large")
+    trim = end_trim
     samples = min(max(decoded - start_trim - trim, 0), decoded) if has_time else 0
 
     statistics = None
