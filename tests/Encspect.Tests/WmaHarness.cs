@@ -121,7 +121,7 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         int size = (Format.BlockAlign * 8) - headerBits;
 
         // Microsoft's convention in the public files without the prefix: the trailer bit is 0 on the last frame that starts in a packet (the
-        // frame that crosses out of it, or ends at its end) and 1 on the others. isLastTrailerSet: the last frame's says another follows.
+        // frame that crosses out of it, or ends inside it and leaves its remaining bits unused) and 1 on the others. isLastTrailerSet: the last frame's says another follows.
         for (int k = 0; k < starts.Count; k++)
         {
             bool isLast = k + 1 == starts.Count || starts[k + 1] / size != starts[k] / size;
