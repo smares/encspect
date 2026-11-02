@@ -26,7 +26,8 @@ every child of that name. A change file:
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
-                   "goldens": ["tests/fixtures/mpeg/some.report.json"]}]   # an entry may name the goldens it applies to, else it applies to all
+                   "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
+                  {"scope": "stream", "fields": ["samples", "duration"]}]  # fields of every stream whose values may differ
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -153,6 +154,11 @@ def reverse_renames(report, renamed):
 
 def drop_changed(report, changed):
     for entry in changed:
+        if entry.get("scope") == "stream":
+            for stream in report.get("streams", []):
+                for field in entry["fields"]:
+                    stream.pop(field, None)
+            continue
         for node in matching(report["root"], entry["path"][:-1]):
             for child in node.get("children", []):
                 if child.get("name") == entry["path"][-1]:
@@ -186,6 +192,9 @@ def changed_in_old(changed, renamed, counted):
     rename goes by that name, so a change file lists such a node once, under its new name."""
     out = []
     for entry in changed:
+        if entry.get("scope") == "stream":
+            out.append(entry)
+            continue
         path = list(entry["path"])
         for rename in renamed:
             parent = list(rename["parent"])

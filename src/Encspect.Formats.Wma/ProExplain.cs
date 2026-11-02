@@ -64,8 +64,9 @@ internal static class ProExplain
     public const string StatFrames = "How many frames were read, including invalid ones.";
     public const string StatInvalidFrames = "How many frames failed one of the rules of the syntax and were dropped.";
     public const string StatFrameLength = "How many samples of each channel a frame holds.";
-    public const string StatSamples = "The samples a decoder outputs for the stream: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut.";
-    public const string StatTrimmedSamples = "The samples the trims of the frames cut at their starts and ends.";
+    public const string StatSamples = "The samples counted from the frames read as FFmpeg's decoder outputs them: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut. Used where the rule fitted to Microsoft's decoder does not apply.";
+    public const string StatSamplesDecoder = "Counted by the rule fitted to the output of Microsoft's WMA decoder (Windows runs, docs/design/wma-pro-format.md): frames × frame length + (frame length − last subframe size) / 2, less the first frame's start trim (or half a frame and half its first subframe where it states none) and the last frame's end trim, at most that frame's output.";
+    public const string StatTrimmedSamples = "The sum of the start and end trims the frames state, which a decoder may cut in part (see Samples).";
     public const string StatDuration = "The samples divided by the sampling rate.";
     public const string StatBlockAlignment = "The size of each packet, the container's block alignment.";
     public const string StatAverageBitrate = "The bytes of the full packets over the stream's duration, as a bitrate.";

@@ -36,6 +36,19 @@ internal sealed class WmaPacketReader
     private int _previousSequence;
     private bool _hasSequence;
     private bool _isLoss = true;
+
+    // What the decoder's rule for the sample count reads off the valid frames (SetDecoderRule).
+    private long _firstTrimStart;
+    private bool _isFirstStartTrimStated;
+
+    // The first packet read states bits that finish a frame before it: the stream starts inside a frame, which a decoder drops without a loss.
+    private bool _isFirstPacketContinued;
+    private int _firstSize;
+    private int _lastSize;
+    private int _previousLastSize;
+    private long _lastTrimEnd;
+    private long _sumTrimStart;
+    private long _sumTrimEnd;
     private bool _isFirstSeen;
     private int _currentPacket;
     private long _framesInCall;
@@ -116,7 +129,16 @@ internal sealed class WmaPacketReader
 
     public long MostFramesInPacket { get; private set; }
 
+    // The samples a decoder outputs: Microsoft's rule where the stream allows it (IsDecoderRule), else the frames' (docs/design/wma-pro-format.md,
+    // "Samples and duration").
     public long Samples { get; private set; }
+
+    public bool IsDecoderRule { get; private set; }
+
+    // Losses a decoder counts (a gap in the sequence numbers, a short packet, a frame or a run it refuses), and packets longer than the block alignment.
+    public long Losses { get; private set; }
+
+    public long LongPackets { get; private set; }
 
     public long TrimmedSamples { get; private set; }
 
@@ -168,6 +190,45 @@ internal sealed class WmaPacketReader
         }
 
         Packets = Data.Packets.Count;
+        if (!_isLossless)
+        {
+            SetDecoderRule();
+        }
+    }
+
+    // The count of the rule: the end of the output, less the start cut and the end cut. The sizes are the largest over the channels of the first
+    // subframe of the first frame and of the last subframe of the last and of the frame before it.
+    internal static long DecoderRule(long frames, long frame, int firstSize, int lastSize, int previousLastSize, bool hasStartTrim, long startTrim, long endTrim)
+    {
+        long end = (frames * frame) + ((frame - lastSize) / 2);
+        long previousEnd = ((frames - 1) * frame) + ((frame - previousLastSize) / 2);
+        long startCut = hasStartTrim ? startTrim : (frame / 2) + (firstSize / 2);
+        long endCut = frames < 2 ? endTrim : Math.Min(endTrim, end - previousEnd);
+        return Math.Max(0, end - startCut - endCut);
+    }
+
+    // Microsoft's decoder outputs every sample the transform has completed (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
+    // The rule was found on streams with the length prefix and without damage and is applied to those only: no loss, no invalid frame, no long
+    // packet, no unfinished frame, nothing skipped, the first packet starting at a frame, for a stream of one frame no end trim, and trims only where
+    // the files had them (a start trim in the first frame, an end trim in the last). A short packet, a refused run and a gap are all counted in Losses.
+    // Any other stream keeps the frames' count.
+    private void SetDecoderRule()
+    {
+        IStreamParameters p = _p;
+        if (!p.HasLengthPrefix || Losses > 0 || InvalidFrames > 0 || LongPackets > 0 || Skipped > 0 || UnfinishedBits > 0 || ValidFrames < 1 || _isFirstPacketContinued
+            || (ValidFrames == 1 && _lastTrimEnd != 0) || _sumTrimStart != _firstTrimStart || _sumTrimEnd != _lastTrimEnd)
+        {
+            return;
+        }
+
+        Samples = DecoderRule(ValidFrames, p.FrameLength, _firstSize, _lastSize, _previousLastSize, _isFirstStartTrimStated, _firstTrimStart, _lastTrimEnd);
+        IsDecoderRule = true;
+    }
+
+    private void MarkLoss()
+    {
+        _isLoss = true;
+        Losses++;
     }
 
     private void ReadPacket(MappedBytes packet)
@@ -203,13 +264,14 @@ internal sealed class WmaPacketReader
                     count == 1
                         ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}."
                         : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}.");
-                _isLoss = true;
+                MarkLoss();
                 return;
             }
         }
 
         if (packet.Length > p.BlockAlignment)
         {
+            LongPackets++;
             _findings.Add(Severity.Info, "wma.packet-long", () => PacketNode(index), count =>
                 count == 1
                     ? $"A media object holds more bytes than the block alignment of {p.BlockAlignment}; a decoder reads them as further packets of {p.BlockAlignment} bytes, which this parser does not."
@@ -234,7 +296,7 @@ internal sealed class WmaPacketReader
                 count == 1
                     ? $"A media object holds fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past its end and counts a loss ({DecoderFile}). It is at 0x{WmaText.Hex(overreadOffset)}."
                     : $"{count} media objects hold fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past their ends and counts a loss ({DecoderFile}). The first is at 0x{WmaText.Hex(overreadOffset)}.");
-            _isLoss = true;
+            MarkLoss();
             return;
         }
 
@@ -264,6 +326,11 @@ internal sealed class WmaPacketReader
         int payloadStart = p.HeaderBits;
         int payloadBits = Math.Max(0, packetBits - payloadStart);
         int count = Math.Min(stated, payloadBits);
+        if (!_hasSequence && stated > 0)
+        {
+            _isFirstPacketContinued = true;
+        }
+
         bool isListed = p.HasLengthPrefix || _isLossless;
         record.Kind = isListed ? PacketKind.Read : PacketKind.HeaderOnly;
         record.HasHeader = true;
@@ -275,6 +342,7 @@ internal sealed class WmaPacketReader
         bool isGap = !_isLoss && _hasSequence && sequence != ((_previousSequence + 1) & 15);
         if (isGap)
         {
+            Losses++;
             int found = sequence;
             int expected = (_previousSequence + 1) & 15;
             _findings.Add(Severity.Warning, "wma.packet-sequence", () => PacketNode(index), n =>
@@ -336,7 +404,7 @@ internal sealed class WmaPacketReader
             {
                 ClearSaved();
                 RefuseRun(packet);
-                _isLoss = true;
+                MarkLoss();
             }
             else
             {
@@ -379,7 +447,7 @@ internal sealed class WmaPacketReader
             if ((((position & 7) + declared + 7) / 8) > _bufferBytes)
             {
                 RefuseRun(packet);
-                _isLoss = true;
+                MarkLoss();
                 break;
             }
 
@@ -388,7 +456,7 @@ internal sealed class WmaPacketReader
             if (!result.IsValid)
             {
                 isError = true;
-                _isLoss = true;
+                MarkLoss();
                 isTrailerOne = false;
                 break;
             }
@@ -451,7 +519,7 @@ internal sealed class WmaPacketReader
                 if (!result.IsValid)
                 {
                     isError = true;
-                    _isLoss = true;
+                    MarkLoss();
                     break;
                 }
 
@@ -540,7 +608,7 @@ internal sealed class WmaPacketReader
         if (isRestDropped)
         {
             // The failed run's bits stay held, and count against the buffer at the next header step.
-            _isLoss = true;
+            MarkLoss();
         }
         else if (tail > 0)
         {
@@ -702,7 +770,7 @@ internal sealed class WmaPacketReader
         if ((((startBit & 7) + bits + (_isLossless ? 8 : 7)) / 8) > _bufferBytes)
         {
             RefuseRun(packet);
-            _isLoss = true;
+            MarkLoss();
             return;
         }
 
@@ -909,6 +977,22 @@ internal sealed class WmaPacketReader
         if (!result.IsValid)
         {
             return;
+        }
+
+        if (!_isLossless)
+        {
+            if (ValidFrames == 0)
+            {
+                _firstTrimStart = result.TrimStart;
+                _isFirstStartTrimStated = result.HasStartTrim;
+                _firstSize = result.FirstSize;
+            }
+
+            _previousLastSize = _lastSize;
+            _lastSize = result.LastSize;
+            _lastTrimEnd = result.TrimEnd;
+            _sumTrimStart += result.TrimStart;
+            _sumTrimEnd += result.TrimEnd;
         }
 
         ValidFrames++;
