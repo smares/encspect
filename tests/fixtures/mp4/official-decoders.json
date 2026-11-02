@@ -3411,10 +3411,11 @@
      "decoder": "coreaudio reader",
      "value": 18368,
      "analyzer": 44100,
-     "status": "pending",
+     "status": "noted",
      "kind": "analyzer-differs",
      "reason": "ExtAudioFile outputs 18,368 samples at the core rate where the analyzer's Samples (Edit List) is 44,100",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the project lead (step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112."
     }
    ],
    "units": [],
@@ -8082,11 +8083,12 @@
      "value": 11264,
      "analyzer": 20480,
      "reference": 10240,
-     "status": "pending",
+     "status": "noted",
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
      "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 10,240, Core Audio's converter 11,264, the analyzer 20,480 (the written rule gives keep unless a reading of the specification decides)",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the project lead (step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown."
     }
    ],
    "units": [
