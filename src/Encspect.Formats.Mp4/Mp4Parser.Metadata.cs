@@ -289,8 +289,9 @@ public sealed partial class Mp4Parser
     }
 
     // iTunSMPB, as Apple's encoder writes it: space-separated hexadecimal words, the second the
-    // encoder delay, the third the padding and the fourth the samples between them, at the output
-    // sample rate.
+    // encoder delay, the third the padding and the fourth the samples between them, at the core
+    // rate (the media timescale), which is half the output rate for HE-AAC: Core Audio reads the
+    // figures as the core's samples and outputs twice as many.
     private static void Smpb(State state, Node value, byte[] bytes, long at)
     {
         var words = new List<(int Start, int Length)>();
