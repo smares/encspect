@@ -49,10 +49,9 @@ internal static class WmaStandardStreams
         byte[] data = new byte[version == 1 ? 4 : 10];
         data[version == 1 ? 2 : 4] = (byte)options;
         data[version == 1 ? 3 : 5] = (byte)(options >> 8);
-        BitConverter.GetBytes(samplesPerBlock).CopyTo(data, 0);
-        if (version == 1)
+        if (version == 2)
         {
-            data[0] = data[1] = 0;
+            BitConverter.GetBytes(samplesPerBlock).CopyTo(data, 0);
         }
 
         return data;
@@ -62,7 +61,7 @@ internal static class WmaStandardStreams
     {
         var parent = new Node("Stream", 0, 100_000_000);
         var format = new AudioFormat(version == 1 ? 0x0160 : 0x0161, channels, rate, bytesPerSecond, align, 16);
-        var configuration = new CodecConfiguration(new MappedBytes(data, 100), parent) { Format = format, AreSamplesEncrypted = encrypted, Duration = 1 };
+        var configuration = new CodecConfiguration(new MappedBytes(data, 100), parent) { Format = format, AreSamplesEncrypted = encrypted, Duration = 1, DurationSamples = rate };
         long offset = 1000;
         List<MappedBytes> packets = [];
         foreach (byte[] o in objects)

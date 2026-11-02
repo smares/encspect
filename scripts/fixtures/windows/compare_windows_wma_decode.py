@@ -54,6 +54,18 @@ def audio_stream(report):
     return report["streams"][0] if report.get("streams") else None
 
 
+def container_samples(report):
+    """The "Container Samples" statistic of the first Windows Media Audio stream: the header's play duration less the preroll, in samples."""
+    for node in nodes_of(report["root"]):
+        if node.get("kind") == "Stream" and str(node.get("name", "")).startswith("Windows Media Audio"):
+            for inner in nodes_of(node):
+                if inner.get("name") == "Container Samples":
+                    value = inner.get("value")
+                    return value.get("value") if isinstance(value, dict) else value
+            return None
+    return None
+
+
 def nodes_of(node):
     yield node
     for child in node.get("children", []):
@@ -235,6 +247,11 @@ def main():
             notes.append("; ".join("=".join(g) for g in groups.values()) + " differ")
         elif known:
             notes.append("agree")
+        # Standard WMA (versions 1 and 2): the analyzer follows the rule fitted to Microsoft's decoder for version 2 streams with a bit reservoir and variable block lengths, and keeps the
+        # frames' count for the others (docs/development.md, "Differences found"). A difference is printed with the figures only.
+        if tag in PER_OBJECT_TAGS and reference is not None and analyzer is not None and reference != analyzer:
+            stated = container_samples(report)
+            notes.append(f"differs: Microsoft {reference}, analyzer {analyzer}, header states {stated if stated is not None else 'none'}")
         if reader.get("stalled"):
             notes.append(f"reader stalled after {reader.get('calls')} ReadSample calls, {reader.get('sampleCount')} samples, last timestamp {reader.get('lastTimestamp')}, "
                          f"{'inside ReadSample since ' + str(reader.get('readStartedAtMs')) + ' ms' if reader.get('inReadSample') else 'between calls'}")

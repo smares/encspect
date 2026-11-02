@@ -184,6 +184,110 @@ internal sealed class StdStream
 
         FinalReservoirBytes = reservoir.Bytes;
         FinalReservoirStartBit = reservoir.StartBit;
+        FinalBlockSize = state.Current;
+        FinalNextBlockSize = state.Next;
+        if (p.UsesBitReservoir && InvalidFrames == 0 && reservoir.Bytes > 0 && Superframes.Count > 0 && Superframes[reservoir.First].State == SuperframeState.Read)
+        {
+            ReadAnnouncedLast(reservoir, state);
+        }
+    }
+
+    // The frame the last superframe announces and whose bits the file holds whole (in the superframe and the middles after it), which
+    // no later superframe finishes: read from the bytes after the last frame the superframe's frames end in.
+    private void ReadAnnouncedLast(Reservoir reservoir, FrameState state)
+    {
+        int align = Parameters.BlockAlign;
+        int first = reservoir.FirstBit >> 3;
+        int middles = Superframes.Count - 1 - reservoir.First;
+        for (int i = reservoir.First + 1; i < Superframes.Count; i++)
+        {
+            if (Superframes[i].State != SuperframeState.Middle || !_window.ContainsKey(i))
+            {
+                return;
+            }
+        }
+
+        byte[] data = new byte[(align - first) + (middles * (align - 1)) + 8];
+        _window[reservoir.First].AsSpan(first).CopyTo(data);
+        int at = align - first;
+        for (int i = reservoir.First + 1; i < Superframes.Count; i++)
+        {
+            _window[i].AsSpan(1).CopyTo(data.AsSpan(at));
+            at += align - 1;
+        }
+
+        int total = 8 * at;
+        var bits = new Bits(data, total) { Position = reservoir.FirstBit & 7 };
+        int start = bits.Position;
+        FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, null, null, out _);
+        if (fault == FrameFault.None && bits.Position <= total)
+        {
+            HasAnnouncedLast = true;
+            AnnouncedLastBits = bits.Position - start;
+            AnnouncedLastMargin = total - bits.Position;
+            FinalBlockSize = state.Current;
+            FinalNextBlockSize = state.Next;
+        }
+    }
+
+    // The last block size code and the next block size code after the last frame read (the announced last frame included).
+    public int FinalBlockSize { get; private set; }
+
+    public int FinalNextBlockSize { get; private set; }
+
+    // Whether the last frame the final superframes announce is whole in their bytes, and its bits and the bits after it up to the superframe's end.
+    public bool HasAnnouncedLast { get; private set; }
+
+    public int AnnouncedLastBits { get; private set; }
+
+    public int AnnouncedLastMargin { get; private set; }
+
+    // The valid frames less the first, times the frame length: what FFmpeg's decoder outputs, and the count where the rule does not apply.
+    public long FramesCountSamples => Math.Max(0, ValidFrames - 1) * Parameters.FrameLength;
+
+    // The valid frames times the frame length, before any overlap is taken off (the frame the last superframe announces is not among them).
+    public long CodedSamples => ValidFrames * Parameters.FrameLength;
+
+    // The frames whose bits are complete: the valid frames and the announced last one.
+    public long CompleteFrames => ValidFrames + (HasAnnouncedLast ? 1 : 0);
+
+    public bool IsRuleApplicable
+    {
+        get
+        {
+            if (!Parameters.UsesBitReservoir || !Parameters.UsesVariableBlocks || Parameters.Version != 2 || InvalidFrames > 0 || Skipped > 0 || CompleteFrames < 2)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < Superframes.Count; i++)
+            {
+                if (Superframes[i].State is not (SuperframeState.Read or SuperframeState.Middle))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    // What Microsoft's decoder outputs, per the records: (K - 2) * F + (F - min(B, L)) / 2, for K the frames complete so far,
+    // B the last block of frame K and L its Next Block Size; the valid frames' count where the rule does not apply (records back it for version 2 with
+    // variable block lengths and a bit reservoir only).
+    public long Samples
+    {
+        get
+        {
+            if (!IsRuleApplicable)
+            {
+                return FramesCountSamples;
+            }
+
+            int f = Parameters.FrameLength;
+            int smaller = Math.Min(Parameters.BlockLength(FinalBlockSize), Parameters.BlockLength(FinalNextBlockSize));
+            return ((CompleteFrames - 2) * f) + ((f - smaller) / 2);
+        }
     }
 
     // The frame in progress: the reservoir's bytes from a start bit on, held in the superframes from First, whose bit FirstBit it starts at.

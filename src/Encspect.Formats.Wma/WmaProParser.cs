@@ -76,7 +76,7 @@ public sealed class WmaProParser : ICodecParser
         var packetNodes = new PacketNodes(reader.Data, p, false);
         long frameCount = reader.Data.Frames.Count;
         double duration = reader.Samples / (double)p.SampleRate;
-        Node? statistics = frameCount > 0 ? ProReport.Statistics(p, reader, tally, parent, duration) : null;
+        Node? statistics = frameCount > 0 ? ProReport.Statistics(p, reader, tally, parent, duration, configuration) : null;
         if (statistics is not null)
         {
             stream.Add(statistics);
@@ -145,7 +145,7 @@ internal static class WmaStreams
             Channels = format.Channels,
             ChannelMode = ModeOf(format.Channels),
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
-            Samples = (long)Math.Round(duration * format.SampleRate),
+            Samples = configuration.DurationSamples ?? 0,
             Duration = duration,
             AverageBitrate = format.BytesPerSecond > 0 ? format.BytesPerSecond * 8.0 / 1000 : null,
         });
