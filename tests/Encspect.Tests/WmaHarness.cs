@@ -55,6 +55,7 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         int headerBits = 6 + width;
         var frames = new List<List<bool>>();
         List<bool>? open = null;
+        int openLength = 0;
         foreach (byte[] packet in Objects)
         {
             Assert.Equal(Format.BlockAlign, packet.Length);
@@ -64,16 +65,22 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
                 payload.Add(GetBits(packet, bit, 1) != 0);
             }
 
+            // The walk of make_wma_pro_variants.py (ProFile.walk): a frame that crosses into the packet ends where its length prefix says, whatever
+            // the count states (it may cover the payload); frames follow until a prefix of 0, one the packet cannot hold, or a trailer bit of 0.
             int count = (int)GetBits(packet, 6, width);
-            if (open is not null && count > 0)
+            int position = count;
+            bool isCovered = false;
+            if (open is not null)
             {
-                open.AddRange(payload.GetRange(0, count));
+                int remaining = openLength - open.Count;
+                open.AddRange(payload.GetRange(0, remaining));
                 frames.Add(open);
+                position = remaining;
+                isCovered = count >= payload.Count;
+                open = null;
             }
 
-            open = null;
-            int position = count;
-            while (payload.Count - position > width)
+            while (!isCovered && payload.Count - position > width)
             {
                 int length = 0;
                 for (int i = 0; i < width; i++)
@@ -89,11 +96,17 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
                 if (length > payload.Count - position)
                 {
                     open = payload.GetRange(position, payload.Count - position);
+                    openLength = length;
                     break;
                 }
 
                 frames.Add(payload.GetRange(position, length));
+                bool isTrailerSet = payload[position + length - 1];
                 position += length;
+                if (!isTrailerSet)
+                {
+                    break;
+                }
             }
         }
 
