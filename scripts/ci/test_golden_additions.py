@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests of golden_additions.py: python3 scripts/ci/test_golden_additions.py"""
 
+import copy
 import json
 import pathlib
 import subprocess
@@ -293,6 +294,32 @@ class RepositoryTests(unittest.TestCase):
         self.write("tests/fixtures/mpeg/b.report.json", [report(OLD_STATS)])
         self.commit()
         self.assertEqual(self.run_check(), 0)
+
+    def test_a_changed_finding_message_is_allowed_where_the_file_lists_the_code(self):
+        old = report(OLD_STATS)
+        old["findings"] = [{"severity": "Info", "code": "x.note", "message": "old words", "offset": 0, "length": 1}]
+        new = copy.deepcopy(old)
+        new["findings"][0]["message"] = "new words"
+        self.write("tests/fixtures/mpeg/a.report.json", [old])
+        self.git("add", "-A")
+        self.git("commit", "-qm", "findings base")
+        self.git("branch", "-f", "main")
+        self.write("tests/fixtures/mpeg/a.report.json", [new])
+        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/a.report.json"], "changed": []})
+        self.commit()
+        self.assertEqual(self.run_check(), 1)
+
+        self.write("tests/fixtures/mpeg/golden-changes.json", {
+            "goldens": ["tests/fixtures/mpeg/a.report.json"],
+            "changed": [{"scope": "finding", "code": "x.note", "fields": ["message"]}]})
+        self.commit()
+        self.assertEqual(self.run_check(), 0)
+
+        self.write("tests/fixtures/mpeg/golden-changes.json", {
+            "goldens": ["tests/fixtures/mpeg/a.report.json"],
+            "changed": [{"scope": "finding", "code": "x.other", "fields": ["message"]}]})
+        self.commit()
+        self.assertEqual(self.run_check(), 1)
 
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
