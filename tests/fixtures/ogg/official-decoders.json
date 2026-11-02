@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ogg",
  "run": {
-  "id": "41440433645",
-  "commit": "cb79af7725b36e4a94d544752a1c07171b64ef15",
+  "id": "41457775152",
+  "commit": "e6963514b1141e589ff78cc3949f20b54db17802",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -3954,6 +3954,67 @@
    "units": []
   },
   {
+   "path": "vorbis-short-start-trim.ogg",
+   "sha256": "216f05bbe6c5d14908081969c7a0501a8381f0ea5b654e2510ce99c284eb7298",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 26560,
+     "reference": 26560,
+     "referencePath": "direct",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 25684,
+     "reference": 25684,
+     "referencePath": "oggdec",
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 25684,
+      "ffmpeg": 26260
+     },
+     "readerTotal": 25684,
+     "readerTool": "oggdec",
+     "lastGranule": 25360,
+     "consistentRange": [
+      25360,
+      26560
+     ]
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 26260,
+     "analyzer": 25684,
+     "reference": 25684,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": []
+  },
+  {
    "path": "vorbis-skip-before-first.ogg",
    "sha256": "eec96d700c98cf9c9c7c1276b6980af161d1b6e9ad9baeaced4061f9fec43e7b",
    "figures": [
@@ -4010,7 +4071,7 @@
      "status": "keep",
      "kind": "reader-not-accepted",
      "reason": "the reader's 28672 is outside 29196 to 29696, what the last pages' granule positions (29196) and the coded total 29696 allow",
-     "note": "oggdec writes fewer samples than the analyzer (28,672 against 29,696), the same reader behavior at a refused packet as in vorbis-packet-errors.ogg (keep, the project lead, 2026-11-01); the analyzer agrees with libvorbis fed packet by packet with the real granule positions (29,696), measuring the first position by the samples since the empty packet. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Applied to this fixture on the request of 2026-11-02.",
+     "note": "oggdec writes fewer samples than the analyzer (28,672 against 29,696). The analyzer agrees with libvorbis fed packet by packet with the real granule positions (29,696), measuring the first position by the samples counted since the empty packet. oggdec's figure looks like the reader behavior of vorbis-packet-errors.ogg at a refused packet, but the mechanism is not shown. The analyzer's count stays; the reader fails the consistency rule, so the trimmed stage has no reference. Decided in review (2026-11-02), for the project lead to confirm.",
      "statusSource": "reviewed"
     }
    ],

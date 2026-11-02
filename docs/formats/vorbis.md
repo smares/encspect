@@ -12,7 +12,7 @@ Vorbis in [Ogg](ogg.md).
 ## Reported
 
 - long and short blocks;
-- the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at the first two blocks, the end trimming at the last block, as libvorbis does; a larger one is a finding);
+- the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at what the packet that carries the first position returns and the end trimming at what the last packet returns, as libvorbis does; one larger than the first two blocks return, or the last packet, is a finding);
 - the count of samples the granule positions are checked against follows libvorbis's `vorbis_synthesis_blockin` (libvorbis 1.3.7; `oggdec` from vorbis-tools 1.4.2 and 1.4.3 write the same figures on the fixtures named here):
   - it continues from the last granule position taken, so the samples of a repeated packet, or a jump of the positions in the middle, are not charged to the end trimming; each position that differs from the count continued from the position before it is counted in `vorbis.granule-inconsistent` (not each position that differs from the first page's);
   - a position counts only on a packet that codes a block: one on an empty, not-audio or invalid packet is not taken, and the packet after such a packet, or after a gap, starts a new count, counted from the first block after it; the first position taken is measured by that count (so a refused packet before it can leave no start trimming), and a later one below the samples counted since discards the difference at that page, at most the last packet's samples (`Gap Trimming`);
@@ -38,10 +38,9 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 - The reference for Vorbis sample counts is Xiph's decoder (libvorbis fed packet by packet; `oggdec`), run by `.github/workflows/official-decode.yml` and held to the analyzer by `OggOfficialDecodersTests`. How it is driven, what the reference rule is and the differences found are described under "Reference for sample counts" in [ogg.md](ogg.md).
 - Start and end trimming are compared with `oggdec`'s output, the packets' samples (the overlap of the blocks) with libvorbis's, and libvorbis's own granule handling is a third witness.
-- The analyzer's end trimming follows libvorbis's granule handling (run 41440433645). A repeated packet in the middle of a file, which put the analyzer 38 to 128 samples below `oggdec` in 10 of the 14 derived Vorbis files, and a repeated end-of-stream page (384 or 986 samples above `oggdec` in 4 of them), now equal `oggdec` in all 14.
+- The analyzer's end trimming follows libvorbis's granule handling (run 41457775152). A repeated packet in the middle of a file, which put the analyzer 38 to 128 samples below `oggdec` in 10 of the 14 derived Vorbis files, and a repeated end-of-stream page (384 or 986 samples above `oggdec` in 4 of them), now equal `oggdec` in all 14.
 - The Vorbis I specification (A.2) says only that the last page's position may be below what the final packet returns; it does not say from which earlier position the count runs, or what a decoder does with a position in the middle that disagrees. The analyzer follows the reference implementation there (`vorbis_synthesis_blockin` takes each position it is given and sets its count to it), and `OggFixtureTests` holds the figures `oggdec` writes for `vorbis-packet-repeated`, `vorbis-granule-midstream`, `vorbis-granule-extreme`, `vorbis-empty-carrier` and `vorbis-end-page-repeated`.
 
 ## Not yet covered
 
 - The floor and residue data of the audio packets (planned: entropy pass). The setup header's floor and residue configurations are read.
-- The start trimming of the first position is capped at what the first two blocks return, as libvorbisfile does; libvorbis proper caps it at the samples of the packet that ends the page. They differ only where the first page ends after a later packet (`vorbis.start-page-layout`).
