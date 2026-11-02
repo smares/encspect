@@ -59,7 +59,7 @@
                 },
                 {
                   "name": "Last Granule Position",
-                  "value": 29496,
+                  "value": 28896,
                   "offset": 285,
                   "length": 8
                 },
@@ -3032,7 +3032,7 @@
                 {
                   "name": "Page",
                   "kind": "Frame",
-                  "value": "serial 0x0B0B000C, sequence 3, granule 19756",
+                  "value": "serial 0x0B0B000C, sequence 3, granule 19156",
                   "offset": 228,
                   "length": 51,
                   "children": [
@@ -3082,7 +3082,7 @@
                     },
                     {
                       "name": "Granule Position",
-                      "value": 19756,
+                      "value": 19156,
                       "offset": 234,
                       "length": 8
                     },
@@ -3100,13 +3100,13 @@
                     },
                     {
                       "name": "CRC",
-                      "value": 431960377,
+                      "value": 3275875878,
                       "offset": 250,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": 431960377,
+                          "value": 3275875878,
                           "offset": 250,
                           "length": 4
                         }
@@ -3288,7 +3288,7 @@
                 {
                   "name": "Page",
                   "kind": "Frame",
-                  "value": "serial 0x0B0B000C, sequence 4, granule 29496, end of stream",
+                  "value": "serial 0x0B0B000C, sequence 4, granule 28896, end of stream",
                   "offset": 279,
                   "length": 47,
                   "children": [
@@ -3338,7 +3338,7 @@
                     },
                     {
                       "name": "Granule Position",
-                      "value": 29496,
+                      "value": 28896,
                       "offset": 285,
                       "length": 8
                     },
@@ -3356,13 +3356,13 @@
                     },
                     {
                       "name": "CRC",
-                      "value": 2469157738,
+                      "value": 2403604918,
                       "offset": 301,
                       "length": 4,
                       "children": [
                         {
                           "name": "Computed",
-                          "value": 2469157738,
+                          "value": 2403604918,
                           "offset": 301,
                           "length": 4
                         }
@@ -3630,7 +3630,7 @@
       {
         "severity": "Warning",
         "code": "vorbis.granule-inconsistent",
-        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xEA, is 19756 where the packets give 19456. Only the last page may end the stream early (section A.2). The later pages are compared with the count continued from this position.",
+        "message": "1 granule position does not match the samples the packets before it return: the first, at 0xEA, is 19156 where the packets give 19456. Only the last page may end the stream early (section A.2). The later pages are compared with the count continued from this position.",
         "offset": 234,
         "length": 8,
         "path": [
