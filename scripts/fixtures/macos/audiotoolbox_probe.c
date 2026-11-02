@@ -1,5 +1,6 @@
-/* The macOS paths of the official-decoder probe (docs/design/official-decoder-crosschecks.md): what AudioToolbox can decode, and
-   two ways to decode a file with it. Apple's decoders are used as black boxes; nothing of them is linked into Encspect.
+/* The macOS paths of the official-decoder cross-checks (docs/design/official-decoder-crosschecks.md): what AudioToolbox can decode, and
+   two ways to decode a file with it. Rollout step 1 (the probe) ran all three modes; step 5 runs `reader` and `convert ... default` over the fixtures
+   (scripts/fixtures/official_decode.py coreaudio). Apple's decoders are used as black boxes; nothing of them is linked into Encspect.
 
      audiotoolbox_probe inventory
          the formats AudioToolbox decodes, the file types it reads, and the decoders registered per format

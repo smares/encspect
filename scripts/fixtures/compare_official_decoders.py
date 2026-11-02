@@ -787,11 +787,14 @@ def coreaudio_unit_verdicts(ca, analyzer):
     findings = [f for f in analyzer["findings"] if aac_unit_finding(f)]
     merged = any(f["count"] > 1 for f in findings) or any(f["code"] in MP4_EXTRA for f in analyzer["findings"])
     result = []
+    all_refused = not conv.get("runs") and conv["unitCount"] > 0  # a stream the converter gives nothing for: its units are listed only where they hold a finding, the figure carries the refusal
     for u in conv["units"]:
         if u["result"] != "refused":
             continue
         start, end = u["offset"], u["offset"] + max(u["received"], 1)
         mine = [f for f in findings if start <= f["offset"] < end]
+        if all_refused and not mine:
+            continue
         entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"], "samples": 0,
                  "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine], "source": "coreaudio converter"}
         if mine:
@@ -1337,11 +1340,14 @@ def ac3_unit_verdicts(conv, analyzer):
     merged = any(f["count"] > 1 for f in findings)
     refused = [u for u in (conv or {}).get("units", []) if u["result"] == "refused"] if conv and conv.get("stoppedBy") == "end" else []
     result, matched = [], set()
+    all_refused = bool(conv) and not conv.get("runs") and conv["unitCount"] > 0  # the figure carries the refusal of a stream the converter gives nothing for
     for u in refused:
         start, end = u["offset"], u["offset"] + max(u["received"], 1)
         mine = [f for f in findings if start <= f["offset"] < end]
         for f in mine:
             matched.add((f["code"], f["offset"]))
+        if all_refused and not mine:
+            continue
         entry = {"index": u["index"], "offset": u["offset"], "length": u["received"], "ranges": [[start, end - start]], "decoder": "refused " + u["status"], "samples": 0,
                  "finding": mine[0]["code"] if mine else None, "findings": [f["code"] for f in mine]}
         if mine:
