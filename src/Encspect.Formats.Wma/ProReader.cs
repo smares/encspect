@@ -152,6 +152,7 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
         trace.Put(hasTrim ? 1 : 0);
         trace.Put(result.TrimStart);
         trace.Put(result.TrimEnd);
+        trace.Put(result.HasStartTrim ? 1 : 0);
 
         ProFault fault = ReadSubframes();
         if (fault != ProFault.None)

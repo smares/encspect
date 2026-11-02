@@ -39,7 +39,10 @@ internal sealed class WmaPacketReader
 
     // What the decoder's rule for the sample count reads off the valid frames (SetDecoderRule).
     private long _firstTrimStart;
-    private bool _isFirstTrimStarted;
+    private bool _isFirstStartTrimStated;
+
+    // The first packet read states bits that finish a frame before it: the stream starts inside a frame, which a decoder drops without a loss.
+    private bool _isFirstPacketContinued;
     private int _firstSize;
     private int _lastSize;
     private int _previousLastSize;
@@ -200,25 +203,25 @@ internal sealed class WmaPacketReader
         long end = (frames * frame) + ((frame - lastSize) / 2);
         long previousEnd = ((frames - 1) * frame) + ((frame - previousLastSize) / 2);
         long startCut = hasStartTrim ? startTrim : (frame / 2) + (firstSize / 2);
-        long endCut = Math.Min(endTrim, end - previousEnd);
+        long endCut = frames < 2 ? endTrim : Math.Min(endTrim, end - previousEnd);
         return Math.Max(0, end - startCut - endCut);
     }
 
     // Microsoft's decoder outputs every sample the transform has completed (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
-    // The rule was found on streams with the length prefix and without damage and is applied to those only: no loss, no invalid frame, no short,
-    // long or unfinished packet, nothing skipped, at least two frames, and trims only where the files had them (a start trim in the first frame, an
-    // end trim in the last). Any other stream keeps the frames' count.
+    // The rule was found on streams with the length prefix and without damage and is applied to those only: no loss, no invalid frame, no long
+    // packet, no unfinished frame, nothing skipped, the first packet starting at a frame, for a stream of one frame no end trim, and trims only where
+    // the files had them (a start trim in the first frame, an end trim in the last). A short packet, a refused run and a gap are all counted in Losses.
+    // Any other stream keeps the frames' count.
     private void SetDecoderRule()
     {
         IStreamParameters p = _p;
-        if (!p.HasLengthPrefix || Losses > 0 || InvalidFrames > 0 || LongPackets > 0 || Skipped > 0 || UnfinishedBits > 0 || ValidFrames < 2
-            || ValidFrames != Data.Frames.Count || Data.Packets.Any(r => r.Kind == PacketKind.Short)
-            || _sumTrimStart != _firstTrimStart || _sumTrimEnd != _lastTrimEnd)
+        if (!p.HasLengthPrefix || Losses > 0 || InvalidFrames > 0 || LongPackets > 0 || Skipped > 0 || UnfinishedBits > 0 || ValidFrames < 1 || _isFirstPacketContinued
+            || (ValidFrames == 1 && _lastTrimEnd != 0) || _sumTrimStart != _firstTrimStart || _sumTrimEnd != _lastTrimEnd)
         {
             return;
         }
 
-        Samples = DecoderRule(ValidFrames, p.FrameLength, _firstSize, _lastSize, _previousLastSize, _isFirstTrimStarted, _firstTrimStart, _lastTrimEnd);
+        Samples = DecoderRule(ValidFrames, p.FrameLength, _firstSize, _lastSize, _previousLastSize, _isFirstStartTrimStated, _firstTrimStart, _lastTrimEnd);
         IsDecoderRule = true;
     }
 
@@ -323,6 +326,11 @@ internal sealed class WmaPacketReader
         int payloadStart = p.HeaderBits;
         int payloadBits = Math.Max(0, packetBits - payloadStart);
         int count = Math.Min(stated, payloadBits);
+        if (!_hasSequence && stated > 0)
+        {
+            _isFirstPacketContinued = true;
+        }
+
         bool isListed = p.HasLengthPrefix || _isLossless;
         record.Kind = isListed ? PacketKind.Read : PacketKind.HeaderOnly;
         record.HasHeader = true;
@@ -976,7 +984,7 @@ internal sealed class WmaPacketReader
             if (ValidFrames == 0)
             {
                 _firstTrimStart = result.TrimStart;
-                _isFirstTrimStarted = result.HasStartTrim;
+                _isFirstStartTrimStated = result.HasStartTrim;
                 _firstSize = result.FirstSize;
             }
 

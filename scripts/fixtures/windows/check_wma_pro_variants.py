@@ -87,12 +87,12 @@ def public_rows(analyzer, folder, folders):
             continue
         frames = [c for c in frames_nodes[0]["children"] if c["name"] == "Frame"]
         f = int(stat["Frame Length"])
-        valid = [x for x in frames]
+        valid = frames
         trim_first = next((c["value"] for c in valid[0]["children"] if c["name"] == "Trim"), "none")
         trim_last = next((c["value"] for c in valid[-1]["children"] if c["name"] == "Trim"), "none")
-        m = re.match(r"(\d+) samples at the start, (\d+) at the end", trim_first)
-        start, stated = (int(m[1]), True) if m and int(m[1]) > 0 else (0, False)
-        m = re.match(r"(\d+) samples at the start, (\d+) at the end", trim_last)
+        m = re.match(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim_first)
+        start, stated = (int(m[1]), True) if m and m[1] else (0, False)
+        m = re.match(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim_last)
         end = int(m[2]) if m else 0
         first, _ = sizes_of(valid[0], f)
         _, last = sizes_of(valid[-1], f)

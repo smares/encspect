@@ -493,8 +493,8 @@ def trim_of(frame):
     trim = next((c.get("value", "none") for c in frame.get("children", []) if c["name"] == "Trim"), "none")
     if trim == "none":
         return 0, 0
-    match = re.fullmatch(r"(\d+) samples? at the start, (\d+) at the end", trim)
-    return int(match.group(1)), int(match.group(2))
+    match = re.fullmatch(r"(?:(\d+) samples?|none) at the start, (\d+) at the end", trim)
+    return int(match.group(1) or 0), int(match.group(2))
 
 
 def check_wma_frames(path, codec, problems):
