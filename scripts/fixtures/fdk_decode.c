@@ -49,6 +49,9 @@ static unsigned char *read_file(const char *path, long *length) {
     }
     fseek(file, 0, SEEK_END);
     *length = ftell(file);
+    if (*length < 0) {
+        exit(2);
+    }
     fseek(file, 0, SEEK_SET);
     unsigned char *data = malloc(*length ? *length : 1);
     if (!data) {
@@ -75,9 +78,9 @@ static struct {
     unsigned char *data;
     HANDLE_AACDECODER decoder;
     long coded, outputs, calls, fed_end;
-    int limit, raw;
+    int limit, raw, adif, conceal, conceal_set;
     const char *stopped;
-} G = {NULL, NULL, 0, 0, 0, 0, 0, 0, "end"};
+} G = {.stopped = "end"};
 
 /* Decodes what the library holds until it asks for more bits, and writes one line per call; numTotalBytes in each line says how
    many bytes of the input the library has used up to that call. */
@@ -88,6 +91,11 @@ static void decode_all(long index, long from, long to, unsigned fill, unsigned l
     int stuck = 0;
     for (int attempt = 0; attempt < 1000000; attempt++) {
         AAC_DECODER_ERROR error = aacDecoder_DecodeFrame(G.decoder, pcm, MAX_PCM, 0);
+        if (G.adif && !G.conceal_set) {
+            /* an ADIF header is read inside the library, so the method is set after the first decode call, which configures the stream */
+            G.conceal_set = 1;
+            printf("{\"type\":\"conceal\",\"when\":\"after the first decode call\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(G.decoder, AAC_CONCEAL_METHOD, G.conceal));
+        }
         long samples;
         int channels;
         int output = IS_OUTPUT_VALID(error);
@@ -157,6 +165,9 @@ int main(int argc, char **argv) {
     unsigned char *data = read_file(argv[2], &length);
 
     Unit *units = calloc(1, sizeof(Unit));
+    if (!units) {
+        return 2;
+    }
     long unit_count = 0, unit_capacity = 0;
     unsigned char config[4096];
     int config_length = 0;
@@ -217,24 +228,33 @@ int main(int argc, char **argv) {
 
     G.data = data;
     G.raw = raw;
+    G.adif = !strcmp(mode, "adif");
+    G.conceal = conceal;
     G.decoder = decoder;
     if (!strcmp(mode, "units")) {
         long fed_end = 0;
+        int conceal_after_unit = 0;
         for (long i = 0; i < unit_count && !G.limit; i++) {
             long start = units[i].offset;
+            if (start < 0 || start > length) {
+                continue;
+            }
             /* For ADTS everything from the end of the last fed unit is fed: the gap (junk, a resync gap) goes in front of the next unit.
                MP4 access units are fed alone. */
             long from = raw ? start : fed_end;
             long to = start + units[i].received;
-            if (start < 0 || start > length) {
-                continue;
-            }
             if (to > length) {
                 to = length;
             }
+            if (!raw && from > to) {
+                continue; /* a unit that ends before the bytes already fed */
+            }
             feed(i, from, to, start, units[i].declared, units[i].received);
-            fed_end = to;
-            if (i == 0) {
+            if (to > fed_end) {
+                fed_end = to;
+            }
+            if (!conceal_after_unit) {
+                conceal_after_unit = 1;
                 printf("{\"type\":\"conceal\",\"when\":\"after the first unit\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(decoder, AAC_CONCEAL_METHOD, conceal));
             }
         }
@@ -243,8 +263,6 @@ int main(int argc, char **argv) {
         }
     } else {
         feed(0, 0, length, 0, length, length);
-        /* an ADIF header is read inside the library, so the method is set again after the data (the status is recorded) */
-        printf("{\"type\":\"conceal\",\"when\":\"after the data\",\"status\":\"0x%04X\"}\n", (unsigned)aacDecoder_SetParam(decoder, AAC_CONCEAL_METHOD, conceal));
     }
     /* what the library still holds when it answers 0x1002: the bytes fed that numTotalBytes has not counted (a frame of several raw data blocks keeps its last
        blocks until more bits arrive, and the drain discards them) */

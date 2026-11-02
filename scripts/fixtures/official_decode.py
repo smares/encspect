@@ -592,8 +592,10 @@ def fdk_result(child, summary, mode, version, path):
         samples = sum(l["samples"] for l in outputs)
         unit = {"index": index, "offset": offset, "declared": declared, "received": received, "fedFrom": fed_from, "result": result,
                 "samples": samples, "usedBytes": group[-1]["totalBytes"] if group else None, "calls": len(group)}
-        if adts and offset + 6 < len(data):
-            unit["blocks"] = (data[offset + 6] & 3) + 1  # number_of_raw_data_blocks_in_frame + 1 of the frame's header
+        if adts and index < summary["units"] and offset + 6 < len(data) and data[offset] == 0xFF and data[offset + 1] & 0xF0 == 0xF0:
+            unit["blocks"] = (data[offset + 6] & 3) + 1  # number_of_raw_data_blocks_in_frame + 1 of the frame's header (frames of the unit list only)
+        if outputs:
+            unit["rate"] = outputs[0]["sampleRate"]
         if errors:
             unit["error"] = errors[0] if len(errors) == 1 else errors
         if fills:
@@ -617,10 +619,16 @@ def fdk_result(child, summary, mode, version, path):
         del run["_key"]
     # Bytes fed that the library has not used when it answers 0x1002 with a whole frame fed last: it keeps the last raw data blocks of a frame of several until more bits come,
     # and the drain discards them, so the total is short by those blocks.
-    listed = [u for u in units if u["index"] < summary["units"]]  # the bytes after the last unit are fed as one more, which is no frame
+    # The last frame of the unit list, whole, with several raw data blocks: the library keeps the last blocks until more bits come and the drain discards them. The blocks held are
+    # those the frame declares less those it output (a block it refused is not held).
+    listed = [u for u in units if u["index"] < summary["units"]]
     last_unit = listed[-1] if listed else None
-    multi = last_unit is not None and last_unit.get("blocks", 1) > 1
-    held_back = bool(held) and held["heldBytes"] > 0 and last_unit is not None and last_unit["received"] == last_unit["declared"] and multi
+    held_blocks = 0
+    if last_unit is not None and last_unit.get("blocks", 1) > 1 and last_unit["received"] == last_unit["declared"] and runs and runs[-1]["frameSize"]:
+        held_blocks = max(0, last_unit["blocks"] - last_unit["samples"] // runs[-1]["frameSize"])
+        if last_unit["result"] != "decoded" and last_unit["samples"] == 0:
+            held_blocks = 0  # a frame the library refused as a whole is no held frame
+    held_back = bool(held) and held_blocks > 0 and held["heldBytes"] > 0 and env.get("kind") in ("adts", "adif")
     stopped = stopped_by(child, end)
     notes = []
     incomplete = child.get("linesElided") or child.get("lastLineTruncated") or any(l.get("type") == "unparsed" for l in lines)
@@ -647,7 +655,8 @@ def fdk_result(child, summary, mode, version, path):
         "unitCount": len(units),
         "units": units if len(units) <= AAC_UNIT_LIMIT else units[:AAC_UNIT_LIMIT],
         "errorCodes": dict(sorted(codes.items())),
-        "heldBytes": held["heldBytes"] if held else None,
+        "heldBytes": held["heldBytes"] if held and env.get("kind") in ("adts", "adif") else None,
+        "heldBlocks": held_blocks,
         "heldBack": held_back,
         "drain": {"outputDelay": drain["outputDelay"], "frameSize": drain["frameSize"], "requests": drain["requests"], "flushedSamples": end.get("flushedSamples") if end else None,
                   "results": [f["error"] for f in flushes]} if drain else None,
@@ -655,7 +664,8 @@ def fdk_result(child, summary, mode, version, path):
         "warnings": [l for l in child["stderr"].splitlines() if l.strip()],
     }
     if held_back:
-        notes.append("%d bytes fed are not used when the library answers 0x1002: it holds the last raw data blocks of a frame and the drain discards them" % held["heldBytes"])
+        notes.append("the last frame has %d raw data blocks and the library output %d of them; it holds the rest when it answers 0x1002 (%d bytes fed and not used) and the drain discards them" % (
+            last_unit["blocks"], last_unit["blocks"] - held_blocks, held["heldBytes"]))
     if configured is not None:
         result["configRaw"] = {"status": configured, "bytes": env.get("configBytes")}
     if len(units) > AAC_UNIT_LIMIT:

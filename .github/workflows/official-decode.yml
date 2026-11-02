@@ -34,7 +34,7 @@ env:
 
 jobs:
   linux:
-    name: libopus, libvorbis and libtta-c on ubuntu-26.04
+    name: libopus, libvorbis, libtta-c and FDK AAC on ubuntu-26.04
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
@@ -100,7 +100,7 @@ jobs:
           path: build/inst-v2.0.2
           key: fdk-aac-801f67f-${{ runner.os }}-ubuntu26-gcc15
 
-      # The pinned version of fdk_tool.py (v2.0.2), built from the commit of its tag; the harness is compiled against its own headers. The probe found 2.0.2, 2.0.3 and
+      # The version fdk_tool.py pins (v2.0.2), built from the commit of its tag; the harness is compiled against its own headers. The probe found 2.0.2, 2.0.3 and
       # 3.0.0 identical on every file (open question 6).
       - name: Build FDK AAC 2.0.2 and its harness
         run: |

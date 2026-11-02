@@ -704,7 +704,8 @@ def compare_aac(record, analyzer, ffmpeg):
         ff = ff_entry.get("samples")
     all_streams = [i for r in a_runs for i in r["streams"]]
     base = {"stage": "coded", "analyzerFigure": "samples", "streams": all_streams, "analyzer": sum_known(r["samples"] for r in a_runs), "reference": None,
-            "referencePath": None, "referenceKind": None, "witnesses": {"ffmpeg": ff} if ffmpeg else {}}
+            "referencePath": None, "referenceKind": None, "witnesses": {"ffmpeg": ff} if ffmpeg else {},
+            "analyzerRates": sorted({a["key"][0] for a in a_runs if a["key"][0]})}
     if not a_runs:
         notes.append("the analyzer reports no AAC stream: its figure is 0")
         a_runs = [{"key": (None, None), "streams": [], "samples": 0}]
@@ -716,14 +717,30 @@ def compare_aac(record, analyzer, ffmpeg):
     elif not complete:
         figures.append({"id": "samples", **base, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
     elif direct.get("heldBack"):
-        figures.append({"id": "samples", **base, "heldBack": True, "decoderSamples": direct.get("totalSamples"), "heldBytes": direct.get("heldBytes"),
-                        "noReference": "FDK holds the last raw data blocks of the last frame (%s bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of %s is short by those blocks" % (
-                            show(direct.get("heldBytes")), show(direct.get("totalSamples")))})
+        lost = direct["heldBlocks"] * ((d_runs[-1]["frameSize"] if d_runs else 0) or 0)
+        figures.append({"id": "samples", **base, "heldBack": True, "decoderSamples": direct.get("totalSamples"), "heldBytes": direct.get("heldBytes"), "heldBlocks": direct["heldBlocks"],
+                        "analyzerRates": sorted({a["key"][0] for a in a_runs if a["key"][0]}),
+                        "noReference": "FDK holds the last %d raw data blocks of the last frame (%s bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of %s is short by those %d held blocks (%s samples)%s" % (
+                            direct["heldBlocks"], show(direct.get("heldBytes")), show(direct.get("totalSamples")), direct["heldBlocks"], show(lost),
+                            "" if not any(u["result"] in ("refused", "no output") for u in direct.get("units", [])) else ", and by the blocks of the units it refused or gave no output for")})
     else:
         if not d_runs:  # the decoder output nothing and the analyzer counts nothing
-            d_runs = [{"rate": None, "channels": None, "samples": 0, "aot": None, "extAot": None, "frameSize": None}]
+            d_runs = [{"rate": None, "channels": None, "samples": 0, "aot": None, "extAot": None, "frameSize": None, "outputs": 0}]
             a_runs = [{"key": (None, None), "streams": all_streams, "samples": 0}]
-        pairs = len(a_runs) == len(d_runs) and all(a["key"][1] == d["channels"] or a["key"][1] is None or d["channels"] is None for a, d in zip(a_runs, d_runs))
+        a_rates = sorted({a["key"][0] for a in a_runs if a["key"][0]})
+        a_channels = sorted({a["key"][1] for a in a_runs if a["key"][1]})
+        # a decoder rate that none of the analyzer's runs has: SBR applied by one side and not by the other, paired or not
+        odd = [d for d in d_runs if d["rate"] and a_rates and d["rate"] not in a_rates]
+        rate_differs = None
+        if odd:
+            rate_differs = {"analyzerRates": a_rates, "decoderRates": sorted({d["rate"] for d in odd}), "decoderSamples": sum(d["samples"] for d in odd),
+                            "frames": sum(d.get("outputs", 0) for d in odd), "firstUnit": min(d.get("firstUnit", 0) for d in odd),
+                            "ratio": "/".join(str(x) for x in ((sorted({d["rate"] for d in odd})[0], a_rates[0]) if len(a_rates) == 1 and len({d["rate"] for d in odd}) == 1 else ("decoder", "analyzer")))}
+        # a channel count that none of the analyzer's runs has
+        odd_channels = sorted({d["channels"] for d in d_runs if d["channels"] and a_channels and d["channels"] not in a_channels})
+        channels_differ = {"analyzer": a_channels, "decoder": odd_channels} if odd_channels else None
+        pairs = len(a_runs) == len(d_runs) and not channels_differ
+        capped = any(f["code"] == "aac.streams-limited" for f in analyzer["findings"])
         if pairs:
             for n, (a, d) in enumerate(zip(a_runs, d_runs)):
                 rate = a["key"][0]
@@ -731,32 +748,53 @@ def compare_aac(record, analyzer, ffmpeg):
                 concealed, _ = at_rate(d.get("concealedSamples", 0), d["rate"], rate)
                 figure = {"id": "samples" if len(a_runs) == 1 else "samples.run%d" % (n + 1), **base, "streams": a["streams"], "analyzer": a["samples"], "reference": value,
                           "referencePath": "fdk direct", "referenceKind": "official", "format": {"rate": d["rate"], "channels": d["channels"]}, "concealedSamples": concealed,
-                          "object": {"aot": d["aot"], "extAot": d["extAot"], "frameSize": d["frameSize"]}}
+                          "analyzerRates": [rate] if rate else [], "object": {"aot": d["aot"], "extAot": d["extAot"], "frameSize": d["frameSize"]}}
                 if len(a_runs) > 1:
                     figure["witnesses"] = {}
                 if d["rate"] != rate and rate is not None and d["rate"] is not None:
-                    figure["rateDiffers"] = {"analyzerRate": rate, "decoderRate": d["rate"], "decoderSamples": d["samples"], "ratio": "%d/%d" % (d["rate"], rate)}
                     figure["referenceAtAnalyzerRate"] = {"samples": value, "exact": exact}
                 figures.append(figure)
+            if rate_differs and len(figures) == 1:
+                figures[0]["rateDiffers"] = rate_differs
+            elif rate_differs:
+                for figure, d in zip(figures, d_runs):
+                    if d in odd:
+                        figure["rateDiffers"] = {**rate_differs, "decoderRates": [d["rate"]], "decoderSamples": d["samples"], "frames": d.get("outputs", 0), "firstUnit": d.get("firstUnit", 0)}
         else:
-            rate = next((a["key"][0] for a in a_runs if a["key"][0]), None) or d_runs[0]["rate"]
-            analyzer_total = exact_all = 0
+            rate = a_rates[0] if a_rates else d_runs[0]["rate"]
+            analyzer_total = 0
             exact_all = True
+            analyzer_exact = Fraction(0)
             for a in a_runs:
                 value, exact = at_rate(a["samples"], a["key"][0], rate)
                 analyzer_total += value
                 exact_all = exact_all and exact
+                analyzer_exact += Fraction(a["samples"] * (rate or 1), a["key"][0] or rate or 1)
             reference = concealed = 0
+            reference_exact = Fraction(0)
             for d in d_runs:
                 value, exact = at_rate(d["samples"], d["rate"], rate)
                 reference += value
                 exact_all = exact_all and exact
                 concealed += at_rate(d.get("concealedSamples", 0), d["rate"], rate)[0]
-            figures.append({"id": "samples", **base, "analyzer": analyzer_total, "reference": reference, "referencePath": "fdk direct", "referenceKind": "official",
-                            "format": {"rate": rate, "channels": d_runs[0]["channels"]}, "concealedSamples": concealed,
-                            "unpaired": {"rate": rate, "exact": exact_all, "decoder": [[r["rate"], r["channels"], r["samples"]] for r in d_runs],
-                                         "analyzer": [[r["key"][0], r["key"][1], r["samples"]] for r in a_runs]}})
+                reference_exact += Fraction(d["samples"] * (rate or 1), d["rate"] or rate or 1)
+            figure = {"id": "samples", **base, "analyzer": analyzer_total, "reference": reference, "referencePath": "fdk direct", "referenceKind": "official",
+                      "format": {"rate": rate, "channels": d_runs[0]["channels"]}, "concealedSamples": concealed, "analyzerRates": a_rates,
+                      "unpaired": {"rate": rate, "exact": exact_all, "decoder": [[r["rate"], r["channels"], r["samples"]] for r in d_runs],
+                                   "analyzer": [[r["key"][0], r["key"][1], r["samples"]] for r in a_runs]}}
+            if capped:
+                # the 64-stream cap: the finding points at the first frame in no stream: the analyzer counts nothing from the unit that holds aac.streams-limited on; the excess must be exactly FDK's samples from it on
+                cap = next(f for f in analyzer["findings"] if f["code"] == "aac.streams-limited")
+                holder = next((u for u in direct.get("units", []) if u["fedFrom"] <= cap["offset"] < u["offset"] + max(u["received"], 1)), None)
+                if holder is not None:
+                    after = sum((Fraction(u["samples"] * (rate or 1), u.get("rate") or rate or 1) for u in direct["units"] if u["index"] >= holder["index"] and u["samples"]), Fraction(0))
+                    figure["afterCap"] = {"unit": holder["index"], "samples": int(after + Fraction(1, 2)), "exactExcess": reference_exact - analyzer_exact == after}
+            if rate_differs:
+                figure["rateDiffers"] = rate_differs
+            figures.append(figure)
             notes.append("the decoder has %d runs of constant output format and the analyzer %d: both are counted at %s Hz (the same durations) and compared as one figure" % (len(d_runs), len(a_runs), show(rate)))
+        if channels_differ:
+            figures[0]["channelsDiffer"] = channels_differ
     if ffmpeg and figures and "ffmpeg" in figures[0]["witnesses"] and figures[0]["witnesses"]["ffmpeg"] is None:
         figures[0]["witnessErrors"] = {"ffmpeg": ffmpeg_failure(ffmpeg, "coded" if "coded" in ffmpeg else "default")}
     if complete and direct.get("flushedSamples"):
@@ -775,10 +813,9 @@ def compare_aac(record, analyzer, ffmpeg):
 
 def aac_differences(figures, direct, codecs, analyzer, units):
     differences = []
-    capped = any(f["code"] == "aac.streams-limited" for f in analyzer["findings"])
-    # units the analyzer flags and counts by their declared positions, for which the reference refuses or outputs nothing
+    # flagged or covered units (a finding at or covering their bytes) that FDK refuses, outputs nothing for or conceals: the analyzer counts them by their declared positions
     blocks = {u["index"]: u.get("blocks", 1) for u in direct.get("units", [])}
-    missing = sum(blocks.get(u["index"], 1) for u in units if u["decoder"].split(" ")[0] in ("refused", "no") and u["status"] in ("agree", "noted") and u["index"] is not None)
+    missing = sum(blocks.get(u["index"], 1) for u in units if u["decoder"].split(" ")[0] in ("refused", "no", "concealed") and u["status"] in ("agree", "noted") and u["index"] is not None)
     # The analyzer counts every unit by its declared raw data blocks, so one block is its samples over all the blocks: the shortfall is exactly the flagged units' blocks.
     total_blocks = sum(u.get("blocks", 1) for u in direct.get("units", []))
     for figure in figures:
@@ -797,22 +834,28 @@ def aac_differences(figures, direct, codecs, analyzer, units):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": figure["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-holds-blocks",
                                 "reason": figure["noReference"]})
             continue
+        if figure.get("channelsDiffer"):
+            cd = figure["channelsDiffer"]
+            differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": None, "analyzer": a, "status": "noted", "kind": "channels-differ",
+                                "reason": "FDK outputs %s channels where the analyzer reports %s%s" % ("/".join(map(str, cd["decoder"])), "/".join(map(str, cd["analyzer"])),
+                                          "; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)" if cd["analyzer"] == [1] and cd["decoder"] == [2]
+                                          else "; not explained by a reading of FDK's source")})
         if figure.get("rateDiffers"):
             rd = figure["rateDiffers"]
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": rd["decoderSamples"], "analyzer": a, "status": "pending", "kind": "rate-differs",
-                                "reason": "FDK outputs %s samples at %s Hz where the analyzer counts %s at %s Hz (the rate ratio is %s: the same duration when the counts are in that ratio); the decoders disagree on whether SBR is applied" % (
-                                    show(rd["decoderSamples"]), show(rd["decoderRate"]), show(a), show(rd["analyzerRate"]), rd["ratio"])})
+                                "reason": "FDK outputs %s frames (%s samples) at %s Hz, from unit %d, where the analyzer's runs are at %s Hz (ratio %s): the decoders disagree on whether SBR is applied there" % (
+                                    show(rd["frames"]), show(rd["decoderSamples"]), "/".join(map(str, rd["decoderRates"])), rd["firstUnit"], "/".join(map(str, rd["analyzerRates"])), rd["ratio"])})
         if r is not None and a != r:
             concealed = figure.get("concealedSamples", 0)
-            if r > (a or 0) and capped:
+            if r > (a or 0) and (figure.get("afterCap") or {}).get("exactExcess"):
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
-                                    "reason": "the analyzer keeps 64 streams and counts no sample of the frames after them (aac.streams-limited, documented in aac.md); FDK decodes them all"})
+                                    "reason": "the analyzer keeps 64 streams and counts no sample of the frames from the unit with aac.streams-limited on (documented in aac.md); the excess is exactly FDK's samples from unit %d on" % figure["afterCap"]["unit"]})
             elif r > (a or 0) and r - a == concealed:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
                                     "reason": "the excess of %s samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps" % show(r - a)})
-            elif r < (a or 0) and missing and total_blocks and (a - r) * total_blocks == a * missing:
+            elif r < (a or 0) and missing and total_blocks and (a - (r - concealed)) * total_blocks == a * missing:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
-                                    "reason": "the shortfall of %s samples is %d frames of flagged units, which the analyzer counts by their declared positions and FDK refuses or outputs nothing for" % (show(a - r), missing)})
+                                    "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (%s) are exactly the %d blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals" % (show(a - (r - concealed)), missing)})
             else:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs"})
         for name, value in figure["witnesses"].items():
@@ -887,8 +930,11 @@ def render_aac(results, not_run, unmatched, environment, ffmpeg_version, warning
             if fig.get("concealedSamples"):
                 note += (" " if note else "") + "(%s concealed)" % show(fig["concealedSamples"])
             if fig.get("rateDiffers"):
-                note += (" " if note else "") + "(FDK %s samples at %s Hz, the analyzer's rate %s Hz: ratio %s)" % (
-                    show(fig["rateDiffers"]["decoderSamples"]), show(fig["rateDiffers"]["decoderRate"]), show(fig["rateDiffers"]["analyzerRate"]), fig["rateDiffers"]["ratio"])
+                rd = fig["rateDiffers"]
+                note += (" " if note else "") + "(FDK: %s frames, %s samples at %s Hz from unit %d; the analyzer's rate %s Hz)" % (
+                    show(rd["frames"]), show(rd["decoderSamples"]), "/".join(map(str, rd["decoderRates"])), rd["firstUnit"], "/".join(map(str, rd["analyzerRates"])))
+            if fig.get("channelsDiffer"):
+                note += (" " if note else "") + "(channels: FDK %s, the analyzer %s)" % ("/".join(map(str, fig["channelsDiffer"]["decoder"])), "/".join(map(str, fig["channelsDiffer"]["analyzer"])))
             tag = "" if fig["analyzer"] == fig["reference"] or fig["reference"] is None else "  DIFFERS"
             rows.append([r["folder"], r["file"], r["sha256"][:8], fig["id"], fig["stage"], show(fig["analyzer"]), show(fig["reference"]), wit, (note + tag).strip()])
     out += ["", table(rows, ["folder", "file", "sha256", "figure", "stage", "analyzer", "fdk", "other decoders", "notes"])]
