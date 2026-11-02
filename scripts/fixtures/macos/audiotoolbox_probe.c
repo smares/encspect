@@ -1,5 +1,6 @@
-/* The macOS paths of the official-decoder probe (docs/design/official-decoder-crosschecks.md): what AudioToolbox can decode, and
-   two ways to decode a file with it. Apple's decoders are used as black boxes; nothing of them is linked into Encspect.
+/* The macOS paths of the official-decoder cross-checks (docs/design/official-decoder-crosschecks.md): what AudioToolbox can decode, and
+   two ways to decode a file with it. Rollout step 1 (the probe) ran all three modes; step 5 runs `reader` and `convert ... default` over the fixtures
+   (scripts/fixtures/official_decode.py coreaudio). Apple's decoders are used as black boxes; nothing of them is linked into Encspect.
 
      audiotoolbox_probe inventory
          the formats AudioToolbox decodes, the file types it reads, and the decoders registered per format
@@ -255,7 +256,7 @@ static OSStatus supply(AudioConverterRef converter, UInt32 *packets, AudioBuffer
     feed->have = 0;
     feed->delivered++;
     long skip = 0;
-    if (feed->adts) {
+    if (feed->adts && feed->unit->received >= 2) {
         skip = (feed->data[feed->unit->offset + 1] & 1) ? 7 : 9;
         if (skip > feed->unit->received) {
             skip = feed->unit->received;
@@ -426,6 +427,9 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
             if (id == kAudioFormatAC3) {
                 int fscod = d[4] >> 6;
                 rate = rates_ac3[fscod];
+                if ((d[5] >> 3) > 8) {
+                    rate /= (double)(1 << ((d[5] >> 3) - 8)); /* bsid 9 and 10: half and quarter sample rate */
+                }
                 unsigned bits = ((unsigned)d[6] << 8) | d[7];
                 int at = 15;
                 acmod = (bits >> (at - 2)) & 7;
@@ -526,6 +530,13 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     Feed feed = {data, NULL, 0, {0, 0, 0}, 0, 0, !strcmp(kind, "adts")};
     for (long i = 0; i <= count + 3; i++) {
         int is_unit = i < count;
+        if (is_unit && units[i].received == 0) {
+            /* A unit with no byte in the file (cut at its first byte, or outside the file) is not given to the converter: an empty packet would only measure the harness. */
+            printf("{\"type\":\"unit\",\"index\":%ld,\"offset\":%ld,\"declared\":%ld,\"received\":0,\"consumed\":false,\"notFed\":true,\"status\":0,\"noMoreData\":false,\"frames\":0}\n", i, units[i].offset, units[i].declared);
+            fflush(stdout);
+            calls++;
+            continue;
+        }
         if (is_unit) {
             feed.unit = &units[i];
             feed.have = 1;

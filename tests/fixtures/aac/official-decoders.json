@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41379699952",
-  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
+  "id": "41463609030",
+  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -12,7 +12,18 @@
    "version": "v2.0.2"
   },
   "concealMethod": 1,
-  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "coreAudio": {
+   "macOS": "15.8.2",
+   "build": "24H232",
+   "machine": "arm64",
+   "imageOS": "macos15",
+   "imageVersion": "20261028.0489.1",
+   "audioCodecs": "7.0",
+   "audioToolbox": "1.14",
+   "runId": "41463609030",
+   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
+  }
  },
  "statuses": [
   "explained",
@@ -55,6 +66,25 @@
       "aot": 39,
       "extAot": 0,
       "frameSize": 512
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 22528,
+       "decoderSamples": 22528,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aace",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
      }
     },
     {
@@ -65,14 +95,38 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 22200
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 22050,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 328,
+        "remainderFrames": 150
+       },
+       "fileFormat": {
+        "formatID": "aace",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 512
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     }
     }
    ],
    "differences": [],
@@ -120,6 +174,25 @@
       "aot": 23,
       "extAot": 0,
       "frameSize": 512
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 23040,
+       "decoderSamples": 23040,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aacl",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
      }
     },
     {
@@ -130,14 +203,38 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 22456
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 22050,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 584,
+        "remainderFrames": 406
+       },
+       "fileFormat": {
+        "formatID": "aacl",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 512
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     }
     }
    ],
    "differences": [],
@@ -207,7 +304,26 @@
        2
       ]
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 51200,
+       "decoderSamples": 51200,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -217,14 +333,42 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 49088
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 2112,
+        "remainderFrames": 1438
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 22050,
+      "exact": true
+     }
     }
    ],
    "differences": [
@@ -284,7 +428,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 51200,
+       "decoderSamples": 51200,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -294,14 +457,42 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 49088
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 2112,
+        "remainderFrames": 1438
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 22050,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -350,7 +541,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 51200,
+       "decoderSamples": 51200,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 51200,
+       "decoderSamples": 51200,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -398,7 +623,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 51200,
+       "decoderSamples": 51200,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -408,14 +652,42 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 49088
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 2112,
+        "remainderFrames": 1438
+       },
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 22050,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -464,7 +736,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -512,7 +818,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -522,14 +847,38 @@
       0
      ],
      "analyzer": 22050,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 22050,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 22464
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 22050,
+       "decoderSamples": 22050,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 22050,
+        "primingFrames": 2112,
+        "remainderFrames": 414
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -578,7 +927,26 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -588,14 +956,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 67584
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 2048,
+        "remainderFrames": 1434
+       },
+       "fileFormat": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -644,7 +1036,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 66560,
+       "decoderSamples": 66560,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -654,14 +1065,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 0,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -710,7 +1145,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -769,10 +1238,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -818,7 +1337,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -877,10 +1430,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -926,7 +1529,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -985,10 +1622,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1034,10 +1721,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 65408,
+       "decoderSamples": 65408,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 32704,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65408,
+     "analyzer": 69632,
+     "reference": 69632,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,408 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (32,704 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1083,7 +1820,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1147,7 +1918,41 @@
       "firstUnit": 0,
       "ratio": "22050/44100"
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 69632,
+       "decoderSamples": 69632,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -1159,7 +1964,7 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 34 frames (34,816 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. The owners' decoders disagree: FDK decodes at the core rate without SBR (22,050 Hz), the analyzer, ffmpeg and Core Audio count SBR (44,100 Hz).",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. Core Audio's converter outputs 69,632 samples at 44,100 Hz, as the analyzer and ffmpeg count; FDK alone decodes at the core rate without SBR (22,050 Hz, 34,816 samples, the same 34 frames). The keep stands by that decision, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here); FDK alone differs and no reading of the specification decides.",
      "statusSource": "reviewed"
     }
    ],
@@ -1228,7 +2033,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1276,7 +2115,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1324,7 +2197,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -1334,14 +2226,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 67584
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 1040,
+        "remainderFrames": 1725
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     },
     {
      "id": "samples.editList",
@@ -1351,14 +2271,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 67584
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 1040,
+        "remainderFrames": 1725
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -1407,7 +2355,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 6,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1455,7 +2437,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -1524,7 +2540,41 @@
        2
       ]
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 77824,
+       "decoderSamples": 77824,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 77824,
+       "decoderSamples": 77824,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -1604,7 +2654,26 @@
        2
       ]
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 77824,
+       "decoderSamples": 77824,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -1614,14 +2683,42 @@
       0
      ],
      "analyzer": 36000,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 36000,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 73728
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 36000,
+       "decoderSamples": 72000,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 36000,
+        "primingFrames": 1040,
+        "remainderFrames": 1872
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 36000,
+      "exact": true
+     }
     },
     {
      "id": "samples.editList",
@@ -1631,14 +2728,42 @@
       0
      ],
      "analyzer": 36000,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 36000,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 73728
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 36000,
+       "decoderSamples": 72000,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 36000,
+        "primingFrames": 1040,
+        "remainderFrames": 1872
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 36000,
+      "exact": true
+     }
     }
    ],
    "differences": [
@@ -1698,7 +2823,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -1708,14 +2852,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 67584
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 1040,
+        "remainderFrames": 1725
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     },
     {
      "id": "samples.editList",
@@ -1725,14 +2897,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 67584
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 1040,
+        "remainderFrames": 1725
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -1781,7 +2981,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -1791,14 +3010,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     },
     {
      "id": "samples.editList",
@@ -1808,14 +3051,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -1864,7 +3131,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -1874,14 +3160,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     },
     {
      "id": "samples.editList",
@@ -1891,14 +3201,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -1947,7 +3281,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -2006,10 +3374,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2055,7 +3473,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 68608,
+       "decoderSamples": 68608,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 68608,
+       "decoderSamples": 68608,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2103,7 +3555,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2151,7 +3637,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2161,14 +3666,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 69632
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 2048,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -2217,7 +3750,26 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 35840,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2227,17 +3779,52 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 69632
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 33075,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 2048,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 35840,
+     "analyzer": 71680,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 35,840 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2283,7 +3870,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 73728,
+       "decoderSamples": 73728,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 73728,
+       "decoderSamples": 73728,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2331,7 +3952,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 73728,
+       "decoderSamples": 73728,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2341,14 +3981,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 70656
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 3072,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -2397,7 +4065,26 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 73728,
+       "decoderSamples": 36864,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2407,17 +4094,52 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 70656
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 33075,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 3072,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 22050,
+      "channels": 1
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 36864,
+     "analyzer": 73728,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 36,864 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2463,7 +4185,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 73728,
+       "decoderSamples": 73728,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2473,14 +4214,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 70656
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 3072,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -2529,7 +4298,26 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 71680,
+       "decoderSamples": 71680,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2539,14 +4327,42 @@
       0
      ],
      "analyzer": 33075,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 33075,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 69632
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 33075,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 33075,
+        "primingFrames": 2048,
+        "remainderFrames": 717
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 33075,
+      "exact": true
+     }
     }
    ],
    "differences": [],
@@ -2595,7 +4411,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 68608,
+       "decoderSamples": 68608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2605,14 +4440,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 2048,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -2661,7 +4520,26 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 68608,
+       "decoderSamples": 68608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2671,14 +4549,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 2048,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     },
     {
      "id": "samples.editList",
@@ -2688,14 +4590,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 2048,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -2744,7 +4670,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2792,7 +4752,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -2840,10 +4834,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2889,7 +4933,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -2899,14 +4962,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -2955,7 +5042,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -2965,14 +5071,38 @@
       0
      ],
      "analyzer": 66150,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 66150,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 66560
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 66150,
+       "decoderSamples": 66150,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 66150,
+        "primingFrames": 1024,
+        "remainderFrames": 410
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -3012,7 +5142,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -3024,6 +5164,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC LTP",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 67584,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -3062,7 +5212,17 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     }
     }
    ],
    "differences": [
@@ -3074,6 +5234,16 @@
      "status": "explained",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 66 units (0x1002, it never has enough bits); AAC Main, LTP and SSR are not among the object types FDK AAC documents (its header names the AAC Low Complexity profile for predictors and no gain control; it also decodes HE-AAC, LD, ELD and USAC); the stream is AAC Main",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 67584,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -3121,7 +5291,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 73728,
+       "decoderSamples": 73728,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -3131,14 +5320,38 @@
       0
      ],
      "analyzer": 72000,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 72000,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 72704
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 72000,
+       "decoderSamples": 72000,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 72000,
+        "primingFrames": 1024,
+        "remainderFrames": 704
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     }
     }
    ],
    "differences": [],
@@ -3204,7 +5417,41 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -3252,10 +5499,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 67584,
+       "decoderSamples": 67584,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 65472,
+       "decoderSamples": 65472,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 65472,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 65472,
+     "analyzer": 67584,
+     "reference": 67584,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 65,472 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (65,472 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3270,5 +5567,10 @@
     "AAC LC"
    ]
   }
- ]
+ ],
+ "counts": {
+  "files": 53,
+  "fed": 52,
+  "coreAudioCarried": 0
+ }
 }

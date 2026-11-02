@@ -1,0 +1,6549 @@
+{
+ "schema": 1,
+ "format": "ac3",
+ "run": {
+  "id": "41463609030",
+  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
+  "imageOS": "macos15",
+  "imageVersion": "20261028.0489.1",
+  "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "coreAudio": {
+   "macOS": "15.8.2",
+   "build": "24H232",
+   "machine": "arm64",
+   "imageOS": "macos15",
+   "imageVersion": "20261028.0489.1",
+   "audioCodecs": "7.0",
+   "audioToolbox": "1.14",
+   "runId": "41463609030",
+   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
+  }
+ },
+ "statuses": [
+  "explained",
+  "noted",
+  "pending",
+  "follow",
+  "keep",
+  "build-dependent",
+  "stale"
+ ],
+ "changedFiguresForReview": [],
+ "files": [
+  {
+   "path": "aht.eac3",
+   "sha256": "da3858538bfc10e891ff1907af0a916d03bc62075a59ec790b2009ca9f184c7d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "annex-d.ac3",
+   "sha256": "9d1d11854ae8c8a5b9ccf0f51063ddec6fffc2eb2c566e5a11f68f0c22427afc",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 9,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.reserved-value",
+     "findings": [
+      "ac3.reserved-value"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "bad-blocks.ac3",
+   "sha256": "24520c7ae31ae53daef0ca5e51f9042f4c5b577e48060d770d468d822cdc2f7f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 9,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.block-inconsistent",
+     "findings": [
+      "ac3.block-inconsistent"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 2314,
+     "length": 2,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.block-invalid",
+     "findings": [
+      "ac3.block-invalid"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "bsi-fields.ac3",
+   "sha256": "5f7a11efbb70c56339cf8f4fcb9bef531e15eb513006492772189130da3d58be",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12000,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 8,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "bsid-10.ac3",
+   "sha256": "e31ab15a5c2c37545b696bc82f987e5e43d481c977e420b7e655c7af6e7a134e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      12000
+     ],
+     "referenceOffset": -288,
+     "noReference": "Core Audio's converter gave no complete total (did not open (status 0x666D743F))",
+     "refused": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (12,000 Hz, 2 channels)",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7479703F)"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 6144,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (12,000 Hz, 2 channels); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "bsid-9.ac3",
+   "sha256": "dc9664128ed6bce639481754b1d000e6a624312a42a22f3f7ea15985b10007ab",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      24000
+     ],
+     "referenceOffset": -288,
+     "noReference": "Core Audio's converter gave no complete total (did not open (status 0x666D743F))",
+     "refused": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (24,000 Hz, 2 channels)",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7479703F)"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 6144,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter cannot be built (did not open (status 0x666D743F)): AudioFile refuses the file (status 0x7479703F), and no converter can be built for the description the harness made from its first syncframe (24,000 Hz, 2 channels); ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "coding-ac3-core-dependent.ac3",
+   "sha256": "f768d8dd736000ae323d40a94d5146e34f1167790581e4c87e5a55676a288442",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "coding-ac3-coupling.ac3",
+   "sha256": "2c4762f54c8931e8c041eb60ba6672ea784ba05b4cd0346bde3b58bb2f591a4f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 7680,
+     "reference": 7392,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 7680
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 7392,
+       "decoderSamples": 7392,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 7392,
+       "decoderSamples": 7392,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 5,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "coding-ac3-dual-mono.ac3",
+   "sha256": "2ac07c2a82bbca03c852c9ebdcfb5b1ac7913c8bd2b13c1c44e108b9256ae63e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 2784,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 3072
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 2,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "coding-ac3-stereo.ac3",
+   "sha256": "4e9d98d8a605edb3d1a6b947d3d2128ffca9495c87a93d275307b68d428d49b4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "coding-ac3-surround.ac3",
+   "sha256": "18c8b062b4ab58c33ad507b718f32f6b3b3746db596f9af51fd9865991a0d9aa",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 2784,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 3072
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 2,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "coding-eac3-blocks.eac3",
+   "sha256": "779edadd4a31246570f6200038e3c10e4c3f77b69e14dff2bd938ea1c3224f2f",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "coding-eac3-dependent.eac3",
+   "sha256": "e741aa926a16492bb16f7cb9a780e46be4eb996cdbd6534c9db2ac92f811a23d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 3808,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 8
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 3808,
+       "decoderSamples": 3808,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 768
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 3808,
+       "decoderSamples": 3808,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 768
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "coding-eac3-nine-frames.eac3",
+   "sha256": "5d40b65847c74faa0adaed5214da22c6612b21b786d5fb4bee343bfc0216acb4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 3808,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 3808,
+       "decoderSamples": 3808,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 3808,
+       "decoderSamples": 3808,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "coding-eac3-spx-default.eac3",
+   "sha256": "50921b45e20214738e29b1dddb3fe5d455510337b9d41c8378b1fdd11f3a3f41",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "coupling.eac3",
+   "sha256": "5dd25408c3f17810a64cf2e73813665c4d0592a2c86fd430ffc07b07f588a59d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 5
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "crc-damaged.ac3",
+   "sha256": "b76cf4e77dd1d21962811d04534a2da5ae8920dc9aca918c17c8ea9b529ec2c0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12000,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 1538,
+     "length": 2,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.crc1-mismatch",
+     "findings": [
+      "ac3.crc1-mismatch"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 2302,
+     "length": 2,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.crc2-mismatch",
+     "findings": [
+      "ac3.crc2-mismatch"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 8,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "cut-frame.ac3",
+   "sha256": "8a3a150da8e66eb713233e035ae31c3ba67c119b91f5713aa1257457816cd026",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 7392,
+       "decoderSamples": 7392,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 7392,
+     "analyzer": 9216,
+     "reference": 8928,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928",
+     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 6144,
+     "analyzer": 9216,
+     "reference": 8928,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ffmpeg outputs 6,144 samples against the analyzer's 9,216",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 1536,
+     "length": 400,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.frame-damaged",
+     "findings": [
+      "ac3.frame-damaged"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "dac3-differs.mp4",
+   "sha256": "f3d5e296d3605bd64a86bbdccaed257dadd6da1a0f927cb63c979782614d8465",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 9216,
+        "primingFrames": 0,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 458,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-differs",
+     "findings": [
+      "ac3.config-differs",
+      "ac3.config-differs",
+      "ac3.config-differs"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 459,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-reserved",
+     "findings": [
+      "ac3.config-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "dec3-dependent.mp4",
+   "sha256": "2cdacbde5c57fdcdc53b72d20fdff4a5be0ae74f95fdbee8cf0e9ceb1a098a31",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 8
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "dependent-first.eac3",
+   "sha256": "85a92cfee6fbf7b1247d8441f1fb33a5c55bb3c212370312fd0d5895a209d990",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x21646174)"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 320,
+     "ranges": [
+      [
+       0,
+       320
+      ]
+     ],
+     "decoder": "no output",
+     "samples": 0,
+     "finding": "ac3.dependent-without-independent",
+     "findings": [
+      "ac3.dependent-without-independent"
+     ],
+     "verdict": "decoder gave no output, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "dependent-repeated.eac3",
+   "sha256": "dd7422406ea2c40cadee238ba59281044b3ca176b69cc81834c24a25dfc3db32",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "refused": "Core Audio's converter refuses every one of its 3 units (0x21646174)",
+     "noReference": "Core Audio refuses the stream; ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "refuses every unit (0x21646174)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x21646174)"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4608,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter refuses every one of its 3 units (0x21646174); Core Audio refuses the stream; ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 1360,
+     "ranges": [
+      [
+       0,
+       1360
+      ]
+     ],
+     "decoder": "refused 0x21646174",
+     "samples": 0,
+     "finding": "ac3.dependent-excess",
+     "findings": [
+      "ac3.dependent-excess"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "derived-ffmpeg-eac3-mono-48k-spx-delta.eac3",
+   "sha256": "1813ed0788b23ef103cd9caa3dcd311b601f15066480ee7456770c0ed5884857",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "derived-ffmpeg-stereo-192k-delta-block0.ac3",
+   "sha256": "3d1835d8800f201c53a633fbe44d0450a5f2a7c81376a424af5587e1719af9e2",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "derived-ffmpeg-stereo-192k-delta.ac3",
+   "sha256": "947e5821c6e3199efffef55dcf4b13da2e89a79734094072f764665d05defb9e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "dmixmod-reserved.ac3",
+   "sha256": "77706aa203a327133932b48cd55367f71127b09071eb9550aa8e396927913bdb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "emdf-length-long.eac3",
+   "sha256": "03c53746f8a11b14287b7cdeb982cf1b923acd54f822553bda3d751f914a4cef",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 634,
+     "length": 86,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-length",
+     "findings": [
+      "ac3.emdf-length"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-length-short.eac3",
+   "sha256": "aa217a1b7bae49f6ec56206feebd529916a4ed0e25f408317233de74741ea29e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 634,
+     "length": 79,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-length",
+     "findings": [
+      "ac3.emdf-length"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-noise.eac3",
+   "sha256": "b74e0e1fa0c700f899ce5fba11d2805f9ba2034f8bb2cb207591230fb05687ad",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 46080,
+     "reference": 45792,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 46080
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 45792,
+       "decoderSamples": 45792,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 45792,
+       "decoderSamples": 45792,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 30,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-padding.eac3",
+   "sha256": "43b9bac4ce93f632980d7110e5a111943044dbef780ff3d24fe3b2bcadb14389",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 673,
+     "length": 2,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-reserved",
+     "findings": [
+      "ac3.emdf-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-payload-size.eac3",
+   "sha256": "78d2c45265179fcfbbd780f13cf997ba09f964fb5782d6b852274358baa7d26c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 608,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.extension-without-joc",
+     "findings": [
+      "ac3.extension-without-joc"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 657,
+     "length": 2,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-payload-size",
+     "findings": [
+      "ac3.emdf-payload-size"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-payloads.eac3",
+   "sha256": "514f9d73cb794ac5aeb949cf8b8470a52fb138f96aadcaf5339882f24917c2de",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-reserved.eac3",
+   "sha256": "233f02ae69b3c77a351bd44611e0909fb894a9b50a8c920edefd3c92a687bacd",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 711,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-reserved",
+     "findings": [
+      "ac3.emdf-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-truncated.eac3",
+   "sha256": "fcca9db9df230b354976a6e1e1bf91713fef6c4092c4f253f2dc8279ab97e2a5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 636,
+     "length": 3,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.emdf-truncated",
+     "findings": [
+      "ac3.emdf-truncated"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "emdf-version.eac3",
+   "sha256": "ddcbb2dc110df5de971ffff86bca105cf13611661302d30c89b8338a434c0fe4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 608,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.extension-without-joc",
+     "findings": [
+      "ac3.extension-without-joc"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "enhanced-coupling.eac3",
+   "sha256": "66a0ab0c49f18733ecff70c54c0a274fe6c8ce1e0f547c528ed9fd16302ffd64",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 5
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "external-aften-5.1-448k.ac3",
+   "sha256": "4d9e267027d3e42cb8ca90fb5aa3a91f9ef7f5128ab067e95a6d5954caeeb336",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-aften-stereo-192k-blocksw.ac3",
+   "sha256": "eaf451ff5481fb3bbbd9dcf40b37f66935fb5f62b3a6d394317d6ad42b00becf",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-5.1-448k.ac3",
+   "sha256": "df8f441d70b7d9cd9dbe968bbd4e52962580b9d921dae96117ba6c3083dfc91a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-annex-d-5.1.ac3",
+   "sha256": "6e226d2f83d8b93162739195b395cf2ca4333243290f2ba45e03213ae5000629",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-eac3-5.1-256k.eac3",
+   "sha256": "88c634f82fb2a44c297cfef5ac28905df4aa6ccd075df169936dc0664f41aea6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-eac3-mono-48k.eac3",
+   "sha256": "0e90b1d3cabbea727d0a36743e2423dda10670f70c2247bddb976b8518f4b12c",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-eac3-stereo-96k.eac3",
+   "sha256": "d46cc45c01514fa9f942aa024e6485facb033aba8928cff7bbd7b3a9e8da9f9e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-fixed-stereo-128k.ac3",
+   "sha256": "94144ce6208b89401e5fcf7e21133a81bded89077a52e632497efd4b27b77ab5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-mono-96k.ac3",
+   "sha256": "867891183d069fa88bb485baa156a1469fac4b2c10a551d5d28f04015c0b7e3e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-mp4-5.1-448k.mp4",
+   "sha256": "4a0a87d136e6653ca530f07df4896a6f8bac5a14e4cc8ea995cc3cb0f94524ea",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 24576,
+        "primingFrames": 0,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 23712,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the media timescale",
+     "witnesses": {},
+     "noReference": "ExtAudioFile applies no edit list or iTunSMPB to AC-3 and E-AC-3 in MP4 (its packet table says 24,576 valid frames, 0 priming and 0 remainder; it read 24,288): the trimming of the reader is not understood, so the trimmed stage is not compared"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-mp4-eac3-stereo-96k.mp4",
+   "sha256": "40ff97ed3f6c88af0a8228b01895887877a85ca2eae71a15fc3e70869e53bcda",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    },
+    {
+     "id": "samples.editList",
+     "stage": "trimmed",
+     "analyzerFigure": "Samples (Edit List)",
+     "streams": [
+      0
+     ],
+     "analyzer": 23712,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "countsAt": "the media timescale",
+     "witnesses": {},
+     "noReference": "ExtAudioFile applies no edit list or iTunSMPB to AC-3 and E-AC-3 in MP4: the trimming of the reader is not understood, so the trimmed stage is not compared"
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-stereo-192k.ac3",
+   "sha256": "2f2ec19e8185c62c5616bcc60497d4e31d4c33ad8f3bd75bf255d2445d77ec37",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24288,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 24576
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 24288,
+       "decoderSamples": 24288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-stereo-32k-320k.ac3",
+   "sha256": "a89999b7ce8d88f28461070ad90fc4a85425e6580ee2ffa0d95d520095ff8323",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 16896,
+     "reference": 16608,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 16896
+     },
+     "analyzerRates": [
+      32000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 32000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 16608,
+       "decoderSamples": 16608,
+       "format": {
+        "rate": 32000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 32000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 16608,
+       "decoderSamples": 16608,
+       "format": {
+        "rate": 32000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 32000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 11,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "external-ffmpeg-stereo-44k-64k.ac3",
+   "sha256": "93b7e7f7eef6e30ccd20e254945460f6b6fe365e27e704013186a20f5ce77b60",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 23040,
+     "reference": 22752,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 23040
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 22752,
+       "decoderSamples": 22752,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 22752,
+       "decoderSamples": 22752,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 15,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "frame-exponents.eac3",
+   "sha256": "81bc0fa008a907181bb1a04248c880932bec033025aef61d9a2d652a4bcbbdcb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-after-blocks.eac3",
+   "sha256": "8abbbd0cf7b8757af66474d6d82348c822eef4fae981ffb0804c9d85e99cdc63",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 8
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-aht.mp4",
+   "sha256": "364d6c5feded9caf223c9cf1fd01ff804e5ac96635a1882c9e977e20ff3a08fa",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-atmos.eac3",
+   "sha256": "ba279bb55f89a6019b1a9f15d3ad14478f61822f7e0a4ccbb0d82fa38acaccad",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-auxiliary-data.eac3",
+   "sha256": "623c120278928d4100824b66f3c1794d27ae47f85060898bce21a3a6741d7727",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-dec3-absent.mp4",
+   "sha256": "d08fb3a73b9688a4dd96a93660b5be7bf382ec57d0a8e9039562c3eb6eb9aac7",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 449,
+     "length": 13,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-differs",
+     "findings": [
+      "ac3.config-differs"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-dec3-clear.mp4",
+   "sha256": "7ac540340a7e44f7130040cd18b7a209c12a55537ec19175393893e8a21c7b29",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 462,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-differs",
+     "findings": [
+      "ac3.config-differs"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-dec3-complexity.mp4",
+   "sha256": "efdd8acbad7eff8c31af5c3761f4e4a8e49a35d40b3840f0e092d62da7767902",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 463,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-differs",
+     "findings": [
+      "ac3.config-differs"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-dec3-unmatched.mp4",
+   "sha256": "9852e498bd026e83dae9849c1c6cedb949854f669d0bf02431a87dd75263813b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 462,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.config-reserved",
+     "findings": [
+      "ac3.config-reserved",
+      "ac3.config-differs"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-dec3.mp4",
+   "sha256": "309acc6d1ed5bf94bc2035dcee871b28a1473ae17bafcc428f31cf8e7be8674b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-flag-both.eac3",
+   "sha256": "b956e7c47f8072fe68ecd5a66d70b6407c4e8caef8565afcb3659a321781da25",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 8
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-flag-mismatch.eac3",
+   "sha256": "4c2a5538f409a572c6f203716d51538a1d87c7dd1711e17dffbd298181811551",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 8,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.extension-without-joc",
+     "findings": [
+      "ac3.extension-without-joc"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 1880,
+     "length": 101,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.joc-without-extension",
+     "findings": [
+      "ac3.joc-without-extension"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-incomplete.eac3",
+   "sha256": "40805e731f68084cde0862638bed0ffdad7a9af97eb4d7231500620d2387131a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 634,
+     "length": 108,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.object-audio-incomplete",
+     "findings": [
+      "ac3.object-audio-incomplete"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-reserved.eac3",
+   "sha256": "3b0d584bb9e885c9a7047e604b6a37da086959b0521c67c89f85ca21696082f1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 686,
+     "length": 3,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.joc-reserved",
+     "findings": [
+      "ac3.joc-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "joc-short.eac3",
+   "sha256": "704cc253f2944acfac06db6e5731390845a72ca50d7968fd27d9e4c522d76354",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": 4320,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4608
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 682,
+     "length": 6,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.object-payload-short",
+     "findings": [
+      "ac3.object-payload-short"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "junk-adts-in-frames-cut.eac3",
+   "sha256": "6de56c01503fa19900548f9971c3427ca25db1f5ea9629ed92c8d74512d94cc1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10752,
+     "reference": 10464,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 10464,
+       "decoderSamples": 10464,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7479703F)"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 0,
+     "length": 502,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.leading-junk",
+     "findings": [
+      "ac3.leading-junk"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 7,
+    "cutUnits": 0,
+    "skippedRanges": 1,
+    "skippedBytes": 502
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "junk-adts-in-frames.eac3",
+   "sha256": "c663ee0e649d5d9354a580d072b925006fd5026506e453f8e966f06f938b4ee4",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12000,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7479703F)"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 0,
+     "length": 100,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.leading-junk",
+     "findings": [
+      "ac3.leading-junk"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 8,
+    "cutUnits": 0,
+    "skippedRanges": 1,
+    "skippedBytes": 100
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "junk-around.ac3",
+   "sha256": "bb5afc58bdd2fd6a43b614c2086583e316ec86dd7ea5469f8d7615076a94ede3",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 6144,
+     "analyzer": 9216,
+     "reference": 8928,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ffmpeg outputs 6,144 samples against the analyzer's 9,216",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 0,
+     "length": 30,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.leading-junk",
+     "findings": [
+      "ac3.leading-junk"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 2334,
+     "length": 50,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.sync-lost",
+     "findings": [
+      "ac3.sync-lost"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 4688,
+     "length": 20,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.trailing-data",
+     "findings": [
+      "ac3.trailing-data"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 3,
+    "skippedBytes": 100
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "junk-mpeg-in-frames.ac3",
+   "sha256": "50b2f76e4d2f73c80c77a9940ed041a2f32207633e7b51a37b67c8e5bc5cf052",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12000,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 12000,
+       "decoderSamples": 12000,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7479703F)"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 0,
+     "length": 100,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.leading-junk",
+     "findings": [
+      "ac3.leading-junk"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 8,
+    "cutUnits": 0,
+    "skippedRanges": 1,
+    "skippedBytes": 100
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "reduced-rate.eac3",
+   "sha256": "c9f3b49a3a45000a437a01931c58484844c8bfac76e5b8ba296bcc0ce56e7a80",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4608,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      24000
+     ],
+     "referenceOffset": -288,
+     "refused": "Core Audio's converter refuses every one of its 3 units (0x21646174)",
+     "noReference": "Core Audio refuses the stream; ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "refuses every unit (0x21646174)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4608,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter refuses every one of its 3 units (0x21646174); Core Audio refuses the stream; ffmpeg and liba52 stay the reference (decided 2026-11-01)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "reserved-values.ac3",
+   "sha256": "b54908cc65d599f4ca370f47c628fd41eaf75c8e4193e6392c2447f9d0b29ac0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 5
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 5
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": null,
+     "offset": 6,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.reserved-value",
+     "findings": [
+      "ac3.reserved-value"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 7,
+     "length": 1,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.dialnorm-reserved",
+     "findings": [
+      "ac3.dialnorm-reserved"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "sample-short.mp4",
+   "sha256": "8c3dfa5af27f0773247e6c954ddf09822f534d81686f67e53bad7fbaea6a935e",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 9216,
+        "primingFrames": 0,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 6144,
+     "analyzer": 9216,
+     "reference": 8928,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ffmpeg outputs 6,144 samples against the analyzer's 9,216",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 584,
+     "length": 700,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.frame-truncated",
+     "findings": [
+      "ac3.frame-truncated"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "mp4",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0,
+    "timescale": 48000
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "spectral-extension.eac3",
+   "sha256": "3219c989dc9845a985cf04530ff022925caf71897a89dbb15c2ca254ef6cd86b",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "stream-changes.ac3",
+   "sha256": "566abcb2454e64005758356098cc61aadb0d46099dc21c8c438b56f228e82d29",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1,
+      2
+     ],
+     "analyzer": 9216,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "noReference": "the analyzer has 3 runs of constant output format and the converter has one",
+     "coreAudio": {}
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3",
+    "AC-3",
+    "AC-3"
+   ]
+  },
+  {
+   "path": "substreams.eac3",
+   "sha256": "02ee9c0bf2d75eb823509b6a21d05f974d1c5cdb344ed54d650fda38a10cfb96",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0,
+      1
+     ],
+     "analyzer": 12288,
+     "reference": null,
+     "referencePath": null,
+     "referenceKind": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "noReference": "the analyzer has 2 runs of constant output format and the converter has one",
+     "coreAudio": {},
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aist#0:0/eac3] [dec:eac3] Error submitting packet to decoder: Error number -84085770 occurred"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3",
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "truncated-in-skip.eac3",
+   "sha256": "3c153f2d46cfa656e6da7c31c561c9315dab96a8653ba16276df284569b2082d",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 6144,
+     "reference": 5856,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 6144
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 6
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 5856,
+       "decoderSamples": 5856,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4320,
+       "decoderSamples": 4320,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 4320,
+     "analyzer": 6144,
+     "reference": 5856,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 4,320 samples where the converter outputs 5,856",
+     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 6144,
+     "length": 264,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.frame-truncated",
+     "findings": [
+      "ac3.frame-truncated"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 4,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  },
+  {
+   "path": "truncated.ac3",
+   "sha256": "4a8c477f5862e5c2a2feade25dfa7ca11c36029ee79925dd62bd0df6e94974a1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 9216,
+     "reference": 8928,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 9216
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 2
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 8928,
+       "decoderSamples": 8928,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 7392,
+       "decoderSamples": 7392,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ac-3",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 1536
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 7392,
+     "analyzer": 9216,
+     "reference": 8928,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928",
+     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": null,
+     "offset": 3840,
+     "length": 468,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.frame-truncated",
+     "findings": [
+      "ac3.frame-truncated"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "ac3",
+    "codec": "ac-3",
+    "units": 6,
+    "cutUnits": 1,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AC-3"
+   ]
+  },
+  {
+   "path": "two-blocks.eac3",
+   "sha256": "92b31f9fa72433cf7b37b877e528ec688f0c6d7aa20d6bebededcf1382daf246",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 2784,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 3072
+     },
+     "analyzerRates": [
+      48000
+     ],
+     "referenceOffset": -288,
+     "format": {
+      "rate": 48000,
+      "channels": 1
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 2784,
+       "decoderSamples": 2784,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "ec-3",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 512
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "eac3",
+    "codec": "ec-3",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "E-AC-3"
+   ]
+  }
+ ],
+ "counts": {
+  "files": 78,
+  "fed": 78,
+  "coreAudioCarried": 0
+ }
+}

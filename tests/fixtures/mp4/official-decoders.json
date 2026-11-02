@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41379699952",
-  "commit": "fea550fd2840fab40c46f2368544ad2d6aea9bd9",
+  "id": "41463609030",
+  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -12,7 +12,18 @@
    "version": "v2.0.2"
   },
   "concealMethod": 1,
-  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0"
+  "gcc": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "coreAudio": {
+   "macOS": "15.8.2",
+   "build": "24H232",
+   "machine": "arm64",
+   "imageOS": "macos15",
+   "imageVersion": "20261028.0489.1",
+   "audioCodecs": "7.0",
+   "audioToolbox": "1.14",
+   "runId": "41463609030",
+   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
+  }
  },
  "statuses": [
   "explained",
@@ -56,10 +67,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -137,10 +198,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -186,10 +297,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1350,7 +1511,45 @@
        6
       ]
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 8
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -1362,6 +1561,17 @@
      "status": "noted",
      "kind": "channels-differ",
      "reason": "FDK outputs 6 channels where the analyzer reports 8; not explained by a reading of FDK's source",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
      "statusSource": "rule"
     }
    ],
@@ -1410,10 +1620,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1459,10 +1719,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1499,11 +1809,21 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0xFFFFFFCE)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7768743F)"
       }
      }
     }
@@ -1517,6 +1837,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0xFFFFFFCE)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -1581,10 +1911,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1630,10 +2010,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1679,10 +2109,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1728,10 +2208,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1777,10 +2307,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1826,10 +2406,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -1875,7 +2505,31 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "notFedUnits": 10
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [],
@@ -1924,7 +2578,35 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 1,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "silentUnits": [
+        6,
+        7,
+        8
+       ]
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -1936,6 +2618,18 @@
      "reference": 10240,
      "status": "explained",
      "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 6144,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Core Audio's converter outputs 6,144: the owners' decoders disagree; it gives no output for unit 6, 7, 8 after its first output",
      "statusSource": "rule"
     }
    ],
@@ -2037,6 +2731,25 @@
      "verdict": "decoder concealed, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
      "status": "noted",
      "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 1103,
+     "length": 20,
+     "ranges": [
+      [
+       1103,
+       20
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
     }
    ],
    "unitList": {
@@ -2083,10 +2796,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2138,10 +2901,60 @@
        "error": "no audio stream"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2193,10 +3006,60 @@
        "error": "no audio stream"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2242,10 +3105,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2291,7 +3204,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.editList",
@@ -2301,17 +3233,53 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 18368,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 20480
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples.editList",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 44100,
+     "status": "noted",
+     "kind": "analyzer-differs",
+     "reason": "ExtAudioFile outputs 18,368 samples at the core rate where the analyzer's Samples (Edit List) is 44,100",
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted. The figure states the container's edit list (44,100 units past the media's 20,480), which the analyzer already warns of (mp4.edit-beyond-media); the reader does not apply it and reads 18,368, the media less its own default priming of 2,112.",
+     "statusSource": "reviewed"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2357,10 +3325,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -2406,7 +3424,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 47104,
+       "decoderSamples": 47104,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -2416,14 +3453,38 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 44100,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 44992
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 44100,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 44100,
+        "primingFrames": 2112,
+        "remainderFrames": 892
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     },
     {
      "id": "samples.editList",
@@ -2433,14 +3494,38 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 44100,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 44992
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 44100,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 44100,
+        "primingFrames": 2112,
+        "remainderFrames": 892
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -2480,11 +3565,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2498,6 +3604,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2537,11 +3653,21 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0xFFFFFFCE)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7768743F)"
       }
      }
     }
@@ -2555,6 +3681,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0xFFFFFFCE)); no reference from it",
      "statusSource": "rule"
     }
    ],
@@ -2594,11 +3730,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 2,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2612,6 +3769,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2651,11 +3818,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 3,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2669,6 +3857,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2708,11 +3906,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 4,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2726,6 +3945,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2765,11 +3994,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 5,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2783,6 +4033,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2822,11 +4082,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2840,6 +4121,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2879,11 +4170,32 @@
       48000
      ],
      "refused": "FDK AAC outputs nothing for any of its 20 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aacf",
+        "sampleRate": 48000,
+        "channels": 8,
+        "framesPerPacket": 512
+       },
+       "refusedUnits": 20,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -2897,6 +4209,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 20 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 20 units (20 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -2944,10 +4266,60 @@
       "aot": 39,
       "extAot": 0,
       "frameSize": 480
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 9600,
+       "decoderSamples": 9600,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aace",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 480
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 9360,
+       "decoderSamples": 9360,
+       "format": {
+        "rate": 48000,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 9360,
+        "primingFrames": 240,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aace",
+        "sampleRate": 48000,
+        "channels": 1,
+        "framesPerPacket": 480
+       }
+      }
      }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 9360,
+     "analyzer": 9600,
+     "reference": 9600,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 9,360 samples: the file states no priming or padding and the reader's own packet table drops 240 frames of priming at the core rate (9,360 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3009,10 +4381,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 20352,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3186,10 +4608,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3235,7 +4707,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 47104,
+       "decoderSamples": 47104,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -3245,14 +4736,38 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 44100,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 43968
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 44100,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 44100,
+        "primingFrames": 1024,
+        "remainderFrames": 1980
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     },
     {
      "id": "samples.editList",
@@ -3262,14 +4777,38 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 44100,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 43968
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 44100,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 44100,
+        "primingFrames": 1024,
+        "remainderFrames": 1980
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -3318,10 +4857,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 57216,
+       "decoderSamples": 57216,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 57216,
+     "analyzer": 61440,
+     "reference": 61440,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 57,216 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3367,10 +4956,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 57216,
+       "decoderSamples": 57216,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 57216,
+     "analyzer": 61440,
+     "reference": 61440,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 57,216 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3437,7 +5076,45 @@
        2
       ]
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 57216,
+       "decoderSamples": 57216,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -3449,6 +5126,17 @@
      "status": "noted",
      "kind": "channels-differ",
      "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 57216,
+     "analyzer": 61440,
+     "reference": 61440,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 57,216 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
      "statusSource": "rule"
     }
    ],
@@ -3497,10 +5185,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 57216,
+       "decoderSamples": 57216,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 57216,
+     "analyzer": 61440,
+     "reference": 61440,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 57,216 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3546,10 +5284,60 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 57216,
+       "decoderSamples": 57216,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aacp",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 57216,
+     "analyzer": 61440,
+     "reference": 61440,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 57,216 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3601,7 +5389,30 @@
        "error": "no audio stream"
       }
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7768743F)"
+      }
+     }
     }
    ],
    "differences": [],
@@ -3650,10 +5461,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3699,10 +5560,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3748,10 +5659,70 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3797,10 +5768,70 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3862,10 +5893,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -3911,7 +5992,26 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 47104,
+       "decoderSamples": 47104,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      }
+     }
     },
     {
      "id": "samples.iTunSMPB",
@@ -3921,14 +6021,38 @@
       0
      ],
      "analyzer": 44100,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 44100,
+     "referencePath": "coreaudio reader",
+     "referenceKind": "official",
      "countsAt": "the core rate (the media timescale)",
      "witnesses": {
       "ffmpeg": 44992
      },
-     "noReference": "the trimmed stage waits for Core Audio's ExtAudioFile (rollout step 5); FDK has no file reader"
+     "coreAudio": {
+      "reader": {
+       "samples": 44100,
+       "decoderSamples": 44100,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 44100,
+        "primingFrames": 2112,
+        "remainderFrames": 892
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     }
     }
    ],
    "differences": [],
@@ -3977,10 +6101,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4026,10 +6200,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4075,10 +6299,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 28608,
+       "decoderSamples": 28608,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 28608,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 28608,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 28,608 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (28,608 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4124,10 +6398,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4317,10 +6641,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4366,10 +6740,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 48000,
+        "channels": 6,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -4463,10 +6887,70 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -4554,7 +7038,45 @@
        2
       ]
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 20352,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -4566,6 +7088,17 @@
      "status": "noted",
      "kind": "channels-differ",
      "reason": "FDK outputs 2 channels where the analyzer reports 1; FDK widens a mono stream with SBR to two output channels when parametric stereo is possible (psPossible in aacdecoder_lib.cpp)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
      "statusSource": "rule"
     }
    ],
@@ -4630,10 +7163,70 @@
       "extAot": 5,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20352,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 20352,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 20,352 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": null,
@@ -4759,7 +7352,30 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [],
@@ -4808,7 +7424,45 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 20480,
+        "primingFrames": 0,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -4857,7 +7511,30 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [],
@@ -4906,7 +7583,30 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [],
@@ -4936,9 +7636,9 @@
       0
      ],
      "analyzer": 3072,
-     "reference": null,
-     "referencePath": null,
-     "referenceKind": null,
+     "reference": 3072,
+     "referencePath": "coreaudio converter",
+     "referenceKind": "official",
      "witnesses": {
       "ffmpeg": null
      },
@@ -4946,12 +7646,53 @@
       1
      ],
      "refused": "FDK AAC outputs nothing for any of its 3 units (0x2008)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
       }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 1,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 1,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 960,
+       "decoderSamples": 960,
+       "format": {
+        "rate": 1,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 960,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 1,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "format": {
+      "rate": 1,
+      "channels": 2
      }
     }
    ],
@@ -4964,6 +7705,17 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 3 units (0x2008); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 960,
+     "analyzer": 3072,
+     "reference": 3072,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 960 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (960 valid frames, 0 remainder); the coded stage is the converter's",
      "statusSource": "rule"
     }
    ],
@@ -5044,10 +7796,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5093,7 +7895,35 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 11264,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 5,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "silentUnits": [
+        2,
+        3,
+        4
+       ]
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -5106,6 +7936,19 @@
      "kind": "analyzer-differs",
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared positions; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
+     "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 11264,
+     "analyzer": 20480,
+     "reference": 10240,
+     "status": "noted",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 10,240, Core Audio's converter 11,264, the analyzer 20,480 (the written rule gives keep unless a reading of the specification decides)",
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown.",
      "statusSource": "reviewed"
     }
    ],
@@ -5297,6 +8140,103 @@
      "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
      "status": "noted",
      "statusSource": "rule"
+    },
+    {
+     "index": 5,
+     "offset": 204,
+     "length": 33,
+     "ranges": [
+      [
+       204,
+       33
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": "aac.section-overrun",
+     "findings": [
+      "aac.section-overrun"
+     ],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    },
+    {
+     "index": 6,
+     "offset": 237,
+     "length": 30,
+     "ranges": [
+      [
+       237,
+       30
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 7,
+     "offset": 267,
+     "length": 27,
+     "ranges": [
+      [
+       267,
+       27
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 8,
+     "offset": 294,
+     "length": 24,
+     "ranges": [
+      [
+       294,
+       24
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 9,
+     "offset": 318,
+     "length": 20,
+     "ranges": [
+      [
+       318,
+       20
+      ]
+     ],
+     "decoder": "refused 0x62616461",
+     "samples": 0,
+     "finding": null,
+     "findings": [],
+     "source": "coreaudio converter",
+     "verdict": "decoder refused, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
     }
    ],
    "unitList": {
@@ -5375,10 +8315,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 481
+      },
+      "reader": {
+       "samples": 10176,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 10176,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 10,176 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5440,7 +8430,45 @@
       "firstUnit": 0,
       "ratio": "44100/22050"
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 10176,
+       "decoderSamples": 10176,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 10176,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
    "differences": [
@@ -5452,8 +8480,19 @@
      "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 12 frames (24,576 samples) at 44100 Hz, from unit 0, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. Rate differs; revisited in step 5. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK and the Windows transform apply it (24,576), the analyzer, ffmpeg and Core Audio do not (12,288). The owners' decoders disagree.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. The configuration signals SBR absent and all 12 blocks hold SBR data: FDK applies it (24,576 at 44,100 Hz); Core Audio's converter (12,288 at 22,050 Hz, built from the first playable entry of the file's format list), the analyzer and ffmpeg do not. The keep stands by that decision, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here); FDK alone differs and no reading of the specification decides.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 10176,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 10,176 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (10,176 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -5533,10 +8572,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5630,10 +8719,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5743,10 +8882,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5792,10 +8981,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5841,10 +9080,60 @@
       "extAot": 0,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 8192,
+       "decoderSamples": 8192,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 6080,
+       "decoderSamples": 6080,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 6080,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 6080,
+     "analyzer": 8192,
+     "reference": 8192,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 6,080 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (6,080 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 3,
@@ -5911,10 +9200,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 18368,
+       "decoderSamples": 18368,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 18368,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18368,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 18,368 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (18,368 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -5976,7 +9315,34 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 9216,
+       "decoderSamples": 9216,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 0,
+       "notFedUnits": 10,
+       "silentUnits": [
+        9
+       ]
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -5988,6 +9354,7 @@
      "status": "explained",
      "kind": "analyzer-differs",
      "reason": "the excess of 1,024 samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps",
+     "alignment": "the samples-definition alignment counts the cut sample: the analyzer then equals FDK (10,240) and Core Audio's converter (9,216) is the decoder that differs, which its cross-check statuses (rule 2) leave to the lead",
      "statusSource": "rule"
     },
     {
@@ -6065,10 +9432,60 @@
       "extAot": 5,
       "frameSize": 1024
      },
-     "flushedSamples": 1024
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 22464,
+       "decoderSamples": 22464,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": {
+        "validFrames": 22464,
+        "primingFrames": 2112,
+        "remainderFrames": 0
+       },
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 22464,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "noted",
+     "kind": "reader-priming",
+     "reason": "ExtAudioFile outputs 22,464 samples: the file states no priming or padding and the reader's own packet table drops 2,112 frames of priming at the core rate (22,464 valid frames, 0 remainder); the coded stage is the converter's",
+     "statusSource": "rule"
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "mp4",
@@ -6103,11 +9520,32 @@
      },
      "analyzerRates": [],
      "refused": "FDK AAC outputs nothing for any of its 10 units (0x2007)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": null,
        "error": "no audio stream"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 0,
+        "channels": 1,
+        "framesPerPacket": 0
+       },
+       "refusedUnits": 10,
+       "noOutputUnits": 0,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x7768743F)"
       }
      }
     }
@@ -6121,6 +9559,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 10 units (0x2007); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 10 units (10 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6185,7 +9633,41 @@
       "extAot": 0,
       "frameSize": 2048
      },
-     "flushedSamples": 2048
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 61440,
+       "decoderSamples": 61440,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     }
     }
    ],
    "differences": [],
@@ -6225,7 +9707,28 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 27,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -6237,6 +9740,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6276,7 +9789,28 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 27,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -6288,6 +9822,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6327,7 +9871,28 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 27,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -6339,6 +9904,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6378,11 +9953,32 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
        "error": "[aac] Invalid vDk0[1]: 0"
+      }
+     },
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 27,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -6396,6 +9992,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 61440,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6435,7 +10041,28 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 30 units (0x0005)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio, rollout step 5), else ffmpeg"
+     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "usac",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 27,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
+     }
     }
    ],
    "differences": [
@@ -6447,6 +10074,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "FDK AAC outputs nothing for any of its 30 units (0x0005); FDK gives no reference; the next decoders of the rule (Core Audio, rollout step 5; Media Foundation, step 6) decide, and ffmpeg stays the reference where none decodes it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 30720,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Core Audio's converter outputs nothing for any of its 30 units (27 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -6464,5 +10101,10 @@
     "xHE-AAC (USAC)"
    ]
   }
- ]
+ ],
+ "counts": {
+  "files": 187,
+  "fed": 79,
+  "coreAudioCarried": 0
+ }
 }

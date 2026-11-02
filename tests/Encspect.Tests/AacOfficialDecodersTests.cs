@@ -7,11 +7,12 @@ namespace Encspect.Tests;
 
 // Holds the analyzer's AAC sample counts to tests/fixtures/{aac,adts,mp4}/official-decoders.json (docs/design/official-decoder-crosschecks.md, "Records and the comparison"):
 // for each fixture the reference figure of the coded stage, which is what Fraunhofer's FDK AAC decoder (2.0.2, concealment method 1) output when it was fed the units of the
-// file one at a time, per run of constant output format; every difference with its status; and the units it refuses, conceals or outputs nothing for beside the analyzer's
-// findings at the same bytes. A figure that equals the reference passes; one that differs passes only as a listed difference whose recorded analyzer figure it still is. The
-// findings of the aac codes (warnings and errors) must be the listed ones, so a finding that appears, goes or moves fails here. The trimmed figures (iTunSMPB, edit list)
-// have no reference until Core Audio (rollout step 5) and are not held. An entry whose SHA-256 is not the fixture's is stale: it is listed and does not fail, since a
-// regenerated fixture would otherwise need a new run before its pull request could pass. tests/fixtures/apple has no goldens, so its files are not read here.
+// file one at a time, per run of constant output format; where FDK gives none, the total of Core Audio's AudioConverter (macOS, rollout step 5); every difference with its status;
+// and the units they refuse, conceal or output nothing for beside the analyzer's findings at the same bytes. A figure that equals the reference passes; one that differs passes only
+// as a listed difference whose recorded analyzer figure it still is. The trimmed figures (iTunSMPB, edit list) are held to the total of Core Audio's ExtAudioFile at the core rate in
+// the same way, and so is the converter's total beside the coded figure. The findings of the aac codes (warnings and errors) must be the listed ones, so a finding that appears,
+// goes or moves fails here. An entry whose SHA-256 is not the fixture's is stale: it is listed and does not fail, since a regenerated fixture would otherwise need a new run before
+// its pull request could pass. tests/fixtures/apple has no goldens, so its files are not read here.
 public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
 {
     private static readonly string[] Statuses = ["explained", "noted", "pending", "follow", "keep", "build-dependent", "stale"];
@@ -60,6 +61,29 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
         Assert.Contains("8.0.1", run.GetProperty("ffmpeg").GetString(), StringComparison.Ordinal);
         Assert.Equal("v2.0.2", run.GetProperty("fdkAac").GetProperty("version").GetString());
         Assert.Equal(1, run.GetProperty("concealMethod").GetInt32());
+        JsonElement mac = run.GetProperty("coreAudio");
+        Assert.False(string.IsNullOrEmpty(mac.GetProperty("macOS").GetString()));
+        Assert.False(string.IsNullOrEmpty(mac.GetProperty("build").GetString()));
+        foreach (string key in new[] { "audioCodecs", "audioToolbox", "machine", "imageVersion", "runId" })
+        {
+            Assert.False(string.IsNullOrEmpty(mac.GetProperty(key).GetString()), $"{folder}: run.coreAudio.{key}");
+        }
+
+        JsonElement counts = document.RootElement.GetProperty("counts");
+        JsonElement[] recorded = [.. document.RootElement.GetProperty("files").EnumerateArray()];
+        Assert.Equal(recorded.Length, counts.GetProperty("files").GetInt32());
+        Assert.Equal(recorded.Count(f => !f.TryGetProperty("notFed", out _)), counts.GetProperty("fed").GetInt32());
+
+        // Entries whose Core Audio data a partial macOS run carried over from an earlier run say where they come from; the run record counts them and they are listed here.
+        JsonElement[] carried = [.. recorded.Where(f => f.TryGetProperty("coreAudioFrom", out _))];
+        Assert.Equal(carried.Length, counts.GetProperty("coreAudioCarried").GetInt32());
+        foreach (JsonElement entry in carried)
+        {
+            JsonElement from = entry.GetProperty("coreAudioFrom");
+            Assert.False(string.IsNullOrEmpty(from.GetProperty("run").GetString()), "coreAudioFrom.run");
+            Assert.False(string.IsNullOrEmpty(from.GetProperty("commit").GetString()), "coreAudioFrom.commit");
+            Note($"official decoders: {entry.GetProperty("path").GetString()} carries Core Audio data of run {from.GetProperty("run").GetString()} ({from.GetProperty("commit").GetString()![..7]}), not of run {run.GetProperty("id").GetString()}");
+        }
         Assert.Equal(Statuses, document.RootElement.GetProperty("statuses").EnumerateArray().Select(s => s.GetString()));
         foreach (JsonElement file in document.RootElement.GetProperty("files").EnumerateArray())
         {
@@ -123,14 +147,31 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
 
         Report report = Fixtures.AnalyzeMpeg(name);
         var figures = new Dictionary<string, long?>();
-        foreach (JsonElement figure in entry.GetProperty("figures").EnumerateArray().Where(f => f.GetProperty("stage").GetString() == "coded"))
+        foreach (JsonElement figure in entry.GetProperty("figures").EnumerateArray())
         {
             string id = figure.GetProperty("id").GetString()!;
-            long? actual = AnalyzerFigure(report, figure);
+            bool trimmed = figure.GetProperty("stage").GetString() == "trimmed";
+            long? actual = trimmed ? AnalyzerGapless(report, figure.GetProperty("analyzerFigure").GetString()!) : AnalyzerFigure(report, figure);
             figures[id] = actual;
 
+            // Core Audio's converter beside the coded figure: a total that differs from the analyzer's is listed as a difference of the converter, or is the reference's own.
+            if (!trimmed && figure.TryGetProperty("coreAudio", out JsonElement column) && column.TryGetProperty("converter", out JsonElement converter)
+                && converter.TryGetProperty("samples", out JsonElement converted) && converted.ValueKind == JsonValueKind.Number && converted.GetInt64() != actual)
+            {
+                long c = converted.GetInt64();
+                bool sameAsReference = figure.GetProperty("reference").ValueKind == JsonValueKind.Number && figure.GetProperty("reference").GetInt64() == c;
+                Assert.True(
+                    sameAsReference || entry.GetProperty("differences").EnumerateArray().Any(d => d.GetProperty("figure").GetString() == id && d.GetProperty("decoder").GetString() == "coreaudio converter"),
+                    $"{name}: Core Audio's converter gives {c} for {id}, the analyzer {actual?.ToString() ?? "absent"}, and no difference of the converter lists it");
+            }
+
+            if (!trimmed)
+            {
+                CheckColumns(name, entry, figure, id, actual);
+            }
+
             // The rates the figure was converted with are the analyzer's streams' rates, and every kind of difference a figure carries is listed.
-            HashSet<long> rates = [.. figure.GetProperty("analyzerRates").EnumerateArray().Select(r => r.GetInt64())];
+            HashSet<long> rates = figure.TryGetProperty("analyzerRates", out JsonElement recorded) ? [.. recorded.EnumerateArray().Select(r => r.GetInt64())] : [];
             if (rates.Count > 0)
             {
                 Assert.True(
@@ -183,7 +224,13 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                 continue;
             }
 
-            if (kind is "decoder-holds-blocks" or "rate-differs" or "channels-differ")
+            if (kind == "build-dependent")
+            {
+                Note($"official decoders: build-dependent {name} {id}: {difference.GetProperty("decoder").GetString()} gives {difference.GetProperty("value")} on another build; the figure stays {difference.GetProperty("reference")}");
+                continue;
+            }
+
+            if (kind is "decoder-holds-blocks" or "rate-differs" or "channels-differ" or "decoder-one-block-per-frame")
             {
                 Assert.True(actual == listed, $"{name}: the samples of {id} are {actual}; the list ({kind}) has the analyzer's {listed}");
                 if (status == "pending")
@@ -206,6 +253,13 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             }
 
             long value = difference.GetProperty("value").GetInt64();
+            if (difference.GetProperty("decoder").GetString() == "coreaudio converter" && kind == "coreaudio-differs")
+            {
+                // The value of the converter's difference is the total recorded beside the figure.
+                JsonElement figure = entry.GetProperty("figures").EnumerateArray().Single(f => f.GetProperty("id").GetString() == id);
+                Assert.Equal(value, figure.GetProperty("coreAudio").GetProperty("converter").GetProperty("samples").GetInt64());
+            }
+
             bool resolved = actual == value;
             if (resolved)
             {
@@ -241,9 +295,13 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
             bool Holds(Finding f) => IsUnitFinding(f)
                 && (ranges.Count == 0 ? f.Node!.Offset == offset : ranges.Any(r => f.Node!.Offset >= r.Start && f.Node.Offset < r.Start + r.Length));
             string[] expected = [.. unit.GetProperty("findings").EnumerateArray().Select(f => f.GetString()!)];
-            foreach (string code in expected)
+            // The units Core Audio's converter refuses carry their source; FDK's entries list every unit with a finding, so only those are counted.
+            if (!unit.TryGetProperty("source", out _))
             {
-                listedFindings[code] = listedFindings.GetValueOrDefault(code) + 1;
+                foreach (string code in expected)
+                {
+                    listedFindings[code] = listedFindings.GetValueOrDefault(code) + 1;
+                }
             }
 
             Assert.True(
@@ -296,6 +354,76 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
         }
 
         return rate is null ? total : total + AtRate(run, current?.Rate, rate.Value);
+    }
+
+    // Core Audio's columns beside a coded figure are held to the differences: a converter whose output format has a rate that none of the analyzer's runs has is listed as rate-differs; a
+    // reader total (a file without gapless data) that is not the analyzer's is listed with its total, as reader-priming only when the shortfall is exactly the priming of its packet table.
+    private static void CheckColumns(string name, JsonElement entry, JsonElement figure, string id, long? actual)
+    {
+        if (!figure.TryGetProperty("coreAudio", out JsonElement column))
+        {
+            return;
+        }
+
+        JsonElement[] differences = [.. entry.GetProperty("differences").EnumerateArray().Where(d => d.GetProperty("figure").GetString() == id)];
+        if (column.TryGetProperty("converter", out JsonElement converter) && converter.TryGetProperty("format", out JsonElement format) && format.ValueKind == JsonValueKind.Object
+            && figure.TryGetProperty("analyzerRates", out JsonElement rates) && rates.GetArrayLength() > 0 && !converter.TryGetProperty("refusesStream", out _))
+        {
+            long rate = format.GetProperty("rate").GetInt64();
+            bool known = rates.EnumerateArray().Any(r => r.GetInt64() == rate);
+            Assert.True(
+                known || differences.Any(d => d.GetProperty("decoder").GetString() == "coreaudio converter" && d.GetProperty("kind").GetString() == "rate-differs"),
+                $"{name}: the converter outputs {rate} Hz, which none of the analyzer's runs has, and no rate-differs difference lists it");
+            Assert.True(
+                !known || !differences.Any(d => d.GetProperty("decoder").GetString() == "coreaudio converter" && d.GetProperty("kind").GetString() == "rate-differs"),
+                $"{name}: a rate-differs difference of the converter for a rate the analyzer has");
+        }
+
+        if (column.TryGetProperty("reader", out JsonElement reader) && reader.TryGetProperty("samples", out JsonElement total) && total.ValueKind == JsonValueKind.Number
+            && figure.GetProperty("reference").ValueKind == JsonValueKind.Number)
+        {
+            long samples = total.GetInt64();
+            JsonElement[] listed = [.. differences.Where(d => d.GetProperty("decoder").GetString() == "coreaudio reader")];
+            if (samples == actual)
+            {
+                Assert.Empty(listed);
+                return;
+            }
+
+            JsonElement difference = Assert.Single(listed);
+            Assert.Equal(samples, difference.GetProperty("value").GetInt64());
+            Assert.Equal(actual, difference.GetProperty("analyzer").GetInt64());
+            string kind = difference.GetProperty("kind").GetString()!;
+            JsonElement table = reader.TryGetProperty("packetTable", out JsonElement t) ? t : default;
+            bool priming = table.ValueKind == JsonValueKind.Object && table.GetProperty("primingFrames").GetInt64() > 0 && table.GetProperty("validFrames").GetInt64() > 0
+                && actual - samples == (2 * table.GetProperty("primingFrames").GetInt64() * samples + table.GetProperty("validFrames").GetInt64()) / (2 * table.GetProperty("validFrames").GetInt64());
+            Assert.Equal(priming ? "reader-priming" : "witness-differs", kind);
+        }
+    }
+
+    // The figure of the first "Gapless" node of the report (the first track's) with the given name, as the comparison reads it.
+    private static long? AnalyzerGapless(Report report, string name)
+    {
+        Node? gapless = FindNode(report.Root, "Gapless");
+        return gapless?.Children.FirstOrDefault(c => c.Name == name)?.Value?.AsInteger();
+    }
+
+    private static Node? FindNode(Node node, string name)
+    {
+        if (node.Name == name)
+        {
+            return node;
+        }
+
+        foreach (Node child in node.Children)
+        {
+            if (FindNode(child, name) is { } found)
+            {
+                return found;
+            }
+        }
+
+        return null;
     }
 
     private static long AtRate(long samples, long? from, long to) => from is null or 0 || from == to ? samples : (2 * samples * to + from.Value) / (2 * from.Value);

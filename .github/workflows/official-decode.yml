@@ -11,6 +11,8 @@ name: Cross-checks by the formats' official decoders
 #             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3);
 #             Fraunhofer's FDK AAC 2.0.2 through fdk_decode.c over every AAC fixture of tests/fixtures/{aac,adts,apple,mp4}, its variants and the downloaded
 #             samples (rollout step 4)
+#   macos     Core Audio (AudioToolbox) through macos/audiotoolbox_probe.c: ExtAudioFile on the file and AudioConverter fed the units, over every AAC, AC-3 and E-AC-3 fixture,
+#             the variants of a fixed list of undamaged files and the downloaded samples (rollout step 5)
 #   compare   the comparison of the records of every decoder job
 #   probe-*   the probe of rollout step 1 (FDK AAC, tta, Core Audio, Media Foundation): Run workflow with probe set
 on:
@@ -36,7 +38,7 @@ jobs:
   linux:
     name: libopus, libvorbis, libtta-c and FDK AAC on ubuntu-26.04
     runs-on: ubuntu-26.04
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v5
 
@@ -119,11 +121,12 @@ jobs:
 
       # The samples that are pinned by SHA-256 and never committed (sbr-samples.json, usac-samples.json); one that no address serves is listed and skipped. The folder holds media
       # and is not uploaded.
+      # fate-suite.ffmpeg.org was slow for hours on 2026-11-02 (one sample took 12 minutes): the retry budget of downloads.py is 20 minutes, so the step has 30.
       - name: Download the AAC samples
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
-        run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples | tee out-aac-fetch.txt
+        run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples 1200 | tee out-aac-fetch.txt
 
       - name: Decode the AAC files, their variants and the samples with FDK AAC
         # The artifact is uploaded even if this step runs out of time (environment.json is written first).
@@ -144,12 +147,51 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+  macos:
+    name: Core Audio on macos-15
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      # The same minor version of Python as the Linux job (3.12; the patch version differs and is recorded), so that the unit lists and the derived variants are made the same way.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build the AudioToolbox harness
+        run: |
+          mkdir -p build
+          clang -O2 -Wall scripts/fixtures/macos/audiotoolbox_probe.c -framework AudioToolbox -framework CoreFoundation -o build/audiotoolbox_probe
+
+      # The samples that are pinned by SHA-256 and never committed; one that no address serves is listed and skipped. The folder holds media and is not uploaded.
+      - name: Download the AAC samples
+        timeout-minutes: 30
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 -I scripts/fixtures/fetch_aac_samples.py build/aac-samples 1200 | tee out-aac-fetch.txt
+
+      - name: Decode the AAC, AC-3 and E-AC-3 files, the variants and the samples with Core Audio
+        # The artifact is uploaded even if this step runs out of time (environment.json is written first).
+        timeout-minutes: 10
+        run: |
+          python3 -I scripts/fixtures/official_decode.py coreaudio --out out-coreaudio --probe build/audiotoolbox_probe --downloaded build/aac-samples
+          cp out-aac-fetch.txt out-coreaudio/fetch.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: official-decode-macos
+          path: out-coreaudio
+          retention-days: 30
+          if-no-files-found: error
+
   compare:
     name: Comparison with the analyzer and ffmpeg on ubuntu-26.04
     runs-on: ubuntu-26.04
-    needs: [linux]
+    needs: [linux, macos]
     if: always()
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v5
 
@@ -173,10 +215,12 @@ jobs:
 
       # The downloaded samples again (the artifacts hold records, never media), for the analyzer's figures and ffmpeg's column.
       - name: Download the AAC samples
-        timeout-minutes: 15
+        timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
-        run: python3 -I scripts/fixtures/fetch_aac_samples.py aac-samples
+        run: |
+          mkdir -p comparison
+          python3 -I scripts/fixtures/fetch_aac_samples.py aac-samples 1200 | tee comparison/fetch.txt
 
       # The analyzer's figures of the derived variants come from the command line program; the committed fixtures use their golden reports.
       - name: Build the command line program
@@ -195,10 +239,11 @@ jobs:
           python3 -I scripts/fixtures/compare_official_decoders.py --encspect cli-out/encspect --run-id "$GITHUB_RUN_ID" --out comparison \
             --write-official comparison/official-decoders.ogg.draft.json --previous tests/fixtures/ogg/official-decoders.json \
             --write-official-tta comparison/official-decoders.tta.draft.json --previous-tta tests/fixtures/tta/official-decoders.json \
-            --write-official-aac comparison/aac-drafts --downloaded aac-samples artifacts
+            --write-official-aac comparison/aac-drafts --write-official-ac3 comparison/official-decoders.ac3.draft.json --downloaded aac-samples artifacts
           { echo '```'; awk '/^Differences/{f=1} f' comparison/comparison.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           { echo 'TTA'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-tta.txt | head -c 400000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           { echo 'AAC'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-aac.txt | grep -v '^derived ' | head -c 300000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo 'AC-3 and E-AC-3'; echo '```'; awk '/^Differences/{f=1} f' comparison/comparison-ac3.txt | head -c 200000; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         if: always()
