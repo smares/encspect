@@ -831,6 +831,13 @@ def coreaudio_differences(figures, analyzer, record, ca):
         entry = column.get("converter")
         if not entry:
             continue
+        if entry.get("samples") is None and (entry.get("why") or "").startswith("did not open"):
+            agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "explained" if agrees else "noted", "kind": "decoder-refuses-stream",
+                                **({"ownersDisagree": True} if agrees else {}),
+                                "reason": "Core Audio cannot build a converter for the stream (%s)%s" % (entry["why"], "; the analyzer equals the reference (fdk direct, %s): the owners' decoders disagree" % show(r) if agrees
+                                                                                                          else "; no reference from it")})
+            continue
         if entry.get("noReference"):
             differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": entry["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-one-block-per-frame",
                                 "reason": entry["noReference"]})
@@ -1001,6 +1008,15 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
     if coreaudio and not coreaudio.get("notFed"):
         differences += coreaudio_differences(figures, analyzer, record, coreaudio)
         units = units + coreaudio_unit_verdicts(coreaudio, analyzer)
+        # The samples-definition alignment counts a cut MP4 sample by its declared positions: the analyzer then equals FDK, which conceals a frame for it, and Core Audio, which equals the analyzer
+        # today, is the one that differs.
+        for figure in figures:
+            converter = (figure.get("coreAudio") or {}).get("converter") or {}
+            if figure["stage"] == "coded" and record["unitList"].get("kind") == "mp4" and record["unitList"].get("cutUnits") and converter.get("samples") == figure["analyzer"]:
+                for d in differences:
+                    if d["figure"] == figure["id"] and d["decoder"] == "fdk direct" and d["kind"] == "analyzer-differs" and "frames FDK conceals" in d.get("reason", ""):
+                        d["alignment"] = ("the samples-definition alignment counts the cut sample: the analyzer then equals FDK (%s) and Core Audio's converter (%s) is the decoder that differs, which its cross-check statuses "
+                                          "(rule 2) leave to the lead" % (show(d["value"]), show(converter["samples"])))
     return {"figures": figures, "differences": differences, "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
 
 

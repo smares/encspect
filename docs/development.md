@@ -1099,9 +1099,9 @@ The same workflow feeds the AAC fixtures to Fraunhofer's FDK AAC decoder, to tel
     - `crc-blocks.aac`: 20,480 / 17,408 (no reference, 3 held) / none (exit 69) / 0 / 0;
     - `blocks-trailing-bytes.aac`: 20,480 / 19,456 (no reference, 1 held) / 20,480 / 10,240 / 0;
     - `crc-blocks-damaged.aac`: 20,480 / 13,312 (no reference, 3 held, and the blocks of a refused unit) / none (exit 69) / 0 / 0, `keep` for its own reason too: the CRC-failing blocks carry `aac.crc-mismatch` and count as positions.
-  - `sbr-in-frames-failing-crc.aac` (`pending`, awaiting step 5): 12,288 / none (0x0005 for every unit) / 24,576 / 24,576 / 0. Core Audio decodes it and becomes its reference.
+  - `sbr-in-frames-failing-crc.aac` (FDK's entry `noted` since step 5): 12,288 / none (0x0005 for every unit) / 24,576 / 24,576 / 0. Core Audio decodes it and is its reference; see step 5 below for what is left.
   - Main, LTP and SSR (`ffmpeg-main.aac`, `ffmpeg-ltp.aac`, `ltp.aac`, `main-prediction.aac`, `main-prediction-bands.aac`, `ssr-gain-control.aac`; `explained`): FDK gives no output, ffmpeg equals the analyzer. The other streams FDK gives no count for (`noted`) are hand-built.
-  - The nine `faac-style-*.aac` files: 65,536 / 65,536 / 65,536 / 61,440 / 65,536. FDK equals the analyzer, so there is no difference in this step; the owners' decoders disagree with Core Audio, which the project lead approved as `explained` when step 5 gives its column.
+  - The nine `faac-style-*.aac` files: 65,536 / 65,536 / 65,536 / 61,440 / 65,536. FDK equals the analyzer, so there is no FDK difference; Core Audio's column is `explained` since step 5, as the project lead approved (below).
   - Six figures with `channels-differ` (`noted`), above.
   - Units in the committed files: 28 agree (FDK refuses or conceals and an `aac` finding is at the same bytes; for example `crc-stereo-damaged.aac` unit 3, 0x4005, `aac.crc-mismatch`), 42 are `noted` and none is `pending`:
     - findings where FDK decodes: reserved or invalid fields that FDK reads, and 0x1001 sync errors on the trailing bytes of `blocks-trailing-bytes.aac`;
@@ -1116,7 +1116,7 @@ The same workflow feeds the AAC fixtures to Fraunhofer's FDK AAC decoder, to tel
     - **cut in the middle or last sample** (35 each): FDK one concealed frame more in all 35 (`explained`);
     - the 11 variants with a `rate-differs` (`pending` by rule): the five of `faac-2.1-he-51-adts.aac` and six changed-byte variants of other HE-AAC files;
     - 3 units are `pending`, in `exhale-sbr.flip-byte.m4a` at 2,445, 2,497 and 2,547 (concealed 0x4002, no finding): the analyzer does not read the payloads of xHE-AAC (USAC) yet ([aac.md](formats/aac.md), "Not yet covered").
-- The analyzer has not been changed. The one `pending` item in the committed files is `sbr-in-frames-failing-crc.aac`, awaiting step 5; the `keep` items for a rate difference (`faac-2.1-he-51-adts.aac`, `sbr-signaled-absent.m4a`, `sbr-in-one-block.aac`, `sbr-in-three-blocks.aac`) are revisited with the Core Audio and Windows columns.
+- The analyzer has not been changed. `sbr-in-frames-failing-crc.aac` and the `keep` items for a rate difference (`faac-2.1-he-51-adts.aac`, `sbr-signaled-absent.m4a`, `sbr-in-one-block.aac`, `sbr-in-three-blocks.aac`) were revisited with Core Audio's column in step 5 (below).
 
 ### WMA Voice
 
