@@ -61,7 +61,7 @@ public class OggFixtureTests
 
     // libvorbis continues its sample count from every page's granule position, so a repeated packet or a jump of the positions in
     // the middle is not charged to the end trimming (oggdec writes 30,220 and 29,196 samples for these two files). Counted from the
-    // first page, the trims would be 1,524 (capped at the 1,024 the last packet returns, with vorbis.end-trimming-large) and 200.
+    // first page, the trims would be 1,524 (capped at the 1,024 the last packet returns, with vorbis.end-trimming-large) and 800.
     [Theory]
     [InlineData("ogg/vorbis-packet-repeated.ogg", 30_720, 500, 30_220)]
     [InlineData("ogg/vorbis-granule-midstream.ogg", 29_696, 500, 29_196)]

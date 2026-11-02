@@ -346,13 +346,13 @@ def vorbis_packet_repeated():
 
 
 def vorbis_granule_midstream():
-    # The positions from the page that ends at the 16th audio packet on are 300 above what the packets return, and the last is
+    # The positions from the page that ends at the 16th audio packet on are 300 below what the packets return, and the last is
     # 500 below its page's: the end trimming is counted from the latest page's position (libvorbis does so at every page), so it
-    # is the 500, not the 200 that counting from the first page would give.
+    # is the 500, not the 800 that counting from the first page would give.
     blocks = [1] * 30
     packets, granules = vorbis_stream(1, 44100, blocks, end_trim=500)
     for i in range(3 + 15, len(granules)):
-        granules[i] += 300
+        granules[i] -= 300
     f = single("vorbis-granule-midstream", packets, granules, Cuts(1, 2, 8, 12, 11), serial=0x0B0B000C, codec="Vorbis")
     f.finding("vorbis.granule-inconsistent", "not match the samples the packets before")
     f.write()
