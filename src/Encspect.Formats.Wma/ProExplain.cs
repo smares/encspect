@@ -64,7 +64,7 @@ internal static class ProExplain
     public const string StatFrames = "How many frames were read, including invalid ones.";
     public const string StatInvalidFrames = "How many frames failed one of the rules of the syntax and were dropped.";
     public const string StatFrameLength = "How many samples of each channel a frame holds.";
-    public const string StatSamples = "The samples counted from the frames read as FFmpeg's decoder outputs them: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut. Used where the rule fitted to Microsoft's decoder does not apply.";
+    public const string StatSamples = "The samples counted from the frames read as FFmpeg's decoder outputs them: the frames read, less the first, which only fills the overlap of the transform, and less the samples each frame's trims cut; the frames that start in the last packet of a stream without the length prefix are left out, since that decoder never reads them. Used where the rule fitted to Microsoft's decoder does not apply.";
     // The rule is in docs/design/wma-pro-format.md, "What Encspect reports".
     public const string StatSamplesDecoder = "Counted by the rule fitted to the output of Microsoft's WMA decoder in black-box runs: frames × frame length + (frame length − the largest last subframe of the last frame) / 2, less the first frame's start trim (or half a frame and half its largest first subframe where it states none) and the last frame's end trim, at most that frame's output.";
     public const string StatTrimmedSamples = "The sum of the start and end trims the frames state; what a decoder cuts can differ (see Samples).";

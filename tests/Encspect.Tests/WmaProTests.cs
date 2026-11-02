@@ -564,8 +564,8 @@ public class WmaProTests
         Assert.StartsWith(RuleCount, DescriptionOfSamples(context), StringComparison.Ordinal);
     }
 
-    // A frame that starts in the last packet and fails (bits of the first one, 16 bits after the prefix of the packet's header, set) is a finding,
-    // and the stream keeps the frames' count.
+    // A frame that starts in the last packet and fails (every third bit of the 600 bits that follow the first 8 bits of the first whole frame
+    // there is set) is a finding, and the stream keeps the count of FFmpeg's decoder, which reads none of that packet's frames.
     [Fact]
     public void ADamagedFrameInTheLastPacketWithoutTheLengthPrefixKeepsTheFramesCount()
     {
@@ -580,6 +580,96 @@ public class WmaProTests
         CodecContext context = stream.RunPro();
         Assert.Contains(context.Findings, f => f.Code == "wma.frame-invalid");
         Assert.StartsWith(FramesCount, DescriptionOfSamples(context), StringComparison.Ordinal);
+    }
+
+    private static (int Frames, int LastSize) FramesAndLastSize(Node stream)
+    {
+        Node last = Assert.Single(Count(stream, "Frames")).Children[^1];
+        int size = WmaStream.Child(last, "Tile Header").Children.Max(c => int.Parse(c.Value!.ToString()!.Split(',')[^1]));
+        return (Assert.Single(Count(stream, "Frames")).Children.Count, size);
+    }
+
+    // The stream without the length prefix cut after a packet: the last packet's run ends inside a frame no packet finishes. As with the
+    // prefix this is the information that the last packet ends in an unfinished frame, not an invalid frame, and the rule counts the frames
+    // read: N x 2,048 + (2,048 - L) / 2 less the first frame's start trim of 2,048 (the cut stream has no end trim), L the largest, over the
+    // channels, of the last subframe of the last frame. The basis is the rule fitted to Microsoft's decoder; the prefix variants cut open
+    // (cut-open-3 and the like) are the ones Windows gave this figure for.
+    [Theory]
+    [InlineData(3)]
+    [InlineData(6)]
+    [InlineData(9)]
+    public void ARunTheLastPacketCannotFinishIsAnUnfinishedFrame(int packets)
+    {
+        WmaStream stream = WmaStream.LoadPro().WithoutLengthPrefix();
+        stream.Objects = stream.Objects[..packets];
+        CodecContext context = stream.RunPro();
+        Node node = WmaStream.StreamNode(context);
+        Finding finding = Assert.Single(context.Findings);
+        Assert.Equal("wma.frame-unfinished", finding.Code);
+        Assert.Equal(Severity.Info, finding.Severity);
+        (int frames, int lastSize) = FramesAndLastSize(node);
+        Assert.Equal(frames.ToString(), WmaStream.Statistic(node, "Frames"));
+        Assert.StartsWith(RuleCount, DescriptionOfSamples(context), StringComparison.Ordinal);
+        Assert.Equal($"{(frames * 2048) + ((2048 - lastSize) / 2) - 2048} samples", WmaStream.Statistic(node, "Samples"));
+    }
+
+    // The last frame says another follows (its trailer bit is set) and zero padding is all that is left: the padding is not read as a frame.
+    // All 66 frames are read, the finding is the information, and the rule gives the original's 132,300.
+    [Fact]
+    public void ZeroPaddingAfterALastFrameThatSaysAnotherFollowsIsNotAFrame()
+    {
+        CodecContext context = WmaStream.LoadPro().WithoutLengthPrefix(true).RunPro();
+        Node node = WmaStream.StreamNode(context);
+        Finding finding = Assert.Single(context.Findings);
+        Assert.Equal("wma.frame-unfinished", finding.Code);
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Equal("66", WmaStream.Statistic(node, "Frames"));
+        Assert.Equal("132300 samples", WmaStream.Statistic(node, "Samples"));
+    }
+
+    // The last media object is shorter than the block alignment: a loss is pending at the end, so the run of the packet before is dropped as at
+    // every other packet, and the frames in it are not read: no invalid frame next to the packet's warning.
+    [Fact]
+    public void ALossPendingAtTheEndDropsTheLastRun()
+    {
+        WmaStream whole = WmaStream.LoadPro().WithoutLengthPrefix();
+        int withRun = int.Parse(WmaStream.Statistic(WmaStream.StreamNode(whole.RunPro()), "Frames"));
+        WmaStream stream = WmaStream.LoadPro().WithoutLengthPrefix();
+        stream.Objects[^1] = stream.Objects[^1][..100];
+        CodecContext context = stream.RunPro();
+        Assert.Contains(context.Findings, f => f.Code == "wma.packet-short");
+        Assert.DoesNotContain(context.Findings, f => f.Code is "wma.frame-invalid" or "wma.frame-unfinished");
+        Assert.True(int.Parse(WmaStream.Statistic(WmaStream.StreamNode(context), "Frames")) < withRun - 1);
+        Assert.StartsWith(FramesCount, DescriptionOfSamples(context), StringComparison.Ordinal);
+    }
+
+    // The packet limit cuts the stream where a run goes on in a packet nobody read: the run is dropped, with no frame-invalid next to
+    // wma.records-limit.
+    [Fact]
+    public void ARunCutByTheRecordsLimitIsDropped()
+    {
+        WmaStream stream = WmaStream.LoadPro().WithoutLengthPrefix();
+        CodecContext context = stream.Run(new WmaProParser { PacketLimit = 5 });
+        Assert.Contains(context.Findings, f => f.Code == "wma.records-limit");
+        Assert.DoesNotContain(context.Findings, f => f.Code is "wma.frame-invalid" or "wma.frame-unfinished");
+    }
+
+    // A stream without the length prefix that fails the rule (a sequence number out of order) keeps FFmpeg's count, which never reads the
+    // frames of the last packet: (frames listed less those that start in the last packet, less the first, which only fills the overlap) x 2,048.
+    [Fact]
+    public void TheFallbackCountLeavesOutTheFramesOfTheLastPacket()
+    {
+        WmaStream stream = WmaStream.LoadPro().WithoutLengthPrefix();
+        WmaStream.SetBits(stream.Objects[4], 0, 4, (WmaStream.GetBits(stream.Objects[4], 0, 4) + 5) & 15);
+        CodecContext context = stream.RunPro();
+        Assert.Contains(context.Findings, f => f.Code == "wma.packet-sequence");
+        Assert.StartsWith(FramesCount, DescriptionOfSamples(context), StringComparison.Ordinal);
+        Node node = WmaStream.StreamNode(context);
+        long lastPacket = 200 + ((stream.Objects.Count - 1) * 20_000L);
+        int listed = Assert.Single(Count(node, "Frames")).Children.Count;
+        int flushed = Assert.Single(Count(node, "Frames")).Children.Count(f => f.Offset >= lastPacket);
+        Assert.True(flushed > 0);
+        Assert.Equal($"{(listed - flushed - 1) * 2048} samples", WmaStream.Statistic(node, "Samples"));
     }
 
     // Without the length prefix a frame's end is found by reading it, and the frames of a packet are read when the next one has supplied their

@@ -47,9 +47,9 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
     // The same Professional stream written without the length prefix: its frames are found by their prefixes, which are removed (the skipped
     // bit before the trailer bit ends a frame), joined one after another with every trailer bit set but the last one's, and cut again into
     // packets of the block alignment, each with its sequence number, the two bits and the count of bits that finish the frame before. The
-    // last packet is padded with zero bits. The frames that start in the last packet are whole in its payload
+    // last packet is padded with zero bits (isLastTrailerSet: the last frame's trailer bit says another frame follows). The frames that start in the last packet are whole in its payload
     // (docs/design/wma-pro-format.md, "Frames without the length prefix").
-    public WmaStream WithoutLengthPrefix()
+    public WmaStream WithoutLengthPrefix(bool isLastTrailerSet = false)
     {
         int width = 31 - int.LeadingZeroCount(Format.BlockAlign) + 4;
         int headerBits = 6 + width;
@@ -103,7 +103,7 @@ internal sealed class WmaStream(List<byte[]> objects, AudioFormat format, byte[]
         {
             starts.Add(stripped.Count);
             stripped.AddRange(frame.GetRange(width, frame.Count - width));
-            stripped[^1] = frame != frames[^1];
+            stripped[^1] = frame != frames[^1] || isLastTrailerSet;
         }
 
         int size = (Format.BlockAlign * 8) - headerBits;

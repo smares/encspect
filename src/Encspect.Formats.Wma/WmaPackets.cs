@@ -23,6 +23,8 @@ internal sealed class WmaPacketReader
     private readonly Func<int, string> _reason;
     private readonly int _bufferBytes;
     private bool _isFirstOfRun;
+    private bool _isFlush;
+    private readonly int _maxPackets;
     private readonly TraceWriter _trace = new();
     private readonly byte[] _packetBuffer;
     private byte[] _savedBuffer = new byte[64];
@@ -59,8 +61,9 @@ internal sealed class WmaPacketReader
     private readonly List<int> _secondFrames = [];
     private int _lastValidSecond = -1;
 
-    public WmaPacketReader(IStreamParameters parameters, IFrameSyntax syntax, bool isLossless, int channels, Func<int, string> reason, CodecContext context, FindingCollector findings)
+    public WmaPacketReader(IStreamParameters parameters, IFrameSyntax syntax, bool isLossless, int channels, Func<int, string> reason, CodecContext context, FindingCollector findings, int maxPackets = MaxPackets)
     {
+        _maxPackets = maxPackets;
         _p = parameters;
         _context = context;
         _findings = findings;
@@ -175,7 +178,7 @@ internal sealed class WmaPacketReader
                 _context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (Data.Packets.Count >= MaxPackets)
+            if (Data.Packets.Count >= _maxPackets)
             {
                 Skipped++;
                 continue;
@@ -492,12 +495,76 @@ internal sealed class WmaPacketReader
     }
 
     // The frames that start in the last packet: no packet follows to supply their last bits, but the saved run holds whole frames and is read
-    // as every other run is (docs/design/wma-pro-format.md, "Frames without the length prefix").
+    // as every other run is (docs/design/wma-pro-format.md, "Frames without the length prefix"). A run is dropped where a loss is pending or a
+    // packet was skipped (its last frame goes on in a packet nobody read). A frame the run cannot finish, and zero bits after a frame that says
+    // another follows, are an unfinished frame as with the length prefix, not an invalid one. FFmpeg never reads these frames, so they stay
+    // out of the count it gives (the fallback).
     private void FlushWithoutPrefix()
     {
         _framesInCall = 0;
         _isReturnedInCall = false;
-        ReadWithoutPrefix(Data.Packets.Count - 1, 0, 0, 0, false);
+        int total = _savedBits;
+        if (_isLoss || Skipped > 0 || total == 0)
+        {
+            ClearSaved();
+            return;
+        }
+
+        byte[] buffer = new byte[((total + 7) / 8) + 8];
+        BitCopy.Copy(_savedBuffer, 0, buffer, 0, total);
+        var parts = new List<FramePart>(_saved);
+        var joined = new Bits(buffer, total);
+        int position = 0;
+        int unfinished = 0;
+        _isFlush = true;
+        while (position < total)
+        {
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            FrameOutcome probe = _reader.Read(joined, position, total, 0, _trace);
+            if (probe.Fault != 0 && position + probe.Bits >= total)
+            {
+                unfinished = total - position;
+                break;
+            }
+
+            FrameOutcome result = ReadOne(joined, position, total, 0, [], parts, position);
+            position += Math.Max(result.Bits, 1);
+            if (!result.IsValid)
+            {
+                MarkLoss();
+                break;
+            }
+
+            if (!result.Trailer)
+            {
+                break;
+            }
+
+            if (position < total && IsZero(joined, position, total))
+            {
+                unfinished = total - position;
+                break;
+            }
+        }
+
+        _isFlush = false;
+        ClearSaved();
+        UnfinishedBits = _isLoss ? 0 : unfinished;
+        MostFramesInPacket = Math.Max(MostFramesInPacket, _framesInCall);
+    }
+
+    private static bool IsZero(Bits bits, int from, int to)
+    {
+        bits.Position = from;
+        while (bits.Position < to)
+        {
+            if (bits.ReadBit() != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void ReadWithoutPrefix(int packet, int end, int payloadStart, int count, bool isDropped)
@@ -963,7 +1030,7 @@ internal sealed class WmaPacketReader
         {
             Samples += OutputOf(result);
         }
-        else if (result.AreSubframesRead || result.Fault == (int)ProFault.NeedsMoreBits)
+        else if (!_isFlush && (result.AreSubframesRead || result.Fault == (int)ProFault.NeedsMoreBits))
         {
             // A decoder reads on to the end of the subframes past the bits a frame has, so a frame that reads past its end got there too. A frame
             // that fails only the check of its length, or reads past its end, is output where a decoder returns it from the call that

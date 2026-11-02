@@ -565,10 +565,23 @@ def pro_rule_samples(report, frames, length):
     return max(0, end - start_cut - end_cut)
 
 
+def flushed_frames(report, stream):
+    """The numbers of the frames ffmpeg never reads: those that start in the last packet of a Professional stream without the length prefix,
+    which the analyzer reads after the last packet from the run it leaves (ffmpeg reads a packet's frames when the next packet arrives)."""
+    if named(report, "Has Length Prefix", stream["name"]) is not False:
+        return set()
+    packets = next((c for c in stream.get("children", []) if c["name"] == "Packets"), {}).get("children", [])
+    frames = next((c for c in stream.get("children", []) if c["name"] == "Frames"), {}).get("children", [])
+    if not packets:
+        return set()
+    return {i for i, f in enumerate(frames) if f["offset"] >= packets[-1]["offset"]}
+
+
 def check_wma_frames(path, codec, problems):
     """The sample count of each frame ffmpeg's decoder outputs (framecrc's duration column) against the golden report's frames; where the
     frames start and end in the file is not compared. Their total is ffmpeg's count, which the frames give (the frames' count).
-    Professional's first frame only fills the overlap of the transform and is not output; a trim of a frame's whole length or more removes
+    Professional's first frame only fills the overlap of the transform and is not output; the frames that start in the last packet of a stream
+    without the length prefix are not read by ffmpeg and are left out of the comparison (flushed_frames); a trim of a frame's whole length or more removes
     the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied).
     The golden report's samples are ffmpeg's count, except for a Professional stream the rule of Microsoft's decoder applies to (pro_rule_samples):
     there they are that rule's figure, which differs from ffmpeg's where the last frame ends in subframes smaller than the frame."""
@@ -583,8 +596,9 @@ def check_wma_frames(path, codec, problems):
         return
     expected = []
     skipped_first = codec == "Windows Media Audio Lossless"
-    for frame in frames.get("children", []):
-        if str(frame.get("value", "")).startswith("invalid"):
+    unread = flushed_frames(report, stream) if codec == "Windows Media Audio Professional" else set()
+    for number, frame in enumerate(frames.get("children", [])):
+        if str(frame.get("value", "")).startswith("invalid") or number in unread:
             continue
         start, end = trim_of(frame)
         if not skipped_first:

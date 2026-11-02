@@ -321,7 +321,7 @@
    "info_findings": [
     "wma.frame-unfinished"
    ],
-   "samples_differ": "the file ends in an unfinished frame and Microsoft's rule gives what Windows outputs, 9,029,504; ffmpeg's count is the frames'"
+   "samples_differ": "the file ends in an unfinished frame and Microsoft's rule gives what the Windows Source Reader outputs, 9,029,504 (the decoder DMO outputs 48 kHz in two channels and gives half); ffmpeg's count is the frames'"
   },
   {
    "file": "classical_16_16_1_8000_off_0_off_1_29.wma",
