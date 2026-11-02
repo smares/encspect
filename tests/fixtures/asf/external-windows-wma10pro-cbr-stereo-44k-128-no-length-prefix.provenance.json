@@ -1,0 +1,64 @@
+{
+ "description": "external-windows-wma10pro-cbr-stereo-44k-128.wma written without the length prefix by make_wma_pro_no_length_prefix.py: the same frames, joined without their prefixes and cut into packets again, and the length prefix bit of the decode flags cleared. Not an encoder's output; it holds the frames of Media Foundation's transcoder (see that file's provenance) in the layout of a writer without the prefix, so the frames that start in the last packet, which a decoder reads, are covered.",
+ "encoder": {
+  "tool": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+  "path": "media-foundation",
+  "codec": "Windows Media Audio (WMA9, Media Foundation)",
+  "format_index": null,
+  "achieved_bitrate": 163837,
+  "format_description": "Media Foundation WMA9 at 128000 bps",
+  "format_tag": "0x0162",
+  "mode": "cbr",
+  "requested": {
+   "requestedChannels": 2,
+   "requestedRates": [
+    44100
+   ],
+   "requestedBitrate": 128000
+  },
+  "format_channels": 2,
+  "format_rate": 44100,
+  "format_bits": 16,
+  "format_bitrate": 128016,
+  "config_bitrate": null,
+  "buffer_window_ms": null,
+  "title": null,
+  "author": null
+ },
+ "input": {
+  "signal": "tones",
+  "channels": 2,
+  "rate": 44100,
+  "bits": 16,
+  "seconds": 3,
+  "frames": 132300,
+  "type": "plain PCM WAV",
+  "generator": "wma_signals.py"
+ },
+ "runner": {
+  "image_os": "win25-vs2026",
+  "image_version": "20260925.250.1",
+  "windows": "Microsoft Windows Server 2025 Datacenter",
+  "windows_version": "10.0.26100",
+  "architecture": "AMD64",
+  "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+ },
+ "requested_name": "wma10pro-cbr-stereo-44k-128",
+ "actual": {
+  "format_tag": 354,
+  "channels": 2,
+  "rate": 44100,
+  "bytes_per_second": 16002,
+  "bits": 16
+ },
+ "reproducible": true,
+ "bytes": 61439,
+ "sha256": "9c051580c9179c0136cd7733da7f0c06d984eb6cde0682cd27dd5d4971dbc717",
+ "note": "Written by the script from the committed source; running it again gives the same bytes. The File Properties object's file ID and creation date are the source's.",
+ "derived": {
+  "from": "external-windows-wma10pro-cbr-stereo-44k-128.wma",
+  "tool": "scripts/fixtures/windows/make_wma_pro_no_length_prefix.py",
+  "frames": 66,
+  "packets": 10
+ }
+}

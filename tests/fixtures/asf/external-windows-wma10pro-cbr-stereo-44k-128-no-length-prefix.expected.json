@@ -1,0 +1,23 @@
+{
+ "description": "external-windows-wma10pro-cbr-stereo-44k-128.wma written without the length prefix by make_wma_pro_no_length_prefix.py: the same frames, joined without their prefixes and cut into packets again, and the length prefix bit of the decode flags cleared. Not an encoder's output; it holds the frames of Media Foundation's transcoder (see that file's provenance) in the layout of a writer without the prefix, so the frames that start in the last packet, which a decoder reads, are covered.",
+ "format": "ASF",
+ "encoder": "Media Foundation's transcoder (Windows.Media.Transcoding, MediaEncodingProfile.CreateWma)",
+ "encoder_path": "media-foundation",
+ "mode": "cbr",
+ "sha256": "9c051580c9179c0136cd7733da7f0c06d984eb6cde0682cd27dd5d4971dbc717",
+ "reproducible": false,
+ "ffprobe": {
+  "codec": "wmapro",
+  "channels": 2,
+  "rate": 44100,
+  "block_align": null,
+  "bit_rate": 128016,
+  "extradata_size": 18,
+  "packets": 10,
+  "packet_sizes": [
+   5945
+  ],
+  "decoded_samples": 122880,
+  "file_bytes": 61439
+ }
+}
