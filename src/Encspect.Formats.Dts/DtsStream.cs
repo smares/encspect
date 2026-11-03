@@ -147,6 +147,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     public void Add(long offset, int length, int samples, UnitFacts facts, UnitLayout layout)
     {
         Figures.Add(offset, length, samples);
+        if (layout.IsCut || layout.IsTruncated)
+        {
+            Figures.AddLost(samples);
+        }
+
         if (!layout.IsCut && !layout.IsTruncated)
         {
             _sizes.Add(length);
@@ -285,6 +290,10 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         Node Add(string name, NodeValue value, string description, string? topic = null) =>
             statistics.Add(cover(name, value, NodeKind.Detail, description, topic));
         NodeValue Counted(int count) => NodeValue.Integer(count, "frames", "frame");
+        if (Figures.LostSamples > 0)
+        {
+            Add("Lost Samples", NodeValue.Integer(Figures.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+        }
 
         Add("Core Frames", Counted(CoreFrames), Explain.StatCoreFrames, Topics.CoreFrames);
         Add("Extension Substream Frames", Counted(SubstreamFrames), Explain.StatSubstreamFrames, Topics.ExtensionSubstream);

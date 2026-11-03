@@ -20,12 +20,16 @@ internal sealed class StreamFigures(int sampleRate)
     public long Bytes { get; private set; }
 
     private long _samples;
+    private long _lost;
 
     // The sampling frequency the stream delivers where it is higher than the one its frames are counted at (the core's), such as with
     // X96; Samples then counts at that frequency, and the duration and bitrates stay the same.
     public int DeliveredRate { get; set; }
 
     public long Samples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round(_samples * (double)DeliveredRate / sampleRate) : _samples;
+
+    // The declared samples of the units that are cut, counted like Samples.
+    public long LostSamples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round(_lost * (double)DeliveredRate / sampleRate) : _lost;
 
     public int Smallest { get; private set; } = int.MaxValue;
 
@@ -46,6 +50,7 @@ internal sealed class StreamFigures(int sampleRate)
         var figures = new StreamFigures(rate)
         {
             _unmeasured = _unmeasured,
+            _lost = _lost,
             Smallest = Smallest,
             Largest = Largest,
         };
@@ -57,6 +62,8 @@ internal sealed class StreamFigures(int sampleRate)
 
         return figures;
     }
+
+    public void AddLost(int samples) => _lost += samples;
 
     public void Add(long offset, int length, int samples)
     {
