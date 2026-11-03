@@ -482,7 +482,7 @@ public class MeasurementLevelsTests
     }
 
     [Fact]
-    public void TheLevelsChargeFourUnitsForEverySampleOfAChannel()
+    public void TheLevelsChargeFiveUnitsForEverySampleOfAChannel()
     {
         long units = 0;
         var pcm = new PcmFormat(44100, 2, 16, SampleFormat.Integer);
@@ -494,7 +494,7 @@ public class MeasurementLevelsTests
         int[] planar = new int[2 * 1000];
         measurer.Write(new PcmBlock(0, 1000, 2, 1000, planar));
 
-        Assert.Equal(1000L * 2 * 4, units);
+        Assert.Equal(1000L * 2 * 5, units);
     }
 
     [Fact]

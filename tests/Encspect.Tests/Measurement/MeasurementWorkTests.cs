@@ -134,7 +134,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     }
 
     // The levels alone, with the Int128 accumulators: one and two channels at 16, 24 and 32 bits, noise, a full-scale square wave (every piece
-    // scans for runs) and zeros (every piece is silent). The weight of 4 units is the design's estimate; this holds it to the reference.
+    // scans for runs) and zeros (every piece is silent). The weight of 5 units (the design's estimate was 4) is held to the reference by this test.
     public static TheoryData<int, int, Signal> LevelsCases()
     {
         var data = new TheoryData<int, int, Signal>();
