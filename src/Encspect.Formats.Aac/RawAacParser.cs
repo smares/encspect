@@ -326,6 +326,7 @@ public sealed class RawAacParser : IFormatParser
                 CrcState = crc >= 0 ? CrcState.OutsideStreams : CrcState.None,
                 Elements = NotRead,
                 IsTruncated = truncated,
+                IsCut = cut,
             });
             return;
         }
@@ -373,6 +374,8 @@ public sealed class RawAacParser : IFormatParser
             Elements = first.Elements,
             Skeleton = first.Skeleton,
             IsTruncated = truncated,
+            IsCut = cut,
+            LostBlocks = details.LostBlocks,
         });
     }
 
@@ -389,7 +392,7 @@ public sealed class RawAacParser : IFormatParser
         int blocks = header.RawDataBlocks;
         if (frame.Length < headerLength)
         {
-            return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null, -1);
+            return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null, -1, blocks);
         }
 
         int[] positions = [];
@@ -556,7 +559,10 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
-        return new FrameDetails([.. result], positions, crc, overall, badPositions, layout, held);
+        // A cut frame loses all its blocks; otherwise those the reading did not reach the end of (a block that breaks stops the frame's reading).
+        int counted = held >= 0 ? held : blocks;
+        int lostBlocks = damaged ? counted : Math.Max(0, counted - reads.Count(r => r.Read.Ok));
+        return new FrameDetails([.. result], positions, crc, overall, badPositions, layout, held, lostBlocks);
     }
 
     private static CrcState Verdict(BlockResult read, ReadOnlySpan<byte> block, ref Crc16 crc, int expected, BlockLog log)
@@ -893,6 +899,9 @@ public sealed class RawAacParser : IFormatParser
             var frameHeader = new AdtsHeader(frame.Header);
             int counted = state.Details.TryGetValue(i, out FrameDetails? held) && held.BlocksHeld >= 0 ? held.BlocksHeld : frameHeader.RawDataBlocks;
             figures.Add(frame.Offset, frame.Length, config.OutputFrameLength * counted);
+
+            // A frame cut by the data or the next frame loses all its blocks (also one past the stream limit, whose blocks are not read).
+            figures.AddLost(config.OutputFrameLength * (long)(frame.IsTruncated || frame.IsCut ? counted : frame.LostBlocks));
             vbr += frameHeader.IsVbr ? 1 : 0;
             appleHeaders += IsAppleHeader(frameHeader) ? 1 : 0;
             frames++;
@@ -974,6 +983,7 @@ public sealed class RawAacParser : IFormatParser
             ChannelMode = config.ChannelMode,
             ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
+            LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = vbr > 0 && vbr == frames,
@@ -1001,7 +1011,8 @@ public sealed class RawAacParser : IFormatParser
 
     // Layout: the speakers of a program config element that starts the frame's first block.
     // BlocksHeld: the raw data blocks an unprotected frame holds when that is fewer than its header declares, else -1.
-    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, IReadOnlyList<Speaker>? Layout, int BlocksHeld)
+    // LostBlocks: the raw data blocks the frame counts that were not read to their end (their syntax breaks) or that the data cuts short.
+    private sealed record FrameDetails(Block[] Blocks, int[] Positions, int Crc, CrcState CrcState, bool HasBadPositions, IReadOnlyList<Speaker>? Layout, int BlocksHeld, int LostBlocks = 0)
     {
         public int? Channels => Layout?.Count;
     }
@@ -1034,6 +1045,12 @@ public sealed class RawAacParser : IFormatParser
         public long Skeleton { get; init; } = -1;
 
         public bool IsTruncated { get; init; }
+
+        // Cut short by the next frame's header (aac.frame-damaged).
+        public bool IsCut { get; init; }
+
+        // The raw data blocks of the frame that are lost: cut by the data, or not read to their end.
+        public int LostBlocks { get; init; }
 
         public static Frame Gap(long offset, long length) => new(offset, (int)Math.Min(length, int.MaxValue), 0);
 

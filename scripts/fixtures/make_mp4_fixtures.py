@@ -56,13 +56,15 @@ SPEAKERS = {1: ["front center"], 2: ["front left", "front right"],
             8: ["front center", "front left", "front right", "side left", "side right", "back left", "back right", "LFE"]}
 
 
-def stream(codec, rate, channels, mode, samples, vbr=False, encoder=None, writer=None):
+def stream(codec, rate, channels, mode, samples, vbr=False, encoder=None, writer=None, lost_samples=0):
     entry = {"codec": codec, "sample_rate": rate, "channels": channels, "channel_mode": mode, "channel_layout": SPEAKERS[channels],
              "samples": samples, "is_vbr": vbr}
     if encoder:
         entry["encoder"] = list(encoder)
     if writer:
         entry["writer"] = list(writer)
+    if lost_samples:
+        entry["lost_samples"] = lost_samples
     return entry
 
 
@@ -936,7 +938,7 @@ def corrupt():
          # The samples read from moov are no raw data blocks, which their findings show.
          [["mp4.sample-outside-mdat", "lie outside every mdat box"], ["aac.prediction-not-allowed", "6 raw data blocks are not read to their end"],
           ["aac.max-sfb-too-large", "gives max_sfb 61"], ["aac.element-past-end", "ends before its END element"], ["aac.section-overrun", "past max_sfb 1"]],
-         tracks=big, mutate=into_moov,
+         tracks=big, mutate=into_moov, streams=[stream("AAC LC", 44100, 2, "Stereo", 20 * 1024, vbr=True, lost_samples=10 * 1024)],
          units_rows=unit_list([next(o for p, o, s in movie(big)[1] if p == "moov") + 8] + plain_offsets[1:], samples, 10))
 
     file("box-size-zero-and-small", "A udta box whose last box has size 0, which only the last box of the file may have, so it is read to the end of udta; "
@@ -984,7 +986,8 @@ def corrupt():
          # From the sixth sample on, the sizes stsz gives do not fit the bytes at the second chunk, so what is read there is no raw data block.
          [["mp4.chunk-sample-mismatch", "hold 10 samples, but stsz sizes 20"], ["aac.unit-trailing-bytes", "holds 16 bytes after the END element"],
           ["aac.tns-order-too-high", "higher order than the 12"], ["aac.element-past-end", "The PCE at"], ["aac.ics-reserved-bit", "3 raw data blocks"],
-          ["aac.prediction-not-allowed", "3 raw data blocks are not read to their end"]], tracks=[fewer], units_rows=placed)
+          ["aac.prediction-not-allowed", "3 raw data blocks are not read to their end"]], tracks=[fewer], units_rows=placed,
+         streams=[stream("AAC LC", 44100, 2, "Stereo", len(placed) * 1024, vbr=True, lost_samples=4 * 1024)])
 
     sizes_bad = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), edits=[(500, -5)])
     file("edit-list-invalid", "An edit list whose media time is -5, which ISO/IEC 14496-12 does not define.",
@@ -1166,7 +1169,7 @@ def adts_fixtures():
     damaged[7] = bytes(long_frame)
     data, rows = concat(damaged)
     add("damaged-length", "Frame 8 states a length 50 bytes too long: the next frame's header inside it cuts it short where the damage is.", data, rows,
-        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True)], [["aac.frame-damaged", "cut short by the next frame's header"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True, lost_samples=1024)], [["aac.frame-damaged", "cut short by the next frame's header"]],
         skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})
 
     data, rows = concat(frames[:20])
@@ -1194,7 +1197,7 @@ def adts_fixtures():
     data = data[:-5]
     rows = rows[:11] + [(rows[11][0], len(data) - rows[11][0])]
     add("truncated", "The last frame is cut 5 bytes short.", data, rows,
-        [stream("AAC LC", 44100, 2, "Stereo", 12 * 1024, vbr=True)], [["aac.frame-truncated", "of its"]],
+        [stream("AAC LC", 44100, 2, "Stereo", 12 * 1024, vbr=True, lost_samples=1024)], [["aac.frame-truncated", "of its"]],
         skip={"ffprobe": "ffmpeg drops the cut frame.", "faad": "faad2 does not count the cut frame."})
 
     # ADTS with channel configuration 0: each raw data block starts with a program config element.

@@ -97,8 +97,17 @@ public sealed class AacCodecParser : ICodecParser
                 context.CancellationToken.ThrowIfCancellationRequested();
             }
 
+            // An access unit with no byte declares nothing (aac.empty-access-units); it is no unit to count.
             ref readonly Unit unit = ref log.Units[i];
-            figures.Add(unit.Offset, unit.Length, frame);
+            if (unit.Length > 0)
+            {
+                figures.Add(unit.Offset, unit.Length, frame);
+            }
+        }
+
+        if (!(context.Configuration is { AreSamplesEncrypted: true }))
+        {
+            figures.AddLost(log.Lost * frame);
         }
 
         var leading = new List<Node>();
@@ -212,6 +221,7 @@ public sealed class AacCodecParser : ICodecParser
             ChannelMode = config.ChannelMode,
             ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
+            LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = context.Configuration?.IsVbr ?? false,
@@ -362,6 +372,9 @@ public sealed class AacCodecParser : ICodecParser
 
         public int Empty { get; private set; }
 
+        // The access units that were cut by the data or whose syntax breaks.
+        public long Lost { get; private set; }
+
         public (string Text, int Index)? Signature { get; private set; }
 
         public void Add(MappedBytes packet)
@@ -380,6 +393,8 @@ public sealed class AacCodecParser : ICodecParser
                 Empty++;
             }
 
+            // The container says the packet is cut by the data (MappedBytes.IsCut), and the reading says its syntax breaks.
+            bool isLost = packet.IsCut && packet.Length > 0;
             int elements = -1;
             byte tag = 0;
             long skeleton = -1;
@@ -401,6 +416,7 @@ public sealed class AacCodecParser : ICodecParser
                 flags |= IsRead;
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
                 (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
+                isLost |= !result.Ok && packet.Length > 0;
                 Blocks.EndUnit();
                 elements = result.Elements;
                 Blocks.AddEvidence(result, Blocks.Count - 1);
@@ -442,6 +458,7 @@ public sealed class AacCodecParser : ICodecParser
                 }
             }
 
+            Lost += isLost ? 1 : 0;
             Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, flags, tag));
         }
 

@@ -31,6 +31,18 @@ internal sealed class StreamFigures(int sampleRate)
 
     public long Samples { get; private set; }
 
+    // Of Samples, those of the units that were cut or that the reading could not take to their end.
+    public long Lost { get; private set; }
+
+    public void AddLost(long samples) => Lost += samples;
+
+    // A unit that counts its declared samples but whose bytes are not a unit's to count (an ADIF block that breaks, whose extent is unknown).
+    public void AddUnreadable(long samples)
+    {
+        Samples += samples;
+        Lost += samples;
+    }
+
     public int Smallest { get; private set; } = int.MaxValue;
 
     public int Largest { get; private set; }
@@ -160,6 +172,11 @@ internal sealed class StreamFigures(int sampleRate)
         Node statistics = cover("Statistics", null, NodeKind.Statistics, Explain.Statistics);
         statistics.Add(cover(unitPlural, NodeValue.Integer(Count, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatUnits));
         statistics.Add(cover("Samples", NodeValue.Integer(Samples, "samples", "sample"), NodeKind.Detail, Explain.StatSamples));
+        if (Lost > 0)
+        {
+            Node node = cover("Lost Samples", NodeValue.Integer(Lost, "samples", "sample"), NodeKind.Detail, StreamInfo.LostSamplesDescription);
+            statistics.Add(new Node(node.Name, node.Offset, node.Length, node.Value) { Kind = node.Kind, Ranges = node.Ranges, Description = node.Description, Topic = Topics.SamplesAndLostSamples });
+        }
         statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)
