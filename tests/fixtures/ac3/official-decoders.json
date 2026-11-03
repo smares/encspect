@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ac3",
  "run": {
-  "id": "41592571038",
-  "commit": "dbf05947676a65f6614b803ddfe51a7d3231cb1b",
+  "id": "41610797320",
+  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
   "imageOS": "macos15",
   "imageVersion": "20261028.0489.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -15,8 +15,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41592571038",
-   "commit": "dbf05947676a65f6614b803ddfe51a7d3231cb1b"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   }
  },
  "statuses": [
@@ -269,7 +269,7 @@
      "analyzerLost": 4608,
      "status": "noted",
      "kind": "outputs-lost-samples",
-     "reason": "the converter outputs 8,928 samples where the analyzer's coded stage less its lost samples is 4,608 (the stage is 9,216, the lost samples 4,608); the converter does not drop the units the analyzer reports as lost, and no cause is claimed",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 4,608, which leaves 4,608",
      "statusSource": "rule"
     }
    ],
@@ -1453,7 +1453,7 @@
      "analyzerLost": 1536,
      "status": "noted",
      "kind": "outputs-lost-samples",
-     "reason": "the converter outputs 8,928 samples where the analyzer's coded stage less its lost samples is 7,680 (the stage is 9,216, the lost samples 1,536); the converter does not drop the units the analyzer reports as lost, and no cause is claimed",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
      "statusSource": "rule"
     },
     {
@@ -1464,7 +1464,7 @@
      "reference": 8928,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; the reader's total is the coded stage less the converter's constant less the analyzer's lost samples (1,536), so it outputs nothing for the units the analyzer reports as lost",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
      "analyzerLost": 1536,
      "statusSource": "rule"
     },
@@ -6075,7 +6075,7 @@
      "analyzerLost": 1536,
      "status": "noted",
      "kind": "outputs-lost-samples",
-     "reason": "the converter outputs 8,928 samples where the analyzer's coded stage less its lost samples is 7,680 (the stage is 9,216, the lost samples 1,536); the converter does not drop the units the analyzer reports as lost, and no cause is claimed",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
      "statusSource": "rule"
     },
     {
@@ -6359,7 +6359,7 @@
      "analyzerLost": 1536,
      "status": "noted",
      "kind": "outputs-lost-samples",
-     "reason": "the converter outputs 5,856 samples where the analyzer's coded stage less its lost samples is 4,608 (the stage is 6,144, the lost samples 1,536); the converter does not drop the units the analyzer reports as lost, and no cause is claimed",
+     "reason": "the converter outputs 5,856 samples; the analyzer's coded stage is 6,144 and its lost samples are 1,536, which leaves 4,608",
      "statusSource": "rule"
     },
     {
@@ -6370,7 +6370,7 @@
      "reference": 5856,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 4,320 samples where the converter outputs 5,856; the reader's total is the coded stage less the converter's constant less the analyzer's lost samples (1,536), so it outputs nothing for the units the analyzer reports as lost",
+     "reason": "ExtAudioFile outputs 4,320 samples where the converter outputs 5,856; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
      "analyzerLost": 1536,
      "statusSource": "rule"
     }
@@ -6475,7 +6475,7 @@
      "analyzerLost": 1536,
      "status": "noted",
      "kind": "outputs-lost-samples",
-     "reason": "the converter outputs 8,928 samples where the analyzer's coded stage less its lost samples is 7,680 (the stage is 9,216, the lost samples 1,536); the converter does not drop the units the analyzer reports as lost, and no cause is claimed",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
      "statusSource": "rule"
     },
     {
@@ -6486,7 +6486,7 @@
      "reference": 8928,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; the reader's total is the coded stage less the converter's constant less the analyzer's lost samples (1,536), so it outputs nothing for the units the analyzer reports as lost",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
      "analyzerLost": 1536,
      "statusSource": "rule"
     }
