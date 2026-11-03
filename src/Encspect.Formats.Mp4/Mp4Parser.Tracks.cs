@@ -484,7 +484,7 @@ public sealed partial class Mp4Parser
         if (firstOutside is { } cut)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
-                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; "
+                $"{Samples(outside)} of track {track.Id} {Counts.Agree(outside, "lies", "lie")} outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; "
                 + (firstCut is { } partial
                     ? $"the sample at 0x{partial.Offset:X} starts in the file, so it is analyzed as far as the file goes and its samples are lost; the others are not analyzed."
                     : "they are not analyzed."), table);
@@ -498,7 +498,7 @@ public sealed partial class Mp4Parser
         if (firstOutsideMdat is { } stray)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-mdat",
-                $"{Samples(outsideMdat)} of track {track.Id} lie outside every mdat box, the first at 0x{stray.Offset:X}.", table);
+                $"{Samples(outsideMdat)} of track {track.Id} {Counts.Agree(outsideMdat, "lies", "lie")} outside every mdat box, the first at 0x{stray.Offset:X}.", table);
         }
 
         ranges.Sort((a, b) => a.Offset.CompareTo(b.Offset));
