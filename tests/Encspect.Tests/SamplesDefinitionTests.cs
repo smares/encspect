@@ -255,6 +255,18 @@ public class SamplesDefinitionTests
         // Rule 2: a cut ADTS frame counts its declared samples (the lost samples come with the ADTS commit).
         { "adts/truncated.aac", 12288, 0 },
 
+        #region AC-3 and E-AC-3
+        // A cut frame and a frame whose blocks break are lost whole; a failing CRC and an unread coding tool are not.
+        { "ac3/cut-frame.ac3", 9216, 1536 },
+        { "ac3/truncated.ac3", 9216, 1536 },
+        { "ac3/truncated-in-skip.eac3", 6144, 1536 },
+        { "ac3/bad-blocks.ac3", 9216, 4608 },
+        { "ac3/crc-damaged.ac3", 12288, 0 },
+        { "ac3/aht.eac3", 4608, 0 },
+        { "wav/built-iec61937-cut-in-payload.wav", 7680, 1536 },
+        { "wav/built-iec61937-cut-odd-payload.wav", 7680, 1536 },
+        #endregion
+
         // Rule 3: bytes skipped while searching for sync declare nothing.
         { "adts/damaged-header.aac", 29696, 0 },
 

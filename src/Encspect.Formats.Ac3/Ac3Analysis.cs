@@ -153,7 +153,8 @@ internal sealed class Ac3Analysis
         if (program is not null)
         {
             program.Cover(region, offset, available);
-            if (program.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch) && !Findings.CountIfKnown("ac3.dependent-excess"))
+            if (program.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch,
+                    shortened || cut || result.Stop is StopReason.Invalid or StopReason.Overrun) && !Findings.CountIfKnown("ac3.dependent-excess"))
             {
                 int id = header.SubstreamId;
                 Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>
@@ -561,6 +562,7 @@ internal sealed class Ac3Analysis
             ChannelMode = Ac3Names.CodingModeShort(program.Key.Acmod),
             ChannelLayout = program.Layout,
             Samples = program.Figures.Samples,
+            LostSamples = program.LostSamples,
             Duration = program.Figures.Duration,
             AverageBitrate = program.Figures.AverageBitrate,
             IsVbr = program.IsVbr,
