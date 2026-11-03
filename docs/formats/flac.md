@@ -34,7 +34,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 ## Reported
 
-- the sample rate, channels and layout, bits per sample, the samples (from the frames; STREAMINFO's count is compared, `flac.total-samples-mismatch`, and 0 means unknown, `flac.total-samples-unknown`), the duration and the average bitrate, which counts the bytes of the frames;
+- the sample rate, channels and layout, bits per sample, the samples (the block sizes of the frames, a cut frame's included; Lost Samples counts the block sizes of the frames that are cut or unreadable; STREAMINFO's count is compared, `flac.total-samples-mismatch`, and 0 means unknown, `flac.total-samples-unknown`), the duration and the average bitrate, which counts the bytes of the frames;
 - the bitrate per frame and per second as series, with the smallest and largest and a distribution; the bitrate mode is variable where the frame bitrates differ (`IsVbr`);
 - statistics: the blocking strategy, the block sizes, the share of each stereo assignment, the subframe types with the predictor orders and coefficient precisions, the wasted bits, the partition orders, the Rice parameter width, the escaped partitions, the checksums that held and failed, and the MD5.
 
