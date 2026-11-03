@@ -11,11 +11,11 @@ public static class ReportCsvWriter
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
         "Is Protected", "Is Verified", "Protection Scheme", "DRM Systems", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)",
-        "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)",
+        "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples",
     ];
 
     // The columns the writer formats from numbers: counts, durations, rates and the measured figures; they skip the guard against formulas.
-    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)" }.Select(n => Array.IndexOf(Columns, n))];
+    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples" }.Select(n => Array.IndexOf(Columns, n))];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
 
@@ -41,6 +41,7 @@ public static class ReportCsvWriter
                 string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems), s.SpectralCutoff?.ToString(CultureInfo.InvariantCulture),
                 s.SamplePeakTenths is { } peak ? MeasurementText.Tenths(peak) : null, s.TruePeakTenths is { } truePeak ? MeasurementText.Tenths(truePeak) : null,
                 s.IntegratedLoudnessTenths is { } loudness ? MeasurementText.Tenths(loudness) : null, s.LoudnessRangeTenths is { } range ? MeasurementText.Tenths(range) : null,
+                s.Samples is null ? null : s.LostSamples.ToString(CultureInfo.InvariantCulture),
             ], numeric: NumericColumns);
             writer.Flush();
         }

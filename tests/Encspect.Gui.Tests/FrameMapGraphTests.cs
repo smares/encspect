@@ -437,6 +437,27 @@ public class FrameMapGraphTests
         Assert.Equal(43 * 40, locator.PositionOfFrame(5800));
     }
 
+    [Fact]
+    public void A_frame_cut_by_the_end_of_the_data_is_marked_at_its_own_position_not_before_it()
+    {
+        // Six frames of 4,096 samples at 100,000: the sixth is cut, the decoder delivered five, and the measured span ends with the units.
+        double[] x = [1000, 2000, 3000, 4000, 5000, 6000];
+        var series = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 1, 1, 1, 1, 1, 1 });
+        var stream = new StreamInfo { Nodes = [], Codec = "FLAC", SampleRate = 44100, Samples = 6 * 4096, Series = [series] };
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Incomplete, FirstPosition = 100000, Samples = 5 * 4096, LostSamples = 4096, TrailingLostSamples = 4096 };
+        SampleLocator locator = SampleLocator.For(stream, measured)!;
+
+        Assert.Equal(100000, locator.Base);
+        for (int frame = 0; frame < 6; frame++)
+        {
+            Assert.Equal(100000 + (frame * 4096L), locator.PositionOfFrame((long)x[frame]));
+            Assert.Equal((long)x[frame], locator.FrameOffsetAt(100000 + (frame * 4096L) + 7));
+        }
+
+        FrameMapGraph map = Map(series);
+        Assert.Equal(5, map.IndexOfFrame(6000));
+    }
+
     [Theory]
     [InlineData("built-parity-mismatch.thd")]
     [InlineData("built-leading-units.thd")]

@@ -1,6 +1,6 @@
 # Samples: what a stream's units declare, and lost samples
 
-Status: approved by the project lead on 2026-11-02, after three independent reviews, with every recommendation of the [open questions](#open-questions) as listed, the two departures from written rules included (question 1: a checksum failure alone is not lost, status `noted`; question 2: packets of damaged Ogg pages are handed over flagged). Nothing in it is built.
+Status: approved by the project lead on 2026-11-02, after three independent reviews, with every recommendation of the [open questions](#open-questions) as listed, the two departures from written rules included (question 1: a checksum failure alone is not lost, status `noted`; question 2: packets of damaged Ogg pages are handed over flagged). The core commit is built (`StreamInfo.LostSamples` and its output, `MappedBytes.IsCut`, Decision A, the topic article and the checks that need no per-format change); the per-format changes are not.
 
 - **Checked at:** `main` 465988f (it holds the Ogg and TTA cross-checks, #209 and #210), `fix/wma-pro-trim` 57ed8cb (PR #212), `feat/wma-container-duration` f95f188, `ci/official-decode-aac` fea550f (a change to the comparison script only; the committed `official-decoders.json` equal b03bdfc's).
 - **Figures** were computed by scripts over the committed goldens (`*.report.json`, `*.expected.json`, `*.decode.json`) and the `official-decoders.json` files. A claim no code, golden or document confirms is marked **unverified**.
@@ -15,6 +15,8 @@ Status: approved by the project lead on 2026-11-02, after three independent revi
   - CLAUDE.md, "One concept, one name": the coded stage has one name, **Coded Samples**. Only when the other names go is open ([question 6](#open-questions)).
 
 **Decision A (follows from the above):** the host gives the measurer the stream's coded-stage start and end, taken from the `CodedFrame`s, so a lost first or last unit is in the measured `lostSamples`. Without it `SampleLocator` (`FirstPosition + Samples + LostSamples` against `Total` = `StreamInfo.Samples`) puts every frame's mark early by the lost tail. Tests: `SampleLocatorTests`, `FrameMapGraphTests`, `AudioPanelTests` in `Encspect.Gui.Tests`, with a cut-last-frame case added, and `TrueHdRunsTests` for the TrueHD gap.
+
+- **As built (core commit):** `FirstPosition` stays the first block's, because the grids and graphs start from it, so a lost first unit cannot move it. The record gains `LeadingLostSamples` and `TrailingLostSamples` (inside `LostSamples`, JSON above 0 only), each lost end counts as one gap, and `SampleLocator` ends the span at `FirstPosition + Samples + LostSamples - LeadingLostSamples`. Only a stream whose decoding reached its end (status `Complete` or `Incomplete`) gets them. TrueHD hands unreadable units with 0 samples today, so its gap appears with the TrueHD commit.
 
 ## Today
 

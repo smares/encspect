@@ -145,4 +145,24 @@ public class TrueHdRunsTests
         Assert.Equal(expected, window.Model.SelectedNode!.Node.Offset);
         window.Close();
     }
+
+    // A TrueHD unit the parser cannot read is handed to the decoding with its 40 samples, so the decoded stream has a gap there and the
+    // measured span ends with the units even when the last one is lost.
+    [Fact]
+    public void A_lost_last_unit_in_the_measured_span_keeps_the_runs_and_their_frames_in_place()
+    {
+        // 20 units of 40 samples in two runs of 10, at 1,000 on; the last unit was not decoded.
+        double[] x = [500, 1500];
+        var runs = new FrameRuns(new long[] { 1, 11 }, 20, new long[] { 400, 400 });
+        var series = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 1, 1 }) { Runs = runs };
+        var stream = new StreamInfo { Nodes = [], Codec = "TrueHD", SampleRate = 48000, Samples = 800, Series = [series] };
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Incomplete, FirstPosition = 1000, Samples = 760, LostSamples = 40, TrailingLostSamples = 40 };
+        SampleLocator locator = SampleLocator.For(stream, measured)!;
+
+        Assert.Equal((1000L, 800L), (locator.Base, locator.Total));
+        Assert.Equal(1500, locator.FrameOffsetAt(1000 + 790));
+        Assert.Equal(9, locator.FramesIntoRunAt(1000 + 790));
+        Assert.Equal(1000 + 400, locator.PositionOfFrame(1500));
+        Assert.Equal(500, locator.FrameOffsetAt(1000 + 399));
+    }
 }

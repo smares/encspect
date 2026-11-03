@@ -1,7 +1,7 @@
 ---
 id: measurements
 title: Measurements of decoded audio
-related: spectral-cutoff, spectrogram, levels, loudness, loudness-range, sample-peak-and-true-peak, verification, pcm-samples, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
+related: samples-and-lost-samples, spectral-cutoff, spectrogram, levels, loudness, loudness-range, sample-peak-and-true-peak, verification, pcm-samples, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
 references: P. D. Welch, The use of fast Fourier transform for the estimation of power spectra, IEEE Trans. Audio Electroacoust. 15(2), 1967; F. J. Harris, On the use of windows for harmonic analysis with the discrete Fourier transform, Proc. IEEE 66(1), 1978
 ---
 
@@ -9,7 +9,7 @@ references: P. D. Welch, The use of fast Fourier transform for the estimation of
 
 **How it works.** When the analysis decodes a stream, the host hands every block of decoded samples to a measurer as well as to the front end. One decoding pass therefore verifies and measures, and measuring never changes a verification or a decoding finding. The measurer keeps arrays of a fixed size, so a long stream costs time and no more memory. Its figures are integers in fixed units, whole hertz and tenths of a decibel, and its arithmetic does not depend on the platform, so a report reads the same on every machine.
 
-**Which samples.** The samples the decoder wrote, before any trimming (for a WAV, Wave64 or AIFF file, the [samples as stored](pcm-samples)): samples a format drops at the start are measured too, a TrueHD stream as the presentation the decoder decodes, and a WavPack hybrid file without its correction file as the lossy audio it decodes to. Nothing is measured across a gap where frames were lost; the figures say how many samples were skipped. At most 32 channels are measured.
+**Which samples.** The samples the decoder wrote, before any trimming (for a WAV, Wave64 or AIFF file, the [samples as stored](pcm-samples)): samples a format drops at the start are measured too, a TrueHD stream as the presentation the decoder decodes, and a WavPack hybrid file without its correction file as the lossy audio it decodes to. Nothing is measured across a gap where frames were lost; the figures say how many samples were skipped (the [lost samples](samples-and-lost-samples) of the measurements, as the parser's own are another figure). At most 32 channels are measured.
 
 **Which figures.** The spectrum and its cutoff; the [levels](levels): sample peak, RMS, DC offset, clipping runs, digital silence and bit-depth usage; the [loudness](loudness) of ITU-R BS.1770 and EBU R 128 with the [loudness range](loudness-range); and the [true peak](sample-peak-and-true-peak). --measure takes each by name: spectrum, levels, loudness and true-peak.
 

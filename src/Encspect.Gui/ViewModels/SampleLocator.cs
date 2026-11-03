@@ -8,8 +8,8 @@ namespace Encspect.Gui.ViewModels;
 //
 // The frames cover the span [Base, Base + Total): Total is the stream's sample count and Base the position where the frames start,
 // which is not 0 for a stream cut from a longer one (a FLAC fragment whose frames start at 4,096 or at 2^24) and which the measured
-// positions give: the end of what was measured (first position, samples and the samples the gaps skipped) less the sample count.
-// A gap lies inside the span, since the measured positions count the samples it skipped, so it moves no frame.
+// positions give: the end of what the stream's units cover (first position, samples and the samples the gaps skipped, those of a lost last unit included, less those of a lost first one) less the sample count.
+// A gap lies inside the span, since the measured positions count the samples it skipped, so it moves no frame; a lost last unit is counted too, or every mark would sit early by it.
 //
 // The reading: the frames of a stream last equally long, but the last, which is shorter or as long. That is what FLAC (a fixed block
 // size), WavPack, Monkey's Audio and TrueHD write, and what the graphs' per-second series already assume. A position p of `count`
@@ -62,9 +62,9 @@ public sealed class SampleLocator
 
         Series? frames = stream.Series.FirstOrDefault(s => s.Axis == SeriesAxis.FrameOffset && s.X.Length > 0);
         ReadOnlyMemory<double> offsets = frames?.X ?? default;
-        long end = measured is null ? stream.Samples : measured.FirstPosition + measured.Samples + measured.LostSamples;
+        long end = measured is null ? stream.Samples : measured.FirstPosition + measured.Samples + measured.LostSamples - measured.LeadingLostSamples;
         long total = stream.Samples > 0 ? stream.Samples : measured is null ? 0 : measured.Samples + measured.LostSamples;
-        long origin = total <= 0 ? 0 : stream.Samples > 0 && end >= total ? end - total : measured?.FirstPosition ?? 0;
+        long origin = total <= 0 ? 0 : stream.Samples > 0 && end >= total ? end - total : measured is null ? 0 : measured.FirstPosition - measured.LeadingLostSamples;
         return offsets.Length == 0 || total <= 0 ? null : new SampleLocator(offsets, total, Math.Max(0, origin), frames!.Runs);
     }
 

@@ -43,6 +43,18 @@ public sealed record StreamInfo
 
     public long Samples { get; init; }
 
+    // The samples per channel that the units counted in Samples declare and the parser could not show to be whole: units cut by the end
+    // of the data, units whose syntax breaks, and units that cannot be read until the stream's next sync point
+    // (docs/design/samples-definition.md). A figure from the parser, without decoding, at the coded stage, so it is part of the coded
+    // samples and may lie outside the trimmed ones; 0 where there is none, in a protected stream and in one no parser reads.
+    public long LostSamples { get; init; }
+
+    // What the "Lost Samples" statistic says, for the parsers that report it. A figure with its basis, never a verdict about the audio.
+    public const string LostSamplesDescription =
+        "The samples per channel that the stream's units declare and that could not be read as whole units: the declared samples of units cut by the end of the data, units that break the syntax, and units that cannot be read until the stream's next sync point. They are part of the stream's samples.";
+
+    public const string LostSamplesTopic = "samples-and-lost-samples";
+
     // In seconds.
     public double Duration { get; init; }
 

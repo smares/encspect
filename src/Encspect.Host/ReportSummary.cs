@@ -40,6 +40,9 @@ public sealed record ReportSummary(
     // property of the analysis, not of the file: the CSV writes it only for an analysis that asked for decoding.
     public bool? IsVerified { get; init; }
 
+    // The lost samples of the streams Samples adds up (StreamInfo.LostSamples), counted the same way: the longest stream of a playback group once.
+    public long LostSamples { get; init; }
+
     // The spectral cutoff in hertz of the first audio stream's combined spectrum, where measurements found one; null otherwise.
     public int? SpectralCutoff { get; init; }
 
@@ -82,6 +85,7 @@ public sealed record ReportSummary(
             .. audio.Where(s => s.PlaybackGroup is not null).GroupBy(s => s.PlaybackGroup).Select(g => g.MaxBy(s => s.Duration)!)];
         double duration = counted.Sum(s => s.Duration);
         long samples = counted.Sum(s => s.Samples);
+        long lost = counted.Sum(s => s.LostSamples);
 
         bool? verified = audio.Any(s => s.Verification?.IsVerified == false) ? false
             : audio.Count > 0 && audio.All(s => s.Verification?.IsVerified == true) ? true
@@ -113,6 +117,7 @@ public sealed record ReportSummary(
             [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()])
         {
             IsVerified = verified,
+            LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
             TruePeakTenths = first?.Measurements?.TruePeak is { NotMeasured: null, StreamTenths: var truePeak } && truePeak != MeasurementLimits.NoLevel ? truePeak : null,
