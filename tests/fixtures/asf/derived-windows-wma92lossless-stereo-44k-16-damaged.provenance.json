@@ -1,0 +1,66 @@
+{
+ "description": "external-windows-wma92lossless-stereo-44k-16.wma with the sequence number of its seventh media object changed, so that a packet seems to be lost. Not an encoder's output and never decoded by Windows.",
+ "bytes": 206261,
+ "sha256": "1e0aa9e65871169cf7630061ce3cf7dd0baaf841db5928aff0167cc852d7898f",
+ "reproducible": true,
+ "note": "Written by the script from the committed source; running it again gives the same bytes.",
+ "derived": {
+  "from": "external-windows-wma92lossless-stereo-44k-16.wma",
+  "tool": "scripts/fixtures/windows/make_wma_damaged_variants.py",
+  "note": "Not an encoder's output: the source's bytes with a cut or damage added.",
+  "source": {
+   "encoder": {
+    "tool": "the Windows Media Format SDK writer (wmvcore.dll)",
+    "path": "wmf-sdk",
+    "codec": "Windows Media Audio 9.2 Lossless",
+    "format_index": 0,
+    "achieved_bitrate": null,
+    "format_description": "VBR Quality 100, 44 kHz, 2 channel 16 bit VBR",
+    "format_tag": "0x0163",
+    "mode": "vbr",
+    "requested": {
+     "requestedChannels": 2,
+     "requestedRates": [
+      44100
+     ],
+     "requestedFormatBits": 16,
+     "requestedQuality": 100
+    },
+    "format_channels": 2,
+    "format_rate": 44100,
+    "format_bits": 16,
+    "format_bitrate": 128016,
+    "config_bitrate": 128016,
+    "buffer_window_ms": 4294967295,
+    "title": null,
+    "author": null
+   },
+   "input": {
+    "signal": "quiet",
+    "channels": 2,
+    "rate": 44100,
+    "bits": 16,
+    "seconds": 2,
+    "frames": 88200,
+    "type": "plain",
+    "generator": "wma_signals.py"
+   },
+   "runner": {
+    "image_os": "win25-vs2026",
+    "image_version": "20260925.250.1",
+    "windows": "Microsoft Windows Server 2025 Datacenter",
+    "windows_version": "10.0.26100",
+    "architecture": "AMD64",
+    "wmvcore_version": "12.0.26100.7309 (WinBuild.160101.0800)"
+   },
+   "requested_name": "wma92lossless-stereo-44k-16",
+   "actual": {
+    "format_tag": 355,
+    "channels": 2,
+    "rate": 44100,
+    "bytes_per_second": 144000,
+    "bits": 16
+   }
+  }
+ }
+}

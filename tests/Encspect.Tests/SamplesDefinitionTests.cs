@@ -298,7 +298,16 @@ public class SamplesDefinitionTests
         { "asf/writer-stamp-not-last.asf", 4096, 4096 },
         { "asf/fragments-in-two-streams.asf", 4096, 4096 },
         // Voice: a cut, broken or dropped superframe counts its stated samples, or 480, and is lost.
-        { "asf/voice-truncated.asf", 11060, 300 },
+        // The container hands a cut media object over flagged cut, and the codec parser counts what the bytes present declare: the cut Voice
+        // object finishes the superframe before it, the frames a cut standard object declares by its first byte are lost, and so is the Lossless
+        // frame that starts at a declared start and runs past the cut.
+        { "asf/voice-truncated.asf", 11060, 0 },
+        { "asf/derived-windows-wma92-stereo-44k-128-object-cut.asf", 135168, 6144 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.asf", 88064, 2048 },
+        // Damage: an invalid standard frame and the frames its superframe declares after it; the Lossless frames that start where a packet's header
+        // points or after a valid frame and cannot be used after a lost packet.
+        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 133120, 14336 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 51336, 6144 },
         { "asf/voice-invalid-superframes.asf", 11520, 1440 },
         { "asf/voice-object-not-whole.asf", 8160, 480 },
         { "asf/voice-spillover.asf", 8160, 960 },
