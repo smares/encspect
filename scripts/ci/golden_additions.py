@@ -32,9 +32,9 @@ every child of that name. A change file:
                   {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
                   {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code
       "removed": [{"parent": ["ASF", "Data Object", "Windows Media Audio Voice", "Statistics"], "name": "Lost Samples",     # a node only the old report has;
-                   "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]}],                                       # an entry may name the goldens it applies to
-      "findings": [{"gone": ["wma.voice-unfinished"], "new": ["wma.packet-short"],   # codes of findings only the old or only the new report has
-                    "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]}]
+                   "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]},                                        # an entry may name the goldens it applies to
+                  {"scope": "finding", "code": "wma.voice-unfinished"}],                                                  # a finding only the old report has
+      "bitrate": [{"goldens": ["tests/fixtures/mp4/some.report.json"], "reason": "why the average bitrate differs"}]  # goldens whose averageBitrate may differ without lost samples
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -294,6 +294,39 @@ def reports(golden):
     return golden if isinstance(golden, list) else [golden]
 
 
+def validate(change):
+    """Readable errors for the entries of a change file that cannot work: a key an entry needs is missing, or the entry has the wrong shape."""
+    needs = {
+        "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name")},
+        "removed": {"finding": ("code",), "node": ("parent", "name")},
+    }
+    for key, scopes in needs.items():
+        for entry in change.get(key, []):
+            scope = entry.get("scope", "node")
+            if scope not in scopes:
+                raise ChangeError(f"{key}: unknown scope {scope!r} in {json.dumps(entry)}")
+            required = ("array", "name") if key == "added" and scope == "stream" and "array" in entry else scopes[scope]
+            for field in required:
+                if field not in entry:
+                    raise ChangeError(f"{key}: an entry with the scope {scope} needs {field}: {json.dumps(entry)}")
+    for entry in change.get("bitrate", []):
+        if "goldens" not in entry or not entry.get("reason"):
+            raise ChangeError(f"bitrate: an entry needs goldens and a reason: {json.dumps(entry)}")
+    if "findings" in change:
+        raise ChangeError('findings: no longer a key of a change file; list new findings under "added" and gone ones under "removed", each with the scope finding and a code')
+
+
+def bitrate_problems(before, after, change, index):
+    """A stream's average bitrate differs only where the stream has lost samples (the unit counted newly is in the samples), or where the change file says why."""
+    if change.get("bitrate"):
+        return []
+    problems = []
+    for number, (x, y) in enumerate(zip(before.get("streams", []), after.get("streams", []))):
+        if x.get("averageBitrate") != y.get("averageBitrate") and not y.get("lostSamples", 0) > 0:
+            problems.append(f"[{index}]/streams[{number}]/averageBitrate: {json.dumps(x.get('averageBitrate'))} in the old report, {json.dumps(y.get('averageBitrate'))} in the new, and the stream has no lost samples (the change file's \"bitrate\" entry gives the reason)")
+    return problems
+
+
 def check_golden(old, new, change):
     """The problems of one golden (an array of reports) against one change file."""
     olds, news = reports(old), reports(new)
@@ -312,22 +345,34 @@ def check_golden(old, new, change):
                         problems.append(f"[{index}]: the node {entry['from']} is still there under {'/'.join(entry['parent'])}, which the change renames to {entry['to']}")
                     if entry["to"] not in names:
                         problems.append(f"[{index}]: the node {entry['to']} is missing under {'/'.join(entry['parent'])}, where the change renames {entry['from']} to it")
-        # What the change lists as gone (nodes and findings only the old report has) and new findings (only the new one has) is taken out before
-        # the two reports are compared.
-        for entry in change.get("removed", []):
-            for parent in matching(before["root"], entry["parent"]):
-                kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
-                if kept:
-                    parent["children"] = kept
-                else:
-                    parent.pop("children", None)
+        # What the change lists as removed (nodes and findings only the old report has) is taken out of the old report before the two are compared,
+        # and the old report's finding and stream paths follow the nodes that shifted.
+        try:
+            validate(change)
+            tag(before["root"], [])
+            for entry in change.get("removed", []):
+                if entry.get("scope") == "finding":
+                    before["findings"] = [f for f in before.get("findings", []) if f.get("code") != entry["code"]]
+                    continue
+                for parent in matching(before["root"], entry["parent"]):
+                    kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
+                    if kept:
+                        parent["children"] = kept
+                    else:
+                        parent.pop("children", None)
+            mapping = {}
+            final_paths(before["root"], [], mapping)
+            for finding in before.get("findings", []):
+                if "path" in finding:
+                    finding["path"] = map_path(finding["path"], mapping)
+            for stream in before.get("streams", []):
+                if "nodes" in stream:
+                    stream["nodes"] = [map_path(p, mapping) for p in stream["nodes"]]
+            untag(before["root"])
+        except ChangeError as error:
+            return [str(error)]
+        problems += bitrate_problems(before, after, change, index)
 
-        gone = {code for entry in change.get("findings", []) for code in entry.get("gone", [])}
-        added = {code for entry in change.get("findings", []) for code in entry.get("new", [])}
-        if gone and "findings" in before:
-            before["findings"] = [f for f in before["findings"] if f.get("code") not in gone]
-        if added and "findings" in after:
-            after = {**after, "findings": [f for f in after["findings"] if f.get("code") not in added]}
         try:
             drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
             expected = transform(after, change, before)
@@ -341,7 +386,7 @@ def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
     out = dict(change)
-    for key in ("added", "renamed", "moved", "changed", "removed", "findings"):
+    for key in ("added", "renamed", "moved", "changed", "removed", "bitrate"):
         if key in change:
             out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
     return out
