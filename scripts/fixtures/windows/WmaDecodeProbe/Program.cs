@@ -27,6 +27,9 @@ public static class Program
         WriteIndented = false,
     };
 
+    // The Source Reader runs after the first one; official_decode.py's SOURCE_READER_RUNS is this plus one.
+    private const int SourceReaderRepeats = 2;
+
     public static int Main(string[] args)
     {
         if (args.Length >= 5 && args[0] == "--child")
@@ -140,6 +143,20 @@ public static class Program
                 ["direct"] = RunChild(aac ? "mft" : "dmo", file, timeout, modules, units),
                 ["directWithoutTimestamps"] = RunChild(aac ? "mft-nots" : "dmo-nots", file, timeout, modules, units),
             };
+            if (aac)
+            {
+                // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four whole runs and read to the end in others),
+                // so it is read twice more; the driver takes a result as a figure only where the three agree (the reads of one run are not independent, so this guards against a visible
+                // variation only; a stream whose result is known to vary has no committed figure, see compare_official_decoders.py).
+                var repeats = new JsonArray();
+                for (int repeat = 0; repeat < SourceReaderRepeats; repeat++)
+                {
+                    repeats.Add(RunChild("sr", file, timeout, modules, null));
+                }
+
+                record["sourceReaderRepeats"] = repeats;
+            }
+
             var direct = record["direct"]?["decoder"];
             if (direct != null)
             {

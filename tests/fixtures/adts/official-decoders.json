@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41463609030",
-  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
+  "id": "41558366773",
+  "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,20 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41463609030",
-   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
+   "runId": "41558366773",
+   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+  },
+  "mediaFoundation": {
+   "windows": "Windows Server 2025 Datacenter 24H2",
+   "build": "26100.33674",
+   "machine": "AMD64",
+   "imageOS": "win25-vs2026",
+   "imageVersion": "20261030.294.1",
+   "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
+   "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
+   "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
+   "runId": "41558366773",
+   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
   }
  },
  "statuses": [
@@ -82,6 +94,12 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x73796E63)"
+      }
+     },
+     "mediaFoundation": {
+      "reader": {
+       "samples": null,
+       "why": "refused: the file did not open"
       }
      }
     }
@@ -155,10 +173,78 @@
        "samples": null,
        "why": "stopped by error"
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 10,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "blocksPerFrame": 4,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 10 units (all 10 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 10,240 and the reference's 10,240",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 0,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Media Foundation's transform outputs 0; Learn allows one raw data block per ADTS frame; the frames declare up to 4",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": 0,
@@ -244,6 +330,51 @@
        "samples": null,
        "why": "stopped by error"
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 10,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "blocksPerFrame": 2,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 10 units (all 10 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -267,6 +398,16 @@
      "status": "noted",
      "kind": "decoder-one-block-per-frame",
      "reason": "the frames declare up to 2 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 20480,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 10 units (all 10 and the drain gave no output); Learn allows one raw data block per ADTS frame; the frames declare up to 2; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -513,10 +654,80 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 30,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 30 units (all 30 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 30,720 and the reference's 30,720",
+     "statusSource": "reviewed",
+     "note": "The Source Reader reads to the end of the stream with its first read and returns no sample, as the transform returns none (see its entry)."
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 0,
+     "analyzer": 30720,
+     "reference": 30720,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 30,720) and Media Foundation's transform outputs 0: the owners' decoders disagree",
+     "statusSource": "reviewed",
+     "note": "Facts from the Windows records and the files; the cause is not established and no variant of the file was run. The transform gives no output for any of the 30 units, signals no stream change, returns nothing at the drain and reports no error. vbr.aac has the same 1,053 bytes except that every frame header states adts_buffer_fullness 2,047 (0x7FF) where cbr.aac states 256; the transform decodes it (30,720 samples, unit 0 held back). Both start with a frame of 13 bytes, as mpeg2.aac, junk-around.aac, truncated.aac, damaged-header.aac and damaged-length.aac do, which the transform decodes. The ADTS files of the encoder fdkaac with a fullness other than 2,047 (fdkaac-crc-mono.aac 136 to 145, fdkaac-he-adts.aac 146 to 157, fdkaac-he-v2-adts.aac 138 to 145) give no output for their first 5, 6 and 5 units and return the rest with the drain (5,120, 12,288 and 10,240 samples)."
+    }
+   ],
    "units": [],
    "unitList": {
     "kind": "adts",
@@ -599,6 +810,58 @@
         "sampleRate": 44100,
         "channels": 1,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 21504,
+       "decoderSamples": 21504,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4643990,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 21504
+      },
+      "reader": {
+       "samples": 21504,
+       "decoderSamples": 21504,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
        }
       }
      }
@@ -867,6 +1130,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 21504,
+       "decoderSamples": 21504,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4643990,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 21504
+      },
+      "reader": {
+       "samples": 21504,
+       "decoderSamples": 21504,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
      }
     }
    ],
@@ -1091,11 +1406,50 @@
        "refusedUnits": 1,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 4 units (1 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 4 units (1 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
       }
      }
     }
@@ -1111,6 +1465,28 @@
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
      "reason": "the analyzer equals the reference (fdk direct, 4,096) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 4096,
+     "reference": 4096,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 4,096 and the reference's 4,096",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 0,
+     "analyzer": 4096,
+     "reference": 4096,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "reason": "the analyzer equals the reference (fdk direct, 4,096) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
      "statusSource": "rule"
     }
    ],
@@ -1196,11 +1572,52 @@
        "noOutputUnits": 3,
        "drainFrames": 0,
        "blocksPerFrame": 4,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 5,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "blocksPerFrame": 4,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 5 units (all 5 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
       }
      }
     }
@@ -1224,7 +1641,17 @@
      "analyzer": 20480,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
+     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 20480,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 5 units (all 5 and the drain gave no output); Learn allows one raw data block per ADTS frame; the frames declare up to 4; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -1328,11 +1755,52 @@
        "noOutputUnits": 3,
        "drainFrames": 0,
        "blocksPerFrame": 4,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 5,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "blocksPerFrame": 4,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 5 units (all 5 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
       }
      }
     }
@@ -1356,7 +1824,17 @@
      "analyzer": 20480,
      "status": "noted",
      "kind": "decoder-refuses-stream",
-     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others held back); neither official decoder gives a reference here (the next, Media Foundation, is rollout step 6), and ffmpeg stays the reference",
+     "reason": "Core Audio's converter outputs nothing for any of its 5 units (2 refused, the others and the drain gave no output); neither FDK nor Core Audio gives a reference here (the next decoder of the rule, Media Foundation's transform, is the reference where it decodes the stream, else ffmpeg stays the reference)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 20480,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 5 units (all 5 and the drain gave no output); Learn allows one raw data block per ADTS frame; the frames declare up to 4; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -1436,6 +1914,58 @@
         "sampleRate": 44100,
         "channels": 1,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 20480
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
        }
       }
      }
@@ -1541,6 +2071,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 20480
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
      }
     }
    ],
@@ -1623,6 +2205,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1160997,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 6144
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
      }
     }
    ],
@@ -1703,6 +2337,58 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1160997,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 6144
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
        }
       }
      }
@@ -1808,6 +2494,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1160997,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 6144
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -1888,6 +2626,58 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 29696,
+       "decoderSamples": 29696,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6501587,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 29696
+      },
+      "reader": {
+       "samples": 29696,
+       "decoderSamples": 29696,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
        }
       }
      }
@@ -2003,6 +2793,64 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 28672,
+       "decoderSamples": 28672,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 3,
+       "drainFrames": 1024,
+       "silentUnits": [
+        7,
+        8
+       ],
+       "noOutputList": [
+        0,
+        7,
+        8
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733786,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 28672
+      },
+      "reader": {
+       "samples": 28672,
+       "decoderSamples": 28672,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
        }
       }
      }
@@ -2171,6 +3019,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -2280,6 +3183,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -2393,6 +3351,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -2502,6 +3515,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -2615,6 +3683,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -2724,6 +3847,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -2837,6 +4015,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -2946,6 +4179,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -3059,6 +4347,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 65536,
+       "decoderSamples": 65536,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 14396371,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 65536
+      },
+      "reader": {
+       "samples": 65536,
+       "decoderSamples": 32768,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -3166,6 +4509,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 7168,
+       "decoderSamples": 7168,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1393197,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 7168
+      },
+      "reader": {
+       "samples": 7168,
+       "decoderSamples": 7168,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
      }
     }
    ],
@@ -3246,6 +4641,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 24576
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -3330,6 +4780,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 696598,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 4096
+      },
+      "reader": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -3406,6 +4908,58 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x73796E63)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 20480
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
       }
      }
     }
@@ -3487,7 +5041,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -3496,6 +5050,36 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "2210",
+        "aot": 4,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -3519,6 +5103,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC LTP; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -3557,7 +5151,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -3566,6 +5160,36 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "0A08",
+        "aot": 1,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -3589,6 +5213,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -3627,7 +5261,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -3636,6 +5270,36 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "0A08",
+        "aot": 1,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -3659,6 +5323,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -3738,6 +5412,58 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4411791,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 20480
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 20480,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
        }
       }
      }
@@ -3822,6 +5548,61 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 48000,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2346666,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1180",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 48000,
+        "channels": 6
+       },
+       "outputFormat": {
+        "sampleRate": 48000,
+        "channels": 6
+       },
+       "nativeType": {
+        "sampleRate": 48000,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -3879,6 +5660,61 @@
       "reader": {
        "samples": null,
        "why": "stopped by error"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1398",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 24576
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 3
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 3
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 3
+       }
       }
      }
     }
@@ -3970,6 +5806,61 @@
       "reader": {
        "samples": null,
        "why": "stopped by error"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1380",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 24576
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
       }
      }
     }
@@ -4072,6 +5963,51 @@
        "samples": null,
        "why": "stopped by error"
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 10,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "blocksPerFrame": 3,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 10 units (all 10 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -4095,6 +6031,16 @@
      "status": "noted",
      "kind": "decoder-one-block-per-frame",
      "reason": "the frames declare up to 3 raw data blocks and the converter outputs 10,240 samples for 10 frames (an observation of the totals: 1,024 per frame)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 30720,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 10 units (all 10 and the drain gave no output); Learn allows one raw data block per ADTS frame; the frames declare up to 3; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -4163,11 +6109,55 @@
        "refusedUnits": 9,
        "noOutputUnits": 3,
        "drainFrames": 0,
-       "refusesStream": "Core Audio's converter outputs nothing for any of its 12 units (9 refused, the others held back)"
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 12 units (9 refused, the others and the drain gave no output)"
       },
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 12,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 12 units (all 12 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
       }
      }
     }
@@ -4183,6 +6173,28 @@
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
      "reason": "the analyzer equals the reference (fdk direct, 12,288) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 12,288 and the reference's 12,288",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 0,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "reason": "the analyzer equals the reference (fdk direct, 12,288) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
      "statusSource": "rule"
     }
    ],
@@ -4280,6 +6292,58 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1388",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 1
+       }
       }
      }
     }
@@ -4384,6 +6448,61 @@
         "framesPerPacket": 2048
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 24576
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -4468,6 +6587,61 @@
         "sampleRate": 44100,
         "channels": 2,
         "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 24576,
+       "decoderSamples": 24576,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 5108390,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 24576
+      },
+      "reader": {
+       "samples": 24576,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
        }
       }
      }
@@ -4570,6 +6744,50 @@
      "format": {
       "rate": 44100,
       "channels": 2
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 12,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 12 units (all 12 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -4595,6 +6813,27 @@
      "reason": "Core Audio outputs 24,576 samples at 44100 Hz where the analyzer's runs are at 22050 Hz: the decoders disagree on whether SBR is applied",
      "note": "decided in review (2026-11-02; step 5, run 41423202796): keep. 12,288 samples at 22,050 Hz (analyzer) against 24,576 at 44,100 Hz (Core Audio's converter, the same duration; its reader and ffmpeg 24,576 too). FDK refuses every unit (0x0005) while Core Audio and ffmpeg decode SBR in frames whose ADTS CRC fails (12 aac.crc-mismatch); no reading of the specification says whether the SBR data of such a frame counts, so the analyzer keeps its figure.",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 12,288 and the reference's 12,288",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 12288,
+     "status": "noted",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 12 units (all 12 and the drain gave no output); the reference stands (coreaudio converter)",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -4731,6 +6970,56 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 8192,
+       "decoderSamples": 8192,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 3,
+       "drainFrames": 1024,
+       "silentUnits": [
+        4,
+        5
+       ],
+       "noOutputList": [
+        0,
+        4,
+        5
+       ],
+       "streamChangeUnits": [
+        4,
+        5
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 8192
+      },
+      "reader": {
+       "samples": null,
+       "why": "no figure: the transform signals a stream change at a unit that gives no output after its first output (units 4, 5), where the Source Reader's result varies from run to run"
+      }
      }
     }
    ],
@@ -4745,6 +7034,19 @@
      "reason": "FDK outputs 1 frames (2,048 samples) at 44100 Hz, from unit 4, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. One raw data block per frame; FDK applies SBR in frame 4 and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz, and so does Core Audio's converter (10,240 samples at 22,050 Hz, no frame at 44,100 Hz). The totals agree in the same duration; the owners' decoders disagree on SBR there and no reading of the specification decides; the keep stands by the decision of step 4, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here).",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 8192,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Media Foundation's transform outputs 8,192: the owners' decoders disagree; it gives no output for unit 4, 5 after its first output",
+     "statusSource": "reviewed",
+     "note": "Facts from the Windows records; the cause is not established. Every frame holds one raw data block (the file is not a multi-block file). The transform signals a stream change at units 4 and 5 and gives no output for units 0 (the usual hold-back), 4 and 5; its seven other units and the drain give one frame of 1,024 samples each at 22,050 Hz, 2 channels (one output format): 8,192 where FDK, Core Audio and the analyzer have 10,240 in the same duration. Unit 4 is the frame of 67 bytes where the others have 46 or 47. The Source Reader's result varies from run to run: it fails (0xC00D6D60) in most reads and reads to the end with 8,192 samples (the transform's total) in some, within one run too (error, error, end 8192 in one run, error and end 8192 in ten reads of another). Its column therefore says that it has no figure, by a rule on the transform's record. FDK's reviewed entry for this file records that FDK applies SBR in that frame."
     }
    ],
    "units": [],
@@ -4880,6 +7182,66 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 7,
+       "drainFrames": 1024,
+       "silentUnits": [
+        4,
+        5,
+        7,
+        8
+       ],
+       "noOutputList": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+       ],
+       "streamChangeUnits": [
+        1,
+        2,
+        4,
+        5,
+        7,
+        8
+       ],
+       "firstOutput": {
+        "unit": 3,
+        "time": 928798,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 4096
+      },
+      "reader": {
+       "samples": null,
+       "why": "no figure: the transform signals a stream change at a unit that gives no output after its first output (units 4, 5, 7, 8), where the Source Reader's result varies from run to run"
+      }
      }
     }
    ],
@@ -4894,6 +7256,19 @@
      "reason": "FDK outputs 3 frames (6,144 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session), revisited in step 5 (run 41423202796): keep stays. Rate differs. One raw data block per frame; FDK applies SBR in three runs of frames and outputs the others at 22,050 Hz; the analyzer counts all 10 frames at 22,050 Hz, and so does Core Audio's converter (10,240 samples at 22,050 Hz, no frame at 44,100 Hz). The totals agree in the same duration; the owners' decoders disagree on SBR there and no reading of the specification decides; the keep stands by the decision of step 4, not by the written rule (the rule covers decoders that disagree with each other and with the analyzer; Core Audio equals the analyzer here).",
      "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 4096,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Media Foundation's transform outputs 4,096: the owners' decoders disagree; it gives no output for unit 4, 5, 7, 8 after its first output",
+     "statusSource": "reviewed",
+     "note": "Facts from the Windows records; the cause is not established. Every frame holds one raw data block (the file is not a multi-block file). The transform signals a stream change at units 1, 2, 4, 5, 7 and 8 and gives no output for them and for unit 0 (the usual hold-back); units 3, 6 and 9 and the drain give one frame of 1,024 samples each at 22,050 Hz, 2 channels (one output format): 4,096 where FDK, Core Audio and the analyzer have 10,240 in the same duration. Units 1, 4 and 7 are the frames of 66, 65 and 64 bytes where the others have 46 or 47. The Source Reader's result varies from run to run: it stopped at its first failed read (0xC00D6D60) in four whole runs and read to the end with 4,096 samples (the transform's total) in others, and the three reads of one run gave end, error, end. Its column therefore says that it has no figure, by a rule on the transform's record. FDK's reviewed entry for this file records that FDK applies SBR in those frames."
     }
    ],
    "units": [],
@@ -4963,6 +7338,63 @@
       "reader": {
        "samples": null,
        "why": "stopped by error"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 2048,
+       "decoderSamples": 2048,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 1024,
+       "silentUnits": [
+        2
+       ],
+       "noOutputList": [
+        0,
+        2
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 464399,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 2048,
+       "blocksPerFrame": 2
+      },
+      "reader": {
+       "samples": 2048,
+       "decoderSamples": 2048,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
       }
      }
     }
@@ -5059,7 +7491,7 @@
       44100
      ],
      "refused": "FDK AAC outputs nothing for any of its 4 units (0x1002, it never has enough bits)",
-     "noReference": "FDK refuses the stream; the next decoder of the rule is the reference (Core Audio's converter), else ffmpeg",
+     "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg",
      "coreAudio": {
       "converter": {
        "samples": null,
@@ -5068,6 +7500,36 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 4,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1A08",
+        "aot": 3,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
       }
      }
     }
@@ -5091,6 +7553,16 @@
      "status": "noted",
      "kind": "decoder-refuses-stream",
      "reason": "Core Audio cannot build a converter for the stream (did not open (status 0x666D743F)); no reference from it",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "reason": "Media Foundation's transform outputs nothing for any of its 4 units (all 4 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC SSR; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -5172,6 +7644,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 464399,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1230",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 3072
+      },
+      "reader": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 6
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 6
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 6
+       }
+      }
      }
     }
    ],
@@ -5242,6 +7766,58 @@
       "reader": {
        "samples": null,
        "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 464399,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 3072
+      },
+      "reader": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
       }
      }
     }
@@ -5369,6 +7945,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 16384,
+       "decoderSamples": 16384,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 3482993,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 16384
+      },
+      "reader": {
+       "samples": 16384,
+       "decoderSamples": 16384,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -5490,6 +8118,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1160997,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 6144
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -5541,6 +8221,12 @@
       "converter": {
        "samples": null,
        "why": "the analyzer has 2 runs of constant output format and the converter has one"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": null,
+       "why": "the analyzer has 2 runs of constant output format and Media Foundation's runs cannot be paired"
       }
      }
     },
@@ -6373,6 +9059,390 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 194502,
+       "decoderSamples": 202752,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "runs": [
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ],
+        [
+         44100,
+         1,
+         3072
+        ],
+        [
+         48000,
+         1,
+         3072
+        ]
+       ],
+       "exact": false,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        "..."
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 45743310,
+        "duration": 213333,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 194502
+      },
+      "reader": {
+       "samples": null,
+       "why": "stopped by error"
+      }
      }
     }
    ],
@@ -6588,6 +9658,62 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 11264,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 1024,
+       "silentUnits": [
+        11
+       ],
+       "noOutputList": [
+        0,
+        11
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2321995,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 11264
+      },
+      "reader": {
+       "samples": 11264,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -6683,6 +9809,12 @@
       "converter": {
        "samples": null,
        "why": "the analyzer has 2 runs of constant output format and the converter has one"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": null,
+       "why": "the analyzer has 2 runs of constant output format and Media Foundation's runs cannot be paired"
       }
      }
     },
@@ -6793,6 +9925,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 6733786,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 30720
+      },
+      "reader": {
+       "samples": 30720,
+       "decoderSamples": 30720,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
      }
     }
    ],
@@ -6875,6 +10059,58 @@
         "framesPerPacket": 1024
        }
       }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 1160997,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 6144
+      },
+      "reader": {
+       "samples": 6144,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
      }
     }
    ],
@@ -6896,6 +10132,7 @@
  "counts": {
   "files": 56,
   "fed": 56,
-  "coreAudioCarried": 0
+  "coreAudioCarried": 0,
+  "mediaFoundationCarried": 0
  }
 }

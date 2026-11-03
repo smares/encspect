@@ -107,6 +107,9 @@ public static class SourceReaderProbe
         }
 
         int blockAlign = 0;
+        // The runs of constant output format in reading order; a change of the current media type starts a new one.
+        var runs = new List<Dictionary<string, object?>>();
+        Set("runs", runs);
         void ReadOutputType()
         {
             if (reader.GetCurrentMediaType(Native.FirstAudioStream, out var current) >= 0)
@@ -117,6 +120,14 @@ public static class SourceReaderProbe
                 {
                     blockAlign = (int)d["blockAlign"]!;
                     Set("outputFormat", d);
+                    string key = $"{d.GetValueOrDefault("sampleRate")} Hz, {d.GetValueOrDefault("channels")} channels";
+                    lock (Gate)
+                    {
+                        if (runs.Count == 0 || (string)runs[^1]["key"]! != key)
+                        {
+                            runs.Add(new Dictionary<string, object?> { ["key"] = key, ["rate"] = d.GetValueOrDefault("sampleRate"), ["channels"] = d.GetValueOrDefault("channels"), ["samples"] = 0L, ["bytes"] = 0L, ["outputs"] = 0 });
+                        }
+                    }
                 }
             }
         }
@@ -140,6 +151,13 @@ public static class SourceReaderProbe
             }
 
             hr = reader.ReadSample(Native.FirstAudioStream, 0, out uint actual, out uint flags, out long timestamp, out var sample);
+            // A read that reports a changed media type is counted with the new type: the sample it returns was produced in it (counting it with the old block alignment turned
+            // 110,592 bytes of six channels into 27,648 frames of two in pce.aac).
+            if ((flags & (NativeChanged | CurrentChanged)) != 0)
+            {
+                ReadOutputType();
+            }
+
             var read = new Dictionary<string, object?>
             {
                 ["hresult"] = Format.Hr(hr),
@@ -157,6 +175,15 @@ public static class SourceReaderProbe
                 read["frames"] = frames;
                 totalFrames += frames;
                 totalBytes += length;
+                lock (Gate)
+                {
+                    if (runs.Count > 0)
+                    {
+                        runs[^1]["samples"] = (long)runs[^1]["samples"]! + frames;
+                        runs[^1]["bytes"] = (long)runs[^1]["bytes"]! + length;
+                        runs[^1]["outputs"] = (int)runs[^1]["outputs"]! + 1;
+                    }
+                }
                 samples++;
                 sample.GetSampleFlags(out uint sampleFlags);
                 if (sampleFlags != 0)
@@ -189,11 +216,6 @@ public static class SourceReaderProbe
             {
                 Set("stoppedBy", "1000 reads at the timestamp " + timestamp);
                 break;
-            }
-
-            if ((flags & (NativeChanged | CurrentChanged)) != 0)
-            {
-                ReadOutputType();
             }
 
             if (hr < 0 || (flags & ErrorFlag) != 0)
