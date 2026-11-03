@@ -593,6 +593,50 @@
     {
       "scope": "node",
       "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "DTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "categorySeries",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-dts.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
         "WebM",
         "Track 1 Frames",
         "Statistics"
@@ -871,19 +915,6 @@
       "name": "Coded Samples",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "key": "categorySeries",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
       ]
     },
     {
@@ -1465,6 +1496,20 @@
         "DTS",
         "Statistics"
       ],
+      "from": "Frames With CRC",
+      "to": "Stored Frame Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "DTS",
+        "Statistics"
+      ],
       "from": "Frames Failing a CRC",
       "to": "Failed Frame Checksums",
       "goldens": [
@@ -1691,6 +1736,30 @@
         "Track 2 Frames",
         "Statistics"
       ],
+      "name": "Long Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "Statistics"
+      ],
+      "name": "Short Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "Statistics"
+      ],
       "name": "Decoded Samples",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
@@ -1716,9 +1785,63 @@
         "Track 1 Frames",
         "Statistics"
       ],
+      "name": "Long Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "WebM",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Short Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "WebM",
+        "Track 1 Frames",
+        "Statistics"
+      ],
       "name": "Decoded Samples",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Long Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Short Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
+        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
       ]
     },
     {

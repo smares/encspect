@@ -246,6 +246,21 @@
                       "length": 2944
                     },
                     {
+                      "name": "Stereo Coding",
+                      "value": 4,
+                      "unit": "frames",
+                      "offset": 80,
+                      "length": 2944,
+                      "children": [
+                        {
+                          "name": "Left/right stereo",
+                          "value": "4 frames (100.0%)",
+                          "offset": 80,
+                          "length": 2944
+                        }
+                      ]
+                    },
+                    {
                       "name": "Extension Substream Frames",
                       "value": 4,
                       "unit": "frames",
@@ -342,7 +357,7 @@
                       "length": 2944
                     },
                     {
-                      "name": "Frames With CRC",
+                      "name": "Stored Frame Checksums",
                       "value": 0,
                       "unit": "frames",
                       "offset": 80,
@@ -9326,6 +9341,42 @@
             ],
             "values": [
               552
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 4
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                4
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

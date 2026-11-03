@@ -88,6 +88,27 @@
                   "length": 3072
                 },
                 {
+                  "name": "Stereo Coding",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "5 frames (83.3%)",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Intensity stereo",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
                   "name": "Extension Substream Frames",
                   "value": 0,
                   "unit": "frames",
@@ -184,7 +205,7 @@
                   "length": 3072
                 },
                 {
-                  "name": "Frames With CRC",
+                  "name": "Stored Frame Checksums",
                   "value": 0,
                   "unit": "frames",
                   "offset": 0,
@@ -4719,6 +4740,46 @@
             ],
             "values": [
               369
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 5
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 1
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                5
+              ],
+              [
+                2,
+                1
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

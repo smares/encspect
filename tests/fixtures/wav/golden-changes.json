@@ -2,7 +2,112 @@
   "goldens": [
     "tests/fixtures/wav/"
   ],
+  "added": [
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "DTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "categorySeries",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "DTS",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
+      ]
+    }
+  ],
   "renamed": [
+    {
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Frames With CRC",
+      "to": "Stored Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
+    },
     {
       "parent": [
         "RIFF",
@@ -104,6 +209,19 @@
         "tests/fixtures/wav/built-w64-ac3.report.json",
         "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
         "tests/fixtures/wav/external-w64-ac3.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Frames With CRC",
+      "to": "Stored Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
       ]
     },
     {

@@ -116,6 +116,20 @@
         "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
         "tests/fixtures/ac3/joc-dec3.report.json"
       ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (Edit List)",
+      "to": "Encoder Padding (Edit List)",
+      "goldens": [
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json"
+      ]
     }
   ]
 }

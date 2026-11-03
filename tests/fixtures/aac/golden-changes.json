@@ -19,6 +19,37 @@
     {
       "parent": [
         "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (iTunSMPB)",
+      "to": "Encoder Padding (iTunSMPB)",
+      "goldens": [
+        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
         "mdat",
         "Track 1 Samples",
         "AAC",
@@ -89,6 +120,30 @@
     {
       "parent": [
         "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (Edit List)",
+      "to": "Encoder Padding (Edit List)",
+      "goldens": [
+        "tests/fixtures/aac/exhale-sbr.report.json",
+        "tests/fixtures/aac/exhale.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
+        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
         "Track 1 Samples",
         "AAC",
         "Statistics"
@@ -104,7 +159,57 @@
     {
       "array": "categorySeries",
       "from": "Window Sequences",
-      "to": "Block Usage"
+      "to": "Block Usage",
+      "goldens": [
+        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40-adts.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50-adts.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac-adts.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
+        "tests/fixtures/aac/fdkaac-he-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-fast.report.json",
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-ltp.report.json",
+        "tests/fixtures/aac/ffmpeg-main.report.json",
+        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
+        "tests/fixtures/aac/ffmpeg-no-tools.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json"
+      ]
     }
   ]
 }
