@@ -83,7 +83,8 @@ internal sealed class VoiceStream
 
         int length = mediaObject.Length;
         int align = _p.BlockAlign;
-        int lead = length % align;
+        // An object the container cut has its whole packets first and the cut one last; an uncut object longer than a packet starts with the lead.
+        int lead = mediaObject.IsCut ? 0 : length % align;
         int first = PacketRecords.Count;
         if (length < align)
         {
@@ -107,7 +108,7 @@ internal sealed class VoiceStream
 
             for (; start < length; start += align)
             {
-                ProcessPacket(mediaObject, start, align, hasHeader: true);
+                ProcessPacket(mediaObject, start, Math.Min(align, length - start), hasHeader: true);
             }
         }
         catch (LimitReached)

@@ -13,10 +13,10 @@ public sealed partial class AsfParser
     // sub-payloads are media objects of their own (section 5.2.3.2). The packets are read again from
     // the file, one at a time, as the codec asks for objects.
     //
-    // isKeepingPartial: the object that the file ends in the middle of one of its payloads is handed over with the bytes that arrived, after
-    // its finding, for a codec whose decoder reads a short packet (Windows Media Audio Lossless); the others never see it. An object that is
-    // incomplete because later fragments never arrive, or because the Data Object's stated end comes first, is dropped, as the ASF demuxer drops it.
-    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber, bool isKeepingPartial)
+    // An incomplete object (the file ends inside it, the Data Object's stated end or the next object comes first) is handed over with the bytes
+    // that arrived, flagged IsCut, after its finding (docs/design/samples-definition.md, "What containers hand over"); the object after a lost
+    // one has FollowsGap. A fragment that does not continue an object (asf.fragment-order) and an object of an invalid size are dropped.
+    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber)
     {
         ByteReader reader = state.Reader;
         FindingCollector findings = state.Findings;
@@ -36,7 +36,7 @@ public sealed partial class AsfParser
         // The object's stated size; its buffer grows with the fragments that arrive, so a packet that states a
         // large object and never delivers it costs what it holds, not what it states.
         int total = 0;
-        bool isCutByFile = false;
+        bool followsGap = false;
 
         while (position < end)
         {
@@ -96,14 +96,22 @@ public sealed partial class AsfParser
                     if (data is not null)
                     {
                         findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "next", anchor, n =>
-                            $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. They are dropped.");
+                            $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
+                        if (collected > 0)
+                        {
+                            yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = followsGap };
+                        }
+
                         data = null;
+                        ranges = [];
+                        followsGap = true;
                     }
 
                     if (size == 0 || size > MaxMediaObject)
                     {
                         findings.Add(Severity.Warning, "asf.object-size-invalid", streamNumber, anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} state{(n == 1 ? "s" : string.Empty)} a size of 0 or more than {MaxMediaObject} bytes; {(n == 1 ? "it is" : "they are")} not followed.");
+                        followsGap = true;
                         continue;
                     }
 
@@ -117,6 +125,7 @@ public sealed partial class AsfParser
                 {
                     findings.Add(Severity.Warning, "asf.fragment-order", streamNumber, anchor, n =>
                         $"{(n == 1 ? "A fragment of a media object of stream" : $"{n} fragments of media objects of stream")} {streamNumber} {(n == 1 ? "does" : "do")} not continue the object before {(n == 1 ? "it" : "them")}; {(n == 1 ? "it is" : "they are")} dropped.");
+                    followsGap = true;
                     continue;
                 }
 
@@ -139,12 +148,12 @@ public sealed partial class AsfParser
                 }
 
                 collected += take;
-                isCutByFile = (packet.Issues & PacketIssues.Truncated) != 0 && payload.DataPosition + payload.DataLength >= count;
                 if (collected == total)
                 {
-                    yield return new MappedBytes(data, ranges);
+                    yield return new MappedBytes(data, ranges) { FollowsGap = followsGap };
                     data = null;
                     ranges = [];
+                    followsGap = false;
                 }
             }
 
@@ -153,17 +162,21 @@ public sealed partial class AsfParser
 
         if (data is not null)
         {
-            bool isHandedOver = isKeepingPartial && collected > 0 && isCutByFile && end >= reader.Start + reader.Length;
-            if (isHandedOver)
+            bool isEndOfFile = end >= reader.Start + reader.Length;
+            if (isEndOfFile)
             {
                 findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "file", anchor, n =>
-                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are.");
-                yield return new MappedBytes(data.AsMemory(0, collected), ranges);
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
             }
             else
             {
                 findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "end", anchor, n =>
-                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. They are dropped.");
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
+            }
+
+            if (collected > 0)
+            {
+                yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = followsGap };
             }
         }
     }

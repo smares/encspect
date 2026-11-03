@@ -139,6 +139,12 @@ internal sealed class StdStream
             if (packet.Length < align)
             {
                 record.State = SuperframeState.Short;
+                if (packet.IsCut && packet.Length >= 1)
+                {
+                    // A cut object whose first byte is there declares frames by it: those that start in it and, with the bit reservoir, the one it finishes.
+                    UnreadFrames += p.UsesBitReservoir ? (packet.Span[0] & 15) + (reservoir.Bytes > 0 ? 1 : 0) : 1;
+                }
+
                 reservoir.Bytes = 0;
                 Superframes.Add(record);
                 findings.Add(Severity.Warning, "wma.superframe-short", () => nodes.Superframe(index), n => StdText.SuperframeShort(n, align, SuperframeOffset(index)));
