@@ -174,14 +174,126 @@ def expect_stream(data, records, s):
         "serial": f"0x{serial:08X}", "codec": s["codec"], "link": s["link"], "pages": len(pages), "packets": len(packets),
         "has_eos": any(r["flags"] & m.EOS and r["crc_ok"] and not r.get("truncated") for r in pages),
     }
-    entry, info = expect_codec(entry, data, packets, page_ends, s)
+    handed, handed_ends = hand_over(data, pages, s)
+    entry, info = expect_codec(entry, data, handed, handed_ends, s, (packets, page_ends))
+    # The audio packets libogg, and so oggz, does not return: crosscheck_ogg_fixtures.py leaves them out of its comparison.
+    for codec in ("speex", "vorbis", "opus"):
+        if codec in entry:
+            first_audio = len(handed) - len(entry[codec]["packets"])
+            missing = [i - first_audio for i, p in enumerate(handed) if not p["oggz"] and i >= first_audio]
+            if missing:
+                entry[codec]["oggz_missing"] = missing
     # The streams of one link play at the same time and form a playback group, which the summary counts once.
     if info:
         info["playback_group"] = s["link"]
     return entry, info
 
 
-def expect_codec(entry, data, packets, page_ends, s):
+def hand_over(data, pages, s):
+    """The packets the Ogg parser hands to the codec parser (docs/design/samples-definition.md, question 2): those of a page that fails its CRC as
+    the page holds them, those of a truncated page with the bytes present, the one it cuts flagged, and the packet left unfinished at the end of
+    the stream, flagged cut; pages lost by sequence number or after a sequence gap break the packet they cut. Each packet has "cut" and
+    "oggz" (False where libogg, and so oggz, does not return it); the pages come with the indexes of the packets that end on them."""
+    packets, page_ends, pending, last_sequence, gap = [], [], None, None, False
+    pending_oggz = True
+
+    def emit(cut, oggz, fallback=0):
+        nonlocal pending, gap, pending_oggz
+        buffer, ranges = pending
+        merged = []
+        for o, l in ranges:
+            if merged and merged[-1][0] + merged[-1][1] == o:
+                merged[-1] = (merged[-1][0], merged[-1][1] + l)
+            else:
+                merged.append((o, l))
+        packets.append({"offset": merged[0][0] if merged else fallback, "data": bytes(buffer), "ranges": merged, "gap": gap, "cut": cut, "oggz": oggz and pending_oggz})
+        pending, gap, pending_oggz = None, False, True
+
+    for r in pages:
+        offset = r["offset"]
+        truncated = bool(r.get("truncated"))
+        damaged = truncated or not r["crc_ok"]
+        if last_sequence is not None and r["sequence"] != (last_sequence + 1) & 0xFFFFFFFF:
+            pending, gap = None, True
+        last_sequence = r["sequence"]
+        if r["sequence"] in s["lost"]:
+            pending, gap = None, True
+            page_ends.append((r, [], True))
+            continue
+        count = data[offset + 26]
+        present = min(count, r["length"] - 27) if truncated else count
+        lacing = data[offset + 27:offset + 27 + present]
+        body = offset + 27 + count
+        room = max(0, r["length"] - 27 - count) if truncated else float("inf")
+        # The runs of the segment table: (start, length, ends).
+        runs, start, length, index, orphan = [], 0, 0, 0, False
+        if r["flags"] & m.CONTINUED and pending is None and present:
+            end = False
+            while index < present:
+                value = lacing[index]
+                index += 1
+                length += value
+                if value < 255:
+                    end = True
+                    break
+            orphan = True
+            gap = True
+            start = length
+            if not end:
+                # libogg skips the rest of the page; the next page's continuation is an orphan as well.
+                pass
+            length = 0
+        elif not r["flags"] & m.CONTINUED and pending is not None:
+            pending, gap = None, True
+        ends = []
+        position = start
+        while index < present:
+            run_start, run_length, run_ends = position, 0, False
+            while index < present:
+                value = lacing[index]
+                index += 1
+                run_length += value
+                if value < 255:
+                    run_ends = True
+                    break
+            position += run_length
+            runs.append((run_start, run_length, run_ends))
+        for k, (run_start, run_length, run_ends) in enumerate(runs):
+            held = min(run_length, room - run_start)
+            if held <= 0 and truncated:
+                break
+            if pending is None:
+                pending = (bytearray(), [])
+            at = body + run_start
+            pending[0].extend(data[at:at + int(held)])
+            if held:
+                pending[1].append((at, int(held)))
+            if held < run_length:
+                emit(True, False, at + int(held))
+                break
+            if run_ends:
+                emit(False, not damaged, at + int(held))
+                ends.append(len(packets) - 1)
+        if truncated:
+            if pending is not None:
+                emit(True, False)
+            pending, gap = None, True
+            page_ends.append((r, [], True))
+        else:
+            if damaged:
+                for e in ends:
+                    packets[e]["oggz"] = False
+                if pending is not None:
+                    pending_oggz = False
+            page_ends.append((r, ends, pending is None))
+    if pending is not None and pending[0]:
+        emit(True, False)
+    return packets, page_ends
+
+
+def expect_codec(entry, data, packets, page_ends, s, scan):
+    """packets and page_ends are what the codec parser is handed (hand_over); scan is the same as libogg and the page scan return them, which the
+    model of speexdec's trimming and the oggz comparison follow."""
     if s["codec"] in CODECS and s["analyzed"] and packets:
         return CODECS[s["codec"]](entry, data, packets, page_ends, s)
     if s["codec"] != "Speex" or not s["analyzed"] or not packets:
@@ -196,14 +308,18 @@ def expect_codec(entry, data, packets, page_ends, s):
             is_end = bool(r["flags"] & m.EOS) and clean
             positions.append((ends[-1] - first_audio, r["granule"], is_end))
     gaps = [i - first_audio for i, p in enumerate(packets) if p["gap"] and i >= first_audio]
-    speex = m.speex_expectations(header, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions, gaps)
+    cuts = [i - first_audio for i, p in enumerate(packets) if p["cut"] and i >= first_audio]
+    speex = m.speex_expectations(header, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions, gaps, cuts)
     entry["speex"] = {"header": m.speex_header_fields(header), **{k: v for k, v in speex.items() if k != "stream_info"}}
     if len(packets) > 1:
         entry["speex"]["comment"] = m.read_comment(packets[1]["data"])
     if len(header) >= 80 and 0 <= struct.unpack_from("<i", header, 40)[0] <= 2:
-        frames = [None] * first_audio + [len(f) for f in speex["frames"]]
+        scan_packets, scan_ends = scan
+        scan_audio = scan_packets[first_audio:]
+        scan_frames = m.speex_expectations(header, [(p["offset"], p["data"], p["ranges"]) for p in scan_audio], [], [])["frames"]
+        frames = [None] * first_audio + [len(f) for f in scan_frames]
         entry["speex"]["speexdec_samples"] = m.speexdec_samples(
-            [(r["granule"], len(ends), bool(r["flags"] & m.EOS)) for r, ends, _ in page_ends if ends], frames, header)
+            [(r["granule"], len(ends), bool(r["flags"] & m.EOS)) for r, ends, _ in scan_ends if ends], frames, header)
     return entry, speex["stream_info"]
 
 
@@ -539,7 +655,7 @@ def oggs_in_mp3():
     data = b"".join(frames)
     (OUT / "oggs-in-mp3.mp3").write_bytes(data)
     # Six frames of 1152 samples, 417 bytes each.
-    info = {"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_layout": ["front left", "front right"], "samples": 6912,
+    info = {"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_layout": ["front left", "front right"], "samples": 6912, "lost_samples": 0,
             "duration": 6912 / 44100,
             "average_bitrate": 6 * 417 * 8 * 44100 / 6912 / 1000, "is_vbr": False}
     manifest = {"length": len(data), "format": "MPEG Audio", "regions": [{"name": "MPEG Audio", "offset": 0, "length": len(data)}],
@@ -751,6 +867,7 @@ def frames_corrupt():
     f.finding("speex.frame-overrun", "the frame runs past the end of the packet")
     f.finding("speex.extra-frames", "more frames than the 2 per packet")
     f.finding("speex.missing-frames", "fewer frames than the 2 per packet")
+    f.finding("speex.granule-beyond-packets", "160 samples beyond what the packets before it hold")
     f.finding("speex.empty-packet", "1 audio packet is empty")
     f.finding("speex.wideband-layer-in-narrowband", "carries wideband layers")
     f.crosscheck = {"valid": False, "oggz_validate": "ok", "packets": True, "speexdec": True, "not_compared": {

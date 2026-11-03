@@ -48,7 +48,8 @@ def expect_vorbis(entry, data, packets, page_ends, s):
         vorbis["setup"] = {"value": setup["value"], "groups": setup["groups"]}
     audio = packets[first_audio:]
     gaps = [i - first_audio for i, p in enumerate(packets) if p["gap"] and i >= first_audio]
-    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps)
+    cuts = [i - first_audio for i, p in enumerate(packets) if p["cut"] and i >= first_audio]
+    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts=cuts)
     vorbis.update({"packets": result["packets"], "blocks": result["blocks"], "statistics": result["statistics"]})
     if s.get("encoder"):
         vorbis["encoder"] = s["encoder"]
@@ -81,7 +82,8 @@ def expect_opus(entry, data, packets, page_ends, s):
             opus["extra"] = f"{m.plural(len(tags) - end, 'byte', 'bytes')}, {'binary data to keep' if tags[end] & 1 else 'padding, which may be discarded'}"
     audio = packets[first_audio:]
     gaps = [i - first_audio for i, p in enumerate(packets) if p["gap"] and i >= first_audio]
-    result = v.opus_expectations(head, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps)
+    cuts = [i - first_audio for i, p in enumerate(packets) if p["cut"] and i >= first_audio]
+    result = v.opus_expectations(head, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts)
     opus.update({"packets": result["packets"], "tocs": result["tocs"], "statistics": result["statistics"]})
     if s.get("encoder"):
         opus["encoder"] = s["encoder"]
