@@ -39,7 +39,7 @@ The description does not say how the frame length is rounded, what each CRC-32 c
 
 ## Reported
 
-- the sample rate, channels, bits per sample, samples (the samples of the frames read whole), duration and average bitrate (the bytes of the frames, CRC-32s included, over the time their samples last);
+- the sample rate, channels, bits per sample, samples (the samples the frames declare: the frame length from the header, the remainder for the last frame; a frame the data cuts short counts them and Lost Samples counts them too), duration and average bitrate (the bytes of the frames, CRC-32s included, over the time their samples last);
 - the bitrate per frame and per second as series, with the smallest and largest frame, a distribution and the bitrate mode: variable where the frame bitrates differ (`IsVbr`), unknown for a single frame;
 - the frame length, and the frames whose CRC-32 held and failed.
 

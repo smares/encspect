@@ -126,7 +126,12 @@ public sealed class TtaCodecParser : ICodecParser
             s.HasGap = true;
         }
 
-        if (data.Length < 4)
+        if (packet.IsCut)
+        {
+            // The container cut the packet: its last four bytes are not the CRC-32.
+            entry.Status = EntryStatus.Cut;
+        }
+        else if (data.Length < 4)
         {
             entry.Status = EntryStatus.TooSmall;
         }

@@ -188,11 +188,14 @@ class Stream:
         if h is None:
             return None
         done = self.complete_frames()
-        samples = sum(self.samples_of(i) for i, _ in done) if h["rate"] else 0
+        # A frame the data cuts short counts its declared samples and is lost; the bitrate covers the frames the data holds whole.
+        whole = sum(self.samples_of(i) for i, _ in done) if h["rate"] else 0
+        lost = sum(self.samples_of(i) for i, x in enumerate(self.frames) if "cut" in x["status"]) if h["rate"] else 0
+        samples = whole + lost
         duration = samples / h["rate"] if h["rate"] else 0
         bits_total = sum(x["size"] * 8 for _, x in done)
-        average = bits_total * h["rate"] / samples / 1000 if samples else None
-        return {"codec": "TTA", "sample_rate": h["rate"], "channels": h["channels"], "samples": samples, "duration": duration, "bits_per_sample": h["bits"],
+        average = bits_total * h["rate"] / whole / 1000 if whole else None
+        return {"codec": "TTA", "sample_rate": h["rate"], "channels": h["channels"], "samples": samples, "lost_samples": lost, "duration": duration, "bits_per_sample": h["bits"],
                 "average_bitrate": average, "layout": []}
 
     def verification(self):

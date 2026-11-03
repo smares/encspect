@@ -174,6 +174,7 @@ public class TtaFixtureTests
         Assert.Equal(info.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
         Assert.Equal(info.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.Equal(info.GetProperty("samples").GetInt64(), stream.Samples);
+        Assert.Equal(info.GetProperty("lost_samples").GetInt64(), stream.LostSamples);
         Assert.Equal(info.GetProperty("duration").GetDouble(), stream.Duration, 9);
         Assert.Equal(info.GetProperty("bits_per_sample").GetInt32(), stream.BitsPerSample);
         if (info.GetProperty("average_bitrate").ValueKind == JsonValueKind.Null)
