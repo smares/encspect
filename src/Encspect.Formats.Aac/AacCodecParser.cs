@@ -99,10 +99,7 @@ public sealed class AacCodecParser : ICodecParser
 
             // An access unit with no byte declares nothing (aac.empty-access-units); it is no unit to count.
             ref readonly Unit unit = ref log.Units[i];
-            if (unit.Length > 0)
-            {
-                figures.Add(unit.Offset, unit.Length, frame);
-            }
+            figures.Add(unit.Offset, unit.Length, unit.Length > 0 ? frame : 0);
         }
 
         if (!(context.Configuration is { AreSamplesEncrypted: true }))

@@ -424,6 +424,46 @@ public class SamplesDefinitionTests
         Assert.Equal(7213L, report.Streams[0].Samples);
     }
 
+    // A container that hands a block cut by the end of the file (MappedBytes.IsCut) to a codec parser, of whatever codec: the parser reports no
+    // bug, counts the packet where it can and keeps its series whole (an empty cut packet once broke the AAC coding series).
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(20)]
+    [InlineData(400)]
+    public void AMatroskaFileCutInsideItsLastBlockProducesNoParserBug(int cut)
+    {
+        int analyzed = 0;
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "matroska")).Where(f => f.EndsWith(".mka", StringComparison.Ordinal) || f.EndsWith(".mkv", StringComparison.Ordinal) || f.EndsWith(".webm", StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        {
+            byte[] data = File.ReadAllBytes(path);
+            if (data.Length <= cut)
+            {
+                continue;
+            }
+
+            Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(path), new MemoryStream(data, 0, data.Length - cut), new AnalysisOptions { Decoding = new DecodeOptions() });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+            Assert.All(report.Streams, s => Assert.True(s.LostSamples >= 0));
+            analyzed++;
+        }
+
+        Assert.True(analyzed > 20);
+    }
+
+    [Fact]
+    public void ACutAacBlockInMatroskaIsCountedAndLost()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "matroska", "aac-delay.mka");
+        byte[] data = File.ReadAllBytes(path);
+        StreamInfo whole = Analyzer.CreateDefault().Analyze("whole.mka", new MemoryStream(data)).Streams.Single();
+        Report report = Analyzer.CreateDefault().Analyze("cut.mka", new MemoryStream(data, 0, data.Length - 3));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        StreamInfo cut = report.Streams.Single();
+        Assert.Equal(whole.Samples, cut.Samples);
+        Assert.Equal(1024, cut.LostSamples);
+    }
+
     [Fact]
     public void TheTopicOfLostSamplesIsServed()
     {
