@@ -47,6 +47,11 @@ internal static class VoiceReport
         Add("Frames", NodeValue.Integer(frames), VoiceExplain.StatFrames);
         Add("Frame Length", NodeValue.Integer(VoiceParameters.FrameSamples, "samples"), VoiceExplain.StatFrameLength);
         Add("Samples", NodeValue.Integer(t.Samples, "samples"), VoiceExplain.StatSamples);
+        if (t.LostSamples > 0)
+        {
+            node.Add("Lost Samples", container.Offset, container.Length, NodeValue.Integer(t.LostSamples, "samples"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+        }
+
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), VoiceExplain.StatDuration);
         ContainerFigures.AddLength(node, container, configuration);
 

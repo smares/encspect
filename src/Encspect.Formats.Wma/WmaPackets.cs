@@ -147,6 +147,18 @@ internal sealed class WmaPacketReader
 
     public long LongPackets { get; private set; }
 
+    // The declared samples, at the coded stage, of the frames that are lost: in a Professional stream each invalid frame and the frame the last
+    // packet starts and no packet finishes (wma.frame-unfinished) count a frame length (docs/design/samples-definition.md). A Lossless stream
+    // reports none: after a loss its reader meets bits that are no frame any packet declares, so an invalid frame there is no unit to count.
+    public long LostSamples => _isLossless ? 0 : (InvalidFrames + UnfinishedFrames) * _p.FrameLength;
+
+    // The frame that the last packet starts and no packet finishes, in a stream that has one.
+    public long UnfinishedFrames => !_isLossless && UnfinishedBits > 0 && ValidFrames > 0 ? 1 : 0;
+
+    // The frames' declared samples before any trim: every valid frame counts a frame length, and in a Professional stream so does every invalid
+    // one and the unfinished one.
+    public long CodedSamples => _isLossless ? ValidFrames * _p.FrameLength : (ValidFrames + InvalidFrames + UnfinishedFrames) * _p.FrameLength;
+
     public long TrimmedSamples { get; private set; }
 
     public long TrimmedFrames { get; private set; }
@@ -1026,6 +1038,7 @@ internal sealed class WmaPacketReader
             BitrateY.Add(rate);
         }
 
+        long before = Samples;
         if (_isLossless)
         {
             Samples += OutputOf(result);
@@ -1058,6 +1071,12 @@ internal sealed class WmaPacketReader
 
         if (!result.IsValid)
         {
+            // An invalid Professional frame declares a frame length whatever a decoder outputs for it.
+            if (!_isLossless && Samples - before < p.FrameLength)
+            {
+                Samples += p.FrameLength - (Samples - before);
+            }
+
             return;
         }
 

@@ -116,6 +116,7 @@ public sealed class WmaStandardParser : ICodecParser
             ChannelMode = parameters.Channels == 1 ? "Mono" : "Stereo",
             ChannelLayout = parameters.Channels == 1 ? ChannelLayouts.Mono : ChannelLayouts.Stereo,
             Samples = samples,
+            LostSamples = stream.LostSamples,
             Duration = duration,
             AverageBitrate = averageBitrate,
             IsVbr = configuration.IsVbr ?? false,

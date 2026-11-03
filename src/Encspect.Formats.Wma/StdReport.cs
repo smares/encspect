@@ -10,8 +10,8 @@ internal static class StdReport
     {
         StdTotals totals = stream.Totals;
 
-        Node Add(string name, NodeValue value, string description, Node? to = null) =>
-            (to ?? statistics).Add(new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = Topics.WmaStandard });
+        Node Add(string name, NodeValue value, string description, Node? to = null, string? topic = null) =>
+            (to ?? statistics).Add(new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard });
 
         Add("Superframes", NodeValue.Integer(stream.Superframes.Count), StdText.StatSuperframes);
         Add("Frames", NodeValue.Integer(stream.FramesRead), StdText.StatFrames);
@@ -25,6 +25,11 @@ internal static class StdReport
         if (stream.IsRuleApplicable)
         {
             Add("Coded Samples", NodeValue.Integer(stream.CodedSamples, "samples"), StdText.StatCodedSamples);
+        }
+
+        if (stream.LostSamples > 0)
+        {
+            Add("Lost Samples", NodeValue.Integer(stream.LostSamples, "samples"), StreamInfo.LostSamplesDescription, topic: StreamInfo.LostSamplesTopic);
         }
 
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), StdText.StatDuration);

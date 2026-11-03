@@ -44,7 +44,7 @@ internal static class VoiceExplain
     public const string StatInvalidSuperframes = "How many superframes failed: music, more than 480 samples, a frame type code with no type, or more bits than the packets give.";
     public const string StatFrames = "How many frames the superframes read hold: three each.";
     public const string StatFrameLength = "The samples in each frame.";
-    public const string StatSamples = "The samples the superframes read output: 480 each, or the count a superframe states.";
+    public const string StatSamples = "The samples the superframes declare: 480 each, or the count a superframe states, those of the superframes that are lost included.";
     public const string StatDuration = "The samples over the sample rate.";
     public const string StatAverageSuperframeBitrate = "The bits of the superframes read over the duration, without the packet headers, the spillover fields and the bits no superframe uses.";
     public const string StatSmallestSuperframe = "The fewest bytes a superframe read takes, from its bits.";

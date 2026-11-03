@@ -287,7 +287,12 @@ internal sealed class VoiceStream
         }
         else
         {
+            // A superframe that is cut, breaks the syntax or is dropped declares the samples it states, or 480 where it states none or more
+            // than it holds; they count and are lost (docs/design/samples-definition.md).
+            int declared = sf.HasSampleCount && sf.SampleCount <= VoiceParameters.SuperframeSamples ? sf.SampleCount : VoiceParameters.SuperframeSamples;
             Totals.Invalid++;
+            Totals.Samples += declared;
+            Totals.LostSamples += declared;
         }
 
         return index;
