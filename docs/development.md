@@ -777,7 +777,7 @@ Step 2 added the levels (`--measure` runs both; docs/design/spectral-analysis.md
 | 16,384 | 176,400 Hz | 19.2 | 1.11 | 19.5 | 1.22 |
 | 32,768 | 352,800 Hz | 20.0 | 1.11 | 19.1 | 1.02 |
 
-The levels alone (`--measure levels`), with the 128-bit accumulators, in nanoseconds for each sample of a channel at 44.1 kHz (the ratio to the reference's time per unit, with a weight of 4):
+The levels alone (`--measure levels`), with the 128-bit accumulators, in nanoseconds for each sample of a channel at 44.1 kHz (the ratio to the reference's time per unit, with a weight of 4; the weight is 5 since the nightly of 7a27989, which divides each ratio by 1.25: see the design's "As built: step 2"):
 
 | Samples | 1 channel | 2 channels |
 |---|---|---|
