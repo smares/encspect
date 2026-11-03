@@ -44,6 +44,8 @@ public sealed partial class MpegAudioParser
         long samples = 0;
         long lost = 0;
         long lostTicks = 0;
+        long cutStart = long.MaxValue;
+        long cutEnd = 0;
         bool hasSideInfo = true;
         int maximumFill = 0;
         int free = 0;
@@ -61,6 +63,8 @@ public sealed partial class MpegAudioParser
                 samples += new MpegHeader(frame.Header).Samples;
                 lost += new MpegHeader(frame.Header).Samples;
                 lostTicks += Ticks(frame);
+                cutStart = Math.Min(cutStart, frame.Offset);
+                cutEnd = Math.Max(cutEnd, frame.End);
             }
 
             if (!IsAudio(frame))
@@ -88,13 +92,14 @@ public sealed partial class MpegAudioParser
         }
 
         int audio = region.AudioFrames;
-        long start = region.AudioStart;
-        long length = region.AudioEnd - start;
+        long start = Math.Min(region.AudioStart, cutStart);
+        long length = Math.Max(region.AudioEnd, cutEnd) - start;
         Node node = new("Statistics", start, length, $"{FramesText(audio)}, {DurationText(ticks + lostTicks)}") { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         Add("Frames", NodeValue.Integer(audio), Explain.StatFrames);
         Add("Samples", NodeValue.Integer(samples), Explain.StatSamples);
         if (lost > 0)
         {
+            // The Statistics node reaches over the cut frames' bytes, so this one covers the units it counts.
             Add("Lost Samples", NodeValue.Integer(lost), StreamInfo.LostSamplesDescription, Topics.SamplesAndLostSamples);
         }
 
