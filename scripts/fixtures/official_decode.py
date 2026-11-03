@@ -1002,7 +1002,7 @@ def windows_reader_signature(result):
 
 
 def windows_reader_result(node, repeats=()):
-    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file nine times more) differ from it in what windows_reader_signature compares, in which
+    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file twice more) differ from it in what windows_reader_signature compares, in which
     case the reader has no figure (`error`, with the runs' outcomes in the reason)."""
     first = windows_reader_single(node)
     others = [windows_reader_single(r) for r in repeats]
@@ -1080,7 +1080,7 @@ def windows_reader_single(node):
 
 
 MF_NOTE_LIMIT = 2000
-SOURCE_READER_RUNS = 10  # the probe reads the file this many times (Program.cs SourceReaderRepeats + 1); a total counts only where all agree
+SOURCE_READER_RUNS = 3  # the probe reads the file this many times (Program.cs SourceReaderRepeats + 1); a total counts only where all agree
 MF_LIST_LIMIT = 64
 
 

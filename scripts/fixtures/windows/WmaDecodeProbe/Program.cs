@@ -28,7 +28,7 @@ public static class Program
     };
 
     // The Source Reader runs after the first one; official_decode.py's SOURCE_READER_RUNS is this plus one.
-    private const int SourceReaderRepeats = 9;
+    private const int SourceReaderRepeats = 2;
 
     public static int Main(string[] args)
     {
@@ -146,8 +146,8 @@ public static class Program
             if (aac)
             {
                 // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four whole runs and read to the end in others),
-                // so it is read nine times more; the driver takes a result as a figure only where the ten agree (with five, a file whose reads end or fail about as often as not still
-                // gave an agreeing "failed" one time in sixteen, and the committed text of its column then differed between two runs).
+                // so it is read twice more; the driver takes a result as a figure only where the three agree (the reads of one run are not independent, so this guards against a visible
+                // variation only; a stream whose result is known to vary has no committed figure, see compare_official_decoders.py).
                 var repeats = new JsonArray();
                 for (int repeat = 0; repeat < SourceReaderRepeats; repeat++)
                 {

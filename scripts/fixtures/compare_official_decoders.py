@@ -1056,8 +1056,14 @@ def attach_mediafoundation(result, mf, record):
                     transform["unitCount"], nothing_phrase(transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], transform.get("notFedUnits", 0)))
     if reader is not None:
         runs, why = mf_total(reader)
-        # a reader that has no figure says only how (the full reason is in the record): its stop, a failed read or a result that differs from run to run, varies with timing
-        column["reader"] = {"samples": None, "why": why.split(" (")[0] + (" (the Source Reader's runs differ)" if "the Source Reader's runs differ" in why else "")} if runs is None else mf_entry(reader, runs, rate)
+        # a reader that has no figure says only how (the full reason, the Source Reader's runs differ included, is in the record): whether its ten reads failed alike or differed varies from run to run (ten failed in run 41553191451, end, error and end differed in 41543602536), so the committed column cannot carry it
+        column["reader"] = {"samples": None, "why": why.split(" (")[0]} if runs is None else mf_entry(reader, runs, rate)
+        # The Source Reader's result on a stream whose output type the transform changes at a unit that gives no output varies from run to run (sbr-in-three-blocks.aac: failed in
+        # most runs, read to the end in others), and its reads within a run are not independent, so no number of reads makes the committed form certain: such a reader has no figure
+        # whatever it did, which the transform's record decides alone.
+        unstable = [u for u in transform.get("streamChangeUnits", []) if u in set(transform.get("silentUnits", []))] if transform else []
+        if unstable:
+            column["reader"] = {"samples": None, "why": "no figure: the transform signals a stream change at a unit that gives no output (units %s), where the Source Reader's result varies from run to run" % ", ".join(map(str, unstable[:8]))}
     entry = column.get("transform")
     if entry is None:
         return

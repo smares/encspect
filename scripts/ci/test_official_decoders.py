@@ -914,7 +914,27 @@ class WindowsRecordTests(unittest.TestCase):
                   "witnesses": {}, "analyzerRates": [44100]}
         reader = driver.windows_reader_result(self.reader_node(False), [self.reader_node(True), self.reader_node(False)])
         compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": reader, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
-        self.assertEqual({"samples": None, "why": "stopped by error (the Source Reader's runs differ)"}, figure["mediaFoundation"]["reader"])
+        self.assertEqual({"samples": None, "why": "stopped by error"}, figure["mediaFoundation"]["reader"])
+        self.assertIn("runs differ", reader["reason"])
+
+    def test_a_reader_has_no_figure_whatever_it_did_where_the_transform_changes_the_stream_at_a_silent_unit(self):
+        # sbr-in-three-blocks.aac: stream changes at units 1, 2, 4, 5, 7 and 8, of which 4, 5, 7 and 8 gave no output after the first one
+        transform = {**mf_path(4096), "silentUnits": [4, 5, 7, 8], "streamChangeUnits": [1, 2, 4, 5, 7, 8]}
+        for reader in (self.reader_node(False), self.reader_node(True, 4096)):
+            result = driver.windows_reader_result(reader, [reader, reader])
+            figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 10240, "reference": 10240, "referencePath": "fdk direct", "referenceKind": "official",
+                      "witnesses": {}, "analyzerRates": [22050]}
+            compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": result, "transform": transform}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
+            self.assertEqual("no figure: the transform signals a stream change at a unit that gives no output (units 4, 5, 7, 8), where the Source Reader's result varies from run to run",
+                             figure["mediaFoundation"]["reader"]["why"])
+            self.assertIsNone(figure["mediaFoundation"]["reader"]["samples"])
+            self.assertEqual([], [d for d in compare.mediafoundation_differences([figure], {"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 22050}], "findings": []}) if d["decoder"].endswith("reader")])
+        # a stream change at a held-back first unit (HE-AAC) is not that
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 4096, "reference": 4096, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": driver.windows_reader_result(self.reader_node(True, 4096)), "transform": {**mf_path(4096), "silentUnits": [], "streamChangeUnits": [0, 5]}}},
+                                       {"paths": {"direct": {"units": []}}, "unitList": {}})
+        self.assertEqual(8192, figure["mediaFoundation"]["reader"]["samples"])
         stopping = driver.windows_reader_result(self.reader_node(False), [self.reader_node(False), self.reader_node(False)])
         figure = {**figure, "mediaFoundation": {}}
         compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": stopping, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
@@ -1003,7 +1023,7 @@ class WindowsDriverRunTests(unittest.TestCase):
         self.assertEqual("end", record["paths"]["transform"]["stoppedBy"])
 
 class ReviewFixTests(unittest.TestCase):
-    def test_one_probe_call_has_a_budget_for_its_twelve_children(self):
+    def test_one_probe_call_has_a_budget_for_its_five_children(self):
         calls = []
 
         def fake_run(command, **kwargs):
@@ -1012,8 +1032,8 @@ class ReviewFixTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp, mock.patch.object(subprocess, "run", fake_run):
             node, environment = driver.windows_probe_run("probe.exe", "a.m4a", tmp, pathlib.Path(tmp) / "work", timeout=30)
-        self.assertEqual([12 * 30 + 60], calls)
-        self.assertEqual((None, "the probe did not finish within 420 seconds"), (node, environment["error"]))
+        self.assertEqual([5 * 30 + 60], calls)
+        self.assertEqual((None, "the probe did not finish within 210 seconds"), (node, environment["error"]))
 
     def test_a_core_audio_converter_that_stopped_is_decoder_stopped_and_noted(self):
         figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 9600, "reference": 9600, "referencePath": "fdk direct", "referenceKind": "official",
