@@ -267,6 +267,14 @@ public class SamplesDefinitionTests
         { "wav/built-iec61937-cut-odd-payload.wav", 7680, 1536 },
         #endregion
 
+        #region DTS and DTS-HD
+        { "dts/cut-frame.dts", 3072, 512 },
+        { "dts/truncated.dts", 3072, 512 },
+        { "dts/fsize-too-large.dts", 3072, 512 },
+        { "dts/exss-overrun.dts", 2048, 512 },
+        { "dts/dtshd-stream-truncated.dtshd", 2048, 512 },
+        #endregion
+
         // Rule 3: bytes skipped while searching for sync declare nothing.
         { "adts/damaged-header.aac", 29696, 0 },
 
