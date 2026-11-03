@@ -610,8 +610,6 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     if packets:
         statistics = {"Packets": str(len(packets) - len(set(cuts)))}
         if block_count:
-            statistics["Long Blocks"] = m.share(long_count, block_count, "packet", "packets")
-            statistics["Short Blocks"] = m.share(short_count, block_count, "packet", "packets")
             statistics["Block Sizes"] = plural(block_count, "packet", "packets")
             if long_count:
                 statistics["Block Sizes/Long"] = m.share(long_count, block_count, "packet", "packets")

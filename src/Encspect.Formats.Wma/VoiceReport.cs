@@ -181,10 +181,14 @@ internal static class VoiceReport
         var perSuperframe = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates)
         {
             Description = BitrateSeries,
+            Concept = GraphConcept.BitDistribution,
+            Quantity = "Bitrate",
         };
         var perSecond = new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, x.ToArray(), y.ToArray(), statistics)
         {
             Description = BitrateOverTimeSeries,
+            Concept = GraphConcept.BitDistribution,
+            Quantity = "Bitrate",
         };
         return [perSuperframe, perSecond];
     }

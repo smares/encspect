@@ -136,8 +136,6 @@ internal static class Explain
     public const string BlockSizes = "The packets that code a block, grouped by the size of the block: long (blocksize_1) or short (blocksize_0), with their shares.";
     public const string SizeLong = "Packets that code a long block (blocksize_1), with their share of the packets that code a block.";
     public const string SizeShort = "Packets that code a short block (blocksize_0), with their share of the packets that code a block.";
-    public const string LongBlocks = "Packets that code a long block, and their share of the packets that code a block.";
-    public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
     public const string CodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
     public const string StartOffset = "The first audio page's granule position less the samples returned up to it: 0 for a stream that starts at its beginning, below 0 where samples are discarded at the start, above where the stream starts later (section A.2).";
     public const string StartOffsetClamped = "The first audio page's granule position less the samples returned up to it, shown at the limit of a 64-bit figure: the position is at least that far from the samples returned (section A.2).";

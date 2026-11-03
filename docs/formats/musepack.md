@@ -5,7 +5,7 @@ Musepack SV8, SV7, and SV4 to SV6.
 ## What is read
 
 - **SV8**, packet by packet:
-  - the stream header, with its CRC-32 (SV8; **Verified Header Checksums** is 1 where it holds and 0 where the packet is cut, and **Failed Header Checksums** is listed only where it fails);
+  - the stream header, with its CRC-32 (SV8; the statistics list **Verified Header Checksums** (1 where it holds, 0 where it fails) and **Failed Header Checksums** (1) only where the packet is whole; a cut header has neither);
   - ReplayGain and encoder info;
   - the seek table, checked against the audio packets;
   - chapters, with their APEv2 tags;

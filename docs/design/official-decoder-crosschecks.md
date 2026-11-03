@@ -62,10 +62,10 @@ The figures below are read from the committed goldens; the names are the report'
 
 - Stream: `samples` and `duration` count every access unit at the output rate: 1,024 per unit, 2,048 with SBR (24,576 for `apple-lc-m4a-cbr-st44.m4a`, which holds 22,050 samples of audio). `StreamInfo` carries no priming field.
 - MP4 gapless nodes live under the track's "Gapless" node, one set per source:
-  - "Encoder Delay (iTunSMPB)", "Samples (iTunSMPB)", "Padding (iTunSMPB)";
-  - "Encoder Delay (Edit List)", "Samples (Edit List)", "Padding (Edit List)", "Media Time", "Segment Duration", "Roll Distance".
+  - "Encoder Delay (iTunSMPB)", "Samples (iTunSMPB)", "Encoder Padding (iTunSMPB)";
+  - "Encoder Delay (Edit List)", "Samples (Edit List)", "Encoder Padding (Edit List)", "Media Time", "Segment Duration", "Roll Distance".
 - The words "Encoder Delay" and "Padding" alone are the words of the iTunSMPB item's value in the metadata (`meta / iTunes Metadata / iTunSMPB / data / Value`), not stream-level nodes.
-- A file with only an edit list has no iTunSMPB figures: `ffmpeg-lc.m4a` has `samples` 67,584 and "Samples (Edit List)" 66,150, and its "Padding (Edit List)" is 0, not 410.
+- A file with only an edit list has no iTunSMPB figures: `ffmpeg-lc.m4a` has `samples` 67,584 and "Samples (Edit List)" 66,150, and its "Encoder Padding (Edit List)" is 0, not 410.
 - Which rate iTunSMPB counts at is not settled. [aac.md](../formats/aac.md) says the core rate, which is the media timescale (`fdkaac-he.m4a`: 2,048 + 33,075 + 717 = 35,840, half of the stream's 71,680); the analyzer's own comment in `Mp4Parser.Metadata.cs` says "at the output sample rate". Both cannot hold (open question 11; question 2 for the project lead).
 - Findings on gapless data: an edit list and iTunSMPB that disagree, an iTunSMPB whose total is not the track's duration.
 - Damage: ADTS CRC failures, cut and truncated frames, `aac.blocks-missing`, resync gaps, MP4 sample table findings (`mp4.samples-overlap`, samples outside the file), and the SBR and parametric stereo rules (`aac.sbr-data-sparse`, `aac.ps-without-mono-core`, `aac.sbr-without-channel-element`), which decide whether the output rate doubles.
@@ -74,7 +74,7 @@ The figures below are read from the committed goldens; the names are the report'
 ### AC-3 and E-AC-3
 
 - Stream: `samples` and `duration` from the frames: 1,536 per AC-3 frame, 256 per E-AC-3 audio block; one stream per configuration (`stream-changes.ac3`), and the independent substreams of one file in one playback group.
-- In MP4 they carry edit lists: `external-ffmpeg-mp4-5.1-448k.mp4` and `external-ffmpeg-mp4-eac3-stereo-96k.mp4` have "Media Time" 256, "Samples (Edit List)" 23,712 and "Padding (Edit List)" 32, against a `samples` of 24,576.
+- In MP4 they carry edit lists: `external-ffmpeg-mp4-5.1-448k.mp4` and `external-ffmpeg-mp4-eac3-stereo-96k.mp4` have "Media Time" 256, "Samples (Edit List)" 23,712 and "Encoder Padding (Edit List)" 32, against a `samples` of 24,576.
 - Damage: `ac3.crc1-mismatch`, `ac3.crc2-mismatch`, `ac3.frame-truncated`, `ac3.block-overrun`, `ac3.dependent-excess`, `ac3.streams-limited`; frames that break are still counted (`crc-damaged.ac3`: 12,288 samples with both CRC findings).
 - Today: ffmpeg decodes each packet alone and must refuse exactly the damaged frames, and refuses every independent substream but 0; liba52 confirms the block ends. No decoder's output length is compared.
 

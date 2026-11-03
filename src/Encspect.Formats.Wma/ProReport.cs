@@ -129,7 +129,7 @@ internal static class ProReport
     {
         var series = new List<Series>
         {
-            new("Bitrate", "kbps", SeriesAxis.FrameOffset, reader.BitrateX.ToArray(), reader.BitrateY.ToArray()) { Description = ProExplain.BitrateSeries },
+            new("Bitrate", "kbps", SeriesAxis.FrameOffset, reader.BitrateX.ToArray(), reader.BitrateY.ToArray()) { Description = ProExplain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" },
         };
 
         if (reader.LastValidSecond >= 0)
@@ -148,7 +148,7 @@ internal static class ProReport
                 }
             }
 
-            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = ProExplain.BitrateOverTimeSeries });
+            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = ProExplain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         return series;

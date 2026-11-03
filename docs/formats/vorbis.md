@@ -13,7 +13,7 @@ Vorbis in [Ogg](ogg.md).
 
 ## Reported
 
-- long and short blocks, and **Block Sizes**, the same packets as a tally and a category series (long and short, with the series' time index of the seconds), named as MPEG audio and AAC name the grouping of their block types;
+- **Block Sizes**, the packets that code a block as a tally and a category series (long and short, with the series' time index of the seconds), named as MPEG audio and AAC name the grouping of their block types (it replaces the "Long Blocks" and "Short Blocks" nodes);
 - the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at what the packet that carries the first position returns and the end trimming at what the last packet returns, as libvorbis does; one larger than the first two blocks return, or the last packet, is a finding);
 - the count of samples the granule positions are checked against follows libvorbis's `vorbis_synthesis_blockin` (libvorbis 1.3.7; `oggdec` from vorbis-tools 1.4.2 and 1.4.3 write the same figures on the fixtures named here):
   - it continues from the last granule position taken, so the samples of a repeated packet, or a jump of the positions in the middle, are not charged to the end trimming; each position that differs from the count continued from the position before it is counted in `vorbis.granule-inconsistent` (not each position that differs from the first page's);

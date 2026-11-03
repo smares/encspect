@@ -372,6 +372,7 @@ internal sealed class DtsAnalysis
         first.Leading.Add(statistics);
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        List<Series> series = stream.Figures.Series(bitrate, Cancellation);
         _context.AddStream(new StreamInfo
         {
             Nodes = [.. Regions.Where(r => stream.Regions.Contains(r)).Select(r => r.Node!)],
@@ -390,7 +391,8 @@ internal sealed class DtsAnalysis
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
             WriterConfidence = writerConfidence,
-            Series = stream.Figures.Series(bitrate, Cancellation),
+            Series = series,
+            CategorySeries = series.Count > 0 && stream.StereoCodingNode is { } stereo ? stream.Figures.Categories(series[0], stereo) : [],
         });
     }
 

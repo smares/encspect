@@ -199,6 +199,11 @@ public sealed partial class OggParser
         int failedPages = 0;
         for (int i = 0; i < stream.Pages.Count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             PageStatus status = region.Pages[stream.Pages[i]].Status;
             if ((status & PageStatus.Truncated) != 0)
             {

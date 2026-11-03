@@ -220,8 +220,6 @@ public sealed partial class VorbisParser
             Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             if (blocks > 0)
             {
-                Add("Long Blocks", Share(_longBlocks, blocks, "packet", "packets"), Explain.LongBlocks, Topics.VorbisBlocks);
-                Add("Short Blocks", Share(_shortBlocks, blocks, "packet", "packets"), Explain.ShortBlocks, Topics.VorbisBlocks);
                 Node blockSizes = Add("Block Sizes", NodeValue.Integer(blocks, "packets", "packet"), Explain.BlockSizes, Topics.VorbisBlocks);
                 if (_longBlocks > 0)
                 {

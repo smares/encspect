@@ -151,7 +151,7 @@ internal static class Explain
     public const string StatPackets = "The audio packets of the stream.";
     public const string CodedSamples = "The samples per channel the frames code: 1,152 per frame, a frame cut by the end of the data included.";
     public const string StartTrimming = "The samples a decoder drops at the start: the synthesis filter's delay of 481 samples (libmpcdec r495 MPC_DECODER_SYNTH_DELAY), plus the beginning silence of SV8.";
-    public const string StatSamples = "The samples per channel decoders output: the coded samples less the decoder delay and the end of the last frame that is not audio (libmpcdec r495).";
+    public const string StatSamples = "The samples per channel decoders output: the coded samples less the start trimming and the end of the last frame that is not audio (libmpcdec r495).";
     public const string StatDuration = "The duration of the output samples at the sample rate.";
     public const string AverageBitrate = "The bits of the frames or audio packets over the time their coded samples last.";
     public const string MinimumBitrate = "The bitrate of the smallest frame or packet over the time it codes.";

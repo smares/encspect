@@ -88,8 +88,8 @@ internal static class StdText
 
     public const string BitrateSeries = "The bitrate of each frame if frames of its size followed one another, at the frame's first byte; 0 for an invalid frame.";
     public const string BitrateOverTimeSeries = "The bitrate over each second of the stream, from the valid frames that begin in it.";
-    public const string ReservoirFillSeries = "The bit reservoir fill each superframe ends with: the bytes it leaves for the next one to finish, at the superframe's first byte.";
-    public const string ReservoirFillOverTimeSeries = "The mean bit reservoir fill of the superframes that start in each second of audio.";
+    public const string ReservoirFillSeries = "The bit reservoir fill as each superframe starts: the bytes the superframe before it left for it to finish (0 for the first), at the superframe's first byte.";
+    public const string ReservoirFillOverTimeSeries = "The mean bit reservoir fill, as each superframe starts, of the superframes that start in each second of audio.";
 
     public static string Sizes(long count) => Counts.Of(count, "size", "sizes");
 

@@ -121,9 +121,9 @@ public class AacGraphsTests
         Choose(stereo, "Stereo Coding", GraphForm.Summary);
         ScreenshotTests.Save(stereo, $"aac-stereo-coding-summary-{variant}.png");
         Choose(stereo, "Block Usage", GraphForm.OverTime);
-        ScreenshotTests.Save(stereo, $"aac-window-sequences-over-time-{variant}.png");
+        ScreenshotTests.Save(stereo, $"aac-block-usage-over-time-{variant}.png");
         Choose(stereo, "Block Usage", GraphForm.Frames);
-        ScreenshotTests.Save(stereo, $"aac-window-sequences-frames-{variant}.png");
+        ScreenshotTests.Save(stereo, $"aac-block-usage-frames-{variant}.png");
         Choose(stereo, "Block Sizes", GraphForm.Summary);
         ScreenshotTests.Save(stereo, $"aac-block-sizes-summary-{variant}.png");
         Choose(stereo, "Coded Bandwidth", GraphForm.OverTime);

@@ -132,7 +132,7 @@ public sealed partial class OpusParser
                 Topic = Topics.OpusModes,
             });
 
-            Node Add(Node parent, string name, NodeValue value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
+            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
 
             Add(node, "Packets", NodeValue.Integer(_wholePackets), Explain.Packets);
             Add(node, "Frames", NodeValue.Integer(_frames), Explain.Frames);
@@ -192,7 +192,7 @@ public sealed partial class OpusParser
                     }
                 }
 
-                Node coded = Add(node, "Coded Bandwidth", null!, Explain.StatCodedBandwidth, Topics.CodedBandwidth);
+                Node coded = Add(node, "Coded Bandwidth", null, Explain.StatCodedBandwidth, Topics.CodedBandwidth);
                 int firstBand = Array.FindIndex(_bandwidths, c => c > 0);
                 int mostBand = 0;
                 for (int b = 1; b < _bandwidths.Length; b++)

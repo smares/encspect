@@ -500,7 +500,7 @@ Since every codebook is complete, "bits that are no code of the coefficient code
 
 ### Statistics
 
-All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the duration to three decimals). In this order, those in brackets only where they apply. With the bit reservoir the four statistics "Frames per Superframe", "Frames Spanning Superframes", "Largest Bit Reservoir" and "Average Bit Reservoir" are always shown, with 0 where nothing counts; the filler pair and "Superframes Inside a Frame" need a case of their own:
+All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the duration to three decimals). In this order, those in brackets only where they apply. With the bit reservoir the four statistics "Frames per Superframe", "Frames Spanning Superframes", "Maximum Reservoir Fill" and "Average Reservoir Fill" are always shown, with 0 where nothing counts; the filler pair and "Superframes Inside a Frame" need a case of their own:
 
 | Node | Value |
 | --- | --- |
@@ -542,7 +542,7 @@ Where at least one frame was read and r is above 0:
 
 - "Bitrate" (kbps, by file offset): each frame's first byte in the file and its bits × r / F / 1000, 0 for an invalid frame.
 - "Bitrate Over Time" (kbps, by second, attached to "Statistics"): frame i falls in second floor(i × F / r), i counting all frames; each second holds the valid frames' bits × r / (their count × F) / 1000, rounded to one decimal with halves to even, 0 for a second with none; the list ends at the last second with a valid frame.
-- "Reservoir Fill" (bytes, by file offset), with the bit reservoir only: each superframe's offset and the reservoir it leaves: 0 where it failed or was short, the reservoir kept for an invalid header, the accumulated bytes for a superframe inside a frame.
+- "Reservoir Fill" (bytes, by file offset), with the bit reservoir only: each superframe's offset and the reservoir the superframe before it left (0 for the first): 0 where it failed or was short, the reservoir kept for an invalid header, the accumulated bytes for a superframe inside a frame.
 - "Reservoir Fill Over Time" (bytes, by second), with the bit reservoir only: the mean of the reservoirs the superframes that start in each second leave, rounded half to even, anchored to "Maximum Reservoir Fill"; the unit and axis of MPEG audio's series of that name.
 
 ### Findings

@@ -73,6 +73,14 @@ class CheckTests(unittest.TestCase):
         none = report(OLD_STATS)
         self.assertTrue(self.check(none, new, change))
 
+    def test_a_renamed_numeric_series_is_given_its_old_name_back(self):
+        old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "WMA", "series": [{"name": "Bit Reservoir"}]}])
+        new = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "WMA", "series": [{"name": "Reservoir Fill", "concept": "bitDistribution"}]}])
+        change = {"renamedSeries": [{"array": "series", "from": "Bit Reservoir", "to": "Reservoir Fill"}],
+                  "added": [{"scope": "stream", "array": "series", "name": "Reservoir Fill", "key": "concept"}]}
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {"renamedSeries": change["renamedSeries"]}))
+
     def test_nodes_and_findings_listed_as_removed_or_added_are_taken_out_before_the_reports_are_compared(self):
         old = report([*OLD_STATS, node("Invalid Frames", value=1)], findings=[{"code": "a", "message": "m"}, {"code": "gone", "message": "g"}])
         new = report(OLD_STATS, findings=[{"code": "a", "message": "m"}, {"code": "new", "message": "n"}])

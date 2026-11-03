@@ -146,7 +146,7 @@ internal static class StdReport
             }
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = StdText.BitrateSeries } };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = StdText.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" } };
         if (seconds.Count > 0)
         {
             var starts = new double[seconds.Count];
@@ -158,7 +158,7 @@ internal static class StdReport
                 values[s] = count == 0 ? 0 : Math.Round((double)bits * p.SampleRate / ((double)count * p.FrameLength) / 1000, 1, MidpointRounding.ToEven);
             }
 
-            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries });
+            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         if (p.UsesBitReservoir)
@@ -171,7 +171,7 @@ internal static class StdReport
             {
                 SuperframeRecord record = stream.Superframes[i];
                 x[i] = record.Offset;
-                kept[i] = record.Kept;
+                kept[i] = i == 0 ? 0 : stream.Superframes[i - 1].Kept;
                 int second = (int)((long)record.FirstFrame * p.FrameLength / p.SampleRate);
                 while (perSecond.Count <= second)
                 {
@@ -179,7 +179,7 @@ internal static class StdReport
                 }
 
                 (long sum, int n) = perSecond[second];
-                perSecond[second] = (sum + record.Kept, n + 1);
+                perSecond[second] = (sum + (long)kept[i], n + 1);
             }
 
             series.Add(new Series("Reservoir Fill", "bytes", SeriesAxis.FrameOffset, x, kept)

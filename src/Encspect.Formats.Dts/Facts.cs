@@ -24,6 +24,9 @@ internal sealed class UnitFacts
 
     public bool IsSumDifferenceSurround { get; set; }
 
+    // Some primary channel copies subbands from an earlier one by joint intensity coding (JOINX above 0).
+    public bool HasJointIntensity { get; set; }
+
     // The dialog normalization gain in dB, or null where VERNUM carries none.
     public int? DialogNormalization { get; set; }
 

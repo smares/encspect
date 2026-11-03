@@ -17,6 +17,6 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4; ATSC A/52:2018 5.4.3.1
 
 **The graphs.** Block Usage shows the type of every granule and channel, the share of each type per second and a strip with one cell per granule and channel. Block Sizes groups the same granules by the size of the transform as EncSpot counts them: long (normal, start and stop), short, mixed, and the reserved type apart, which EncSpot counts as long.
 
-**In AAC.** The four window sequences of [AAC](aac-windows-and-blocks) correspond to Layer III's: only long to normal, long start to start, eight short to short, long stop to stop; there are no mixed blocks. Window Sequences and Block Sizes count every channel stream, as Block Usage counts every granule and channel.
+**In AAC.** The four window sequences of [AAC](aac-windows-and-blocks) correspond to Layer III's: only long to normal, long start to start, eight short to short, long stop to stop; there are no mixed blocks. Block Usage and Block Sizes count every channel stream, as Block Usage counts every granule and channel.
 
 **In AC-3.** blksw splits a channel's transform of 512 points into two of 256 for one audio block ([audio blocks](ac3-audio-blocks)), which is AC-3's short block; it signals no other window types. Blocks With Block Switching counts the blocks in which any channel switches, and its graph shows each block of a frame.
