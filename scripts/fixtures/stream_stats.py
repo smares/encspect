@@ -120,6 +120,11 @@ class FrameInfo:
     def is_audio(self):
         return self.header is None and not self.truncated
 
+    @property
+    def is_cut(self):
+        """A frame cut by the end of the data or the next frame: it declares its samples, which are lost, but it is no audio frame."""
+        return self.header is None and self.truncated
+
 
 def reservoir_fills(frames):
     """The reservoir fill each Layer III frame reports (the analyzer's BitReservoir): the free
@@ -172,17 +177,21 @@ def region_fields(frames, all_frames):
     audio = [f for f in frames if f.is_audio]
     if not audio:
         return {}
+    cut = [f for f in frames if f.is_cut]
     ticks = sum(f.ticks for f in audio)
-    samples = sum(f.samples for f in audio)
+    cut_ticks = sum(f.ticks for f in cut)
+    samples = sum(f.samples for f in audio + cut)
     bits = sum(f.length * 8 for f in audio)
     fields = {
-        "Statistics": f"{frames_text(len(audio))}, {duration_text(ticks)}",
+        "Statistics": f"{frames_text(len(audio))}, {duration_text(ticks + cut_ticks)}",
         "Statistics/Frames": str(len(audio)),
         "Statistics/Samples": str(samples),
-        "Statistics/Duration": duration_text(ticks),
+        "Statistics/Duration": duration_text(ticks + cut_ticks),
         "Statistics/IsVbr": "true" if len({f.bitrate for f in audio}) > 1 else "false",
         "Statistics/Average Bitrate": kbps_tenths_text(bits, ticks),
     }
+    if cut:
+        fields["Statistics/Lost Samples"] = str(sum(f.samples for f in cut))
     fixed = sorted({f.bitrate for f in audio if f.bitrate is not None})
     if fixed:
         fields["Statistics/Minimum Bitrate"] = f"{fixed[0]} kbps"

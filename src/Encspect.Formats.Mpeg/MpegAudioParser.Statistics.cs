@@ -42,6 +42,8 @@ public sealed partial class MpegAudioParser
         long ticks = 0;
         long bits = 0;
         long samples = 0;
+        long lost = 0;
+        long lostTicks = 0;
         bool hasSideInfo = true;
         int maximumFill = 0;
         int free = 0;
@@ -52,6 +54,15 @@ public sealed partial class MpegAudioParser
         {
             state.CheckCancellation(i - region.First);
             ref readonly Entry frame = ref frames[i];
+            if (IsCut(frame))
+            {
+                // A frame cut by the end of the data or the next frame declares its samples (Samples and Lost Samples), but its bytes are no
+                // audio frame's, so the frame count and the bitrates leave it out.
+                samples += new MpegHeader(frame.Header).Samples;
+                lost += new MpegHeader(frame.Header).Samples;
+                lostTicks += Ticks(frame);
+            }
+
             if (!IsAudio(frame))
             {
                 continue;
@@ -79,10 +90,15 @@ public sealed partial class MpegAudioParser
         int audio = region.AudioFrames;
         long start = region.AudioStart;
         long length = region.AudioEnd - start;
-        Node node = new("Statistics", start, length, $"{FramesText(audio)}, {DurationText(ticks)}") { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        Node node = new("Statistics", start, length, $"{FramesText(audio)}, {DurationText(ticks + lostTicks)}") { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         Add("Frames", NodeValue.Integer(audio), Explain.StatFrames);
         Add("Samples", NodeValue.Integer(samples), Explain.StatSamples);
-        Add("Duration", Duration(ticks), Explain.StatDuration);
+        if (lost > 0)
+        {
+            Add("Lost Samples", NodeValue.Integer(lost, "samples", "sample"), StreamInfo.LostSamplesDescription, Topics.SamplesAndLostSamples);
+        }
+
+        Add("Duration", Duration(ticks + lostTicks), Explain.StatDuration);
 
         // Free format, without a bitrate, sorts last.
         var counts = fixedRates.Select(r => ((int?)r.Key, r.Value)).ToList();
@@ -305,6 +321,8 @@ public sealed partial class MpegAudioParser
     // The frames a VBR header describes: the records FirstFrame to End, gaps among them not
     // counted; FirstFrame is -1 where there are none.
     private readonly record struct Coverage(int FirstFrame, int End, int Frames, long Bytes, long Samples, bool HasTruncated);
+
+    private static bool IsCut(in Entry entry) => !entry.IsGap && !entry.IsVbrHeader && entry.IsTruncated;
 
     private static bool IsAudio(in Entry entry) => !entry.IsGap && !entry.IsVbrHeader && !entry.IsTruncated;
 

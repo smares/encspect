@@ -3,6 +3,7 @@ namespace Encspect.Formats.Mpeg;
 // The background articles the MPEG nodes point to, by the IDs the host's topic library serves.
 internal static class Topics
 {
+    public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string FrameSync = "frame-sync";
     public const string FrameHeader = "frame-header";
     public const string GranulesAndFrames = "granules-and-frames";
@@ -216,7 +217,7 @@ internal static class Explain
 
     public const string Statistics = "Figures the analyzer computed over the region's complete audio frames, without the VBR header frame and a truncated last frame.";
     public const string StatFrames = "How many complete audio frames the region has.";
-    public const string StatSamples = "Samples per channel in those frames.";
+    public const string StatSamples = "Samples per channel in those frames and in a last frame cut by the end of the data or the next frame, which declares its samples all the same.";
     public const string StatDuration = "The playing time of those frames, before any gapless trimming.";
     public const string IsVbr = "Whether the frames use more than one bitrate. A VBR header alone does not make a file VBR.";
     public const string AverageBitrate = "The bits of those frames divided by their playing time.";
