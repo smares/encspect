@@ -889,5 +889,13 @@
         "tests/fixtures/asf/voice-truncated.report.json"
       ]
     }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ],
+      "reason": "The packet bytes stay 1,440 (the cut packet is in no byte figure); the duration grows from 1.345 s to 1.3825 s with the superframe the cut media object finishes (10,760 to 11,060 samples), so the bitrate falls from 8.565 to 8.333 kbps."
+    }
   ]
 }
