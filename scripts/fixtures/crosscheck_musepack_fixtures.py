@@ -170,9 +170,14 @@ def check_info(name, manifest, path, problems):
 
 
 def decoded_samples_of(manifest):
-    """The samples the analyzer counts less the lost ones: a frame cut by the end of the data or damaged is counted and lost, and the decoders do not decode it."""
+    """The samples the analyzer counts less the lost ones inside the counted range: a frame cut by the end of the data or damaged is counted and lost, and the
+    decoders do not decode it. The SV4 or SV5 last frame the data cuts (musepack.last-frame-unwritten) is lost but trimmed from the samples (decoders never
+    decode that frame), so it is outside the samples and is not subtracted."""
     info = manifest["stream_infos"][0]
-    return info["samples"] - info.get("lost_samples", 0)
+    lost = info.get("lost_samples", 0)
+    if any(f["code"] == "musepack.last-frame-unwritten" for f in manifest.get("findings", [])):
+        lost -= m.FRAME
+    return info["samples"] - lost
 
 
 def check_decode(name, manifest, path, problems, exact=True):
