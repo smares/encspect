@@ -151,7 +151,7 @@ public sealed partial class SpeexParser
 
             void Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
-            Add("Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             Add("Frames", NodeValue.Integer(_frames), Explain.Frames);
             if (HasTime)
             {
@@ -170,16 +170,19 @@ public sealed partial class SpeexParser
 
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
                 Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
-                Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _coded / 1000, 1, "kbps"), Explain.AverageBitrate);
-                Add("Minimum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.First().Key), 1, "kbps"), Explain.MinimumBitrate);
-                Add("Maximum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.Last().Key), 1, "kbps"), Explain.MaximumBitrate);
+                if (_wholeCoded > 0 && _sizes.Count > 0)
+                {
+                    Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeCoded / 1000, 1, "kbps"), Explain.AverageBitrate);
+                    Add("Minimum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.First().Key), 1, "kbps"), Explain.MinimumBitrate);
+                    Add("Maximum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.Last().Key), 1, "kbps"), Explain.MaximumBitrate);
+                }
             }
 
             Node distribution = node.Add("Packet Sizes", start, length, NodeValue.Integer(_sizes.Count, "sizes", "size"), Explain.PacketSizes);
             foreach ((int size, long count) in _sizes)
             {
                 string bitrate = HasTime ? $", {PacketBitrate(size).ToString("F1", CultureInfo.InvariantCulture)} kbps" : string.Empty;
-                distribution.Add(Count(size, "byte", "bytes"), start, length, $"{Share(count, _packets, "packet", "packets")}{bitrate}", Explain.PacketSize);
+                distribution.Add(Count(size, "byte", "bytes"), start, length, $"{Share(count, _packets - _cutPackets.Count, "packet", "packets")}{bitrate}", Explain.PacketSize);
             }
 
             if (Mode >= 0 && _frames > 0)
@@ -271,6 +274,11 @@ public sealed partial class SpeexParser
                 }
 
                 PacketRecord packet = _records.Packets[i];
+                if (_cutPackets.Contains(i))
+                {
+                    continue;
+                }
+
                 bitrates[i] = PacketBitrate(packet.Length);
                 if (!perSecond)
                 {

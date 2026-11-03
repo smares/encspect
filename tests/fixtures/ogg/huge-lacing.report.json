@@ -248,13 +248,13 @@
                   "children": [
                     {
                       "name": "Packets",
-                      "value": 6,
+                      "value": 5,
                       "offset": 200,
                       "length": 66689
                     },
                     {
                       "name": "Frames",
-                      "value": 6,
+                      "value": 5,
                       "offset": 200,
                       "length": 66689
                     },
@@ -302,13 +302,13 @@
                     },
                     {
                       "name": "IsVbr",
-                      "value": true,
+                      "value": false,
                       "offset": 200,
                       "length": 66689
                     },
                     {
                       "name": "Average Bitrate",
-                      "value": 4408.333333333333,
+                      "value": 8,
                       "unit": "kbps",
                       "offset": 200,
                       "length": 66689
@@ -322,27 +322,21 @@
                     },
                     {
                       "name": "Maximum Bitrate",
-                      "value": 26410,
+                      "value": 8,
                       "unit": "kbps",
                       "offset": 200,
                       "length": 66689
                     },
                     {
                       "name": "Packet Sizes",
-                      "value": 2,
+                      "value": 1,
                       "unit": "sizes",
                       "offset": 200,
                       "length": 66689,
                       "children": [
                         {
                           "name": "20 bytes",
-                          "value": "5 packets (83.3%), 8.0 kbps",
-                          "offset": 200,
-                          "length": 66689
-                        },
-                        {
-                          "name": "66025 bytes",
-                          "value": "1 packet (16.7%), 26410.0 kbps",
+                          "value": "5 packets (100.0%), 8.0 kbps",
                           "offset": 200,
                           "length": 66689
                         }
@@ -350,20 +344,14 @@
                     },
                     {
                       "name": "Narrowband Submodes",
-                      "value": 2,
+                      "value": 1,
                       "unit": "submodes",
                       "offset": 200,
                       "length": 66689,
                       "children": [
                         {
-                          "name": "Submode 0 (5 bits)",
-                          "value": "1 frame (16.7%)",
-                          "offset": 200,
-                          "length": 66689
-                        },
-                        {
                           "name": "Submode 3 (160 bits)",
-                          "value": "5 frames (83.3%)",
+                          "value": "5 frames (100.0%)",
                           "offset": 200,
                           "length": 66689
                         }
@@ -4879,7 +4867,7 @@
                     },
                     {
                       "name": "Body",
-                      "value": "1000 bytes, not read as packets: the page is cut short",
+                      "value": "1000 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page is cut short",
                       "offset": 65889,
                       "length": 1000
                     }
@@ -4910,8 +4898,8 @@
         "samples": 920,
         "lostSamples": 160,
         "duration": 0.115,
-        "averageBitrate": 4408.333333333333,
-        "isVbr": true,
+        "averageBitrate": 8,
+        "isVbr": false,
         "playbackGroup": 1,
         "encoder": "speexenc 1.2.1",
         "encoderConfidence": "High",
@@ -4934,7 +4922,7 @@
               8,
               8,
               8,
-              26410
+              0
             ]
           },
           {
@@ -4945,7 +4933,7 @@
               0
             ],
             "values": [
-              4408.3
+              8
             ]
           }
         ]

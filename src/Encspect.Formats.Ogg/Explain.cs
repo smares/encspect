@@ -35,7 +35,7 @@ internal static class Explain
     public const string LacingFull = "255: a full segment, after which the packet goes on in the next segment, on this page or the next (RFC 3533, section 5).";
     public const string LacingLast = "A segment shorter than 255 bytes, which ends its packet; 0 ends a packet whose length is a multiple of 255 (RFC 3533, section 5).";
     public const string UntrackedBody = "The page's body, not read as packets because its logical stream is past the number of streams the analyzer follows for this much data.";
-    public const string LostBody = "The page's body, not read as packets because the page fails its CRC check or the file cuts it short.";
+    public const string LostBody = "The page's body. libogg drops a page that fails its CRC check or that the file cuts short, so decoders read no packet from it; the analyzer hands the packets it holds to the codec parser (docs/design/samples-definition.md, question 2).";
     public const string PacketData = "Bytes of one packet on this page: the segments the lacing values join, which may continue on the stream's next page (RFC 3533, section 5).";
     public const string OrphanData = "The rest of a packet whose start was on a page that is lost or missing; readers drop it.";
     public const string TooLargeData = "Part of a packet larger than the analyzer reads, so it is not handed to the codec.";
@@ -46,7 +46,7 @@ internal static class Explain
     public const string CodecUnknown = "No known codec: the stream's first packet starts with bytes no Ogg mapping is known for, or is missing.";
     public const string ChainLink = "Which link of a chained file the stream belongs to, counting from 1: chaining puts complete groups of streams one after another (RFC 3533, section 4).";
     public const string PageCount = "How many pages of the stream the file holds.";
-    public const string PacketCount = "How many complete packets the stream's pages hold.";
+    public const string PacketCount = "How many complete packets libogg returns from the stream's pages, which leaves out the pages that fail their CRC check or are cut short; the codec parser may be handed more.";
     public const string LastGranulePosition = "The granule position of the stream's last page that has one, which gives the stream's length in the codec's units.";
     public const string HasEndOfStream = "Whether a page of the stream carries the end-of-stream flag, as RFC 3533 asks of the last page of every logical stream (section 4).";
 

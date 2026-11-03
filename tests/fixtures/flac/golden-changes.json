@@ -1,5 +1,5 @@
 {
-  "note": "Samples alignment (docs/design/samples-definition.md): a FLAC frame the data cuts short counts its block size in the samples and is lost, and the block sizes of cut and unreadable frames are the stream's lostSamples, with the statistics node Lost Samples. Only built-cut-mid-frame has a changed sample count.",
+  "note": "Samples alignment (docs/design/samples-definition.md): a FLAC frame the data cuts short counts its block size in the samples and is lost, and the block sizes of cut and unreadable frames are the stream's lostSamples, with the statistics node Lost Samples. Only built-cut-mid-frame has a changed sample count. The Frames statistic does not count a frame the data cuts.",
   "goldens": [
     "tests/fixtures/flac/"
   ],
@@ -10,31 +10,72 @@
     },
     {
       "scope": "node",
-      "parent": ["FLAC", "Statistics"],
+      "parent": [
+        "FLAC",
+        "Statistics"
+      ],
       "name": "Lost Samples"
     }
   ],
   "changed": [
     {
       "scope": "stream",
-      "fields": ["samples", "duration"],
-      "goldens": ["tests/fixtures/flac/built-cut-mid-frame.report.json"]
+      "fields": [
+        "samples",
+        "duration"
+      ],
+      "goldens": [
+        "tests/fixtures/flac/built-cut-mid-frame.report.json"
+      ]
     },
     {
-      "path": ["FLAC", "Statistics", "Samples"],
-      "fields": ["value"],
-      "goldens": ["tests/fixtures/flac/built-cut-mid-frame.report.json"]
+      "path": [
+        "FLAC",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/flac/built-cut-mid-frame.report.json"
+      ]
     },
     {
-      "path": ["FLAC", "Statistics", "Duration"],
-      "fields": ["value"],
-      "goldens": ["tests/fixtures/flac/built-cut-mid-frame.report.json"]
+      "path": [
+        "FLAC",
+        "Statistics",
+        "Duration"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/flac/built-cut-mid-frame.report.json"
+      ]
     },
     {
       "scope": "finding",
       "code": "flac.total-samples-mismatch",
-      "fields": ["message"],
-      "goldens": ["tests/fixtures/flac/built-cut-mid-frame.report.json"]
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/flac/built-cut-mid-frame.report.json"
+      ]
+    },
+    {
+      "path": [
+        "FLAC",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/flac/built-cut-mid-frame.report.json"
+      ]
     }
   ]
 }

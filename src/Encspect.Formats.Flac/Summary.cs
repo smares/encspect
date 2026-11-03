@@ -223,7 +223,7 @@ internal static partial class Summary
         long samples = s.Samples;
         double duration = rate > 0 ? samples / (double)rate : 0;
         IReadOnlyList<Speaker>? layout = Layout(channels);
-        statistics.Add(cover("Frames", NodeValue.Integer(s.Frames, "frames"), Explain.StatFrames, Topics.Frames));
+        statistics.Add(cover("Frames", NodeValue.Integer(s.Frames - s.CutFrames, "frames"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover3("Samples", NodeValue.Integer(samples, "samples"), Explain.StatSamples));
         if (s.LostSamples > 0)
         {

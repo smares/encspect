@@ -103,7 +103,7 @@ internal static class Summary
         int rate = (int)Math.Min(h.SampleRate, int.MaxValue);
         double duration = rate > 0 ? samples / (double)rate : 0;
         IReadOnlyList<Speaker>? layout = Layout(h.Channels, s.Wav?.Mask);
-        statistics.Add(Cover("Frames", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatFrames, Topics.Frames));
+        statistics.Add(Cover("Frames", NodeValue.Integer(s.WholeFrames, "frames", "frame"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
         if (s.LostSamples > 0 && h.TotalFrames > 0)
         {

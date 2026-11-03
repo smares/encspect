@@ -2918,7 +2918,7 @@
                     },
                     {
                       "name": "Body",
-                      "value": "280 bytes, not read as packets: the page fails its CRC check",
+                      "value": "280 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page fails its CRC check",
                       "offset": 522,
                       "length": 280
                     }

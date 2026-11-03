@@ -309,11 +309,13 @@ public sealed partial class OggParser
                     continue;
                 }
 
-                long held = Math.Min(run.Length, bodyPresent - run.Start);
-                if (held <= 0 && isTruncated)
+                // An empty packet lies wherever its run starts; the walk stops at the first run that starts at or past the bytes present.
+                if (isTruncated && (run.Length == 0 ? run.Start > bodyPresent : run.Start >= bodyPresent))
                 {
                     break;
                 }
+
+                long held = Math.Min(run.Length, bodyPresent - run.Start);
 
                 Append(window.Get(page.BodyOffset + run.Start, (int)held), page.BodyOffset + run.Start);
                 if (held < run.Length)

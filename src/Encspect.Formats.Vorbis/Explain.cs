@@ -132,7 +132,7 @@ internal static class Explain
     public const string UnreadData = "The rest of a packet the analyzer could not read as a block: not audio, or its mode undefined or cut short.";
 
     public const string Statistics = "Figures over the stream's audio packets, from their blocks and the granule positions.";
-    public const string Packets = "How many audio packets the stream holds.";
+    public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string LongBlocks = "Packets that code a long block, and their share of the packets that code a block.";
     public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
     public const string DecodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
@@ -155,6 +155,7 @@ internal static class Explain
     public const string Encoder = "Which library or program encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high for a vendor string a libvorbis, aoTuV or Lancer release is known to write, medium for an unknown string of their form or an encoder's name in a field other software may write.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText

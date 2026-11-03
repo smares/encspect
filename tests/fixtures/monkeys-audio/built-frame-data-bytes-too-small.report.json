@@ -249,7 +249,7 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 3,
+                  "value": 1,
                   "unit": "frames",
                   "offset": 0,
                   "length": 113629
@@ -323,41 +323,41 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 250.260885,
+                  "value": 130.5869140625,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 113629
                 },
                 {
                   "name": "Bitrate Mode",
-                  "value": "variable",
+                  "value": "unknown",
                   "offset": 0,
                   "length": 113629
                 },
                 {
                   "name": "Smallest Frame",
-                  "value": 0,
+                  "value": 27290,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 113629
                 },
                 {
                   "name": "Largest Frame",
-                  "value": 86207,
+                  "value": 27290,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 113629
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 0,
+                  "value": 130.5869140625,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 113629
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 412.51396484375,
+                  "value": 130.5869140625,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 113629
@@ -368,20 +368,8 @@
                   "length": 113629,
                   "children": [
                     {
-                      "name": "0 to 31 kbps",
-                      "value": "1 frame (33.3%)",
-                      "offset": 0,
-                      "length": 113629
-                    },
-                    {
                       "name": "128 to 159 kbps",
-                      "value": "1 frame (33.3%)",
-                      "offset": 0,
-                      "length": 113629
-                    },
-                    {
-                      "name": "384 to 415 kbps",
-                      "value": "1 frame (33.3%)",
+                      "value": "1 frame (100.0%)",
                       "offset": 0,
                       "length": 113629
                     }
@@ -523,8 +511,8 @@
         "samples": 147456,
         "lostSamples": 73728,
         "duration": 3.3436734693877552,
-        "averageBitrate": 250.260885,
-        "isVbr": true,
+        "averageBitrate": 130.5869140625,
+        "isVbr": false,
         "verification": {
           "isVerified": false,
           "decoding": "notRequested",
@@ -556,14 +544,10 @@
             "unit": "kbps",
             "axis": "frameOffset",
             "x": [
-              132,
-              27422,
-              113629
+              132
             ],
             "values": [
-              130.5869140625,
-              412.51396484375,
-              0
+              130.5869140625
             ]
           },
           {
@@ -571,14 +555,10 @@
             "unit": "kbps",
             "axis": "seconds",
             "x": [
-              0,
-              1,
-              3
+              0
             ],
             "values": [
-              131,
-              413,
-              0
+              131
             ]
           }
         ]

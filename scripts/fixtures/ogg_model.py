@@ -419,14 +419,18 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
     frames, sizes, counts = [], {}, [{}, {}, {}]
     inband = stereo = total_frames = total_bytes = 0
     ends, coded_so_far, lost = [], 0, 0
+    whole_coded = 0
     for number, (offset, data, ranges) in enumerate(packets):
-        sizes[len(data)] = sizes.get(len(data), 0) + 1
-        total_bytes += len(data)
+        # The sizes and bitrates cover the packets handed over whole; a cut packet counts in the samples only.
+        if number not in cuts:
+            sizes[len(data)] = sizes.get(len(data), 0) + 1
+            total_bytes += len(data)
         samples, is_lost = per_packet, number in cuts
         if not data or not valid_mode:
             frames.append([])
             is_lost = is_lost or (not data and valid_mode)
             coded_so_far += samples
+            whole_coded += 0 if number in cuts else samples
             lost += samples if is_lost else 0
             ends.append(coded_so_far)
             continue
@@ -443,9 +447,12 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
             samples = frame_size * len(found)
         is_lost = is_lost or broken
         coded_so_far += samples
+        whole_coded += 0 if number in cuts else samples
         lost += samples if is_lost else 0
         ends.append(coded_so_far)
         frames.append(found)
+        if number in cuts:  # the frame tallies cover the packets handed over whole
+            continue
         inband += requests
         stereo += stereo_requests
         total_frames += len(found)
@@ -476,7 +483,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         trim = max(0, last[0] - delay - last[1])
     samples = min(max(coded - max(0, first_delay or 0) - trim, 0), coded) if has_time else 0
 
-    statistics = {"Packets": str(len(packets)), "Frames": str(total_frames)}
+    statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(total_frames)}
     if has_time and packets:
         bitrate = lambda size: size * 8.0 * rate / per_packet / 1000
         statistics["Coded Samples"] = plural(coded, "sample", "samples")
@@ -488,13 +495,14 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
             statistics["Lost Samples"] = plural(lost, "sample", "samples")
         statistics["Duration"] = fmt_decimal(samples / rate, 3) + " s"
         statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
-        statistics["Average Bitrate"] = fmt_decimal(total_bytes * 8.0 * rate / coded / 1000, 1) + " kbps"
-        statistics["Minimum Bitrate"] = fmt_decimal(bitrate(min(sizes)), 1) + " kbps"
-        statistics["Maximum Bitrate"] = fmt_decimal(bitrate(max(sizes)), 1) + " kbps"
+        if whole_coded and sizes:
+            statistics["Average Bitrate"] = fmt_decimal(total_bytes * 8.0 * rate / whole_coded / 1000, 1) + " kbps"
+            statistics["Minimum Bitrate"] = fmt_decimal(bitrate(min(sizes)), 1) + " kbps"
+            statistics["Maximum Bitrate"] = fmt_decimal(bitrate(max(sizes)), 1) + " kbps"
     if packets:
         statistics["Packet Sizes"] = plural(len(sizes), "size", "sizes")
         for size in sorted(sizes):
-            text = share(sizes[size], len(packets), "packet", "packets")
+            text = share(sizes[size], len(packets) - len(set(cuts)), "packet", "packets")
             if has_time:
                 text += ", " + fmt_decimal(size * 8.0 * rate / per_packet / 1000, 1) + " kbps"
             statistics[f"Packet Sizes/{plural(size, 'byte', 'bytes')}"] = text
@@ -520,7 +528,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         "samples": samples,
         "lost_samples": lost if has_time else 0,
         "duration": samples / rate if has_time else 0,
-        "average_bitrate": total_bytes * 8.0 * rate / coded / 1000 if has_time and coded else None,
+        "average_bitrate": total_bytes * 8.0 * rate / whole_coded / 1000 if has_time and whole_coded else None,
         "is_vbr": len(sizes) > 1,
     }
     return {

@@ -25,8 +25,9 @@ internal readonly record struct PageOutcome(bool PendingBefore, int CompletedBef
 // Follows one logical stream's packets across its pages (RFC 3533, section 5, "Packet
 // segmentation"): a lacing value of 255 continues the packet, a smaller one ends it, and a packet
 // left unfinished at the end of a page continues on the next page of the stream, which sets the
-// continued flag. The scan and the codec's packets both go through it, so the packets the codec
-// gets are the ones the scan counted and reported on.
+// continued flag. The scan follows the packets as libogg returns them: a page that fails its CRC check
+// or is cut short is lost to it. The codec parser's packets are put together again from the pages
+// (PacketBuilder), which hands over the packets of such pages too.
 internal sealed class PacketAssembler
 {
     // Larger packets are not read: a stream of lacing values of 255 would otherwise make the parser

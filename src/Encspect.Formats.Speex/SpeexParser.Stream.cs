@@ -92,6 +92,10 @@ public sealed partial class SpeexParser
         // the first granule position implies, and the last position with the samples coded by then.
         private long _coded;
 
+        // The audio packets a container cut, by index, and the samples of the others: the bitrate figures cover those.
+        private readonly HashSet<int> _cutPackets = [];
+        private long _wholeCoded;
+
         // Of _coded, the samples of the packets that are empty, corrupt or cut.
         private long _lost;
         private long? _firstDelay;
@@ -223,6 +227,12 @@ public sealed partial class SpeexParser
         // Vorbis gives it (speexenc.c comment_init).
         private void AddComment(MappedBytes packet)
         {
+            if (packet.IsCut)
+            {
+                _parent.Add(Node.FromMapped("Cut Comment Data", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.CutCommentData));
+                return;
+            }
+
             _comment = context.ParseTag(TagName, packet, _parent);
             if (_comment is null)
             {
@@ -268,8 +278,18 @@ public sealed partial class SpeexParser
             }
 
             _packets++;
-            _bytes += packet.Length;
-            _sizes[packet.Length] = _sizes.GetValueOrDefault(packet.Length) + 1;
+
+            // The sizes and bitrates cover the packets the container hands over whole, as the other formats' do: a cut packet counts in the samples only.
+            if (packet.IsCut)
+            {
+                _cutPackets.Add(index);
+            }
+            else
+            {
+                _bytes += packet.Length;
+                _sizes[packet.Length] = _sizes.GetValueOrDefault(packet.Length) + 1;
+            }
+
             _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
 
@@ -294,6 +314,7 @@ public sealed partial class SpeexParser
             }
 
             _coded += samples;
+            _wholeCoded += packet.IsCut ? 0 : samples;
             if (isLost)
             {
                 _lost += samples;
@@ -349,6 +370,12 @@ public sealed partial class SpeexParser
             {
                 _findings.Add(Severity.Info, "speex.wideband-layer-in-narrowband", PacketNode(_records, index), count =>
                     $"{Count(count, "audio packet", "audio packets")} of this narrowband stream {(count == 1 ? "carries" : "carry")} wideband layers, which narrowband decoders skip. The first at 0x{packet.FileStart:X}.");
+            }
+
+            // The frame tallies cover the packets handed over whole.
+            if (packet.IsCut)
+            {
+                return (frames, isBroken);
             }
 
             _inBand += walk.InBand;
@@ -434,7 +461,7 @@ public sealed partial class SpeexParser
                     Samples = samples,
                     LostSamples = HasTime ? _lost : 0,
                     Duration = HasTime ? samples / (double)Rate : 0,
-                    AverageBitrate = HasTime && _coded > 0 ? _bytes * 8.0 * Rate / _coded / 1000 : null,
+                    AverageBitrate = HasTime && _wholeCoded > 0 ? _bytes * 8.0 * Rate / _wholeCoded / 1000 : null,
                     IsVbr = _sizes.Count > 1,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,

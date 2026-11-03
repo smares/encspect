@@ -511,6 +511,14 @@ public class SamplesDefinitionTests
 
         // Question 11 and 5 (b): an empty, invalid or overrunning packet counts its frames per packet and is lost; one with fewer frames counts those present.
         { "ogg/frames-corrupt.spx", 3000, 960 },
+
+        // An empty packet on a truncated page does not stop the packets after it; the packet the data cuts is lost.
+        { "ogg/truncated-page-empty-packet.spx", 1920, 640 },
+
+        // A packet cut by a truncated page: a Vorbis block whose mode reads is lost, and an Opus code 0 packet reads as a valid shorter one, so only
+        // the container shows the cut.
+        { "ogg/vorbis-cut-last-packet.ogg", 40960, 1024 },
+        { "ogg/opus-cut-last-packet.opus", 28488, 960 },
         #endregion
 
         #region Matroska
@@ -597,6 +605,123 @@ public class SamplesDefinitionTests
         }
 
         Assert.True(analyzed > 20);
+    }
+
+    // The end of the last SimpleBlock or Block of a Matroska file whose elements all state their sizes, or -1.
+    private static long LastBlockEnd(byte[] data)
+    {
+        static (long Id, long Size, int Header) Element(byte[] d, long at)
+        {
+            int idWidth = d[at] >= 0x80 ? 1 : d[at] >= 0x40 ? 2 : d[at] >= 0x20 ? 3 : 4;
+            long id = 0;
+            for (int i = 0; i < idWidth; i++)
+            {
+                id = (id << 8) | d[at + i];
+            }
+
+            int sizeWidth = 1;
+            while (sizeWidth <= 8 && (d[at + idWidth] & (0x80 >> (sizeWidth - 1))) == 0)
+            {
+                sizeWidth++;
+            }
+
+            long size = d[at + idWidth] & (0xFF >> sizeWidth);
+            bool unknown = size == (0xFF >> sizeWidth);
+            for (int i = 1; i < sizeWidth; i++)
+            {
+                unknown &= d[at + idWidth + i] == 0xFF;
+                size = (size << 8) | d[at + idWidth + i];
+            }
+
+            return (id, unknown ? -1 : size, idWidth + sizeWidth);
+        }
+
+        long position = 0;
+        long last = -1;
+        while (position < data.Length)
+        {
+            (long id, long size, int header) = Element(data, position);
+            if (size < 0)
+            {
+                return -1;
+            }
+
+            if (id == 0x18538067)
+            {
+                position += header;
+                continue;
+            }
+
+            if (id == 0x1F43B675)
+            {
+                long end = position + header + size;
+                long inner = position + header;
+                while (inner < end)
+                {
+                    (long childId, long childSize, int childHeader) = Element(data, inner);
+                    if (childSize < 0)
+                    {
+                        return -1;
+                    }
+
+                    if (childId == 0xA3)
+                    {
+                        last = inner + childHeader + childSize;
+                    }
+                    else if (childId == 0xA0)
+                    {
+                        // The Block inside the group; DiscardPadding and BlockDuration may follow it.
+                        long groupEnd = inner + childHeader + childSize;
+                        for (long item = inner + childHeader; item < groupEnd;)
+                        {
+                            (long itemId, long itemSize, int itemHeader) = Element(data, item);
+                            if (itemId == 0xA1)
+                            {
+                                last = item + itemHeader + itemSize;
+                            }
+
+                            item += itemHeader + itemSize;
+                        }
+                    }
+
+                    inner += childHeader + childSize;
+                }
+            }
+
+            position += header + size;
+        }
+
+        return last;
+    }
+
+    // A block the file cuts: its frame is handed to the codec parser cut, which counts it by its declaration and loses it. A fixed-size lace
+    // (mkvmerge's AC-3, E-AC-3 and DTS) takes its frame size from the block's declared size, so the frames before the cut stay whole.
+    [Theory]
+    [InlineData("external-mkvmerge-ac3.mka", 1536)]
+    [InlineData("external-mkvmerge-eac3.mka", 1536)]
+    [InlineData("external-mkvmerge-dts.mka", 512)]
+    [InlineData("external-mkvmerge-timestamp-scale.mka", 1536)]
+    [InlineData("external-mkvmerge-vorbis.mka", -1)]
+    [InlineData("external-mkvmerge-opus.mka", -1)]
+    [InlineData("external-mkvmerge-aac.mka", 1024)]
+    [InlineData("external-mkvmerge-tta.mka", -1)]
+    [InlineData("external-ffmpeg-tta.mka", -1)]
+    public void ACutMatroskaBlockIsLostOnceWhateverTheLacingAndCodec(string name, int frameSamples)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "matroska", name));
+        long end = LastBlockEnd(data);
+        Assert.True(end > 0, name);
+        StreamInfo whole = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data)).Streams.Single();
+        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data, 0, (int)end - 3));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        StreamInfo cut = report.Streams.Single();
+        Assert.True(cut.LostSamples > 0, $"{name}: nothing is lost");
+        Assert.True(cut.LostSamples <= cut.Samples + whole.Samples);
+        if (frameSamples > 0)
+        {
+            Assert.Equal(frameSamples, cut.LostSamples);
+            Assert.Equal(whole.Samples, cut.Samples);
+        }
     }
 
     [Fact]

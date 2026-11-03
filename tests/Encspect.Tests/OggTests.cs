@@ -98,6 +98,40 @@ public class OggTests
         Assert.Empty(Indexes(codec.Packets, p => p.IsCut));
     }
 
+    // A page that fails its CRC and is followed by a page cut short inside its header still ends where the next page starts, so its packets are handed over.
+    [Fact]
+    public void APageThatFailsItsCrcBeforeAPageCutInsideItsHeaderIsNotAGap()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("bad-crc.spx"));
+        int last = file.AsSpan().LastIndexOf("OggS"u8);
+        Report whole = Analyzer.CreateDefault().Analyze("bad-crc.spx", new MemoryStream(file));
+        Report cut = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(file, 0, last + 28));
+
+        Assert.DoesNotContain(cut.Findings, f => f.Code == "ogg.junk");
+        Assert.Contains(cut.Findings, f => f.Code == "ogg.crc-mismatch");
+        Assert.True(cut.Streams[0].Samples > whole.Streams[0].Samples - (10 * 160) - 400, $"{cut.Streams[0].Samples} of {whole.Streams[0].Samples}");
+    }
+
+    [Fact]
+    public void ACommentHeaderTheContainerCutIsNotReadAsAComment()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("comment-many.spx"));
+        int second = 0;
+        int at = -1;
+        for (int i = 0; i + 4 <= file.Length && second < 2; i++)
+        {
+            if (file.AsSpan(i, 4).SequenceEqual("OggS"u8))
+            {
+                second++;
+                at = i;
+            }
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(file, 0, at + 27 + file[at + 26] + 30));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("vorbis-comment.", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "ogg.page-truncated");
+    }
+
     [Fact]
     public void ACommentThatSpansPagesKeepsItsRanges()
     {

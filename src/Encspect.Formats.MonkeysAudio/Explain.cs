@@ -79,7 +79,7 @@ internal static class Explain
     public const string Unlisted = "Frames after the first million, which the report does not list one by one. They are read and checked in every case.";
 
     public const string Statistics = "Figures computed over the frames of the stream.";
-    public const string StatFrames = "The number of frames the seek table locates.";
+    public const string StatFrames = "The number of frames the seek table locates, not counting a frame the data cuts or one with no byte in the file.";
     public const string StatSamples = "The samples of each channel the frames declare (the header gives the frame size and the size of the last frame), added up for the frames whose first byte the file holds.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the header.";

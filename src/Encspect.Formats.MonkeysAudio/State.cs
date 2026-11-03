@@ -82,6 +82,9 @@ internal sealed class State
     // Counts over the frames.
     public long Frames { get; set; }
 
+    // The frames that are not cut and have a byte in the file: the frame count of the statistics.
+    public long WholeFrames { get; set; }
+
     public long CutFrames { get; set; }
 
     public long MisplacedFrames { get; set; }

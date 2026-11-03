@@ -54,7 +54,7 @@ internal static class Explain
     public const string Unparsed = "Bits the analyzer could not read as frames, because a submode is undefined or a frame runs past the packet's end.";
 
     public const string Statistics = "Figures over the stream's audio packets, counted from their frames and the granule positions.";
-    public const string Packets = "How many audio packets the stream holds.";
+    public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string Frames = "How many frames the audio packets hold.";
     public const string CodedSamples = "The samples the frames code: the number of frames times the frame size.";
     public const string EncoderDelay = "Samples the first audio page's packets code beyond its granule position, which speexenc and ffmpeg set to the encoder's lookahead.";
@@ -78,6 +78,7 @@ internal static class Explain
     public const string Encoder = "Which program encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high when speexenc's vendor string and the header's version agree, medium for an encoder's name alone, low when only the library's version points to it.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText

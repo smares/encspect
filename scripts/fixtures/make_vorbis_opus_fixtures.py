@@ -1096,11 +1096,42 @@ def opus_tags_variants():
     f.write()
 
 
+def cut_last_page(name, extension, packets, granules, cuts, serial, codec, cut_bytes):
+    """A stream whose last page the file ends inside, so the last packet is cut (docs/design/samples-definition.md, "New fixtures")."""
+    f = Fixture(name, extension)
+    pages = pages_for(serial, packets, granules, cuts)
+    for p in pages[:-1]:
+        f.w.write(p)
+    last = pages[-1]
+    f.w.write(last, cut=27 + len(last.lacing) + len(last.body) - cut_bytes)
+    f.stream(serial, pages, codec=codec)
+    f.finding("ogg.page-truncated", "is cut short")
+    f.finding("ogg.eos-missing", "")
+    f.crosscheck = {"valid": False, "oggz_validate": ["missing *** eos"], "packets": True, "not_compared": {
+        "ogginfo, opusinfo, ffprobe and the decoders": "they do not report a page cut short; libogg never returns it, so oggz dump lacks its packets, as the analyzer's packets do"}}
+    f.write()
+
+
+def vorbis_cut_last_packet():
+    # The file ends inside the last page, 2 bytes before its end: the last packet is cut, and its mode still reads, so its block counts and is lost.
+    blocks = switching(48)
+    packets, granules = vorbis_stream(1, 44100, blocks, comments=[b"TITLE=Cut Vorbis"], sizes=[40, 52, 33], end_trim=300)
+    cut_last_page("vorbis-cut-last-packet", ".ogg", packets, granules, vorbis_cuts(len(blocks)), 0x0B0B0030, "Vorbis", 2)
+
+
+def opus_cut_last_packet():
+    # The file ends inside the last page: the last packet, a code 0 packet, reads as a valid shorter one, so only the container shows the cut.
+    audio = [v.opus_packet(31, 1, [140]) for _ in range(30)]
+    packets, granules = opus_stream(v.opus_head(2, pre_skip=312, rate=48000), audio, end_trim=200)
+    cut_last_page("opus-cut-last-packet", ".opus", packets, granules, opus_cuts(len(audio)), 0x0F0F0030, "Opus", 20)
+
+
 FIXTURES = [
     vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_granule_extreme, vorbis_empty_carrier, vorbis_end_page_repeated, vorbis_eos_then_eos, vorbis_eos_mid_then_more, vorbis_first_extreme, vorbis_skip_before_first, vorbis_skip_then_small, vorbis_short_start_trim, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
     opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,
+    vorbis_cut_last_packet, opus_cut_last_packet,
 ]
 
 

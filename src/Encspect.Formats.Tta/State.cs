@@ -124,7 +124,13 @@ internal sealed class State
                 FirstCut = (index, entry);
             }
 
+            // A track a container stores without the header states no sample count, so the frame length for the rate stands in for the frame's.
             long declared = Records.SamplesOf(index);
+            if (declared < 0 && SampleRate > 0)
+            {
+                declared = TtaHeader.FrameLengthOf(SampleRate);
+            }
+
             if (declared > 0)
             {
                 Samples += declared;

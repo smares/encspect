@@ -9,6 +9,7 @@ Vorbis in [Ogg](ogg.md).
 - **Setup header:** field by field: codebooks, floors, residues, mappings with their square polar coupling steps, and modes.
 - **Audio packets:** each packet's mode and block size.
 - **Samples:** each block counts the samples its overlap with the previous block returns (the first block none); Gap Trimming, like the start and end trimming, takes samples off the trimmed stage only. A packet the container cut whose mode still reads counts its block and is counted again as Lost Samples; a cut packet whose mode does not read declares nothing.
+- **Bitrates:** the sizes and bitrates cover the packets the container hands over whole; a cut packet counts in the samples only.
 
 ## Reported
 
