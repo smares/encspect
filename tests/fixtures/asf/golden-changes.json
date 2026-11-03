@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame read; the unfinished frame of a Professional stream included). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096) and seven Voice fixtures (voice-truncated 10,760 to 11,060, voice-invalid-superframes 10,080 to 11,520, voice-object-not-whole 7,680 to 8,160, voice-spillover 7,200 to 8,160, voice-cache-overflow, voice-object-dropped, voice-object-dropped-blocks and voice-object-skip-kept), with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration (writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams) gains Average Bitrate.",
+  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame read; the unfinished frame of a Professional stream included). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096) and seven Voice fixtures (voice-truncated 10,760 to 11,060, voice-invalid-superframes 10,080 to 11,520, voice-object-not-whole 7,680 to 8,160, voice-spillover 7,200 to 8,160, voice-cache-overflow, voice-object-dropped, voice-object-dropped-blocks and voice-object-skip-kept), with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration (writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams) gains Average Bitrate. voice-truncated.asf is replaced by voice-cut-last-object.asf: the ASF container hands the cut last object over, so the superframe before it is finished by its bytes (11,060 samples, nothing lost) and the fixture no longer shows an object the container drops. The four derived cut and damaged fixtures are new and not listed.",
   "goldens": [
     "tests/fixtures/asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
@@ -197,6 +197,284 @@
       ],
       "fields": [
         "value"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "asf.object-incomplete",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Packets"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Superframes"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Packet Bytes"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Superframes Spanning Packets"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Superframes with a Sample Count"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Superframes with Residual LSPs"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Frame Types"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Fixed Codebooks"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Adaptive Codebooks"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics",
+        "Blocks per Frame"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Packets"
+      ],
+      "fields": [
+        "children",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Superframes"
+      ],
+      "fields": [
+        "children",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    }
+  ],
+  "removed": [
+    {
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics"
+      ],
+      "name": "Invalid Superframes",
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Voice",
+        "Statistics"
+      ],
+      "name": "Bits After the Last Superframe",
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "gone": [
+        "wma.voice-unfinished"
+      ],
+      "new": [
+        "wma.packet-short"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
       ]
     }
   ]
