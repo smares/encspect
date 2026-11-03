@@ -230,7 +230,16 @@ internal sealed class WmaPacketReader
         Packets = Data.Packets.Count;
         if (!_isLossless)
         {
+            if (_cutPacket >= 0 && _cutPacket == Data.Packets.Count - 1)
+            {
+                Losses = _lossesBeforeCut;
+            }
+
             SetDecoderRule();
+            if (!IsDecoderRule)
+            {
+                Samples += CutFrames * _p.FrameLength;
+            }
         }
     }
 
@@ -308,7 +317,9 @@ internal sealed class WmaPacketReader
                     CountCutFrames(packet.Span, length * 8);
                 }
 
+                _lossesBeforeCut = Losses;
                 MarkLoss();
+                _cutPacket = packet.IsCut ? index : -1;
                 return;
             }
         }
@@ -468,8 +479,12 @@ internal sealed class WmaPacketReader
         }
 
         CutFrames += frames;
-        Samples += frames * p.FrameLength;
     }
+
+    // The loss the packet a cut media object ends in counts, and the packet's index: where it is the last packet, the stream stays under Microsoft's
+    // rule (the cut object's frames count in the coded and lost samples only); else the rule is off and they count in the samples too.
+    private long _lossesBeforeCut;
+    private int _cutPacket = -1;
 
     // The frames that cut media objects declare (Professional): counted in the samples and lost.
     public long CutFrames { get; private set; }
