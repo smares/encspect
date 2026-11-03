@@ -23,7 +23,7 @@
             {
               "name": "Statistics",
               "kind": "Statistics",
-              "value": "5 frames, 0.131 s",
+              "value": "5 frames, 0.157 s",
               "offset": 0,
               "length": 2089,
               "children": [
@@ -35,13 +35,19 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 5760,
+                  "value": 6912,
+                  "offset": 0,
+                  "length": 2089
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 1152,
                   "offset": 0,
                   "length": 2089
                 },
                 {
                   "name": "Duration",
-                  "value": 0.131,
+                  "value": 0.157,
                   "unit": "s",
                   "offset": 0,
                   "length": 2089
@@ -3909,8 +3915,9 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 5760,
-        "duration": 0.1306122448979592,
+        "samples": 6912,
+        "lostSamples": 1152,
+        "duration": 0.156734693877551,
         "averageBitrate": 127.95125,
         "isVbr": false,
         "series": [
