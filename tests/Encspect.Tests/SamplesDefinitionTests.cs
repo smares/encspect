@@ -556,7 +556,6 @@ public class SamplesDefinitionTests
     [InlineData("external-mkvmerge-vorbis.mka", -1)]
     [InlineData("external-mkvmerge-opus.mka", -1)]
     [InlineData("external-mkvmerge-aac.mka", 1024)]
-    [InlineData("external-mkvmerge-wavpack.mka", -1)]
     [InlineData("external-mkvmerge-tta.mka", -1)]
     [InlineData("external-ffmpeg-tta.mka", -1)]
     public void ACutMatroskaBlockIsLostOnceWhateverTheLacingAndCodec(string name, int frameSamples)

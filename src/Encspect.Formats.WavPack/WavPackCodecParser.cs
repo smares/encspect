@@ -57,9 +57,6 @@ public sealed class WavPackCodecParser : ICodecParser
         private long _blocks;
         private long _audioBlocks;
         private long _samples;
-
-        // Of _samples, the samples of the packets the container cut.
-        private long _lost;
         private long _bytes;
         private long _invalid;
         private long _extraBlocks;
@@ -87,17 +84,6 @@ public sealed class WavPackCodecParser : ICodecParser
             _hasGap |= packet.FollowsGap;
             ReadOnlySpan<byte> data = packet.Span;
             Node? node = _listed < MaxListedPackets ? NewPacketNode(packet, index) : null;
-
-            // A packet the container cut counts the samples its first four bytes declare and is lost; the container's finding reports the cut.
-            if (packet.IsCut)
-            {
-                uint declared = data.Length >= 4 ? BinaryPrimitives.ReadUInt32LittleEndian(data) : 0;
-                _samples += declared;
-                _lost += declared;
-                HandUnreadable(packet);
-                return;
-            }
-
             if (data.Length < 12)
             {
                 Invalid(packet, node, $"is {Counts.Of(data.Length, "byte", "bytes")} long, too short for the samples and one block's flags and CRC");
@@ -425,11 +411,6 @@ public sealed class WavPackCodecParser : ICodecParser
             statistics.Add(Stat("Packets", NodeValue.Integer(_packets, "packets", "packet"), Explain.StatPackets, Topics.Matroska));
             statistics.Add(Stat("Blocks", NodeValue.Integer(_blocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
             statistics.Add(Stat("Samples", NodeValue.Integer(_samples, "samples", "sample"), Explain.StatSamples));
-            if (_lost > 0)
-            {
-                statistics.Add(Stat("Lost Samples", NodeValue.Integer(_lost, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
-            }
-
             statistics.Add(Stat("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             statistics.Add(Stat("Sample Rate", NodeValue.Integer(_rate, "Hz"), first.IsDsd ? Explain.StatRateDsd : Explain.StatRate));
             statistics.Add(Stat("Channels", NodeValue.Integer(_channels, "channels", "channel"), Explain.StatChannels, Topics.Channels));
@@ -448,7 +429,6 @@ public sealed class WavPackCodecParser : ICodecParser
                 ChannelLayout = ChannelLayouts.FromWaveMask(_channelMask, _channels),
                 BitsPerSample = first.IsDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null,
                 Samples = _samples * (first.IsDsd ? 8 : 1),
-                LostSamples = _lost * (first.IsDsd ? 8 : 1),
                 Duration = duration,
                 AverageBitrate = duration > 0 ? _bytes * 8 / duration / 1000 : null,
                 Verification = verification,
