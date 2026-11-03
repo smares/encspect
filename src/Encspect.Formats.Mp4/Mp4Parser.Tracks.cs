@@ -420,7 +420,6 @@ public sealed partial class Mp4Parser
         (long Offset, long Size)? firstOutside = null;
         (long Offset, long Size)? firstOutsideMdat = null;
         (long Offset, long Size)? firstCut = null;
-        long cutSamples = 0;
         long index = 0;
         long accepted = 0;
         track.SampleBudget = state.SampleBytesLeft;
@@ -451,7 +450,9 @@ public sealed partial class Mp4Parser
 
             if (present < sample.Size)
             {
-                cutSamples++;
+                // The sample reaches past the file's end: it lies partly outside the file (mp4.sample-outside-file) and is analyzed as far as it goes.
+                outside++;
+                firstOutside ??= sample;
                 firstCut ??= sample;
             }
 
@@ -483,13 +484,10 @@ public sealed partial class Mp4Parser
         if (firstOutside is { } cut)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
-                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; they are not analyzed.", table);
-        }
-
-        if (firstCut is { } partial)
-        {
-            state.Findings.AddNow(Severity.Warning, "mp4.sample-truncated",
-                $"{Samples(cutSamples)} of track {track.Id} {Counts.Agree(cutSamples, "is", "are")} cut by the end of the file, the first at 0x{partial.Offset:X} with {Counts.Of(Present(state, partial), "byte", "bytes")} of its {Counts.Of(partial.Size, "byte", "bytes")}; the bytes there are analyzed, and the sample's samples are lost.", table);
+                $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; "
+                + (firstCut is { } partial
+                    ? $"the sample at 0x{partial.Offset:X} starts in the file, so it is analyzed as far as the file goes and its samples are lost; the others are not analyzed."
+                    : "they are not analyzed."), table);
         }
 
         if (empty > 0)

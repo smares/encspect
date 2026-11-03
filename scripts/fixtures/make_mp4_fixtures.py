@@ -918,8 +918,7 @@ def corrupt():
     # A sample the file ends inside is a unit with the bytes present.
     rows = [[r[0], min(r[1], cut_length - r[0])] for r in unit_list(full[2][0], samples, 10) if r[0] < cut_length]
     file("truncated", "A file cut 300 bytes before the end of mdat: the mdat box declares more than the file holds, and the last samples lie outside it.",
-         [["mp4.truncated", "but the file ends after"], ["mp4.sample-outside-file", "lie outside the file"], ["mp4.sample-truncated", "cut by the end of the file"],
-          ["aac.element-past-end", "runs past the end of its access unit"]], mutate=cut, units_rows=rows,
+         [["mp4.truncated", "but the file ends after"], ["mp4.sample-outside-file", "starts in the file, so it is analyzed as far as the file goes"]], mutate=cut, units_rows=rows,
          streams=[stream("AAC LC", 44100, 2, "Stereo", len(rows) * 1024, vbr=True, lost_samples=1024)])
 
     big = [Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), stsz_box=None)]

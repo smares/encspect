@@ -36,7 +36,7 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 ## Findings
 
 - broken box sizes and inconsistent sample tables;
-- samples outside the file or outside mdat, samples the file ends inside (`mp4.sample-truncated`), and samples that overlap;
+- samples outside the file or outside mdat, samples the file ends inside (reported with the samples outside it, `mp4.sample-outside-file`), and samples that overlap;
 - boxes where they do not belong (a moov inside another box, a traf in a traf, a moof in a moof) and more boxes than the limit;
 - durations that disagree;
 - moov after mdat;

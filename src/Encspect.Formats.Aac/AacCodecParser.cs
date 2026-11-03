@@ -415,7 +415,7 @@ public sealed class AacCodecParser : ICodecParser
             {
                 flags |= IsRead;
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
-                (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
+                (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges), report: !packet.IsCut);
                 isLost |= !result.Ok && packet.Length > 0;
                 Blocks.EndUnit();
                 elements = result.Elements;
