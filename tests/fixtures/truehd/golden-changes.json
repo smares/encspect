@@ -1,0 +1,94 @@
+{
+  "note": "Lost Samples (docs/design/samples-definition.md): the units that are cut, break the syntax or wait for the next major sync after damage count at the samples of the sync in force and are lost, so samples, duration and the figures over the units change in these eight reports; external-truehd-stereo-48k-24-odd-length gains Coded Samples. The series field changes only in the samples each run of the Bitrate series codes (frameRuns), which add up to the stream's samples.",
+  "goldens": [
+    "tests/fixtures/truehd/built-block-size-invalid.report.json",
+    "tests/fixtures/truehd/built-directory-end-past-unit.report.json",
+    "tests/fixtures/truehd/built-mlp-sync-crc-mismatch.report.json",
+    "tests/fixtures/truehd/built-parity-mismatch.report.json",
+    "tests/fixtures/truehd/built-restart-sync-invalid.report.json",
+    "tests/fixtures/truehd/built-substream-without-restart-header.report.json",
+    "tests/fixtures/truehd/built-sync-crc-mismatch.report.json",
+    "tests/fixtures/truehd/built-unit-cut.report.json",
+    "tests/fixtures/truehd/external-truehd-stereo-48k-24-odd-length.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MLP",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Coded Samples"
+    }
+  ],
+  "changed": [
+    {
+      "scope": "stream",
+      "fields": [
+        "samples",
+        "duration",
+        "series"
+      ]
+    },
+    {
+      "path": [
+        "Dolby TrueHD",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Dolby TrueHD",
+        "Statistics",
+        "Duration"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MLP",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "MLP",
+        "Statistics",
+        "Duration"
+      ],
+      "fields": [
+        "value"
+      ]
+    }
+  ]
+}
