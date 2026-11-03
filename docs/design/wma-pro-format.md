@@ -455,7 +455,7 @@ Read from the source and checked with ffmpeg 6.1.1 on the files above and their 
   | `latin_192_mulitchannel_cut.wma` | 208,896 | 208,896 |
 
   - The other 13 `cut-open-<k>` variants fit as well: 4 of `stereo-128` and 9 of `surround-384`.
-  - The bits of the unfinished frame are not in the count; Windows' totals are the rule's without them, so it appears not to output them either (inferred from the totals only). The samples definition ([samples-definition.md](samples-definition.md), question 9) says that the unfinished frame's F is reported apart as lost samples. A `LostSamples` field is not built yet: it waits for the samples alignment, and nothing here reports those F samples.
+  - The bits of the unfinished frame are not in the count; Windows' totals are the rule's without them, so it appears not to output them either (inferred from the totals only). The samples definition ([samples-definition.md](samples-definition.md), question 9) says that the unfinished frame's F is reported apart as lost samples, and the analyzer does (Lost Samples).
 - **Streams without the length prefix** are counted by the rule too, as the frames of the last packet are read ([Frames without the length prefix](#frames-without-the-length-prefix)). The three public files, Windows' figures against the frames read before the last packet's and the rule over all frames:
 
   | File | Windows | Without the last packet's frames | Rule |

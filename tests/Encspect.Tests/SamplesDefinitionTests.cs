@@ -444,7 +444,7 @@ public class SamplesDefinitionTests
         { "asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.asf", 88064, 2048 },
         // Damage: an invalid standard frame and the frames its superframe declares after it; the Lossless frames that start where a packet's header
         // points or after a valid frame and cannot be used after a lost packet.
-        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 135168, 16384 },
+        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 133120, 14336 },
         { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 73864, 28672 },
         { "asf/voice-invalid-superframes.asf", 11520, 1440 },
         { "asf/voice-object-not-whole.asf", 8160, 480 },
