@@ -95,7 +95,7 @@ public sealed partial class MpegAudioParser
         Add("Samples", NodeValue.Integer(samples), Explain.StatSamples);
         if (lost > 0)
         {
-            Add("Lost Samples", NodeValue.Integer(lost, "samples", "sample"), StreamInfo.LostSamplesDescription, Topics.SamplesAndLostSamples);
+            Add("Lost Samples", NodeValue.Integer(lost), StreamInfo.LostSamplesDescription, Topics.SamplesAndLostSamples);
         }
 
         Add("Duration", Duration(ticks + lostTicks), Explain.StatDuration);

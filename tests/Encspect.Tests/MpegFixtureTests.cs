@@ -693,6 +693,7 @@ public class MpegFixtureTests
             Assert.Equal(wanted.GetProperty("codec").GetString(), stream.Codec);
             Assert.Equal(wanted.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
             Assert.Equal(wanted.GetProperty("samples").GetInt64(), stream.Samples);
+            Assert.Equal(wanted.TryGetProperty("lost_samples", out JsonElement lost) ? lost.GetInt64() : 0, stream.LostSamples);
             Assert.Equal(wanted.GetProperty("duration").GetString(), NodeValue.Decimal(Math.Round(stream.Duration, 3, MidpointRounding.ToEven), 3, "s").ToString());
             Assert.Equal(
                 wanted.TryGetProperty("average_bitrate", out JsonElement bitrate) ? bitrate.GetString() : null,

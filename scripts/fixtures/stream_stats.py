@@ -247,13 +247,16 @@ def streams(all_frames):
 def stream_fields(frames):
     first = frames[0]
     audio = [f for f in frames if f.is_audio]
+    cut = [f for f in frames if f.is_cut]
     ticks = sum(f.ticks for f in audio)
     fields = {
         "codec": f"{first.version} Layer {first.layer}",
         "sample_rate": first.rate,
-        "samples": sum(f.samples for f in audio),
-        "duration": duration_text(ticks),
+        "samples": sum(f.samples for f in audio + cut),
+        "duration": duration_text(ticks + sum(f.ticks for f in cut)),
     }
+    if cut:
+        fields["lost_samples"] = sum(f.samples for f in cut)
     if first.mode is not None:
         fields["channel_layout"] = channel_layout(first.mode)
     if not audio:
