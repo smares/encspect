@@ -383,7 +383,32 @@
     "Channels": "1",
     "SamplingRate": "16000"
    },
-   "sampling_count_differs": "The file's header states a play duration that its data does not reach (the analyzer reports asf.file-size, asf.packet-count and others), and MediaInfo's sampling count is that duration times the rate; the analyzer's samples are those of the superframes, which ffmpeg decodes to the same number."
+   "sampling_count_differs": "The file's header states a play duration that its data does not reach (the analyzer reports asf.file-size, asf.packet-count and others), and MediaInfo's sampling count is that duration times the rate; the analyzer's samples are those of the superframes, which ffmpeg decodes to the same number.",
+   "analyzer": {
+    "samples": 1269120,
+    "lost_samples": 480,
+    "superframes": 2643,
+    "frames": 7929,
+    "frame_types": {
+     "0": 1180,
+     "1": 918,
+     "11": 823,
+     "12": 739,
+     "13": 4269
+    },
+    "findings": [
+     "asf.file-size",
+     "asf.object-incomplete",
+     "asf.object-truncated",
+     "asf.packet-count",
+     "asf.packet-length",
+     "asf.packet-truncated",
+     "wma.packet-short",
+     "wma.voice-superframe-overrun"
+    ],
+    "info_findings": [],
+    "reason": "The file ends inside its last media object, which holds 300 bytes of a 600-byte packet. ffmpeg's demuxer does not return that object, so its decoder ends after 2,639 superframes. The analyzer hands the object over flagged cut and reads 4 more superframes from its bytes (1,920 samples) and the 5th, which needs 467 bits where 290 are left, as a lost superframe of 480 samples; the superframe the packet before left unfinished is finished by those bytes, so wma.voice-unfinished is gone."
+   }
   },
   {
    "file": "wmav_8.wma",
@@ -427,7 +452,8 @@
     "Channels": "1",
     "SamplingRate": "8000"
    },
-   "sampling_count_differs": "The container states 14.4 s, and about half of the superframes hold music, which FFmpeg's decoder does not support and no sample counts; the analyzer's samples are those of the speech superframes, which ffmpeg decodes to the same number."
+   "sampling_count_differs": "The container states 14.4 s, and about half of the superframes hold music, which FFmpeg's decoder does not support and no sample counts; the analyzer's samples are those of the speech superframes, which ffmpeg decodes to the same number.",
+   "lost_samples": 11520
   },
   {
    "file": "wmv3-wmaspeeech.wmv",

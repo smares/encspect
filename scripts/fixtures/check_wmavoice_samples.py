@@ -117,25 +117,31 @@ def analyzer_problems(analyzer, path, sample):
     if report["root"].get("value") != sample["container"]:
         problems.append(f"the analyzer's format is {report['root'].get('value')}, the manifest {sample['container']}")
     stream = report["streams"][0]
-    for key, expected in (("codec", "Windows Media Audio Voice"), ("sampleRate", sample["rate"]), ("channels", sample["channels"]), ("samples", sample["samples"])):
-        if stream.get(key) != expected:
-            problems.append(f"the analyzer's {key} is {stream.get(key)}, the manifest {expected}")
+    # The manifest holds ffmpeg's figures. Where the analyzer's differ for a reason (a media object the file cuts, which ffmpeg's demuxer does not
+    # return), "analyzer" gives them with the reason; "lost_samples" is the analyzer's lost samples, which ffmpeg does not decode.
+    analyzer = sample.get("analyzer", {})
+    lost = analyzer.get("lost_samples", sample.get("lost_samples", 0))
+    wanted = analyzer.get("samples", sample["samples"] + lost)
+    for key, expected in (("codec", "Windows Media Audio Voice"), ("sampleRate", sample["rate"]), ("channels", sample["channels"]), ("samples", wanted), ("lostSamples", lost)):
+        got = stream.get(key, 0) if key == "lostSamples" else stream.get(key)
+        if got != expected:
+            problems.append(f"the analyzer's {key} is {got}, the manifest {expected}")
     if sample["samples"] != sample["ffmpeg_samples"]:
         problems.append("the manifest's samples differ from ffmpeg's")
-    for name, expected in (("Superframes", sample["superframes"]), ("Frames", sample["frames"]), ("LSPs per Frame", sample["lsps"]), ("Block Alignment", sample["block_align"])):
+    for name, expected in (("Superframes", analyzer.get("superframes", sample["superframes"])), ("Frames", analyzer.get("frames", sample["frames"])), ("LSPs per Frame", sample["lsps"]), ("Block Alignment", sample["block_align"])):
         if statistic(report, name) != expected:
             problems.append(f"the analyzer's {name} is {statistic(report, name)}, the manifest {expected}")
-    if frame_types(report) != sample["frame_types"]:
-        problems.append(f"the analyzer's frame types are {frame_types(report)}, the manifest {sample['frame_types']}")
+    if frame_types(report) != analyzer.get("frame_types", sample["frame_types"]):
+        problems.append(f"the analyzer's frame types are {frame_types(report)}, the manifest {analyzer.get('frame_types', sample['frame_types'])}")
     nominal = statistic(report, "Nominal Bitrate")
     if nominal is None or round(nominal * 1000) != sample["ffprobe"]["bit_rate"]:
         problems.append(f"the analyzer's nominal bitrate is {nominal} kbps, ffprobe's {sample['ffprobe']['bit_rate']} bit/s")
     serious = sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"})
-    if serious != sorted(sample["findings"]):
-        problems.append(f"the analyzer reports {serious}, the manifest {sample['findings']}")
+    if serious != sorted(analyzer.get("findings", sample["findings"])):
+        problems.append(f"the analyzer reports {serious}, the manifest {analyzer.get('findings', sample['findings'])}")
     infos = sorted({f["code"] for f in report["findings"] if f["severity"] == "Info"})
-    if infos != sorted(sample["info_findings"]):
-        problems.append(f"the analyzer reports the infos {infos}, the manifest {sample['info_findings']}")
+    if infos != sorted(analyzer.get("info_findings", sample["info_findings"])):
+        problems.append(f"the analyzer reports the infos {infos}, the manifest {analyzer.get('info_findings', sample['info_findings'])}")
     return problems
 
 
