@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax; samples do not change.",
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax. Frames that are cut or shortened by the end of the data or the container are in no frame count, size, bitrate or block tally (Frames, Average Bitrate, Smallest and Largest Frame, Minimum and Maximum Bitrate, Audio Blocks and the tallies of the blocks, the series), only in the samples and the lost samples; the coded series lose that frame's unit.",
   "goldens": [
     "tests/fixtures/ac3/bad-blocks.report.json",
     "tests/fixtures/ac3/cut-frame.report.json",

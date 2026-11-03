@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where units are cut; samples do not change.",
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where units are cut. Units that are cut or truncated are in no unit count, size or bitrate figure, only in the samples and the lost samples; a unit with a header that runs past its data (dts.header-overrun) is lost: exss-core-header-overrun, exss-component-header-overrun, xxch-header-overrun, xll-set-header-overrun, xll-navigation-overrun and the derived forms.",
   "goldens": [
     "tests/fixtures/dts/14be-xxch-header-overrun.report.json",
     "tests/fixtures/dts/14le-xxch-header-overrun.report.json",
