@@ -91,10 +91,13 @@ internal sealed class State
         bool isCutPacket = Cookie is { CanWalk: true } && packet.IsCut && length > 0;
         if (isCutPacket)
         {
-            // A sample the container cut: its bytes are not read (the container's finding reports the cut), it declares the cookie's frame length and is
-            // lost, and it is in no frame count, size or bitrate.
+            // A sample the container cut: its bytes are not read (the container's finding reports the cut), it declares the count its first element states, or the
+            // cookie's frame length, and is lost, and it is in no frame count, size or bitrate.
             flags |= FrameFlags.NotWalked;
-            samples = Cookie!.FrameLength;
+            // The count its first element states, where the element's header is in the bytes present (read with a tally and a list of its own, so
+            // nothing of it enters the statistics or the findings), else the cookie's frame length.
+            FrameWalker.Walk(packet.Span, Cookie!, _walk, new CodingTally(), [], null, _cancellation);
+            samples = _walk.HasSamples && _walk.Samples > 0 ? _walk.Samples : Cookie!.FrameLength;
             Lost += samples;
             CutFrames++;
         }

@@ -498,7 +498,7 @@ public class SamplesDefinitionTests
         #endregion
 
         #region ALAC
-        // An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read) and is lost.
+        // An unreadable frame counts its declared samples (the count its first element states, else the cookie's frame length) and is lost.
         { "alac/built-element-invalid-shift.m4a", 10000, 4096 },
         { "alac/built-residual-run-too-long.m4a", 6004, 100 },
 
@@ -506,8 +506,10 @@ public class SamplesDefinitionTests
         { "alac/built-tuning-kb-zero.m4a", 10000, 0 },
         #endregion
 
+        #region Opus
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them, and the packets that break RFC 6716 are lost there.
         { "ogg/opus-packets-corrupt.opus", 24648, 14400 },
+        #endregion
 
         #region Ogg, Speex
         // Question 2 (b): the packets of a page that fails its CRC are handed over and counted, not lost; those of a truncated page with bytes
@@ -836,8 +838,9 @@ public class SamplesDefinitionTests
         Report report = AnalyzeCut(fixture, cut);
         StreamInfo stream = report.Streams.Single();
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "alac.frame-overrun" or "alac.element-invalid");
-        Assert.Equal(4096, stream.LostSamples);
-        Assert.True(stream.Samples >= whole.Samples - 4096);
+        // The cut sample is the last, whose element states its 1,808 samples where the header is in the bytes present; with less than the header, the cookie's 4,096.
+        Assert.Equal(whole.Samples, stream.Samples);
+        Assert.Equal(1808, stream.LostSamples);
         Assert.Equal(FrameCount(AnalyzeCut(fixture, 0)) - 1, FrameCount(report));
     }
 
