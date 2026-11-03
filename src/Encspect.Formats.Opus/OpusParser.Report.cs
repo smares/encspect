@@ -305,8 +305,9 @@ public sealed partial class OpusParser
             var bitrates = new double[count];
             var seconds = new List<(long Bits, long Samples)>();
             var highest = new List<int>();
-            var bandwidthX = new List<double>();
-            var bandwidthY = new List<double>();
+            var bandwidthX = new double[count];
+            var bandwidthY = new double[count];
+            int bandwidthCount = 0;
             long position = 0;
             for (int i = 0; i < count; i++)
             {
@@ -342,8 +343,8 @@ public sealed partial class OpusParser
 
                 if (band >= 0)
                 {
-                    bandwidthX.Add(offsets[i]);
-                    bandwidthY.Add(Toc.BandwidthHertz[band]);
+                    bandwidthX[bandwidthCount] = offsets[i];
+                    bandwidthY[bandwidthCount++] = Toc.BandwidthHertz[band];
                     highest[second] = Math.Max(highest[second], Toc.BandwidthHertz[band]);
                 }
 
@@ -360,9 +361,11 @@ public sealed partial class OpusParser
                 new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate },
                 new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
             };
-            if (bandwidthX.Count > 0)
+            if (bandwidthCount > 0)
             {
-                series.Add(new("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, bandwidthX.ToArray(), bandwidthY.ToArray())
+                Array.Resize(ref bandwidthX, bandwidthCount);
+                Array.Resize(ref bandwidthY, bandwidthCount);
+                series.Add(new("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, bandwidthX, bandwidthY)
                 {
                     Description = SeriesText.CodedBandwidth,
                     Concept = GraphConcept.CodedBandwidth,
