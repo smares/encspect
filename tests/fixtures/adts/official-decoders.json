@@ -7428,13 +7428,11 @@
      "decoder": "coreaudio converter",
      "value": 3072,
      "analyzer": 4096,
-     "reference": 2048,
-     "status": "explained",
-     "kind": "coreaudio-differs",
-     "ownersDisagree": true,
-     "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 2,048, Core Audio's converter 3,072, the analyzer 4,096 (the written rule gives keep unless a reading of the specification decides)",
-     "note": "decided in review (2026-11-02; step 5, run 41423202796): explained. The flagged unit (aac.frame-truncated) is counted by its declared samples (two blocks); FDK outputs nothing for it and Core Audio's converter one block (3,072 against the analyzer's 4,096).",
-     "statusSource": "reviewed"
+     "analyzerLost": 2048,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 3,072 samples; the analyzer's coded stage is 4,096 and its lost samples are 2,048, which leaves 2,048",
+     "statusSource": "rule"
     }
    ],
    "units": [
