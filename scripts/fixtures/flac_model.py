@@ -717,8 +717,9 @@ def stream_info(stream):
     bits = i["bits"] if i else first["bits"]
     samples = stream.samples
     bits_total = sum(f["length"] * 8 for f in frames)
+    whole_samples = sum(f["header"]["block_size"] for f in frames)  # the bitrate covers the frames the data holds whole
     return {"codec": "FLAC", "sample_rate": rate, "channels": channels, "samples": samples, "duration": samples / rate if rate else 0.0, "bits_per_sample": bits,
-            "average_bitrate": bits_total * rate / samples / 1000 if samples else None, "lost_samples": stream.lost_samples, "layout": LAYOUTS.get(channels, [])}
+            "average_bitrate": bits_total * rate / whole_samples / 1000 if whole_samples else None, "lost_samples": stream.lost_samples, "layout": LAYOUTS.get(channels, [])}
 
 
 def manifest(data, start=0, end=None, extra=None):
