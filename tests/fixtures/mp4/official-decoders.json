@@ -10792,8 +10792,8 @@
      "analyzer": 20480,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared positions; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared samples; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
      "statusSource": "reviewed"
     },
     {

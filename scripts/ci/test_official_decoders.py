@@ -165,6 +165,20 @@ class Ac3Tests(unittest.TestCase):
         compared = compare.compare_ac3(self.record(8928, 7392), self.analyzer, None)
         self.assertEqual([("witness-differs", "explained")], [(d["kind"], d["status"]) for d in compared["differences"]])
 
+    def test_a_cut_frame_counted_and_lost_notes_the_converters_total_with_both_figures_and_explains_the_reader(self):
+        analyzer = {**self.analyzer, "streams": [{**self.analyzer["streams"][0], "lostSamples": 1536}]}
+        compared = compare.compare_ac3(self.record(8928, 7392), analyzer, None)
+        by_kind = {d["kind"]: d for d in compared["differences"]}
+        self.assertEqual(("noted", 1536), (by_kind["outputs-lost-samples"]["status"], by_kind["outputs-lost-samples"]["analyzerLost"]))
+        self.assertIn("8,928", by_kind["outputs-lost-samples"]["reason"])
+        self.assertIn("7,680", by_kind["outputs-lost-samples"]["reason"])
+        self.assertEqual("explained", by_kind["witness-differs"]["status"])
+        self.assertNotIn("alignment", by_kind["witness-differs"])
+
+    def test_no_lost_samples_leave_the_converters_total_without_a_note(self):
+        compared = compare.compare_ac3(self.record(8928, 8928), self.analyzer, None)
+        self.assertNotIn("outputs-lost-samples", [d["kind"] for d in compared["differences"]])
+
     def test_a_stream_the_converter_refuses_throughout_is_no_reference(self):
         record = self.record(0)
         record["paths"]["converter"].update({"refusedUnits": 6, "units": [{"index": i, "offset": i * 10, "declared": 10, "received": 10, "result": "refused", "frames": 0, "status": "0x21646174"} for i in range(6)]})
@@ -1230,6 +1244,24 @@ class MediaFoundationProvenanceTests(unittest.TestCase):
         line = next(l for l in text.splitlines() if l.strip().startswith("aac, apple") and "transform totals" in l)
         self.assertIn("transform totals   1, equal to the analyzer   1", line)
         self.assertIn("carried from the committed files, not counted above: 1 files (aac/old.m4a)", text)
+
+
+class DeclaredSamplesTests(unittest.TestCase):
+    def test_a_committed_reason_is_read_as_the_script_words_it_now(self):
+        self.assertEqual("which it counts by their declared samples", compare.reworded("which it counts by their declared positions"))
+        self.assertIsNone(compare.reworded(None))
+        self.assertEqual(3, compare.reworded(3))
+
+    def test_the_shortfall_of_flagged_units_is_explained_only_where_the_lost_samples_cover_it(self):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 12288, "reference": 11264, "referencePath": "fdk direct", "witnesses": {}, "concealedSamples": 0}
+        direct = {"units": [{"index": 0, "blocks": 1}] * 12}
+        units = [{"index": 11, "decoder": "refused", "status": "agree"}]
+        for lost, status in ((1024, "explained"), (0, "noted")):
+            analyzer = {"streams": [{"lostSamples": lost}], "gapless": {}, "findings": []}
+            differences = compare.aac_differences([dict(figure)], direct, ["AAC LC"], analyzer, units)
+            self.assertEqual([("analyzer-differs", status)], [(d["kind"], d["status"]) for d in differences])
+            self.assertEqual(lost, differences[0]["analyzerLost"])
+            self.assertIn("declared samples", differences[0]["reason"])
 
 
 if __name__ == "__main__":

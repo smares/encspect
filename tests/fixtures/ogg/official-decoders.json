@@ -2126,7 +2126,7 @@
      "analyzer": 24960,
      "status": "explained",
      "kind": "analyzer-differs",
-     "note": "\"Decoded Samples\" counts the positions the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
+     "note": "\"Decoded Samples\" counts the samples the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     },
     {
@@ -2136,7 +2136,7 @@
      "analyzer": 5760,
      "status": "explained",
      "kind": "analyzer-differs",
-     "note": "\"Decoded Samples\" counts the positions the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
+     "note": "\"Decoded Samples\" counts the samples the packets declare; libopus refuses packets with error -4 (and is not given an empty one), and those packets carry findings. Under the lead's gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples. The analyzer's count stays. Decision of the project lead, 2026-11-01.",
      "statusSource": "reviewed"
     }
    ],
