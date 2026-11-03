@@ -276,7 +276,9 @@ def check_speexdec(name, manifest, problems):
     vendor = entry["speex"]["comment"]["vendor"]
     if vendor and vendor not in text:
         problems.append(f"speexdec does not print the vendor string {vendor!r}")
-    frames = [tuple([f[3], f[0], f[1], f[2]]) for packet in entry["speex"]["frames"] for f in packet]
+    # Packets libogg does not return (those of dropped pages, and a cut packet) never reach speexdec: the same ones the oggz comparison leaves out.
+    missing = set(entry["speex"].get("oggz_missing", []))
+    frames = [tuple([f[3], f[0], f[1], f[2]]) for i, packet in enumerate(entry["speex"]["frames"]) if i not in missing for f in packet]
     expected = [m.speexdec_bitrate(f, mode, rate) for f in frames]
     if bitrates != expected:
         problems.append(f"speexdec prints {len(bitrates)} frame bitrates {bitrates[:6]}..., the manifest's frames give {len(expected)} {expected[:6]}...")
