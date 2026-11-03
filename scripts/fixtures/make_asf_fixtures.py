@@ -19,6 +19,9 @@ import sys
 
 import asf_model as m
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "windows"))
+import make_wma_pro_no_length_prefix as no_prefix  # noqa: E402
+
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "asf"
 
 FILE_ID = bytes(range(1, 17))
@@ -435,6 +438,14 @@ fixture("derived-ffmpeg-wmav2-tool-name-lavc", "The ffmpeg wmav2 file external-f
         tool_name_file, [])
 
 
+def no_length_prefix_file():
+    return no_prefix.rewrite((OUT / no_prefix.SOURCE).read_bytes())[0]
+
+
+fixture(no_prefix.NAME, no_prefix.DESCRIPTION, no_length_prefix_file, [],
+        {"ffprobe": True, "wma_frames": "Windows Media Audio Professional"})
+
+
 def two_codecs():
     return m.asf_file(
         [m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)),
@@ -735,8 +746,16 @@ def main():
         data = builder()
         (OUT / f"{name}.asf").write_bytes(data)
         model = m.parse(data)
-        derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}} if name.startswith("derived-") else {}
+        derived = {}
+        if name == no_prefix.NAME:
+            derived = {"derived": no_prefix.derived(no_prefix.rewrite((OUT / no_prefix.SOURCE).read_bytes())[1])}
+        elif name.startswith("derived-"):
+            derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}}
         manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}
+        if name == no_prefix.NAME:
+            source = json.loads((OUT / (no_prefix.SOURCE[:-4] + ".provenance.json")).read_text(encoding="utf-8"))
+            record = no_prefix.provenance(data, derived["derived"], source)
+            (OUT / f"{name}.provenance.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         if name in PROTECTION:
             manifest["protection"] = PROTECTION[name]
         (OUT / f"{name}.expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -52,8 +52,10 @@ read. Professional and Lossless are read, and for their Microsoft-encoded fixtur
 decoder by the sample count of each frame (check_wma_frames): the samples of each frame ffmpeg outputs (ffmpeg -f framecrc)
 are the frame's samples less its trims, in the analyzer's order (Professional drops the first frame, which only fills the
 overlap; Lossless outputs it), and their total is ffmpeg's count. The golden report's samples are that total, except for a Professional stream with
-the length prefix and no finding of the WMA parser, whose samples are the rule of Microsoft's decoder (pro_rule_samples), which is 512 more where the
-last frame ends in two subframes of 1,024 samples (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs"). Frame boundaries in the file are not compared: framecrc
+no finding of the WMA parser but the information that its last packet ends in an unfinished frame (wma.frame-unfinished), whose samples are the rule of
+Microsoft's decoder (pro_rule_samples), which is 512 more where the last frame ends in two subframes of 1,024 samples, and for a stream without the
+length prefix, whose last packet's frames the analyzer reads and ffmpeg never does (docs/design/wma-pro-format.md, "What Microsoft's decoder outputs").
+Frame boundaries in the file are not compared: framecrc
 gives no input offsets, and every frame but the last outputs the same number of samples.
 """
 
@@ -351,6 +353,9 @@ def check_hand_built(name, manifest, path, problems):
                 problems.append(f"ffmpeg decoding: {errors or code}")
             else:
                 check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
+    if crosscheck.get("wma_frames"):
+        # The frames of a Professional stream written without the length prefix, which ffmpeg reads one packet late (flushed_frames).
+        check_wma_frames(path, crosscheck["wma_frames"], problems)
     if audio and all(s["tag"] == 0x000A for s in audio):
         check_mediainfo(name, path, data["streams"][0], problems, golden_report(path), count_samples=crosscheck.get("decode") == "ok")
 
@@ -538,10 +543,10 @@ def frame_sizes(frame, length):
 
 def pro_rule_samples(report, frames, length):
     """The samples Microsoft's decoder outputs by the rule of docs/design/wma-pro-format.md ("What Encspect reports"), worked out from the golden
-    report's frames, or None where the rule does not apply to the stream: no length prefix, a finding of the WMA parser, no frame read, an end trim
-    in a frame but the last or a start trim in a frame but the first, or a one-frame stream with an end trim."""
-    codec = "Windows Media Audio Professional"
-    if named(report, "Has Length Prefix", codec) is not True or any(f["code"].startswith("wma.") for f in report["findings"]):
+    report's frames, or None where the rule does not apply to the stream: a finding of the WMA parser other than the information that the last packet
+    ends in an unfinished frame, no frame read, an end trim in a frame but the last or a start trim in a frame but the first, or a one-frame stream
+    with an end trim. Streams without the length prefix are counted by it, their last packet's frames read."""
+    if any(f["code"].startswith("wma.") and f["code"] != "wma.frame-unfinished" for f in report["findings"]):
         return None
     valid = [f for f in frames if not str(f.get("value", "")).startswith("invalid")]
     if not valid:
@@ -563,10 +568,23 @@ def pro_rule_samples(report, frames, length):
     return max(0, end - start_cut - end_cut)
 
 
+def flushed_frames(report, stream):
+    """The numbers of the frames ffmpeg never reads: those that start in the last packet of a Professional stream without the length prefix,
+    which the analyzer reads after the last packet from the run it leaves (ffmpeg reads a packet's frames when the next packet arrives)."""
+    if named(report, "Has Length Prefix", stream["name"]) is not False:
+        return set()
+    packets = next((c for c in stream.get("children", []) if c["name"] == "Packets"), {}).get("children", [])
+    frames = next((c for c in stream.get("children", []) if c["name"] == "Frames"), {}).get("children", [])
+    if not packets:
+        return set()
+    return {i for i, f in enumerate(frames) if f["offset"] >= packets[-1]["offset"]}
+
+
 def check_wma_frames(path, codec, problems):
     """The sample count of each frame ffmpeg's decoder outputs (framecrc's duration column) against the golden report's frames; where the
     frames start and end in the file is not compared. Their total is ffmpeg's count, which the frames give (the frames' count).
-    Professional's first frame only fills the overlap of the transform and is not output; a trim of a frame's whole length or more removes
+    Professional's first frame only fills the overlap of the transform and is not output; the frames that start in the last packet of a stream
+    without the length prefix are not read by ffmpeg and are left out of the comparison (flushed_frames); a trim of a frame's whole length or more removes
     the frame. Lossless outputs every frame less the trim at its end (the trim at the start is read and not applied).
     The golden report's samples are ffmpeg's count, except for a Professional stream the rule of Microsoft's decoder applies to (pro_rule_samples):
     there they are that rule's figure, which differs from ffmpeg's where the last frame ends in subframes smaller than the frame."""
@@ -581,8 +599,9 @@ def check_wma_frames(path, codec, problems):
         return
     expected = []
     skipped_first = codec == "Windows Media Audio Lossless"
-    for frame in frames.get("children", []):
-        if str(frame.get("value", "")).startswith("invalid"):
+    unread = flushed_frames(report, stream) if codec == "Windows Media Audio Professional" else set()
+    for number, frame in enumerate(frames.get("children", [])):
+        if str(frame.get("value", "")).startswith("invalid") or number in unread:
             continue
         start, end = trim_of(frame)
         if not skipped_first:
