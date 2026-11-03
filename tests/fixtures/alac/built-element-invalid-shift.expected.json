@@ -95,7 +95,7 @@
    "offset": 5380,
    "size": 8900,
    "status": "invalid",
-   "samples": 0,
+   "samples": 4096,
    "walked": 0,
    "channels": 0,
    "element_count": 1,
@@ -307,20 +307,21 @@
    "codec": "Apple Lossless",
    "sample_rate": 44100,
    "channels": 2,
-   "samples": 5904,
-   "duration": 0.13387755102040816,
+   "samples": 10000,
+   "duration": 0.22675736961451248,
    "bits_per_sample": 16,
-   "average_bitrate": 683.729268292683,
+   "average_bitrate": 717.66576,
    "is_vbr": true,
    "layout": [
     "front left",
     "front right"
    ],
-   "units": 2,
+   "units": 3,
    "pair_codes": [
     [
      2
     ],
+    [],
     [
      2
     ]
@@ -329,10 +330,12 @@
     [
      0
     ],
+    [],
     [
      0
     ]
-   ]
+   ],
+   "lost_samples": 4096
   }
  ],
  "verification": {

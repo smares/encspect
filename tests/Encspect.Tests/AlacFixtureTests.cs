@@ -405,6 +405,7 @@ public partial class AlacFixtureTests
         Assert.Equal(info.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
         Assert.Equal(info.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.Equal(info.GetProperty("samples").GetInt64(), stream.Samples);
+        Assert.Equal(info.TryGetProperty("lost_samples", out JsonElement lost) ? lost.GetInt64() : 0, stream.LostSamples);
         Assert.Equal(info.GetProperty("duration").GetDouble(), stream.Duration, 9);
         if (info.GetProperty("bits_per_sample").ValueKind == JsonValueKind.Null)
         {
