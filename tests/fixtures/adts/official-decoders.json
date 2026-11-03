@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41558366773",
-  "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a",
+  "id": "41592571038",
+  "commit": "dbf05947676a65f6614b803ddfe51a7d3231cb1b",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41592571038",
+   "commit": "dbf05947676a65f6614b803ddfe51a7d3231cb1b"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41592571038",
+   "commit": "dbf05947676a65f6614b803ddfe51a7d3231cb1b"
   }
  },
  "statuses": [
@@ -2862,6 +2862,7 @@
      "decoder": "fdk direct",
      "value": 28672,
      "analyzer": 30720,
+     "analyzerLost": 1024,
      "status": "keep",
      "kind": "analyzer-differs",
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (3,072) are exactly the 3 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
@@ -7405,6 +7406,7 @@
      "decoder": "fdk direct",
      "value": 2048,
      "analyzer": 4096,
+     "analyzerLost": 2048,
      "status": "explained",
      "kind": "analyzer-differs",
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (2,048) are exactly the 2 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
@@ -9723,6 +9725,7 @@
      "decoder": "fdk direct",
      "value": 11264,
      "analyzer": 12288,
+     "analyzerLost": 1024,
      "status": "explained",
      "kind": "analyzer-differs",
      "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (1,024) are exactly the 1 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
