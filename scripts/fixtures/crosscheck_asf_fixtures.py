@@ -144,7 +144,7 @@ MICROSOFT_STANDARD_SAMPLES = {
 
 def check_standard_frames(path, samples, problems):
     """For a stream of Windows Media Audio version 1 or 2 the analyzer reads the frames: the samples ffmpeg decodes (per channel) equal the
-    golden report's "Coded Samples" (the frames it declares times the frame length) less its lost samples and one frame where the golden has them, else its samples;
+    golden report's valid frames less one times the frame length where the golden has "Coded Samples" (the frames it declares, the frame the last superframe announces included, times the frame length), else its samples less its lost ones;
     where the golden has "Coded Samples", its samples follow the rule fitted to Microsoft's decoder, which the figures of
     MICROSOFT_STANDARD_SAMPLES hold."""
     report = golden_report(path)
@@ -160,8 +160,9 @@ def check_standard_frames(path, samples, problems):
         if analyzed - lost != samples:
             problems.append(f"the analyzer's golden report has {analyzed} samples of which {lost} are lost, ffmpeg decodes {samples}")
     else:
-        if length and coded - lost - length != samples:
-            problems.append(f"the analyzer's golden report has {coded} coded samples of which {lost} are lost, ffmpeg decodes {samples}, which are one frame of {length} less")
+        frames, invalid = (statistic_of(streams[0], n) for n in ("Frames", "Invalid Frames"))
+        if length and frames is not None and (frames - (invalid or 0) - 1) * length != samples:
+            problems.append(f"the analyzer's golden report has {frames} frames of which {invalid or 0} are invalid, ffmpeg decodes {samples}, which are one valid frame of {length} less")
         wanted = MICROSOFT_STANDARD_SAMPLES.get(path.stem)
         if wanted is None:
             problems.append("the golden report counts by the rule fitted to Microsoft's decoder, and no figure of Microsoft's decoder is pinned for the file")

@@ -93,6 +93,21 @@ class ColumnTests(unittest.TestCase):
         self.assertEqual("explained", differences[0]["status"])
         self.assertTrue(differences[0]["ownersDisagree"])
 
+    def test_a_converter_that_outputs_part_of_a_lost_unit_is_noted_with_both_figures_and_no_cause(self):
+        for lost, c, status, kind in ((2048, 3072, "noted", "outputs-lost-samples"), (2048, 1024, "pending", "coreaudio-differs"), (2048, 2049, "noted", "outputs-lost-samples"), (0, 3072, "pending", "coreaudio-differs")):
+            figure = self.figure(4096, 2048, lostSamples=lost)
+            self.attach(figure, self.converter(c))
+            figure["lostSamples"] = lost
+            differences = compare.coreaudio_differences([figure])
+            self.assertEqual([(kind, status)], [(d["kind"], d["status"]) for d in differences], (lost, c))
+        figure = self.figure(4096, 2048)
+        self.attach(figure, self.converter(3072))
+        figure["lostSamples"] = 2048
+        reason = compare.coreaudio_differences([figure])[0]["reason"]
+        self.assertIn("3,072", reason)
+        self.assertIn("2,048", reason)
+        self.assertNotIn("block", reason)
+
     def test_decoders_that_all_disagree_are_left_pending_for_the_lead(self):
         figure = self.figure(10000, 9000)
         self.attach(figure, self.converter(8000))
@@ -1262,6 +1277,15 @@ class DeclaredSamplesTests(unittest.TestCase):
             self.assertEqual([("analyzer-differs", status)], [(d["kind"], d["status"]) for d in differences])
             self.assertEqual(lost, differences[0]["analyzerLost"])
             self.assertIn("declared samples", differences[0]["reason"])
+
+
+    def test_a_refused_unit_without_a_finding_or_a_shortfall_that_is_not_the_refused_blocks_is_pending(self):
+        figure = {"id": "samples", "stage": "coded", "streams": [0], "analyzer": 12288, "reference": 11264, "referencePath": "fdk direct", "witnesses": {}, "concealedSamples": 0}
+        direct = {"units": [{"index": 0, "blocks": 1}] * 12}
+        analyzer = {"streams": [{"index": 0, "lostSamples": 1024}], "gapless": {}, "findings": []}
+        for units in ([{"index": 11, "decoder": "refused", "status": "pending"}], []):
+            differences = compare.aac_differences([dict(figure)], direct, ["AAC LC"], analyzer, units)
+            self.assertEqual([("analyzer-differs", "pending")], [(d["kind"], d["status"]) for d in differences])
 
 
 if __name__ == "__main__":

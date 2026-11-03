@@ -202,7 +202,7 @@ internal sealed class StdStream
         FinalReservoirStartBit = reservoir.StartBit;
         FinalBlockSize = state.Current;
         FinalNextBlockSize = state.Next;
-        if (p.UsesBitReservoir && InvalidFrames == 0 && reservoir.Bytes > 0 && Superframes.Count > 0 && Superframes[reservoir.First].State == SuperframeState.Read)
+        if (p.UsesBitReservoir && reservoir.Bytes > 0 && Superframes.Count > 0 && Superframes[reservoir.First].State == SuperframeState.Read)
         {
             ReadAnnouncedLast(reservoir, state);
         }
@@ -271,8 +271,8 @@ internal sealed class StdStream
     // The declared samples of the lost frames, at the coded stage: each counts a frame length. Zero where the rule applies, which needs no invalid frame.
     public long LostSamples => LostFrames * Parameters.FrameLength;
 
-    // The valid frames times the frame length, before any overlap is taken off (the frame the last superframe announces is not among them).
-    public long CodedSamples => (ValidFrames + LostFrames) * Parameters.FrameLength;
+    // The valid frames, the lost frames and the frame the last superframe announces where the file holds it whole, times the frame length, before any overlap is taken off.
+    public long CodedSamples => (ValidFrames + LostFrames + (HasAnnouncedLast ? 1 : 0)) * Parameters.FrameLength;
 
     // The frames whose bits are complete: the valid frames and the announced last one.
     public long CompleteFrames => ValidFrames + (HasAnnouncedLast ? 1 : 0);

@@ -55,12 +55,13 @@ public class WmaFixtureTests
         // (WmaStandardRuleTests holds it to the Windows figures); the others have the container's duration at the rate (the Voice frames are held by the golden reports and VoiceFixtureTests).
         if (codec is "wmav1" or "wmav2")
         {
-            // Where the statistics have Coded Samples (the complete frames times the frame length) the samples follow the rule fitted to Microsoft's
-            // decoder, and ffmpeg outputs one frame less than the coded samples (WmaStandardRuleTests holds the samples to the Windows figures).
+            // Where the statistics have Coded Samples the samples follow the rule fitted to Microsoft's decoder, and ffmpeg outputs the valid frames
+            // less one (WmaStandardRuleTests holds the samples to the Windows figures).
             Node statistics = Child(report.Streams[0].Nodes[0], "Statistics");
             if (statistics.Children.Any(c => c.Name == "Coded Samples"))
             {
-                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger() - (statistics.Children.Any(c => c.Name == "Lost Samples") ? Child(statistics, "Lost Samples").Value!.AsInteger() : 0) - Child(statistics, "Frame Length").Value!.AsInteger());
+                long invalid = statistics.Children.Any(c => c.Name == "Invalid Frames") ? Child(statistics, "Invalid Frames").Value!.AsInteger()!.Value : 0;
+                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), (Child(statistics, "Frames").Value!.AsInteger() - invalid - 1) * Child(statistics, "Frame Length").Value!.AsInteger());
             }
             else
             {

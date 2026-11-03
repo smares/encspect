@@ -34,7 +34,7 @@ refuses, conceals or outputs nothing for, and the units with an analyzer finding
   explained   FDK's excess over the analyzer is exactly the samples of the frames it conceals (a future decoder leaves them as gaps, decision of the project lead, 2026-11-01); FDK's
               shortfall is exactly the blocks of units the analyzer flags (a finding at their bytes or covering them) and counts by their declared samples (reporting the lost ones apart), for which FDK refuses
               or outputs nothing; the 64-stream cap (aac.streams-limited); AAC Main, LTP and SSR, which FDK AAC does not document
-  noted       no reference, the analyzer has nothing wrong to change; a unit the analyzer flags through a merged finding, a sample-table finding or the declared length of a damaged unit
+  noted       no reference, the analyzer has nothing wrong to change; a flagged unit FDK refuses that the stream does not lose; a unit the analyzer flags through a merged finding, a sample-table finding or the declared length of a damaged unit
   pending     every other difference of the analyzer from FDK, rate differences, and every unit FDK refuses, conceals or outputs nothing for with no finding that covers it
 
   Media Foundation (rollout step 6, the `mediaFoundation` column of the coded figure): the AAC decoder transform fed the unit list (with timestamps on the input samples; the control run
@@ -921,6 +921,11 @@ def coreaudio_differences(figures):
                                 "reason": "the analyzer equals the reference (%s, %s) and Core Audio's converter outputs %s: the owners' decoders disagree%s" % (
                                     figure["referencePath"], show(r), show(c),
                                     "; it gives no output for unit %s after its first output" % ", ".join(map(str, entry["silentUnits"])) if entry.get("silentUnits") else "")})
+        elif r is not None and c != r and 0 < (a or 0) - c < figure.get("lostSamples", 0):
+            # The converter outputs part of a unit the analyzer reports as lost: noted with both figures, no cause claimed (as for the AC-3 converter).
+            lost = figure["lostSamples"]
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": c, "analyzer": a, "analyzerLost": lost, "status": "noted", "kind": "outputs-lost-samples",
+                                "reason": "the converter outputs %s samples; the analyzer's coded stage is %s and its lost samples are %s, which leaves %s" % (show(c), show(a), show(lost), show(a - lost))})
         elif r is not None and c != r:
             differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": c, "analyzer": a, "reference": r, "status": "pending", "kind": "coreaudio-differs",
                                 "ownersDisagree": True,
@@ -1307,10 +1312,14 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
     codecs = [s["codec"] for s in analyzer["streams"]]
     units = aac_unit_verdicts(direct, analyzer)
     attach_coreaudio(figures, coreaudio, record)
+    for figure in figures:
+        figure["lostSamples"] = sum(x.get("lostSamples", 0) for x in analyzer["streams"] if x["index"] in figure["streams"])
     differences = aac_differences(figures, direct, codecs, analyzer, units)
     if coreaudio and not coreaudio.get("notFed"):
         differences += coreaudio_differences(figures)
         units = units + coreaudio_unit_verdicts(coreaudio, analyzer)
+    for figure in figures:
+        del figure["lostSamples"]
     return {"figures": figures, "differences": differences, "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
 
 

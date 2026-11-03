@@ -53,7 +53,8 @@ public class WmaStandardRuleTests
         Assert.Equal(expected, Child(statistics, "Samples").Value!.AsInteger());
         Assert.StartsWith("The samples per channel Microsoft's decoder outputs", Child(statistics, "Samples").Description, StringComparison.Ordinal);
         Assert.Contains("Microsoft's decoder", Child(statistics, "Samples").Description, StringComparison.Ordinal);
-        Assert.Equal(Child(statistics, "Frames").Value!.AsInteger() * Child(statistics, "Frame Length").Value!.AsInteger(), Child(statistics, "Coded Samples").Value!.AsInteger());
+        // The frames read and the one the last superframe announces, which the file holds whole.
+        Assert.Equal((Child(statistics, "Frames").Value!.AsInteger() + 1) * Child(statistics, "Frame Length").Value!.AsInteger(), Child(statistics, "Coded Samples").Value!.AsInteger());
     }
 
     // 8 kHz mono, a frame of 512 samples, a bit reservoir and variable block lengths; every block is a whole frame (size index 0).
@@ -139,7 +140,7 @@ public class WmaStandardRuleTests
         var (run, statistics) = Run(Superframe(0, 3, Frames(3)));
 
         Assert.Equal(F, Value(statistics, "Samples"));
-        Assert.Equal(2 * F, Value(statistics, "Coded Samples"));
+        Assert.Equal(3 * F, Value(statistics, "Coded Samples"));
         Assert.StartsWith("The samples per channel Microsoft's decoder outputs", Child(statistics, "Samples").Description, StringComparison.Ordinal);
         Finding finding = Assert.Single(run.Findings, f => f.Code == "wma.reservoir-at-end");
         Assert.Contains("the frame is counted in the samples", finding.Message, StringComparison.Ordinal);
