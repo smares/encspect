@@ -58,6 +58,18 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - After each milestone, an independent review agent that has not seen the author's conclusions reviews the code against the spec.
 - Agents for implementation and simple tasks run on Sonnet with medium effort; review agents, including the milestone review, run on Opus with high effort. Design documents are drafted on Opus with high effort; fixes to them count as implementation.
 
+## Working efficiently
+
+Tokens are limited; spend them on the work, not on talk. None of this lowers the bar for results or for the documents in the repository.
+
+- **Messages to the lead:** only decisions the lead must make (with the options and a recommendation), blockers, and the end of the task the lead asked for, in a few lines. No progress narration, no relayed agent reports, no tables of figures unless asked. Duplicate or empty notifications get no reply beyond a word. The lead asks when they want status or an explanation.
+- **Briefs to agents:** point to files (a brief, a design, a review on disk) instead of restating them; state scope, decisions and what done means, briefly. Reuse an agent that already holds the context (send it a message) rather than starting a fresh one that rereads everything.
+- **Reports from agents:** at most about 15 lines: what changed, checks run, open decisions. Details go to a file in the scratchpad, which the coordinator reads only where a decision needs it.
+- **Context:** read large outputs (test logs, records, transcripts) through `tail`, `grep` or a summary, never whole.
+- **Checks:** run the fast checks of the changed areas locally; leave the full suite and the other platforms to CI. Run the slow cross-checks once per change, not per commit.
+- **Reviews:** one independent review per milestone, scoped to the diff, and one fix review of the fixes; further rounds only for blocking findings.
+- **Polling:** wait for notifications (agents, PR events); a scheduled check-in only where no event arrives.
+
 ## Git
 
 - Push every commit to its own branch right after making it, so work survives a lost session or container. Never push to `main` directly.
