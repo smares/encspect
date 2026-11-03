@@ -1442,7 +1442,7 @@
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "1 frame, 0.000 s",
+                      "value": "1 frame, 0.093 s",
                       "offset": 446,
                       "length": 1074,
                       "children": [
@@ -1473,14 +1473,21 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 0,
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 446,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Lost Samples",
+                          "value": 4096,
                           "unit": "samples",
                           "offset": 446,
                           "length": 1074
                         },
                         {
                           "name": "Duration",
-                          "value": 0,
+                          "value": 0.09287981859410431,
                           "unit": "s",
                           "offset": 446,
                           "length": 1074
@@ -1503,6 +1510,13 @@
                           "name": "Block Alignment",
                           "value": 100,
                           "unit": "bytes",
+                          "offset": 446,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 17.2265625,
+                          "unit": "kbps",
                           "offset": 446,
                           "length": 1074
                         },
@@ -1836,8 +1850,10 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 0,
-        "duration": 0,
+        "samples": 4096,
+        "lostSamples": 4096,
+        "duration": 0.09287981859410431,
+        "averageBitrate": 17.2265625,
         "isVbr": false,
         "playbackGroup": 1,
         "encoder": "Microsoft's Windows Media Audio encoder",
