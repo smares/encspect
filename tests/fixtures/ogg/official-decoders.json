@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ogg",
  "run": {
-  "id": "41610797320",
-  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
+  "id": "41666864897",
+  "commit": "384c13ab12892ac47e4211819e148898a5ea2e1f",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -1456,6 +1456,59 @@
    "units": []
   },
   {
+   "path": "opus-cut-last-packet.opus",
+   "sha256": "1cc6a6aca6dd24e72861b69afc9ffe36146b3c8096b7b526a098694b24630cb4",
+   "figures": [
+    {
+     "id": "decodedSamples",
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [],
+     "analyzer": null,
+     "reference": null,
+     "referencePath": null,
+     "witnesses": {
+      "ffmpeg +skip_manual": null
+     },
+     "noReference": "the direct path did not feed every unit (libogg dropped 0 bytes, 4267 bytes left over, 0 pages refused)",
+     "witnessErrors": {
+      "ffmpeg +skip_manual": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 28488,
+     "reference": null,
+     "referencePath": null,
+     "format": null,
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "readerTotal": null,
+     "readerTool": "opusdec",
+     "lastGranule": 0,
+     "consistentRange": null,
+     "noReference": "the reader did not open the file",
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": null,
+       "error": "no audio stream"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": []
+  },
+  {
    "path": "opus-encoder-fields.opus",
    "sha256": "2bb1978cbd9e9e4d4253af378ec5c33e5ebd3baf0c1aee40e21e107574e9a116",
    "figures": [
@@ -2577,6 +2630,67 @@
     }
    ],
    "differences": [],
+   "units": []
+  },
+  {
+   "path": "vorbis-cut-last-packet.ogg",
+   "sha256": "4b21c9b4b6d0de2e3f15286da2d1ce268e4431071a95efc8d8c88cdee5617bc3",
+   "figures": [
+    {
+     "stage": "coded",
+     "analyzerFigure": "Decoded Samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 40960,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {},
+     "noReference": "the direct path did not feed every unit (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)",
+     "directTotal": 26816,
+     "id": "decodedSamples"
+    },
+    {
+     "id": "samples",
+     "stage": "trimmed",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 40960,
+     "reference": null,
+     "referencePath": null,
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "witnesses": {
+      "libvorbis with granule positions": 26816,
+      "ffmpeg": 26816
+     },
+     "readerTotal": 26816,
+     "readerTool": "oggdec",
+     "lastGranule": 26816,
+     "consistentRange": null,
+     "noReference": "the direct path did not feed every page (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)"
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "oggdec",
+     "value": 26816,
+     "analyzer": 40960,
+     "status": "pending",
+     "kind": "reader-not-accepted",
+     "reason": "the direct path did not feed every page (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)",
+     "statusSource": "rule"
+    }
+   ],
    "units": []
   },
   {
