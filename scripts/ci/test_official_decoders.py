@@ -919,26 +919,50 @@ class WindowsRecordTests(unittest.TestCase):
 
     def test_a_reader_has_no_figure_whatever_it_did_where_the_transform_changes_the_stream_at_a_silent_unit(self):
         # sbr-in-three-blocks.aac: stream changes at units 1, 2, 4, 5, 7 and 8, of which 4, 5, 7 and 8 gave no output after the first one
-        transform = {**mf_path(4096), "silentUnits": [4, 5, 7, 8], "streamChangeUnits": [1, 2, 4, 5, 7, 8]}
+        transform = {**mf_path(4096), "silentUnits": [4, 5, 7, 8], "streamChangeUnits": [1, 2, 4, 5, 7, 8], "streamChangeAtSilentCount": 4, "streamChangeAtSilentUnits": [4, 5, 7, 8]}
         for reader in (self.reader_node(False), self.reader_node(True, 4096)):
             result = driver.windows_reader_result(reader, [reader, reader])
             figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 10240, "reference": 10240, "referencePath": "fdk direct", "referenceKind": "official",
                       "witnesses": {}, "analyzerRates": [22050]}
             compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": result, "transform": transform}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
-            self.assertEqual("no figure: the transform signals a stream change at a unit that gives no output (units 4, 5, 7, 8), where the Source Reader's result varies from run to run",
+            self.assertEqual("no figure: the transform signals a stream change at a unit that gives no output after its first output (units 4, 5, 7, 8), where the Source Reader's result varies from run to run",
                              figure["mediaFoundation"]["reader"]["why"])
             self.assertIsNone(figure["mediaFoundation"]["reader"]["samples"])
             self.assertEqual([], [d for d in compare.mediafoundation_differences([figure], {"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 22050}], "findings": []}) if d["decoder"].endswith("reader")])
         # a stream change at a held-back first unit (HE-AAC) is not that
         figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 4096, "reference": 4096, "referencePath": "fdk direct", "referenceKind": "official",
                   "witnesses": {}, "analyzerRates": [44100]}
-        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": driver.windows_reader_result(self.reader_node(True, 4096)), "transform": {**mf_path(4096), "silentUnits": [], "streamChangeUnits": [0, 5]}}},
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": driver.windows_reader_result(self.reader_node(True, 4096)), "transform": {**mf_path(4096), "silentUnits": [], "streamChangeUnits": [0, 5], "streamChangeAtSilentCount": 0}}},
                                        {"paths": {"direct": {"units": []}}, "unitList": {}})
         self.assertEqual(8192, figure["mediaFoundation"]["reader"]["samples"])
-        stopping = driver.windows_reader_result(self.reader_node(False), [self.reader_node(False), self.reader_node(False)])
-        figure = {**figure, "mediaFoundation": {}}
-        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": stopping, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
-        self.assertEqual({"samples": None, "why": "stopped by error"}, figure["mediaFoundation"]["reader"])
+
+    def reader_after(self, transform_extra):
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 4096, "reference": 4096, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": driver.windows_reader_result(self.reader_node(True, 4096)), "transform": {**mf_path(4096), **transform_extra}}},
+                                       {"paths": {"direct": {"units": []}}, "unitList": {}})
+        return figure["mediaFoundation"]["reader"]
+
+    def test_silent_units_alone_or_a_stream_change_alone_do_not_remove_the_readers_figure(self):
+        # damaged-length.aac: silent units after the first output and no stream change
+        self.assertEqual(8192, self.reader_after({"silentUnits": [7, 8], "streamChangeUnits": [], "streamChangeAtSilentCount": 0})["samples"])
+        # fdkaac-he-adts.aac: a stream change at unit 5, a unit that gave no output before the first output (so not a silent unit)
+        self.assertEqual(8192, self.reader_after({"silentUnits": [], "streamChangeUnits": [5], "streamChangeAtSilentCount": 0})["samples"])
+
+    def test_the_driver_counts_the_stream_changes_at_silent_units_before_it_caps_its_lists(self):
+        # 100 units gave no output after the first one, each with a stream change: the capped lists hold 64 of them, the count all
+        units = [unit(0, 1024)] + [unit(i, 0, output="streamChange") for i in range(1, 101)]
+        record = driver.windows_transform_result(transform_node(units, coded=1024, drain=0, runs=[run44(1024)]), 101)
+        self.assertEqual((64, 64, 100), (len(record["silentUnits"]), len(record["streamChangeUnits"]), record["streamChangeAtSilentCount"]))
+        # a stream change at unit 70 of a run whose first 69 silent units fill the cap: the capped silent list does not hold unit 70, the count does
+        late = [unit(0, 1024)] + [unit(i, 0) for i in range(1, 70)] + [unit(70, 0, output="streamChange")]
+        record = driver.windows_transform_result(transform_node(late, coded=1024, drain=0, runs=[run44(1024)]), 71)
+        self.assertNotIn(70, record["silentUnits"])
+        self.assertEqual((1, [70]), (record["streamChangeAtSilentCount"], record["streamChangeAtSilentUnits"]))
+        # fdkaac-he-adts.aac: a stream change at a unit before the first output, and silent units without one, are not the pattern
+        before = [unit(0, 0), unit(1, 0, output="streamChange"), unit(2, 1024), unit(3, 0), unit(4, 1024)]
+        record = driver.windows_transform_result(transform_node(before, coded=2048, drain=0, runs=[run44(2048)]), 5)
+        self.assertEqual((0, [3], [1]), (record["streamChangeAtSilentCount"], record["silentUnits"], record["streamChangeUnits"]))
 
     def test_a_retry_that_succeeds_makes_a_decoded_unit_and_one_that_fails_a_refused_unit(self):
         self.assertEqual("decoded", driver.windows_unit_result(unit(0, 1024, inputHresult="0xC00D36B5", retryHresult="0x00000000")))
@@ -967,6 +991,14 @@ class WindowsRecordTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             first, second = driver.case_directory(tmp, "units"), driver.case_directory(tmp, "units")
         self.assertNotEqual(first, second)
+
+
+class ProbeConstantTests(unittest.TestCase):
+    def test_the_drivers_count_of_source_reader_runs_is_the_probes_repeats_plus_one(self):
+        text = (pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "windows" / "WmaDecodeProbe" / "Program.cs").read_text(encoding="utf-8")
+        import re
+        repeats = int(re.search(r"private const int SourceReaderRepeats = (\d+);", text).group(1))
+        self.assertEqual(repeats + 1, driver.SOURCE_READER_RUNS)
 
 
 class WindowsUnitVerdictTests(unittest.TestCase):

@@ -1189,6 +1189,9 @@ def windows_transform_result(node, units_expected):
         "silentUnits": silent[:MF_LIST_LIMIT],
         "noOutputList": no_output[:MF_LIST_LIMIT],
         "streamChangeUnits": stream_changes[:MF_LIST_LIMIT],
+        # the stream changes at units that gave no output after the first output, counted before the lists are capped: the comparison's rule on the Source Reader reads this
+        "streamChangeAtSilentCount": len([u for u in stream_changes if u in set(silent)]),
+        "streamChangeAtSilentUnits": [u for u in stream_changes if u in set(silent)][:MF_LIST_LIMIT],
         "timeline": windows_timeline(node),
         "units": units,
         "unitFrames": node.get("codedSamples"),

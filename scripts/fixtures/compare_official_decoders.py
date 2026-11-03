@@ -1061,9 +1061,9 @@ def attach_mediafoundation(result, mf, record):
         # The Source Reader's result on a stream whose output type the transform changes at a unit that gives no output varies from run to run (sbr-in-three-blocks.aac: failed in
         # most runs, read to the end in others), and its reads within a run are not independent, so no number of reads makes the committed form certain: such a reader has no figure
         # whatever it did, which the transform's record decides alone.
-        unstable = [u for u in transform.get("streamChangeUnits", []) if u in set(transform.get("silentUnits", []))] if transform else []
-        if unstable:
-            column["reader"] = {"samples": None, "why": "no figure: the transform signals a stream change at a unit that gives no output (units %s), where the Source Reader's result varies from run to run" % ", ".join(map(str, unstable[:8]))}
+        if transform and transform.get("streamChangeAtSilentCount", 0) > 0:
+            column["reader"] = {"samples": None, "why": "no figure: the transform signals a stream change at a unit that gives no output after its first output (units %s), where the Source Reader's result varies from run to run" % ", ".join(
+                map(str, transform["streamChangeAtSilentUnits"][:8]))}
     entry = column.get("transform")
     if entry is None:
         return
