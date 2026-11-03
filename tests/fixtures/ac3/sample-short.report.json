@@ -1129,7 +1129,7 @@
                           "children": [
                             {
                               "name": "Frames",
-                              "value": 6,
+                              "value": 5,
                               "unit": "frames",
                               "offset": 584,
                               "length": 4540
@@ -1137,6 +1137,13 @@
                             {
                               "name": "Samples",
                               "value": 9216,
+                              "unit": "samples",
+                              "offset": 584,
+                              "length": 4540
+                            },
+                            {
+                              "name": "Lost Samples",
+                              "value": 1536,
                               "unit": "samples",
                               "offset": 584,
                               "length": 4540
@@ -1150,14 +1157,14 @@
                             },
                             {
                               "name": "Average Bitrate",
-                              "value": 189.16666666666666,
+                              "value": 192,
                               "unit": "kbps",
                               "offset": 584,
                               "length": 4540
                             },
                             {
                               "name": "Smallest Frame",
-                              "value": 700,
+                              "value": 768,
                               "unit": "bytes",
                               "offset": 584,
                               "length": 4540
@@ -1171,7 +1178,7 @@
                             },
                             {
                               "name": "Minimum Bitrate",
-                              "value": 175,
+                              "value": 192,
                               "unit": "kbps",
                               "offset": 584,
                               "length": 4540
@@ -1180,13 +1187,6 @@
                               "name": "Maximum Bitrate",
                               "value": 192,
                               "unit": "kbps",
-                              "offset": 584,
-                              "length": 4540
-                            },
-                            {
-                              "name": "Lost Samples",
-                              "value": 1536,
-                              "unit": "samples",
                               "offset": 584,
                               "length": 4540
                             },
@@ -1226,14 +1226,14 @@
                             },
                             {
                               "name": "Audio Blocks",
-                              "value": 36,
+                              "value": 30,
                               "unit": "blocks",
                               "offset": 584,
                               "length": 4540
                             },
                             {
                               "name": "Audio Blocks Read",
-                              "value": 36,
+                              "value": 30,
                               "unit": "blocks",
                               "offset": 584,
                               "length": 4540
@@ -1268,7 +1268,7 @@
                             },
                             {
                               "name": "Bands Coded as Sum/Difference",
-                              "value": "0 of 144",
+                              "value": "0 of 120",
                               "offset": 584,
                               "length": 4540
                             },
@@ -1281,7 +1281,7 @@
                             },
                             {
                               "name": "Exponent Strategies",
-                              "value": 72,
+                              "value": 60,
                               "unit": "exponent sets",
                               "offset": 584,
                               "length": 4540,
@@ -1302,14 +1302,14 @@
                                 },
                                 {
                                   "name": "D45",
-                                  "value": 12,
+                                  "value": 10,
                                   "unit": "exponent sets",
                                   "offset": 584,
                                   "length": 4540
                                 },
                                 {
                                   "name": "Reuse",
-                                  "value": 60,
+                                  "value": 50,
                                   "unit": "exponent sets",
                                   "offset": 584,
                                   "length": 4540
@@ -8334,7 +8334,7 @@
         "samples": 9216,
         "lostSamples": 1536,
         "duration": 0.192,
-        "averageBitrate": 189.16666666666666,
+        "averageBitrate": 192,
         "isVbr": false,
         "playbackGroup": 1,
         "series": [
@@ -8345,7 +8345,6 @@
             "concept": "bitDistribution",
             "quantity": "Bitrate",
             "x": [
-              584,
               1284,
               2052,
               2820,
@@ -8353,7 +8352,6 @@
               4356
             ],
             "values": [
-              175,
               192,
               192,
               192,
@@ -8371,7 +8369,7 @@
               0
             ],
             "values": [
-              189
+              192
             ]
           },
           {
@@ -8381,7 +8379,6 @@
             "concept": "codedBandwidth",
             "quantity": "Coded Bandwidth",
             "x": [
-              584,
               1284,
               2052,
               2820,
@@ -8389,7 +8386,6 @@
               4356
             ],
             "values": [
-              6844,
               6844,
               6844,
               6844,
@@ -8424,15 +8420,15 @@
               },
               {
                 "name": "Without block switching",
-                "count": 36
+                "count": 30
               }
             ],
-            "total": 36,
+            "total": 30,
             "xSeries": "Bitrate",
             "runs": [
               [
                 1,
-                36
+                30
               ]
             ],
             "seconds": [
@@ -8451,15 +8447,15 @@
               },
               {
                 "name": "Without coupling",
-                "count": 36
+                "count": 30
               }
             ],
-            "total": 36,
+            "total": 30,
             "xSeries": "Bitrate",
             "runs": [
               [
                 1,
-                36
+                30
               ]
             ],
             "seconds": [
@@ -8478,15 +8474,15 @@
               },
               {
                 "name": "Without rematrixing",
-                "count": 36
+                "count": 30
               }
             ],
-            "total": 36,
+            "total": 30,
             "xSeries": "Bitrate",
             "runs": [
               [
                 1,
-                36
+                30
               ]
             ],
             "seconds": [

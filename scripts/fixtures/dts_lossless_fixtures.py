@@ -167,7 +167,7 @@ def build(api):
                                          ("xll-navigation-overrun", "navigation index", 26, "ends inside the navigation index")):
         a = dict(components=["core", "xll"], sizes={"core": 96, "xll": cut}, raw={"xll": full[:cut]}, channels=2, mask=0x02)
         parts = [unit(a) for _ in range(2)]
-        fixture(file_name, ".dts", f"Two units whose lossless component ends inside the {text}.", b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)],
+        fixture(file_name, ".dts", f"Two units whose lossless component ends inside the {text}.", b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True, lost=2 * 512)],
                 [("dts.header-overrun", wanted)],
                 crosscheck=undecodable(cc, "Invalid XLL sub-header checksum" if "sub-header" in text else "Invalid NAVI checksum",
                                        "ffmpeg's decoder checks the CRC-16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"))

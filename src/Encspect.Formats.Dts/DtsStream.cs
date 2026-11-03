@@ -146,14 +146,21 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public void Add(long offset, int length, int samples, UnitFacts facts, UnitLayout layout)
     {
-        Figures.Add(offset, length, samples);
-        if (layout.IsCut || layout.IsTruncated)
+        // A unit the data or the container cuts counts in the samples and the lost samples only, not in the unit count, the sizes or the bitrates.
+        bool isCut = layout.IsCut || layout.IsTruncated;
+        if (isCut)
         {
+            Figures.AddCut(samples);
             Figures.AddLost(samples);
         }
-
-        if (!layout.IsCut && !layout.IsTruncated)
+        else
         {
+            Figures.Add(offset, length, samples);
+            if (facts.HasHeaderOverrun)
+            {
+                Figures.AddLost(samples);
+            }
+
             _sizes.Add(length);
         }
 
@@ -286,14 +293,16 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate)
     {
-        Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate);
+        Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate, node =>
+        {
+            if (Figures.LostSamples > 0)
+            {
+                node.Add(cover("Lost Samples", NodeValue.Integer(Figures.LostSamples, "samples", "sample"), NodeKind.Detail, StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+            }
+        });
         Node Add(string name, NodeValue value, string description, string? topic = null) =>
             statistics.Add(cover(name, value, NodeKind.Detail, description, topic));
         NodeValue Counted(int count) => NodeValue.Integer(count, "frames", "frame");
-        if (Figures.LostSamples > 0)
-        {
-            Add("Lost Samples", NodeValue.Integer(Figures.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
-        }
 
         Add("Core Frames", Counted(CoreFrames), Explain.StatCoreFrames, Topics.CoreFrames);
         Add("Extension Substream Frames", Counted(SubstreamFrames), Explain.StatSubstreamFrames, Topics.ExtensionSubstream);

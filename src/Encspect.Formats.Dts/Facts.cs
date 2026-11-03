@@ -8,6 +8,9 @@ internal sealed class UnitFacts
 {
     public bool HasCore { get; set; }
 
+    // A header of the unit runs past its data.
+    public bool HasHeaderOverrun { get; set; }
+
     public CoreHeader Core { get; set; }
 
     public StreamForm Form { get; set; }

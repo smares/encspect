@@ -151,7 +151,11 @@ internal sealed class WmaPacketReader
     // the frame the last packet starts and no packet finishes (wma.frame-unfinished) count a frame length. Lossless: each invalid frame that starts at
     // a declared frame start counts a frame length; bits read after a loss before the next declared start, which include the bits that finish a lost
     // frame, count nothing.
-    public long LostSamples => _isLossless ? DeclaredInvalidFrames * _p.FrameLength : (InvalidFrames + UnfinishedFrames + CutFrames) * _p.FrameLength;
+    public long LostSamples => _isLossless ? (DeclaredInvalidFrames + DroppedFrames) * _p.FrameLength : (InvalidFrames + UnfinishedFrames + CutFrames + DroppedFrames) * _p.FrameLength;
+
+    // The frames that start at a declared start and are in the file, but that a loss throws away unread (a sequence gap, a refused run, a short or
+    // cut packet): they count a frame length and are lost (docs/design/samples-definition.md, rule 1).
+    public long DroppedFrames { get; private set; }
 
     // The invalid Lossless frames that start where a packet's header points or right after a frame of the same run.
     public long DeclaredInvalidFrames { get; private set; }
@@ -167,7 +171,7 @@ internal sealed class WmaPacketReader
 
     // The frames' declared samples before any trim: every valid frame counts a frame length, and in a Professional stream so does every invalid
     // one and the unfinished one.
-    public long CodedSamples => _isLossless ? (ValidFrames + DeclaredInvalidFrames) * _p.FrameLength : (ValidFrames + InvalidFrames + UnfinishedFrames + CutFrames) * _p.FrameLength;
+    public long CodedSamples => _isLossless ? (ValidFrames + DeclaredInvalidFrames + DroppedFrames) * _p.FrameLength : (ValidFrames + InvalidFrames + UnfinishedFrames + CutFrames + DroppedFrames) * _p.FrameLength;
 
     public long TrimmedSamples { get; private set; }
 
@@ -448,6 +452,17 @@ internal sealed class WmaPacketReader
                 }
 
                 frames++;
+                // The last bit of a frame says whether another follows in the packet; once the end of the frame is among the bytes present, the
+                // padding after the last frame is no frame.
+                if (position + declared <= packetBits)
+                {
+                    bits.Position = position + declared - 1;
+                    if (bits.ReadBit() == 0)
+                    {
+                        break;
+                    }
+                }
+
                 position += declared;
             }
         }
@@ -467,12 +482,12 @@ internal sealed class WmaPacketReader
         int position = payloadStart;
         if (isDropped)
         {
-            ClearSaved();
+            DropSaved();
             position += count;
         }
         else if (count == 0)
         {
-            ClearSaved();
+            DropSaved();
         }
         else
         {
@@ -480,7 +495,7 @@ internal sealed class WmaPacketReader
             var parts = new List<FramePart>(_saved) { new(packet, payloadStart, count) };
             if (((total + 7) / 8) > _bufferBytes)
             {
-                ClearSaved();
+                DropSaved();
                 RefuseRun(packet);
                 MarkLoss();
             }
@@ -553,7 +568,7 @@ internal sealed class WmaPacketReader
         own.IsTailUnfinished = isTrailerOne;
         if (!isError && tail > 0)
         {
-            Save(packet, position, tail);
+            Save(packet, position, tail, isTrailerOne);
         }
         else
         {
@@ -636,7 +651,7 @@ internal sealed class WmaPacketReader
     {
         if (isDropped)
         {
-            ClearSaved();
+            DropSaved();
         }
 
         int total = _savedBits + (isDropped ? 0 : count);
@@ -682,7 +697,7 @@ internal sealed class WmaPacketReader
         int tail = Math.Max(0, end - position2);
         if (!isError && tail > 0)
         {
-            Save(packet, position2, tail);
+            Save(packet, position2, tail, true);
         }
     }
 
@@ -705,7 +720,7 @@ internal sealed class WmaPacketReader
                 if (Append(packet, payloadStart, count))
                 {
                     taken = count;
-                    ClearSaved();
+                    DropSaved();
                 }
                 else
                 {
@@ -714,7 +729,7 @@ internal sealed class WmaPacketReader
             }
             else
             {
-                ClearSaved();
+                DropSaved();
                 taken = count;
             }
         }
@@ -868,7 +883,7 @@ internal sealed class WmaPacketReader
         int total = _savedBits + bits;
         if ((((_isLossless ? _savedOff : 0) + total + 8) / 8) > _bufferBytes)
         {
-            ClearSaved();
+            DropSaved();
             RefuseRun(packet);
             return false;
         }
@@ -897,6 +912,53 @@ internal sealed class WmaPacketReader
             n == 1
                 ? $"The bits a decoder keeps for the frames that start in a packet, with the bits that finish the last of them, do not fit its buffer of {Counts.Bytes(limit)} ({DecoderFile}); it drops them and the frames in them. Encspect does not walk those frames."
                 : $"The bits a decoder keeps for the frames that start in {n} packets, with the bits that finish the last of them, do not fit its buffer of {Counts.Bytes(limit)} ({DecoderFile}); it drops them and the frames in them. Encspect does not walk those frames.");
+    }
+
+    // Throws the saved run away because of a loss. Its frames start at a declared start (the packet's header points to the first, each further one
+    // follows a valid frame) and are in the file: each counts a frame length and is lost. With the length prefix the run is the one frame the packet
+    // starts; otherwise its frames are walked with the probe reader, which keeps no figures.
+    private void DropSaved()
+    {
+        if (_savedBits > 0 && _isSavedDeclared)
+        {
+            CountDropped();
+        }
+
+        ClearSaved();
+    }
+
+    private void CountDropped()
+    {
+        int total = _savedBits;
+        IStreamParameters p = _p;
+        if (p.HasLengthPrefix && !_isLossless)
+        {
+            DroppedFrames++;
+            Samples += p.FrameLength;
+            return;
+        }
+
+        var joined = new Bits(_savedBuffer, total);
+        if (IsZero(joined, total))
+        {
+            return;
+        }
+
+        int position = 0;
+        bool isFirst = true;
+        while (position < total)
+        {
+            FrameOutcome result = _probe.Read(joined, position, total, 0, _trace);
+            DroppedFrames++;
+            Samples += _isLossless ? Math.Max(0, p.FrameLength - result.TrimEnd) : p.FrameLength;
+            position += Math.Max(result.Bits, 1);
+            if (!result.IsValid || (!result.Trailer && !(isFirst && _isLossless)))
+            {
+                break;
+            }
+
+            isFirst = false;
+        }
     }
 
     private void ClearSaved()

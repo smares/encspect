@@ -60,7 +60,7 @@ public class WmaFixtureTests
             Node statistics = Child(report.Streams[0].Nodes[0], "Statistics");
             if (statistics.Children.Any(c => c.Name == "Coded Samples"))
             {
-                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger() - Child(statistics, "Frame Length").Value!.AsInteger());
+                Assert.Equal(tools.GetProperty("decoded_samples").GetInt64(), Child(statistics, "Coded Samples").Value!.AsInteger() - (statistics.Children.Any(c => c.Name == "Lost Samples") ? Child(statistics, "Lost Samples").Value!.AsInteger() : 0) - Child(statistics, "Frame Length").Value!.AsInteger());
             }
             else
             {

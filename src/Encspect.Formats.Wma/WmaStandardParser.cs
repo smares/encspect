@@ -70,7 +70,7 @@ public sealed class WmaStandardParser : ICodecParser
         parent.Add(streamNode);
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings, Traits(parameters, data, stream));
         Node? statistics = null;
-        if (stream.FramesRead > 0)
+        if (stream.FramesRead > 0 || stream.LostSamples > 0)
         {
             statistics = streamNode.Add(new Node("Statistics", parent.Offset, parent.Length, $"{Count(stream.FramesRead, "frame", "frames")}, {duration.ToString("F3", CultureInfo.InvariantCulture)} s")
             {

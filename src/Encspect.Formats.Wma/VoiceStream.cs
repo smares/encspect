@@ -206,8 +206,13 @@ internal sealed class VoiceStream
             packet.RangeCount++;
         }
 
-        Totals.Packets++;
-        Totals.PacketBytes += length;
+        // The packet a cut object ends in is in no packet count or byte figure (docs/design/samples-definition.md), only in the samples it declares.
+        if (!(mediaObject.IsCut && length < _p.BlockAlign))
+        {
+            Totals.Packets++;
+            Totals.PacketBytes += length;
+        }
+
         int index = PacketRecords.Count;
         if (_dropped)
         {

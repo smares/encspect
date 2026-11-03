@@ -416,7 +416,7 @@ def build_substream_damage():
     parts = [unit([stub]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-core-header-overrun", ".dts", "Four units whose extension substream holds a core component of 20 bytes, so the core frame ends inside its header.", data, rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.header-overrun", "core frame ends inside its header")],
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, lost=4 * 512)], [("dts.header-overrun", "core frame ends inside its header")],
             crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": PROFILE_STUB}))
     # The last substream declares more bytes than the file has.
     whole = unit([asset])
@@ -542,12 +542,12 @@ def build_review():
     stub = dict(components=["core", "xll"], sizes={"core": 96, "xll": 8}, raw={"xll": m.SYNC_XLL.to_bytes(4, "big") + bytes(4)}, channels=2, mask=0x02)
     parts = [unit([stub]) for _ in range(2)]
     fixture("exss-component-header-overrun", ".dts", "Two units whose lossless component is its sync word and four bytes, so the data ends inside its header.", b"".join(parts), rows(parts),
-            [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)], [("dts.header-overrun", "ends inside the XLL component's header")],
+            [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True, lost=2 * 512)], [("dts.header-overrun", "ends inside the XLL component's header")],
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL common header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
     parts = [m.core_frame(size=1024, amode=9, nch=5, ext_id=6, ext=1, extensions=[m.xxch_overrun()], subs=[30] * 5, vqsub=[31] * 5, joinx=[0] * 5, thuff=[0] * 5,
                           shuff=[6] * 5, bhuff=[5] * 5, sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(5)]) for _ in range(2)]
     fixture("xxch-header-overrun", ".dts", "Two 3/2 core frames with an XXCH extension of 12 bytes, whose header CRC-16 holds and whose fields need more bits than it has.", b"".join(parts), rows(parts),
-            [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
+            [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512, lost=2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
             crosscheck=cc(ffprobe_profile=False, libdca_channels=5, skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which is cut short here"}))
 
     # A bad CRC-16 in the header of XXCH in the core, of XBR in a substream.

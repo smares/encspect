@@ -29,14 +29,14 @@ internal static class ProReport
 
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), ProExplain.StatFrameLength);
         Add("Samples", NodeValue.Integer(reader.Samples, "samples", "sample"), reader.IsDecoderRule ? ProExplain.StatSamplesDecoder : ProExplain.StatSamples);
-        if (reader.CodedSamples != reader.Samples)
-        {
-            Add("Coded Samples", NodeValue.Integer(reader.CodedSamples, "samples", "sample"), ProExplain.StatCodedSamples);
-        }
-
         if (reader.LostSamples > 0)
         {
             Add("Lost Samples", NodeValue.Integer(reader.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+        }
+
+        if (reader.CodedSamples != reader.Samples)
+        {
+            Add("Coded Samples", NodeValue.Integer(reader.CodedSamples, "samples", "sample"), ProExplain.StatCodedSamples);
         }
 
         if (reader.TrimmedSamples > 0)

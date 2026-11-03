@@ -26,7 +26,7 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 4,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 2774
@@ -34,6 +34,13 @@
                 {
                   "name": "Samples",
                   "value": 2048,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 2774
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 512,
                   "unit": "samples",
                   "offset": 0,
                   "length": 2774
@@ -47,14 +54,14 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 520.125,
+                  "value": 528,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 2774
                 },
                 {
                   "name": "Smallest Frame",
-                  "value": 662,
+                  "value": 704,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 2774
@@ -68,7 +75,7 @@
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 496.5,
+                  "value": 528,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 2774
@@ -77,13 +84,6 @@
                   "name": "Maximum Bitrate",
                   "value": 528,
                   "unit": "kbps",
-                  "offset": 0,
-                  "length": 2774
-                },
-                {
-                  "name": "Lost Samples",
-                  "value": 512,
-                  "unit": "samples",
                   "offset": 0,
                   "length": 2774
                 },
@@ -9050,7 +9050,7 @@
         "samples": 2048,
         "lostSamples": 512,
         "duration": 0.042666666666666665,
-        "averageBitrate": 520.125,
+        "averageBitrate": 528,
         "isVbr": true,
         "series": [
           {
@@ -9060,14 +9060,12 @@
             "x": [
               0,
               704,
-              1408,
-              2112
+              1408
             ],
             "values": [
               528,
               528,
-              528,
-              496.5
+              528
             ]
           },
           {
@@ -9078,7 +9076,7 @@
               0
             ],
             "values": [
-              520
+              528
             ]
           }
         ]

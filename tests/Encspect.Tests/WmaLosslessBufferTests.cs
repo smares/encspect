@@ -29,7 +29,7 @@ public class WmaLosslessBufferTests
     public void RefusedSavesGiveTheFrameCountsOfADecoder(int blockAlignment, int frames)
     {
         CodecContext context = LosslessBuilder.Run(LosslessBuilder.RawStream(blockAlignment, 60), 1, blockAlignment);
-        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
+        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples - context.Streams[0].LostSamples);
     }
 
     // At 29,500 the stray run's first frame is rejected for its end trim (no loss) and the frame read on from it fails in a later call. The
@@ -56,7 +56,7 @@ public class WmaLosslessBufferTests
     public void ASequenceGapKeepsTheHeldBitsUnderTheBufferRule(int blockAlignment, int gap, int frames, int refusals)
     {
         CodecContext context = LosslessBuilder.Run(LosslessBuilder.RawStream(blockAlignment, 60, k => k == gap ? 9 : k & 15), 1, blockAlignment);
-        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
+        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples - context.Streams[0].LostSamples);
         Assert.Equal(refusals, context.Findings.Where(f => f.Code == "wma.run-too-long").Sum(f => f.Count));
     }
 
@@ -74,7 +74,7 @@ public class WmaLosslessBufferTests
         List<byte[]> objects = LosslessBuilder.RawStream(blockAlignment, 60);
         objects[index] = hasCount ? [objects[index][0], 0xFF] : objects[index][..2];
         CodecContext context = LosslessBuilder.Run(objects, 1, blockAlignment);
-        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
+        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples - context.Streams[0].LostSamples);
         Assert.Equal(refusals, context.Findings.Where(f => f.Code == "wma.run-too-long").Sum(f => f.Count));
     }
 
@@ -167,7 +167,7 @@ public class WmaLosslessBufferTests
         Finding finding = Assert.Single(context.Findings, f => f.Code == "wma.run-too-long");
         Assert.Equal(Severity.Warning, finding.Severity);
         Assert.Contains("32768 bytes", finding.Message.Replace(",", string.Empty, StringComparison.Ordinal), StringComparison.Ordinal);
-        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples);
+        Assert.Equal(frames * (long)LosslessBuilder.FrameLength, context.Streams[0].Samples - context.Streams[0].LostSamples);
         Assert.DoesNotContain(context.Findings, f => f.Code is "parse.failed" or "decode.failed");
     }
 
