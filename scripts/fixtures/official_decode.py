@@ -1132,7 +1132,7 @@ def windows_transform_result(node, units_expected):
     elif "exception" in node:
         stopped, reason = "error", node["exception"]
     elif node.get("skipped"):
-        stopped, reason = "harness", "Media Foundation was not asked: " + node["skipped"]
+        stopped, reason = "harness", node["skipped"]
     elif media_type_refused:
         stopped, reason = "error", "the transform refuses the input media type (%s)" % "; ".join(
             "%s %s" % (a.get("config"), a.get("setInputHresult") or a.get("error") or "type not built") for a in node.get("inputAttempts", []))
@@ -1209,16 +1209,16 @@ def windows_transform_result(node, units_expected):
 
 
 def windows_probe_run(exe, path, units_dir, work, timeout=30):
-    """One call of the probe on one file: its three children (Source Reader, transform with timestamps, transform without) each get `timeout` seconds. Returns (record, environment)."""
+    """One call of the probe on one file: its seven children (the Source Reader five times, the transform with timestamps and without) each get `timeout` seconds. Returns (record, environment)."""
     import subprocess
     work.mkdir(parents=True, exist_ok=True)
     try:
         completed = subprocess.run([str(exe), "--format", "aac", "--units", str(units_dir), "--out", str(work), "--timeout", str(timeout), str(path)],
-                                   capture_output=True, text=True, errors="replace", timeout=3 * timeout + 60)
+                                   capture_output=True, text=True, errors="replace", timeout=7 * timeout + 60)
         output = (completed.stdout + completed.stderr)[-400:]
         code = completed.returncode
     except subprocess.TimeoutExpired:
-        return None, {"error": "the probe did not finish within %d seconds" % (3 * timeout + 60)}
+        return None, {"error": "the probe did not finish within %d seconds" % (7 * timeout + 60)}
     except OSError as error:
         return None, {"error": str(error)}
     found = sorted((work / "records").glob("*.json")) if (work / "records").is_dir() else []

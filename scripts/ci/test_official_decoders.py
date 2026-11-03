@@ -3,6 +3,7 @@
 
 import json
 import pathlib
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -810,8 +811,12 @@ class StopKindTests(unittest.TestCase):
     def test_a_configuration_the_probe_cannot_build_a_type_from_is_not_asked(self):
         record = driver.windows_transform_result({"withTimestamps": True, "skipped": "the configuration could not be read"}, 10)
         self.assertEqual(("harness", False), (record["stoppedBy"], record["opened"]))
-        self.assertIn("was not asked", record["reason"])
+        self.assertEqual("the configuration could not be read", record["reason"])
         self.assertFalse(compare.mf_total(record)[1].startswith("refused"))
+        figure, differences = self.run_through(record)
+        reason = differences[0]["reason"]
+        self.assertEqual(1, reason.count("not asked"), reason)
+        self.assertEqual(1, reason.count("could not be read"), reason)
 
     def test_a_refusal_of_the_media_type_stays_a_refusal(self):
         record = driver.windows_transform_result({"withTimestamps": True, "refusedMediaType": True, "inputAttempts": [{"config": "asStored", "setInputHresult": "0xC00D36B4"}]}, 10)
@@ -909,6 +914,10 @@ class WindowsRecordTests(unittest.TestCase):
                   "witnesses": {}, "analyzerRates": [44100]}
         reader = driver.windows_reader_result(self.reader_node(False), [self.reader_node(True), self.reader_node(False)])
         compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": reader, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
+        self.assertEqual({"samples": None, "why": "stopped by error (the Source Reader's runs differ)"}, figure["mediaFoundation"]["reader"])
+        stopping = driver.windows_reader_result(self.reader_node(False), [self.reader_node(False), self.reader_node(False)])
+        figure = {**figure, "mediaFoundation": {}}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"reader": stopping, "transform": mf_path(9600)}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
         self.assertEqual({"samples": None, "why": "stopped by error"}, figure["mediaFoundation"]["reader"])
 
     def test_a_retry_that_succeeds_makes_a_decoded_unit_and_one_that_fails_a_refused_unit(self):
@@ -992,6 +1001,90 @@ class WindowsDriverRunTests(unittest.TestCase):
             record = json.loads(next((tmp / "out" / "records" / "mf-aac").glob("*.json")).read_text(encoding="utf-8"))
         self.assertEqual(("error", 2), (record["paths"]["reader"]["stoppedBy"], record["paths"]["reader"]["repeats"]))
         self.assertEqual("end", record["paths"]["transform"]["stoppedBy"])
+
+class ReviewFixTests(unittest.TestCase):
+    def test_one_probe_call_has_a_budget_for_its_seven_children(self):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(kwargs["timeout"])
+            raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(subprocess, "run", fake_run):
+            node, environment = driver.windows_probe_run("probe.exe", "a.m4a", tmp, pathlib.Path(tmp) / "work", timeout=30)
+        self.assertEqual([270], calls)
+        self.assertEqual((None, "the probe did not finish within 270 seconds"), (node, environment["error"]))
+
+    def test_a_core_audio_converter_that_stopped_is_decoder_stopped_and_noted(self):
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 9600, "reference": 9600, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        record = {"paths": {"direct": {"units": []}}, "unitList": {}}
+        crashed = {"opened": False, "stoppedBy": "crash", "units": [], "unitCount": 10, "refusedUnits": 0, "noOutputUnits": 0, "drainFrames": 0, "runs": []}
+        compare.attach_coreaudio([figure], {"paths": {"converter": crashed}}, record)
+        differences = compare.coreaudio_differences([figure])
+        self.assertEqual([("decoder-stopped", "noted", "coreaudio converter")], [(d["kind"], d["status"], d["decoder"]) for d in differences])
+        self.assertIn("stopped by crash", differences[0]["reason"])
+
+    def test_the_phrase_for_a_stream_nothing_came_out_of_does_not_count_refused_units_as_held_back(self):
+        self.assertEqual("20 refused", compare.nothing_phrase(20, 20))
+        self.assertEqual("27 refused, the others and the drain gave no output", compare.nothing_phrase(30, 27))
+        self.assertEqual("all 10 and the drain gave no output", compare.nothing_phrase(10, 0))
+        self.assertEqual("2 refused, 1 with an output error, 1 not fed, the others and the drain gave no output", compare.nothing_phrase(10, 2, 1, 1))
+
+    def test_a_documented_limit_replaces_the_clause_that_the_owners_disagree(self):
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 4096, "reference": 4096, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"transform": mf_path(0)}}, {"paths": {"direct": {"units": [{"index": 0, "blocks": 4}]}}, "unitList": {}})
+        documented = compare.mediafoundation_differences([figure], {"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 44100}], "findings": []})[0]
+        self.assertNotIn("disagree", documented["reason"])
+        self.assertNotIn("ownersDisagree", documented)
+        plain = {**figure, "mediaFoundation": {"transform": {"samples": 0, "decoderSamples": 0, "format": None}}}
+        undocumented = compare.mediafoundation_differences([plain], {"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 44100}], "findings": []})[0]
+        self.assertIn("the owners' decoders disagree", undocumented["reason"])
+        self.assertTrue(undocumented["ownersDisagree"])
+
+    def test_a_refusal_reason_says_refuses_once(self):
+        record = driver.windows_transform_result({"withTimestamps": True, "refusedMediaType": True, "inputAttempts": [{"config": "asStored", "setInputHresult": "0xC00D36B4"}]}, 10)
+        figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 9600, "reference": 9600, "referencePath": "fdk direct", "referenceKind": "official",
+                  "witnesses": {}, "analyzerRates": [44100]}
+        compare.attach_mediafoundation({"figures": [figure]}, {"paths": {"transform": record}}, {"paths": {"direct": {"units": []}}, "unitList": {}})
+        reason = compare.mediafoundation_differences([figure], {"streams": [{"codec": "AAC LC", "channels": 2, "sampleRate": 44100}], "findings": []})[0]["reason"]
+        self.assertEqual(1, reason.count("refuse"), reason)
+
+
+class UnitDirectoryTests(unittest.TestCase):
+    """Two files with the same bytes have one unit list file name: the FDK and Core Audio drivers write each in a directory of its own, as the Windows one does."""
+
+    def run_driver(self, run, args_extra, patched):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = pathlib.Path(tmp)
+            first, second = tmp / "one.m4a", tmp / "two.m4a"
+            first.write_bytes(b"same")
+            second.write_bytes(b"same")
+            seen = []
+
+            def unit_list(path, directory):
+                seen.append(pathlib.Path(directory))
+                return directory / "x.units.tsv", {"kind": "mp4", "codec": "aac", "units": 1, "encrypted": False, "note": None}
+
+            args = mock.Mock(out=str(tmp / "out"), downloaded=None, **args_extra)
+            with mock.patch.object(driver.probe, "unit_list", unit_list), mock.patch.object(driver.probe, "files", lambda folder, ext: [first, second] if folder == "aac" else []), \
+                    mock.patch.object(driver.derive_variants, "write_aac", lambda out: []), mock.patch.object(driver, "aac_skip_reason", lambda summary: "skipped"), \
+                    mock.patch.object(driver, "coreaudio_skip_reason", lambda summary, ac3: "skipped"), mock.patch.object(driver, "AAC_FOLDERS", ("aac",)), \
+                    mock.patch.object(driver, "AC3_FOLDERS", ()), mock.patch.object(driver.probe, "tool_line", lambda command: "x"), mock.patch.object(driver.probe, "plist_version", lambda path: "x"):
+                run(args)
+            return seen
+
+    def test_the_fdk_driver_writes_each_unit_list_in_a_directory_of_its_own(self):
+        seen = self.run_driver(driver.run_aac, {"fdk_decode": "fdk", "fdk_lib": "lib", "fdk_commit": "c", "fdk_version": "v"}, None)
+        self.assertEqual(2, len(seen))
+        self.assertNotEqual(seen[0], seen[1])
+
+    def test_the_core_audio_driver_writes_each_unit_list_in_a_directory_of_its_own(self):
+        seen = self.run_driver(driver.run_coreaudio, {"probe": "probe"}, None)
+        self.assertEqual(2, len(seen))
+        self.assertNotEqual(seen[0], seen[1])
+
 
 class MediaFoundationProvenanceTests(unittest.TestCase):
     def committed(self, tmp, carried_from=None):

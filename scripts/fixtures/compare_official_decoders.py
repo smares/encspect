@@ -693,6 +693,19 @@ def at_rate(samples, rate_from, rate_to):
 
 # ---- Core Audio's column (rollout step 5) ---------------------------------------------------------------------------------
 
+def nothing_phrase(units, refused, errors=0, not_fed=0):
+    """What happened to the units of a stream a decoder gives no output for: all refused, or the refused ones and 'the others and the drain gave no output'."""
+    others = units - refused - errors - not_fed
+    parts = ["%d refused" % refused] if refused else []
+    if errors:
+        parts.append("%d with an output error" % errors)
+    if not_fed:
+        parts.append("%d not fed" % not_fed)
+    if others > 0:
+        parts.append("%s and the drain gave no output" % ("the others" if parts else "all %d" % others))
+    return ", ".join(parts)
+
+
 def ca_total(path):
     """(total, format, why) of a Core Audio path that opened and reached the end: its single output format (None when it output nothing); else (None, None, the reason)."""
     if not path:
@@ -759,8 +772,8 @@ def attach_coreaudio(figures, ca, record):
             if blocks > 1:
                 column["converter"]["blocksPerFrame"] = blocks
             if total == 0 and fig["analyzer"] and conv["unitCount"] > 0:
-                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%d refused%s, the others and the drain gave no output)" % (
-                    conv["unitCount"], conv["refusedUnits"], ", %d not fed" % conv["notFedUnits"] if conv.get("notFedUnits") else "")
+                column["converter"]["refusesStream"] = "Core Audio's converter outputs nothing for any of its %d units (%s)" % (
+                    conv["unitCount"], nothing_phrase(conv["unitCount"], conv["refusedUnits"], 0, conv.get("notFedUnits", 0)))
         if not trimmed and reader:
             total, fmt, why = ca_total(reader)
             column["reader"] = {"samples": None, "why": why} if total is None else {**ca_entry(reader, total, fmt, rate)}
@@ -865,6 +878,10 @@ def coreaudio_differences(figures):
                                 "kind": "witness-differs", "reason": "ExtAudioFile outputs %s samples (the file has no gapless data, so the coded stage) against the analyzer's %s" % (show(reader["samples"]), show(a))})
         entry = column.get("converter")
         if not entry:
+            continue
+        if entry.get("samples") is None and (entry.get("why") or "").startswith("stopped by"):
+            differences.append({"figure": figure["id"], "decoder": "coreaudio converter", "value": None, "analyzer": a, "status": "noted", "kind": "decoder-stopped",
+                                "reason": "Core Audio's converter did not reach the end of the stream (%s); its partial count is no figure" % entry["why"]})
             continue
         if entry.get("samples") is None and (entry.get("why") or "").startswith("did not open"):
             agrees = r is not None and a == r and figure["referencePath"] == "fdk direct"
@@ -1035,12 +1052,12 @@ def attach_mediafoundation(result, mf, record):
             if blocks > 1:
                 entry["blocksPerFrame"] = blocks
             if not runs and fig["analyzer"] and transform["unitCount"] > 0:
-                entry["refusesStream"] = "Media Foundation's transform outputs nothing for any of its %d units (%d refused, %d with an output error%s, the others and the drain gave no output)" % (
-                    transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], ", %d not fed" % transform["notFedUnits"] if transform.get("notFedUnits") else "")
+                entry["refusesStream"] = "Media Foundation's transform outputs nothing for any of its %d units (%s)" % (
+                    transform["unitCount"], nothing_phrase(transform["unitCount"], transform["refusedUnits"], transform["errorUnits"], transform.get("notFedUnits", 0)))
     if reader is not None:
         runs, why = mf_total(reader)
         # a reader that has no figure says only how (the full reason is in the record): its stop, a failed read or a result that differs from run to run, varies with timing
-        column["reader"] = {"samples": None, "why": why.split(" (")[0]} if runs is None else mf_entry(reader, runs, rate)
+        column["reader"] = {"samples": None, "why": why.split(" (")[0] + (" (the Source Reader's runs differ)" if "the Source Reader's runs differ" in why else "")} if runs is None else mf_entry(reader, runs, rate)
     entry = column.get("transform")
     if entry is None:
         return
@@ -1107,11 +1124,11 @@ def mediafoundation_differences(figures, analyzer):
             if why.startswith("refused:"):
                 differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "explained" if documented or fdk_agrees else "noted",
                                     "kind": "decoder-refuses-stream", **({"ownersDisagree": True} if fdk_agrees and not documented else {}),
-                                    "reason": "Media Foundation's transform is not set up for the stream, %s%s" % (why, "; " + documented if documented else (
+                                    "reason": "Media Foundation's transform is not set up for the stream: %s%s" % (why[len("refused: "):], "; " + documented if documented else (
                                         "; the analyzer equals the reference (fdk direct, %s): the owners' decoders disagree" % show(r) if fdk_agrees else "; no reference from it"))})
             elif why.startswith("not asked:"):
                 differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "noted", "kind": "decoder-not-asked",
-                                    "reason": "Media Foundation's transform was not asked (%s): the harness's limit, not a refusal by the decoder" % why[len("not asked: "):]})
+                                    "reason": "Media Foundation's transform was not asked: %s; the harness's limit, not a refusal by the decoder" % why[len("not asked: "):]})
             elif why.startswith("stopped by"):
                 differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": None, "analyzer": a, "status": "noted", "kind": "decoder-stopped",
                                     "reason": "Media Foundation's transform did not reach the end of the stream (%s); its partial count is no figure" % why})
@@ -1145,15 +1162,16 @@ def mediafoundation_differences(figures, analyzer):
             differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
                                 "reason": "FDK and Core Audio's converter give no reference; Media Foundation's transform outputs %s samples against the analyzer's %s" % (show(c), show(a))})
         elif r is not None and a == r:
-            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "reference": r, "status": "explained", "kind": "mediafoundation-differs", "ownersDisagree": True,
-                                "reason": "the analyzer equals the reference (%s, %s) and Media Foundation's transform outputs %s: the owners' decoders disagree%s%s" % (
-                                    figure["referencePath"], show(r), show(c), "; " + documented if documented else "",
+            differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "reference": r, "status": "explained", "kind": "mediafoundation-differs", **({} if documented else {"ownersDisagree": True}),
+                                "reason": "the analyzer equals the reference (%s, %s) and Media Foundation's transform outputs %s%s%s" % (
+                                    figure["referencePath"], show(r), show(c), "; " + documented if documented else ": the owners' decoders disagree",
                                     "; it gives no output for unit %s after its first output" % ", ".join(map(str, entry["silentUnits"])) if entry.get("silentUnits") else "")})
         elif r is not None and c != r:
             differences.append({"figure": figure["id"], "decoder": MF_TRANSFORM, "value": c, "analyzer": a, "reference": r, "status": "explained" if documented else "pending",
-                                "kind": "mediafoundation-differs", "ownersDisagree": True,
-                                "reason": "the owners' decoders disagree with each other and with the analyzer: %s %s, Media Foundation's transform %s, the analyzer %s%s" % (
-                                    figure["referencePath"], show(r), show(c), show(a), "; " + documented if documented else " (the written rule gives keep unless a reading of the specification decides)")})
+                                "kind": "mediafoundation-differs", **({} if documented else {"ownersDisagree": True}),
+                                "reason": "%s %s %s, Media Foundation's transform %s, the analyzer %s%s" % (
+                                    "the reference is" if documented else "the owners' decoders disagree with each other and with the analyzer:", figure["referencePath"], show(r), show(c), show(a),
+                                    "; " + documented if documented else " (the written rule gives keep unless a reading of the specification decides)")})
     return differences
 
 
