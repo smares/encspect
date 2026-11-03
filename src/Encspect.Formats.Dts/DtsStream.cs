@@ -158,7 +158,9 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             if (samples != 0)
             {
                 Figures.AddStereo(facts is { HasCore: true, HasAudioHeader: true, PrimaryChannels: >= 2 }
-                    ? (facts.IsSumDifferenceFront || facts.IsSumDifferenceSurround ? 1 : 0) + (facts.HasJointIntensity ? 2 : 0)
+                    ? (Tables.IsSumDifferenceArrangement(facts.Core.Amode)
+                        || (facts.IsSumDifferenceFront && Tables.HasFrontPair(facts.Core.Amode))
+                        || (facts.IsSumDifferenceSurround && Tables.HasSurroundPair(facts.Core.Amode)) ? 1 : 0) + (facts.HasJointIntensity ? 2 : 0)
                     : null);
             }
 

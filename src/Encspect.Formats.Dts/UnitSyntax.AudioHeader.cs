@@ -55,7 +55,8 @@ internal sealed partial class UnitSyntax
         PerChannel("High Frequency VQ Start Subband", 5, Explain.Vqsub, channels, _vqsub, v => NodeValue.Integer(v + 1, "subbands", "subband"), Topics.CoreCodingHeader);
         PerChannel("Joint Intensity Coding Index", 3, Explain.Joinx, channels, _joinx, v => v == 0 ? "0 (disabled)" : $"{v} (copies channel {v})", Topics.CoreCodingHeader,
             (ch, v) => v > ch ? $"channel {ch + 1} copies channel {v}, which does not come before it" : null, Issue.JointSource);
-        Facts.HasJointIntensity = _joinx.Take(channels).Any(v => v != 0);
+        // Only a source before the channel is intensity stereo; a channel that copies itself or a later one is a finding (Issue.JointSource).
+        Facts.HasJointIntensity = _joinx.Take(channels).Select((v, ch) => v > 0 && v <= ch).Any(valid => valid);
         PerChannel("Transient Mode Code Book", 2, Explain.Thuff, channels, _thuff, v => ((char)('A' + v)) + "4", Topics.CoreCodingHeader);
         PerChannel("Scale Factor Code Book", 3, Explain.Shuff, channels, _shuff, ScaleFactorBook, Topics.CoreCodingHeader,
             (_, v) => v == 7 ? "SHUFF 7 is invalid (Table 5-24)" : null, Issue.ReservedValue);

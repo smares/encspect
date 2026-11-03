@@ -368,8 +368,24 @@ public sealed partial class OpusParser
                     Concept = GraphConcept.CodedBandwidth,
                     Quantity = "Coded Bandwidth",
                 });
-                double[] bandStarts = [.. Enumerable.Range(0, highest.Count).Where(s => highest[s] >= 0).Select(s => (double)s)];
-                series.Add(new("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, bandStarts, highest.Where(h => h >= 0).Select(h => (double)h).ToArray(), _codedBandwidthNode)
+                int valued = 0;
+                for (int s = 0; s < highest.Count; s++)
+                {
+                    valued += highest[s] >= 0 ? 1 : 0;
+                }
+
+                var bandStarts = new double[valued];
+                var bandHighest = new double[valued];
+                for (int s = 0, n = 0; s < highest.Count; s++)
+                {
+                    if (highest[s] >= 0)
+                    {
+                        bandStarts[n] = s;
+                        bandHighest[n++] = highest[s];
+                    }
+                }
+
+                series.Add(new("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, bandStarts, bandHighest, _codedBandwidthNode)
                 {
                     Description = SeriesText.CodedBandwidthOverTime,
                     Concept = GraphConcept.CodedBandwidth,

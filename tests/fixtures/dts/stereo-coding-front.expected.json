@@ -1,0 +1,51 @@
+{
+ "description": "Four stereo core frames: plain, with SUMF, with a joint intensity source (channel 2 copies channel 1), and with both.",
+ "length": 2048,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Stereo Coding": "4 frames",
+  "DTS/Statistics/Stereo Coding/Left/right stereo": "1 frame (25.0%)",
+  "DTS/Statistics/Stereo Coding/Mid/side stereo": "1 frame (25.0%)",
+  "DTS/Statistics/Stereo Coding/Intensity stereo": "1 frame (25.0%)",
+  "DTS/Statistics/Stereo Coding/Mid/side and intensity stereo": "1 frame (25.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

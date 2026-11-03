@@ -1,0 +1,41 @@
+{
+ "description": "Two left total and right total core frames (AMODE 4), one with SUMF set, which counts since the arrangement has front left and right channels.",
+ "length": 1024,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 left total, right total",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1024,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Stereo Coding": "2 frames",
+  "DTS/Statistics/Stereo Coding/Left/right stereo": "1 frame (50.0%)",
+  "DTS/Statistics/Stereo Coding/Mid/side stereo": "1 frame (50.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

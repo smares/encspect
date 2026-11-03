@@ -67,8 +67,8 @@ internal static class StdText
     public const string StatUsesBitReservoir = "Whether the encode options turn the bit reservoir on.";
     public const string StatFramesPerSuperframe = "The most frames read in one superframe.";
     public const string StatFramesSpanning = "Frames that began in one superframe and ended in a later one.";
-    public const string StatLargestReservoir = "The largest bit reservoir fill any superframe ends with: the most bytes it left for the next one to finish, superframes inside a frame included.";
-    public const string StatAverageReservoir = "The mean bit reservoir fill the superframes end with: the bytes they left for the next one, over all superframes.";
+    public const string StatLargestReservoir = "The largest bit reservoir fill any superframe starts with: the most bytes the superframe before it left for it to finish, superframes inside a frame included.";
+    public const string StatAverageReservoir = "The mean bit reservoir fill the superframes start with (0 for the first), over all superframes.";
     public const string StatFramesFollowedByFiller = "Frames that began in one superframe and are followed by bits up to the bit offset the next superframe states.";
     public const string StatFillerBits = "The bits between the end of such a frame and the bit offset.";
     public const string StatSuperframesInsideFrame = "Superframes in which no frame ends.";

@@ -53,8 +53,18 @@ internal static class StdReport
         {
             Add("Frames per Superframe", NodeValue.Integer(stream.MaxFramesPerSuperframe), StdText.StatFramesPerSuperframe);
             Add("Frames Spanning Superframes", NodeValue.Integer(stream.SpanningFrames), StdText.StatFramesSpanning);
-            Add("Maximum Reservoir Fill", NodeValue.Integer(stream.LargestReservoir, "bytes"), StdText.StatLargestReservoir);
-            Add("Average Reservoir Fill", NodeValue.Decimal((double)stream.ReservoirSum / stream.Superframes.Count, 1, "bytes"), StdText.StatAverageReservoir);
+            // The fill as each superframe starts: what the one before left for it, as the series shows it.
+            long largest = 0;
+            long sum = 0;
+            for (int i = 1; i < stream.Superframes.Count; i++)
+            {
+                int fill = stream.Superframes[i - 1].Kept;
+                largest = Math.Max(largest, fill);
+                sum += fill;
+            }
+
+            Add("Maximum Reservoir Fill", NodeValue.Integer(largest, "bytes"), StdText.StatLargestReservoir);
+            Add("Average Reservoir Fill", NodeValue.Decimal((double)sum / stream.Superframes.Count, 1, "bytes"), StdText.StatAverageReservoir);
             if (stream.FillerFrames > 0)
             {
                 Add("Frames Followed by Filler", NodeValue.Integer(stream.FillerFrames), StdText.StatFramesFollowedByFiller);
