@@ -1,5 +1,5 @@
 {
- "note": "The samples alignment (docs/design/samples-definition.md): a sample the file ends inside is an access unit of its own (the last one) and counts its samples, which are lost; cut and broken access units are reported in the new statistic Lost Samples and the stream's lostSamples.",
+ "note": "The samples alignment (docs/design/samples-definition.md): a sample the file ends inside is an access unit of its own (the last one), not read and in no unit count, size or bitrate; its samples count and are lost; cut and broken access units are reported in the new statistic Lost Samples and the stream's lostSamples.",
  "goldens": [
   "tests/fixtures/mp4/chunk-sample-mismatch.report.json",
   "tests/fixtures/mp4/sample-outside-mdat.report.json",
@@ -37,18 +37,6 @@
     "MP4",
     "mdat",
     "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Raw Data Blocks"
-   ],
-   "name": "Unreadable Blocks"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
     "AAC"
    ],
    "name": "Access Unit",
@@ -60,10 +48,8 @@
    "scope": "stream",
    "fields": [
     "averageBitrate",
-    "categorySeries",
     "duration",
-    "samples",
-    "series"
+    "samples"
    ]
   },
   {
@@ -110,8 +96,7 @@
     "Access Units"
    ],
    "fields": [
-    "length",
-    "value"
+    "length"
    ]
   },
   {
@@ -413,8 +398,7 @@
     "CPE"
    ],
    "fields": [
-    "length",
-    "value"
+    "length"
    ]
   },
   {
@@ -581,8 +565,7 @@
     "Minimum Bitrate"
    ],
    "fields": [
-    "length",
-    "value"
+    "length"
    ]
   },
   {
@@ -635,8 +618,7 @@
     "Raw Data Blocks"
    ],
    "fields": [
-    "length",
-    "value"
+    "length"
    ]
   },
   {
@@ -663,8 +645,7 @@
     "Smallest Access Unit"
    ],
    "fields": [
-    "length",
-    "value"
+    "length"
    ]
   },
   {
