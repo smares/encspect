@@ -73,5 +73,13 @@
         "series"
       ]
     }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/monkeys-audio/built-cut-in-seek-table.report.json"
+      ],
+      "reason": "The file ends inside the seek table, so no frame has a byte in the file: samples are 0 and, with decision 3 (units with no byte stay out of bitrate figures), there is no average bitrate where the old report divided the header's frame bytes by its duration (651.43 kbps)."
+    }
   ]
 }
