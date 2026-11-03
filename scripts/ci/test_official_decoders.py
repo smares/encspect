@@ -1003,7 +1003,7 @@ class WindowsDriverRunTests(unittest.TestCase):
         self.assertEqual("end", record["paths"]["transform"]["stoppedBy"])
 
 class ReviewFixTests(unittest.TestCase):
-    def test_one_probe_call_has_a_budget_for_its_seven_children(self):
+    def test_one_probe_call_has_a_budget_for_its_twelve_children(self):
         calls = []
 
         def fake_run(command, **kwargs):
@@ -1012,8 +1012,8 @@ class ReviewFixTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp, mock.patch.object(subprocess, "run", fake_run):
             node, environment = driver.windows_probe_run("probe.exe", "a.m4a", tmp, pathlib.Path(tmp) / "work", timeout=30)
-        self.assertEqual([270], calls)
-        self.assertEqual((None, "the probe did not finish within 270 seconds"), (node, environment["error"]))
+        self.assertEqual([12 * 30 + 60], calls)
+        self.assertEqual((None, "the probe did not finish within 420 seconds"), (node, environment["error"]))
 
     def test_a_core_audio_converter_that_stopped_is_decoder_stopped_and_noted(self):
         figure = {"id": "samples", "stage": "coded", "analyzerFigure": "samples", "streams": [0], "analyzer": 9600, "reference": 9600, "referencePath": "fdk direct", "referenceKind": "official",

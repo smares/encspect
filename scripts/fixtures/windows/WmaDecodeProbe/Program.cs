@@ -27,6 +27,9 @@ public static class Program
         WriteIndented = false,
     };
 
+    // The Source Reader runs after the first one; official_decode.py's SOURCE_READER_RUNS is this plus one.
+    private const int SourceReaderRepeats = 9;
+
     public static int Main(string[] args)
     {
         if (args.Length >= 5 && args[0] == "--child")
@@ -143,9 +146,15 @@ public static class Program
             if (aac)
             {
                 // The Source Reader's result on some files varies from run to run (sbr-in-three-blocks.aac stopped at its first read in four whole runs and read to the end in others),
-                // so it is read four times more; the driver takes a result as a figure only where the five agree.
-                record["sourceReaderRepeats"] = new JsonArray(RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null),
-                    RunChild("sr", file, timeout, modules, null), RunChild("sr", file, timeout, modules, null));
+                // so it is read nine times more; the driver takes a result as a figure only where the ten agree (with five, a file whose reads end or fail about as often as not still
+                // gave an agreeing "failed" one time in sixteen, and the committed text of its column then differed between two runs).
+                var repeats = new JsonArray();
+                for (int repeat = 0; repeat < SourceReaderRepeats; repeat++)
+                {
+                    repeats.Add(RunChild("sr", file, timeout, modules, null));
+                }
+
+                record["sourceReaderRepeats"] = repeats;
             }
 
             var direct = record["direct"]?["decoder"];

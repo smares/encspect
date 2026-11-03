@@ -1002,7 +1002,7 @@ def windows_reader_signature(result):
 
 
 def windows_reader_result(node, repeats=()):
-    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file four times more) differ from it in what windows_reader_signature compares, in which
+    """The Source Reader's record: the first run's, unless the repeats (the probe reads the file nine times more) differ from it in what windows_reader_signature compares, in which
     case the reader has no figure (`error`, with the runs' outcomes in the reason)."""
     first = windows_reader_single(node)
     others = [windows_reader_single(r) for r in repeats]
@@ -1080,6 +1080,7 @@ def windows_reader_single(node):
 
 
 MF_NOTE_LIMIT = 2000
+SOURCE_READER_RUNS = 10  # the probe reads the file this many times (Program.cs SourceReaderRepeats + 1); a total counts only where all agree
 MF_LIST_LIMIT = 64
 
 
@@ -1209,16 +1210,16 @@ def windows_transform_result(node, units_expected):
 
 
 def windows_probe_run(exe, path, units_dir, work, timeout=30):
-    """One call of the probe on one file: its seven children (the Source Reader five times, the transform with timestamps and without) each get `timeout` seconds. Returns (record, environment)."""
+    """One call of the probe on one file: its children (the Source Reader SOURCE_READER_RUNS times, the transform with timestamps and without) each get `timeout` seconds. Returns (record, environment)."""
     import subprocess
     work.mkdir(parents=True, exist_ok=True)
     try:
         completed = subprocess.run([str(exe), "--format", "aac", "--units", str(units_dir), "--out", str(work), "--timeout", str(timeout), str(path)],
-                                   capture_output=True, text=True, errors="replace", timeout=7 * timeout + 60)
+                                   capture_output=True, text=True, errors="replace", timeout=(SOURCE_READER_RUNS + 2) * timeout + 60)
         output = (completed.stdout + completed.stderr)[-400:]
         code = completed.returncode
     except subprocess.TimeoutExpired:
-        return None, {"error": "the probe did not finish within %d seconds" % (7 * timeout + 60)}
+        return None, {"error": "the probe did not finish within %d seconds" % ((SOURCE_READER_RUNS + 2) * timeout + 60)}
     except OSError as error:
         return None, {"error": str(error)}
     found = sorted((work / "records").glob("*.json")) if (work / "records").is_dir() else []
