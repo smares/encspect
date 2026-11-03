@@ -219,6 +219,8 @@ Every format gains `LostSamples`; goldens change only where it is above 0 or `sa
 
 The reason strings ("counted by their declared positions") are written by `compare_official_decoders.py` into every `official-decoders.json`; the rollout rewords them to "declared samples".
 
+**As built (commit 3):** the comparison script words its reasons "declared samples" and carries reviewed statuses over the rewording; FDK's shortfall by flagged units is `explained` where `lostSamples` cover it and `noted` where not (rule 1; `damaged-length.aac` stays the lead's `keep`); Core Audio's AC-3 converter total, which is more than the coded stage less the lost samples, is `noted` with both figures (decision of 2026-11-03: no cause is claimed) and ExtAudioFile's total is `explained`; `truncated.m4a` equals FDK and Core Audio, ffmpeg and the Source Reader are the decoders that differ (`explained`). Ogg and TTA statuses are unchanged. The records of one green run (41592571038) are committed and a repeat run equals them apart from provenance.
+
 **Recorded items at the heads above:**
 - `opus-packets-corrupt.opus`: stays `explained`, now by rule 1, if the lost samples equal the difference.
 - TTA cut last frame (derived variants): totals become equal (rule 2); the `keep` is superseded. Vorbis `keep` items, refused-header streams and standard WMA: unchanged.
