@@ -363,22 +363,26 @@ public sealed partial class Mp4Parser
                 {
                     long size = track.Sizes is { } table ? table[index] : track.SampleSize;
                     bool isInFile = position >= 0 && position <= fileEnd - size;
-                    if (track.Sizes is null && !isInFile)
+
+                    // A sample whose first byte is in the file but which the file ends inside is placed with the bytes present.
+                    bool isPartial = !isInFile && position >= 0 && position < fileEnd && size > 0;
+                    if (track.Sizes is null && !isInFile && !isPartial)
                     {
                         yield return (position, size, inChunk - i);
                         index += inChunk - i;
                         break;
                     }
 
-                    if (isInFile)
+                    if (isInFile || isPartial)
                     {
-                        if (walk.Placed + size > walk.Budget)
+                        long present = isInFile ? size : fileEnd - position;
+                        if (walk.Placed + present > walk.Budget)
                         {
                             walk.IsCut = true;
                             yield break;
                         }
 
-                        walk.Placed += size;
+                        walk.Placed += present;
                     }
 
                     yield return (position, size, 1);
@@ -398,6 +402,13 @@ public sealed partial class Mp4Parser
     private static bool InFile(State state, (long Offset, long Size) sample) =>
         sample.Offset >= state.Reader.Start && sample.Size >= 0 && sample.Offset <= state.Reader.End - sample.Size;
 
+    // The bytes of the sample that the file holds: all of them, or up to its end where the file ends inside the sample (its first byte is there),
+    // or none where it starts outside the file.
+    private static long Present(State state, (long Offset, long Size) sample) =>
+        InFile(state, sample) ? sample.Size
+        : sample.Offset >= state.Reader.Start && sample.Offset < state.Reader.End && sample.Size > 0 ? state.Reader.End - sample.Offset
+        : 0;
+
     // The file ranges the track's samples cover, merged and in file order. Samples outside the file
     // are reported and left out; samples outside every mdat box are reported but still read.
     private static List<ByteRange> SampleRanges(State state, Track track)
@@ -408,6 +419,8 @@ public sealed partial class Mp4Parser
         long empty = 0;
         (long Offset, long Size)? firstOutside = null;
         (long Offset, long Size)? firstOutsideMdat = null;
+        (long Offset, long Size)? firstCut = null;
+        long cutSamples = 0;
         long index = 0;
         long accepted = 0;
         track.SampleBudget = state.SampleBytesLeft;
@@ -422,7 +435,8 @@ public sealed partial class Mp4Parser
             accepted += entry.Count;
 
             (long Offset, long Size) sample = (entry.Offset, entry.Size);
-            if (!InFile(state, sample))
+            long present = Present(state, sample);
+            if (present == 0 && sample.Size > 0)
             {
                 outside += entry.Count;
                 firstOutside ??= sample;
@@ -435,7 +449,13 @@ public sealed partial class Mp4Parser
                 continue;
             }
 
-            if (FindMdat(state, sample.Offset, sample.Offset + sample.Size) is null)
+            if (present < sample.Size)
+            {
+                cutSamples++;
+                firstCut ??= sample;
+            }
+
+            if (FindMdat(state, sample.Offset, sample.Offset + present) is null)
             {
                 outsideMdat++;
                 firstOutsideMdat ??= sample;
@@ -443,11 +463,11 @@ public sealed partial class Mp4Parser
 
             if (ranges.Count > 0 && ranges[^1].End == sample.Offset)
             {
-                ranges[^1] = ranges[^1] with { Length = ranges[^1].Length + sample.Size };
+                ranges[^1] = ranges[^1] with { Length = ranges[^1].Length + present };
             }
             else
             {
-                ranges.Add(new ByteRange(sample.Offset, sample.Size));
+                ranges.Add(new ByteRange(sample.Offset, present));
             }
         }
 
@@ -464,6 +484,12 @@ public sealed partial class Mp4Parser
         {
             state.Findings.AddNow(Severity.Warning, "mp4.sample-outside-file",
                 $"{Samples(outside)} of track {track.Id} lie outside the file, the first at 0x{cut.Offset:X} with {Counts.Of(cut.Size, "byte", "bytes")}; they are not analyzed.", table);
+        }
+
+        if (firstCut is { } partial)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.sample-truncated",
+                $"{Samples(cutSamples)} of track {track.Id} {Counts.Agree(cutSamples, "is", "are")} cut by the end of the file, the first at 0x{partial.Offset:X} with {Counts.Of(Present(state, partial), "byte", "bytes")} of its {Counts.Of(partial.Size, "byte", "bytes")}; the bytes there are analyzed, and the sample's samples are lost.", table);
         }
 
         if (empty > 0)
@@ -507,9 +533,11 @@ public sealed partial class Mp4Parser
                 state.Context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (InFile(state, sample) && sample.Size > 0)
+            long present = Present(state, sample);
+            if (present > 0)
             {
-                yield return MappedBytes.Read(state.Reader, [new ByteRange(sample.Offset, sample.Size)]);
+                // A sample the file ends inside is handed with the bytes present, flagged as cut: the codec's own syntax cannot show it.
+                yield return MappedBytes.Read(state.Reader, [new ByteRange(sample.Offset, present)], isCut: present < sample.Size);
             }
         }
     }
