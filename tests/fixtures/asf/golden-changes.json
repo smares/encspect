@@ -82,6 +82,13 @@
         "Statistics"
       ],
       "name": "Average Bitrate"
+    },
+    {
+      "scope": "finding",
+      "code": "wma.packet-short",
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ]
     }
   ],
   "changed": [
@@ -463,16 +470,10 @@
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
       ]
-    }
-  ],
-  "findings": [
+    },
     {
-      "gone": [
-        "wma.voice-unfinished"
-      ],
-      "new": [
-        "wma.packet-short"
-      ],
+      "scope": "finding",
+      "code": "wma.voice-unfinished",
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
       ]

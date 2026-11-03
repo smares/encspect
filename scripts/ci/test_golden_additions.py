@@ -61,14 +61,63 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {"added": change["added"][:1]}))
 
-    def test_nodes_and_findings_listed_as_gone_or_new_are_taken_out_before_the_reports_are_compared(self):
+    def test_nodes_and_findings_listed_as_removed_or_added_are_taken_out_before_the_reports_are_compared(self):
         old = report([*OLD_STATS, node("Invalid Frames", value=1)], findings=[{"code": "a", "message": "m"}, {"code": "gone", "message": "g"}])
         new = report(OLD_STATS, findings=[{"code": "a", "message": "m"}, {"code": "new", "message": "n"}])
-        change = {"removed": [{"parent": ["MPEG Audio", "Statistics"], "name": "Invalid Frames"}], "findings": [{"gone": ["gone"], "new": ["new"]}]}
+        change = {"removed": [{"parent": ["MPEG Audio", "Statistics"], "name": "Invalid Frames"}, {"scope": "finding", "code": "gone"}],
+                  "added": [{"scope": "finding", "code": "new"}]}
         self.assertTrue(self.check(old, new, {}))
         self.assertEqual(self.check(old, new, change), [])
         self.assertTrue(self.check(old, new, {"removed": change["removed"]}))
-        self.assertTrue(self.check(old, new, {"findings": change["findings"]}))
+        self.assertTrue(self.check(old, new, {"added": change["added"]}))
+        self.assertTrue(self.check(old, new, {"removed": change["removed"][:1], "added": change["added"]}))
+
+    def test_a_removed_node_shifts_the_paths_of_the_old_reports_findings_and_streams(self):
+        old = report([node("Frames", value=10), node("Gone"), *OLD_STATS[1:]], findings=[{"code": "x", "path": [1, 1, 4]}],
+                     streams=[{"nodes": [[1, 1, 3]], "codec": "MPEG-1 Layer III", "series": []}])
+        new = report(OLD_STATS, findings=[{"code": "x", "path": [1, 1, 3]}], streams=[{"nodes": [[1, 1, 2]], "codec": "MPEG-1 Layer III", "series": []}])
+        change = {"removed": [{"parent": ["MPEG Audio", "Statistics"], "name": "Gone"}]}
+        self.assertEqual(self.check(old, new, change), [])
+        wrong = report(OLD_STATS, findings=[{"code": "x", "path": [1, 1, 4]}], streams=[{"nodes": [[1, 1, 2]], "codec": "MPEG-1 Layer III", "series": []}])
+        self.assertTrue(self.check(old, wrong, change))
+
+    def test_an_entry_that_cannot_work_is_a_readable_error(self):
+        same = report(OLD_STATS)
+        for change, words in (
+            ({"removed": [{"name": "Gone"}]}, "needs parent"),
+            ({"removed": [{"scope": "finding"}]}, "needs code"),
+            ({"removed": [{"scope": "stream", "code": "x"}]}, "unknown scope"),
+            ({"added": [{"scope": "finding"}]}, "needs code"),
+            ({"added": [{"scope": "node", "name": "A"}]}, "needs parent"),
+            ({"added": [{"scope": "stream", "array": "series"}]}, "needs name"),
+            ({"added": [{"scope": "report"}]}, "needs key"),
+            ({"bitrate": [{"goldens": ["a"]}]}, "needs goldens and a reason"),
+            ({"findings": [{"gone": ["a"]}]}, "no longer a key"),
+        ):
+            problems = self.check(same, same, change)
+            self.assertEqual(1, len(problems), change)
+            self.assertIn(words, problems[0])
+
+    def test_an_average_bitrate_that_differs_needs_lost_samples_or_a_reason(self):
+        old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [], "averageBitrate": 128.0}])
+        new = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [], "averageBitrate": 127.0}])
+        stream = {"scope": "stream", "fields": ["averageBitrate"]}
+        problems = self.check(old, new, {"changed": [stream]})
+        self.assertEqual(1, len(problems))
+        self.assertIn("no lost samples", problems[0])
+        new["streams"][0]["lostSamples"] = 1152
+        self.assertEqual(self.check(old, new, {"changed": [stream, {"scope": "stream", "fields": ["lostSamples"]}]}), [])
+        new["streams"][0].pop("lostSamples")
+        self.assertEqual(self.check(old, new, {"changed": [stream], "bitrate": [{"goldens": ["x"], "reason": "the cut unit's bytes are in the tally"}]}), [])
+
+    def test_a_key_of_the_report_and_an_element_key_of_a_series_are_taken_back(self):
+        old = report(OLD_STATS)
+        new = report(OLD_STATS)
+        new["someKey"] = 1
+        new["streams"][0]["series"][0]["concept"] = "x"
+        change = {"added": [{"scope": "report", "key": "someKey"}, {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"}]}
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {"added": change["added"][:1]}))
 
     def test_a_series_array_that_is_empty_in_both_reports_stays(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM", "series": []}])
