@@ -1,0 +1,23 @@
+{
+  "note": "Samples alignment (docs/design/samples-definition.md): a Matroska block that states more bytes than the file or its Cluster holds hands its cut frame to the codec parser flagged; the three Opus files with such a block gain lostSamples and the statistics node Lost Samples (the samples do not change).",
+  "goldens": [
+    "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
+    "tests/fixtures/matroska/size-past-parent.report.json",
+    "tests/fixtures/matroska/truncated-cluster.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    }
+  ]
+}
