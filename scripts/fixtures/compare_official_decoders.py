@@ -14,7 +14,7 @@ committed golden reports (or from the CLI given with --encspect, which the deriv
   with --write-official FILE: the committed results of the fixtures of the format (tests/fixtures/<format>/official-decoders.json), keeping the status
                     and the note of every difference a person has set
 
-Stages: the coded stage is the sum of what the stream's packets code, before any trimming (the direct path, "Decoded Samples"); the trimmed stage is
+Stages: the coded stage is the sum of what the stream's packets code, before any trimming (the direct path, "Coded Samples"); the trimmed stage is
 what the owner's reader writes after the priming and padding of the format (the stream's "samples"). The script computes no trimming of its own.
 
 TTA (comparison-tta.txt, comparison-tta.json, --write-official-tta): one figure per file, the stream's `samples` against the reference. TTA has no priming or padding
@@ -125,11 +125,11 @@ def ogg_analyzer(report):
         occurrence = seen.get(serial, 0)
         seen[serial] = occurrence + 1
         info = infos.get(i)
-        decoded = find_node(node, "Decoded Samples")
+        decoded = find_node(node, "Coded Samples")
         streams.append({
             "serial": serial, "occurrence": occurrence, "codec": node.get("value"), "offset": node.get("offset"), "length": node.get("length"),
             "samples": info["samples"] if info else None,
-            "decodedSamples": decoded["value"] if decoded else None,
+            "codedSamples": decoded["value"] if decoded else None,
             "sampleRate": info["sampleRate"] if info else None, "channels": info["channels"] if info else None,
             "lastGranule": child_value(node, "Last Granule Position"),
         })
@@ -252,8 +252,8 @@ def compare_ogg(record, analyzer, ffmpeg):
     for run in runs:
         members = [s for s in direct["streams"] if s["stream"] in run["streams"]]
         mine = analyzer_streams(members)
-        a = sum_known(m["decodedSamples"] if m else None for m in mine)
-        figure = {"stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
+        a = sum_known(m["codedSamples"] if m else None for m in mine)
+        figure = {"stage": "coded", "analyzerFigure": "Coded Samples", "streams": [analyzer_index(analyzer, m) for m in mine], "analyzer": a,
                   "reference": run["samples"] if unfed is None else None, "referencePath": "direct" if unfed is None else None,
                   "format": {"rate": run["rate"], "channels": run["channels"]}, "witnesses": {}, "kind": "run"}
         if unfed:
@@ -264,21 +264,21 @@ def compare_ogg(record, analyzer, ffmpeg):
         for st in direct["streams"]:
             if st.get("refusal") and st["codec"] in ("opus", "vorbis"):
                 m = mapping.get(st["stream"])
-                coded.append({"stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [analyzer_index(analyzer, m)], "analyzer": m["decodedSamples"] if m else None,
+                coded.append({"stage": "coded", "analyzerFigure": "Coded Samples", "streams": [analyzer_index(analyzer, m)], "analyzer": m["codedSamples"] if m else None,
                               "reference": None, "referencePath": None, "witnesses": {}, "kind": "refused", "refused": st["refusal"],
                               "stream": st["stream"]})
     for number, figure in enumerate(coded):
         if len(coded) == 1:
-            figure["id"] = "decodedSamples"
+            figure["id"] = "codedSamples"
         elif figure["kind"] == "run":
-            figure["id"] = "decodedSamples.run%d" % (number + 1)
+            figure["id"] = "codedSamples.run%d" % (number + 1)
         else:
-            figure["id"] = "decodedSamples.stream%d" % figure.pop("stream")
+            figure["id"] = "codedSamples.stream%d" % figure.pop("stream")
         figure.pop("stream", None)
         figure.pop("kind")
         figures.append(figure)
     if not coded:
-        figures.append({"id": "decodedSamples", "stage": "coded", "analyzerFigure": "Decoded Samples", "streams": [], "analyzer": None, "reference": None, "referencePath": None,
+        figures.append({"id": "codedSamples", "stage": "coded", "analyzerFigure": "Coded Samples", "streams": [], "analyzer": None, "reference": None, "referencePath": None,
                         "witnesses": {}, "noReference": unfed or "the decoder decoded no packet"})
     coded_figures = list(figures)
     # ffmpeg decodes the first audio stream only, so its counts are set against a file of one logical stream; the column of the others is kept apart.

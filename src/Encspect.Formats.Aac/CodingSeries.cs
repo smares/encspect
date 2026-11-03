@@ -57,7 +57,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
 {
     private readonly List<byte> _windows = [];
     private readonly List<byte> _pairs = [];
-    private readonly CategorySeriesBuilder _windowSeries = new("Window Sequences", CodingCategories.WindowSequences, "channel stream", concept: GraphConcept.BlockSwitching);
+    private readonly CategorySeriesBuilder _windowSeries = new("Block Usage", CodingCategories.WindowSequences, "channel stream", concept: GraphConcept.BlockSwitching);
     private CategorySeriesBuilder? _pairSeries;
     private readonly ChunkedList<int> _hertz = new();
     private int _unitHertz = -1;

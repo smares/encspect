@@ -514,12 +514,12 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 | "Block Alignment" | A |
 | ["Average Bitrate"] | 8 × A × (superframes not short) / duration / 1000, where the duration is above 0 |
 | ["Smallest Frame", "Largest Frame"] | the bits of the shortest and longest valid frame / 8, in bytes |
-| ["Minimum Frame Bitrate", "Maximum Frame Bitrate"] | those bits × r / F / 1000 |
+| ["Minimum Bitrate", "Maximum Bitrate"] | those bits × r / F / 1000 |
 | "Uses Bit Reservoir" | bit 1 of the options |
 | ["Frames per Superframe"] | with the bit reservoir: the most frames read in one superframe |
 | ["Frames Spanning Superframes"] | with the bit reservoir: frames spanning superframes read |
-| ["Largest Bit Reservoir"] | with the bit reservoir: the largest reservoir after a superframe, superframes inside a frame included |
-| ["Average Bit Reservoir"] | with the bit reservoir: the sum of the reservoirs left by step 7 (superframes inside a frame not counted) / superframes |
+| ["Maximum Reservoir Fill"] | with the bit reservoir: the largest reservoir after a superframe, superframes inside a frame included |
+| ["Average Reservoir Fill"] | with the bit reservoir: the sum of the reservoirs left by step 7 (superframes inside a frame not counted) / superframes |
 | ["Frames Followed by Filler", "Filler Bits"] | only where at least one frame has stuffing or filler: frames spanning superframes with stuffing or filler, and those bits |
 | ["Superframes Inside a Frame"] | only where there is one: superframes inside a frame |
 | "Exponent Coding" | "scale factor codes" or "line spectral pairs" |
@@ -542,7 +542,8 @@ Where at least one frame was read and r is above 0:
 
 - "Bitrate" (kbps, by file offset): each frame's first byte in the file and its bits × r / F / 1000, 0 for an invalid frame.
 - "Bitrate Over Time" (kbps, by second, attached to "Statistics"): frame i falls in second floor(i × F / r), i counting all frames; each second holds the valid frames' bits × r / (their count × F) / 1000, rounded to one decimal with halves to even, 0 for a second with none; the list ends at the last second with a valid frame.
-- "Bit Reservoir" (bytes, by file offset), with the bit reservoir only: each superframe's offset and the reservoir it leaves: 0 where it failed or was short, the reservoir kept for an invalid header, the accumulated bytes for a superframe inside a frame.
+- "Reservoir Fill" (bytes, by file offset), with the bit reservoir only: each superframe's offset and the reservoir it leaves: 0 where it failed or was short, the reservoir kept for an invalid header, the accumulated bytes for a superframe inside a frame.
+- "Reservoir Fill Over Time" (bytes, by second), with the bit reservoir only: the mean of the reservoirs the superframes that start in each second leave, rounded half to even, anchored to "Maximum Reservoir Fill"; the unit and axis of MPEG audio's series of that name.
 
 ### Findings
 

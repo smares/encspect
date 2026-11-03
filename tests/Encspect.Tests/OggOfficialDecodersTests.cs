@@ -6,7 +6,7 @@ using Xunit.Abstractions;
 namespace Encspect.Tests;
 
 // Holds the analyzer's figures that the official decoders speak to to tests/fixtures/ogg/official-decoders.json (docs/design/official-decoder-crosschecks.md,
-// "Records and the comparison"): for each fixture the reference figure of each stage (libopus and libvorbis fed packet by packet at the coded stage, "Decoded Samples";
+// "Records and the comparison"): for each fixture the reference figure of each stage (libopus and libvorbis fed packet by packet at the coded stage, "Coded Samples";
 // opusdec and oggdec at the trimmed stage, the stream's samples), and every difference with its status. A figure that equals the reference passes; one that differs
 // passes only as a listed difference whose recorded analyzer figure it still is. An entry whose SHA-256 is not the fixture's is stale: it is listed and does not fail,
 // since a regenerated fixture would otherwise need a new run before its pull request could pass.
@@ -226,7 +226,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
             Node node = streams[index.GetInt32()];
             long? value = figure.GetProperty("analyzerFigure").GetString() == "samples"
                 ? report.Streams.FirstOrDefault(s => s.Nodes.Contains(node))?.Samples
-                : Find(node, "Decoded Samples")?.Value?.AsInteger();
+                : Find(node, "Coded Samples")?.Value?.AsInteger();
             if (value is null)
             {
                 return null;

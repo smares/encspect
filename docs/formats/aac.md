@@ -42,11 +42,14 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
 
 Each stream whose raw data blocks are read (AAC Main, LC, SSR and LTP) reports, counted while the blocks are read:
 
-- window sequences and shapes per channel stream, and **Block Sizes**, the window sequences grouped as long (only long, long start and long stop) and short (eight short);
+- window sequences and shapes per channel stream (the tally and series **Block Usage**, named as MPEG audio names the block types of Layer III), and **Block Sizes**, the window sequences grouped as long (only long, long start and long stop) and short (eight short);
 - channel pairs with a common window, mid/side masks and bands, intensity stereo, and **Stereo Coding**, how every channel pair codes its channels (below);
 - noise substitution, TNS per window sequence, pulse data, codebook use, max_sfb and global gain per channel;
 - **Coded Bandwidth**: the lowest, most common and highest coded bandwidth of the stream's access units or frames, in whole hertz (below);
-- SBR's frequencies and the fill payloads.
+- SBR's frequencies and the fill payloads;
+- **Verified Frame Checksums** and, above 0, **Failed Frame Checksums** for ADTS: the frames whose CRC-16 equals the one computed over the header and the elements it covers (a frame whose CRC could not be verified, because a raw data block was unreadable, or that lies in no stream, is in neither count).
+
+Not covered yet: a "Reservoir Fill" series (as in MPEG audio and WMA) from the buffer fullness field of the ADTS and LATM headers; the field is shown in the ADTS header node but not graphed.
 
 The classification of a channel pair, per pair and independent of its window:
 
@@ -68,7 +71,7 @@ Each stream whose blocks are read reports category series and numeric series for
 - **Recorded while reading,** not derived at the end as MPEG audio's are: the parser keeps the bits of each block and rebuilds its nodes by walking the syntax again, so a field has no fixed place to read back, and recording it costs a byte in the pass that counts it already.
 - **A unit** is what the bitrate series has a point for: an access unit (MP4, Matroska), an ADTS frame or an ADIF block. It holds as many values as it has (a variable layout, with a count byte per unit); a unit codes at most 254 values and counts the rest without a code, so a series still equals its tally.
 - **Category series,** each anchored to its Statistics node, with the names of the node's entries and a time index of the seconds "Bitrate Over Time" uses:
-  - "Window Sequences" (concept `blockSwitching`): the sequence of every channel stream of every raw data block of the unit, as the tally counts them (coupling channel elements have none); and its grouping "Block Sizes";
+  - "Block Usage" (concept `blockSwitching`): the sequence of every channel stream of every raw data block of the unit, as the tally counts them (coupling channel elements have none); and its grouping "Block Sizes";
   - "Stereo Coding" (concept `stereoCoding`): the coding of every channel pair of the unit, with the category "Reserved" for ms_mask_present 3.
 - **Numeric series** "Coded Bandwidth" (Hz, concept `codedBandwidth`) per unit, and "Coded Bandwidth Over Time", each second's highest, anchored to the Statistics node. A unit without a channel stream has no point, and the series then has its own x values; "Bitrate" and "Bitrate Over Time" get the concept `bitDistribution` and the quantity "Bitrate", as MPEG audio's.
 - A stream without a channel pair has no "Stereo Coding" (a mono stream keeps nothing for it), and the series stop at the unit where `aac.frames-limit` or `aac.blocks-limit` stops the statistics.
@@ -225,4 +228,5 @@ From `afconvert` on macOS 15.7.9 (AudioToolbox framework bundle version 1.14, Au
 
 ## Not yet covered
 
+- Coded bandwidth for xHE-AAC (USAC) and AAC-ELD, and their window sequences and stereo coding: not covered yet. Their raw data blocks are not read element by element, which needs the frame-level parsing that comes with the format's decoder.
 - USAC, ER AAC and the values of the SBR envelope and noise floor data. The data itself is read: every codeword is decoded to reach the PS ID and to check FAAC's layout, but only the header, the grid and the PS ID are shown (planned: entropy pass).

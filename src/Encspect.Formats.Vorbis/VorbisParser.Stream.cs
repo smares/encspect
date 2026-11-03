@@ -733,6 +733,7 @@ public sealed partial class VorbisParser
 
             if (_identification is { } id)
             {
+                var built = Series(anchor, packets);
                 context.AddStream(new StreamInfo
                 {
                     Nodes = [_parent],
@@ -750,7 +751,8 @@ public sealed partial class VorbisParser
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,
                     WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-                    Series = Series(anchor, packets),
+                    Series = built.Series,
+                    CategorySeries = built.Categories,
                 });
             }
 

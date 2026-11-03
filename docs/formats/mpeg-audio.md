@@ -39,7 +39,8 @@ Each MPEG Audio region reports:
   - **Joint Stereo Modes**, the stereo coding of the joint stereo frames of Layer III only, or **Intensity Stereo Bounds**, their intensity stereo bound in Layers I and II;
   - Layer III **Block Usage** (long, start, short, mixed, stop, reserved, granules counted per channel) and global gain per channel;
   - **Block Sizes**, the same granules grouped as EncSpot counts them: long (with start and stop), short, mixed, and the reserved block type apart, which EncSpot counts as long;
-  - the mean and largest main_data_begin;
+  - the mean and largest main_data_begin, and the largest reservoir fill ("Maximum Reservoir Fill", the bytes the bit reservoir holds as a frame starts);
+  - **Verified Frame Checksums** and, above 0, **Failed Frame Checksums**: the protected frames whose stored CRC-16 equals the one computed over the header bits and the side information or bit allocation it covers (a frame whose covered bytes are cut has none and is in neither count);
   - the share of granules with scalefactor scaling;
   - whether padding, scfsi and scalefactor scaling are used;
   - the ancillary data with its share, data rate and smallest and largest amount per frame;
@@ -55,7 +56,7 @@ Streams follow the stream rule shared with ADTS, AC-3 and DTS (the [plan](../PLA
 
 Each stream, which may span regions, reports its codec, duration, average bitrate and encoder, and for graphs:
 
-- the bitrate and the bit reservoir fill per frame and per second, under the heading "Bit Distribution" (concept `bitDistribution`), each pair one `quantity` ("Bitrate", "Reservoir Fill");
+- the bitrate and the bit reservoir fill per frame and per second, under the heading "Bit Distribution" (concept `bitDistribution`), each pair one `quantity` ("Bitrate", "Reservoir Fill"; the name, unit and axes of "Reservoir Fill" are WMA's too, see `docs/development.md`, "Names of statistics and series");
 - a **declared range** on two series (JSON `declaredRange`, see `docs/cli.md`): the per-frame "Bitrate" declares the steps of its version and layer's bitrate table (the 14 nonzero, unreserved entries), none for a free-format stream; "Channel Bit Share" and "Channel Bit Share Over Time" declare 0 to 100;
 - the **category series** of the coding, derived at the end from the kept frame records (one code per frame, 4 per Layer III frame of two channels for the block types), with the counts of the tally node each is anchored to, under the same names, and a time index of the seconds:
   - "Channel Modes" (no heading, in "Other");

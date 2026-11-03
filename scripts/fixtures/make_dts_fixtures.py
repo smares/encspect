@@ -556,13 +556,13 @@ def build_review():
     parts = [m.core_frame(size=1024, extensions=[m.xxch(chsets=((2, 0x180),), core_mask=0x3F, bad_crc=(i == 1), crc_chset=True, p=p)], **ext_options) for i in range(3)]
     fixture("xxch-bad-crc", ".dts", "Three 3/2 core frames with an LFE channel and an XXCH extension whose frame header CRC-16 fails in the second.", b"".join(parts), rows(parts),
             [stream("DTS-ES", 48000, SURROUND_5_1_WITH_REAR, "3/2", 3 * 512)],
-            [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "1 frame"},
+            [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "1 frame"},
             crosscheck=cc(ffprobe=False, decode=False, decode_errors={"0": "DSYNC check failed", "1024": "XXCH sync word not found", "2048": "DSYNC check failed"}, libdca_channels=6,
                           skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed')",
                                 "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC-16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"}))
     parts = [m.core_frame(size=512) + m.exss([dict(components=["xbr"], channels=2, mask=0x02, component_options={"xbr": {"bad_crc": True}})]) for _ in range(3)]
     fixture("xbr-bad-crc", ".dts", "Three units whose extension substream has an XBR component with a frame header CRC-16 that fails.", b"".join(parts), rows(parts),
-            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "3 frames"},
+            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "3 frames"},
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"}))
 
     # Profile precedence and the delivered sampling frequency.

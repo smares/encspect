@@ -18,9 +18,9 @@ public class AacCodingSeriesTests
     public void The_values_of_every_unit_equal_what_its_nodes_state(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
-        foreach (StreamInfo stream in report.Streams.Where(s => s.CategorySeries.Any(c => c.Name == "Window Sequences")))
+        foreach (StreamInfo stream in report.Streams.Where(s => s.CategorySeries.Any(c => c.Name == "Block Usage" && c.ValuesPerUnit == 0)))
         {
-            CategorySeries windows = Series(stream, "Window Sequences")!;
+            CategorySeries windows = Series(stream, "Block Usage")!;
             Unit[] units = Units(stream, windows);
             CategorySeries? pairs = Series(stream, "Stereo Coding");
             Series? bandwidth = stream.Series.FirstOrDefault(s => s.Name == "Coded Bandwidth");
@@ -188,20 +188,20 @@ public class AacCodingSeriesTests
         Report report = Fixtures.AnalyzeMpeg("aac/ffmpeg-adts.aac");
         StreamInfo stream = Assert.Single(report.Streams);
 
-        Assert.Equal(["Window Sequences", "Block Sizes", "Stereo Coding"], stream.CategorySeries.Select(s => s.Name));
+        Assert.Equal(["Block Usage", "Block Sizes", "Stereo Coding"], stream.CategorySeries.Select(s => s.Name));
         Assert.Equal([GraphConcept.BlockSwitching, GraphConcept.BlockSwitching, GraphConcept.StereoCoding], stream.CategorySeries.Select(s => s.Concept));
         Assert.All(stream.CategorySeries, s => Assert.Equal(s.Name, s.Anchor!.Name));
         Assert.All(stream.CategorySeries, s => Assert.Equal("Bitrate", s.XSeries!.Name));
         Assert.All(stream.CategorySeries, s => Assert.NotNull(s.Time));
         Assert.All(stream.CategorySeries.Where(s => s.Source is null), s => Assert.Equal(0, s.ValuesPerUnit));
-        Assert.Equal(["Only Long", "Long Start", "Eight Short", "Long Stop"], Series(stream, "Window Sequences")!.Categories.Select(c => c.Name));
+        Assert.Equal(["Only Long", "Long Start", "Eight Short", "Long Stop"], Series(stream, "Block Usage")!.Categories.Select(c => c.Name));
         Assert.Equal(["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"], Series(stream, "Stereo Coding")!.Categories.Select(c => c.Name));
         Assert.True(Series(stream, "Stereo Coding")!.Categories[4].IsReserved);
         CategorySeries sizes = Series(stream, "Block Sizes")!;
-        Assert.Equal("Window Sequences", sizes.Source!.Name);
+        Assert.Equal("Block Usage", sizes.Source!.Name);
         Assert.Equal(["Long, start and stop", "Short"], sizes.Categories.Select(c => c.Name));
         Assert.Equal([130L, 2L], sizes.Counts);
-        Assert.Equal(132, Series(stream, "Window Sequences")!.Total);
+        Assert.Equal(132, Series(stream, "Block Usage")!.Total);
         Assert.Equal(66, Series(stream, "Stereo Coding")!.Total);
 
         Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
@@ -232,7 +232,7 @@ public class AacCodingSeriesTests
         Report report = Fixtures.AnalyzeMpeg("aac/ffmpeg-mono-faststart.m4a");
         StreamInfo stream = Assert.Single(report.Streams);
 
-        Assert.Equal(["Window Sequences", "Block Sizes"], stream.CategorySeries.Select(s => s.Name));
+        Assert.Equal(["Block Usage", "Block Sizes"], stream.CategorySeries.Select(s => s.Name));
         Assert.DoesNotContain(Fixtures.Resolve(stream.Nodes[0], "Statistics").Single().Children, c => c.Name == "Stereo Coding");
     }
 
@@ -267,7 +267,7 @@ public class AacCodingSeriesTests
     {
         StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/stereo-coding-elements.aac").Streams);
         CategorySeries pairs = Series(stream, "Stereo Coding")!;
-        CategorySeries windows = Series(stream, "Window Sequences")!;
+        CategorySeries windows = Series(stream, "Block Usage")!;
 
         Assert.Equal([[1, 2], [0, 1], [1, 0]], Enumerable.Range(0, 3).Select(unit => Values(pairs, unit).ToArray()));
         Assert.Equal([[0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 0], [0, 2, 2, 0, 0, 0]], Enumerable.Range(0, 3).Select(unit => Values(windows, unit).ToArray()));
@@ -278,7 +278,7 @@ public class AacCodingSeriesTests
     public void An_adts_frame_of_several_blocks_is_one_unit()
     {
         StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/raw-blocks.aac").Streams);
-        CategorySeries windows = Series(stream, "Window Sequences")!;
+        CategorySeries windows = Series(stream, "Block Usage")!;
         Node[] frames = [.. stream.Nodes.SelectMany(n => n.Children).Where(c => c.Name == "Frame")];
 
         Assert.Equal(frames.Length, windows.Count);
@@ -332,7 +332,7 @@ public class AacCodingSeriesTests
 
         Report report = Analyzer.CreateDefault().Analyze("many.aac", new MemoryStream(data));
         StreamInfo stream = Assert.Single(report.Streams);
-        CategorySeries windows = Series(stream, "Window Sequences")!;
+        CategorySeries windows = Series(stream, "Block Usage")!;
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.Equal(4, windows.Count);
@@ -351,11 +351,11 @@ public class AacCodingSeriesTests
     {
         byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"));
         Report intact = Analyzer.CreateDefault().Analyze("adif.aac", new MemoryStream(whole));
-        Assert.NotNull(Series(Assert.Single(intact.Streams), "Window Sequences")!.XSeries);
+        Assert.NotNull(Series(Assert.Single(intact.Streams), "Block Usage")!.XSeries);
 
         Report cut = Analyzer.CreateDefault().Analyze("cut.aac", new MemoryStream(whole[..^6]));
         StreamInfo stream = Assert.Single(cut.Streams);
-        CategorySeries windows = Series(stream, "Window Sequences")!;
+        CategorySeries windows = Series(stream, "Block Usage")!;
         Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
 
         Assert.DoesNotContain(cut.Findings, f => f.Code == "parse.failed");
@@ -433,7 +433,7 @@ public class AacCodingSeriesTests
 
         Assert.Equal(960, FrameLength(report));
         Assert.Equal(count * 960L, stream.Samples);
-        Assert.Equal([0, 2], Values(Series(stream, "Window Sequences")!, 0));
+        Assert.Equal([0, 2], Values(Series(stream, "Block Usage")!, 0));
         int expected = (int)Math.Max(Math.Round(BandTables.Long960[4][30] * 44100.0 / (2 * 960), MidpointRounding.ToEven), Math.Round(BandTables.Short120[4][10] * 44100.0 / (2 * 120), MidpointRounding.ToEven));
         Assert.All(bandwidth.Values.ToArray(), v => Assert.Equal(expected, v));
         Assert.Equal(count, bandwidth.Values.Length);

@@ -48,6 +48,8 @@ public sealed partial class MpegAudioParser
         long cutEnd = 0;
         bool hasSideInfo = true;
         int maximumFill = 0;
+        int crcVerified = 0;
+        int crcFailed = 0;
         int free = 0;
         long freeBits = 0;
         long freeTicks = 0;
@@ -79,6 +81,18 @@ public sealed partial class MpegAudioParser
             hasSideInfo &= frame.HasSideInfo;
             region.Tally.AddFigure(FigureOf(state.Build, frame, header));
             maximumFill = Math.Max(maximumFill, frame.ReservoirFill);
+            if (frame is { Crc: >= 0, ComputedCrc: >= 0 })
+            {
+                if (frame.Crc == frame.ComputedCrc)
+                {
+                    crcVerified++;
+                }
+                else
+                {
+                    crcFailed++;
+                }
+            }
+
             if (BitrateOf(frame) is { } kbps)
             {
                 fixedRates[kbps] = fixedRates.GetValueOrDefault(kbps) + 1;
@@ -118,6 +132,15 @@ public sealed partial class MpegAudioParser
         {
             Add("Minimum Bitrate", NodeValue.Integer(fixedRates.Keys.First(), "kbps"), Explain.MinimumBitrate);
             Add("Maximum Bitrate", NodeValue.Integer(fixedRates.Keys.Last(), "kbps"), Explain.MaximumBitrate);
+        }
+
+        if (crcVerified + crcFailed > 0)
+        {
+            Add("Verified Frame Checksums", NodeValue.Integer(crcVerified, "frames", "frame"), Explain.StatFrameChecksums, Topics.Crc);
+            if (crcFailed > 0)
+            {
+                Add("Failed Frame Checksums", NodeValue.Integer(crcFailed, "frames", "frame"), Explain.StatFrameChecksumsFailed, Topics.Crc);
+            }
         }
 
         region.Distribution = Add("Bitrate Distribution", NodeValue.Integer(counts.Count, "bitrates", "bitrate"), Explain.Distribution, Topics.BitrateModes);

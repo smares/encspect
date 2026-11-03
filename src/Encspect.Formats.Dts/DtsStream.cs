@@ -353,7 +353,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             Add("Frames With CRC", Counted(CrcFrames), Explain.StatFlags, Topics.Crc);
         }
 
-        Add("Frames Failing a CRC", Counted(CrcErrors), Explain.StatCrcErrors, Topics.Crc);
+        Add("Failed Frame Checksums", Counted(CrcErrors), Explain.StatCrcErrors, Topics.Crc);
         Add("Coding Components", ComponentsText(), Explain.StatComponents, Topics.ExtensionSubstream);
         if (Lossless is { } sets)
         {

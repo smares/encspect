@@ -195,6 +195,32 @@ public sealed partial class OggParser
             : new Node("Codec", stream.Start, 0, "Unknown") { Description = codecText });
         node.Add(new Node("Chain Link", first.Offset + 5, 1, NodeValue.Integer(stream.Link)) { Description = Explain.ChainLink });
         node.Add(new Node("Page Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Pages.Count, "pages", "page")) { Description = Explain.PageCount });
+        int verifiedPages = 0;
+        int failedPages = 0;
+        for (int i = 0; i < stream.Pages.Count; i++)
+        {
+            PageStatus status = region.Pages[stream.Pages[i]].Status;
+            if ((status & PageStatus.Truncated) != 0)
+            {
+                continue;
+            }
+
+            if ((status & PageStatus.CrcMismatch) != 0)
+            {
+                failedPages++;
+            }
+            else
+            {
+                verifiedPages++;
+            }
+        }
+
+        node.Add(new Node("Verified Page Checksums", stream.Start, stream.End - stream.Start, NodeValue.Integer(verifiedPages, "pages", "page")) { Description = Explain.VerifiedPageChecksums, Topic = Topics.Crc });
+        if (failedPages > 0)
+        {
+            node.Add(new Node("Failed Page Checksums", stream.Start, stream.End - stream.Start, NodeValue.Integer(failedPages, "pages", "page")) { Description = Explain.FailedPageChecksums, Topic = Topics.Crc });
+        }
+
         node.Add(new Node("Packet Count", stream.Start, stream.End - stream.Start, NodeValue.Integer(stream.Assembler.Completed, "packets", "packet"))
         {
             Description = Explain.PacketCount,

@@ -67,8 +67,8 @@ internal static class StdText
     public const string StatUsesBitReservoir = "Whether the encode options turn the bit reservoir on.";
     public const string StatFramesPerSuperframe = "The most frames read in one superframe.";
     public const string StatFramesSpanning = "Frames that began in one superframe and ended in a later one.";
-    public const string StatLargestReservoir = "The most bytes a superframe left for the next one to finish, superframes inside a frame included.";
-    public const string StatAverageReservoir = "The bytes the superframes left for the next one, over all superframes.";
+    public const string StatLargestReservoir = "The largest bit reservoir fill any superframe ends with: the most bytes it left for the next one to finish, superframes inside a frame included.";
+    public const string StatAverageReservoir = "The mean bit reservoir fill the superframes end with: the bytes they left for the next one, over all superframes.";
     public const string StatFramesFollowedByFiller = "Frames that began in one superframe and are followed by bits up to the bit offset the next superframe states.";
     public const string StatFillerBits = "The bits between the end of such a frame and the bit offset.";
     public const string StatSuperframesInsideFrame = "Superframes in which no frame ends.";
@@ -88,7 +88,8 @@ internal static class StdText
 
     public const string BitrateSeries = "The bitrate of each frame if frames of its size followed one another, at the frame's first byte; 0 for an invalid frame.";
     public const string BitrateOverTimeSeries = "The bitrate over each second of the stream, from the valid frames that begin in it.";
-    public const string BitReservoirSeries = "The bytes each superframe leaves for the next one to finish, at the superframe's first byte.";
+    public const string ReservoirFillSeries = "The bit reservoir fill each superframe ends with: the bytes it leaves for the next one to finish, at the superframe's first byte.";
+    public const string ReservoirFillOverTimeSeries = "The mean bit reservoir fill of the superframes that start in each second of audio.";
 
     public static string Sizes(long count) => Counts.Of(count, "size", "sizes");
 

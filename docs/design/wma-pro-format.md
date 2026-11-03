@@ -624,7 +624,7 @@ The "Statistics" node (value "N frames, D s", N every frame record, D the durati
 | "Block Alignment" | bytes |
 | "Average Bitrate" | where the duration is above 0: block alignment × 8 × (packets of at least the block alignment) / duration / 1,000, kbps |
 | "Smallest Frame", "Largest Frame" | the fewest and most bits of a frame read without error, over 8, bytes |
-| "Minimum Frame Bitrate", "Maximum Frame Bitrate" | those bit counts × rate / F / 1,000, kbps |
+| "Minimum Bitrate", "Maximum Bitrate" | those bit counts × rate / F / 1,000, kbps |
 | "Frames Spanning Packets" | frames read in a later packet than the one they start in |
 | "Most Frames in a Packet" | the most frames read while one packet is read (those that end in it) |
 | "Has Length Prefix" | a boolean |
@@ -649,11 +649,11 @@ The "Statistics" node (value "N frames, D s", N every frame record, D the durati
 
 - Percentages are rounded to one decimal, halves to even, and printed with one decimal; a share of 0 of 0 is 0.0%. "K" takes the singular for 1 ("1 subframe").
 - **Which totals include invalid frames:**
-  - Frame-level totals count only frames read without error: "Smallest Frame", "Largest Frame", "Minimum Frame Bitrate", "Maximum Frame Bitrate", "Trimmed Samples", "Trimmed Frames", "Frames with a Dynamic Range Gain" and "Frames with a Postprocessing Transform". "Samples" and "Duration" follow the frames read without error too. "Frames", "Frames Spanning Packets" and the "Frames" count of the stream's Statistics value count every frame record, invalid ones included.
+  - Frame-level totals count only frames read without error: "Smallest Frame", "Largest Frame", "Minimum Bitrate", "Maximum Bitrate", "Trimmed Samples", "Trimmed Frames", "Frames with a Dynamic Range Gain" and "Frames with a Postprocessing Transform". "Samples" and "Duration" follow the frames read without error too. "Frames", "Frames Spanning Packets" and the "Frames" count of the stream's Statistics value count every frame record, invalid ones included.
   - Every subframe-level total includes the subframes that were read of invalid frames, up to the failure: "Subframes", "Subframe Sizes", "Channels per Subframe", "Channel Groups", "Bands Transformed", "Subframes with an Extended Header", "Subframes with Vector Counts", "Coded Channel Subframes", "Scale Factors Sent", "Scale Factors as Differences", "Second Coefficient Codebook", "Smallest Quantization Step", "Largest Quantization Step", "Non-Zero Coefficients", "Escape-Coded Coefficients" and "Damaged Coefficient Codes".
 - **Units and decimals:**
   - "Samples" and "Trimmed Samples" have the unit "samples" ("1 sample"), "Subframe Sizes" the unit "sizes" ("1 size"), the per-size children are named "L samples" ("1 sample" is never reached).
-  - "Block Alignment" is in bytes. "Smallest Frame" and "Largest Frame" are in bytes with one decimal (the bits over 8), "Average Bitrate", "Minimum Frame Bitrate" and "Maximum Frame Bitrate" in kbps with one decimal, "Duration" in seconds with three decimals.
+  - "Block Alignment" is in bytes. "Smallest Frame" and "Largest Frame" are in bytes with one decimal (the bits over 8), "Average Bitrate", "Minimum Bitrate" and "Maximum Bitrate" in kbps with one decimal, "Duration" in seconds with three decimals.
   - "Channels per Subframe" is the raw ratio (channels of all subframes over the subframes), shown with two decimals and no unit.
 - Without any frame record (only short packets, or frames none of which could be read) there is no Statistics node and no series.
 

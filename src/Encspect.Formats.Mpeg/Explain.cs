@@ -280,6 +280,8 @@ internal static class Explain
     public const string AncillaryTotal = "Bytes of ancillary data in the frames, as mp3guessenc counts them.";
     public const string AncillaryShare = "Their share of the frames' bytes.";
     public const string AncillaryRate = "Ancillary bits per second of audio.";
+    public const string StatFrameChecksums = "The frames whose stored CRC-16 equals the one computed over the header bits and the side information or bit allocation it covers.";
+    public const string StatFrameChecksumsFailed = "The frames whose stored CRC-16 differs from the one computed.";
     public const string AncillarySmallest = "The least ancillary data of a frame that has any.";
     public const string AncillaryLargest = "The most ancillary data of any frame.";
     public const string UsesPadding = "Whether any frame carries a padding slot.";

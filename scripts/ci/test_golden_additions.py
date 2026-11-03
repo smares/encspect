@@ -61,6 +61,18 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {"added": change["added"][:1]}))
 
+    def test_a_renamed_series_is_given_its_old_name_back_where_the_old_stream_has_it(self):
+        old = report(OLD_STATS)
+        old["streams"][0]["categorySeries"] = [{"name": "Window Sequences"}, {"name": "Block Sizes", "groupOf": "Window Sequences"}]
+        new = report(OLD_STATS)
+        new["streams"][0]["categorySeries"] = [{"name": "Block Usage"}, {"name": "Block Sizes", "groupOf": "Block Usage"}]
+        change = {"renamedSeries": [{"array": "categorySeries", "from": "Window Sequences", "to": "Block Usage"}]}
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {}))
+        # A stream whose old report lacks the series under the old name keeps the new name: that is an addition.
+        none = report(OLD_STATS)
+        self.assertTrue(self.check(none, new, change))
+
     def test_nodes_and_findings_listed_as_removed_or_added_are_taken_out_before_the_reports_are_compared(self):
         old = report([*OLD_STATS, node("Invalid Frames", value=1)], findings=[{"code": "a", "message": "m"}, {"code": "gone", "message": "g"}])
         new = report(OLD_STATS, findings=[{"code": "a", "message": "m"}, {"code": "new", "message": "n"}])

@@ -55,6 +55,9 @@ internal static class Toc
     // The audio bandwidth each name stands for (RFC 6716, table 1).
     public static readonly string[] BandwidthRanges = ["4 kHz", "6 kHz", "8 kHz", "12 kHz", "20 kHz"];
 
+    // The audio bandwidth each name stands for in whole hertz (RFC 6716, table 1), as the coded bandwidth figures of other formats are.
+    public static readonly int[] BandwidthHertz = [4000, 6000, 8000, 12000, 20000];
+
     public static string FrameDuration(int samples) => samples == 120 ? "2.5 ms" : $"{samples / 48} ms";
 
     public static string Describe(byte toc) =>

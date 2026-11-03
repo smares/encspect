@@ -7,7 +7,7 @@ namespace Encspect.Formats.Aac;
 // coding statistics mp3guessenc and EncSpot print: window sequences and shapes, stereo coding, the
 // tools channel streams use, codebooks, max_sfb and the coded bandwidth it gives, global gain, SBR, fill
 // and data stream elements. Shares are rounded half to even, to tenths of a percent. The nodes that
-// the coding series are anchored to (Window Sequences, Block Sizes, Stereo Coding and Coded
+// the coding series are anchored to (Block Usage, Block Sizes, Stereo Coding and Coded
 // Bandwidth) are returned.
 internal static class CodingStatistics
 {
@@ -40,7 +40,7 @@ internal static class CodingStatistics
         long streams = tally.ChannelStreams;
         if (streams > 0)
         {
-            windows = statistics.Add(cover("Window Sequences", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowSequences, Topics.Windows));
+            windows = statistics.Add(cover("Block Usage", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowSequences, Topics.Windows));
             for (int w = 0; w < 4; w++)
             {
                 if (tally.WindowSequences[w] > 0)

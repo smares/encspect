@@ -25,6 +25,7 @@ every child of that name. A change file:
                   {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"},
                   {"scope": "node", "parent": ["MP4", "Track 1 Samples", "AAC"], "name": "Access Unit", "last": 1}],  # one more node of a kind the parent has, last
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
+      "renamedSeries": [{"array": "categorySeries", "from": "Window Sequences", "to": "Block Usage"}],  # a series of a stream renamed (and the groupOf and xSeries that name it); only where the old stream has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
@@ -185,6 +186,25 @@ def reverse_renames(report, renamed):
                     child["name"] = entry["from"]
 
 
+def reverse_series_renames(report, renamed, old):
+    """Gives a stream's series back the name the old report's stream (the same index) has them under; a series the old stream lacks under
+    the old name is an addition, which the change lists as added."""
+    for entry in renamed:
+        for number, stream in enumerate(report.get("streams", [])):
+            before = old.get("streams", []) if old is not None else []
+            if old is not None and (number >= len(before) or not any(e.get("name") == entry["from"] for e in before[number].get(entry["array"], []))):
+                continue
+            for element in stream.get(entry["array"], []):
+                if element.get("name") == entry["to"]:
+                    element["name"] = entry["from"]
+            for element in stream.get("categorySeries", []):
+                if element.get("groupOf") == entry["to"]:
+                    element["groupOf"] = entry["from"]
+            for element in stream.get("series", []) + stream.get("categorySeries", []):
+                if element.get("xSeries") == entry["to"]:
+                    element["xSeries"] = entry["from"]
+
+
 def drop_changed(report, changed):
     for entry in changed:
         if entry.get("scope") == "stream":
@@ -255,6 +275,7 @@ def transform(new, change, old=None):
     remove_added(report, change.get("added", []), renamed_in(old, renamed) if old is not None else frozenset((tuple(e["parent"]), e["to"]) for e in renamed), old)
     reattach_moved(report, detached)
     reverse_renames(report, change.get("renamed", []))
+    reverse_series_renames(report, change.get("renamedSeries", []), old)
     mapping = {}
     final_paths(report["root"], [], mapping)
     for finding in report.get("findings", []):
@@ -314,6 +335,12 @@ def validate(change):
             for field in required:
                 if field not in entry:
                     raise ChangeError(f"{key}: an entry with the scope {scope} needs {field}: {json.dumps(entry)}")
+    for entry in change.get("renamedSeries", []):
+        for field in ("array", "from", "to"):
+            if field not in entry:
+                raise ChangeError(f"renamedSeries: an entry needs {field}: {json.dumps(entry)}")
+        if entry["array"] not in ("series", "categorySeries"):
+            raise ChangeError(f"renamedSeries: array must be series or categorySeries: {json.dumps(entry)}")
     for entry in change.get("bitrate", []):
         if "goldens" not in entry or not entry.get("reason"):
             raise ChangeError(f"bitrate: an entry needs goldens and a reason: {json.dumps(entry)}")
@@ -391,7 +418,7 @@ def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
     out = dict(change)
-    for key in ("added", "renamed", "moved", "changed", "removed", "bitrate"):
+    for key in ("added", "renamed", "renamedSeries", "moved", "changed", "removed", "bitrate"):
         if key in change:
             out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
     return out

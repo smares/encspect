@@ -902,6 +902,11 @@ public sealed class RawAacParser : IFormatParser
 
             // A frame cut by the data or the next frame loses all its blocks (also one past the stream limit, whose blocks are not read).
             figures.AddLost(config.OutputFrameLength * (long)(frame.IsTruncated || frame.IsCut ? counted : frame.LostBlocks));
+            if (frame.CrcState is CrcState.Verified or CrcState.Mismatch)
+            {
+                figures.AddChecksum(frame.CrcState == CrcState.Verified);
+            }
+
             vbr += frameHeader.IsVbr ? 1 : 0;
             appleHeaders += IsAppleHeader(frameHeader) ? 1 : 0;
             frames++;
