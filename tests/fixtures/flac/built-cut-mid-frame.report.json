@@ -361,21 +361,28 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 4,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 21850
                 },
                 {
                   "name": "Samples",
-                  "value": 12288,
+                  "value": 16384,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 21850
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 4096,
                   "unit": "samples",
                   "offset": 0,
                   "length": 21850
                 },
                 {
                   "name": "Duration",
-                  "value": 0.2786394557823129,
+                  "value": 0.37151927437641724,
                   "unit": "s",
                   "offset": 0,
                   "length": 21850
@@ -2129,8 +2136,9 @@
         ],
         "channelLayoutName": "stereo",
         "bitsPerSample": 16,
-        "samples": 12288,
-        "duration": 0.2786394557823129,
+        "samples": 16384,
+        "lostSamples": 4096,
+        "duration": 0.37151927437641724,
         "averageBitrate": 265.7771484375,
         "isVbr": true,
         "verification": {
@@ -2199,7 +2207,7 @@
       {
         "severity": "Warning",
         "code": "flac.total-samples-mismatch",
-        "message": "STREAMINFO says the stream holds 24000 samples, but its frames hold 12288, 11712 fewer.",
+        "message": "STREAMINFO says the stream holds 24000 samples, but its frames hold 16384, 7616 fewer.",
         "offset": 0,
         "length": 21850,
         "path": [

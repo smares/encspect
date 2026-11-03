@@ -64,6 +64,7 @@ public class DtsFixtureTests
             Assert.Equal(expected.GetProperty("channel_mode").GetString(), stream.ChannelMode);
             Assert.Equal(expected.GetProperty("channel_layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
             Assert.Equal(expected.GetProperty("samples").GetInt64(), stream.Samples);
+            Assert.Equal(expected.TryGetProperty("lost_samples", out JsonElement lost) ? lost.GetInt64() : 0, stream.LostSamples);
             Assert.Equal(expected.GetProperty("is_vbr").GetBoolean(), stream.IsVbr);
             Assert.All(stream.NodePaths, path => Assert.NotNull(path));
         }

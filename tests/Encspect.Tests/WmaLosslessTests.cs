@@ -87,7 +87,7 @@ public class WmaLosslessTests
         CodecContext context = stream.RunLossless();
         Finding gap = Assert.Single(context.Findings, f => f.Code == "wma.packet-sequence");
         Assert.Equal(2, gap.Count);
-        Assert.Equal(88200 - 12288, context.Streams[0].Samples);
+        Assert.Equal(88200 - 12288, context.Streams[0].Samples - context.Streams[0].LostSamples);
     }
 
     [Fact]

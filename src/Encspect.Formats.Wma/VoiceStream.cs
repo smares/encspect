@@ -83,7 +83,8 @@ internal sealed class VoiceStream
 
         int length = mediaObject.Length;
         int align = _p.BlockAlign;
-        int lead = length % align;
+        // An object the container cut has its whole packets first and the cut one last; an uncut object longer than a packet starts with the lead.
+        int lead = mediaObject.IsCut ? 0 : length % align;
         int first = PacketRecords.Count;
         if (length < align)
         {
@@ -107,7 +108,7 @@ internal sealed class VoiceStream
 
             for (; start < length; start += align)
             {
-                ProcessPacket(mediaObject, start, align, hasHeader: true);
+                ProcessPacket(mediaObject, start, Math.Min(align, length - start), hasHeader: true);
             }
         }
         catch (LimitReached)
@@ -205,8 +206,13 @@ internal sealed class VoiceStream
             packet.RangeCount++;
         }
 
-        Totals.Packets++;
-        Totals.PacketBytes += length;
+        // The packet a cut object ends in is in no packet count or byte figure (docs/design/samples-definition.md), only in the samples it declares.
+        if (!(mediaObject.IsCut && length < _p.BlockAlign))
+        {
+            Totals.Packets++;
+            Totals.PacketBytes += length;
+        }
+
         int index = PacketRecords.Count;
         if (_dropped)
         {
@@ -287,7 +293,12 @@ internal sealed class VoiceStream
         }
         else
         {
+            // A superframe that is cut, breaks the syntax or is dropped declares the samples it states, or 480 where it states none or more
+            // than it holds; they count and are lost (docs/design/samples-definition.md).
+            int declared = sf.HasSampleCount && sf.SampleCount <= VoiceParameters.SuperframeSamples ? sf.SampleCount : VoiceParameters.SuperframeSamples;
             Totals.Invalid++;
+            Totals.Samples += declared;
+            Totals.LostSamples += declared;
         }
 
         return index;

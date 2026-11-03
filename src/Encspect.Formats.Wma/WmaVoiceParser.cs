@@ -127,6 +127,7 @@ public sealed class WmaVoiceParser : ICodecParser
             ChannelMode = null,
             ChannelLayout = format.Channels == 1 ? ChannelLayouts.Mono : format.Channels == 2 ? ChannelLayouts.Stereo : null,
             Samples = totals.Samples,
+            LostSamples = totals.LostSamples,
             Duration = seconds,
             AverageBitrate = seconds > 0 ? totals.PacketBytes * 8.0 / seconds / 1000 : null,
             IsVbr = config.IsVbr ?? false,

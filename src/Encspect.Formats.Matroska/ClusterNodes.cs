@@ -205,7 +205,15 @@ internal static class ClusterNodes
         long position = framesAt;
         for (int i = 0; i < block.Frames; i++)
         {
-            long size = records.FrameSize(block, i);
+            // A frame of a block the file cuts shows the bytes it has, and one that starts past them is not listed; a whole block lists every frame, a
+            // frame of 0 bytes included.
+            long declared = records.FrameSize(block, i);
+            if (block.IsCut && position >= end && declared > 0)
+            {
+                break;
+            }
+
+            long size = Math.Max(0, Math.Min(declared, end - position));
             children.Add(new Node("Frame", position, size, NodeValue.Integer(size, "bytes", "byte")) { Description = Explain.Frame });
             position += size;
         }

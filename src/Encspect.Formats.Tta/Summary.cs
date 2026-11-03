@@ -95,10 +95,19 @@ internal static class Summary
         if (s.CutFrames > 0)
         {
             (long cut, Entry entry) = s.FirstCut;
-            long present = Math.Max(0, records.DataEnd - entry.Offset);
-            uint declared = entry.Size;
-            s.Findings.Add(Severity.Warning, "tta.frame-cut", At(cut, i => Nodes.Frame(records, i)), _ =>
-                $"The data ends inside frame {cut}, which the seek table gives {Counts.Of(declared, "byte", "bytes")}; {present} of them {Counts.Agree(present, "is", "are")} there.");
+            if (s.IsContained)
+            {
+                uint held = entry.Size;
+                s.Findings.Add(Severity.Warning, "tta.frame-cut", At(cut, i => Nodes.Frame(records, i)), _ =>
+                    $"The container ends frame {cut} after {Counts.Of(held, "byte", "bytes")}, before the frame is whole.");
+            }
+            else
+            {
+                long present = Math.Max(0, records.DataEnd - entry.Offset);
+                uint declared = entry.Size;
+                s.Findings.Add(Severity.Warning, "tta.frame-cut", At(cut, i => Nodes.Frame(records, i)), _ =>
+                    $"The data ends inside frame {cut}, which the seek table gives {Counts.Of(declared, "byte", "bytes")}; {present} of them {Counts.Agree(present, "is", "are")} there.");
+            }
         }
 
         if (s.MissingFrames > 0)
@@ -185,9 +194,19 @@ internal static class Summary
         double duration = hasSamples && rate > 0 ? samples / (double)rate : 0;
         StreamFigures? figures = hasSamples ? Figures(s) : null;
         statistics.Add(cover("Frames", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatFrames, Topics.Stream));
+        if (!hasSamples && s.LostSamples > 0)
+        {
+            statistics.Add(cover("Lost Samples", NodeValue.Integer(s.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         if (hasSamples)
         {
             statistics.Add(Cover3("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
+            if (s.LostSamples > 0)
+            {
+                statistics.Add(cover("Lost Samples", NodeValue.Integer(s.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+            }
+
             statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         }
 
@@ -227,6 +246,7 @@ internal static class Summary
             ChannelMode = channels switch { 1 => "Mono", 2 => "Stereo", > 2 => "Multichannel", _ => null },
             BitsPerSample = bits > 0 ? bits : null,
             Samples = samples,
+            LostSamples = s.LostSamples,
             Duration = duration,
             AverageBitrate = figures?.AverageBitrate,
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,

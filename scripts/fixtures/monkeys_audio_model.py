@@ -235,6 +235,53 @@ def start_fields(data, a, f, version_has_special=True):
     return word & 0x7FFFFFFF, None
 
 
+def classify(data, a):
+    """Per frame, in order: (blocks, state) with state "misplaced" (the seek table puts it outside the frame data), "absent" (no byte in the file),
+    "lost" (the data ends inside it, or it is too short for the CRC and the special frame codes it starts with) or "held" (whole)."""
+    avail = max(0, min(len(data), a.data_end) - a.word_start) // 4 * 4
+    span = a.data_end - a.word_start
+    has_crc = getattr(a, "has_crc", True)
+    has_special = getattr(a, "has_special", True)
+    out = []
+    for f, frame in enumerate(a.frames):
+        start, end = frame["start"], frame["end"]
+        if start < 0 or start > span or end < start or end > span:
+            out.append((frame["blocks"], "misplaced"))
+            continue
+        if start >= avail:
+            out.append((frame["blocks"], "absent"))
+            continue
+        usable = min(end, avail)
+        short = False
+        if has_crc:
+            if usable - start < 4:
+                short = True
+            else:
+                first = stream_bytes(data, a.word_start, start, start + 4)
+                short = bool(has_special and struct.unpack(">I", first[:4])[0] & 0x80000000 and usable - start < 8)
+        out.append((frame["blocks"], "lost" if end > avail or short else "held"))
+    return out
+
+
+def declared(data, a):
+    """(samples, lost samples) of the frames, by the definition in docs/design/samples-definition.md: a frame counts the blocks its header declares when
+    its first byte is in the file (or the seek table places it outside the frame data, where that cannot be told); it is lost when the data ends inside it
+    or holds less than the CRC and, where the frame flags them, the special frame codes it starts with."""
+    states = classify(data, a)
+    return (sum(b for b, st in states if st != "absent"), sum(b for b, st in states if st == "lost"))
+
+
+def held_totals(data, a, limit=None):
+    """(bits, blocks) of the frames the file holds whole, which the bitrate figures cover, among the first limit frames."""
+    states = classify(data, a)
+    bits = blocks = 0
+    for (b, st), frame in list(zip(states, a.frames))[:limit]:
+        if st == "held":
+            bits += (frame["end"] - frame["start"]) * 8
+            blocks += b
+    return bits, blocks
+
+
 def build(frames, level, bits, channels, rate, blocks_per_frame, final_blocks, header_data=b"", terminating=b"", junk=b"", version=3990, program=13420,  # 13420: the program version (13.42) these hand-built files imitate
           flags=0, signature=b"MAC ", total_frames=None, seek=None, descriptor_bytes=DESCRIPTOR, header_bytes=HEADER, md5=None, frame_data_bytes=None,
           terminating_bytes=None, header_data_bytes=None, seek_bytes=None, seek_pad=0):
@@ -323,9 +370,8 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
         entries.append({"index": index, "offset": offset, "length": length, "samples": frame["blocks"], "crc": None if crc is None else f"0x{crc:08X}",
                         "special": None if special is None else f"0x{special:08X}", "start": frame["start"], "end": frame["end"]})
     rated = len(a.frames) if rated is None else rated
-    bits = sum((f["end"] - f["start"]) * 8 for f in a.frames[:rated])
-    coded = sum(f["blocks"] for f in a.frames[:rated])
-    samples = 0 if a.total_frames == 0 else (a.total_frames - 1) * a.blocks_per_frame + a.final_blocks
+    bits, coded = held_totals(data, a, rated)
+    samples, lost = declared(data, a) if a.total_frames else (0, 0)
     default = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed)
     verify = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed, decode.get("checked", 0), decode.get("failed", 0))
     wav_layout, wav_findings = wav_header(a.header_data, a.channels)
@@ -337,6 +383,7 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
         "channels": a.channels,
         "channel_mode": {0: None, 1: "Mono", 2: "Mid/side stereo"}.get(a.channels, "Multichannel"),
         "samples": samples,
+        "lost_samples": lost,
         "duration": samples / a.rate if a.rate else 0,
         "bits_per_sample": a.bits,
         "average_bitrate": bits * a.rate / coded / 1000 if coded and a.rate else None,
@@ -453,12 +500,12 @@ def old_frame_entries(data, a):
     return entries
 
 
-def old_stream_info(a, entries_bits, samples):
+def old_stream_info(a, entries_bits, samples, lost=0, coded=None):
     layout = wav_header(a.header_data, a.channels)[0] or {1: ["front center"], 2: ["front left", "front right"]}.get(a.channels)
     return {"codec": "Monkey's Audio", "layout": layout, "sample_rate": a.rate, "channels": a.channels,
             "channel_mode": {0: None, 1: "Mono", 2: "Mid/side stereo"}.get(a.channels, "Multichannel"), "samples": samples,
-            "duration": samples / a.rate if a.rate else 0, "bits_per_sample": a.bits,
-            "average_bitrate": entries_bits * a.rate / samples / 1000 if samples and a.rate else None,
+            "lost_samples": lost, "duration": samples / a.rate if a.rate else 0, "bits_per_sample": a.bits,
+            "average_bitrate": entries_bits * a.rate / (samples if coded is None else coded) / 1000 if (samples if coded is None else coded) and a.rate else None,
             "encoder": f"Monkey's Audio (file version {a.version // 1000}.{a.version % 1000 // 10:02d})"}
 
 

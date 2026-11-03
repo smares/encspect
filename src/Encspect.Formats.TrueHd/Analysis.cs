@@ -54,6 +54,7 @@ internal sealed class Analysis
     private long _runOffset;
     private long _runFirstFrame;
     private long _runCoded;
+    private bool _isRunEnding;
 
     public Analysis(AnalysisContext context)
     {
@@ -141,6 +142,13 @@ internal sealed class Analysis
     public long SkippedBytes { get; private set; }
 
     public long Samples { get; private set; }
+
+    // The samples the counted units declare, before an end of stream marker drops any: the readable units' held samples and, for each
+    // lost unit, those of the sync in force.
+    public long CodedSamples { get; private set; }
+
+    // The declared samples of the units that are cut, break the syntax or follow damage until the next major sync.
+    public long LostSamples { get; private set; }
 
     public long ShortestUnit { get; private set; } = long.MaxValue;
 
@@ -352,6 +360,12 @@ internal sealed class Analysis
             {
                 HasGap = true;
                 _isGapPending = true;
+                if (_sync is { UnitSamples: > 0 } syncInForce)
+                {
+                    AddLostToRun(syncInForce.UnitSamples);
+                }
+
+                LoseUnit(memory, offset, _sync);
                 Findings.Add(Severity.Warning, "truehd.units-after-damage", () => Nodes.Unit(records, index), count =>
                     $"{(count == 1 ? "An access unit follows" : $"{count} access units follow")} damage and carry no major sync, so the stream cannot be read until the next major sync, at the first of them at 0x{offset:X}.");
             }
@@ -458,6 +472,7 @@ internal sealed class Analysis
         UnitStatus overall = status;
         bool isReadable = !isUnreadable;
         int outSamples = 0;
+        int heldSamples = 0;
         bool isDamaged = false;
         UnitDetail? detail = null;
         MajorSync? current = _sync;
@@ -465,7 +480,7 @@ internal sealed class Analysis
         if (isReadable && current is { } active)
         {
             SubstreamsRead read = ReadSubstreams(memory, offset, index, layout, active, overall);
-            (isReadable, outSamples, isDamaged, isWalked, overall, detail) = (read.IsReadable, read.OutSamples, read.IsDamaged, read.IsWalked, read.Status, read.Detail);
+            (isReadable, outSamples, heldSamples, isDamaged, isWalked, overall, detail) = (read.IsReadable, read.OutSamples, read.HeldSamples, read.IsDamaged, read.IsWalked, read.Status, read.Detail);
             isUnsupported = read.IsUnsupported;
         }
 
@@ -507,10 +522,13 @@ internal sealed class Analysis
         }
 
         Units++;
+        // A unit that is cut or breaks the syntax is lost whole: it declares the samples of the sync in force (units that use what the analyzer
+        // leaves aside, and the ones before the first sync, are not counted).
+        int lostSamples = !isReadable && !isUnsupported && current is { UnitSamples: > 0 } known ? known.UnitSamples : 0;
         if (_hasSynced)
         {
             long counted = isReadable ? outSamples : current?.UnitSamples ?? 0;
-            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0, outSamples);
+            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0, isReadable ? outSamples : lostSamples, lostSamples > 0);
         }
 
         if (AddEntry(new Entry { Kind = EntryKind.Unit, Status = overall, Offset = offset, Header = header, SyncLength = syncLength }, bytes.Length))
@@ -544,11 +562,38 @@ internal sealed class Analysis
 
             FirstSample += outSamples;
             Samples += outSamples;
+            CodedSamples += heldSamples;
+        }
+        else if (lostSamples > 0)
+        {
+            LoseUnit(memory, offset, current);
         }
         else if (Session is { IsDecoding: true } failing && !_isDecodePaused)
         {
             failing.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, 0) { IsUnreadable = true, IsDamaged = true });
         }
+    }
+
+    // Counts a unit that is lost as the samples of the sync in force: the decoding session gets it as an unreadable unit that spans them, so
+    // that the decoded stream has a gap there.
+    private void LoseUnit(ReadOnlyMemory<byte> memory, long offset, MajorSync? sync)
+    {
+        if (sync is not { UnitSamples: > 0 } counting)
+        {
+            return;
+        }
+
+        int samples = counting.UnitSamples;
+        CodedSamples += samples;
+        LostSamples += samples;
+        Samples += samples;
+        _samplesByRate[counting.SampleRate] = _samplesByRate.GetValueOrDefault(counting.SampleRate) + samples;
+        if (Session is { IsDecoding: true } session && !_isDecodePaused)
+        {
+            session.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, samples) { IsUnreadable = true, IsDamaged = true });
+        }
+
+        FirstSample += samples;
     }
 
     private static string DescribeSync(SyncProblem problem) => problem switch
@@ -646,7 +691,7 @@ internal sealed class Analysis
     }
 
     // What reading the substreams of a unit gave. IsUnsupported: the unit cannot be read because of what the analyzer leaves aside, and of nothing else.
-    private readonly record struct SubstreamsRead(bool IsReadable, int OutSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail, bool IsUnsupported);
+    private readonly record struct SubstreamsRead(bool IsReadable, int OutSamples, int HeldSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail, bool IsUnsupported);
 
     private SubstreamsRead ReadSubstreams(ReadOnlyMemory<byte> memory, long offset, int index, UnitLayout layout, MajorSync sync, UnitStatus status)
     {
@@ -817,6 +862,7 @@ internal sealed class Analysis
         }
 
         int outSamples = 0;
+        int heldSamples = 0;
         if (isReadable)
         {
             // The first restart header of a unit that could be read names a presentation, as the decoder's first does.
@@ -832,6 +878,7 @@ internal sealed class Analysis
 
             WalkResult top = _walks[read - 1]!;
             outSamples = top.OutputSamples;
+            heldSamples = top.Samples;
             if (top.IsDropMoreThanHeld)
             {
                 int dropped = top.Tail.DroppedSamples;
@@ -896,7 +943,7 @@ internal sealed class Analysis
         }
 
         bool isWalked = isReadable && !lent.IsEmpty;
-        return new SubstreamsRead(isReadable, outSamples, isDamaged, isWalked, status, detail, hasUnsupportedFault && !hasDamageFault);
+        return new SubstreamsRead(isReadable, outSamples, heldSamples, isDamaged, isWalked, status, detail, hasUnsupportedFault && !hasDamageFault);
     }
 
     // Stores what the nodes of a unit are built from.
@@ -1116,10 +1163,10 @@ internal sealed class Analysis
     }
 
     // coded: the samples the unit really codes, none for a unit that cannot be read; samples is what the bitrate counts it over.
-    private void Figure(long offset, int length, long samples, int available, int rate, int coded)
+    private void Figure(long offset, int length, long samples, int available, int rate, long coded, bool isLost)
     {
         Figures ??= new StreamFigures(Records.StreamRate > 0 ? Records.StreamRate : 48000);
-        if (_runUnits > 0 && rate != _runRate)
+        if (_runUnits > 0 && (rate != _runRate || _isRunEnding))
         {
             FlushRun();
         }
@@ -1142,6 +1189,24 @@ internal sealed class Analysis
         {
             FlushRun();
         }
+        else if (isLost)
+        {
+            // The units that wait for the next major sync after this one are lost too: they join its run, in the samples only.
+            _isRunEnding = true;
+        }
+    }
+
+    // The samples of a lost unit that is no unit of a run of its own: the run that is open, or the last one.
+    private void AddLostToRun(long samples)
+    {
+        if (_runUnits > 0)
+        {
+            _runCoded += samples;
+        }
+        else
+        {
+            Figures?.AddCoded(samples);
+        }
     }
 
     // isLast: the stream's end flushes what is left, a run of fewer units than the others.
@@ -1149,9 +1214,10 @@ internal sealed class Analysis
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength, _runFirstFrame, _runCoded);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && !_isRunEnding && _runUnits < RunLength, _runFirstFrame, _runCoded);
         }
 
+        _isRunEnding = false;
         _runUnits = 0;
         _runBits = 0;
         _runSamples = 0;

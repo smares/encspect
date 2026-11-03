@@ -323,10 +323,10 @@ internal static class Explain
     public const string CrcCheck = "Whether the CRC-16 of Annex B over the bytes the field covers, the CRC itself included, comes to zero, as it does for an intact header.";
 
     public const string Statistics = "Figures computed over every frame of the stream.";
-    public const string StatUnits = "How many frames the stream has, a core frame and its extension substreams counting as one.";
-    public const string StatSamples = "The samples per channel the frames hold, counted at the sampling frequency the stream delivers (the core's, or the higher one an extension gives), 32 for each block of a core frame (5.4.2, NBLKS).";
+    public const string StatUnits = "How many frames the stream has, a core frame and its extension substreams counting as one. A frame that the end of the data or the container cuts is not counted.";
+    public const string StatSamples = "The samples per channel the frames hold, counted at the sampling frequency the stream delivers (the core's, or the higher one an extension gives), 32 for each block of a core frame (5.4.2, NBLKS). A cut frame counts the samples its header declares, and they are lost (Lost Samples).";
     public const string StatDuration = "The stream's length in seconds: the samples divided by the sampling frequency they are counted at.";
-    public const string AverageBitrate = "The bytes of every frame, extension substreams included, over the duration.";
+    public const string AverageBitrate = "The bytes of every frame that is not cut, extension substreams included, over the duration of the frames that are not cut.";
     public const string Smallest = "The size of the smallest frame in bytes.";
     public const string Largest = "The size of the largest frame in bytes.";
     public const string MinimumBitrate = "The lowest bit rate of any single frame, from its size and its samples.";

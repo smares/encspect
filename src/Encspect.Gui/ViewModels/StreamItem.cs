@@ -48,6 +48,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add(Format.Duration(Stream.Duration));
             }
 
+            if (Stream.LostSamples > 0)
+            {
+                parts.Add(Format.Count(Stream.LostSamples, "lost sample", "lost samples"));
+            }
+
             if (Stream.AverageBitrate is { } bitrate)
             {
                 parts.Add(Format.Bitrate(bitrate, Stream.IsVbr));

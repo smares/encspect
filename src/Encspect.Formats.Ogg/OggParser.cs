@@ -180,7 +180,8 @@ public sealed partial class OggParser : IFormatParser
                         continue;
                     }
 
-                    if (followed)
+                    // The page that follows may itself be cut short inside its header; it still confirms where this page ends.
+                    if (followed || Pages.Probe(window, next, end, out _) == PageProbe.HeaderCut)
                     {
                         AddPage(region, window, header, computed, header.Length, PageStatus.CrcMismatch, runs);
                         position = next;

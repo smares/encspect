@@ -98,6 +98,21 @@ public sealed class MappedBytes
         FileStart = segments > 0 ? _offsets[0] : FileEnd;
     }
 
+    private MappedBytes(MappedBytes other)
+    {
+        Data = other.Data;
+        _starts = other._starts;
+        _offsets = other._offsets;
+        FileStart = other.FileStart;
+        FileEnd = other.FileEnd;
+        IsOpaque = other.IsOpaque;
+        EndPosition = other.EndPosition;
+        EndPositionField = other.EndPositionField;
+        IsEndOfStream = other.IsEndOfStream;
+        FollowsGap = other.FollowsGap;
+        IsCut = true;
+    }
+
     private MappedBytes(ReadOnlyMemory<byte> data, long fileStart, long fileEnd)
     {
         Data = data;
@@ -126,6 +141,13 @@ public sealed class MappedBytes
 
     public bool FollowsGap { get; init; }
 
+    // For a packet a container hands to a codec parser: the bytes are not the whole packet, because the file ends inside it, the
+    // container's element ends first or its page was cut. Only the container knows, as the packets of most codings (a raw AAC access
+    // unit, an ALAC frame, an Opus, Vorbis or Speex packet, a WMA media object) show no cut in their own syntax: a parser that cannot see
+    // the cut counts a flagged packet by what its syntax declares and records it as cut; one that can ignores the flag. The members
+    // above and this one describe a packet and are not carried by Slice.
+    public bool IsCut { get; init; }
+
     public ReadOnlySpan<byte> Span => Data.Span;
 
     public int Length => Data.Length;
@@ -139,15 +161,18 @@ public sealed class MappedBytes
     // part of them maps to the whole source range.
     public bool IsOpaque { get; }
 
-    public static MappedBytes Opaque(ReadOnlyMemory<byte> data, long fileStart, long fileEnd)
+    public static MappedBytes Opaque(ReadOnlyMemory<byte> data, long fileStart, long fileEnd, bool isCut = false)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(fileStart);
         ArgumentOutOfRangeException.ThrowIfLessThan(fileEnd, fileStart);
-        return new MappedBytes(data, fileStart, fileEnd);
+        return new MappedBytes(data, fileStart, fileEnd) { IsCut = isCut };
     }
 
+    // The same bytes and packet members, flagged as cut: for a packet a content decoder returns, whose encoded frame was cut.
+    public MappedBytes AsCut() => IsCut ? this : new MappedBytes(this);
+
     // Reads the ranges, in file order, into one buffer: a packet put together from its pages.
-    public static MappedBytes Read(ByteReader reader, IReadOnlyList<ByteRange> ranges)
+    public static MappedBytes Read(ByteReader reader, IReadOnlyList<ByteRange> ranges, bool isCut = false)
     {
         ArgumentNullException.ThrowIfNull(reader);
         ArgumentNullException.ThrowIfNull(ranges);
@@ -182,7 +207,7 @@ public sealed class MappedBytes
             at += (int)range.Length;
         }
 
-        return new MappedBytes(data, ranges, ranges.Count > 0 ? ranges[^1].End : reader.Start);
+        return new MappedBytes(data, ranges, ranges.Count > 0 ? ranges[^1].End : reader.Start) { IsCut = isCut };
     }
 
     // The file offset of the byte at index; Length maps to FileEnd.

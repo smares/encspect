@@ -3,6 +3,7 @@ namespace Encspect.Formats.Aac;
 // The background articles the AAC nodes point to, by the IDs the host's topic library serves.
 internal static class Topics
 {
+    public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string ObjectTypes = "aac-object-types";
     public const string AudioSpecificConfig = "audio-specific-config";
     public const string RawDataBlocks = "aac-raw-data-blocks";

@@ -54,18 +54,20 @@
    ],
    "samples": 90112,
    "frames": 45,
-   "packets": 5,
+   "packets": 6,
    "findings": [
     "asf.file-size",
     "asf.index-missing",
     "asf.object-incomplete",
     "asf.object-truncated",
     "asf.packet-count",
-    "asf.packet-truncated"
+    "asf.packet-truncated",
+    "wma.packet-short"
    ],
    "info_findings": [
     "wma.frame-unfinished"
-   ]
+   ],
+   "lost_samples": 16384
   },
   {
    "file": "Beethovens_nionde_symfoni_Scherzo-1.wma",
@@ -309,19 +311,21 @@
    ],
    "samples": 9029504,
    "frames": 2205,
-   "packets": 514,
+   "packets": 515,
    "findings": [
     "asf.file-size",
     "asf.index-missing",
     "asf.object-incomplete",
     "asf.object-truncated",
     "asf.packet-count",
-    "asf.packet-truncated"
+    "asf.packet-truncated",
+    "wma.packet-short"
    ],
    "info_findings": [
     "wma.frame-unfinished"
    ],
-   "samples_differ": "the file ends in an unfinished frame and Microsoft's rule gives what the Windows Source Reader outputs, 9,029,504 (the decoder DMO outputs 48 kHz in two channels and gives half); ffmpeg's count is the frames'"
+   "samples_differ": "the file ends in an unfinished frame and Microsoft's rule gives what the Windows Source Reader outputs, 9,029,504 (the decoder DMO outputs 48 kHz in two channels and gives half); ffmpeg's count is the frames'",
+   "lost_samples": 8192
   },
   {
    "file": "classical_16_16_1_8000_off_0_off_1_29.wma",
@@ -610,18 +614,20 @@
    ],
    "samples": 208896,
    "frames": 103,
-   "packets": 3,
+   "packets": 4,
    "findings": [
     "asf.file-size",
     "asf.index-missing",
     "asf.object-incomplete",
     "asf.object-truncated",
     "asf.packet-count",
-    "asf.packet-truncated"
+    "asf.packet-truncated",
+    "wma.packet-short"
    ],
    "info_findings": [
     "wma.frame-unfinished"
-   ]
+   ],
+   "lost_samples": 22528
   },
   {
    "file": "luckynight.wma",
@@ -703,7 +709,8 @@
    ],
    "info_findings": [
     "wma.packet-short"
-   ]
+   ],
+   "lost_samples": 2048
   },
   {
    "file": "master_audio_2.0_24bit.wma",
@@ -753,7 +760,8 @@
    "findings": [
     "wma.frame-invalid"
    ],
-   "info_findings": []
+   "info_findings": [],
+   "lost_samples": 2048
   },
   {
    "file": "g2_24bit.wma",

@@ -69,6 +69,8 @@ public sealed partial class MpegAudioParser
         long ticks = 0;
         long bits = 0;
         long samples = 0;
+        long lost = 0;
+        long lostTicks = 0;
         int? firstBitrate = null;
         bool isVbr = false;
         int audio = 0;
@@ -93,6 +95,14 @@ public sealed partial class MpegAudioParser
             if (regions.Count == 0 || regions[^1] != state.Regions[region])
             {
                 regions.Add(state.Regions[region]);
+            }
+
+            if (IsCut(frame))
+            {
+                int declared = new MpegHeader(frame.Header).Samples;
+                samples += declared;
+                lost += declared;
+                lostTicks += Ticks(frame);
             }
 
             if (IsAudio(frame))
@@ -125,7 +135,8 @@ public sealed partial class MpegAudioParser
             ChannelLayout = layout,
             MultilingualChannels = multilingual,
             Samples = samples,
-            Duration = ticks / (double)Clock,
+            LostSamples = lost,
+            Duration = (ticks + lostTicks) / (double)Clock,
             AverageBitrate = ticks > 0 ? bits * (double)Clock / (ticks * 1000.0) : null,
             IsVbr = isVbr,
             Encoder = encoderName,

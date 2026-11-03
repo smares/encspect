@@ -169,9 +169,20 @@ def check_info(name, manifest, path, problems):
         problems.append(f"mpcdec -i length: {info.get('length')!r}, manifest {stream['samples']} samples")
 
 
+def decoded_samples_of(manifest):
+    """The samples the analyzer counts less the lost ones inside the counted range: a frame cut by the end of the data or damaged is counted and lost, and the
+    decoders do not decode it. The SV4 or SV5 last frame the data cuts (musepack.last-frame-unwritten) is lost but trimmed from the samples (decoders never
+    decode that frame), so it is outside the samples and is not subtracted."""
+    info = manifest["stream_infos"][0]
+    lost = info.get("lost_samples", 0)
+    if any(f["code"] == "musepack.last-frame-unwritten" for f in manifest.get("findings", [])):
+        lost -= m.FRAME
+    return info["samples"] - lost
+
+
 def check_decode(name, manifest, path, problems, exact=True):
     decoded = mpcdec_samples(path)
-    samples = manifest["stream_infos"][0]["samples"]
+    samples = decoded_samples_of(manifest)
     if not exact:
         # A decoder also decodes the frames of a cut packet or frame; it may not pass what the header announces.
         header = manifest["header"]
@@ -246,8 +257,8 @@ def check_mpc2sv8(name, manifest, path, problems):
             problems.append("mpc2sv8 wrote nothing")
             return
         decoded = mpcdec_samples(out)
-        if decoded is None or decoded[0] != manifest["stream_infos"][0]["samples"]:
-            problems.append(f"mpc2sv8's SV8 decodes to {decoded and decoded[0]} samples, manifest {manifest['stream_infos'][0]['samples']}")
+        if decoded is None or decoded[0] != decoded_samples_of(manifest):
+            problems.append(f"mpc2sv8's SV8 decodes to {decoded and decoded[0]} samples, manifest {decoded_samples_of(manifest)} (less the lost ones)")
 
 
 def decoder_lines(tool, path):
@@ -289,7 +300,7 @@ def check_old(name, manifest, path, frames126, portable, problems):
             if [str(bits), str(want[1]), want[2], str(want[3])] != got:
                 problems.append(f"frame {i}: libmpcdec 1.2.6 {got}, manifest {want}")
                 break
-        samples = manifest["stream_infos"][0]["samples"]
+        samples = decoded_samples_of(manifest)
         if lines[-1] != ["samples", str(samples)]:
             problems.append(f"libmpcdec 1.2.6 {' '.join(lines[-1])}, manifest {samples} samples")
         output = portable and run([str(portable_decoder), str(path)]).stdout.decode("latin-1")

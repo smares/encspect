@@ -1,0 +1,143 @@
+{
+ "note": "The samples alignment (docs/design/samples-definition.md): a frame (SV8: the frames of an audio packet) cut by the end of the data, and a frame whose subband resolutions run past its length or out of range, are counted in Coded Samples, Samples and Duration where the stream is read, and reported in the new statistic Lost Samples and the stream's lostSamples; the last frame of an SV4 or SV5 stream is counted in Coded Samples, trimmed from the samples and lost only where cut. The frame count and the bitrates leave them out.",
+ "goldens": [
+  "tests/fixtures/musepack/external-mppsv4-vbr.report.json",
+  "tests/fixtures/musepack/external-mppsv5-left-right-vbr.report.json",
+  "tests/fixtures/musepack/external-mppsv5-vbr.report.json",
+  "tests/fixtures/musepack/sv5-band-overrun.report.json",
+  "tests/fixtures/musepack/sv5-seek-tag.report.json",
+  "tests/fixtures/musepack/sv6-band-overrun.report.json",
+  "tests/fixtures/musepack/sv7-damaged-length.report.json",
+  "tests/fixtures/musepack/sv7-data-after-tag.report.json",
+  "tests/fixtures/musepack/sv7-resolution-invalid.report.json",
+  "tests/fixtures/musepack/sv7-truncated.report.json",
+  "tests/fixtures/musepack/sv8-truncated.report.json"
+ ],
+ "added": [
+  {
+   "scope": "stream",
+   "key": "lostSamples"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Musepack SV5",
+    "Statistics"
+   ],
+   "name": "Lost Samples"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Musepack SV6",
+    "Statistics"
+   ],
+   "name": "Lost Samples"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Musepack SV7",
+    "Statistics"
+   ],
+   "name": "Lost Samples"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Musepack SV8",
+    "Statistics"
+   ],
+   "name": "Lost Samples"
+  }
+ ],
+ "changed": [
+  {
+   "scope": "stream",
+   "fields": [
+    "duration",
+    "samples"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV4",
+    "Statistics",
+    "Coded Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV5",
+    "Statistics",
+    "Coded Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV7",
+    "Statistics",
+    "Coded Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV7",
+    "Statistics",
+    "Duration"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV7",
+    "Statistics",
+    "Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV8",
+    "Statistics",
+    "Coded Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV8",
+    "Statistics",
+    "Duration"
+   ],
+   "fields": [
+    "value"
+   ]
+  },
+  {
+   "path": [
+    "Musepack SV8",
+    "Statistics",
+    "Samples"
+   ],
+   "fields": [
+    "value"
+   ]
+  }
+ ]
+}

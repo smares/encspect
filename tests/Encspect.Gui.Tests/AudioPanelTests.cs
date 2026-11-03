@@ -309,7 +309,7 @@ public class AudioPanelTests
         var graph = (SpectrogramGraph)window.Graph.Graph!;
         SampleLocator locator = graph.Locator!;
         Assert.Equal(origin, locator.Base);
-        Assert.Equal(locator.Base, graph.Measurements.FirstPosition + graph.Measurements.Samples + graph.Measurements.LostSamples - locator.Total);
+        Assert.Equal(locator.Base, graph.Measurements.FirstPosition + graph.Measurements.Samples + graph.Measurements.LostSamples - graph.Measurements.LeadingLostSamples - locator.Total);
 
         // The first column leads to the first frame and the last to the last.
         long firstFrame = (long)graph.Stream.Series.First(s => s.Axis == SeriesAxis.FrameOffset).X.Span[0];
@@ -317,6 +317,24 @@ public class AudioPanelTests
         Assert.True(origin == 0 || graph.FrameAt(0, null) == firstFrame);
         Assert.Equal(locator.Count - 1, locator.FrameIndexAt(locator.Base + locator.Total - 1));
         Assert.Equal(0, locator.FrameIndexAt(locator.Base + 1));
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_stream_whose_last_frame_is_cut_is_located_over_all_its_frames()
+    {
+        // The last of 20,000 samples' frames is cut by the end of the file: the decoder delivers 18,432, the stream's samples count the cut
+        // frame, and the measured positions end where the units do (the trailing lost samples), so the located span is the stream's.
+        DetailWindow window = Open(Path.Combine(Fixtures.Directory, "monkeys-audio", "built-old-3860-last-frame-cut.ape"));
+        Choose(window, "Waveform");
+        var graph = (WaveformGraph)window.Graph.Graph!;
+        StreamMeasurements measured = graph.Measurements;
+        Assert.Equal((0L, 18432L, 1568L), (measured.FirstPosition, measured.Samples, measured.TrailingLostSamples));
+        Assert.Equal(measured.LostSamples, measured.TrailingLostSamples);
+        SampleLocator locator = graph.Locator!;
+        Assert.Equal((0L, graph.Stream.Samples), (locator.Base, locator.Total));
+        Assert.Equal(locator.Count - 1, locator.FrameIndexAt(locator.Base + locator.Total - 1));
+        Assert.Equal(locator.Count - 1, locator.FrameIndexAt(measured.FirstPosition + measured.Samples + 1));
         window.Close();
     }
 

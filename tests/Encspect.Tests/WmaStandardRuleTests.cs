@@ -174,7 +174,9 @@ public class WmaStandardRuleTests
         var (run, statistics) = Run(Superframe(0, whole + 1, Frames(whole + 1, 150)));
 
         Assert.Equal((whole - 2) * F, Value(statistics, "Samples"));
-        Assert.Equal(whole * F, Value(statistics, "Coded Samples"));
+        // The announced frame the superframe cuts is declared and lost: it counts in the coded samples, not in the rule's figure.
+        Assert.Equal((whole + 1) * F, Value(statistics, "Coded Samples"));
+        Assert.Equal(F, Value(statistics, "Lost Samples"));
         AssertNotCounted(run);
     }
 
@@ -231,7 +233,9 @@ public class WmaStandardRuleTests
 
         Assert.True(each > 0);
         AssertFallback(statistics);
-        Assert.Equal(0, Value(statistics, "Samples"));
+        // The second frame is announced and not whole: declared, so it counts and is lost.
+        Assert.Equal(F, Value(statistics, "Samples"));
+        Assert.Equal(F, Value(statistics, "Lost Samples"));
     }
 
     [Fact]

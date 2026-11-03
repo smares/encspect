@@ -1,5 +1,12 @@
 {
   "goldens": [
+    "tests/fixtures/ogg/bad-crc.report.json",
+    "tests/fixtures/ogg/eos-inside-packet.report.json",
+    "tests/fixtures/ogg/frames-corrupt.report.json",
+    "tests/fixtures/ogg/huge-lacing.report.json",
+    "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+    "tests/fixtures/ogg/speex-wideband-layer-skip.report.json",
+    "tests/fixtures/ogg/truncated-page.report.json",
     "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
     "tests/fixtures/ogg/vorbis-granule-errors.report.json"
   ],
@@ -42,6 +49,261 @@
       ],
       "goldens": [
         "tests/fixtures/ogg/vorbis-granule-errors.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Audio Packets"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/eos-inside-packet.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Audio Packets"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/eos-inside-packet.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/eos-inside-packet.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/huge-lacing.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Audio Packets"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/huge-lacing.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/huge-lacing.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Audio Packets"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "fields": [
+        "value",
+        "length",
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "fields": [
+        "children",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/frames-corrupt.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "samples",
+        "duration",
+        "averageBitrate",
+        "isVbr",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json",
+        "tests/fixtures/ogg/eos-inside-packet.report.json",
+        "tests/fixtures/ogg/frames-corrupt.report.json",
+        "tests/fixtures/ogg/huge-lacing.report.json",
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Pages",
+        "Page",
+        "Body"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json",
+        "tests/fixtures/ogg/huge-lacing.report.json",
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    }
+  ],
+  "note": " Samples alignment (docs/design/samples-definition.md): the packets of a page that fails its CRC and the packets with bytes present of a truncated page, and a packet left unfinished at the end of the stream, are handed to the codec parser, the cut ones flagged; a stream gains lostSamples and the statistics node Lost Samples. bad-crc, truncated-page, huge-lacing and eos-inside-packet gain packets (their packet and statistics nodes change), frames-corrupt counts a packet with missing frames by the frames present.",
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json",
+        "tests/fixtures/ogg/eos-inside-packet.report.json",
+        "tests/fixtures/ogg/frames-corrupt.report.json",
+        "tests/fixtures/ogg/huge-lacing.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/speex-wideband-layer-skip.report.json",
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "speex.granule-beyond-packets",
+      "goldens": [
+        "tests/fixtures/ogg/frames-corrupt.report.json"
       ]
     }
   ]

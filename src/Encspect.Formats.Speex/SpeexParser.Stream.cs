@@ -91,6 +91,13 @@ public sealed partial class SpeexParser
         // Samples coded so far (frames_per_packet frames of the mode's size per packet), the delay
         // the first granule position implies, and the last position with the samples coded by then.
         private long _coded;
+
+        // The audio packets a container cut, by index, and the samples of the others: the bitrate figures cover those.
+        private readonly HashSet<int> _cutPackets = [];
+        private long _wholeCoded;
+
+        // Of _coded, the samples of the packets that are empty, corrupt or cut.
+        private long _lost;
         private long? _firstDelay;
         private long? _delay;
         private bool _afterGap;
@@ -220,6 +227,12 @@ public sealed partial class SpeexParser
         // Vorbis gives it (speexenc.c comment_init).
         private void AddComment(MappedBytes packet)
         {
+            if (packet.IsCut)
+            {
+                _parent.Add(Node.FromMapped("Cut Comment Data", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.CutCommentData));
+                return;
+            }
+
             _comment = context.ParseTag(TagName, packet, _parent);
             if (_comment is null)
             {
@@ -265,27 +278,58 @@ public sealed partial class SpeexParser
             }
 
             _packets++;
-            _bytes += packet.Length;
-            _sizes[packet.Length] = _sizes.GetValueOrDefault(packet.Length) + 1;
+
+            // The sizes and bitrates cover the packets the container hands over whole, as the other formats' do: a cut packet counts in the samples only.
+            if (packet.IsCut)
+            {
+                _cutPackets.Add(index);
+            }
+            else
+            {
+                _bytes += packet.Length;
+                _sizes[packet.Length] = _sizes.GetValueOrDefault(packet.Length) + 1;
+            }
+
             _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
 
+            // A packet counts the samples its header's frames per packet declare, empty or damaged included (design question 11); one that holds
+            // fewer frames than that without a fault counts the frames present (question 5). An empty, a corrupt or a cut packet is lost.
+            long samples = SamplesPerPacket;
+            bool isLost = packet.IsCut;
             if (packet.Length == 0)
             {
                 _findings.Add(Severity.Warning, "speex.empty-packet", PacketNode(_records, index), count =>
                     $"{Count(count, "audio packet is", "audio packets are")} empty; decoders treat {(count == 1 ? "it" : "them")} as lost and fill in the gap. The first at 0x{packet.FileStart:X}.");
+                isLost = true;
             }
             else if (_header is { } header && Mode >= 0)
             {
-                WalkFrames(packet, index, header);
+                (int present, bool isBroken) = WalkFrames(packet, index, header);
+                isLost |= isBroken;
+                if (present < header.FramesPerPacketCounted && !isBroken && !packet.IsCut)
+                {
+                    samples = (long)FrameSize * present;
+                }
             }
 
-            _coded += SamplesPerPacket;
+            _coded += samples;
+            _wholeCoded += packet.IsCut ? 0 : samples;
+            if (isLost)
+            {
+                _lost += samples;
+            }
+
             TrackPosition(packet);
         }
 
-        private void WalkFrames(MappedBytes packet, int index, SpeexHeader header)
+        // Returns the frames the packet holds and whether it is corrupt (a frame that is invalid or overruns the packet before the frames the header gives).
+        private (int Frames, bool IsBroken) WalkFrames(MappedBytes packet, int index, SpeexHeader header)
         {
+            bool isBroken = false;
+
+            // A packet the container cut is lost whatever its frames hold; what the walk of its bytes finds is the cut's, so it is not reported.
+            bool isReported = !packet.IsCut;
             int expected = header.FramesPerPacketCounted;
             PacketWalk walk = SpeexFrames.Walk(packet.Span, Mode, expected + 1, _records.Frames, expected);
             int frames = walk.Frames;
@@ -294,8 +338,11 @@ public sealed partial class SpeexParser
                 _records.Frames.RemoveLast();
                 frames = expected;
                 _records.Irregular[index] = walk;
-                _findings.Add(Severity.Warning, "speex.extra-frames", PacketNode(_records, index), count =>
-                    $"{Count(count, "audio packet holds", "audio packets hold")} more frames than the {expected} per packet the header gives; decoders ignore the rest. The first at 0x{packet.FileStart:X}.");
+                if (isReported)
+                {
+                    _findings.Add(Severity.Warning, "speex.extra-frames", PacketNode(_records, index), count =>
+                        $"{Count(count, "audio packet holds", "audio packets hold")} more frames than the {expected} per packet the header gives; decoders ignore the rest. The first at 0x{packet.FileStart:X}.");
+                }
             }
             else if (walk.End is WalkEnd.Invalid or WalkEnd.Overrun && frames == expected)
             {
@@ -304,12 +351,16 @@ public sealed partial class SpeexParser
             }
             else if (walk.End is WalkEnd.Invalid or WalkEnd.Overrun)
             {
+                isBroken = true;
                 _records.Irregular[index] = walk;
-                _findings.Add(Severity.Warning, walk.End == WalkEnd.Invalid ? "speex.frame-invalid" : "speex.frame-overrun", PacketNode(_records, index), count =>
-                    $"{Count(count, "audio packet", "audio packets")} {(count == 1 ? "is" : "are")} corrupt: in the first, at 0x{packet.FileStart:X}, {walk.Error} after {Count(frames, "frame", "frames")}; decoders stop decoding the packet there.");
+                if (isReported)
+                {
+                    _findings.Add(Severity.Warning, walk.End == WalkEnd.Invalid ? "speex.frame-invalid" : "speex.frame-overrun", PacketNode(_records, index), count =>
+                        $"{Count(count, "audio packet", "audio packets")} {(count == 1 ? "is" : "are")} corrupt: in the first, at 0x{packet.FileStart:X}, {walk.Error} after {Count(frames, "frame", "frames")}; decoders stop decoding the packet there.");
+                }
             }
 
-            if (frames < expected && walk.End is not (WalkEnd.Invalid or WalkEnd.Overrun))
+            if (isReported && frames < expected && walk.End is not (WalkEnd.Invalid or WalkEnd.Overrun))
             {
                 _findings.Add(Severity.Warning, "speex.missing-frames", PacketNode(_records, index), count =>
                     $"{Count(count, "audio packet holds", "audio packets hold")} fewer frames than the {expected} per packet the header gives, so decoders output fewer samples than the granule positions count. The first at 0x{packet.FileStart:X}, with {frames}.");
@@ -319,6 +370,12 @@ public sealed partial class SpeexParser
             {
                 _findings.Add(Severity.Info, "speex.wideband-layer-in-narrowband", PacketNode(_records, index), count =>
                     $"{Count(count, "audio packet", "audio packets")} of this narrowband stream {(count == 1 ? "carries" : "carry")} wideband layers, which narrowband decoders skip. The first at 0x{packet.FileStart:X}.");
+            }
+
+            // The frame tallies cover the packets handed over whole.
+            if (packet.IsCut)
+            {
+                return (frames, isBroken);
             }
 
             _inBand += walk.InBand;
@@ -333,6 +390,7 @@ public sealed partial class SpeexParser
             }
 
             _frames += frames;
+            return (frames, isBroken);
         }
 
         // Granule positions (speexenc.c): each page's counts the samples coded up to its last
@@ -401,8 +459,9 @@ public sealed partial class SpeexParser
                     ChannelMode = header.DecodedChannels == 1 ? "Mono" : "Stereo",
                     ChannelLayout = header.DecodedChannels == 1 ? ChannelLayouts.Mono : ChannelLayouts.Stereo,
                     Samples = samples,
+                    LostSamples = HasTime ? _lost : 0,
                     Duration = HasTime ? samples / (double)Rate : 0,
-                    AverageBitrate = HasTime && _coded > 0 ? _bytes * 8.0 * Rate / _coded / 1000 : null,
+                    AverageBitrate = HasTime && _wholeCoded > 0 ? _bytes * 8.0 * Rate / _wholeCoded / 1000 : null,
                     IsVbr = _sizes.Count > 1,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,

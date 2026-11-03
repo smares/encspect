@@ -238,9 +238,10 @@ public sealed partial class OggParser
         }
     }
 
-    // The stream's packets, read again from its pages as the scan followed them. Pages the scan
-    // found damaged are skipped, so a packet they held a part of is lost, and the next packet
-    // follows a gap.
+    // The stream's packets, read again from its pages as the scan followed them. A page that fails its CRC hands over its packets as the
+    // page holds them, and a truncated page those with bytes present, the one it cuts flagged as cut (docs/design/samples-definition.md,
+    // question 2); a packet left unfinished at the end of the stream is handed over cut. The next packet after a page the stream lost follows
+    // a gap.
     private static IEnumerable<MappedBytes> Packets(Region region, LogicalStream stream, PageWindow window, CancellationToken cancellationToken)
     {
         var builder = new PacketBuilder(region, window);
@@ -257,6 +258,11 @@ public sealed partial class OggParser
             {
                 yield return packet;
             }
+        }
+
+        if (builder.Unfinished() is { } cut)
+        {
+            yield return cut;
         }
     }
 
@@ -275,18 +281,19 @@ public sealed partial class OggParser
         {
             completed.Clear();
             ref readonly PageRecord page = ref region.Pages[index];
-            if (page.IsLost || (page.Status & PageStatus.DropsPending) != 0)
+            bool isTruncated = (page.Status & PageStatus.Truncated) != 0;
+            if ((page.Status & PageStatus.DropsPending) != 0)
             {
                 _assembler.Lose();
                 Reset();
                 _gap = true;
-                if (page.IsLost)
-                {
-                    return;
-                }
             }
 
-            PageOutcome outcome = _assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Span(page.Lacing, page.Segments), _runs);
+            // A truncated page whose segment table is itself cut has no body in the file, and not even the offset of its packets lies inside the data: it hands
+            // over none (an empty packet there would have a position past the page).
+            long bodyPresent = !isTruncated ? long.MaxValue : page.LacingPresent < page.Segments ? -1 : Math.Max(0, page.Length - PageHeader.FixedLength - page.Segments);
+            int segments = isTruncated ? page.LacingPresent : page.Segments;
+            PageOutcome outcome = _assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Span(page.Lacing, segments), _runs);
             if (outcome.ContinuationMissing)
             {
                 Reset();
@@ -304,13 +311,28 @@ public sealed partial class OggParser
                     continue;
                 }
 
-                Append(window.Get(page.BodyOffset + run.Start, run.Length), page.BodyOffset + run.Start);
+                // An empty packet lies wherever its run starts; the walk stops at the first run that starts at or past the bytes present.
+                if (isTruncated && (run.Length == 0 ? run.Start > bodyPresent : run.Start >= bodyPresent))
+                {
+                    break;
+                }
+
+                long held = Math.Min(run.Length, bodyPresent - run.Start);
+
+                Append(window.Get(page.BodyOffset + run.Start, (int)held), page.BodyOffset + run.Start);
+                if (held < run.Length)
+                {
+                    // The data ends inside this packet, on the page's last bytes.
+                    completed.Add(CutPacket());
+                    break;
+                }
+
                 if (!run.Ends)
                 {
                     continue;
                 }
 
-                bool positioned = r == lastEnding && page.Granule != -1;
+                bool positioned = r == lastEnding && page.Granule != -1 && !isTruncated;
                 // MappedBytes copies the ranges, so the list is reused for the next packet.
                 completed.Add(new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), _ranges, page.BodyOffset + run.Start + run.Length)
                 {
@@ -322,6 +344,30 @@ public sealed partial class OggParser
                 _gap = false;
                 Reset();
             }
+
+            if (isTruncated)
+            {
+                // What follows the cut is gone: the packet left unfinished cannot be completed, and the next page's packet follows a gap.
+                if (_length > 0)
+                {
+                    completed.Add(CutPacket());
+                }
+
+                _assembler.Lose();
+                Reset();
+                _gap = true;
+            }
+        }
+
+        // The packet left unfinished at the end of the stream, with the bytes it has.
+        public MappedBytes? Unfinished() => _length > 0 ? CutPacket() : null;
+
+        private MappedBytes CutPacket()
+        {
+            var packet = new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), _ranges, _ranges[^1].End) { FollowsGap = _gap, IsCut = true };
+            _gap = false;
+            Reset();
+            return packet;
         }
 
         private void Append(ReadOnlySpan<byte> data, long offset)

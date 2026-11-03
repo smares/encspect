@@ -180,4 +180,44 @@ public class MappedBytesTests
         Assert.Contains("\"length\": 48,\n          \"ranges\": [\n            {\n              \"offset\": 4,\n              \"length\": 2\n            },", json, StringComparison.Ordinal);
         Assert.Contains("\"bitLength\": 8,\n              \"ranges\": [", json, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void ACutPacketIsFlaggedByTheContainerAndTheFlagIsKeptByAsCutOnly()
+    {
+        MappedBytes whole = Split();
+        Assert.False(whole.IsCut);
+        Assert.False(new MappedBytes(Data, 0x40).IsCut);
+        Assert.False(MappedBytes.Opaque(Data, 3, 9).IsCut);
+        Assert.True(MappedBytes.Opaque(Data, 3, 9, isCut: true).IsCut);
+
+        var packet = new MappedBytes(Data, [new ByteRange(0x100, 3), new ByteRange(0x200, 5)]) { EndPosition = 77, IsEndOfStream = true, FollowsGap = true };
+        MappedBytes cut = packet.AsCut();
+        Assert.True(cut.IsCut);
+        Assert.False(packet.IsCut);
+        Assert.Equal((77L, true, true), (cut.EndPosition, cut.IsEndOfStream, cut.FollowsGap));
+        Assert.Equal(packet.Data.ToArray(), cut.Data.ToArray());
+        Assert.Equal((packet.FileStart, packet.FileEnd, packet.OffsetOf(4), packet.IsOpaque), (cut.FileStart, cut.FileEnd, cut.OffsetOf(4), cut.IsOpaque));
+        Assert.Equal(packet.FileRanges().Select(r => (r.Offset, r.Length)), cut.FileRanges().Select(r => (r.Offset, r.Length)));
+        Assert.Same(cut, cut.AsCut());
+
+        MappedBytes opaque = MappedBytes.Opaque(Data, 3, 9).AsCut();
+        Assert.True(opaque.IsCut);
+        Assert.True(opaque.IsOpaque);
+        Assert.Equal((3L, 9L), (opaque.FileStart, opaque.FileEnd));
+
+        // The members describe a packet; a slice of it is not one.
+        Assert.False(cut.Slice(1, 3).IsCut);
+    }
+
+    [Fact]
+    public void ReadTakesTheFlagForThePacketItPutsTogether()
+    {
+        using var stream = new MemoryStream(Data);
+        var reader = new ByteReader(stream);
+        IReadOnlyList<ByteRange> ranges = [new ByteRange(1, 2), new ByteRange(5, 3)];
+        Assert.False(MappedBytes.Read(reader, ranges).IsCut);
+        MappedBytes cut = MappedBytes.Read(reader, ranges, isCut: true);
+        Assert.True(cut.IsCut);
+        Assert.Equal(new byte[] { 11, 12, 15, 16, 17 }, cut.Data.ToArray());
+    }
 }

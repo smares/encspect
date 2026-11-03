@@ -106,6 +106,18 @@
      [
       280,
       20
+     ],
+     [
+      582,
+      66025,
+      [
+       582,
+       65025
+      ],
+      [
+       65889,
+       1000
+      ]
      ]
     ],
     "frames": [
@@ -148,16 +160,25 @@
        null,
        0
       ]
+     ],
+     [
+      [
+       0,
+       null,
+       null,
+       0
+      ]
      ]
     ],
     "statistics": {
      "Packets": "5",
      "Frames": "5",
-     "Coded Samples": "800 samples",
+     "Coded Samples": "960 samples",
      "Encoder Delay": "40 samples",
      "End Trimming": "0 samples",
-     "Samples": "760 samples",
-     "Duration": "0.095 s",
+     "Samples": "920 samples",
+     "Lost Samples": "160 samples",
+     "Duration": "0.115 s",
      "IsVbr": "false",
      "Average Bitrate": "8.0 kbps",
      "Minimum Bitrate": "8.0 kbps",
@@ -171,7 +192,10 @@
      "vendor": "Encoded with Speex 1.2.1",
      "comments": []
     },
-    "speexdec_samples": 720
+    "speexdec_samples": 720,
+    "oggz_missing": [
+     5
+    ]
    }
   }
  ],
@@ -183,8 +207,9 @@
    "channel_layout": [
     "front center"
    ],
-   "samples": 760,
-   "duration": 0.095,
+   "samples": 920,
+   "lost_samples": 160,
+   "duration": 0.115,
    "average_bitrate": 8.0,
    "is_vbr": false,
    "playback_group": 1

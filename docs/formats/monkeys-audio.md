@@ -26,7 +26,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 
 ## Reported
 
-- the codec "Monkey's Audio", the sample rate, channels, bits per sample, total samples and duration;
+- the codec "Monkey's Audio", the sample rate, channels, bits per sample, total samples and duration (the samples are the blocks the frames declare, for the frames whose first byte the file holds; the bitrate figures cover the frames the file holds whole; Lost Samples counts the blocks of the frames the data cuts and of those too short for the CRC and special frame codes they start with);
 - the compression level by its name (fast 1000, normal 2000, high 3000, extra high 4000, insane 5000);
 - the bitrate per frame and per second as series, with the smallest and largest frame and a distribution; the bitrate mode: variable where frames differ in bitrate, constant where they do not and unknown for a single frame (`IsVbr` is false for the last two);
 - the counts of silent frames and of pseudo-stereo frames, and the number of frame CRCs stored;

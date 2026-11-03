@@ -87,13 +87,67 @@ public class OggTests
         byte[] file = File.ReadAllBytes(OggFixture("bad-crc.spx"));
         new Analyzer(DefaultParsers.Tags, [new OggParser()], [codec]).Analyze("bad-crc.spx", new MemoryStream(file));
 
-        // 2 headers and 30 audio packets on pages of 1, 1, 10, 10 and 10, the fourth page failing its CRC.
-        Assert.Equal(22, codec.Packets.Count);
+        // 2 headers and 30 audio packets on pages of 1, 1, 10, 10 and 10, the fourth page failing its CRC: its packets are handed over like the
+        // others (docs/design/samples-definition.md, question 2).
+        Assert.Equal(32, codec.Packets.Count);
         MappedBytes[] positioned = [.. codec.Packets.Where(p => p.EndPosition is not null)];
-        Assert.Equal([0, 0, (10 * 160) - 40, (30 * 160) - 40], positioned.Select(p => p.EndPosition!.Value));
+        Assert.Equal([0, 0, (10 * 160) - 40, (20 * 160) - 40, (30 * 160) - 40], positioned.Select(p => p.EndPosition!.Value));
         Assert.All(positioned, p => Assert.Equal(("Granule Position", 8L), (p.EndPositionField!.Name, p.EndPositionField.Length)));
-        Assert.Equal([21], Indexes(codec.Packets, p => p.IsEndOfStream));
-        Assert.Equal([12], Indexes(codec.Packets, p => p.FollowsGap));
+        Assert.Equal([31], Indexes(codec.Packets, p => p.IsEndOfStream));
+        Assert.Empty(Indexes(codec.Packets, p => p.FollowsGap));
+        Assert.Empty(Indexes(codec.Packets, p => p.IsCut));
+    }
+
+    // A page that fails its CRC and is followed by a page cut short inside its header still ends where the next page starts, so its packets are handed over.
+    [Fact]
+    public void APageThatFailsItsCrcBeforeAPageCutInsideItsHeaderIsNotAGap()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("bad-crc.spx"));
+        int last = file.AsSpan().LastIndexOf("OggS"u8);
+        Report whole = Analyzer.CreateDefault().Analyze("bad-crc.spx", new MemoryStream(file));
+        Report cut = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(file, 0, last + 28));
+
+        Assert.DoesNotContain(cut.Findings, f => f.Code == "ogg.junk");
+        Assert.Contains(cut.Findings, f => f.Code == "ogg.crc-mismatch");
+        Assert.True(cut.Streams[0].Samples > whole.Streams[0].Samples - (10 * 160) - 400, $"{cut.Streams[0].Samples} of {whole.Streams[0].Samples}");
+    }
+
+    [Fact]
+    public void ACommentHeaderTheContainerCutIsNotReadAsAComment()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("comment-many.spx"));
+        int second = 0;
+        int at = -1;
+        for (int i = 0; i + 4 <= file.Length && second < 2; i++)
+        {
+            if (file.AsSpan(i, 4).SequenceEqual("OggS"u8))
+            {
+                second++;
+                at = i;
+            }
+        }
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(file, 0, at + 27 + file[at + 26] + 30));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("vorbis-comment.", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "ogg.page-truncated");
+    }
+
+    // A page cut inside its segment table has no body in the file; its empty packets (lacing values of 0) are not handed over, since their position
+    // would lie past the page (found by the fuzz test: a finding on a node outside the tree).
+    [Fact]
+    public void AnEmptyPacketOnAPageCutInsideItsSegmentTableIsNotHandedOver()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("speex-narrowband.spx"));
+        int last = file.AsSpan().LastIndexOf("OggS"u8);
+        byte[] cut = file[..(last + 27 + 3)];
+        cut[last + 27] = 0;
+        cut[last + 28] = 0;
+        cut[last + 29] = 0;
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(cut));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "speex.empty-packet");
+        Assert.All(report.Findings, f => Assert.True(f.Node is null || f.Path is not null, f.Code));
     }
 
     [Fact]
@@ -139,7 +193,7 @@ public class OggTests
         var writer = new StringWriter();
         ReportCsvWriter.Write([report], writer);
 
-        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,mono (front center),speexenc 1.2.1,High,,,Vorbis Comment,0,0,0,false,,false,,,,,,,,",
+        Assert.Equal("external-speexenc-wb.spx,Ogg,1,Speex wideband,1.500,24000,28.0,16000,Mono,mono (front center),speexenc 1.2.1,High,,,Vorbis Comment,0,0,0,false,,false,,,,,,,,,0",
             writer.ToString().Split("\r\n")[1]);
 
         ReportSummary chained = ReportSummary.From(Fixtures.AnalyzeMpeg("ogg/external-chained.spx"));
@@ -157,10 +211,10 @@ public class OggTests
         ReportCsvWriter.Write(reports, writer);
         string[] lines = writer.ToString().Split("\r\n");
 
-        Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,\"5.1 (front left, front center, front right, back left, back right, LFE)\",libvorbis 1.3.7,High,,,Vorbis Comment,0,0,0,false,,false,,,,,,,,", lines[1]);
+        Assert.Equal("external-oggenc-51.ogg,Ogg,1,Vorbis,1.000,48000,113.8,48000,5.1,\"5.1 (front left, front center, front right, back left, back right, LFE)\",libvorbis 1.3.7,High,,,Vorbis Comment,0,0,0,false,,false,,,,,,,,,0", lines[1]);
         Assert.StartsWith("external-opusenc-cvbr.opus,Ogg,1,Opus,1.500,72000,", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",libopus 1.4,Medium,opusenc 0.2,Low,Vorbis Comment,0,0,0,false,,false,,,,,,,,", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",FFmpeg (Lavc60.31.102 opus),Medium,FFmpeg (Lavf60.16.100),Low,Vorbis Comment,0,0,0,false,,false,,,,,,,,", lines[3], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",libopus 1.4,Medium,opusenc 0.2,Low,Vorbis Comment,0,0,0,false,,false,,,,,,,,,0", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",48000,Stereo,\"stereo (front left, front right)\",FFmpeg (Lavc60.31.102 opus),Medium,FFmpeg (Lavf60.16.100),Low,Vorbis Comment,0,0,0,false,,false,,,,,,,,,0", lines[3], StringComparison.Ordinal);
         Node head = reports[1].Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Name == "Opus Head");
         Assert.Equal("44100 Hz", head.Children.Single(c => c.Name == "Input Sample Rate").Value?.ToString());
         Assert.False(reports[2].Streams.Single().IsVbr);

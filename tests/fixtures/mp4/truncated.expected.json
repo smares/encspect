@@ -124,8 +124,9 @@
     "front left",
     "front right"
    ],
-   "samples": 9216,
-   "is_vbr": true
+   "samples": 10240,
+   "is_vbr": true,
+   "lost_samples": 1024
   }
  ],
  "units": [
@@ -164,6 +165,10 @@
   [
    945,
    24
+  ],
+  [
+   969,
+   1
   ]
  ],
  "fields": {},
@@ -174,7 +179,7 @@
   ],
   [
    "mp4.sample-outside-file",
-   "lie outside the file"
+   "starts in the file, so it is analyzed as far as the file goes"
   ]
  ],
  "crosscheck": {

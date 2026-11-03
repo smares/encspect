@@ -140,7 +140,8 @@ public class TrueHdFindingTests
 
         StreamInfo stream = report.Streams.Single();
         Assert.Equal(96000, stream.SampleRate);
-        Assert.Equal(stream.Samples / 96000.0, stream.Duration, 6);
+        // The unit that cannot be read is lost at the rate of its own sync (48 kHz); the rest is counted at 96 kHz.
+        Assert.Equal(((stream.Samples - stream.LostSamples) / 96000.0) + (stream.LostSamples / 48000.0), stream.Duration, 6);
         Assert.Equal(24, stream.BitsPerSample);
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
     }

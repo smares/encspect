@@ -232,6 +232,16 @@ def check_decode(name, manifest, path, mac, work, problems):
         problems.append(f"mac -d decodes to {digest}, the manifest says {manifest['decoded_pcm_md5']}")
 
 
+def header_duration(manifest, info):
+    """The duration the tools take from the header's counts: Encspect's samples count only the frames whose first byte the file holds, so they
+    differ from the header's total where the file is cut or its seek table is short."""
+    header = manifest.get("header", {})
+    if header.get("total_frames") and "blocks_per_frame" in header and info["sample_rate"]:
+        blocks = (header["total_frames"] - 1) * header["blocks_per_frame"] + header["final_frame_blocks"]
+        return blocks / info["sample_rate"]
+    return info["duration"]
+
+
 def ffmpeg_reads(manifest, data):
     """Why FFmpeg is not asked to decode the fixture, or None where it is."""
     info = manifest["stream_infos"][0]
@@ -289,8 +299,9 @@ def check_ffmpeg(name, manifest, path, problems):
     for key, want in (("codec_name", "ape"), ("sample_rate", str(info["sample_rate"])), ("channels", info["channels"])):
         if stream.get(key) != want:
             problems.append(f"ffprobe {key} is {stream.get(key)}, the manifest {want}")
-    if stream.get("duration") is not None and abs(float(stream["duration"]) - info["duration"]) > 0.002:
-        problems.append(f"ffprobe duration is {stream['duration']}, the manifest {info['duration']}")
+    expected_duration = header_duration(manifest, info)
+    if stream.get("duration") is not None and abs(float(stream["duration"]) - expected_duration) > 0.002:
+        problems.append(f"ffprobe duration is {stream['duration']}, the header counts {expected_duration}")
 
 
 def check_mediainfo(name, manifest, path, problems):
@@ -316,8 +327,8 @@ def check_mediainfo(name, manifest, path, problems):
         skip(name, "MediaInfo duration", "the header counts no frame, and MediaInfo works the duration out from a count that is not there")
     elif audio.get("Duration") is None:
         skip(name, "MediaInfo duration", "MediaInfo reports no duration")
-    elif abs(float(audio["Duration"]) - info["duration"]) > 0.002:
-        problems.append(f"MediaInfo duration is {audio['Duration']}, the manifest {info['duration']}")
+    elif abs(float(audio["Duration"]) - header_duration(manifest, info)) > 0.002:
+        problems.append(f"MediaInfo duration is {audio['Duration']}, the header counts {header_duration(manifest, info)}")
 
 
 def main():

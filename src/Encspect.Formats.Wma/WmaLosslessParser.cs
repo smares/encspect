@@ -81,14 +81,14 @@ public sealed class WmaLosslessParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new LosslessTally();
-        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings) { FrameLimit = FrameLimit };
+        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings, probe: new LosslessFrameReader(p, new LosslessTally())) { FrameLimit = FrameLimit };
         reader.Run(packets);
 
         var nodes = new LosslessNodes(reader.Data, p);
         var packetNodes = new PacketNodes(reader.Data, p, true);
         long frameCount = reader.FramesRead;
         double duration = reader.Samples / (double)p.SampleRate;
-        if (frameCount > 0)
+        if (frameCount > 0 || reader.LostSamples > 0)
         {
             stream.Add(LosslessReport.Statistics(p, reader, tally, parent, duration, configuration));
         }
@@ -120,6 +120,7 @@ public sealed class WmaLosslessParser : ICodecParser
             Channels = p.Channels,
             ChannelLayout = WmaStreams.Layout(p.ChannelMask, p.Channels),
             Samples = reader.Samples,
+            LostSamples = reader.LostSamples,
             Duration = duration,
             AverageBitrate = duration > 0 ? p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000 : null,
             IsVbr = configuration.IsVbr ?? false,

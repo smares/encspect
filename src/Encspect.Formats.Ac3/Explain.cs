@@ -259,10 +259,10 @@ internal static partial class Explain
     public const string ConfigTrailing = "Reserved bytes after the fields, which decoders ignore (ETSI TS 102 366 F.6.2.14).";
 
     public const string Statistics = "Figures over the stream's frames: counts, duration, bitrates and how the audio blocks use the coding tools.";
-    public const string StatUnits = "The number of program frames: AC-3 frames, or independent E-AC-3 frames with the dependent frames that follow them.";
-    public const string StatSamples = "The samples per channel the frames hold: 256 per audio block.";
+    public const string StatUnits = "The number of program frames: AC-3 frames, or independent E-AC-3 frames with the dependent frames that follow them. A frame that the end of the data or the container cuts is not counted.";
+    public const string StatSamples = "The samples per channel the frames hold: 256 per audio block. A cut frame counts the samples its header declares, and they are lost (Lost Samples).";
     public const string StatDuration = "The duration of the samples at the stream's sample rate.";
-    public const string AverageBitrate = "The bits of all frames over the stream's duration.";
+    public const string AverageBitrate = "The bits of the frames that are not cut over the duration of the frames that are not cut.";
     public const string Smallest = "The smallest program frame, in bytes.";
     public const string Largest = "The largest program frame, in bytes.";
     public const string MinimumBitrate = "The lowest bitrate of a program frame.";

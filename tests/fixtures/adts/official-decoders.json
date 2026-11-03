@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41558366773",
-  "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a",
+  "id": "41610797320",
+  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   }
  },
  "statuses": [
@@ -1631,7 +1631,7 @@
      "status": "keep",
      "kind": "decoder-holds-blocks",
      "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those 3 held blocks (3,072 samples), and by the blocks of the units it refused or gave no output for",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the positions the stream's units declare, with lost samples reported apart.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are what the stream's units declare, with lost samples reported apart.",
      "statusSource": "reviewed"
     },
     {
@@ -2862,9 +2862,10 @@
      "decoder": "fdk direct",
      "value": 28672,
      "analyzer": 30720,
+     "analyzerLost": 1024,
      "status": "keep",
      "kind": "analyzer-differs",
-     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (3,072) are exactly the 3 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (3,072) are exactly the 3 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
      "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK takes the declared 84 bytes of the damaged frame at 280 (it holds 34) as the frame, outputs nothing for units 7 and 8 and a concealed frame for unit 9; the analyzer resynchronizes at 314 and counts every frame by its header (Core Audio's converter: 30,720, probe run 41312630570).",
      "statusSource": "reviewed"
     },
@@ -7405,10 +7406,11 @@
      "decoder": "fdk direct",
      "value": 2048,
      "analyzer": 4096,
+     "analyzerLost": 2048,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (2,048) are exactly the 2 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions (two blocks) and FDK outputs nothing for it.",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (2,048) are exactly the 2 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared samples (two blocks) and FDK outputs nothing for it.",
      "statusSource": "reviewed"
     },
     {
@@ -7431,7 +7433,7 @@
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
      "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 2,048, Core Audio's converter 3,072, the analyzer 4,096 (the written rule gives keep unless a reading of the specification decides)",
-     "note": "decided in review (2026-11-02; step 5, run 41423202796): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions (two blocks); FDK outputs nothing for it and Core Audio's converter one block (3,072 against the analyzer's 4,096).",
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): explained. The flagged unit (aac.frame-truncated) is counted by its declared samples (two blocks); FDK outputs nothing for it and Core Audio's converter one block (3,072 against the analyzer's 4,096).",
      "statusSource": "reviewed"
     }
    ],
@@ -9723,10 +9725,11 @@
      "decoder": "fdk direct",
      "value": 11264,
      "analyzer": 12288,
+     "analyzerLost": 1024,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (1,024) are exactly the 1 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared positions and FDK outputs nothing for it.",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (1,024) are exactly the 1 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The flagged unit (aac.frame-truncated) is counted by its declared samples and FDK outputs nothing for it.",
      "statusSource": "reviewed"
     },
     {

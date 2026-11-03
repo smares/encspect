@@ -161,6 +161,59 @@ public class SampleLocatorTests
     }
 
     [Fact]
+    public void A_lost_last_frame_is_counted_in_the_span_so_no_mark_sits_early()
+    {
+        // Six frames of 4,096 samples from 100,000 on (a fragment), the last cut by the end of the file: the stream counts it (24,576),
+        // the decoder delivered five frames, and the host gave the measurer the span of the units, so the measured positions end where
+        // the sixth frame does.
+        const long start = 100000;
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Complete, FirstPosition = start, Samples = 5 * 4096, LostSamples = 4096, TrailingLostSamples = 4096 };
+        SampleLocator locator = SampleLocator.For(Framed(6 * 4096, 6), measured)!;
+        Assert.Equal(start, locator.Base);
+        for (long position = 0; position < 6 * 4096; position++)
+        {
+            Assert.Equal(position / 4096, locator.FrameIndexAt(start + position));
+        }
+
+        // Without the lost tail in the measured figures every frame's mark would be early by it.
+        SampleLocator early = SampleLocator.For(Framed(6 * 4096, 6), Measured(start, 5 * 4096))!;
+        Assert.Equal(start - 4096, early.Base);
+    }
+
+    [Fact]
+    public void A_coded_end_past_the_stream_samples_is_located_over_the_units_span()
+    {
+        // The shape of wavpack/built-set-without-final-limit.wv: the sets declare 3,000 samples in all, at block indexes that cover 17,000 and the last 16,000 are lost.
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Incomplete, FirstPosition = 0, Samples = 1000, LostSamples = 16000, TrailingLostSamples = 16000 };
+        SampleLocator locator = SampleLocator.For(Framed(3000, 17), measured)!;
+        Assert.Equal((0L, 17000L), (locator.Base, locator.Total));
+        for (int frame = 0; frame < 17; frame++)
+        {
+            Assert.Equal(frame, locator.FrameIndexAt((frame * 1000L) + 5));
+        }
+    }
+
+    [Fact]
+    public void A_lost_first_frame_moves_the_start_back_to_where_the_units_start()
+    {
+        // The first of six frames is lost: the blocks start at 4,096 and the units at 0, which the lost first positions bridge.
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Complete, FirstPosition = 4096, Samples = 5 * 4096, LostSamples = 4096, LeadingLostSamples = 4096 };
+        SampleLocator locator = SampleLocator.For(Framed(6 * 4096, 6), measured)!;
+        Assert.Equal(0, locator.Base);
+        Assert.Equal(6 * 4096, locator.Total);
+        Assert.Equal(1, locator.FrameIndexAt(4096 + 10));
+
+        // Both ends lost, and a gap between.
+        measured = new StreamMeasurements { Status = MeasurementStatus.Complete, FirstPosition = 4096, Samples = 3 * 4096, LostSamples = 3 * 4096, LeadingLostSamples = 4096, TrailingLostSamples = 4096 };
+        locator = SampleLocator.For(Framed(6 * 4096, 6), measured)!;
+        Assert.Equal(0, locator.Base);
+        for (long position = 0; position < 6 * 4096; position++)
+        {
+            Assert.Equal(position / 4096, locator.FrameIndexAt(position));
+        }
+    }
+
+    [Fact]
     public void The_position_of_a_frame_is_never_later_than_its_first_sample_and_less_than_a_frame_earlier()
     {
         const int count = 25;

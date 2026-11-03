@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41558366773",
-  "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a",
+  "id": "41610797320",
+  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41558366773",
-   "commit": "d6211bd627c5e24c05633acd66f6eda802aab81a"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   }
  },
  "statuses": [
@@ -10790,10 +10790,11 @@
      "decoder": "fdk direct",
      "value": 10240,
      "analyzer": 20480,
+     "analyzerLost": 10240,
      "status": "explained",
      "kind": "analyzer-differs",
-     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared positions; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (10,240) are exactly the 10 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): explained. The analyzer counts the samples by their declared samples; the 10 samples FDK refuses (0x0005) lie outside every mdat and carry mp4.sample-outside-mdat and aac findings.",
      "statusSource": "reviewed"
     },
     {
@@ -12579,7 +12580,7 @@
      "streams": [
       0
      ],
-     "analyzer": 9216,
+     "analyzer": 10240,
      "reference": 10240,
      "referencePath": "fdk direct",
      "referenceKind": "official",
@@ -12685,23 +12686,35 @@
    "differences": [
     {
      "figure": "samples",
-     "decoder": "fdk direct",
-     "value": 10240,
-     "analyzer": 9216,
+     "decoder": "ffmpeg",
+     "value": 9216,
+     "analyzer": 10240,
+     "reference": 10240,
      "status": "explained",
-     "kind": "analyzer-differs",
-     "reason": "the excess of 1,024 samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps",
-     "alignment": "the samples-definition alignment counts the cut sample: the analyzer then equals FDK (10,240) and Core Audio's converter (9,216) is the decoder that differs, which its cross-check statuses (rule 2) leave to the lead",
+     "kind": "witness-differs",
      "statusSource": "rule"
     },
     {
      "figure": "samples",
-     "decoder": "ffmpeg",
+     "decoder": "coreaudio converter",
      "value": 9216,
-     "analyzer": 9216,
+     "analyzer": 10240,
      "reference": 10240,
-     "status": "noted",
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Core Audio's converter outputs 9,216: the owners' decoders disagree; it gives no output for unit 9 after its first output",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 9216,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
      "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 9,216 samples against the analyzer's 10,240 and the reference's 10,240",
      "statusSource": "rule"
     }
    ],

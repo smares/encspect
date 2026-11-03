@@ -83,6 +83,9 @@ internal sealed class StreamMeasurer
     private long _samples;
     private long _lost;
     private int _gaps;
+    private bool _hasCodedRange;
+    private long _codedStart;
+    private long _codedEnd;
     private bool _isStopped;
     private bool _isLoudnessCharged;
     private long _nonFinite;
@@ -833,18 +836,38 @@ internal sealed class StreamMeasurer
         return bytes;
     }
 
+    // The positions the units of the stream cover at the coded stage, from the first one's start to the last one's end, as the host saw
+    // them handed to the decoding. A lost first or last unit lies outside the blocks, so without the span it would be in no figure.
+    public void SetCodedRange(long start, long end)
+    {
+        (_hasCodedRange, _codedStart, _codedEnd) = (end > start, start, end);
+    }
+
     // The record of what was measured. Called once, when the stream's decoding has ended.
     public StreamMeasurements Result(MeasurementStatus status, string? reason)
     {
         _probe?.Invoke("result");
+
+        // The units before the first block and after the last are lost only where the decoding reached the stream's end: a stream that was
+        // stopped has unmeasured samples, which are not lost ones.
+        long leading = 0;
+        long trailing = 0;
+        if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)
+        {
+            leading = Math.Max(0, _firstPosition - _codedStart);
+            trailing = Math.Max(0, _codedEnd - _next);
+        }
+
         var record = new StreamMeasurements
         {
             Status = status,
             Reason = reason,
             Samples = _samples,
             FirstPosition = _firstPosition,
-            LostSamples = _lost,
-            Gaps = _gaps,
+            LostSamples = _lost + leading + trailing,
+            LeadingLostSamples = leading,
+            TrailingLostSamples = trailing,
+            Gaps = _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0),
             SampleRate = _format.SampleRate,
             ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,
             Channels = _channels,

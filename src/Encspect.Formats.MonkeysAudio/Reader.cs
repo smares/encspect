@@ -495,8 +495,22 @@ internal static class Reader
             Notice(s, status, start, f);
             s.Findings.Redirect = null;
             s.Frames++;
-            s.Samples += blocks;
-            if ((status & EntryStatus.Misplaced) == 0)
+            s.WholeFrames += (status & EntryStatus.Cut) == 0 && ((status & EntryStatus.Misplaced) != 0 || start < available) ? 1 : 0;
+
+            // A frame counts its declared blocks when its first byte is in the file (or the seek table places it outside the frame data, where
+            // that cannot be told); a frame the data cuts or whose start fields it cannot hold is lost.
+            if ((status & EntryStatus.Misplaced) != 0 || start < available)
+            {
+                s.Samples += blocks;
+                if ((status & (EntryStatus.Cut | EntryStatus.NoStartFields)) != 0)
+                {
+                    s.LostSamples += blocks;
+                }
+            }
+
+            // The bitrate figures cover the frames the file holds whole, as FLAC's and TTA's do: a cut frame, one with no byte in the file or one too
+            // short for its start fields counts in the samples only.
+            if ((status & (EntryStatus.Misplaced | EntryStatus.Cut | EntryStatus.NoStartFields)) == 0 && start < available)
             {
                 s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, index < s.MaxListedFrames);
             }

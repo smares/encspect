@@ -202,7 +202,7 @@ def old_manifest(data, name, pcm):
         "file_version": a.version,
         "seek_entries": a.seek_entries,
         "frames": frames,
-        "stream_infos": [m.old_stream_info(a, bits, samples)],
+        "stream_infos": [m.old_stream_info(a, m.held_totals(data, a)[0], *m.declared(data, a), coded=m.held_totals(data, a)[1])],
         "decoded_samples": samples if is_decoded else 0,
         "pcm_samples": samples if is_decoded else 0,
         "verification": {

@@ -44,6 +44,7 @@ public class Mp4FixtureTests
             Assert.Equal(expected.GetProperty("channel_mode").GetString(), stream.ChannelMode);
             Assert.Equal(expected.GetProperty("channel_layout").EnumerateArray().Select(s => s.GetString()), stream.ChannelLayout?.Select(ChannelLayouts.Name) ?? []);
             Assert.Equal(expected.GetProperty("samples").GetInt64(), stream.Samples);
+            Assert.Equal(expected.TryGetProperty("lost_samples", out JsonElement lost) ? lost.GetInt64() : 0, stream.LostSamples);
             Assert.Equal(expected.GetProperty("is_vbr").GetBoolean(), stream.IsVbr);
             if (expected.TryGetProperty("encoder", out JsonElement encoder))
             {

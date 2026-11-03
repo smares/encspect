@@ -40,14 +40,21 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 1920,
+                  "value": 2560,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 7090
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 640,
                   "unit": "samples",
                   "offset": 0,
                   "length": 7090
                 },
                 {
                   "name": "Duration",
-                  "value": 0.04,
+                  "value": 0.05333333333333334,
                   "unit": "s",
                   "offset": 0,
                   "length": 7090
@@ -256,8 +263,9 @@
         ],
         "channelLayoutName": "stereo",
         "bitsPerSample": 24,
-        "samples": 1920,
-        "duration": 0.04,
+        "samples": 2560,
+        "lostSamples": 640,
+        "duration": 0.05333333333333334,
         "averageBitrate": 1095.9673469387756,
         "isVbr": true,
         "verification": {
@@ -330,7 +338,7 @@
               "frameCount": 64,
               "samples": [
                 640,
-                0,
+                640,
                 640,
                 640
               ]

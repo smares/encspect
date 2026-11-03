@@ -1,5 +1,5 @@
 {
- "description": "The 8 kHz stream cut in the middle of its last packet: the container drops the incomplete media object, so the superframe that began in the packet before is never finished.",
+ "description": "The 8 kHz stream cut in the middle of its last packet: the container hands the incomplete media object over as it is, flagged cut, and the superframe that began in the packet before is finished by the bytes it holds.",
  "format": "ASF",
  "length": 2474,
  "objects": [
@@ -391,6 +391,19 @@
      120
     ]
    ]
+  ],
+  [
+   1,
+   13,
+   47,
+   1276,
+   [
+    [
+     2427,
+     47
+    ]
+   ],
+   "cut"
   ]
  ],
  "file": {
@@ -426,17 +439,23 @@
    "contains": "extends past the packet's end"
   },
   {
-   "code": "wma.voice-unfinished",
-   "contains": "no packet follows"
+   "code": "wma.packet-short",
+   "contains": "fewer bytes than the block alignment"
   }
  ],
  "crosscheck": {
   "ffprobe": false,
-  "reason": "the file is cut inside a payload, which ffmpeg returns as a short packet.",
+  "reason": "the file is cut inside a payload; ffmpeg's demuxer does not return the cut media object.",
   "decode": "errors",
   "messages": [],
   "ffmpeg": {
-   "samples": 10760
+   "samples": 10760,
+   "superframes": 23
+  },
+  "analyzer": {
+   "samples": 11060,
+   "superframes": 24,
+   "reason": "ffmpeg's demuxer does not return the cut media object, so its decoder reads 23 superframes; the analyzer reads the 24th from the bytes the cut object holds and counts its 300 samples"
   }
  }
 }

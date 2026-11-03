@@ -58,6 +58,24 @@ public class TrueHdRunsTests
         }
     }
 
+    // The units that wait for the next major sync after damage are lost samples: the stream counts them and the runs code them, so the locator's
+    // span is the stream's and a position leads to a frame of a run.
+    [Fact]
+    public void Lost_units_after_damage_are_in_the_samples_the_runs_code()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", "built-sync-crc-mismatch.thd"));
+        StreamInfo stream = report.Streams[0];
+        FrameRuns runs = stream.Series.First(s => s.Name == "Bitrate").Runs!;
+        Assert.Equal((3200L, 640L), (stream.Samples, stream.LostSamples));
+        Assert.Equal(stream.Samples, runs.Samples.ToArray().Sum());
+        SampleLocator locator = SampleLocator.For(stream)!;
+        Assert.Equal(stream.Samples, locator.Total);
+        for (long position = 0; position < stream.Samples; position += 40)
+        {
+            Assert.InRange(locator.FrameIndexAt(position), 0, runs.FrameCount - 1);
+        }
+    }
+
     [AvaloniaFact]
     public void A_click_inside_a_run_selects_the_frame_in_the_tree_and_keeps_the_clicked_column()
     {
@@ -144,5 +162,25 @@ public class TrueHdRunsTests
 
         Assert.Equal(expected, window.Model.SelectedNode!.Node.Offset);
         window.Close();
+    }
+
+    // A TrueHD unit the parser cannot read is handed to the decoding with its 40 samples, so the decoded stream has a gap there and the
+    // measured span ends with the units even when the last one is lost.
+    [Fact]
+    public void A_lost_last_unit_in_the_measured_span_keeps_the_runs_and_their_frames_in_place()
+    {
+        // 20 units of 40 samples in two runs of 10, at 1,000 on; the last unit was not decoded.
+        double[] x = [500, 1500];
+        var runs = new FrameRuns(new long[] { 1, 11 }, 20, new long[] { 400, 400 });
+        var series = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, x, new double[] { 1, 1 }) { Runs = runs };
+        var stream = new StreamInfo { Nodes = [], Codec = "TrueHD", SampleRate = 48000, Samples = 800, Series = [series] };
+        var measured = new StreamMeasurements { Status = MeasurementStatus.Incomplete, FirstPosition = 1000, Samples = 760, LostSamples = 40, TrailingLostSamples = 40 };
+        SampleLocator locator = SampleLocator.For(stream, measured)!;
+
+        Assert.Equal((1000L, 800L), (locator.Base, locator.Total));
+        Assert.Equal(1500, locator.FrameOffsetAt(1000 + 790));
+        Assert.Equal(9, locator.FramesIntoRunAt(1000 + 790));
+        Assert.Equal(1000 + 400, locator.PositionOfFrame(1500));
+        Assert.Equal(500, locator.FrameOffsetAt(1000 + 399));
     }
 }

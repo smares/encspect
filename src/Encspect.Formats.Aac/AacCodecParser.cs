@@ -18,6 +18,7 @@ public sealed class AacCodecParser : ICodecParser
     private const byte IsRead = 8;
     private const byte IsFirstOnly = 16;
     private const byte HasTrailingBytes = 32;
+    private const byte IsCutPacket = 64;
 
     public string Id => "aac";
 
@@ -97,8 +98,21 @@ public sealed class AacCodecParser : ICodecParser
                 context.CancellationToken.ThrowIfCancellationRequested();
             }
 
+            // An access unit with no byte declares nothing (aac.empty-access-units); it is no unit to count.
             ref readonly Unit unit = ref log.Units[i];
-            figures.Add(unit.Offset, unit.Length, frame);
+            if ((unit.Flags & IsCutPacket) != 0)
+            {
+                figures.AddSamples(frame);
+            }
+            else
+            {
+                figures.Add(unit.Offset, unit.Length, unit.Length > 0 ? frame : 0);
+            }
+        }
+
+        if (!(context.Configuration is { AreSamplesEncrypted: true }))
+        {
+            figures.AddLost(log.Lost * frame);
         }
 
         var leading = new List<Node>();
@@ -212,6 +226,7 @@ public sealed class AacCodecParser : ICodecParser
             ChannelMode = config.ChannelMode,
             ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
+            LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = context.Configuration?.IsVbr ?? false,
@@ -362,6 +377,9 @@ public sealed class AacCodecParser : ICodecParser
 
         public int Empty { get; private set; }
 
+        // The access units that were cut by the data or whose syntax breaks.
+        public long Lost { get; private set; }
+
         public (string Text, int Index)? Signature { get; private set; }
 
         public void Add(MappedBytes packet)
@@ -380,10 +398,18 @@ public sealed class AacCodecParser : ICodecParser
                 Empty++;
             }
 
+            // The container says the packet is cut by the data (MappedBytes.IsCut), and the reading says its syntax breaks.
+            bool isLost = packet.IsCut && packet.Length > 0;
             int elements = -1;
             byte tag = 0;
             long skeleton = -1;
-            if (_config is { IsUsac: true })
+            if (packet.IsCut && packet.Length > 0)
+            {
+                // A packet the container cut: its bytes are no access unit's, so it is neither read nor counted in the unit figures; its declared samples are
+                // counted and lost.
+                flags |= IsCutPacket;
+            }
+            else if (_config is { IsUsac: true })
             {
                 flags |= IsUsac;
                 if (packet.Length > 0)
@@ -400,7 +426,8 @@ public sealed class AacCodecParser : ICodecParser
             {
                 flags |= IsRead;
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
-                (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges));
+                (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges), report: !packet.IsCut);
+                isLost |= !result.Ok && packet.Length > 0;
                 Blocks.EndUnit();
                 elements = result.Elements;
                 Blocks.AddEvidence(result, Blocks.Count - 1);
@@ -442,6 +469,7 @@ public sealed class AacCodecParser : ICodecParser
                 }
             }
 
+            Lost += isLost ? 1 : 0;
             Units.Add(new Unit(packet.FileStart, packet.Length, elements, skeleton, flags, tag));
         }
 

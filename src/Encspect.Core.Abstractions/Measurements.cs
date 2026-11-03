@@ -13,12 +13,23 @@ public sealed record StreamMeasurements
     public string? Reason { get; init; }
 
     // Samples per channel measured (not counting gaps), the position of the first one (untrimmed, as PcmBlock.Position), and
-    // what the gaps skipped: the positions they covered, and their number.
+    // what the gaps skipped: the positions they covered, and their number. The positions of a lost first or last unit are among them.
     public long Samples { get; init; }
 
     public long FirstPosition { get; init; }
 
     public long LostSamples { get; init; }
+
+    // Of LostSamples, the positions before the first measured block and after the last one that the stream's coded units cover: a lost
+    // first or last unit (the host gives the measurer the span of the units the parser handed to the decoding). The rest lies between
+    // blocks. They are counted only for a stream whose decoding ended with its units, and each counts as a gap.
+    public long LeadingLostSamples { get; init; }
+
+    public long TrailingLostSamples { get; init; }
+
+    // The lost samples between the first and the last measured block: the part of the span [FirstPosition, FirstPosition + Samples +
+    // InnerLostSamples) that the grids and graphs cover.
+    public long InnerLostSamples => LostSamples - LeadingLostSamples - TrailingLostSamples;
 
     public int Gaps { get; init; }
 

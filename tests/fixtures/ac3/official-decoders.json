@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "ac3",
  "run": {
-  "id": "41463609030",
-  "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d",
+  "id": "41610797320",
+  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
   "imageOS": "macos15",
   "imageVersion": "20261028.0489.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -15,8 +15,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41463609030",
-   "commit": "7e401faed6e6c9c05a6f6f9e34018a4ea6ebc57d"
+   "runId": "41610797320",
+   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
   }
  },
  "statuses": [
@@ -260,7 +260,19 @@
      }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 8928,
+     "analyzer": 9216,
+     "analyzerLost": 4608,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 4,608, which leaves 4,608",
+     "statusSource": "rule"
+    }
+   ],
    "units": [
     {
      "index": null,
@@ -1435,14 +1447,25 @@
    "differences": [
     {
      "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 8928,
+     "analyzer": 9216,
+     "analyzerLost": 1536,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
      "decoder": "coreaudio reader",
      "value": 7392,
      "analyzer": 9216,
      "reference": 8928,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928",
-     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
+     "analyzerLost": 1536,
      "statusSource": "rule"
     },
     {
@@ -6046,6 +6069,17 @@
    "differences": [
     {
      "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 8928,
+     "analyzer": 9216,
+     "analyzerLost": 1536,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
      "decoder": "ffmpeg",
      "value": 6144,
      "analyzer": 9216,
@@ -6319,14 +6353,25 @@
    "differences": [
     {
      "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 5856,
+     "analyzer": 6144,
+     "analyzerLost": 1536,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 5,856 samples; the analyzer's coded stage is 6,144 and its lost samples are 1,536, which leaves 4,608",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
      "decoder": "coreaudio reader",
      "value": 4320,
      "analyzer": 6144,
      "reference": 5856,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 4,320 samples where the converter outputs 5,856",
-     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "reason": "ExtAudioFile outputs 4,320 samples where the converter outputs 5,856; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
+     "analyzerLost": 1536,
      "statusSource": "rule"
     }
    ],
@@ -6424,14 +6469,25 @@
    "differences": [
     {
      "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 8928,
+     "analyzer": 9216,
+     "analyzerLost": 1536,
+     "status": "noted",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 8,928 samples; the analyzer's coded stage is 9,216 and its lost samples are 1,536, which leaves 7,680",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
      "decoder": "coreaudio reader",
      "value": 7392,
      "analyzer": 9216,
      "reference": 8928,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928",
-     "alignment": "the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (1,536), and the reader's total is the converter's less that frame",
+     "reason": "ExtAudioFile outputs 7,392 samples where the converter outputs 8,928; that is the coded stage less the converter's constant 288 and less the analyzer's lost samples (1,536)",
+     "analyzerLost": 1536,
      "statusSource": "rule"
     }
    ],

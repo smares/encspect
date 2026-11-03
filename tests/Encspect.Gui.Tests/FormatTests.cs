@@ -51,4 +51,13 @@ public class FormatTests
         var clear = stream with { Protection = new StreamProtection { Scheme = "Common Encryption, AES-CTR (cenc)" } };
         Assert.EndsWith("protected, not encrypted: Common Encryption, AES-CTR (cenc)", new StreamItem(clear).Text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void A_stream_line_names_the_lost_samples_only_above_zero()
+    {
+        var stream = new StreamInfo { Nodes = [new Node("x", 0, 1)], Codec = "MPEG-1 Layer III", SampleRate = 44100, Channels = 2, Duration = 3.5, Samples = 154350 };
+        Assert.DoesNotContain("lost", new StreamItem(stream).Text, StringComparison.Ordinal);
+        Assert.Contains("1,152 lost samples", new StreamItem(stream with { LostSamples = 1152 }).Text, StringComparison.Ordinal);
+        Assert.Contains("1 lost sample ", new StreamItem(stream with { LostSamples = 1, AverageBitrate = 128 }).Text + " ", StringComparison.Ordinal);
+    }
 }

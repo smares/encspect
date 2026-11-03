@@ -15,6 +15,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     private long _pendingOffset = -1;
     private int _pendingBytes;
     private int _pendingSamples;
+    private bool _pendingLost;
+    private bool _pendingCut;
     private int _pendingDependentIds;
     private bool _firstProgramFrame = true;
     private List<Token>? _dependentTokens;
@@ -32,6 +34,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     // The coding series, recorded while the frames are read.
     public CodingRecorder Recorder { get; } = new(key);
+
+    // The declared samples of the program frames that are cut, or whose syntax breaks so that the rest of the frame is not read.
+    public long LostSamples { get; private set; }
 
     public int LayoutChanges { get; private set; }
 
@@ -118,7 +123,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // dependent substream of each ID, so at most 8 (Annex E 2.3.1.2), and the one that repeats an ID
     // ends the program frame. The dependent frames after it, up to the next independent frame, are
     // left out of the program frames, so a program frame never grows beyond 9 frames.
-    public bool Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError)
+    public bool Add(int index, long offset, int length, SyncFrame header, FrameResult result, bool crcError, bool isLost, bool isCut = false)
     {
         if (header.IsDependent)
         {
@@ -134,6 +139,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             DependentFrames++;
             _pendingDependentIds |= bit;
             _pendingBytes += length;
+            _pendingLost |= isLost;
+            _pendingCut |= isCut;
             _pendingDependents.AddRange(DependentTokens(header, result));
         }
         else
@@ -143,6 +150,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             _pendingDependentIds = 0;
             _pendingBytes = length;
             _pendingSamples = header.Samples;
+            _pendingLost = isLost;
+            _pendingCut = isCut;
             _nominal.Add(header.NominalBitrate);
             if (result.Dialnorm >= 0 && !_dialnorms.Contains(result.Dialnorm))
             {
@@ -155,6 +164,12 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             }
 
             CompressionFrames += result.HasCompression ? 1 : 0;
+        }
+
+        // What a cut frame holds is in no tally.
+        if (isCut)
+        {
+            return false;
         }
 
         EmdfContainers += result.EmdfContainers;
@@ -213,9 +228,35 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             return;
         }
 
-        Figures.Add(_pendingOffset, _pendingBytes, _pendingSamples);
-        Recorder.EndUnit();
-        _sizes.Add(_pendingBytes);
+        // A frame the data or the container cuts counts in the samples and the lost samples only, not in the frame count, the sizes or the bitrates.
+        if (_pendingCut)
+        {
+            Figures.AddCut(_pendingSamples);
+        }
+        else
+        {
+            Figures.Add(_pendingOffset, _pendingBytes, _pendingSamples);
+        }
+
+        if (_pendingLost)
+        {
+            LostSamples += _pendingSamples;
+        }
+
+        if (_pendingCut)
+        {
+            Recorder.Discard();
+        }
+        else
+        {
+            Recorder.EndUnit();
+        }
+
+        if (!_pendingCut)
+        {
+            _sizes.Add(_pendingBytes);
+        }
+
         if (_firstProgramFrame)
         {
             _dependentTokens = [.. _pendingDependents];
@@ -353,9 +394,16 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate, out CodingNodes coding)
     {
-        Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate);
+        Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate, node =>
+        {
+            if (LostSamples > 0)
+            {
+                node.Add(cover("Lost Samples", NodeValue.Integer(LostSamples, "samples", "sample"), NodeKind.Detail, StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+            }
+        });
         Node Add(string name, NodeValue value, string description, string? topic = null) =>
             statistics.Add(cover(name, value, NodeKind.Detail, description, topic));
+
         NodeValue Blocked(int count) => NodeValue.Integer(count, "blocks", "block");
         Node? switching = null, coupling = null, rematrixing = null, spectral = null, bandwidth = null;
 

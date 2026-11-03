@@ -1,0 +1,52 @@
+{
+  "note": "Samples alignment (docs/design/samples-definition.md): a TTA frame the data cuts short counts its declared samples in the samples and is lost; the stream gains lostSamples and the statistics node Lost Samples. The average bitrate still covers the frames held whole.",
+  "goldens": [
+    "tests/fixtures/tta/built-cut-mid-frame.report.json",
+    "tests/fixtures/tta/built-header-samples-too-many.report.json",
+    "tests/fixtures/tta/built-seek-entry-too-large.report.json",
+    "tests/fixtures/tta/built-seek-table-past-end.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "TTA",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    }
+  ],
+  "changed": [
+    {
+      "scope": "stream",
+      "fields": [
+        "samples",
+        "duration"
+      ]
+    },
+    {
+      "path": [
+        "TTA",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "TTA",
+        "Statistics",
+        "Duration"
+      ],
+      "fields": [
+        "value"
+      ]
+    }
+  ]
+}

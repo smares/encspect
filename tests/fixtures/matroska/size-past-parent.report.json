@@ -2112,13 +2112,13 @@
                   "children": [
                     {
                       "name": "Packets",
-                      "value": 23,
+                      "value": 22,
                       "offset": 157,
                       "length": 1082
                     },
                     {
                       "name": "Frames",
-                      "value": 23,
+                      "value": 22,
                       "offset": 157,
                       "length": 1082
                     },
@@ -2144,6 +2144,13 @@
                       "length": 1082
                     },
                     {
+                      "name": "Lost Samples",
+                      "value": 960,
+                      "unit": "samples",
+                      "offset": 157,
+                      "length": 1082
+                    },
+                    {
                       "name": "Duration",
                       "value": 0.4535,
                       "unit": "s",
@@ -2158,7 +2165,7 @@
                     },
                     {
                       "name": "Average Bitrate",
-                      "value": 16.347826086956523,
+                      "value": 16.363636363636363,
                       "unit": "kbps",
                       "offset": 157,
                       "length": 1082
@@ -2191,7 +2198,7 @@
                       "children": [
                         {
                           "name": "CELT-only",
-                          "value": "23 frames (100.0%)",
+                          "value": "22 frames (100.0%)",
                           "offset": 157,
                           "length": 1082
                         }
@@ -2205,7 +2212,7 @@
                       "children": [
                         {
                           "name": "Fullband (20 kHz)",
-                          "value": "23 frames (100.0%)",
+                          "value": "22 frames (100.0%)",
                           "offset": 157,
                           "length": 1082
                         }
@@ -2219,7 +2226,7 @@
                       "children": [
                         {
                           "name": "20 ms",
-                          "value": "23 frames (100.0%)",
+                          "value": "22 frames (100.0%)",
                           "offset": 157,
                           "length": 1082
                         }
@@ -2239,7 +2246,7 @@
                         },
                         {
                           "name": "Mono",
-                          "value": "23 packets (100.0%)",
+                          "value": "22 packets (100.0%)",
                           "offset": 157,
                           "length": 1082
                         }
@@ -2253,7 +2260,7 @@
                       "children": [
                         {
                           "name": "Code 0 (one frame)",
-                          "value": "23 packets (100.0%)",
+                          "value": "22 packets (100.0%)",
                           "offset": 157,
                           "length": 1082
                         }
@@ -3398,8 +3405,9 @@
         ],
         "channelLayoutName": "mono",
         "samples": 21768,
+        "lostSamples": 960,
         "duration": 0.4535,
-        "averageBitrate": 16.347826086956523,
+        "averageBitrate": 16.363636363636363,
         "isVbr": true,
         "playbackGroup": 1,
         "writer": "x",
@@ -3437,7 +3445,7 @@
             "values": [
               16,
               16.4,
-              16,
+              0,
               16,
               16.4,
               16.8,
@@ -3468,7 +3476,7 @@
               0
             ],
             "values": [
-              16.3
+              16.4
             ]
           }
         ]

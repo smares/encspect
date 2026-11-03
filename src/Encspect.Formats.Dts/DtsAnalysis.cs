@@ -382,6 +382,7 @@ internal sealed class DtsAnalysis
             ChannelLayout = stream.Layout,
             BitsPerSample = stream.BitsPerSample,
             Samples = stream.Figures.Samples,
+            LostSamples = stream.Figures.LostSamples,
             Duration = stream.Figures.Duration,
             AverageBitrate = stream.Figures.AverageBitrate,
             IsVbr = stream.IsVbr,

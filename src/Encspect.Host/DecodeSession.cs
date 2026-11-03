@@ -32,6 +32,9 @@ internal sealed class DecodeSession : IDecodeSession
     private long _framesNotDecoded;
     private bool _isAfterUnreadable;
     private long _decodedSamples;
+    private bool _hasCodedRange;
+    private long _codedStart;
+    private long _codedEnd;
     private long _work;
     private StreamVerification? _verification;
     private string? _notPossible;
@@ -152,6 +155,13 @@ internal sealed class DecodeSession : IDecodeSession
         if (EndIfAsked())
         {
             return false;
+        }
+
+        // The span of the units handed over, lost ones included, which the measurer needs to count a lost first or last unit.
+        if (frame.Samples > 0 && frame.FirstSample >= 0)
+        {
+            long end = frame.FirstSample > long.MaxValue - frame.Samples ? long.MaxValue : frame.FirstSample + frame.Samples;
+            (_codedStart, _codedEnd, _hasCodedRange) = _hasCodedRange ? (Math.Min(_codedStart, frame.FirstSample), Math.Max(_codedEnd, end), true) : (frame.FirstSample, end, true);
         }
 
         if (_isAfterUnreadable)
@@ -379,6 +389,11 @@ internal sealed class DecodeSession : IDecodeSession
         StreamMeasurements record;
         if (_sink?.Measurer is { } measurer)
         {
+            if (_hasCodedRange)
+            {
+                measurer.SetCodedRange(_codedStart, _codedEnd);
+            }
+
             record = MeasurementFindings.Finish(measurer, run, _isEnded || _isFailed || _status != DecodeStatus.Decoded, _framesNotDecoded > 0, Add);
 
             if (record.Status == MeasurementStatus.Incomplete)

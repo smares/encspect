@@ -202,21 +202,21 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 1,
+                  "value": 0,
                   "unit": "frames",
                   "offset": 0,
                   "length": 82
                 },
                 {
                   "name": "Samples",
-                  "value": 160000,
+                  "value": 0,
                   "unit": "samples",
                   "offset": 0,
                   "length": 82
                 },
                 {
                   "name": "Duration",
-                  "value": 3.6281179138321997,
+                  "value": 0,
                   "unit": "s",
                   "offset": 0,
                   "length": 82
@@ -269,57 +269,9 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 651.43203125,
-                  "unit": "kbps",
+                  "value": "none",
                   "offset": 0,
                   "length": 82
-                },
-                {
-                  "name": "Bitrate Mode",
-                  "value": "unknown",
-                  "offset": 0,
-                  "length": 82
-                },
-                {
-                  "name": "Smallest Frame",
-                  "value": 136136,
-                  "unit": "bytes",
-                  "offset": 0,
-                  "length": 82
-                },
-                {
-                  "name": "Largest Frame",
-                  "value": 136136,
-                  "unit": "bytes",
-                  "offset": 0,
-                  "length": 82
-                },
-                {
-                  "name": "Minimum Bitrate",
-                  "value": 651.43203125,
-                  "unit": "kbps",
-                  "offset": 0,
-                  "length": 82
-                },
-                {
-                  "name": "Maximum Bitrate",
-                  "value": 651.43203125,
-                  "unit": "kbps",
-                  "offset": 0,
-                  "length": 82
-                },
-                {
-                  "name": "Bitrate Distribution",
-                  "offset": 0,
-                  "length": 82,
-                  "children": [
-                    {
-                      "name": "640 to 671 kbps",
-                      "value": "1 frame (100.0%)",
-                      "offset": 0,
-                      "length": 82
-                    }
-                  ]
                 }
               ]
             },
@@ -351,9 +303,8 @@
         ],
         "channelLayoutName": "mono",
         "bitsPerSample": 16,
-        "samples": 160000,
-        "duration": 3.6281179138321997,
-        "averageBitrate": 651.43203125,
+        "samples": 0,
+        "duration": 0,
         "isVbr": false,
         "verification": {
           "decoding": "notRequested",
@@ -379,30 +330,7 @@
         },
         "encoder": "Monkey's Audio 13.44",
         "encoderConfidence": "High",
-        "series": [
-          {
-            "name": "Bitrate",
-            "unit": "kbps",
-            "axis": "frameOffset",
-            "x": [
-              132
-            ],
-            "values": [
-              651.43203125
-            ]
-          },
-          {
-            "name": "Bitrate Over Time",
-            "unit": "kbps",
-            "axis": "seconds",
-            "x": [
-              0
-            ],
-            "values": [
-              651
-            ]
-          }
-        ]
+        "series": []
       }
     ],
     "findings": [

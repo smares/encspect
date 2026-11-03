@@ -82,6 +82,9 @@ internal sealed class State
     // Counts over the frames.
     public long Frames { get; set; }
 
+    // The frames that are not cut and have a byte in the file: the frame count of the statistics.
+    public long WholeFrames { get; set; }
+
     public long CutFrames { get; set; }
 
     public long MisplacedFrames { get; set; }
@@ -99,7 +102,11 @@ internal sealed class State
 
     public long SpecialFrames { get; set; }
 
+    // The declared samples of the frames whose first byte is in the file, and of those the samples of the frames that are cut or too short
+    // for their start fields.
     public long Samples { get; set; }
+
+    public long LostSamples { get; set; }
 
     public bool HasGap { get; set; }
 

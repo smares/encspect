@@ -32,7 +32,7 @@ refuses, conceals or outputs nothing for, and the units with an analyzer finding
   that cannot be paired are compared as one figure at one rate, and a run whose rate differs from the analyzer's (SBR applied by one and not the other) is also listed as `rate-differs`.
   A total with raw data blocks the library still holds when it answers 0x1002 (frames of several blocks) is no reference (`decoder-holds-blocks`).
   explained   FDK's excess over the analyzer is exactly the samples of the frames it conceals (a future decoder leaves them as gaps, decision of the project lead, 2026-11-01); FDK's
-              shortfall is exactly the blocks of units the analyzer flags (a finding at their bytes or covering them) and counts by their declared positions, for which FDK refuses
+              shortfall is exactly the blocks of units the analyzer flags (a finding at their bytes or covering them) and counts by their declared samples (reporting the lost ones apart), for which FDK refuses
               or outputs nothing; the 64-stream cap (aac.streams-limited); AAC Main, LTP and SSR, which FDK AAC does not document
   noted       no reference, the analyzer has nothing wrong to change; a unit the analyzer flags through a merged finding, a sample-table finding or the declared length of a damaged unit
   pending     every other difference of the analyzer from FDK, rate differences, and every unit FDK refuses, conceals or outputs nothing for with no finding that covers it
@@ -640,7 +640,7 @@ def aac_analyzer(report):
     """The AAC streams of a report (all of an ADTS file's, the first stream of an MP4 file's, whose first sound track the unit list holds), the gapless figures of the first
     track and the findings."""
     mp4 = any(c.get("name") == "MP4" for c in report["root"].get("children", []))
-    streams = [{"index": i, "codec": s["codec"], "samples": s.get("samples"), "sampleRate": s.get("sampleRate"), "channels": s.get("channels")}
+    streams = [{"index": i, "codec": s["codec"], "samples": s.get("samples"), "lostSamples": s.get("lostSamples", 0), "sampleRate": s.get("sampleRate"), "channels": s.get("channels")}
                for i, s in enumerate(report.get("streams", [])) if s["codec"].startswith(AAC_CODECS)]
     if mp4:
         first = report["streams"][0] if report.get("streams") else None
@@ -1311,15 +1311,6 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
     if coreaudio and not coreaudio.get("notFed"):
         differences += coreaudio_differences(figures)
         units = units + coreaudio_unit_verdicts(coreaudio, analyzer)
-        # The samples-definition alignment counts a cut MP4 sample by its declared positions: the analyzer then equals FDK, which conceals a frame for it, and Core Audio, which equals the analyzer
-        # today, is the one that differs.
-        for figure in figures:
-            converter = (figure.get("coreAudio") or {}).get("converter") or {}
-            if figure["stage"] == "coded" and record["unitList"].get("kind") == "mp4" and record["unitList"].get("cutUnits") and converter.get("samples") == figure["analyzer"]:
-                for d in differences:
-                    if d["figure"] == figure["id"] and d["decoder"] == "fdk direct" and d["kind"] == "analyzer-differs" and "frames FDK conceals" in d.get("reason", ""):
-                        d["alignment"] = ("the samples-definition alignment counts the cut sample: the analyzer then equals FDK (%s) and Core Audio's converter (%s) is the decoder that differs, which its cross-check statuses "
-                                          "(rule 2) leave to the lead" % (show(d["value"]), show(converter["samples"])))
     return {"figures": figures, "differences": differences, "units": units, "notes": notes, "codecs": codecs, "object": direct.get("object")}
 
 
@@ -1366,8 +1357,12 @@ def aac_differences(figures, direct, codecs, analyzer, units):
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
                                     "reason": "the excess of %s samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps" % show(r - a)})
             elif r < (a or 0) and missing and total_blocks and (a - (r - concealed)) * total_blocks == a * missing:
-                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "explained", "kind": "analyzer-differs",
-                                    "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (%s) are exactly the %d blocks of flagged or covered units, which it counts by their declared positions and FDK refuses, outputs nothing for or conceals" % (show(a - (r - concealed)), missing)})
+                shortfall = a - (r - concealed)
+                # Rule 1 of the samples definition's cross-check statuses: explained where the reference's total equals the coded stage less the lost samples of the figure's streams; units the analyzer flags and counts
+                # but does not report as lost (it reads them without breaking the syntax) are noted.
+                figure_lost = sum(x.get("lostSamples", 0) for x in analyzer["streams"] if x["index"] in figure["streams"])
+                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "analyzerLost": figure_lost, "status": "explained" if figure_lost == shortfall else "noted", "kind": "analyzer-differs",
+                                    "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (%s) are exactly the %d blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals" % (show(shortfall), missing)})
             else:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs"})
         for name, value in figure["witnesses"].items():
@@ -1554,6 +1549,11 @@ def carry_reviewed(d, old):
         d["note"] = d.pop("note")
 
 
+def reworded(value):
+    """A committed reason as the script words it now (the samples definition calls what a unit declares its declared samples, not positions)."""
+    return value.replace("declared positions", "declared samples") if isinstance(value, str) else value
+
+
 def apply_reviewed(results, source):
     """Puts the statuses and notes a person set in the committed file onto the fresh differences and units whose values are unchanged, so that the text shows what the JSON will say."""
     if not source.exists():
@@ -1565,7 +1565,7 @@ def apply_reviewed(results, source):
     for r in results:
         for d in r["differences"] + r["units"]:
             old = previous.get(unit_key(r["file"], r["sha256"], d))
-            if old and old.get("statusSource") == "reviewed" and all(old.get(k) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason")):
+            if old and old.get("statusSource") == "reviewed" and all(reworded(old.get(k)) == d.get(k) for k in ("value", "analyzer", "finding", "verdict", "reason")):
                 carry_reviewed(d, old)
                 if "awaitingStep" in old:
                     d["awaitingStep"] = old["awaitingStep"]
@@ -1787,7 +1787,7 @@ def ac3_unit_finding(finding):
 def ac3_analyzer(report):
     """The AC-3 and E-AC-3 streams of a report (the first stream of an MP4 file's, whose first sound track the unit list holds), the gapless figures and the findings."""
     mp4 = any(c.get("name") == "MP4" for c in report["root"].get("children", []))
-    streams = [{"index": i, "codec": s["codec"], "samples": s.get("samples"), "sampleRate": s.get("sampleRate"), "channels": s.get("channels")}
+    streams = [{"index": i, "codec": s["codec"], "samples": s.get("samples"), "lostSamples": s.get("lostSamples", 0), "sampleRate": s.get("sampleRate"), "channels": s.get("channels")}
                for i, s in enumerate(report.get("streams", [])) if s["codec"].startswith(AC3_CODECS)]
     if mp4:
         streams = [x for x in streams if x["index"] == 0]
@@ -1909,15 +1909,19 @@ def compare_ac3(record, analyzer, ffmpeg):
         if a + offset != r:
             differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs",
                                 "reason": "the analyzer's samples less the converter's constant %d are %s; the converter outputs %s" % (CORE_AUDIO_AC3_SHORT, show(a + offset), show(r))})
+        lost = sum(x.get("lostSamples", 0) for x in analyzer["streams"])
+        if lost and a + offset == r:
+            differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": r, "analyzer": a, "analyzerLost": lost, "status": "noted", "kind": "outputs-lost-samples",
+                                "reason": "the converter outputs %s samples; the analyzer's coded stage is %s and its lost samples are %s, which leaves %s" % (show(r), show(a), show(lost), show(a - lost))})
         entry = column.get("reader")
         if entry and entry.get("samples") is not None and entry["samples"] != r:
             difference = {"figure": "samples", "decoder": "coreaudio reader", "value": entry["samples"], "analyzer": a, "reference": r,
                           "status": "explained" if a + offset == r else "noted", "kind": "witness-differs",
                           "reason": "ExtAudioFile outputs %s samples where the converter outputs %s" % (show(entry["samples"]), show(r))}
-            cut = record["unitList"].get("cutUnits") or 0
-            if cut and r - entry["samples"] == cut * 1536:
-                difference["alignment"] = ("the samples-definition alignment (rule 1 of its cross-check statuses) will make this explained by the lost samples: the cut frame is counted and lost (%s), and the reader's total "
-                                           "is the converter's less that frame" % show(cut * 1536))
+            if lost and entry["samples"] == a + offset - lost:
+                difference["status"] = "explained"
+                difference["analyzerLost"] = lost
+                difference["reason"] += "; that is the coded stage less the converter's constant %d and less the analyzer's lost samples (%s)" % (CORE_AUDIO_AC3_SHORT, show(lost))
             differences.append(difference)
         if ff is not None and ff != a:
             differences.append({"figure": "samples", "decoder": "ffmpeg", "value": ff, "analyzer": a, "reference": r, "status": "explained" if a + offset == r else "noted", "kind": "witness-differs",

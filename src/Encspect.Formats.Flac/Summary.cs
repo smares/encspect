@@ -223,8 +223,13 @@ internal static partial class Summary
         long samples = s.Samples;
         double duration = rate > 0 ? samples / (double)rate : 0;
         IReadOnlyList<Speaker>? layout = Layout(channels);
-        statistics.Add(cover("Frames", NodeValue.Integer(s.Frames, "frames"), Explain.StatFrames, Topics.Frames));
+        statistics.Add(cover("Frames", NodeValue.Integer(s.Frames - s.CutFrames, "frames"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover3("Samples", NodeValue.Integer(samples, "samples"), Explain.StatSamples));
+        if (s.LostSamples > 0)
+        {
+            statistics.Add(cover("Lost Samples", NodeValue.Integer(s.LostSamples, "samples"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         if (rate > 0)
         {
@@ -345,6 +350,7 @@ internal static partial class Summary
             ChannelLayout = layout,
             BitsPerSample = bits > 0 ? bits : null,
             Samples = samples,
+            LostSamples = s.LostSamples,
             Duration = duration,
             AverageBitrate = s.Figures?.AverageBitrate,
             IsVbr = s.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,

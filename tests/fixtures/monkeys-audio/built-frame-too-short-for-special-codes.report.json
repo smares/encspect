@@ -262,6 +262,13 @@
                   "length": 113636
                 },
                 {
+                  "name": "Lost Samples",
+                  "value": 12544,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 113636
+                },
+                {
                   "name": "Duration",
                   "value": 3.6281179138321997,
                   "unit": "s",
@@ -316,7 +323,7 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 250.27632,
+                  "value": 271.550439453125,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 113636
@@ -329,7 +336,7 @@
                 },
                 {
                   "name": "Smallest Frame",
-                  "value": 7,
+                  "value": 27290,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 113636
@@ -343,7 +350,7 @@
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 0.196875,
+                  "value": 130.5869140625,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 113636
@@ -361,20 +368,14 @@
                   "length": 113636,
                   "children": [
                     {
-                      "name": "0 to 31 kbps",
-                      "value": "1 frame (33.3%)",
-                      "offset": 0,
-                      "length": 113636
-                    },
-                    {
                       "name": "128 to 159 kbps",
-                      "value": "1 frame (33.3%)",
+                      "value": "1 frame (50.0%)",
                       "offset": 0,
                       "length": 113636
                     },
                     {
                       "name": "384 to 415 kbps",
-                      "value": "1 frame (33.3%)",
+                      "value": "1 frame (50.0%)",
                       "offset": 0,
                       "length": 113636
                     }
@@ -544,8 +545,9 @@
         "channelLayoutName": "mono",
         "bitsPerSample": 16,
         "samples": 160000,
+        "lostSamples": 12544,
         "duration": 3.6281179138321997,
-        "averageBitrate": 250.27632,
+        "averageBitrate": 271.550439453125,
         "isVbr": true,
         "verification": {
           "decoding": "notRequested",
@@ -578,13 +580,11 @@
             "axis": "frameOffset",
             "x": [
               132,
-              27422,
-              113629
+              27422
             ],
             "values": [
               130.5869140625,
-              412.51396484375,
-              0.196875
+              412.51396484375
             ]
           },
           {
@@ -593,13 +593,11 @@
             "axis": "seconds",
             "x": [
               0,
-              1,
-              3
+              1
             ],
             "values": [
               131,
-              413,
-              0
+              413
             ]
           }
         ]

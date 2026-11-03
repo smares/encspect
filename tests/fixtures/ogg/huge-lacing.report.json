@@ -242,96 +242,103 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "5 packets, 0.095 s",
+                  "value": "6 packets, 0.115 s",
                   "offset": 200,
-                  "length": 100,
+                  "length": 66689,
                   "children": [
                     {
                       "name": "Packets",
                       "value": 5,
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Frames",
                       "value": 5,
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Coded Samples",
-                      "value": 800,
+                      "value": 960,
                       "unit": "samples",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Encoder Delay",
                       "value": 40,
                       "unit": "samples",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "End Trimming",
                       "value": 0,
                       "unit": "samples",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Samples",
-                      "value": 760,
+                      "value": 920,
                       "unit": "samples",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
+                    },
+                    {
+                      "name": "Lost Samples",
+                      "value": 160,
+                      "unit": "samples",
+                      "offset": 200,
+                      "length": 66689
                     },
                     {
                       "name": "Duration",
-                      "value": 0.095,
+                      "value": 0.115,
                       "unit": "s",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "IsVbr",
                       "value": false,
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Average Bitrate",
                       "value": 8,
                       "unit": "kbps",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Minimum Bitrate",
                       "value": 8,
                       "unit": "kbps",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Maximum Bitrate",
                       "value": 8,
                       "unit": "kbps",
                       "offset": 200,
-                      "length": 100
+                      "length": 66689
                     },
                     {
                       "name": "Packet Sizes",
                       "value": 1,
                       "unit": "sizes",
                       "offset": 200,
-                      "length": 100,
+                      "length": 66689,
                       "children": [
                         {
                           "name": "20 bytes",
                           "value": "5 packets (100.0%), 8.0 kbps",
                           "offset": 200,
-                          "length": 100
+                          "length": 66689
                         }
                       ]
                     },
@@ -340,13 +347,13 @@
                       "value": 1,
                       "unit": "submodes",
                       "offset": 200,
-                      "length": 100,
+                      "length": 66689,
                       "children": [
                         {
                           "name": "Submode 3 (160 bits)",
                           "value": "5 frames (100.0%)",
                           "offset": 200,
-                          "length": 100
+                          "length": 66689
                         }
                       ]
                     }
@@ -355,10 +362,10 @@
                 {
                   "name": "Audio Packets",
                   "kind": "Stream",
-                  "value": 5,
+                  "value": 6,
                   "unit": "packets",
                   "offset": 200,
-                  "length": 100,
+                  "length": 66689,
                   "children": [
                     {
                       "name": "Packet",
@@ -610,6 +617,80 @@
                                   "bitLength": 155
                                 }
                               ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "66025 bytes, narrowband submode 0",
+                      "offset": 582,
+                      "length": 66307,
+                      "ranges": [
+                        {
+                          "offset": 582,
+                          "length": 65025
+                        },
+                        {
+                          "offset": 65889,
+                          "length": 1000
+                        }
+                      ],
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 0",
+                          "offset": 582,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 5,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 5,
+                              "unit": "bits",
+                              "offset": 582,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 582,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 0,
+                                  "offset": 582,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Ignored Data",
+                          "value": "528195 bits after the frames the header gives, which decoders ignore",
+                          "offset": 582,
+                          "length": 66307,
+                          "bitOffset": 5,
+                          "bitLength": 528195,
+                          "ranges": [
+                            {
+                              "offset": 582,
+                              "length": 65025
+                            },
+                            {
+                              "offset": 65889,
+                              "length": 1000
                             }
                           ]
                         }
@@ -4786,7 +4867,7 @@
                     },
                     {
                       "name": "Body",
-                      "value": "1000 bytes, not read as packets: the page is cut short",
+                      "value": "1000 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page is cut short",
                       "offset": 65889,
                       "length": 1000
                     }
@@ -4814,8 +4895,9 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 760,
-        "duration": 0.095,
+        "samples": 920,
+        "lostSamples": 160,
+        "duration": 0.115,
         "averageBitrate": 8,
         "isVbr": false,
         "playbackGroup": 1,
@@ -4831,14 +4913,16 @@
               220,
               240,
               260,
-              280
+              280,
+              582
             ],
             "values": [
               8,
               8,
               8,
               8,
-              8
+              8,
+              0
             ]
           },
           {

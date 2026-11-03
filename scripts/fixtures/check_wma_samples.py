@@ -14,7 +14,7 @@ with FFmpeg's code, so ffmpeg's decoder is the one outside check of the frame bo
 Per file, ffprobe, ffmpeg and MediaInfo must agree with the manifest, with their words mapped to the analyzer's: ffprobe's codec names "wmapro"
 and "wmalossless" and the container's nominal bit rate, the samples and the frames (framecrc) ffmpeg decodes, and MediaInfo's Format "WMA" with
 the Format_Profile "Pro" or "Lossless" and the CodecID "162" or "163". With --analyzer, the analyzer's report (encspect --ndjson --hide frames)
-must match instead: the first stream, the samples (equal to ffmpeg's), the frames and packets, and exactly the codes of the findings.
+must match instead: the first stream, the samples (equal to ffmpeg's, which on a file cut inside a media object are the rule's and Windows'; the frames that the cut object declares are in the lost samples only), the frames and packets, and exactly the codes of the findings.
 
 Needs curl, ffmpeg, ffprobe and mediainfo. Usage:
 
@@ -102,6 +102,7 @@ def analyze(analyzer, path):
     statistics = {c["name"]: c.get("value") for n in codec.get("children", []) if n["name"] == "Statistics" for c in n["children"]}
     return {
         "samples": stream["samples"],
+        "lost_samples": stream.get("lostSamples", 0),
         "frames": int(str(codec["value"]).split()[0]),
         "packets": statistics.get("Packets"),
         "findings": sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"}),
@@ -112,8 +113,8 @@ def analyze(analyzer, path):
 def analyzer_problems(analyzer, path, sample):
     problems = []
     found = analyze(analyzer, path)
-    for key in ("samples", "frames", "packets", "findings", "info_findings"):
-        if found[key] != sample[key]:
+    for key in ("samples", "lost_samples", "frames", "packets", "findings", "info_findings"):
+        if found[key] != sample.get(key, 0 if key == "lost_samples" else None):
             problems.append(f"the analyzer's {key} are {found[key]}, the manifest {sample[key]}")
     if found["samples"] != sample["ffmpeg_samples"] and "samples_differ" not in sample:
         problems.append(f"the analyzer's samples are {found['samples']}, ffmpeg decodes {sample['ffmpeg_samples']}")

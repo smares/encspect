@@ -204,6 +204,7 @@ internal sealed class Records
 // The background articles the ALAC nodes point to, by the IDs the host's topic library serves.
 internal static class Topics
 {
+    public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string Alac = "alac";
     public const string AdaptiveGolomb = "alac-adaptive-golomb";
     public const string Prediction = "alac-prediction";

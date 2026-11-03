@@ -284,7 +284,12 @@ public sealed class FlacCodecParser : ICodecParser
             FrameWalk walk = FrameWalker.Walk(data, header, _facts, session, _logs);
             EntryStatus status = EntryStatus.None;
             MappedBytes bytes = packet;
-            if (walk.IsComplete)
+            if (packet.IsCut)
+            {
+                // The container cut the packet: the frame is cut as a file's last frame is (flac.frame-cut), and its CRC-16 is not compared.
+                status = EntryStatus.Cut;
+            }
+            else if (walk.IsComplete)
             {
                 if (walk.Length < data.Length)
                 {

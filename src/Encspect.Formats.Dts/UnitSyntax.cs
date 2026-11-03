@@ -101,6 +101,12 @@ internal sealed partial class UnitSyntax
 
     private void Invoke(Issue issue, string field, int startBit, int endBit, string detail, bool isGroup)
     {
+        // A header that runs past its data breaks the syntax: the unit is lost (samples-definition.md, DTS), like an AC-3 frame that overruns.
+        if (issue == Issue.HeaderOverrun)
+        {
+            Facts.HasHeaderOverrun = true;
+        }
+
         if (_issues is null)
         {
             return;

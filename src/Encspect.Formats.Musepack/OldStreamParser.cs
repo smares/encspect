@@ -478,6 +478,10 @@ internal static class OldStreamParser
         long decoded = 0;
         Frame? firstOverrun = null;
         int overruns = 0;
+        long cut = 0;
+        long lastFrames = 0;
+        long lostLast = 0;
+        long lostFrames = 0;
         for (int i = 0; i < state.Frames.Count; i++)
         {
             if (i % 4096 == 0)
@@ -488,10 +492,24 @@ internal static class OldStreamParser
             Frame frame = state.Frames[i];
             if ((frame.Flags & (FrameFlags.Truncated | FrameFlags.Last)) != 0)
             {
+                // A frame cut by the end of the data counts its declared samples (Coded Samples, Samples, Lost Samples). The last frame of an SV4 or SV5
+                // stream is coded all the same, whole or cut, but decoders do not decode it, so it is trimmed from the samples (the end of the last frame);
+                // it is lost only where the data cut it (the encoders write whole words only).
+                if ((frame.Flags & FrameFlags.Truncated) != 0)
+                {
+                    cut++;
+                }
+                else
+                {
+                    lastFrames++;
+                    lostLast += state.LastRunsPast > 0 ? 1 : 0;
+                }
+
                 continue;
             }
 
             decoded++;
+            lostFrames += (frame.Flags & FrameFlags.Overrun) != 0 ? 1 : 0;
             figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples, inSeries: frame.Length > 0);
             if ((frame.Flags & FrameFlags.Overrun) != 0)
             {
@@ -543,9 +561,11 @@ internal static class OldStreamParser
         // libmpcdec refuses give none. A damaged frame stops libmpcdec earlier; the count assumes the
         // frames whole.
         long frames = h.IsReadable ? decoded : h.Version is 4 or 5 ? Math.Max(0, h.Frames - 1) : 0;
+        long coded = frames + (h.IsReadable ? cut + lastFrames : 0);
+        long lost = h.IsReadable ? (cut + lostLast + lostFrames) * Sv7Parser.FrameSamples : 0;
         long samples = state.FinalSamples is { } given && decoded > 0
             ? ((decoded - 1) * Sv7Parser.FrameSamples) + LastFrameOutput(given) - Sv7Parser.SynthesisDelay
-            : Math.Max(0, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
+            : Math.Max(0, ((frames + (h.IsReadable ? cut : 0)) * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
         double duration = samples / (double)sampleRate;
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
         Node? bitrate = null;
@@ -553,9 +573,13 @@ internal static class OldStreamParser
         {
             Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
             statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), h.KeepsLastFrame ? Explain.Sv6StatFrames : Explain.OldStatFrames));
-            statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
+            statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
             statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay, "samples", "sample"), Explain.DecoderDelay));
             statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), h.KeepsLastFrame ? Explain.Sv6StatSamples : Explain.OldStatSamples));
+            if (lost > 0)
+            {
+                statistics.Add(new Node("Lost Samples", node.Offset, node.Length, NodeValue.Integer(lost, "samples", "sample")) { Description = StreamInfo.LostSamplesDescription, Topic = Topics.SamplesAndLostSamples });
+            }
             statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             figures.AddTo(statistics, Cover, "Frame", "frames", inBytes: false, out Node average);
             bitrate = average;
@@ -586,6 +610,7 @@ internal static class OldStreamParser
             ChannelMode = h.IntensityStereo ? "Stereo, intensity stereo" : h.MidSide ? "Stereo, mid/side per subband" : "Stereo",
             ChannelLayout = ChannelLayouts.Stereo,
             Samples = samples,
+            LostSamples = lost,
             Duration = duration,
             AverageBitrate = h.IsReadable ? figures.AverageBitrate : null,
             IsVbr = h.Bitrate == 0,

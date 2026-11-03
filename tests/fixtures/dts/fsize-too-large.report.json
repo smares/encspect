@@ -26,7 +26,7 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 6,
+                  "value": 5,
                   "unit": "frames",
                   "offset": 0,
                   "length": 3072
@@ -34,6 +34,13 @@
                 {
                   "name": "Samples",
                   "value": 3072,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 3072
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 512,
                   "unit": "samples",
                   "offset": 0,
                   "length": 3072
@@ -4555,6 +4562,7 @@
         "channelLayoutName": "stereo",
         "bitsPerSample": 24,
         "samples": 3072,
+        "lostSamples": 512,
         "duration": 0.064,
         "averageBitrate": 384,
         "isVbr": false,
@@ -4567,12 +4575,10 @@
               0,
               512,
               1024,
-              1536,
               2048,
               2560
             ],
             "values": [
-              384,
               384,
               384,
               384,

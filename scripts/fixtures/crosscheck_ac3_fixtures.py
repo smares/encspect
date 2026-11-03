@@ -457,7 +457,7 @@ MEDIAINFO_SERVICES = ["CM", "ME", "VI", "HI", "D", "C", "E", "VO"]
 # without a frame count of its own, it derives the duration from the file size and that bitrate, and
 # the samples and stream size from the duration rounded to the millisecond.
 FIRST_FRAME_RATE = "MediaInfo takes the bitrate of the first frame of each substream (File_Ac3.cpp, frmsizplus1_Max) and derives the duration, samples and stream size from it and the file size"
-COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), where the analyzer counts every frame, the cut one with a finding"
+COMPLETE_FRAMES = "MediaInfo counts the complete frames as the file size over the first frame's size (File_Ac3.cpp, Streams_Finish: \"Only complete frames\"), where the analyzer counts the complete frames in its frame count and the cut one, with a finding, in its samples and lost samples only"
 LEADING_JUNK = "MediaInfo derives the duration from the file size, junk included (File_Ac3.cpp, Streams_Finish), and the samples and stream size from it, where the analyzer counts the frames"
 DEPENDENT_FIRST = "MediaInfo adds the channels and bitrate of the dependent frame the stream starts with, which A/52 Annex E 2.3.1.2 places after an independent frame and the analyzer reports without it, and derives the samples, duration and stream size from that bitrate"
 
@@ -488,8 +488,8 @@ MEDIAINFO_READS_OTHERWISE = {
     "substreams": dict.fromkeys(["samples", "duration", "stream size"], FIRST_FRAME_RATE),
     "dependent-repeated": dict.fromkeys(["frames", "samples", "duration", "stream size"], FIRST_FRAME_RATE + "; it does not leave out the repeated dependent substreams that the analyzer leaves out of its program frames"),
     "stream-changes": dict.fromkeys(["samples", "duration"], "MediaInfo describes the whole file as one stream and counts all six frames (9216 samples), where the analyzer's first stream is the first two 2/0 frames"),
-    "truncated-in-skip": {**dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
-                          **dict.fromkeys(["bitrate", "bitrate mode"], "MediaInfo takes the bitrate of the first frame (512 kbps, constant), where the analyzer's average over its four frames includes the cut one and varies")},
+    "truncated-in-skip": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
+    "sample-short": {"frames in the sample table": "MediaInfo counts the samples of the sample table, the cut one included (6), where the analyzer leaves the cut frame out of its frame count (5): it is in the samples and the lost samples only"},
     "coding-ac3-core-dependent": dict.fromkeys(["format", "bitrate", "bitrate mode", "samples", "duration", "stream size"], CORE_AND_DEPENDENT),
     "coding-eac3-blocks": dict.fromkeys(["bitrate", "samples", "duration"], VARYING_BLOCKS),
     "coding-eac3-dependent": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; it calls the stream constant (Streams_Fill, \"CBR\" by default)"),

@@ -523,7 +523,7 @@
                 },
                 {
                   "name": "Coded Samples",
-                  "value": 43776,
+                  "value": 44928,
                   "unit": "samples",
                   "offset": 42,
                   "length": 13120
@@ -537,14 +537,21 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 43295,
+                  "value": 44447,
+                  "unit": "samples",
+                  "offset": 42,
+                  "length": 13120
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 1152,
                   "unit": "samples",
                   "offset": 42,
                   "length": 13120
                 },
                 {
                   "name": "Duration",
-                  "value": 0.9817460317460317,
+                  "value": 1.0078684807256235,
                   "unit": "s",
                   "offset": 42,
                   "length": 13120
@@ -4924,8 +4931,9 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 43295,
-        "duration": 0.9817460317460317,
+        "samples": 44447,
+        "lostSamples": 1152,
+        "duration": 1.0078684807256235,
         "averageBitrate": 96.11817434210526,
         "isVbr": true,
         "encoder": "mppenc 1.16",

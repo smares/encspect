@@ -217,7 +217,7 @@ public sealed partial class VorbisParser
 
             Node Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
-            Add("Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             if (blocks > 0)
             {
                 Add("Long Blocks", Share(_longBlocks, blocks, "packet", "packets"), Explain.LongBlocks, Topics.VorbisBlocks);
@@ -239,11 +239,16 @@ public sealed partial class VorbisParser
                 }
 
                 Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
+                if (_lost > 0)
+                {
+                    Add("Lost Samples", NodeValue.Integer(_lost, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+                }
+
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
                 Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
-                if (_decoded > 0)
+                if (_wholeDecoded > 0)
                 {
-                    Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _decoded / 1000, 1, "kbps"), Explain.AverageBitrate);
+                    Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
                 }
 
                 (double minimum, double maximum) = BitrateRange();
@@ -254,7 +259,7 @@ public sealed partial class VorbisParser
             Node sizes = Add("Packet Sizes", Count(_sizes.Count, "size", "sizes"), Explain.PacketSizes);
             for (int kind = 1; kind >= 0; kind--)
             {
-                long count = kind == 1 ? _longBlocks : _shortBlocks;
+                long count = _wholeBlocks[kind];
                 if (count > 0)
                 {
                     double average = _blockBytes[kind] / (double)count;
@@ -345,7 +350,7 @@ public sealed partial class VorbisParser
                 }
 
                 PacketRecord packet = _records.Packets[i];
-                if (!packet.IsBlock)
+                if (!packet.IsBlock || _cutPackets.Contains(i))
                 {
                     continue;
                 }

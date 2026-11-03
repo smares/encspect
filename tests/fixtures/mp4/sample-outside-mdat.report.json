@@ -1476,6 +1476,23 @@
                           ]
                         },
                         {
+                          "name": "Lost Samples",
+                          "value": 10240,
+                          "unit": "samples",
+                          "offset": 36,
+                          "length": 1234,
+                          "ranges": [
+                            {
+                              "offset": 36,
+                              "length": 302
+                            },
+                            {
+                              "offset": 989,
+                              "length": 281
+                            }
+                          ]
+                        },
+                        {
                           "name": "Duration",
                           "value": 0.46439909297052157,
                           "unit": "s",
@@ -12462,6 +12479,7 @@
         ],
         "channelLayoutName": "stereo",
         "samples": 20480,
+        "lostSamples": 10240,
         "duration": 0.46439909297052157,
         "averageBitrate": 10.0430859375,
         "isVbr": true,

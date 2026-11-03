@@ -17,6 +17,7 @@ Box by box:
 
 Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, or [AC-3 and E-AC-3](ac3.md) or [DTS](dts.md).
 
+- **Units counted:** a sample counts when its first byte is in the file; one the file ends inside is handed to the codec parser with the bytes present and flagged as cut (`MappedBytes.IsCut`), so a raw AAC access unit of 1,024 samples counts them and is also reported as lost samples; a sample with no byte in the file or of 0 bytes counts nothing.
 - **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg.packets-not-analyzed`).
 - **Playback groups:** the audio tracks of a movie play at the same time, so every stream that comes from a track has the movie's playback group, also when the codec parser reports several for one track that play together (E-AC-3 independent substreams); the summary counts the longest once. Streams of a track that follow one another (a configuration change) are not grouped.
 - **The track's handler** is the one in its `mdia` box (ISO/IEC 14496-12 8.4.3); the handler of a `meta` box in the `trak` box is the metadata's.
@@ -35,7 +36,7 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 ## Findings
 
 - broken box sizes and inconsistent sample tables;
-- samples outside the file or outside mdat, and samples that overlap;
+- samples outside the file or outside mdat, samples the file ends inside (reported with the samples outside it, `mp4.sample-outside-file`), and samples that overlap;
 - boxes where they do not belong (a moov inside another box, a traf in a traf, a moof in a moof) and more boxes than the limit;
 - durations that disagree;
 - moov after mdat;

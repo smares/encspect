@@ -24,7 +24,7 @@ public class WmaLosslessPacketTests
     public void ACutLastPacketIsReadAsFarAsItGoes()
     {
         CodecContext context = Run(s => s.Objects[^1] = s.Objects[^1][..6000]);
-        Assert.Equal(88_064, context.Streams[0].Samples);
+        Assert.Equal((88_064L, 2_048L), (context.Streams[0].Samples, context.Streams[0].LostSamples));
         Assert.Equal("43", WmaStream.Statistic(WmaStream.StreamNode(context), "Frames"));
         Finding shortPacket = Assert.Single(context.Findings, f => f.Code == "wma.packet-short");
         Assert.Equal(Severity.Info, shortPacket.Severity);
@@ -87,7 +87,11 @@ public class WmaLosslessPacketTests
     public void TheBitsThatFinishALostFrameAreNoFrame()
     {
         CodecContext context = Run(s => s.Objects[2][0] = (byte)((s.Objects[2][0] & 0x0F) | 0x30), WmaStream.LosslessFive);
-        Assert.Equal(5_568, context.Streams[0].Samples);
+        // The frames of the run after the gap start where the packets point and cannot be used (the decoder waits for a seekable subframe): they are
+        // declared samples and lost, and the decoder's 5,568 is the samples less the lost ones. The bits that finish the lost frame count nothing.
+        StreamInfo stream = context.Streams[0];
+        Assert.Equal(5_568, stream.Samples - stream.LostSamples);
+        Assert.Equal(18_432L, stream.LostSamples);
         Node frames = WmaStream.Child(WmaStream.StreamNode(context), "Frames");
         // The first frame listed is the first that starts after the gap, which cannot be read before a seekable subframe has come; the five bits
         // before it are not shown as an invalid frame whose tile header lays out subframes the stream cannot have.
@@ -280,10 +284,9 @@ public class WmaLosslessPacketTests
         Assert.Equal(1, high.Length);
     }
 
-    // An object that is incomplete because the fragments that would finish it never arrive is dropped, as the ASF demuxer drops it; only one
-    // that the file ends inside is handed over.
+    // An object that is incomplete because the fragments that would finish it never arrive is handed over with the bytes that arrived, flagged cut. Its frames are whole here, so nothing is lost.
     [Fact]
-    public void AnObjectWhoseFragmentsNeverArriveIsDropped()
+    public void AnObjectWhoseFragmentsNeverArriveIsHandedOverCut()
     {
         (byte[] properties, _) = AsfBuilder.Take(WmaStream.Lossless, 0x0163);
         List<byte[]> objects = AsfBuilder.Objects(WmaStream.Lossless, 0x0163);
@@ -299,7 +302,8 @@ public class WmaLosslessPacketTests
 
         Report report = Analyzer.CreateDefault().Analyze("never.wma", new MemoryStream(AsfBuilder.Assemble(properties, size, packets)));
         Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
-        Assert.Equal(86_016, Assert.Single(report.Streams).Samples);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal((88_200L, 0L), (stream.Samples, stream.LostSamples));
     }
 
     // The packets of the 16-bit stereo fixture as an ASF file; stated(i) is the size packet i states for its media object.
@@ -319,20 +323,21 @@ public class WmaLosslessPacketTests
         return (AsfBuilder.Assemble(properties, size, packets), size, objects.Count);
     }
 
-    // The Data Object states an end 6,000 bytes into the last media object, with the file going on: the demuxer does not hand the cut object over.
+    // The Data Object states an end 6,000 bytes into the last media object, with the file going on: the cut object is handed over, flagged cut.
     [Fact]
-    public void AnObjectCutByTheDataObjectsEndIsDropped()
+    public void AnObjectCutByTheDataObjectsEndIsHandedOverCut()
     {
         (byte[] file, int size, int count) = FixtureFile();
         int at = file.Length - (count * size) - 50;
         System.Buffers.Binary.BinaryPrimitives.WriteUInt64LittleEndian(file.AsSpan(at + 16), (ulong)(50 + ((count - 1) * size) + 23 + 6000));
         Report report = Analyzer.CreateDefault().Analyze("stated.wma", new MemoryStream(file));
-        Assert.Equal(86_016, Assert.Single(report.Streams).Samples);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal((88_064L, 2_048L), (stream.Samples, stream.LostSamples));
         Assert.Contains(report.Findings, f => f.Code == "asf.object-incomplete");
     }
 
     // An incomplete object in the middle (the next one starts first) and one the file ends inside are described and counted apart: the first is
-    // dropped, the second handed over.
+    // handed over cut as well; the messages say how each came about.
     [Fact]
     public void TheTwoKindsOfIncompleteObjectAreCountedApart()
     {
@@ -343,7 +348,7 @@ public class WmaLosslessPacketTests
         Assert.Equal(2, found.Length);
         Finding middle = Assert.Single(found, f => f.Message.Contains("the next one starts first", StringComparison.Ordinal));
         Assert.Equal(1, middle.Count);
-        Assert.Contains("dropped", middle.Message, StringComparison.Ordinal);
+        Assert.Contains("handed to the codec's parser", middle.Message, StringComparison.Ordinal);
         Finding end = Assert.Single(found, f => f.Message.Contains("the file ends inside", StringComparison.Ordinal));
         Assert.Equal(1, end.Count);
         Assert.Contains("handed to the codec's parser", end.Message, StringComparison.Ordinal);

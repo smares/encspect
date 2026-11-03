@@ -101,6 +101,13 @@ internal struct BlockRecord
     public BlockStatus Status;
     public bool IsInGroup;
 
+    // The block states more bytes than the file or its parent element holds (matroska.element-truncated, matroska.element-overruns-parent),
+    // so its last frame, or every frame of one with fixed-size lacing, is cut.
+    public bool IsCut;
+
+    // How many bytes of the block the file or the parent lacks (0 unless IsCut), so a fixed-size lace takes its frame size from the declared block.
+    public uint Missing;
+
     public readonly Lacing Lacing => (Lacing)((Flags >> 1) & 3);
 
     // SimpleBlock only (RFC 9559 section 10.2).
@@ -146,7 +153,7 @@ internal sealed class Records
 
     // The size of frame i of a block whose frames were read.
     public long FrameSize(in BlockRecord block, int i) => block.Frames <= 1 ? block.End - block.FramesOffset
-        : block.Lacing == Lacing.FixedSize ? (block.End - block.FramesOffset) / block.Frames
+        : block.Lacing == Lacing.FixedSize ? (block.End + block.Missing - block.FramesOffset) / block.Frames
         : LaceSizes[block.Lace + i];
 
     public List<Node> Nodes { get; } = [];

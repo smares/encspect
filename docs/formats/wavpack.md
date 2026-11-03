@@ -26,7 +26,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Reported
 
-- the sample rate (a custom rate from its sub-block, ignored where it is 0 as libwavpack ignores it; for DSD the native bit rate, held to 2,147,483,647 Hz), channels and layout, bits per sample, the total samples and the duration;
+- the sample rate (a custom rate from its sub-block, ignored where it is 0 as libwavpack ignores it; for DSD the native bit rate, held to 2,147,483,647 Hz), channels and layout, bits per sample, the total samples and the duration (the samples are those of the first block of each set; Lost Samples counts a set once for any block in it that is cut, malformed or refused, and is 0 for correction data and for a stream version libwavpack does not decode);
 - "WavPack lossless", "WavPack hybrid", "WavPack lossy" or "WavPack correction data" as the codec;
 - the hybrid target bitrate in bits per sample, from the profile's accumulator ("or less" where the accumulator is 0, since the encoder stores 0 for any target below 568/256 bits per sample, about 2.22; for a false stereo block, whose accumulator is worked out from twice the target, below 540/256, about 2.11), and the average bitrate, which counts the bytes of the audio blocks less the wrapper sub-blocks (the source file's header and trailer) they hold;
 - the bitrate per block and per second, as series, with the smallest and largest block, a distribution and the bitrate mode: variable or constant for two sets or more, unknown for a single set, which shows no variation (`IsVbr` is false then);
@@ -97,7 +97,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - The `wavpack` codec parser reads the packets of an `A_WAVPACK4` track: a packet is the sample count, and for each block its flags, CRC and size (the size is left out when the block holds the initial and the final flag), then the block's data without the 32-byte header (FFmpeg, `matroskadec.c`, `matroska_parse_wavpack`). It rebuilds the headers (the version from the two bytes of CodecPrivate, 0x410 if there are none; block index and total samples 0) and analyzes and decodes the blocks as a file's.
 - The packet nodes list the first 256 packets; later decode findings have no node of their own to point to.
-- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). The Matroska route that calls the parser is not part of this step.
+- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). The Matroska route that calls the parser is not built: Matroska gives an `A_WAVPACK4` track `matroska.codec-not-analyzed`, so the parser does not run on a Matroska file.
 
 ## Tags
 
@@ -117,5 +117,6 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - Playback and any output other than the checksum comparison (the PCM sink feeds the measurements and tests, not an export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
 - Zeroing or concealing a block that fails its CRC.
+- WavPack in Matroska: the track is not routed to the codec parser, so the stream has no lost samples (the definition's rule 5: a stream whose units are not read) whatever the file holds; the route is planned.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).

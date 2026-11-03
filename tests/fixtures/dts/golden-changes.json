@@ -1,0 +1,248 @@
+{
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where units are cut. Units that are cut or truncated are in no unit count, size or bitrate figure, only in the samples and the lost samples; a unit with a header that runs past its data (dts.header-overrun) is lost: exss-core-header-overrun, exss-component-header-overrun, xxch-header-overrun, xll-set-header-overrun, xll-navigation-overrun and the derived forms.",
+  "goldens": [
+    "tests/fixtures/dts/14be-xxch-header-overrun.report.json",
+    "tests/fixtures/dts/14le-xxch-header-overrun.report.json",
+    "tests/fixtures/dts/16le-xxch-header-overrun.report.json",
+    "tests/fixtures/dts/cut-frame.report.json",
+    "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+    "tests/fixtures/dts/dtshd-stream-truncated.report.json",
+    "tests/fixtures/dts/exss-component-header-overrun.report.json",
+    "tests/fixtures/dts/exss-core-header-overrun.report.json",
+    "tests/fixtures/dts/exss-overrun.report.json",
+    "tests/fixtures/dts/fsize-too-large.report.json",
+    "tests/fixtures/dts/le16-exss-component-header-overrun.report.json",
+    "tests/fixtures/dts/le16-exss-core-header-overrun.report.json",
+    "tests/fixtures/dts/truncated.report.json",
+    "tests/fixtures/dts/xll-navigation-overrun.report.json",
+    "tests/fixtures/dts/xll-set-header-overrun.report.json",
+    "tests/fixtures/dts/xxch-header-overrun.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "STRMDATA",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/dts/14be-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/14le-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/16le-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/exss-core-header-overrun.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/fsize-too-large.report.json",
+        "tests/fixtures/dts/le16-exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-core-header-overrun.report.json",
+        "tests/fixtures/dts/truncated.report.json",
+        "tests/fixtures/dts/xll-navigation-overrun.report.json",
+        "tests/fixtures/dts/xll-set-header-overrun.report.json",
+        "tests/fixtures/dts/xxch-header-overrun.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "STRMDATA",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "scope": "stream",
+      "fields": [
+        "lostSamples"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/14be-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/14le-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/16le-xxch-header-overrun.report.json",
+        "tests/fixtures/dts/exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/exss-core-header-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-core-header-overrun.report.json",
+        "tests/fixtures/dts/xll-navigation-overrun.report.json",
+        "tests/fixtures/dts/xll-set-header-overrun.report.json",
+        "tests/fixtures/dts/xxch-header-overrun.report.json"
+      ]
+    },
+    {
+      "path": [
+        "DTS",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/fsize-too-large.report.json",
+        "tests/fixtures/dts/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "DTS",
+        "Statistics",
+        "Average Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "DTS",
+        "Statistics",
+        "Smallest Frame"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "DTS",
+        "Statistics",
+        "Minimum Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "lostSamples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/cut-frame.report.json",
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "STRMDATA",
+        "DTS",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "STRMDATA",
+        "DTS",
+        "Statistics",
+        "Average Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "STRMDATA",
+        "DTS",
+        "Statistics",
+        "Smallest Frame"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "STRMDATA",
+        "DTS",
+        "Statistics",
+        "Minimum Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "lostSamples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/fsize-too-large.report.json"
+      ]
+    }
+  ],
+  "removed": []
+}

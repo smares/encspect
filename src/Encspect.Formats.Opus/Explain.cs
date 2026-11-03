@@ -57,7 +57,7 @@ internal static class Explain
     public const string Unparsed = "The rest of a packet whose framing breaks RFC 6716, section 3.4, so its frames cannot be told apart.";
 
     public const string Statistics = "Figures over the stream's audio packets, counted from their TOC bytes and framing and from the granule positions.";
-    public const string Packets = "How many audio packets the stream holds.";
+    public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string Frames = "How many frames the audio packets hold, over all streams.";
     public const string DecodedSamples = "The samples at 48 kHz the packets code, each the frames of its TOC times their duration, before the pre-skip and end trimming are dropped.";
     public const string StatPreSkip = "The samples at the start the decoder drops, from the identification header (RFC 7845, section 4.2).";
@@ -88,6 +88,7 @@ internal static class Explain
     public const string Encoder = "Which program or library encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: medium, as it rests on the libopus vendor string or on ffmpeg's ENCODER ID, which other software may write too.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText

@@ -167,7 +167,7 @@ def build(api):
                                          ("xll-navigation-overrun", "navigation index", 26, "ends inside the navigation index")):
         a = dict(components=["core", "xll"], sizes={"core": 96, "xll": cut}, raw={"xll": full[:cut]}, channels=2, mask=0x02)
         parts = [unit(a) for _ in range(2)]
-        fixture(file_name, ".dts", f"Two units whose lossless component ends inside the {text}.", b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)],
+        fixture(file_name, ".dts", f"Two units whose lossless component ends inside the {text}.", b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True, lost=2 * 512)],
                 [("dts.header-overrun", wanted)],
                 crosscheck=undecodable(cc, "Invalid XLL sub-header checksum" if "sub-header" in text else "Invalid NAVI checksum",
                                        "ffmpeg's decoder checks the CRC-16 of the sub-header and of the navigation index over the cut component (dca_xll.c), which fails"))
@@ -261,6 +261,7 @@ def build_dtshd(api):
         fixture(file_name, ".dtshd", description, data, rows_ if frames is None else frames, expected, list(findings), fields=fields, gaps=gaps, crosscheck=crosscheck or cc(), fmt="DTS-HD", **({"regions": regions} if regions else {}))
 
     lossless = [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)]
+    lossless_cut = [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True, lost=512)]
     header = ("DTSHDHDR", m.dtshd_header(vbr=True, core=True, extension=True, tc_rate=2, stamp=48000 * 3600 + 1234, substreams=0))
     presentation = ("AUPR-HDR", m.dtshd_presentation(48000, 4, 512, 2048, 0x0F, delay=0, lossless=True, core=True, core_in_extension=False))
     metadata = [("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("EXTSS_MD", m.dtshd_extension_metadata(1000, True, 1200, 256))]
@@ -291,7 +292,7 @@ def build_dtshd(api):
     data, rows_ = build_file([header, presentation, ("STRMDATA", None)], parts)
     cut = len(data) - 100
     file("dtshd-stream-truncated", "A .dtshd file that ends 100 bytes inside the last unit of its STRMDATA chunk.", [header, presentation, ("STRMDATA", None)], parts,
-         lossless, findings=[("dtshd.chunk-truncated", "STRMDATA chunk"), ("dts.frame-truncated", "The last frame")], cut=cut,
+         lossless_cut, findings=[("dtshd.chunk-truncated", "STRMDATA chunk"), ("dts.frame-truncated", "The last frame")], cut=cut,
          frames=rows_[:-1] + [[rows_[-1][0], rows_[-1][1] - 100]],
          crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file (dtshddec.c: avio_skip: 'End of file')", "decode": "no container"}))
     data, _ = build_file([header, ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("STRMDATA", None)], parts)
@@ -312,7 +313,7 @@ def build_dtshd(api):
     short = sum(n for _, n in rows(parts)) - 100
     frames = [[16 + 16 + 16 + o, n] for o, n in rows(parts)]
     file("dtshd-stream-size-wrong", "A .dtshd file whose STRMDATA chunk states a size 100 bytes short of the stream, so the end of the last unit is read as a chunk.",
-         [header, ("STRMDATA", None, short)], parts, lossless,
+         [header, ("STRMDATA", None, short)], parts, lossless_cut,
          findings=[("dtshd.chunk-header", "are not a chunk header"), ("dts.frame-truncated", "The last frame")],
          frames=frames[:-1] + [[frames[-1][0], frames[-1][1] - 100]],
          crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))

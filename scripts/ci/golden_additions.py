@@ -21,14 +21,20 @@ every child of that name. A change file:
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
-                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
+                  {"scope": "finding", "code": "speex.granule-beyond-packets"},          # a finding the golden gains; one the old report has stays
+                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"},
+                  {"scope": "node", "parent": ["MP4", "Track 1 Samples", "AAC"], "name": "Access Unit", "last": 1}],  # one more node of a kind the parent has, last
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
                    "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
                   {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
-                  {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}]  # fields of every finding of the code
+                  {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code
+      "removed": [{"parent": ["ASF", "Data Object", "Windows Media Audio Voice", "Statistics"], "name": "Lost Samples",     # a node only the old report has;
+                   "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]},                                        # an entry may name the goldens it applies to
+                  {"scope": "finding", "code": "wma.voice-unfinished"}],                                                  # a finding only the old report has
+      "bitrate": [{"goldens": ["tests/fixtures/mp4/some.report.json"], "reason": "why the average bitrate differs"}]  # goldens whose averageBitrate may differ without lost samples
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -82,6 +88,8 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
     path and its new name) is the renamed node and stays, and so does one that the old report has under that name; a node comes out only
     when its children have come out too, which takes an entry for each (the deepest entries run first), so a child nobody listed fails."""
     for entry in sorted(added, key=lambda e: -len(e["parent"]) if e.get("scope") == "node" else 1):
+        if entry.get("scope") == "finding" and "code" not in entry:
+            raise ChangeError(f"an added entry with the scope finding needs a code: {json.dumps(entry)}")
         scope = entry.get("scope")
         if scope == "report":
             report.pop(entry["key"], None)
@@ -103,10 +111,34 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
                         stream[entry["array"]] = kept
                     else:
                         stream.pop(entry["array"], None)
+        elif scope == "node" and "last" in entry:
+            # The entry adds up to N children of that name at the end, nodes of a kind the parent already has (a unit that the data ends
+            # inside, after the whole ones): only the surplus over the old report's count of them is taken back, so a golden without the
+            # addition is left alone.
+            olds = matching(old["root"], entry["parent"]) if old is not None else []
+            for number, parent in enumerate(matching(report["root"], entry["parent"])):
+                children = parent.get("children", [])
+                positions = [i for i, c in enumerate(children) if c.get("name") == entry["name"]]
+                known = sum(1 for c in olds[number].get("children", []) if c.get("name") == entry["name"]) if number < len(olds) else 0
+                surplus = min(entry["last"], max(0, len(positions) - known)) if old is not None else entry["last"]
+                dropped = set(positions[len(positions) - surplus:]) if surplus > 0 else set()
+                kept = [c for i, c in enumerate(children) if i not in dropped]
+                if kept:
+                    parent["children"] = kept
+                else:
+                    parent.pop("children", None)
+        elif scope == "finding":
+            # A finding the change adds (entry: {"scope": "finding", "code": ...}): every finding of the code comes out of the new report.
+            report["findings"] = [f for f in report.get("findings", []) if f.get("code") != entry["code"] or (old is not None and any(g.get("code") == entry["code"] for g in old.get("findings", [])))]
         elif scope == "node":
-            if (tuple(entry["parent"]), entry["name"]) in renamed_nodes or (old is not None and has_child(old, entry["parent"], entry["name"])):
+            if (tuple(entry["parent"]), entry["name"]) in renamed_nodes:
                 continue
-            for parent in matching(report["root"], entry["parent"]):
+            # Parents that several nodes share (two streams of one file) are taken one by one: a parent comes out only where the old report's parent
+            # at the same place lacks the node.
+            olds = matching(old["root"], entry["parent"]) if old is not None else []
+            for place, parent in enumerate(matching(report["root"], entry["parent"])):
+                if place < len(olds) and any(c.get("name") == entry["name"] for c in olds[place].get("children", [])):
+                    continue
                 kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"] or c.get("children")]
                 if kept:
                     parent["children"] = kept
@@ -267,6 +299,39 @@ def reports(golden):
     return golden if isinstance(golden, list) else [golden]
 
 
+def validate(change):
+    """Readable errors for the entries of a change file that cannot work: a key an entry needs is missing, or the entry has the wrong shape."""
+    needs = {
+        "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name")},
+        "removed": {"finding": ("code",), "node": ("parent", "name")},
+    }
+    for key, scopes in needs.items():
+        for entry in change.get(key, []):
+            scope = entry.get("scope", "node")
+            if scope not in scopes:
+                raise ChangeError(f"{key}: unknown scope {scope!r} in {json.dumps(entry)}")
+            required = ("array", "name") if key == "added" and scope == "stream" and "array" in entry else scopes[scope]
+            for field in required:
+                if field not in entry:
+                    raise ChangeError(f"{key}: an entry with the scope {scope} needs {field}: {json.dumps(entry)}")
+    for entry in change.get("bitrate", []):
+        if "goldens" not in entry or not entry.get("reason"):
+            raise ChangeError(f"bitrate: an entry needs goldens and a reason: {json.dumps(entry)}")
+    if "findings" in change:
+        raise ChangeError('findings: no longer a key of a change file; list new findings under "added" and gone ones under "removed", each with the scope finding and a code')
+
+
+def bitrate_problems(before, after, change, index):
+    """A stream's average bitrate differs only where the stream has lost samples (the unit counted newly is in the samples), or where the change file says why."""
+    if change.get("bitrate"):
+        return []
+    problems = []
+    for number, (x, y) in enumerate(zip(before.get("streams", []), after.get("streams", []))):
+        if x.get("averageBitrate") != y.get("averageBitrate") and not y.get("lostSamples", 0) > 0:
+            problems.append(f"[{index}]/streams[{number}]/averageBitrate: {json.dumps(x.get('averageBitrate'))} in the old report, {json.dumps(y.get('averageBitrate'))} in the new, and the stream has no lost samples (the change file's \"bitrate\" entry gives the reason)")
+    return problems
+
+
 def check_golden(old, new, change):
     """The problems of one golden (an array of reports) against one change file."""
     olds, news = reports(old), reports(new)
@@ -285,6 +350,34 @@ def check_golden(old, new, change):
                         problems.append(f"[{index}]: the node {entry['from']} is still there under {'/'.join(entry['parent'])}, which the change renames to {entry['to']}")
                     if entry["to"] not in names:
                         problems.append(f"[{index}]: the node {entry['to']} is missing under {'/'.join(entry['parent'])}, where the change renames {entry['from']} to it")
+        # What the change lists as removed (nodes and findings only the old report has) is taken out of the old report before the two are compared,
+        # and the old report's finding and stream paths follow the nodes that shifted.
+        try:
+            validate(change)
+            tag(before["root"], [])
+            for entry in change.get("removed", []):
+                if entry.get("scope") == "finding":
+                    before["findings"] = [f for f in before.get("findings", []) if f.get("code") != entry["code"]]
+                    continue
+                for parent in matching(before["root"], entry["parent"]):
+                    kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
+                    if kept:
+                        parent["children"] = kept
+                    else:
+                        parent.pop("children", None)
+            mapping = {}
+            final_paths(before["root"], [], mapping)
+            for finding in before.get("findings", []):
+                if "path" in finding:
+                    finding["path"] = map_path(finding["path"], mapping)
+            for stream in before.get("streams", []):
+                if "nodes" in stream:
+                    stream["nodes"] = [map_path(p, mapping) for p in stream["nodes"]]
+            untag(before["root"])
+        except ChangeError as error:
+            return [str(error)]
+        problems += bitrate_problems(before, after, change, index)
+
         try:
             drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
             expected = transform(after, change, before)
@@ -298,7 +391,7 @@ def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
     out = dict(change)
-    for key in ("added", "renamed", "moved", "changed"):
+    for key in ("added", "renamed", "moved", "changed", "removed", "bitrate"):
         if key in change:
             out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
     return out

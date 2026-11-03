@@ -28,7 +28,7 @@
               "children": [
                 {
                   "name": "Frames",
-                  "value": 4,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 6408
@@ -36,6 +36,13 @@
                 {
                   "name": "Samples",
                   "value": 6144,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 6408
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 1536,
                   "unit": "samples",
                   "offset": 0,
                   "length": 6408
@@ -49,14 +56,14 @@
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 400.5,
+                  "value": 512,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 6408
                 },
                 {
                   "name": "Smallest Frame",
-                  "value": 264,
+                  "value": 2048,
                   "unit": "bytes",
                   "offset": 0,
                   "length": 6408
@@ -70,7 +77,7 @@
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 66,
+                  "value": 512,
                   "unit": "kbps",
                   "offset": 0,
                   "length": 6408
@@ -111,14 +118,14 @@
                 },
                 {
                   "name": "Audio Blocks",
-                  "value": 24,
+                  "value": 18,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 6408
                 },
                 {
                   "name": "Audio Blocks Read",
-                  "value": 20,
+                  "value": 18,
                   "unit": "blocks",
                   "offset": 0,
                   "length": 6408
@@ -160,14 +167,14 @@
                 },
                 {
                   "name": "Exponent Strategies",
-                  "value": 120,
+                  "value": 108,
                   "unit": "exponent sets",
                   "offset": 0,
                   "length": 6408,
                   "children": [
                     {
                       "name": "D15",
-                      "value": 4,
+                      "value": 3,
                       "unit": "exponent sets",
                       "offset": 0,
                       "length": 6408
@@ -181,14 +188,14 @@
                     },
                     {
                       "name": "D45",
-                      "value": 20,
+                      "value": 15,
                       "unit": "exponent sets",
                       "offset": 0,
                       "length": 6408
                     },
                     {
                       "name": "Reuse",
-                      "value": 96,
+                      "value": 90,
                       "unit": "exponent sets",
                       "offset": 0,
                       "length": 6408
@@ -253,7 +260,7 @@
                 },
                 {
                   "name": "Frames With Extension Type A",
-                  "value": 4,
+                  "value": 3,
                   "unit": "frames",
                   "offset": 0,
                   "length": 6408
@@ -6804,9 +6811,10 @@
         ],
         "channelLayoutName": "5.1",
         "samples": 6144,
+        "lostSamples": 1536,
         "duration": 0.128,
-        "averageBitrate": 400.5,
-        "isVbr": true,
+        "averageBitrate": 512,
+        "isVbr": false,
         "hasObjectAudio": true,
         "jocObjectCount": 15,
         "series": [
@@ -6819,14 +6827,12 @@
             "x": [
               0,
               2048,
-              4096,
-              6144
+              4096
             ],
             "values": [
               512,
               512,
-              512,
-              66
+              512
             ]
           },
           {
@@ -6839,7 +6845,7 @@
               0
             ],
             "values": [
-              400
+              512
             ]
           },
           {
@@ -6851,11 +6857,9 @@
             "x": [
               0,
               2048,
-              4096,
-              6144
+              4096
             ],
             "values": [
-              6844,
               6844,
               6844,
               6844
@@ -6887,25 +6891,21 @@
               },
               {
                 "name": "Without block switching",
-                "count": 20
+                "count": 18
               }
             ],
-            "total": 20,
+            "total": 18,
             "xSeries": "Bitrate",
             "valueCounts": [
               [
                 6,
                 3
-              ],
-              [
-                2,
-                1
               ]
             ],
             "runs": [
               [
                 1,
-                20
+                18
               ]
             ],
             "seconds": [
@@ -6923,25 +6923,21 @@
               },
               {
                 "name": "Without coupling",
-                "count": 20
+                "count": 18
               }
             ],
-            "total": 20,
+            "total": 18,
             "xSeries": "Bitrate",
             "valueCounts": [
               [
                 6,
                 3
-              ],
-              [
-                2,
-                1
               ]
             ],
             "runs": [
               [
                 1,
-                20
+                18
               ]
             ],
             "seconds": [
@@ -6959,25 +6955,21 @@
               },
               {
                 "name": "Without spectral extension",
-                "count": 20
+                "count": 18
               }
             ],
-            "total": 20,
+            "total": 18,
             "xSeries": "Bitrate",
             "valueCounts": [
               [
                 6,
                 3
-              ],
-              [
-                2,
-                1
               ]
             ],
             "runs": [
               [
                 1,
-                20
+                18
               ]
             ],
             "seconds": [

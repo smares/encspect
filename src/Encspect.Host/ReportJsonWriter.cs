@@ -286,6 +286,10 @@ public static class ReportJsonWriter
         if (stream.Kind == StreamKind.Audio)
         {
             writer.WriteNumber("samples", stream.Samples);
+            if (stream.LostSamples > 0)
+            {
+                writer.WriteNumber("lostSamples", stream.LostSamples);
+            }
         }
 
         writer.WriteNumber("duration", stream.Duration);
@@ -684,6 +688,16 @@ public static class ReportJsonWriter
         writer.WriteNumber("samples", m.Samples);
         writer.WriteNumber("firstPosition", m.FirstPosition);
         writer.WriteNumber("lostSamples", m.LostSamples);
+        if (m.LeadingLostSamples > 0)
+        {
+            writer.WriteNumber("leadingLostSamples", m.LeadingLostSamples);
+        }
+
+        if (m.TrailingLostSamples > 0)
+        {
+            writer.WriteNumber("trailingLostSamples", m.TrailingLostSamples);
+        }
+
         writer.WriteNumber("gaps", m.Gaps);
         writer.WriteNumber("sampleRate", m.SampleRate);
         writer.WriteNumber("channels", m.Channels);

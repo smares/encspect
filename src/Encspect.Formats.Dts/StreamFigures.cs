@@ -20,12 +20,19 @@ internal sealed class StreamFigures(int sampleRate)
     public long Bytes { get; private set; }
 
     private long _samples;
+    private long _lost;
+
+    // The samples of units that are cut: in Samples and the duration, in no unit count, size or bitrate.
+    private long _cut;
 
     // The sampling frequency the stream delivers where it is higher than the one its frames are counted at (the core's), such as with
     // X96; Samples then counts at that frequency, and the duration and bitrates stay the same.
     public int DeliveredRate { get; set; }
 
-    public long Samples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round(_samples * (double)DeliveredRate / sampleRate) : _samples;
+    public long Samples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round((_samples + _cut) * (double)DeliveredRate / sampleRate) : _samples + _cut;
+
+    // The declared samples of the units that are cut, counted like Samples.
+    public long LostSamples => DeliveredRate > sampleRate && sampleRate > 0 ? (long)Math.Round(_lost * (double)DeliveredRate / sampleRate) : _lost;
 
     public int Smallest { get; private set; } = int.MaxValue;
 
@@ -35,7 +42,7 @@ internal sealed class StreamFigures(int sampleRate)
 
     public double MaximumBitrate { get; private set; }
 
-    public double Duration => sampleRate > 0 ? _samples / (double)sampleRate : 0;
+    public double Duration => sampleRate > 0 ? (_samples + _cut) / (double)sampleRate : 0;
 
     // In kbps; null without a duration.
     public double? AverageBitrate => _samples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / _samples / 1000 : null;
@@ -46,6 +53,8 @@ internal sealed class StreamFigures(int sampleRate)
         var figures = new StreamFigures(rate)
         {
             _unmeasured = _unmeasured,
+            _lost = _lost,
+            _cut = _cut,
             Smallest = Smallest,
             Largest = Largest,
         };
@@ -57,6 +66,10 @@ internal sealed class StreamFigures(int sampleRate)
 
         return figures;
     }
+
+    public void AddLost(int samples) => _lost += samples;
+
+    public void AddCut(int samples) => _cut += samples;
 
     public void Add(long offset, int length, int samples)
     {
@@ -127,11 +140,12 @@ internal sealed class StreamFigures(int sampleRate)
 
     // The statistics node: counts, duration and bitrates, with the extra figures a caller adds.
     // cover makes a node over the stream's bytes, with its description.
-    public Node Statistics(Func<string, NodeValue?, NodeKind, string, Node> cover, string unitName, string unitPlural, out Node bitrate)
+    public Node Statistics(Func<string, NodeValue?, NodeKind, string, Node> cover, string unitName, string unitPlural, out Node bitrate, Action<Node>? afterSamples = null)
     {
         Node statistics = cover("Statistics", null, NodeKind.Statistics, Explain.Statistics);
         statistics.Add(cover(unitPlural, NodeValue.Integer(Count, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatUnits));
         statistics.Add(cover("Samples", NodeValue.Integer(Samples, "samples", "sample"), NodeKind.Detail, Explain.StatSamples));
+        afterSamples?.Invoke(statistics);
         statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)

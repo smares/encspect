@@ -242,96 +242,103 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "20 packets, 0.391 s",
+                  "value": "22 packets, 0.431 s",
                   "offset": 205,
-                  "length": 1077,
+                  "length": 1214,
                   "children": [
                     {
                       "name": "Packets",
-                      "value": 20,
+                      "value": 21,
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Frames",
-                      "value": 20,
+                      "value": 21,
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Coded Samples",
-                      "value": 6400,
+                      "value": 7040,
                       "unit": "samples",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Encoder Delay",
                       "value": 143,
                       "unit": "samples",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "End Trimming",
                       "value": 0,
                       "unit": "samples",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Samples",
-                      "value": 6257,
+                      "value": 6897,
                       "unit": "samples",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
+                    },
+                    {
+                      "name": "Lost Samples",
+                      "value": 320,
+                      "unit": "samples",
+                      "offset": 205,
+                      "length": 1214
                     },
                     {
                       "name": "Duration",
-                      "value": 0.3910625,
+                      "value": 0.4310625,
                       "unit": "s",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "IsVbr",
                       "value": false,
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Average Bitrate",
                       "value": 20.8,
                       "unit": "kbps",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Minimum Bitrate",
                       "value": 20.8,
                       "unit": "kbps",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Maximum Bitrate",
                       "value": 20.8,
                       "unit": "kbps",
                       "offset": 205,
-                      "length": 1077
+                      "length": 1214
                     },
                     {
                       "name": "Packet Sizes",
                       "value": 1,
                       "unit": "sizes",
                       "offset": 205,
-                      "length": 1077,
+                      "length": 1214,
                       "children": [
                         {
                           "name": "52 bytes",
-                          "value": "20 packets (100.0%), 20.8 kbps",
+                          "value": "21 packets (100.0%), 20.8 kbps",
                           "offset": 205,
-                          "length": 1077
+                          "length": 1214
                         }
                       ]
                     },
@@ -340,13 +347,13 @@
                       "value": 1,
                       "unit": "submodes",
                       "offset": 205,
-                      "length": 1077,
+                      "length": 1214,
                       "children": [
                         {
                           "name": "Submode 5 (300 bits)",
-                          "value": "20 frames (100.0%)",
+                          "value": "21 frames (100.0%)",
                           "offset": 205,
-                          "length": 1077
+                          "length": 1214
                         }
                       ]
                     },
@@ -355,13 +362,13 @@
                       "value": 1,
                       "unit": "submodes",
                       "offset": 205,
-                      "length": 1077,
+                      "length": 1214,
                       "children": [
                         {
                           "name": "Submode 2 (112 bits)",
-                          "value": "20 frames (100.0%)",
+                          "value": "21 frames (100.0%)",
                           "offset": 205,
-                          "length": 1077
+                          "length": 1214
                         }
                       ]
                     }
@@ -370,10 +377,10 @@
                 {
                   "name": "Audio Packets",
                   "kind": "Stream",
-                  "value": 20,
+                  "value": 22,
                   "unit": "packets",
                   "offset": 205,
-                  "length": 1077,
+                  "length": 1214,
                   "children": [
                     {
                       "name": "Packet",
@@ -2374,6 +2381,121 @@
                           "bitLength": 4
                         }
                       ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, narrowband submode 5, wideband submode 2",
+                      "offset": 1319,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Frame",
+                          "value": "narrowband submode 5, wideband submode 2",
+                          "offset": 1319,
+                          "length": 52,
+                          "bitOffset": 0,
+                          "bitLength": 412,
+                          "children": [
+                            {
+                              "name": "Narrowband Layer",
+                              "value": 300,
+                              "unit": "bits",
+                              "offset": 1319,
+                              "length": 38,
+                              "bitOffset": 0,
+                              "bitLength": 300,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": false,
+                                  "offset": 1319,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 5,
+                                  "offset": 1319,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 295,
+                                  "unit": "bits",
+                                  "offset": 1319,
+                                  "length": 38,
+                                  "bitOffset": 5,
+                                  "bitLength": 295
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Wideband Layer",
+                              "value": 112,
+                              "unit": "bits",
+                              "offset": 1356,
+                              "length": 15,
+                              "bitOffset": 4,
+                              "bitLength": 112,
+                              "children": [
+                                {
+                                  "name": "IsWidebandLayer",
+                                  "value": true,
+                                  "offset": 1356,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Submode",
+                                  "value": 2,
+                                  "offset": 1356,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Coded Data",
+                                  "value": 108,
+                                  "unit": "bits",
+                                  "offset": 1357,
+                                  "length": 14,
+                                  "bitOffset": 0,
+                                  "bitLength": 108
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Padding",
+                          "value": 4,
+                          "unit": "bits",
+                          "offset": 1370,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "48 bytes, no frames",
+                      "offset": 1371,
+                      "length": 48,
+                      "children": [
+                        {
+                          "name": "Unparsed",
+                          "value": "384 bits: the frame runs past the end of the packet",
+                          "offset": 1371,
+                          "length": 48
+                        }
+                      ]
                     }
                   ]
                 }
@@ -3235,7 +3357,7 @@
                     },
                     {
                       "name": "Body",
-                      "value": "100 bytes, not read as packets: the page is cut short",
+                      "value": "100 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page is cut short",
                       "offset": 1319,
                       "length": 100
                     }
@@ -3263,8 +3385,9 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 6257,
-        "duration": 0.3910625,
+        "samples": 6897,
+        "lostSamples": 320,
+        "duration": 0.4310625,
         "averageBitrate": 20.8,
         "isVbr": false,
         "playbackGroup": 1,
@@ -3295,7 +3418,9 @@
               1074,
               1126,
               1178,
-              1230
+              1230,
+              1319,
+              1371
             ],
             "values": [
               20.8,
@@ -3317,7 +3442,9 @@
               20.8,
               20.8,
               20.8,
-              20.8
+              20.8,
+              20.8,
+              0
             ]
           },
           {

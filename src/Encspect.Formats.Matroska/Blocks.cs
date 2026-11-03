@@ -19,6 +19,8 @@ internal sealed partial class FileReader
             DataLength = (uint)Math.Min(dataLength, uint.MaxValue),
             HeaderLength = (byte)element.Length,
             IsInGroup = isInGroup,
+            IsCut = element.End is { } declared && declared > end,
+            Missing = element.End is { } stated && stated > end ? (uint)Math.Min(stated - end, uint.MaxValue) : 0,
         };
         string name = isInGroup ? "Block" : "SimpleBlock";
         if (dataLength > MaxBlock)
@@ -59,7 +61,7 @@ internal sealed partial class FileReader
             return AddBlock(records, block, name, cluster.Timestamp);
         }
 
-        if (!TryReadLace(lacing, element.DataOffset + fixedPart, remaining, out int count, out long laceBytes, out string? why))
+        if (!TryReadLace(lacing, element.DataOffset + fixedPart, remaining, block.Missing, out int count, out long laceBytes, out string? why))
         {
             block.Status = BlockStatus.LaceInvalid;
             block.FramesDelta = element.Length + fixedPart;
@@ -282,7 +284,7 @@ internal sealed partial class FileReader
     // The lacing header (RFC 9559 section 10.3) at position: the number of frames, and each frame's size into _laceSizes, the last
     // included. laceBytes is how many bytes the header takes. remaining is what the block holds after its fixed fields. False, with the
     // reason, where the sizes do not add up.
-    private bool TryReadLace(Lacing lacing, long position, long remaining, out int count, out long laceBytes, out string? why)
+    private bool TryReadLace(Lacing lacing, long position, long remaining, long missing, out int count, out long laceBytes, out string? why)
     {
         _laceSizes.Clear();
         count = 0;
@@ -301,9 +303,10 @@ internal sealed partial class FileReader
         switch (lacing)
         {
             case Lacing.FixedSize:
-                if ((remaining - 1) % count != 0)
+                // A block the file cuts is divided by the size it states: the frames that are whole are handed over, the one the file ends inside cut.
+                if ((remaining + missing - 1) % count != 0)
                 {
-                    why = $"holds {Counts.Of(remaining - 1, "byte", "bytes")} for {Counts.Of(count, "frame", "frames")} of one size";
+                    why = $"holds {Counts.Of(remaining + missing - 1, "byte", "bytes")} for {Counts.Of(count, "frame", "frames")} of one size";
                     return false;
                 }
 

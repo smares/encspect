@@ -7,6 +7,8 @@ Speex in [Ogg](ogg.md).
 - the header;
 - the submodes of the frames in every packet: narrowband, wideband and ultra-wideband layers, and in-band requests;
 - the granule positions;
+- the samples of each packet, from the header's frames per packet and the frame size: an empty packet, a packet whose frames break the syntax and a packet the container cut count them and are counted again as Lost Samples; a packet with fewer frames than the header gives, and no fault, counts the frames it holds;
+- the sizes and bitrates cover the packets the container hands over whole; a cut packet counts in the samples only;
 - the comments, through the [Vorbis comment](../tags/vorbis-comments.md) parser.
 
 ## Reported

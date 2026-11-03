@@ -111,8 +111,9 @@ def decode(path, fmt="s16le", level="error"):
 
 
 def analyzer_samples(path):
+    """The stream's samples less its lost samples: the units a decoder outputs (docs/design/samples-definition.md, the cross-check statuses)."""
     report = golden_report(path)
-    return report["streams"][0]["samples"] if report and report["streams"] else None
+    return report["streams"][0]["samples"] - report["streams"][0].get("lostSamples", 0) if report and report["streams"] else None
 
 
 def report_stream(report):
@@ -143,7 +144,7 @@ MICROSOFT_STANDARD_SAMPLES = {
 
 def check_standard_frames(path, samples, problems):
     """For a stream of Windows Media Audio version 1 or 2 the analyzer reads the frames: the samples ffmpeg decodes (per channel) equal the
-    golden report's "Coded Samples" (the valid frames times the frame length) less one frame where the golden has them, else its samples;
+    golden report's "Coded Samples" (the frames it declares times the frame length) less its lost samples and one frame where the golden has them, else its samples;
     where the golden has "Coded Samples", its samples follow the rule fitted to Microsoft's decoder, which the figures of
     MICROSOFT_STANDARD_SAMPLES hold."""
     report = golden_report(path)
@@ -151,14 +152,16 @@ def check_standard_frames(path, samples, problems):
     if not streams or len(report["streams"]) != 1:
         return
     analyzed = report["streams"][0]["samples"]
+    lost = report["streams"][0].get("lostSamples", 0)
     coded = statistic_of(streams[0], "Coded Samples")
     length = statistic_of(streams[0], "Frame Length")
+    # ffmpeg decodes the frames the analyzer reads: the declared frames it counts and loses (lostSamples) are none of them.
     if coded is None:
-        if analyzed != samples:
-            problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+        if analyzed - lost != samples:
+            problems.append(f"the analyzer's golden report has {analyzed} samples of which {lost} are lost, ffmpeg decodes {samples}")
     else:
-        if length and coded - length != samples:
-            problems.append(f"the analyzer's golden report has {coded} coded samples, ffmpeg decodes {samples}, which are one frame of {length} less")
+        if length and coded - lost - length != samples:
+            problems.append(f"the analyzer's golden report has {coded} coded samples of which {lost} are lost, ffmpeg decodes {samples}, which are one frame of {length} less")
         wanted = MICROSOFT_STANDARD_SAMPLES.get(path.stem)
         if wanted is None:
             problems.append("the golden report counts by the rule fitted to Microsoft's decoder, and no figure of Microsoft's decoder is pinned for the file")
@@ -185,7 +188,7 @@ def check_damaged_wma(name, path, problems):
         if message not in errors:
             problems.append(f"ffmpeg does not report {message!r}; it says {errors.splitlines()[:3]}")
     report = golden_report(path)
-    analyzed = sum(s["samples"] for s in report["streams"] if s["codec"].startswith("Windows Media Audio ")) if report else None
+    analyzed = sum(s["samples"] - s.get("lostSamples", 0) for s in report["streams"] if s["codec"].startswith("Windows Media Audio ")) if report else None
     if pcm or analyzed != 0:
         problems.append(f"ffmpeg decodes {len(pcm) // 4} samples, the analyzer's golden report has {analyzed}")
 
@@ -198,12 +201,14 @@ def analyzer_statistic(path, name):
     return next((c.get("value") for c in stats["children"] if c["name"] == name), None) if stats else None
 
 
-def check_voice_frames(path, problems, pinned=None):
+def check_voice_frames(path, problems, pinned=None, analyzer_pinned=None):
     """ffprobe -count_frames decodes the stream: each superframe it decodes is a frame, so the count is the analyzer's superframes (and
     the manifest's, where it pins the count)."""
     code, data = ffprobe_json(path, "-count_frames", "-select_streams", "a:0", "-show_entries", "stream=nb_read_frames")
     counted = int(data["streams"][0].get("nb_read_frames", 0)) if code == 0 and data.get("streams") else None
-    if counted != analyzer_statistic(path, "Superframes"):
+    # A fixture whose analyzer figure differs from ffmpeg's pins both, with the reason in the manifest.
+    expected = analyzer_pinned if analyzer_pinned is not None else counted
+    if expected != analyzer_statistic(path, "Superframes"):
         problems.append(f"ffprobe decodes {counted} frames, the analyzer's golden report has {analyzer_statistic(path, 'Superframes')} superframes")
     if pinned is not None and counted != pinned:
         problems.append(f"ffprobe decodes {counted} frames, the manifest pins {pinned}")
@@ -218,7 +223,7 @@ def check_voice_decode(name, manifest, path, problems):
     analyzed = analyzer_samples(path)
     pins = crosscheck.get("ffmpeg", {})
     if mode != "error":
-        check_voice_frames(path, problems, pins.get("superframes"))
+        check_voice_frames(path, problems, pins.get("superframes"), crosscheck.get("analyzer", {}).get("superframes"))
     if "samples" in pins and samples != pins["samples"]:
         problems.append(f"ffmpeg decodes {samples} samples, the manifest pins {pins['samples']}")
     if mode == "clean":
@@ -243,8 +248,9 @@ def check_voice_decode(name, manifest, path, problems):
         # The decoder does not open: nothing is decoded, and the analyzer states what the container says.
         if samples != 0 or code == 0:
             problems.append(f"ffmpeg decodes {samples} samples (exit status {code}) where it should refuse the configuration")
-    elif analyzed != samples:
-        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    elif analyzed != crosscheck.get("analyzer", {}).get("samples", samples):
+        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}"
+                        + (f" and the manifest expects the analyzer's {crosscheck['analyzer']['samples']}" if "analyzer" in crosscheck else ""))
 
 
 # What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
@@ -331,7 +337,8 @@ def check_hand_built(name, manifest, path, problems):
             if int(entry["channels"]) != expected["channels"] or int(entry["sample_rate"]) != expected["rate"]:
                 problems.append(f"stream {number}: ffprobe says {entry['channels']} channels at {entry['sample_rate']} Hz, the manifest {expected['channels']} at {expected['rate']}")
     got = sorted((order[p["stream_index"]], int(p["size"]), round(float(p.get("pts_time", 0)) * 1000)) for p in data.get("packets", []) if p["stream_index"] in order)
-    want = sorted((o[0], o[2], o[3] - manifest["file"]["preroll"]) for o in manifest["media_objects"])
+    # The objects the container hands over cut (a sixth element) are objects ffmpeg's demuxer never returns.
+    want = sorted((o[0], o[2], o[3] - manifest["file"]["preroll"]) for o in manifest["media_objects"] if len(o) <= 5)
     if len(got) != len(want):
         problems.append(f"ffprobe reads {len(got)} packets, the model {len(want)} media objects")
     else:

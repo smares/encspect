@@ -864,6 +864,7 @@ def manifest(data, kind, extra=None):
              "shifts": [0] * 16, "weights": [0] * 8, "bytes_shifted": [0] * 3, "zero_runs": 0, "long_codes": 0, "fill_bytes": 0, "data_stream_bytes": 0}
     partial_frames = uncompressed_frames = unreadable_frames = 0
     total_samples = 0
+    lost_samples = 0
     points = []
     pair_codes = []
     element_codes = []
@@ -938,6 +939,11 @@ def manifest(data, kind, extra=None):
                 tally["pair_codings"][code] += 1
                 frame_pairs.append(code)
         samples = w["samples"]
+        if fault_code and status != "tuning" and size > 0:
+            # A frame whose first byte is there declares its samples all the same: its first element's, else the cookie's frame length; one that cannot be read is lost.
+            samples = samples or c["frame_length"]
+            lost_samples += samples
+            record["samples"] = samples
         total_samples += samples
         if samples > 0 and index < MAX_ENTRIES:
             points.append((offset, size * 8, samples))
@@ -969,6 +975,7 @@ def manifest(data, kind, extra=None):
             "is_vbr": bool(bitrates) and max(bitrates) > min(bitrates),
             "layout": layout_of(c) if c and c["complete"] else [],
             "units": len(points), "pair_codes": pair_codes[:16], "element_codes": element_codes[:16],
+            **({"lost_samples": lost_samples} if lost_samples else {}),
         })
     # A track without a cookie gets the container's own stream, whose figures the model does not work out.
     result["stream_infos"] = streams if (c is not None and c["complete"]) else ([] if c is not None else None)

@@ -57,6 +57,12 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
+    // Of Samples, those of the frames that were cut by the data or that could not be read.
+    public long Lost { get; private set; }
+
+    // The frames the container cut, which are in no frame count, size or bitrate.
+    public long CutFrames { get; private set; }
+
     // The largest packet, for the cookie's statement of it.
     public long Largest { get; private set; }
 
@@ -82,12 +88,36 @@ internal sealed class State
             }
         }
 
-        if (Cookie is { CanWalk: true } cookie)
+        bool isCutPacket = Cookie is { CanWalk: true } && packet.IsCut && length > 0;
+        if (isCutPacket)
+        {
+            // A sample the container cut: its bytes are not read (the container's finding reports the cut), it declares the count its first element states, or the
+            // cookie's frame length, and is lost, and it is in no frame count, size or bitrate.
+            flags |= FrameFlags.NotWalked;
+            // The count its first element states, where the element's header is in the bytes present (read with a tally and a list of its own, so
+            // nothing of it enters the statistics or the findings), else the cookie's frame length.
+            FrameWalker.Walk(packet.Span, Cookie!, _walk, new CodingTally(), [], null, _cancellation);
+            samples = _walk.HasSamples && _walk.Samples > 0 ? _walk.Samples : Cookie!.FrameLength;
+            Lost += samples;
+            CutFrames++;
+        }
+        else if (Cookie is { CanWalk: true } cookie)
         {
             bool isDetailed = isRecorded && listed < Records.MaxDetailedFrames;
             FrameWalker.Walk(packet.Span, cookie, _walk, Tally, _kept, isDetailed ? Records.Store : null, _cancellation);
             flags |= _walk.Flags;
             samples = _walk.HasSamples ? _walk.Samples : 0;
+
+            // A frame whose first byte is there declares its samples all the same: those of its first element if that was read, else the
+            // cookie's frame length. One that cannot be read, or that the container says is cut, is lost.
+            // A cookie the walk refuses for every frame (alac.tuning-invalid) is a configuration the decoder refuses as a whole: no frame is lost for it.
+            bool isLost = (flags & FrameFlags.Unreadable) != 0 && _walk.Fault != WalkFault.Tuning;
+            if (isLost && length > 0)
+            {
+                samples = samples > 0 ? samples : cookie.FrameLength;
+                Lost += samples;
+            }
+
             elements = _walk.Elements;
             walked = _walk.Walked;
             if (_walk.HasEnd && walked < length)
@@ -116,7 +146,7 @@ internal sealed class State
         if (isRecorded)
         {
             Records.Frames.Add(new FrameRecord { Offset = offset, Length = length, Samples = samples, Flags = flags, Elements = elements, Walked = walked, Detail = detail });
-            if (samples > 0 && Figures is { } figures)
+            if (samples > 0 && !isCutPacket && Figures is { } figures)
             {
                 figures.Add(offset, length * 8L, samples);
                 Series.EndUnit(Tally);

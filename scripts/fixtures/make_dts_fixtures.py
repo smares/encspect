@@ -37,8 +37,8 @@ SURROUND_5_1 = ["front center", "front left", "front right", "back left", "back 
 SURROUND_5_1_WITH_REAR = ["front center", "front left", "front right", "side left", "side right", "back left", "back right", "LFE"]
 
 
-def stream(codec, rate, layout, mode, samples, vbr=False):
-    return {"codec": codec, "sample_rate": rate, "channels": len(layout), "channel_mode": mode, "channel_layout": layout, "samples": samples, "is_vbr": vbr}
+def stream(codec, rate, layout, mode, samples, vbr=False, lost=0):
+    return {"codec": codec, "sample_rate": rate, "channels": len(layout), "channel_mode": mode, "channel_layout": layout, "samples": samples, "is_vbr": vbr, **({"lost_samples": lost} if lost else {})}
 
 
 def fixture(name, extension, description, data, frames, streams, findings, fields=None, gaps=(), crosscheck=None, fmt="DTS", boxes=None, regions=None, golden_hides=None):
@@ -232,7 +232,7 @@ def build_damage():
     # A truncated last frame.
     data = frame * 5 + frame[:300]
     fixture("truncated", ".dts", "Six stereo core frames, the last cut after 300 bytes.", data, same[:5] + [[2560, 300]],
-            [stream("DTS", 48000, STEREO, "2/0", 6 * 512)], [("dts.frame-truncated", "has 300 bytes")],
+            [stream("DTS", 48000, STEREO, "2/0", 6 * 512, lost=512)], [("dts.frame-truncated", "has 300 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "libdca": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.", "libdca": "libdca's tool reads whole frames only."}})
 
@@ -249,7 +249,7 @@ def build_damage():
     # A frame whose second half is missing: the next frame's sync word starts inside it.
     data = frame * 2 + frame[:300] + frame * 3
     parts = [[0, 512], [512, 512], [1024, 300], [1324, 512], [1836, 512], [2348, 512]]
-    fixture("cut-frame", ".dts", "Six stereo core frames, the third cut to its first 300 bytes.", data, parts, [stream("DTS", 48000, STEREO, "2/0", 6 * 512)],
+    fixture("cut-frame", ".dts", "Six stereo core frames, the third cut to its first 300 bytes.", data, parts, [stream("DTS", 48000, STEREO, "2/0", 6 * 512, lost=512)],
             [("dts.frame-damaged", "cut short by the next frame's sync word")],
             crosscheck=cc(ffprobe=False, libdca=False, decode_note=CUT_NOTE, skip={"ffprobe": cut_note, "libdca": "libdca's tool reads frames by their sizes, so it does not resync after the cut frame, and the next frame's bytes are the cut frame's missing ones."}))
 
@@ -266,7 +266,7 @@ def build_damage():
     long_frame = m.core_frame(size=512, fsize=767)
     data = frame * 3 + long_frame + frame * 2
     fixture("fsize-too-large", ".dts", "Six stereo core frames, the fourth with an FSIZE that reaches 256 bytes into the fifth.", data, same,
-            [stream("DTS", 48000, STEREO, "2/0", 6 * 512)], [("dts.frame-damaged", "cut short by the next frame's sync word"), ("dts.rate-exceeded", "768 bytes")],
+            [stream("DTS", 48000, STEREO, "2/0", 6 * 512, lost=512)], [("dts.frame-damaged", "cut short by the next frame's sync word"), ("dts.rate-exceeded", "768 bytes")],
             crosscheck=cc(ffprobe=False, libdca=False, decode_note=CUT_NOTE, skip={"ffprobe": cut_note, "libdca": "libdca's tool reads frames by their sizes, so the frame with the large FSIZE swallows the next one."}))
 
     # Reserved and invalid values in the frame header and the audio header.
@@ -416,7 +416,7 @@ def build_substream_damage():
     parts = [unit([stub]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-core-header-overrun", ".dts", "Four units whose extension substream holds a core component of 20 bytes, so the core frame ends inside its header.", data, rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.header-overrun", "core frame ends inside its header")],
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, lost=4 * 512)], [("dts.header-overrun", "core frame ends inside its header")],
             crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": PROFILE_STUB}))
     # The last substream declares more bytes than the file has.
     whole = unit([asset])
@@ -424,7 +424,7 @@ def build_substream_damage():
     data = whole * 3 + over
     fixture("exss-overrun", ".dts", "Three units and a fourth whose extension substream declares 2,000 bytes but the file ends 150 bytes into it.", data,
             [[i * len(whole), len(whole)] for i in range(3)] + [[3 * len(whole), len(data) - 3 * len(whole)]],
-            [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.frame-truncated", "The last frame")],
+            [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True, lost=512)], [("dts.frame-truncated", "The last frame")],
             crosscheck=cc_lossless(decode=False, decode_errors={**{str(i * len(whole)): None for i in range(3)}, str(3 * len(whole)): "Packet too short for EXSS frame"}, skip={"decode": "the last packet is cut inside its extension substream, which ffmpeg rejects (dca_exss.c: 'Packet too short for EXSS frame'); the packets before it decode"}))
     return build_mp4()
 
@@ -542,12 +542,12 @@ def build_review():
     stub = dict(components=["core", "xll"], sizes={"core": 96, "xll": 8}, raw={"xll": m.SYNC_XLL.to_bytes(4, "big") + bytes(4)}, channels=2, mask=0x02)
     parts = [unit([stub]) for _ in range(2)]
     fixture("exss-component-header-overrun", ".dts", "Two units whose lossless component is its sync word and four bytes, so the data ends inside its header.", b"".join(parts), rows(parts),
-            [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)], [("dts.header-overrun", "ends inside the XLL component's header")],
+            [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True, lost=2 * 512)], [("dts.header-overrun", "ends inside the XLL component's header")],
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XLL common header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": XLL_STUB}))
     parts = [m.core_frame(size=1024, amode=9, nch=5, ext_id=6, ext=1, extensions=[m.xxch_overrun()], subs=[30] * 5, vqsub=[31] * 5, joinx=[0] * 5, thuff=[0] * 5,
                           shuff=[6] * 5, bhuff=[5] * 5, sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(5)]) for _ in range(2)]
     fixture("xxch-header-overrun", ".dts", "Two 3/2 core frames with an XXCH extension of 12 bytes, whose header CRC-16 holds and whose fields need more bits than it has.", b"".join(parts), rows(parts),
-            [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
+            [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512, lost=2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
             crosscheck=cc(ffprobe_profile=False, libdca_channels=5, skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which is cut short here"}))
 
     # A bad CRC-16 in the header of XXCH in the core, of XBR in a substream.
