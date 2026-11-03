@@ -189,7 +189,7 @@ internal static class Summary
             samples = (long)Math.Round(stated * rate);
         }
 
-        long frames = s.Listed;
+        long frames = s.Listed - s.CutFrames;
         Node framesNode = statistics.Add(cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames, Topics.Alac));
         if (s.Tally.Elements.Sum() > 0 || cookie is { CanWalk: true })
         {

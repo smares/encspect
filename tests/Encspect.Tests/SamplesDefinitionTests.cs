@@ -464,6 +464,48 @@ public class SamplesDefinitionTests
         Assert.Equal(1024, cut.LostSamples);
     }
 
+    private static Report AnalyzeCut(string fixture, int cut)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));
+        return Analyzer.CreateDefault().Analyze(Path.GetFileName(fixture), new MemoryStream(data, 0, data.Length - cut));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(20)]
+    public void AnAdifStreamWhoseLastBlockBreaksCountsItsDeclaredSamplesAndLosesThem(int cut)
+    {
+        StreamInfo whole = AnalyzeCut("adts/adif.aac", 0).Streams.Single();
+        Report report = AnalyzeCut("adts/adif.aac", cut);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(whole.Samples, stream.Samples);
+        Assert.Equal(1024, stream.LostSamples);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(7)]
+    [InlineData(100)]
+    public void AnAlacSampleTheFileEndsInsideIsLostWithoutSyntaxFindingsAndStaysOutOfTheFrameFigures(int cut)
+    {
+        const string fixture = "alac/built-end-missing.m4a";
+        StreamInfo whole = AnalyzeCut(fixture, 0).Streams.Single();
+        Report report = AnalyzeCut(fixture, cut);
+        StreamInfo stream = report.Streams.Single();
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "alac.frame-overrun" or "alac.element-invalid");
+        Assert.Equal(4096, stream.LostSamples);
+        Assert.True(stream.Samples >= whole.Samples - 4096);
+        Assert.Equal(FrameCount(AnalyzeCut(fixture, 0)) - 1, FrameCount(report));
+    }
+
+    private static IEnumerable<Node> Nodes(Node node) => node.Children.SelectMany(c => Nodes(c).Prepend(c));
+
+    // The Frames figure of the statistics: the units counted, which leave out a sample the container cut.
+    private static long FrameCount(Report report) =>
+        long.Parse(Nodes(report.Root).First(n => n.Name == "Statistics").Children.First(c => c.Name == "Frames").Value!.ToString()!.Split(' ')[0], CultureInfo.InvariantCulture);
+
     [Fact]
     public void TheTopicOfLostSamplesIsServed()
     {

@@ -18,6 +18,7 @@ public sealed class AacCodecParser : ICodecParser
     private const byte IsRead = 8;
     private const byte IsFirstOnly = 16;
     private const byte HasTrailingBytes = 32;
+    private const byte IsCutPacket = 64;
 
     public string Id => "aac";
 
@@ -99,7 +100,14 @@ public sealed class AacCodecParser : ICodecParser
 
             // An access unit with no byte declares nothing (aac.empty-access-units); it is no unit to count.
             ref readonly Unit unit = ref log.Units[i];
-            figures.Add(unit.Offset, unit.Length, unit.Length > 0 ? frame : 0);
+            if ((unit.Flags & IsCutPacket) != 0)
+            {
+                figures.AddSamples(frame);
+            }
+            else
+            {
+                figures.Add(unit.Offset, unit.Length, unit.Length > 0 ? frame : 0);
+            }
         }
 
         if (!(context.Configuration is { AreSamplesEncrypted: true }))
@@ -395,7 +403,13 @@ public sealed class AacCodecParser : ICodecParser
             int elements = -1;
             byte tag = 0;
             long skeleton = -1;
-            if (_config is { IsUsac: true })
+            if (packet.IsCut && packet.Length > 0)
+            {
+                // A packet the container cut: its bytes are no access unit's, so it is neither read nor counted in the unit figures; its declared samples are
+                // counted and lost.
+                flags |= IsCutPacket;
+            }
+            else if (_config is { IsUsac: true })
             {
                 flags |= IsUsac;
                 if (packet.Length > 0)

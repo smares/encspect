@@ -333,7 +333,7 @@ public sealed partial class Mp4Parser
 
         public long Placed { get; set; }
 
-        public bool IsCut { get; set; }
+        public bool IsOverBudget { get; set; }
     }
 
     // Every sample of the track in order, as offset, size and how many samples the entry stands
@@ -378,7 +378,7 @@ public sealed partial class Mp4Parser
                         long present = isInFile ? size : fileEnd - position;
                         if (walk.Placed + present > walk.Budget)
                         {
-                            walk.IsCut = true;
+                            walk.IsOverBudget = true;
                             yield break;
                         }
 
@@ -475,7 +475,7 @@ public sealed partial class Mp4Parser
         state.SampleBytesLeft -= walk.Placed;
         empty += track.EmptyFragmentSamples;
         Node table = track.ChunkOffsetNode ?? track.Box;
-        if (walk.IsCut)
+        if (walk.IsOverBudget)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.samples-overlap",
                 $"The samples of track {track.Id} add up to more bytes than the file has left for them, so some lie over others (the chunks share bytes); the {Samples(accepted)} before the first one past that are analyzed, the rest are not.", table);

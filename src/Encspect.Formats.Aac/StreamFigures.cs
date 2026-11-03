@@ -36,6 +36,9 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void AddLost(long samples) => Lost += samples;
 
+    // A unit that counts its declared samples only: a packet the container cut is in no unit count, size or bitrate.
+    public void AddSamples(long samples) => Samples += samples;
+
     // A unit that counts its declared samples but whose bytes are not a unit's to count (an ADIF block that breaks, whose extent is unknown).
     public void AddUnreadable(long samples)
     {
