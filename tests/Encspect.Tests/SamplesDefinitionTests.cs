@@ -268,8 +268,25 @@ public class SamplesDefinitionTests
         // Rule 3: bytes skipped while searching for sync declare nothing.
         { "adts/damaged-header.aac", 29696, 0 },
 
-        // Trimming: Opus samples are the trimmed stage; the coded stage lies above them.
-        { "ogg/opus-packets-corrupt.opus", 24648, 0 },
+        // Trimming: Opus samples are the trimmed stage; the coded stage lies above them, and the packets that break RFC 6716 are lost there.
+        { "ogg/opus-packets-corrupt.opus", 24648, 14400 },
+
+        #region Ogg, Speex
+        // Question 2 (b): the packets of a page that fails its CRC are handed over and counted, not lost; those of a truncated page with bytes
+        // present are counted and the one the data cuts is lost; a packet left unfinished at the end of the stream is cut.
+        { "ogg/bad-crc.spx", 4760, 0 },
+        { "ogg/truncated-page.spx", 6897, 320 },
+        { "ogg/huge-lacing.spx", 920, 160 },
+        { "ogg/eos-inside-packet.spx", 1720, 160 },
+
+        // Question 11 and 5 (b): an empty, invalid or overrunning packet counts its frames per packet and is lost; one with fewer frames counts those present.
+        { "ogg/frames-corrupt.spx", 3000, 960 },
+        #endregion
+
+        #region Matroska
+        // A block that states more than the file holds hands its last frame over cut: the Opus parser counts it and records it lost.
+        { "matroska/live-truncated-unknown-element.mka", 5448, 960 },
+        #endregion
 
         #region FLAC
         // A cut frame counts its block size and is lost; an unreadable frame stays in the samples and is lost.

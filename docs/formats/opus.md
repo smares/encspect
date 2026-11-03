@@ -7,6 +7,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - **OpusHead:** with every channel mapping family: mono and stereo, the Vorbis order up to 7.1, ambisonics in families 2 and 3, and family 255.
 - **OpusTags:** through the [Vorbis comment](../tags/vorbis-comments.md) parser.
 - **Packets:** every packet's TOC byte and framing, multistream packets included, checked against the rules of RFC 6716.
+- **Samples:** each packet counts the samples its TOC byte and frame count byte declare (0 where they exceed 120 ms), a packet that breaks the rules, a multistream packet whose streams last different times and a packet the container cut included; Lost Samples counts those packets at this coded stage, inside the pre-skip or not.
 
 ## Reported
 
