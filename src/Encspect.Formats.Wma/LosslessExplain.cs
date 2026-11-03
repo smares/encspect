@@ -44,8 +44,8 @@ internal static class LosslessExplain
     public const string StatMultichannel = "How many seekable subframes use a multichannel filter.";
     public const string StatLpc = "How many subframes carry an LPC filter.";
     public const string StatCascaded = "How many cascaded filters each channel has in seekable subframes.";
-    public const string StatSamples = "The samples a decoder outputs for the stream: each frame's samples less its trim at the end. The first frame is output as the others are.";
-    public const string StatCodedSamples = "The samples the frames declare before their end trims: a frame length for every frame read, valid or not.";
+    public const string StatSamples = "The samples the frames declare, less each frame's trim at the end. The first frame is counted as the others are. A frame that is invalid or that a loss throws away, and that starts where a packet's header points or after a valid frame of its run, counts too and is lost (Lost Samples), so a decoder outputs the samples less the lost ones.";
+    public const string StatCodedSamples = "The samples the frames declare before their end trims: a frame length for every valid frame and for every invalid or dropped frame that starts at a declared start.";
 
     public const string StatTrimmedSamples = "The sum of the end trims the frames state.";
     public const string StatSampleSize = "The sample size the codec-specific data states.";

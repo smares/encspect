@@ -231,6 +231,20 @@ public class AsfFixtureTests
             $"{p[0].GetInt32()},{p[1].GetInt32()},{p[2].GetInt64()},{p[3].GetInt64()},{p[4].GetInt64()},{p[5].GetInt64()},{p[6].GetBoolean()},{p[7].GetBoolean()}"), actual);
     }
 
+    // A media object is flagged as following a gap when the object before it was lost or cut, not when a loss happens while it is open: the
+    // objects of length-field-short are cut one after the other, so the first has no gap before it and each of the others follows a cut one.
+    [Fact]
+    public void ACutObjectFollowsAGapOnlyWhenTheObjectBeforeItWasLost()
+    {
+        var collected = new List<(int Stream, MappedBytes Object)>();
+        var analyzer = new Analyzer(DefaultParsers.Tags, [new AsfParser(TestRoutes)], [new CollectingCodec("wma", collected)]);
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "asf/length-field-short.asf"));
+        analyzer.Analyze("length-field-short.asf", stream);
+        Assert.NotEmpty(collected);
+        Assert.False(collected[0].Object.FollowsGap);
+        Assert.All(collected.Skip(1), c => Assert.True(c.Object.FollowsGap == collected[collected.IndexOf(c) - 1].Object.IsCut));
+    }
+
     private static void CheckMediaObjects(JsonElement expected, List<(int Stream, MappedBytes Object)> collected)
     {
         // The streams that were routed to a codec: the others' media objects are not put together.
