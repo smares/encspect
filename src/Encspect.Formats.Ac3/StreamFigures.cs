@@ -22,6 +22,9 @@ internal sealed class StreamFigures(int sampleRate)
 
     public long Samples { get; private set; }
 
+    // The samples of frames that are cut: in Samples and the duration, in no frame count, size or bitrate.
+    private long _cutSamples;
+
     public int Smallest { get; private set; } = int.MaxValue;
 
     public int Largest { get; private set; }
@@ -32,8 +35,15 @@ internal sealed class StreamFigures(int sampleRate)
 
     public double Duration => sampleRate > 0 ? Samples / (double)sampleRate : 0;
 
+    public void AddCut(int samples)
+    {
+        int counted = Math.Clamp(samples / 256, 0, 7) * 256;
+        Samples += counted;
+        _cutSamples += counted;
+    }
+
     // In kbps; null without a duration.
-    public double? AverageBitrate => Samples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / Samples / 1000 : null;
+    public double? AverageBitrate => Samples - _cutSamples > 0 && sampleRate > 0 ? Bytes * 8.0 * sampleRate / (Samples - _cutSamples) / 1000 : null;
 
     public void Add(long offset, int length, int samples)
     {
@@ -111,11 +121,12 @@ internal sealed class StreamFigures(int sampleRate)
 
     // The statistics node: counts, duration and bitrates, with the extra figures a caller adds.
     // cover makes a node over the stream's bytes, with its description.
-    public Node Statistics(Func<string, NodeValue?, NodeKind, string, Node> cover, string unitName, string unitPlural, out Node bitrate)
+    public Node Statistics(Func<string, NodeValue?, NodeKind, string, Node> cover, string unitName, string unitPlural, out Node bitrate, Action<Node>? afterSamples = null)
     {
         Node statistics = cover("Statistics", null, NodeKind.Statistics, Explain.Statistics);
         statistics.Add(cover(unitPlural, NodeValue.Integer(Count, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatUnits));
         statistics.Add(cover("Samples", NodeValue.Integer(Samples, "samples", "sample"), NodeKind.Detail, Explain.StatSamples));
+        afterSamples?.Invoke(statistics);
         statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)

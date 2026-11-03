@@ -110,6 +110,9 @@ internal sealed class StdStream
 
     public long LostFrames => InvalidFrames + UnreadFrames;
 
+    // The frame the last superframe announces and no superframe finishes, among the unread frames. Microsoft's rule leaves it out of the samples.
+    public long UnfinishedLast { get; private set; }
+
     public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, CancellationToken cancellationToken)
     {
         StdParameters p = Parameters;
@@ -139,9 +142,10 @@ internal sealed class StdStream
             if (packet.Length < align)
             {
                 record.State = SuperframeState.Short;
-                if (packet.IsCut && packet.Length >= 1)
+                if (packet.Length >= 1)
                 {
-                    // A cut object whose first byte is there declares frames by it: those that start in it and, with the bit reservoir, the one it finishes.
+                    // A short object, cut or whole, whose first byte is there declares frames by it: those that start in it and, with the bit
+                    // reservoir, the one in progress that it would finish. Not read, they are lost.
                     UnreadFrames += p.UsesBitReservoir ? (packet.Span[0] & 15) + (reservoir.Bytes > 0 ? 1 : 0) : 1;
                 }
 
@@ -202,6 +206,13 @@ internal sealed class StdStream
         {
             ReadAnnouncedLast(reservoir, state);
         }
+
+        // The frame the last superframe announces and no superframe finishes, whose bits the file does not hold whole: declared, unreadable, lost.
+        if (p.UsesBitReservoir && reservoir.Bytes > 0 && !HasAnnouncedLast)
+        {
+            UnreadFrames++;
+            UnfinishedLast = 1;
+        }
     }
 
     // The frame the last superframe announces and whose bits the file holds whole (in the superframe and the middles after it), which
@@ -261,7 +272,7 @@ internal sealed class StdStream
     public long LostSamples => LostFrames * Parameters.FrameLength;
 
     // The valid frames times the frame length, before any overlap is taken off (the frame the last superframe announces is not among them).
-    public long CodedSamples => ValidFrames * Parameters.FrameLength;
+    public long CodedSamples => (ValidFrames + LostFrames) * Parameters.FrameLength;
 
     // The frames whose bits are complete: the valid frames and the announced last one.
     public long CompleteFrames => ValidFrames + (HasAnnouncedLast ? 1 : 0);
@@ -270,7 +281,7 @@ internal sealed class StdStream
     {
         get
         {
-            if (!Parameters.UsesBitReservoir || !Parameters.UsesVariableBlocks || Parameters.Version != 2 || InvalidFrames > 0 || Skipped > 0 || CompleteFrames < 2)
+            if (!Parameters.UsesBitReservoir || !Parameters.UsesVariableBlocks || Parameters.Version != 2 || InvalidFrames > 0 || UnreadFrames > UnfinishedLast || Skipped > 0 || CompleteFrames < 2)
             {
                 return false;
             }
@@ -343,6 +354,8 @@ internal sealed class StdStream
 
             if (reservoir.Bytes + align - 1 > MaxReservoirAppended || reservoir.Middles >= MaxMiddles)
             {
+                // The frame in progress cannot be finished.
+                UnreadFrames++;
                 reservoir.Bytes = 0;
             }
             else
@@ -363,6 +376,8 @@ internal sealed class StdStream
         if (bitOffset < 0 || bitOffset > (8 * align) - headerBits)
         {
             record.State = SuperframeState.BitOffsetRejected;
+            // The frames its header declares are not read, and neither is the frame in progress it would finish.
+            UnreadFrames += record.Count + (isInProgress ? 1 : 0);
             reservoir.Bytes = 0;
             Superframes.Add(record);
             findings.Add(Severity.Warning, "wma.bit-offset", () => nodes.Superframe(index), n => StdText.BitOffset(n, SuperframeOffset(index)));
@@ -412,6 +427,8 @@ internal sealed class StdStream
         int left = align - (end / 8);
         if (left > MaxReservoir)
         {
+            // The frame this superframe announces cannot be finished.
+            UnreadFrames++;
             reservoir.Bytes = 0;
             FinishSuperframe(index, framesHere, end, 0);
             findings.Add(Severity.Warning, "wma.reservoir-length", () => nodes.Superframe(index), n => StdText.ReservoirLength(n, true));

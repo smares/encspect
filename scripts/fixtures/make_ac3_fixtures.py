@@ -506,7 +506,7 @@ def build_object_audio():
     # The file ends inside block 2's skip field, which fits its frame: the frame is truncated, not overrun.
     cut = 3 * len(atmos_frame()) + 264
     fixture("truncated-in-skip", ".eac3", "Three 5.1 frames of joc-atmos and a fourth cut in the middle of block 2's skip field.", data[:cut], frames_of(data[:cut]),
-            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, vbr=True, objects=15, lost=1536)], [("ac3.frame-truncated", "of its 2048 bytes")],
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15, lost=1536)], [("ac3.frame-truncated", "of its 2048 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
                                  "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})

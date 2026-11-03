@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax; samples do not change.",
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax; samples do not change. The AC-3 frame that the payload's cut ends is in no frame count, size, bitrate or block tally (decision 3 of the review), only in samples and lostSamples.",
   "goldens": [
     "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
     "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
@@ -18,6 +18,197 @@
         "Statistics"
       ],
       "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
     }
-  ]
+  ],
+  "changed": [
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Average Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Smallest Frame"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Minimum Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Audio Blocks"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Audio Blocks Read"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Blocks With Coupling"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Bands Coded as Sum/Difference"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "D45"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "categorySeries",
+        "lostSamples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+      ]
+    }
+  ],
+  "removed": []
 }

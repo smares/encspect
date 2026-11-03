@@ -22,14 +22,14 @@ internal static class StdReport
 
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), StdText.StatFrameLength);
         Add("Samples", NodeValue.Integer(samples, "samples"), stream.IsRuleApplicable ? StdText.StatSamplesDecoder : StdText.StatSamples);
-        if (stream.IsRuleApplicable)
-        {
-            Add("Coded Samples", NodeValue.Integer(stream.CodedSamples, "samples"), StdText.StatCodedSamples);
-        }
-
         if (stream.LostSamples > 0)
         {
             Add("Lost Samples", NodeValue.Integer(stream.LostSamples, "samples"), StreamInfo.LostSamplesDescription, topic: StreamInfo.LostSamplesTopic);
+        }
+
+        if (stream.IsRuleApplicable)
+        {
+            Add("Coded Samples", NodeValue.Integer(stream.CodedSamples, "samples"), StdText.StatCodedSamples);
         }
 
         Add("Duration", NodeValue.Decimal(duration, 3, "s"), StdText.StatDuration);

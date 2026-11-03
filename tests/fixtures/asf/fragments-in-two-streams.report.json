@@ -2615,6 +2615,170 @@
                       ]
                     },
                     {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "value": "0 frames, 0.093 s",
+                      "offset": 392,
+                      "length": 1586,
+                      "children": [
+                        {
+                          "name": "Superframes",
+                          "value": 1,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Frames",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Frame Length",
+                          "value": 2048,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Lost Samples",
+                          "value": 4096,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.09287981859410431,
+                          "unit": "s",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Container Duration",
+                          "value": 1,
+                          "unit": "s",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 44100,
+                          "unit": "samples",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Block Alignment",
+                          "value": 100,
+                          "unit": "bytes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 8.61328125,
+                          "unit": "kbps",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Uses Bit Reservoir",
+                          "value": true,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Frames per Superframe",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Frames Spanning Superframes",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Largest Bit Reservoir",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Average Bit Reservoir",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Exponent Coding",
+                          "value": "scale factor codes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Uses Variable Block Length",
+                          "value": true,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Uses Noise Substitution",
+                          "value": false,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Block Sizes",
+                          "value": 0,
+                          "unit": "sizes",
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks without Coded Channels",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Blocks Reusing Exponents",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Non-Zero Coefficients",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        },
+                        {
+                          "name": "Escape-Coded Coefficients",
+                          "value": 0,
+                          "offset": 392,
+                          "length": 1586
+                        }
+                      ]
+                    },
+                    {
                       "name": "Superframes",
                       "value": "1 superframe",
                       "offset": 392,
@@ -2740,13 +2904,34 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 0,
-        "duration": 0,
+        "samples": 4096,
+        "lostSamples": 4096,
+        "duration": 0.09287981859410431,
+        "averageBitrate": 8.61328125,
         "isVbr": false,
         "playbackGroup": 1,
         "encoder": "Microsoft's Windows Media Audio encoder",
         "encoderConfidence": "Medium",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [],
+            "values": []
+          },
+          {
+            "name": "Bit Reservoir",
+            "unit": "bytes",
+            "axis": "frameOffset",
+            "x": [
+              590
+            ],
+            "values": [
+              0
+            ]
+          }
+        ]
       }
     ],
     "findings": [
@@ -2799,7 +2984,7 @@
           0,
           1,
           8,
-          1,
+          2,
           0
         ],
         "count": 1

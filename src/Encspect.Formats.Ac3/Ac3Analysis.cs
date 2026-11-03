@@ -154,7 +154,7 @@ internal sealed class Ac3Analysis
         {
             program.Cover(region, offset, available);
             if (program.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch,
-                    shortened || cut || result.Stop is StopReason.Invalid or StopReason.Overrun) && !Findings.CountIfKnown("ac3.dependent-excess"))
+                    shortened || cut || result.Stop is StopReason.Invalid or StopReason.Overrun, shortened || cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
             {
                 int id = header.SubstreamId;
                 Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>

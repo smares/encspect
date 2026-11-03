@@ -77,6 +77,17 @@ internal sealed class CodingRecorder
         }
     }
 
+    // The unit being recorded is thrown away: a frame that is cut has no place in the series.
+    public void Discard()
+    {
+        for (; _unitBlocks > 0; _unitBlocks--)
+        {
+            _blocks.RemoveLast();
+        }
+
+        _unitEnd = 255;
+    }
+
     public void EndUnit()
     {
         // At most 9 frames of 6 blocks.

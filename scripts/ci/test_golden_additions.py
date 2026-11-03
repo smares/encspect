@@ -119,6 +119,14 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(old, new, change), [])
         self.assertTrue(self.check(old, new, {"added": change["added"][:1]}))
 
+    def test_an_added_node_comes_out_only_of_the_parents_that_lack_it_in_the_old_report(self):
+        def two_streams(second_has_statistics):
+            streams = [node("Stream", [node("Statistics", value=1)]), node("Stream", [node("Statistics", value=2)] if second_has_statistics else [])]
+            return {"schemaVersion": 1, "root": node("File", streams), "streams": [], "findings": []}
+        change = {"added": [{"scope": "node", "parent": ["Stream"], "name": "Statistics"}]}
+        self.assertEqual(golden_additions.check_golden([two_streams(False)], [two_streams(True)], change), [])
+        self.assertTrue(golden_additions.check_golden([two_streams(True)], [two_streams(True)], {}) == [])
+
     def test_a_series_array_that_is_empty_in_both_reports_stays(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM", "series": []}])
         change = {"added": [{"scope": "stream", "array": "series", "name": "Coded Bandwidth"}]}

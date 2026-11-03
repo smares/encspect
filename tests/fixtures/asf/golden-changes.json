@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame read; the unfinished frame of a Professional stream included). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096) and seven Voice fixtures (voice-truncated 10,760 to 11,060, voice-invalid-superframes 10,080 to 11,520, voice-object-not-whole 7,680 to 8,160, voice-spillover 7,200 to 8,160, voice-cache-overflow, voice-object-dropped, voice-object-dropped-blocks and voice-object-skip-kept), with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration (writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams) gains Average Bitrate. voice-truncated.asf is replaced by voice-cut-last-object.asf: the ASF container hands the cut last object over, so the superframe before it is finished by its bytes (11,060 samples, nothing lost) and the fixture no longer shows an object the container drops. The four derived cut and damaged fixtures are new and not listed.",
+  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame declared and in the file). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096; the second stream of fragments-in-two-streams has only lost frames and gains its Statistics node) and seven Voice fixtures, with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration gains Average Bitrate. The ASF container hands every incomplete media object to the codec parser flagged cut: voice-truncated.asf reads the superframe its cut last object finishes (24 superframes instead of 23, 11,060 samples instead of 10,760, nothing lost; wma.voice-unfinished is gone, wma.packet-short is new, and the bitrate falls with the longer duration). The cut standard files external-windows-wma92-cbr-stereo-44k-128-cut-30 and -cut-36 count the frames their first byte declares. The four derived cut and damaged fixtures are new and not listed.",
   "goldens": [
     "tests/fixtures/asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
@@ -13,6 +13,8 @@
     "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q10.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q50.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q98.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
     "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
     "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
     "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json",
@@ -88,6 +90,332 @@
       "code": "wma.packet-short",
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Average Bitrate",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2"
+      ],
+      "name": "Statistics",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Superframes",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Frames",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Frame Length",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Samples",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Duration",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Container Duration",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Container Samples",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Block Alignment",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Uses Bit Reservoir",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Frames per Superframe",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Frames Spanning Superframes",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Largest Bit Reservoir",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Average Bit Reservoir",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Exponent Coding",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Uses Variable Block Length",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Uses Noise Substitution",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Blocks",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Block Sizes",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Blocks without Coded Channels",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Blocks Reusing Exponents",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Non-Zero Coefficients",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Escape-Coded Coefficients",
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
       ]
     }
   ],
@@ -432,6 +760,89 @@
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
       ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Coded Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "lostSamples"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Duration"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "duration",
+        "lostSamples",
+        "samples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/fragments-in-two-streams.report.json"
+      ]
     }
   ],
   "removed": [
@@ -454,18 +865,6 @@
         "Windows Media Audio Voice",
         "Statistics"
       ],
-      "name": "Lost Samples",
-      "goldens": [
-        "tests/fixtures/asf/voice-truncated.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Voice",
-        "Statistics"
-      ],
       "name": "Bits After the Last Superframe",
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
@@ -477,6 +876,14 @@
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
       ]
+    }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/asf/voice-truncated.report.json"
+      ],
+      "reason": "The packet bytes stay 1,440 (the cut packet is in no byte figure); the duration grows from 1.345 s to 1.3825 s with the superframe the cut media object finishes (10,760 to 11,060 samples), so the bitrate falls from 8.565 to 8.333 kbps."
     }
   ]
 }

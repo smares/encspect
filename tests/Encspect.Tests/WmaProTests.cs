@@ -8,6 +8,23 @@ namespace Encspect.Tests;
 // which ffmpeg's decoder confirms through crosscheck_asf_fixtures.py), and what it does with damaged packets.
 public class WmaProTests
 {
+    // A file cut inside its last media object: the object's frames are counted from its header and length prefixes, and the walk ends at the frame
+    // whose trailer bit says no frame follows, so the padding after the last frame is no frame. The whole file has 66 frames.
+    [Theory]
+    [InlineData(500, 135_168L, 16_384L)]
+    [InlineData(1_500, 135_168L, 16_384L)]
+    [InlineData(4_500, 126_976L, 8_192L)]
+    public void ACutLastObjectCountsTheFramesItDeclaresAndNoPadding(int cut, long coded, long lost)
+    {
+        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/external-windows-wma10pro-cbr-stereo-44k-128.wma"));
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("cut.wma", new MemoryStream(whole[..^cut]));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Node statistics = WmaStream.Child(report.Streams[0].Nodes[0], "Statistics");
+        Assert.Equal(coded, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.Equal(lost, stream.LostSamples);
+        Assert.True(coded <= 66 * 2048L);
+    }
+
     [Theory]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 132300, 8, 209)]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 132300, 7, 209)]
@@ -144,7 +161,8 @@ public class WmaProTests
         WmaStream stream = WmaStream.LoadPro();
         stream.Objects[2][0] = (byte)((stream.Objects[2][0] & 0x0F) | 0xA0);
         CodecContext context = stream.RunPro();
-        Assert.Equal(131788 - (2 * 2048), context.Streams[0].Samples);
+        // The frames the loss drops are declared and lost: they count in the samples, and the samples less the lost ones are the frames read.
+        Assert.Equal(131788 - (2 * 2048), context.Streams[0].Samples - context.Streams[0].LostSamples);
         Assert.StartsWith("The samples counted from the frames", WmaStream.Child(WmaStream.Child(WmaStream.StreamNode(context), "Statistics"), "Samples").Description, StringComparison.Ordinal);
     }
 
@@ -387,7 +405,8 @@ public class WmaProTests
         Assert.Equal(Severity.Warning, gap.Severity);
         Assert.StartsWith("2 packets' sequence numbers do not follow the packet before (the first is 10 for 2)", gap.Message, StringComparison.Ordinal);
         Assert.Equal("Packet", gap.Node!.Name);
-        Assert.Equal(131788 - (2 * 2048), context.Streams[0].Samples);
+        // The frames the loss drops are declared and lost: they count in the samples, and the samples less the lost ones are the frames read.
+        Assert.Equal(131788 - (2 * 2048), context.Streams[0].Samples - context.Streams[0].LostSamples);
         Assert.DoesNotContain(context.Findings, f => f.Code == "wma.frame-invalid");
     }
 
@@ -797,7 +816,7 @@ public class WmaProTests
         int listed = Assert.Single(Count(node, "Frames")).Children.Count;
         int flushed = Assert.Single(Count(node, "Frames")).Children.Count(f => f.Offset >= lastPacket);
         Assert.True(flushed > 0);
-        Assert.Equal($"{(listed - flushed - 1) * 2048} samples", WmaStream.Statistic(node, "Samples"));
+        Assert.Equal((listed - flushed - 1) * 2048L, context.Streams[0].Samples - context.Streams[0].LostSamples);
     }
 
     // Without the length prefix a frame's end is found by reading it, and the frames of a packet are read when the next one has supplied their

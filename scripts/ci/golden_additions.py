@@ -131,9 +131,14 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
             # A finding the change adds (entry: {"scope": "finding", "code": ...}): every finding of the code comes out of the new report.
             report["findings"] = [f for f in report.get("findings", []) if f.get("code") != entry["code"] or (old is not None and any(g.get("code") == entry["code"] for g in old.get("findings", [])))]
         elif scope == "node":
-            if (tuple(entry["parent"]), entry["name"]) in renamed_nodes or (old is not None and has_child(old, entry["parent"], entry["name"])):
+            if (tuple(entry["parent"]), entry["name"]) in renamed_nodes:
                 continue
-            for parent in matching(report["root"], entry["parent"]):
+            # Parents that several nodes share (two streams of one file) are taken one by one: a parent comes out only where the old report's parent
+            # at the same place lacks the node.
+            olds = matching(old["root"], entry["parent"]) if old is not None else []
+            for place, parent in enumerate(matching(report["root"], entry["parent"])):
+                if place < len(olds) and any(c.get("name") == entry["name"] for c in olds[place].get("children", [])):
+                    continue
                 kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"] or c.get("children")]
                 if kept:
                     parent["children"] = kept

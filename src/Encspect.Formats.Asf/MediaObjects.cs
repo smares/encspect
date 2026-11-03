@@ -37,6 +37,7 @@ public sealed partial class AsfParser
         // large object and never delivers it costs what it holds, not what it states.
         int total = 0;
         bool followsGap = false;
+        bool objectGap = false;
 
         while (position < end)
         {
@@ -95,11 +96,12 @@ public sealed partial class AsfParser
                 {
                     if (data is not null)
                     {
-                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "next", anchor, n =>
-                            $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
-                        if (collected > 0)
+                        bool hasBytes = collected > 0;
+                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "next" : "next-empty", anchor, n =>
+                            $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. {Handed(n, hasBytes)}");
+                        if (hasBytes)
                         {
-                            yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = followsGap };
+                            yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = objectGap };
                         }
 
                         data = null;
@@ -115,6 +117,9 @@ public sealed partial class AsfParser
                         continue;
                     }
 
+                    // A loss that happens while the object is open belongs to the next one.
+                    objectGap = followsGap;
+                    followsGap = false;
                     total = (int)size;
                     data = new byte[Math.Min(total, Math.Max(payload.DataLength, 1))];
                     ranges.Clear();
@@ -150,10 +155,9 @@ public sealed partial class AsfParser
                 collected += take;
                 if (collected == total)
                 {
-                    yield return new MappedBytes(data, ranges) { FollowsGap = followsGap };
+                    yield return new MappedBytes(data, ranges) { FollowsGap = objectGap };
                     data = null;
                     ranges = [];
-                    followsGap = false;
                 }
             }
 
@@ -163,23 +167,28 @@ public sealed partial class AsfParser
         if (data is not null)
         {
             bool isEndOfFile = end >= reader.Start + reader.Length;
+            bool hasBytes = collected > 0;
             if (isEndOfFile)
             {
-                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "file", anchor, n =>
-                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "file" : "file-empty", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {Handed(n, hasBytes)}");
             }
             else
             {
-                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, "end", anchor, n =>
-                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. {(n == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut.");
+                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "end" : "end-empty", anchor, n =>
+                    $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. {Handed(n, hasBytes)}");
             }
 
-            if (collected > 0)
+            if (hasBytes)
             {
-                yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = followsGap };
+                yield return new MappedBytes(data.AsMemory(0, collected), ranges) { IsCut = true, FollowsGap = objectGap };
             }
         }
     }
+
+    private static string Handed(int count, bool hasBytes) => hasBytes
+        ? $"{(count == 1 ? "Its bytes are" : "Their bytes are")} handed to the codec's parser as they are, flagged cut."
+        : $"{(count == 1 ? "None of its bytes arrived" : "None of their bytes arrived")}, so nothing is handed over.";
 
     // The sub-payloads of a compressed payload: a length byte and that many bytes each.
     private static IEnumerable<MappedBytes> SubPayloads(byte[] packet, long packetOffset, PayloadView payload)

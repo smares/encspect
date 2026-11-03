@@ -397,6 +397,10 @@ public class SamplesDefinitionTests
         { "ac3/bad-blocks.ac3", 9216, 4608 },
         { "ac3/crc-damaged.ac3", 12288, 0 },
         { "ac3/aht.eac3", 4608, 0 },
+        // A frame whose audio blocks run past its end (ac3.block-overrun) is lost like an invalid one.
+        { "fuzz/ac3-blocks-past-frame-end.bin", 13824, 1536 },
+        { "fuzz/ac3-overrun-after-first-exponent.bin", 23040, 3072 },
+        { "fuzz/eac3-blocks-past-frame-end.bin", 27648, 4608 },
         { "wav/built-iec61937-cut-in-payload.wav", 7680, 1536 },
         { "wav/built-iec61937-cut-odd-payload.wav", 7680, 1536 },
         #endregion
@@ -440,8 +444,8 @@ public class SamplesDefinitionTests
         { "asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.asf", 88064, 2048 },
         // Damage: an invalid standard frame and the frames its superframe declares after it; the Lossless frames that start where a packet's header
         // points or after a valid frame and cannot be used after a lost packet.
-        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 133120, 14336 },
-        { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 51336, 6144 },
+        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 135168, 16384 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 73864, 28672 },
         { "asf/voice-invalid-superframes.asf", 11520, 1440 },
         { "asf/voice-object-not-whole.asf", 8160, 480 },
         { "asf/voice-spillover.asf", 8160, 960 },
@@ -455,6 +459,10 @@ public class SamplesDefinitionTests
         { "dts/fsize-too-large.dts", 3072, 512 },
         { "dts/exss-overrun.dts", 2048, 512 },
         { "dts/dtshd-stream-truncated.dtshd", 2048, 512 },
+        { "dts/dtshd-stream-size-wrong.dtshd", 2048, 512 },
+        // A header that runs past its data breaks the syntax: the unit is lost.
+        { "dts/exss-core-header-overrun.dts", 2048, 2048 },
+        { "dts/xxch-header-overrun.dts", 1024, 1024 },
         #endregion
 
         #region Musepack
@@ -568,6 +576,66 @@ public class SamplesDefinitionTests
         Report report = Analyzer.CreateDefault().AnalyzeFile(path);
         StreamInfo stream = report.Streams[0];
         Assert.Equal((samples, lost), (stream.Samples, stream.LostSamples));
+    }
+
+    // Every stream's lost samples are the Lost Samples node of its tree, directly after Samples, also where no frame was read.
+    [Theory]
+    [MemberData(nameof(RuleCases))]
+    public void ALostSamplesNodeStatesTheStreamsLostSamples(string fixture, long samples, long lost)
+    {
+        Assert.True(samples >= 0);
+        string path = Path.Combine(Fixtures.FixtureDirectory, fixture);
+        Report report = Analyzer.CreateDefault().AnalyzeFile(path);
+        StreamInfo stream = report.Streams[0];
+        Node? node = Find(stream.Nodes[0], "Lost Samples");
+        if (lost == 0)
+        {
+            Assert.Null(node);
+            return;
+        }
+
+        Assert.NotNull(node);
+        Assert.Equal(lost, node.Value!.AsInteger());
+        Node? statistics = ParentOf(stream.Nodes[0], "Lost Samples");
+        Assert.NotNull(statistics);
+        int at = statistics.Children.ToList().FindIndex(c => c.Name == "Lost Samples");
+        Assert.True(at > 0 && statistics.Children[at - 1].Name == "Samples", $"{fixture}: Lost Samples does not follow Samples.");
+    }
+
+    private static Node? ParentOf(Node node, string name)
+    {
+        foreach (Node child in node.Children)
+        {
+            if (child.Name == name)
+            {
+                return node;
+            }
+
+            if (child.Kind != NodeKind.Frame && ParentOf(child, name) is { } inner)
+            {
+                return inner;
+            }
+        }
+
+        return null;
+    }
+
+    private static Node? Find(Node node, string name)
+    {
+        foreach (Node child in node.Children)
+        {
+            if (child.Name == name)
+            {
+                return child;
+            }
+
+            if (child.Kind != NodeKind.Frame && Find(child, name) is { } inner)
+            {
+                return inner;
+            }
+        }
+
+        return null;
     }
 
     // Coded Samples stands next to a trimmed Samples (TrueHD: the 27 samples an end of stream marker drops).
