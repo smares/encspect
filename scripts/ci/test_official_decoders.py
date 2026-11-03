@@ -1252,12 +1252,12 @@ class DeclaredSamplesTests(unittest.TestCase):
         self.assertIsNone(compare.reworded(None))
         self.assertEqual(3, compare.reworded(3))
 
-    def test_the_shortfall_of_flagged_units_is_explained_only_where_the_lost_samples_cover_it(self):
-        figure = {"id": "samples", "stage": "coded", "analyzer": 12288, "reference": 11264, "referencePath": "fdk direct", "witnesses": {}, "concealedSamples": 0}
+    def test_the_shortfall_of_flagged_units_is_explained_only_where_the_figures_lost_samples_equal_it(self):
+        figure = {"id": "samples", "stage": "coded", "streams": [0], "analyzer": 12288, "reference": 11264, "referencePath": "fdk direct", "witnesses": {}, "concealedSamples": 0}
         direct = {"units": [{"index": 0, "blocks": 1}] * 12}
         units = [{"index": 11, "decoder": "refused", "status": "agree"}]
-        for lost, status in ((1024, "explained"), (0, "noted")):
-            analyzer = {"streams": [{"lostSamples": lost}], "gapless": {}, "findings": []}
+        for lost, status in ((1024, "explained"), (0, "noted"), (2048, "noted")):
+            analyzer = {"streams": [{"index": 0, "lostSamples": lost}, {"index": 1, "lostSamples": 4096}], "gapless": {}, "findings": []}
             differences = compare.aac_differences([dict(figure)], direct, ["AAC LC"], analyzer, units)
             self.assertEqual([("analyzer-differs", status)], [(d["kind"], d["status"]) for d in differences])
             self.assertEqual(lost, differences[0]["analyzerLost"])

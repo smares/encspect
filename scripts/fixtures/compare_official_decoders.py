@@ -1321,7 +1321,6 @@ def aac_differences(figures, direct, codecs, analyzer, units):
     missing = sum(blocks.get(u["index"], 1) for u in units if u["decoder"].split(" ")[0] in ("refused", "no", "concealed") and u["status"] in ("agree", "noted") and u["index"] is not None)
     # The analyzer counts every unit by its declared raw data blocks, so one block is its samples over all the blocks: the shortfall is exactly the flagged units' blocks.
     total_blocks = sum(u.get("blocks", 1) for u in direct.get("units", []))
-    lost = sum(x.get("lostSamples", 0) for x in analyzer["streams"])
     for figure in figures:
         a, r = figure["analyzer"], figure["reference"]
         if figure["stage"] != "coded":
@@ -1359,9 +1358,10 @@ def aac_differences(figures, direct, codecs, analyzer, units):
                                     "reason": "the excess of %s samples is exactly the samples of the frames FDK conceals; a future decoder leaves them as gaps" % show(r - a)})
             elif r < (a or 0) and missing and total_blocks and (a - (r - concealed)) * total_blocks == a * missing:
                 shortfall = a - (r - concealed)
-                # Rule 1 of the samples definition's cross-check statuses: explained where the shortfall is covered by the lost samples; units the analyzer flags and counts
+                # Rule 1 of the samples definition's cross-check statuses: explained where the reference's total equals the coded stage less the lost samples of the figure's streams; units the analyzer flags and counts
                 # but does not report as lost (it reads them without breaking the syntax) are noted.
-                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "analyzerLost": lost, "status": "explained" if lost >= shortfall else "noted", "kind": "analyzer-differs",
+                figure_lost = sum(x.get("lostSamples", 0) for x in analyzer["streams"] if x["index"] in figure["streams"])
+                differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "analyzerLost": figure_lost, "status": "explained" if figure_lost == shortfall else "noted", "kind": "analyzer-differs",
                                     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (%s) are exactly the %d blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals" % (show(shortfall), missing)})
             else:
                 differences.append({"figure": figure["id"], "decoder": figure["referencePath"], "value": r, "analyzer": a, "status": "pending", "kind": "analyzer-differs"})
@@ -1912,8 +1912,7 @@ def compare_ac3(record, analyzer, ffmpeg):
         lost = sum(x.get("lostSamples", 0) for x in analyzer["streams"])
         if lost and a + offset == r:
             differences.append({"figure": "samples", "decoder": "coreaudio converter", "value": r, "analyzer": a, "analyzerLost": lost, "status": "noted", "kind": "outputs-lost-samples",
-                                "reason": "the converter outputs %s samples where the analyzer's coded stage less its lost samples is %s (the stage is %s, the lost samples %s); the converter does not drop the units the analyzer reports as lost, and no cause is claimed" % (
-                                    show(r), show(a - lost), show(a), show(lost))})
+                                "reason": "the converter outputs %s samples; the analyzer's coded stage is %s and its lost samples are %s, which leaves %s" % (show(r), show(a), show(lost), show(a - lost))})
         entry = column.get("reader")
         if entry and entry.get("samples") is not None and entry["samples"] != r:
             difference = {"figure": "samples", "decoder": "coreaudio reader", "value": entry["samples"], "analyzer": a, "reference": r,
@@ -1922,7 +1921,7 @@ def compare_ac3(record, analyzer, ffmpeg):
             if lost and entry["samples"] == a + offset - lost:
                 difference["status"] = "explained"
                 difference["analyzerLost"] = lost
-                difference["reason"] += "; the reader's total is the coded stage less the converter's constant less the analyzer's lost samples (%s), so it outputs nothing for the units the analyzer reports as lost" % show(lost)
+                difference["reason"] += "; that is the coded stage less the converter's constant %d and less the analyzer's lost samples (%s)" % (CORE_AUDIO_AC3_SHORT, show(lost))
             differences.append(difference)
         if ff is not None and ff != a:
             differences.append({"figure": "samples", "decoder": "ffmpeg", "value": ff, "analyzer": a, "reference": r, "status": "explained" if a + offset == r else "noted", "kind": "witness-differs",

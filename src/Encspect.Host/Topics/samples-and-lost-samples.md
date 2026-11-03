@@ -5,10 +5,10 @@ related: measurements, gapless-playback, granule-position, mp4-sample-tables
 references: Encspect's samples definition (docs/design/samples-definition.md)
 ---
 
-**The problem.** A frame cut by the end of a file may or may not be audio. Encspect counts by what the file declares, not by what a decoder manages to play.
+**The problem.** Decoders disagree on how much a damaged or cut stream holds, because each plays what it manages to. Encspect counts by what the file declares, and says which of those samples it could not read.
 
-**How it works.** A unit is what a format codes one at a time and states the length of: a frame, a block, a packet, an access unit or, for PCM, a sample frame. The stream's samples are the samples per channel its units declare, read from the unit's syntax or the stream's fixed parameters and added up without decoding. A unit that cannot be used stays in the samples. Its declared samples are also reported as lost samples, at the stage before any trim, when
-- the data ends before the unit does,
+**How it works.** A unit is what a format codes one at a time and states the length of: a frame, a block, a packet, an access unit or, for PCM, a sample frame. The stream's samples are the samples per channel its units declare, read from the unit's syntax or the stream's fixed parameters and added up without decoding. A unit that cannot be used stays in the samples (unless a trim removes it). Its declared samples are also reported as lost samples, at the stage before any trim, when
+- the data, the next unit or the container (a Matroska element, an MP4 sample) ends before the unit does,
 - the parser stops reading the unit because its syntax breaks, or
 - the stream's state was lost, so units after damage cannot be read until the next sync point.
 

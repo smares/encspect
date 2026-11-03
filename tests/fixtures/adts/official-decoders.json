@@ -1631,7 +1631,7 @@
      "status": "keep",
      "kind": "decoder-holds-blocks",
      "reason": "FDK holds the last 3 raw data blocks of the last frame (237 bytes fed and not used) when it answers 0x1002 and the drain discards them: its total of 13,312 is short by those 3 held blocks (3,072 samples), and by the blocks of the units it refused or gave no output for",
-     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are the samples the stream's units declare, with lost samples reported apart.",
+     "note": "decided 2026-11-02 (the project lead delegated the AAC calls to the main session): keep. FDK holds the last raw data blocks of a multi-block frame when it answers 0x1002 and the drain discards them, so its total is no reference and leaves the analyzer's figure. The CRC-failing blocks carry aac.crc-mismatch and count as positions under the gaps rule: samples are what the stream's units declare, with lost samples reported apart.",
      "statusSource": "reviewed"
     },
     {

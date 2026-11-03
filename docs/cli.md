@@ -321,7 +321,7 @@ The CSV row of a file has:
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;
 - `Is Protected`, `true` if any stream is protected and `false` otherwise (empty for a file without a stream), `Is Verified` (see `--verify`), `Protection Scheme`, the schemes of the protected streams, and `DRM Systems`, the systems their files name; several are separated by `; `;
 - `Spectral Cutoff (Hz)` (see `--measure`), empty without a cutoff, and `Sample Peak (dBFS)` (the highest over the channels of the first audio stream; empty without `--measure` and for silence), `Maximum True Peak Level (dBTP)`, `Integrated Loudness (LUFS)` and `Loudness Range (LU)` (of the first audio stream; empty without `--measure`, and where the stream has no figure).
-- `Lost Samples`, the last column: the lost samples (see the stream's `lostSamples`) of the streams the `Samples` column adds, 0 where there are none, empty where `Samples` is;
+- `Lost Samples`, the last column: the lost samples (see the stream's `lostSamples`) of the streams the `Samples` column adds, 0 where there are none, empty where `Samples` is.
 
 ## Exit codes
 
