@@ -1,5 +1,5 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame read; the unfinished frame of a Professional stream included). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096) and seven Voice fixtures (voice-truncated 10,760 to 11,060, voice-invalid-superframes 10,080 to 11,520, voice-object-not-whole 7,680 to 8,160, voice-spillover 7,200 to 8,160, voice-cache-overflow, voice-object-dropped, voice-object-dropped-blocks and voice-object-skip-kept), with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration (writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams) gains Average Bitrate. voice-truncated.asf is replaced by voice-cut-last-object.asf: the ASF container hands the cut last object over, so the superframe before it is finished by its bytes (11,060 samples, nothing lost) and the fixture no longer shows an object the container drops. The four derived cut and damaged fixtures are new and not listed.",
+  "note": "Lost Samples (docs/design/samples-definition.md). WMA Professional and Lossless streams gain Coded Samples (a frame length for each frame declared and in the file). Standard WMA streams off Microsoft's rule and Voice streams count their invalid frames and superframes at their declared samples and lose them: writer-stamp-last, writer-stamp-not-last and the first stream of fragments-in-two-streams (0 to 4,096; the second stream of fragments-in-two-streams has only lost frames and gains its Statistics node) and seven Voice fixtures, with the duration, the Voice statistics that read the totals and the stream's key lostSamples. A standard stream that had no duration gains Average Bitrate. The ASF container hands every incomplete media object to the codec parser flagged cut: voice-truncated.asf reads the superframe its cut last object finishes (24 superframes instead of 23, 11,060 samples instead of 10,760, nothing lost; wma.voice-unfinished is gone, wma.packet-short is new, and the bitrate falls with the longer duration). The cut standard files external-windows-wma92-cbr-stereo-44k-128-cut-30 and -cut-36 count the frames their first byte declares. The four derived cut and damaged fixtures are new and not listed.",
   "goldens": [
     "tests/fixtures/asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.report.json",
     "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
@@ -854,18 +854,6 @@
         "Statistics"
       ],
       "name": "Invalid Superframes",
-      "goldens": [
-        "tests/fixtures/asf/voice-truncated.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio Voice",
-        "Statistics"
-      ],
-      "name": "Lost Samples",
       "goldens": [
         "tests/fixtures/asf/voice-truncated.report.json"
       ]
