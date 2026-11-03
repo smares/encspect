@@ -8631,7 +8631,28 @@
                       "length": 17058
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Block Sizes",
+                      "value": 95,
+                      "unit": "packets",
+                      "offset": 9758,
+                      "length": 17058,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "62 packets (65.3%)",
+                          "offset": 9758,
+                          "length": 17058
+                        },
+                        {
+                          "name": "Short",
+                          "value": "33 packets (34.7%)",
+                          "offset": 9758,
+                          "length": 17058
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Samples",
                       "value": 67136,
                       "unit": "samples",
                       "offset": 9758,
@@ -13505,7 +13526,7 @@
                           ]
                         },
                         {
-                          "name": "Window Sequences",
+                          "name": "Block Usage",
                           "value": 48,
                           "unit": "channel streams",
                           "offset": 10569,
@@ -35801,6 +35822,79 @@
               47.8
             ]
           }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 62
+              },
+              {
+                "name": "Short",
+                "count": 33
+              }
+            ],
+            "total": 95,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0,
+              65
+            ]
+          }
         ]
       },
       {
@@ -35975,7 +36069,7 @@
         ],
         "categorySeries": [
           {
-            "name": "Window Sequences",
+            "name": "Block Usage",
             "concept": "blockSwitching",
             "valueLabel": "channel stream",
             "categories": [
@@ -36078,7 +36172,7 @@
             ],
             "total": 48,
             "xSeries": "Bitrate",
-            "groupOf": "Window Sequences",
+            "groupOf": "Block Usage",
             "map": [
               0,
               0,

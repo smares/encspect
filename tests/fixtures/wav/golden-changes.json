@@ -1,214 +1,134 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax; samples do not change. The AC-3 frame that the payload's cut ends is in no frame count, size, bitrate or block tally (decision 3 of the review), only in samples and lostSamples.",
   "goldens": [
-    "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-    "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+    "tests/fixtures/wav/"
   ],
-  "added": [
+  "renamed": [
     {
-      "scope": "stream",
-      "key": "lostSamples"
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
     },
     {
-      "scope": "node",
       "parent": [
         "RIFF",
         "Data Chunk",
         "AC-3",
         "Statistics"
       ],
-      "name": "Lost Samples"
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-extensible-dolby-ac3.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0092.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0240.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0241.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-leading-pause-bursts.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-pause-bursts.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-pause-gap.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-silence-between.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3-three-bursts.report.json",
+        "tests/fixtures/wav/built-iec61937-ac3.report.json",
+        "tests/fixtures/wav/built-iec61937-burst-missing.report.json",
+        "tests/fixtures/wav/built-iec61937-burst-spacing.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json",
+        "tests/fixtures/wav/built-iec61937-data-after-bursts.report.json",
+        "tests/fixtures/wav/built-iec61937-error-flag.report.json",
+        "tests/fixtures/wav/built-iec61937-length-invalid.report.json",
+        "tests/fixtures/wav/built-iec61937-length-zero.report.json",
+        "tests/fixtures/wav/built-iec61937-other-bitstream.report.json",
+        "tests/fixtures/wav/built-iec61937-rate-mismatch.report.json",
+        "tests/fixtures/wav/built-iec61937-type-changed.report.json",
+        "tests/fixtures/wav/external-ac3-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json",
+        "tests/fixtures/wav/external-iec61937-ac3-stereo-192k.report.json"
+      ]
     },
     {
-      "scope": "node",
       "parent": [
         "RIFF",
+        "Data Chunk",
+        "E-AC-3",
+        "Statistics"
+      ],
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-extensible-dolby-digital-plus.report.json",
+        "tests/fixtures/wav/built-iec61937-eac3-at-the-content-rate.report.json",
+        "tests/fixtures/wav/built-iec61937-eac3.report.json",
+        "tests/fixtures/wav/external-eac3-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-eac3-stereo-192k.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Window Sequences",
+      "to": "Block Usage",
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Wave64",
         "Data Chunk",
         "AC-3",
         "Statistics"
       ],
-      "name": "Lost Samples",
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
       "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+        "tests/fixtures/wav/built-w64-ac3.report.json",
+        "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
+        "tests/fixtures/wav/external-w64-ac3.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
       ]
     }
   ],
-  "changed": [
+  "renamedSeries": [
     {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Frames"
-      ],
-      "fields": [
-        "value"
-      ],
+      "array": "categorySeries",
+      "from": "Window Sequences",
+      "to": "Block Usage",
       "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Average Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Smallest Frame"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Minimum Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Audio Blocks"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Audio Blocks Read"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Blocks With Coupling"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Bands Coded as Sum/Difference"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "D45"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "averageBitrate",
-        "categorySeries",
-        "lostSamples",
-        "series"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
       ]
     }
-  ],
-  "removed": []
+  ]
 }

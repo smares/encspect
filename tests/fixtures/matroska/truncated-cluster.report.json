@@ -882,14 +882,14 @@
                       "length": 306
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Coded Samples",
                       "value": 6720,
                       "unit": "samples",
                       "offset": 200,
                       "length": 306
                     },
                     {
-                      "name": "Pre-skip",
+                      "name": "Start Trimming",
                       "value": 312,
                       "unit": "samples",
                       "offset": 200,
@@ -972,6 +972,34 @@
                         {
                           "name": "Fullband (20 kHz)",
                           "value": "6 frames (100.0%)",
+                          "offset": 200,
+                          "length": 306
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Bandwidth",
+                      "offset": 200,
+                      "length": 306,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 20000,
+                          "unit": "Hz",
+                          "offset": 200,
+                          "length": 306
+                        },
+                        {
+                          "name": "Most Common",
+                          "value": 20000,
+                          "unit": "Hz",
+                          "offset": 200,
+                          "length": 306
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 20000,
+                          "unit": "Hz",
                           "offset": 200,
                           "length": 306
                         }
@@ -1436,6 +1464,42 @@
             ],
             "values": [
               16.4
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              200,
+              246,
+              293,
+              350,
+              396,
+              443
+            ],
+            "values": [
+              20000,
+              20000,
+              20000,
+              20000,
+              20000,
+              20000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              20000
             ]
           }
         ]

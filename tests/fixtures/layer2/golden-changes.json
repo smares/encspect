@@ -1,0 +1,28 @@
+{
+  "goldens": [
+    "tests/fixtures/layer2/"
+  ],
+  "added": [
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Verified Frame Checksums"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/layer2/crc-mismatch.report.json",
+        "tests/fixtures/layer2/free-format-44100-crc-mismatch.report.json",
+        "tests/fixtures/layer2/scalefactor-overflow.report.json"
+      ]
+    }
+  ]
+}

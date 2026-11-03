@@ -7860,7 +7860,28 @@
                       "length": 8123
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Block Sizes",
+                      "value": 95,
+                      "unit": "packets",
+                      "offset": 9650,
+                      "length": 8123,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "62 packets (65.3%)",
+                          "offset": 9650,
+                          "length": 8123
+                        },
+                        {
+                          "name": "Short",
+                          "value": "33 packets (34.7%)",
+                          "offset": 9650,
+                          "length": 8123
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Samples",
                       "value": 67136,
                       "unit": "samples",
                       "offset": 9650,
@@ -12831,6 +12852,79 @@
             "values": [
               37.9,
               47.8
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 62
+              },
+              {
+                "name": "Short",
+                "count": 33
+              }
+            ],
+            "total": 95,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0,
+              65
             ]
           }
         ]

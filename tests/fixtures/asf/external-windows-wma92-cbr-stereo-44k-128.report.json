@@ -3897,14 +3897,14 @@
                           "length": 53816
                         },
                         {
-                          "name": "Minimum Frame Bitrate",
+                          "name": "Minimum Bitrate",
                           "value": 3.682177734375,
                           "unit": "kbps",
                           "offset": 1641,
                           "length": 53816
                         },
                         {
-                          "name": "Maximum Frame Bitrate",
+                          "name": "Maximum Bitrate",
                           "value": 582.839208984375,
                           "unit": "kbps",
                           "offset": 1641,
@@ -3929,14 +3929,14 @@
                           "length": 53816
                         },
                         {
-                          "name": "Largest Bit Reservoir",
+                          "name": "Maximum Reservoir Fill",
                           "value": 5543,
                           "unit": "bytes",
                           "offset": 1641,
                           "length": 53816
                         },
                         {
-                          "name": "Average Bit Reservoir",
+                          "name": "Average Reservoir Fill",
                           "value": 1008.5555555555555,
                           "unit": "bytes",
                           "offset": 1641,
@@ -23771,9 +23771,11 @@
             ]
           },
           {
-            "name": "Bit Reservoir",
+            "name": "Reservoir Fill",
             "unit": "bytes",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               1719,
               7693,
@@ -23795,6 +23797,23 @@
               716,
               609,
               5543
+            ]
+          },
+          {
+            "name": "Reservoir Fill Over Time",
+            "unit": "bytes",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              548,
+              188,
+              2289
             ]
           }
         ]

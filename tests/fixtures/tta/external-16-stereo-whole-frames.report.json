@@ -202,6 +202,12 @@
                   "length": 158585
                 },
                 {
+                  "name": "Channel Layout",
+                  "value": "stereo (front left, front right)",
+                  "offset": 0,
+                  "length": 158585
+                },
+                {
                   "name": "Bits Per Sample",
                   "value": 16,
                   "unit": "bits",
@@ -588,6 +594,11 @@
         "sampleRate": 44100,
         "channels": 2,
         "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
         "bitsPerSample": 16,
         "samples": 92160,
         "duration": 2.089795918367347,

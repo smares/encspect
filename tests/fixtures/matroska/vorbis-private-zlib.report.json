@@ -6393,7 +6393,28 @@
                       "length": 3070
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Block Sizes",
+                      "value": 30,
+                      "unit": "packets",
+                      "offset": 2694,
+                      "length": 3070,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "20 packets (66.7%)",
+                          "offset": 2694,
+                          "length": 3070
+                        },
+                        {
+                          "name": "Short",
+                          "value": "10 packets (33.3%)",
+                          "offset": 2694,
+                          "length": 3070
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Samples",
                       "value": 21632,
                       "unit": "samples",
                       "offset": 2694,
@@ -8071,6 +8092,50 @@
             ],
             "values": [
               46.8
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 20
+              },
+              {
+                "name": "Short",
+                "count": 10
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

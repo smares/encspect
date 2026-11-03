@@ -51,6 +51,13 @@
                   "length": 11341
                 },
                 {
+                  "name": "Verified Page Checksums",
+                  "value": 10,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 11341
+                },
+                {
                   "name": "Packet Count",
                   "value": 43,
                   "unit": "packets",
@@ -921,7 +928,28 @@
                       "length": 11106
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Block Sizes",
+                      "value": 40,
+                      "unit": "packets",
+                      "offset": 235,
+                      "length": 11106,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "32 packets (80.0%)",
+                          "offset": 235,
+                          "length": 11106
+                        },
+                        {
+                          "name": "Short",
+                          "value": "8 packets (20.0%)",
+                          "offset": 235,
+                          "length": 11106
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Samples",
                       "value": 32768,
                       "unit": "samples",
                       "offset": 235,
@@ -5133,6 +5161,50 @@
             ],
             "values": [
               123.3
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 32
+              },
+              {
+                "name": "Short",
+                "count": 8
+              }
+            ],
+            "total": 40,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                11
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                16
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

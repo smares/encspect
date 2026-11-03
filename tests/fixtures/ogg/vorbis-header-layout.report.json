@@ -51,6 +51,13 @@
                   "length": 270
                 },
                 {
+                  "name": "Verified Page Checksums",
+                  "value": 3,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 270
+                },
+                {
                   "name": "Packet Count",
                   "value": 23,
                   "unit": "packets",
@@ -852,7 +859,22 @@
                       "length": 65
                     },
                     {
-                      "name": "Decoded Samples",
+                      "name": "Block Sizes",
+                      "value": 20,
+                      "unit": "packets",
+                      "offset": 205,
+                      "length": 65,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "20 packets (100.0%)",
+                          "offset": 205,
+                          "length": 65
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Samples",
                       "value": 19456,
                       "unit": "samples",
                       "offset": 205,
@@ -2757,6 +2779,34 @@
               0.3
             ]
           }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 20
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                20
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          }
         ]
       }
     ],
@@ -2770,7 +2820,7 @@
         "path": [
           0,
           0,
-          7
+          8
         ],
         "count": 2
       },
@@ -2783,7 +2833,7 @@
         "path": [
           0,
           0,
-          10
+          11
         ],
         "count": 1
       },
@@ -2796,7 +2846,7 @@
         "path": [
           0,
           0,
-          11
+          12
         ],
         "count": 1
       }

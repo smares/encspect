@@ -1,767 +1,119 @@
 {
- "note": "The samples alignment (docs/design/samples-definition.md): a sample the file ends inside is an access unit of its own (the last one), not read and in no unit count, size or bitrate; its samples count and are lost; cut and broken access units are reported in the new statistic Lost Samples and the stream's lostSamples.",
- "goldens": [
-  "tests/fixtures/mp4/chunk-sample-mismatch.report.json",
-  "tests/fixtures/mp4/sample-outside-mdat.report.json",
-  "tests/fixtures/mp4/truncated.report.json"
- ],
- "added": [
-  {
-   "scope": "stream",
-   "key": "lostSamples"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics"
-   ],
-   "name": "Lost Samples"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics"
-   ],
-   "name": "Lost Samples"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC"
-   ],
-   "name": "Access Unit",
-   "last": 1
-  }
- ],
- "changed": [
-  {
-   "scope": "stream",
-   "fields": [
-    "averageBitrate",
-    "duration",
-    "samples"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC"
-   ],
-   "fields": [
-    "length",
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Access Units"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Average Bitrate"
-   ],
-   "fields": [
-    "length",
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Block Sizes"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Block Sizes",
-    "Long, start and stop"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs",
-    "Common Window"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs",
-    "Intensity Stereo"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs",
-    "Mid/Side Bands"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs",
-    "Mid/Side Masks"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Channel Pairs",
-    "Mid/Side Masks",
-    "None (0)"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Codebooks"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Coded Bandwidth"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Coded Bandwidth",
-    "Highest"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Coded Bandwidth",
-    "Lowest"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Coded Bandwidth",
-    "Most Common"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Duration"
-   ],
-   "fields": [
-    "length",
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Elements"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Elements",
-    "CPE"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Elements",
-    "FIL"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Fill Elements"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Fill Elements",
-    "EXT_FILL"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "First Elements"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "First Elements",
-    "CPE"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 0"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 0",
-    "Maximum"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 0",
-    "Minimum"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 1"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 1",
-    "Maximum"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Global Gain",
-    "Channel 1",
-    "Minimum"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Largest Access Unit"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Max SFB (Long Windows)"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Max SFB (Long Windows)",
-    "0"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Maximum Bitrate"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Minimum Bitrate"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Noise Substitution"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Noise Substitution",
-    "Noise Bands"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Pulse Data"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Raw Data Blocks"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Samples"
-   ],
-   "fields": [
-    "length",
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Smallest Access Unit"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Stereo Coding"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Stereo Coding",
-    "Left/right stereo"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "TNS"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "TNS",
-    "Only Long"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Window Sequences"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Window Sequences",
-    "Only Long"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Window Shapes"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "AAC",
-    "Statistics",
-    "Window Shapes",
-    "Sine"
-   ],
-   "fields": [
-    "length"
-   ]
-  },
-  {
-   "scope": "finding",
-   "code": "mp4.sample-outside-file",
-   "fields": [
-    "message"
-   ]
-  }
- ]
+  "goldens": [
+    "tests/fixtures/mp4/"
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Window Sequences",
+      "to": "Block Usage",
+      "goldens": [
+        "tests/fixtures/mp4/aac-too-lavc.report.json",
+        "tests/fixtures/mp4/box-overruns-parent.report.json",
+        "tests/fixtures/mp4/box-size-zero-and-small.report.json",
+        "tests/fixtures/mp4/cenc-clear-default.report.json",
+        "tests/fixtures/mp4/cenc-pssh-only-clear.report.json",
+        "tests/fixtures/mp4/cenc-unused-entry-run.report.json",
+        "tests/fixtures/mp4/chan-7-1-rear.report.json",
+        "tests/fixtures/mp4/chan-bitmap-side.report.json",
+        "tests/fixtures/mp4/chan-bitmap.report.json",
+        "tests/fixtures/mp4/chan-completes-reserved.report.json",
+        "tests/fixtures/mp4/chan-descriptions.report.json",
+        "tests/fixtures/mp4/chan-layout-tag.report.json",
+        "tests/fixtures/mp4/chan-mono-core.report.json",
+        "tests/fixtures/mp4/chnl-defined.report.json",
+        "tests/fixtures/mp4/chnl-omitted.report.json",
+        "tests/fixtures/mp4/chnl-positions.report.json",
+        "tests/fixtures/mp4/chunk-outside-file.report.json",
+        "tests/fixtures/mp4/chunk-sample-mismatch.report.json",
+        "tests/fixtures/mp4/co64-largesize.report.json",
+        "tests/fixtures/mp4/deep-nesting.report.json",
+        "tests/fixtures/mp4/duplicate-boxes.report.json",
+        "tests/fixtures/mp4/duration-mismatch.report.json",
+        "tests/fixtures/mp4/edit-list-beyond-unlisted.report.json",
+        "tests/fixtures/mp4/edit-list-invalid.report.json",
+        "tests/fixtures/mp4/edit-list-itunsmpb.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/gapless-disagree.report.json",
+        "tests/fixtures/mp4/he-aac-backward.report.json",
+        "tests/fixtures/mp4/he-aac-hierarchical.report.json",
+        "tests/fixtures/mp4/he-aac-mono.report.json",
+        "tests/fixtures/mp4/he-aac-v2-backward.report.json",
+        "tests/fixtures/mp4/he-aac-v2-hierarchical.report.json",
+        "tests/fixtures/mp4/huge-sample-count.report.json",
+        "tests/fixtures/mp4/id32.report.json",
+        "tests/fixtures/mp4/ilst-all-types.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-sbr.report.json",
+        "tests/fixtures/mp4/itunes-purchase-clear.report.json",
+        "tests/fixtures/mp4/itunsmpb-only.report.json",
+        "tests/fixtures/mp4/lc-implicit.report.json",
+        "tests/fixtures/mp4/lc-sbr-absent.report.json",
+        "tests/fixtures/mp4/moov-after-mdat.report.json",
+        "tests/fixtures/mp4/moov-in-mfra-before-moov.report.json",
+        "tests/fixtures/mp4/nero-chapters.report.json",
+        "tests/fixtures/mp4/pce-5-1.report.json",
+        "tests/fixtures/mp4/ps-in-channel-pair.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json",
+        "tests/fixtures/mp4/ps-signaled-over-stereo-core.report.json",
+        "tests/fixtures/mp4/quicktime-sound-v1.report.json",
+        "tests/fixtures/mp4/quicktime-sound-v2.report.json",
+        "tests/fixtures/mp4/quicktime-udta-terminator.report.json",
+        "tests/fixtures/mp4/quicktime-udta-text.report.json",
+        "tests/fixtures/mp4/rate-1-hz.report.json",
+        "tests/fixtures/mp4/sample-count-mismatch.report.json",
+        "tests/fixtures/mp4/sbr-downsampled.report.json",
+        "tests/fixtures/mp4/sbr-signaled-absent.report.json",
+        "tests/fixtures/mp4/second-moov-with-track.report.json",
+        "tests/fixtures/mp4/tag-inside-mdat.report.json",
+        "tests/fixtures/mp4/too-data-type-0.report.json",
+        "tests/fixtures/mp4/track-meta-before-mdia.report.json",
+        "tests/fixtures/mp4/trailing-bytes.report.json",
+        "tests/fixtures/mp4/trailing-id3v1.report.json",
+        "tests/fixtures/mp4/truncated.report.json",
+        "tests/fixtures/mp4/two-tracks.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Window Sequences",
+      "to": "Block Usage",
+      "goldens": [
+        "tests/fixtures/mp4/fragmented.report.json",
+        "tests/fixtures/mp4/sample-outside-mdat.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 2 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "from": "Window Sequences",
+      "to": "Block Usage",
+      "goldens": [
+        "tests/fixtures/mp4/two-tracks.report.json"
+      ]
+    }
+  ],
+  "renamedSeries": [
+    {
+      "array": "categorySeries",
+      "from": "Window Sequences",
+      "to": "Block Usage"
+    }
+  ]
 }
