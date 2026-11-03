@@ -499,7 +499,7 @@
                       "children": [
                         {
                           "name": "Frames",
-                          "value": 5,
+                          "value": 4,
                           "unit": "frames",
                           "offset": 52,
                           "length": 24968
@@ -507,6 +507,13 @@
                         {
                           "name": "Samples",
                           "value": 7680,
+                          "unit": "samples",
+                          "offset": 52,
+                          "length": 24968
+                        },
+                        {
+                          "name": "Lost Samples",
+                          "value": 1536,
                           "unit": "samples",
                           "offset": 52,
                           "length": 24968
@@ -520,14 +527,14 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 173.2,
+                          "value": 192,
                           "unit": "kbps",
                           "offset": 52,
                           "length": 24968
                         },
                         {
                           "name": "Smallest Frame",
-                          "value": 392,
+                          "value": 768,
                           "unit": "bytes",
                           "offset": 52,
                           "length": 24968
@@ -541,7 +548,7 @@
                         },
                         {
                           "name": "Minimum Bitrate",
-                          "value": 98,
+                          "value": 192,
                           "unit": "kbps",
                           "offset": 52,
                           "length": 24968
@@ -550,13 +557,6 @@
                           "name": "Maximum Bitrate",
                           "value": 192,
                           "unit": "kbps",
-                          "offset": 52,
-                          "length": 24968
-                        },
-                        {
-                          "name": "Lost Samples",
-                          "value": 1536,
-                          "unit": "samples",
                           "offset": 52,
                           "length": 24968
                         },
@@ -596,14 +596,14 @@
                         },
                         {
                           "name": "Audio Blocks",
-                          "value": 30,
+                          "value": 24,
                           "unit": "blocks",
                           "offset": 52,
                           "length": 24968
                         },
                         {
                           "name": "Audio Blocks Read",
-                          "value": 25,
+                          "value": 24,
                           "unit": "blocks",
                           "offset": 52,
                           "length": 24968
@@ -624,7 +624,7 @@
                         },
                         {
                           "name": "Blocks With Coupling",
-                          "value": 25,
+                          "value": 24,
                           "unit": "blocks",
                           "offset": 52,
                           "length": 24968
@@ -638,7 +638,7 @@
                         },
                         {
                           "name": "Bands Coded as Sum/Difference",
-                          "value": "8 of 100",
+                          "value": "8 of 96",
                           "offset": 52,
                           "length": 24968
                         },
@@ -651,7 +651,7 @@
                         },
                         {
                           "name": "Exponent Strategies",
-                          "value": 75,
+                          "value": 72,
                           "unit": "exponent sets",
                           "offset": 52,
                           "length": 24968,
@@ -672,7 +672,7 @@
                             },
                             {
                               "name": "D45",
-                              "value": 12,
+                              "value": 9,
                               "unit": "exponent sets",
                               "offset": 52,
                               "length": 24968
@@ -8646,7 +8646,7 @@
         "samples": 7680,
         "lostSamples": 1536,
         "duration": 0.16,
-        "averageBitrate": 173.2,
+        "averageBitrate": 192,
         "isVbr": false,
         "series": [
           {
@@ -8659,15 +8659,13 @@
               52,
               6196,
               12340,
-              18484,
-              24628
+              18484
             ],
             "values": [
               192,
               192,
               192,
-              192,
-              98
+              192
             ]
           },
           {
@@ -8680,7 +8678,7 @@
               0
             ],
             "values": [
-              173
+              192
             ]
           },
           {
@@ -8693,11 +8691,9 @@
               52,
               6196,
               12340,
-              18484,
-              24628
+              18484
             ],
             "values": [
-              20344,
               20344,
               20344,
               20344,
@@ -8731,19 +8727,15 @@
               },
               {
                 "name": "Without block switching",
-                "count": 25
+                "count": 24
               }
             ],
-            "total": 25,
+            "total": 24,
             "xSeries": "Bitrate",
             "runs": [
               [
                 1,
-                25
-              ],
-              [
-                null,
-                5
+                24
               ]
             ],
             "seconds": [
@@ -8758,23 +8750,19 @@
             "categories": [
               {
                 "name": "With coupling",
-                "count": 25
+                "count": 24
               },
               {
                 "name": "Without coupling",
                 "count": 0
               }
             ],
-            "total": 25,
+            "total": 24,
             "xSeries": "Bitrate",
             "runs": [
               [
                 0,
-                25
-              ],
-              [
-                null,
-                5
+                24
               ]
             ],
             "seconds": [
@@ -8793,10 +8781,10 @@
               },
               {
                 "name": "Without rematrixing",
-                "count": 18
+                "count": 17
               }
             ],
-            "total": 25,
+            "total": 24,
             "xSeries": "Bitrate",
             "runs": [
               [
@@ -8849,10 +8837,6 @@
               ],
               [
                 1,
-                6
-              ],
-              [
-                null,
                 5
               ]
             ],
