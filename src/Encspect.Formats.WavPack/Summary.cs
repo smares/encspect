@@ -227,6 +227,8 @@ internal static partial class Summary
         bool isCorrectionCreated = s.Config is { } config && (config.Value.Flags & Decode.ConfigCreateWvc) != 0;
         long nativeRate = Reader.NativeRate(s);
         long samples = s.CountedSamples * s.FiguresScale;
+        // Correction data is not read as audio (it cannot be decoded alone), so no unit of it is lost.
+        long lost = isCorrection ? 0 : s.LostSamples * s.FiguresScale;
         double duration = nativeRate > 0 ? samples / (double)nativeRate : 0;
         int channels = s.ChannelInfo?.Value.Channels ?? s.FirstSetChannels;
         List<Speaker>? layout = null;
@@ -248,6 +250,11 @@ internal static partial class Summary
 
         statistics.Add(Cover3("Block Sets", NodeValue.Integer(s.Sets, "sets", "set"), Explain.StatSets));
         statistics.Add(cover("Samples", NodeValue.Integer(samples, isDsd ? "bits" : "samples", isDsd ? "bit" : "sample"), isDsd ? Explain.StatSamplesDsd : Explain.StatSamples, null));
+        if (lost > 0)
+        {
+            statistics.Add(cover("Lost Samples", NodeValue.Integer(lost, isDsd ? "bits" : "samples", isDsd ? "bit" : "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         statistics.Add(cover("Sample Rate", NodeValue.Integer(nativeRate, "Hz"), isDsd ? Explain.StatRateDsd : Explain.StatRate, null));
         if (channels > 0)
@@ -347,6 +354,7 @@ internal static partial class Summary
             ChannelLayout = layout,
             BitsPerSample = bits,
             Samples = samples,
+            LostSamples = lost,
             Duration = duration,
             AverageBitrate = s.Figures?.AverageBitrate,
             IsVbr = s.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,

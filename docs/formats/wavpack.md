@@ -26,7 +26,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Reported
 
-- the sample rate (a custom rate from its sub-block, ignored where it is 0 as libwavpack ignores it; for DSD the native bit rate, held to 2,147,483,647 Hz), channels and layout, bits per sample, the total samples and the duration;
+- the sample rate (a custom rate from its sub-block, ignored where it is 0 as libwavpack ignores it; for DSD the native bit rate, held to 2,147,483,647 Hz), channels and layout, bits per sample, the total samples and the duration (the samples are those of the first block of each set; Lost Samples counts a set once for any block in it that is cut, malformed or refused, and is 0 for correction data and for a stream version libwavpack does not decode);
 - "WavPack lossless", "WavPack hybrid", "WavPack lossy" or "WavPack correction data" as the codec;
 - the hybrid target bitrate in bits per sample, from the profile's accumulator ("or less" where the accumulator is 0, since the encoder stores 0 for any target below 568/256 bits per sample, about 2.22; for a false stereo block, whose accumulator is worked out from twice the target, below 540/256, about 2.11), and the average bitrate, which counts the bytes of the audio blocks less the wrapper sub-blocks (the source file's header and trailer) they hold;
 - the bitrate per block and per second, as series, with the smallest and largest block, a distribution and the bitrate mode: variable or constant for two sets or more, unknown for a single set, which shows no variation (`IsVbr` is false then);

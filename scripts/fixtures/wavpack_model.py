@@ -289,7 +289,7 @@ def stream_info(data, entries):
     hybrid = bool(h["flags"] & HYBRID) or any(e["header"]["flags"] & HYBRID for e in audio)
     correction = not any(has(e, 0x0A) or has(e, 0x0E) for e in audio) and any(has(e, 0x0B) or has(e, 0x0C) for e in audio)
     codec = "WavPack correction data" if correction else "WavPack hybrid" if hybrid else "WavPack lossy" if lossy(entries, data) else "WavPack lossless"
-    return {"codec": codec, "layout": layout(count, mask), "sample_rate": native, "channels": count, "samples": samples, "duration": seconds, "bits_per_sample": bits,
+    return {"codec": codec, "layout": layout(count, mask), "sample_rate": native, "channels": count, "samples": samples, "lost_samples": 0, "duration": seconds, "bits_per_sample": bits,
             "average_bitrate": set_bits * native / samples / 1000 if samples else None, "hybrid": hybrid, "correction": correction, "lossless": not (hybrid or correction or lossy(entries, data)),
             "sets": len(grouped), "declared": h["total"] if h["index"] == 0 else None}
 
