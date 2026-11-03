@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41610797320",
-  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
+  "id": "41666864897",
+  "commit": "384c13ab12892ac47e4211819e148898a5ea2e1f",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41610797320",
-   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
+   "runId": "41666864897",
+   "commit": "384c13ab12892ac47e4211819e148898a5ea2e1f"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41610797320",
-   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
+   "runId": "41666864897",
+   "commit": "384c13ab12892ac47e4211819e148898a5ea2e1f"
   }
  },
  "statuses": [
@@ -10802,12 +10802,11 @@
      "decoder": "coreaudio converter",
      "value": 11264,
      "analyzer": 20480,
-     "reference": 10240,
+     "analyzerLost": 10240,
      "status": "noted",
-     "kind": "coreaudio-differs",
-     "ownersDisagree": true,
-     "reason": "the owners' decoders disagree with each other and with the analyzer: fdk direct 10,240, Core Audio's converter 11,264, the analyzer 20,480 (the written rule gives keep unless a reading of the specification decides)",
-     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown.",
+     "kind": "outputs-lost-samples",
+     "reason": "the converter outputs 11,264 samples; the analyzer's coded stage is 20,480 and its lost samples are 10,240, which leaves 10,240",
+     "note": "decided in review (2026-11-02; step 5, run 41423202796): noted, and since 2026-11-03 by the rule for a converter that outputs part of a lost unit, with both figures and no cause; the extra block is unexplained. Per-unit facts of the converter (20 units): units 0, 2, 3 and 4 give no output, unit 1 (45 bytes at 42) is accepted and units 5 to 9 are refused ('bada'); units 10 to 19 are accepted; 11 accepted units give 11 outputs of 1,024 = 11,264. FDK refuses units 0 to 9 (ten samples outside every mdat) and decodes 10 to 19 (10,240). The converter holds frames back, so an output cannot be tied to a unit; that unit 1 decodes in Core Audio and is refused by FDK is a reading of the counts, not shown.",
      "statusSource": "reviewed"
     }
    ],
