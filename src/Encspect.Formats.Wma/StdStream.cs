@@ -104,6 +104,12 @@ internal sealed class StdStream
 
     public long FramesRead => ValidFrames + InvalidFrames;
 
+    // The frames a superframe declares after a frame that broke its syntax, including the one it announces: they are not read, and are lost
+    // with the invalid frame.
+    public long UnreadFrames { get; private set; }
+
+    public long LostFrames => InvalidFrames + UnreadFrames;
+
     public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, CancellationToken cancellationToken)
     {
         StdParameters p = Parameters;
@@ -133,6 +139,12 @@ internal sealed class StdStream
             if (packet.Length < align)
             {
                 record.State = SuperframeState.Short;
+                if (packet.IsCut && packet.Length >= 1)
+                {
+                    // A cut object whose first byte is there declares frames by it: those that start in it and, with the bit reservoir, the one it finishes.
+                    UnreadFrames += p.UsesBitReservoir ? (packet.Span[0] & 15) + (reservoir.Bytes > 0 ? 1 : 0) : 1;
+                }
+
                 reservoir.Bytes = 0;
                 Superframes.Add(record);
                 findings.Add(Severity.Warning, "wma.superframe-short", () => nodes.Superframe(index), n => StdText.SuperframeShort(n, align, SuperframeOffset(index)));
@@ -243,7 +255,10 @@ internal sealed class StdStream
     public int AnnouncedLastMargin { get; private set; }
 
     // The valid frames less the first, times the frame length: what FFmpeg's decoder outputs, and the count where the rule does not apply.
-    public long FramesCountSamples => Math.Max(0, ValidFrames - 1) * Parameters.FrameLength;
+    public long FramesCountSamples => (Math.Max(0, ValidFrames - 1) + LostFrames) * Parameters.FrameLength;
+
+    // The declared samples of the lost frames, at the coded stage: each counts a frame length. Zero where the rule applies, which needs no invalid frame.
+    public long LostSamples => LostFrames * Parameters.FrameLength;
 
     // The valid frames times the frame length, before any overlap is taken off (the frame the last superframe announces is not among them).
     public long CodedSamples => ValidFrames * Parameters.FrameLength;
@@ -363,6 +378,7 @@ internal sealed class StdStream
             framesHere++;
             if (spanningFault != FrameFault.None)
             {
+                UnreadFrames += record.Count;
                 FinishSuperframe(index, framesHere, -1, 0);
                 reservoir.Bytes = 0;
                 return;
@@ -384,6 +400,7 @@ internal sealed class StdStream
             if (fault != FrameFault.None)
             {
                 ReportInvalid(findings, nodes, frameIndex, index, fault, frame.StartBit / 8);
+                UnreadFrames += record.Count - 1 - i;
                 FinishSuperframe(index, framesHere, -1, 0);
                 reservoir.Bytes = 0;
                 return;

@@ -39,10 +39,10 @@ OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "ac3"
 LRS_RRS = 0x8000 >> 6
 
 
-def stream(codec, rate, acmod, lfeon, samples, layout=None, vbr=False, mode=None, objects=None):
+def stream(codec, rate, acmod, lfeon, samples, layout=None, vbr=False, mode=None, objects=None, lost=0):
     speakers = layout or m.speakers(acmod, lfeon)
     return {"codec": codec, "sample_rate": rate, "channels": len(speakers), "channel_mode": mode or m.CODING_MODES[acmod], "channel_layout": speakers,
-            "samples": samples, "is_vbr": vbr, **({"has_object_audio": True, "joc_object_count": objects} if objects else {})}
+            "samples": samples, "is_vbr": vbr, **({"lost_samples": lost} if lost else {}), **({"has_object_audio": True, "joc_object_count": objects} if objects else {})}
 
 
 def frames_of(data, start=0, end=None):
@@ -205,7 +205,7 @@ def build():
 
     # A truncated last frame.
     data = silent(6)[:-300]
-    fixture("truncated", ".ac3", "Six 2/0 frames, the last cut 300 bytes short.", data, frames_of(data), [stream("AC-3", 48000, 2, 0, 6 * 1536)],
+    fixture("truncated", ".ac3", "Six 2/0 frames, the last cut 300 bytes short.", data, frames_of(data), [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
             [("ac3.frame-truncated", "of its 768 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
@@ -280,7 +280,7 @@ def build():
     frame = ac3()
     data = frame * 2 + frame[:400] + frame * 3
     rows = [[0, 768], [768, 768], [1536, 400], [1936, 768], [2704, 768], [3472, 768]]
-    fixture("cut-frame", ".ac3", "Six 2/0 frames, the third cut to its first 400 bytes.", data, rows, [stream("AC-3", 48000, 2, 0, 6 * 1536)],
+    fixture("cut-frame", ".ac3", "Six 2/0 frames, the third cut to its first 400 bytes.", data, rows, [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
             [("ac3.frame-damaged", "cut short by the next frame's sync word")],
             crosscheck={"ffprobe": False, "decode": True, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg's parser keeps the cut frame's bytes in a packet with the next frame.",
@@ -339,7 +339,7 @@ def build():
     # Inconsistent and invalid blocks: rematstr 0 in block 0, then a bandwidth code above 60.
     data = silent(3, rematstr0=0) + silent(3, chbwcod=61)
     fixture("bad-blocks", ".ac3", "Three 2/0 frames without rematrixing flags in block 0, three with chbwcod 61.", data, frames_of(data),
-            [stream("AC-3", 48000, 2, 0, 6 * 1536)],
+            [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=3 * 1536)],
             [("ac3.block-inconsistent", "rematstr is 0 in block 0"), ("ac3.block-invalid", "chbwcod is above 60")],
             crosscheck={"ffprobe": True, "decode": False, "liba52": False,
                         "skip": {"decode": "ffmpeg rejects the frames with chbwcod 61, as A/52 5.4.3.24 says to.",
@@ -446,7 +446,7 @@ def build():
     track = mp4.Track(1, frames, 48000, 2, entry, durations=[1536] * 6)
     data, boxes, chunks = mp4.movie([track])
     fixture("sample-short", ".mp4", "Six 2/0 frames in MP4 with a matching dac3 box, the first sample 68 bytes short of its frame.", data,
-            sample_rows(track, chunks), [stream("AC-3", 48000, 2, 0, 6 * 1536)],
+            sample_rows(track, chunks), [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
             [("ac3.frame-truncated", "A sample ends inside its frame")], fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], read=False,
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "ffmpeg's AC-3 parser drops the sample that ends inside its frame, so ffprobe lists five packets where the file has six samples.",
@@ -506,7 +506,7 @@ def build_object_audio():
     # The file ends inside block 2's skip field, which fits its frame: the frame is truncated, not overrun.
     cut = 3 * len(atmos_frame()) + 264
     fixture("truncated-in-skip", ".eac3", "Three 5.1 frames of joc-atmos and a fourth cut in the middle of block 2's skip field.", data[:cut], frames_of(data[:cut]),
-            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, vbr=True, objects=15)], [("ac3.frame-truncated", "of its 2048 bytes")],
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, vbr=True, objects=15, lost=1536)], [("ac3.frame-truncated", "of its 2048 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
                                  "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})

@@ -554,16 +554,23 @@ def stream_info(t, data, framing, counts, average=False):
     top = min(first.sync.count, 3) - 1
     channels = t["channels"][top]
     layout = channel_list(first.sync, top, first.sync.count, channels)
-    samples = sum(c for c, s in zip(counts, t["status"]) if s == "read" and c is not None)
+    # A unit that is cut, breaks the syntax or waits for the next major sync after damage is lost: it counts the samples of the sync in force
+    # (docs/design/samples-definition.md). Units that use what the analyzer leaves aside, those before the first usable sync and the bytes
+    # skipped count nothing.
+    start = sync_entry["unit"]
+    lost = sum(c for i, (c, s) in enumerate(zip(counts, t["status"])) if i >= start and s in ("cut", "unreadable", "after-damage") and c is not None)
+    samples = sum(c for c, s in zip(counts, t["status"]) if s == "read" and c is not None) + lost
     rate = first.sync.rate
     # Each stretch of units is counted at the sampling rate of the sync it was read with.
     per_rate = {}
-    for c, s, r in zip(counts, t["status"], t["rates"]):
-        if s == "read" and c is not None:
-            per_rate[r] = per_rate.get(r, 0) + c
+    in_force = rate
+    for i, (c, s, r) in enumerate(zip(counts, t["status"], t["rates"])):
+        in_force = r or in_force
+        if (s == "read" or (i >= start and s in ("cut", "unreadable", "after-damage"))) and c is not None:
+            per_rate[in_force] = per_rate.get(in_force, 0) + c
     duration = sum(c / r for r, c in per_rate.items())
     info = {"codec": "MLP" if not first.sync.is_truehd else "Dolby TrueHD", "sample_rate": rate, "channels": channels, "layout": layout or [], "bits_per_sample": first.sync.bits,
-            "samples": samples, "duration": duration}
+            "samples": samples, "duration": duration, **({"lost_samples": lost} if lost else {})}
     if average:
         total_bits = sum(f[2] for f in framing[sync_entry["unit"]:]) * 8
         info["average_bitrate"] = total_bits * rate / samples / 1000

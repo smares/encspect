@@ -30,6 +30,16 @@ internal static class LosslessReport
         Add("Frame Length", NodeValue.Integer(p.FrameLength, "samples"), ProExplain.StatFrameLength);
         Add("Sample Size", NodeValue.Integer(p.SampleSize, "bits"), LosslessExplain.StatSampleSize);
         Add("Samples", NodeValue.Integer(reader.Samples, "samples", "sample"), LosslessExplain.StatSamples);
+        if (reader.CodedSamples != reader.Samples)
+        {
+            Add("Coded Samples", NodeValue.Integer(reader.CodedSamples, "samples", "sample"), LosslessExplain.StatCodedSamples);
+        }
+
+        if (reader.LostSamples > 0)
+        {
+            Add("Lost Samples", NodeValue.Integer(reader.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+        }
+
         if (reader.TrimmedSamples > 0)
         {
             Add("Trimmed Samples", NodeValue.Integer(reader.TrimmedSamples, "samples", "sample"), LosslessExplain.StatTrimmedSamples);

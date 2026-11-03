@@ -1,0 +1,34 @@
+{
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where units are cut; samples do not change.",
+  "goldens": [
+    "tests/fixtures/dts/cut-frame.report.json",
+    "tests/fixtures/dts/truncated.report.json",
+    "tests/fixtures/dts/fsize-too-large.report.json",
+    "tests/fixtures/dts/exss-overrun.report.json",
+    "tests/fixtures/dts/dtshd-stream-truncated.report.json",
+    "tests/fixtures/dts/dtshd-stream-size-wrong.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "STRMDATA",
+        "DTS",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    }
+  ]
+}

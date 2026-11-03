@@ -1,0 +1,23 @@
+{
+  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax; samples do not change.",
+  "goldens": [
+    "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+    "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Data Chunk",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    }
+  ]
+}

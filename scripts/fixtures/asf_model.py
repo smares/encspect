@@ -567,6 +567,10 @@ def read_packets(data, start, end, packet_size, result):
             else:
                 key = (stream_byte & 0x7F)
                 if offset == 0:
+                    # An object the next one cuts off is handed over with the bytes that arrived, flagged cut (a sixth element).
+                    old = pending.get(key)
+                    if old and old[3] > 0:
+                        result["media_objects"].append([key, old[0], old[3], old[2], old[4], "cut"])
                     pending[key] = [number, object_size if replicated >= 8 else data_length, presentation, 0, []]
                 current = pending.get(key)
                 if current and current[0] == number and offset == current[3]:
@@ -584,4 +588,9 @@ def read_packets(data, start, end, packet_size, result):
         result["packets"].append([position, min(step, end - position), payloads])
         position += step
         index += 1
+    # The objects that were still open when the data ended, or the file did, are handed over as they are, flagged cut.
+    for key in sorted(pending):
+        old = pending[key]
+        if old[3] > 0:
+            result["media_objects"].append([key, old[0], old[3], old[2], old[4], "cut"])
     return result

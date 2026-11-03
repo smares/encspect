@@ -120,7 +120,11 @@ public class WmaLosslessBufferTests
         byte[] third = Object(blockAlignment, width, 6, (int)frame.Count, frame);
         List<byte[]> objects = [Object(blockAlignment, width, 0, 0), Object(blockAlignment, width, 5, 8 * blockAlignment), third];
         CodecContext context = LosslessBuilder.Run(objects, 1, blockAlignment);
-        Assert.Equal(LosslessBuilder.FrameLength, context.Streams[0].Samples);
+        // The frame whose start packet 0 pointed to is declared and cannot be used (the decoder waits for a seekable subframe): it counts in the samples
+        // and is lost. What the decoder outputs, the frame the finishing bits make, is the samples less the lost ones.
+        StreamInfo stream = context.Streams[0];
+        Assert.Equal(LosslessBuilder.FrameLength, stream.Samples - stream.LostSamples);
+        Assert.Equal(LosslessBuilder.FrameLength, stream.LostSamples);
     }
 
     // A media object of zero payload bits except a count, and the bits that follow the header where given.

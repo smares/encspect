@@ -266,6 +266,74 @@ public class SamplesDefinitionTests
         { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
         { "vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
 
+        #region AC-3 and E-AC-3
+        // A cut frame and a frame whose blocks break are lost whole; a failing CRC and an unread coding tool are not.
+        { "ac3/cut-frame.ac3", 9216, 1536 },
+        { "ac3/truncated.ac3", 9216, 1536 },
+        { "ac3/truncated-in-skip.eac3", 6144, 1536 },
+        { "ac3/bad-blocks.ac3", 9216, 4608 },
+        { "ac3/crc-damaged.ac3", 12288, 0 },
+        { "ac3/aht.eac3", 4608, 0 },
+        { "wav/built-iec61937-cut-in-payload.wav", 7680, 1536 },
+        { "wav/built-iec61937-cut-odd-payload.wav", 7680, 1536 },
+        #endregion
+
+        #region WAV, Wave64 and AIFF
+        // Whole sample frames of the bytes present: a partial frame counts nothing and nothing is lost.
+        { "wav/built-partial-sample-frame.wav", 49, 0 },
+        { "wav/built-w64-partial-sample-frame.w64", 49, 0 },
+        { "wav/built-truncated-data.wav", 40, 0 },
+        { "aiff/built-truncated.aiff", 40, 0 },
+        { "aiff/built-sound-data-short.aiff", 50, 0 },
+        #endregion
+
+        #region TrueHD and MLP
+        // A cut unit, units that break the syntax and the units that wait for the next major sync are lost at the samples of the sync in force.
+        { "truehd/built-unit-cut.thd", 3200, 40 },
+        { "truehd/built-sync-crc-mismatch.thd", 3200, 640 },
+        { "truehd/built-mlp-sync-crc-mismatch.mlp", 2560, 640 },
+        { "truehd/built-parity-mismatch.thd", 3200, 480 },
+        { "truehd/built-directory-end-past-unit.thd", 3200, 320 },
+        { "truehd/built-block-size-invalid.thd", 1920, 640 },
+        // Question 12 (b): units that use what the analyzer leaves aside and skipped bytes count nothing; a failing checksum alone is not lost.
+        { "truehd/built-mlp-group-rates.mlp", 1280, 0 },
+        { "truehd/built-data-skipped.thd", 2760, 0 },
+        { "truehd/built-substream-crc-mismatch.thd", 3200, 0 },
+        // An end of stream marker's drop is a trim, not a loss.
+        { "truehd/external-truehd-stereo-48k-24-odd-length.thd", 7213, 0 },
+        #endregion
+
+        #region ASF and WMA
+        // Standard WMA, off Microsoft's rule: an invalid frame and the frames its superframe declares after it count a frame length and are lost.
+        { "asf/writer-stamp-last.asf", 4096, 4096 },
+        { "asf/writer-stamp-not-last.asf", 4096, 4096 },
+        { "asf/fragments-in-two-streams.asf", 4096, 4096 },
+        // Voice: a cut, broken or dropped superframe counts its stated samples, or 480, and is lost.
+        // The container hands a cut media object over flagged cut, and the codec parser counts what the bytes present declare: the cut Voice
+        // object finishes the superframe before it, the frames a cut standard object declares by its first byte are lost, and so is the Lossless
+        // frame that starts at a declared start and runs past the cut.
+        { "asf/voice-truncated.asf", 11060, 0 },
+        { "asf/derived-windows-wma92-stereo-44k-128-object-cut.asf", 135168, 6144 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.asf", 88064, 2048 },
+        // Damage: an invalid standard frame and the frames its superframe declares after it; the Lossless frames that start where a packet's header
+        // points or after a valid frame and cannot be used after a lost packet.
+        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 133120, 14336 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 51336, 6144 },
+        { "asf/voice-invalid-superframes.asf", 11520, 1440 },
+        { "asf/voice-object-not-whole.asf", 8160, 480 },
+        { "asf/voice-spillover.asf", 8160, 960 },
+        // Voice objects that declare no unit the file holds (an orphan spillover, a short packet) count nothing and lose nothing.
+        { "asf/voice-object-short.asf", 8160, 0 },
+        #endregion
+
+        #region DTS and DTS-HD
+        { "dts/cut-frame.dts", 3072, 512 },
+        { "dts/truncated.dts", 3072, 512 },
+        { "dts/fsize-too-large.dts", 3072, 512 },
+        { "dts/exss-overrun.dts", 2048, 512 },
+        { "dts/dtshd-stream-truncated.dtshd", 2048, 512 },
+        #endregion
+
         // Region: Musepack. A frame cut by the end of the data counts 1,152 in Coded Samples and is lost; samples compose as before.
         { "musepack/sv7-truncated.mpc", 46751, 1152 },
         { "musepack/sv8-truncated.mpc", 45599, 4608 },
@@ -344,6 +412,16 @@ public class SamplesDefinitionTests
         Report report = Analyzer.CreateDefault().AnalyzeFile(path);
         StreamInfo stream = report.Streams[0];
         Assert.Equal((samples, lost), (stream.Samples, stream.LostSamples));
+    }
+
+    // Coded Samples stands next to a trimmed Samples (TrueHD: the 27 samples an end of stream marker drops).
+    [Fact]
+    public void TrueHdCodedSamplesStandNextToItsTrimmedSamples()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "truehd", "external-truehd-stereo-48k-24-odd-length.thd"));
+        Node statistics = Fixtures.Resolve(report.Root, "Dolby TrueHD/Statistics").Single();
+        Assert.Equal(7240L, statistics.Children.Single(c => c.Name == "Coded Samples").Value?.AsInteger());
+        Assert.Equal(7213L, report.Streams[0].Samples);
     }
 
     [Fact]

@@ -120,6 +120,7 @@ public sealed class WmaLosslessParser : ICodecParser
             Channels = p.Channels,
             ChannelLayout = WmaStreams.Layout(p.ChannelMask, p.Channels),
             Samples = reader.Samples,
+            LostSamples = reader.LostSamples,
             Duration = duration,
             AverageBitrate = duration > 0 ? p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000 : null,
             IsVbr = configuration.IsVbr ?? false,

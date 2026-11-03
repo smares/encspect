@@ -30,7 +30,11 @@ every child of that name. A change file:
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
                    "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
                   {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
-                  {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}]  # fields of every finding of the code
+                  {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code
+      "removed": [{"parent": ["ASF", "Data Object", "Windows Media Audio Voice", "Statistics"], "name": "Lost Samples",     # a node only the old report has;
+                   "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]}],                                       # an entry may name the goldens it applies to
+      "findings": [{"gone": ["wma.voice-unfinished"], "new": ["wma.packet-short"],   # codes of findings only the old or only the new report has
+                    "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]}]
     }
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
@@ -308,6 +312,22 @@ def check_golden(old, new, change):
                         problems.append(f"[{index}]: the node {entry['from']} is still there under {'/'.join(entry['parent'])}, which the change renames to {entry['to']}")
                     if entry["to"] not in names:
                         problems.append(f"[{index}]: the node {entry['to']} is missing under {'/'.join(entry['parent'])}, where the change renames {entry['from']} to it")
+        # What the change lists as gone (nodes and findings only the old report has) and new findings (only the new one has) is taken out before
+        # the two reports are compared.
+        for entry in change.get("removed", []):
+            for parent in matching(before["root"], entry["parent"]):
+                kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
+                if kept:
+                    parent["children"] = kept
+                else:
+                    parent.pop("children", None)
+
+        gone = {code for entry in change.get("findings", []) for code in entry.get("gone", [])}
+        added = {code for entry in change.get("findings", []) for code in entry.get("new", [])}
+        if gone and "findings" in before:
+            before["findings"] = [f for f in before["findings"] if f.get("code") not in gone]
+        if added and "findings" in after:
+            after = {**after, "findings": [f for f in after["findings"] if f.get("code") not in added]}
         try:
             drop_changed(before, changed_in_old(change.get("changed", []), change.get("renamed", []), counted))
             expected = transform(after, change, before)
@@ -321,7 +341,7 @@ def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
     out = dict(change)
-    for key in ("added", "renamed", "moved", "changed"):
+    for key in ("added", "renamed", "moved", "changed", "removed", "findings"):
         if key in change:
             out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
     return out

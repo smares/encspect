@@ -317,10 +317,10 @@ def truncated():
     return data[:-90]
 
 
-fixture("voice-truncated", "The 8 kHz stream cut in the middle of its last packet: the container drops the incomplete media object, so the superframe that began in the packet before is never finished.",
+fixture("voice-truncated", "The 8 kHz stream cut in the middle of its last packet: the container hands the incomplete media object over as it is, flagged cut, and the superframe that began in the packet before is finished by the bytes it holds.",
         truncated,
         [finding("asf.object-truncated", "the file is cut short"), finding("asf.file-size", "but the file holds"), finding("asf.object-incomplete", "ends before all of its bytes arrive"),
-         finding("asf.packet-truncated", "ends before its header or a payload does"), finding("asf.payload-overrun", "extends past the packet's end"), finding("wma.voice-unfinished", "no packet follows")],
+         finding("asf.packet-truncated", "ends before its header or a payload does"), finding("asf.payload-overrun", "extends past the packet's end"), finding("wma.packet-short", "fewer bytes than the block alignment")],
         {"ffprobe": False, "reason": "the file is cut inside a payload, which ffmpeg returns as a short packet.", "decode": "errors", "messages": [], "ffmpeg": {"samples": 10760}})
 
 

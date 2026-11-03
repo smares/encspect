@@ -2180,7 +2180,7 @@
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
-                      "value": "13 superframes, 0.566 s",
+                      "value": "13 superframes, 0.610 s",
                       "offset": 330,
                       "length": 1442,
                       "children": [
@@ -2217,14 +2217,21 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 6240,
+                          "value": 6720,
+                          "unit": "samples",
+                          "offset": 330,
+                          "length": 1442
+                        },
+                        {
+                          "name": "Lost Samples",
+                          "value": 480,
                           "unit": "samples",
                           "offset": 330,
                           "length": 1442
                         },
                         {
                           "name": "Duration",
-                          "value": 0.5659863945578232,
+                          "value": 0.6095238095238096,
                           "unit": "s",
                           "offset": 330,
                           "length": 1442
@@ -2259,14 +2266,14 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 16.96153846153846,
+                          "value": 15.749999999999998,
                           "unit": "kbps",
                           "offset": 330,
                           "length": 1442
                         },
                         {
                           "name": "Average Superframe Bitrate",
-                          "value": 10.938425480769231,
+                          "value": 10.157109374999997,
                           "unit": "kbps",
                           "offset": 330,
                           "length": 1442
@@ -6620,9 +6627,10 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 6240,
-        "duration": 0.5659863945578232,
-        "averageBitrate": 16.96153846153846,
+        "samples": 6720,
+        "lostSamples": 480,
+        "duration": 0.6095238095238096,
+        "averageBitrate": 15.749999999999998,
         "isVbr": false,
         "playbackGroup": 1,
         "series": [

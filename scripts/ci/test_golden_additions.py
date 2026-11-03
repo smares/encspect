@@ -61,6 +61,15 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {"added": change["added"][:1]}))
 
+    def test_nodes_and_findings_listed_as_gone_or_new_are_taken_out_before_the_reports_are_compared(self):
+        old = report([*OLD_STATS, node("Invalid Frames", value=1)], findings=[{"code": "a", "message": "m"}, {"code": "gone", "message": "g"}])
+        new = report(OLD_STATS, findings=[{"code": "a", "message": "m"}, {"code": "new", "message": "n"}])
+        change = {"removed": [{"parent": ["MPEG Audio", "Statistics"], "name": "Invalid Frames"}], "findings": [{"gone": ["gone"], "new": ["new"]}]}
+        self.assertTrue(self.check(old, new, {}))
+        self.assertEqual(self.check(old, new, change), [])
+        self.assertTrue(self.check(old, new, {"removed": change["removed"]}))
+        self.assertTrue(self.check(old, new, {"findings": change["findings"]}))
+
     def test_a_series_array_that_is_empty_in_both_reports_stays(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM", "series": []}])
         change = {"added": [{"scope": "stream", "array": "series", "name": "Coded Bandwidth"}]}
