@@ -131,6 +131,16 @@ public class SamplesDefinitionTests
     // The invariant of the design, "Invariant and test", read from the goldens without a decode pass: what a decoder decoded cannot be more
     // than the coded stage less the lost samples. Equality holds where the decoding is Decoded, the stream is not DSD, nothing is decoded
     // that the parser did not flag and no unit repeats; the exceptions are named by the per-format commits as they change the goldens.
+    // Fixtures whose cut units Encspect's decoder decodes in full (question 4 of the design), with the reason; the per-format commits add theirs.
+    private static readonly Dictionary<string, string> InvariantExceptions = new()
+    {
+        #region Monkey's Audio
+        ["monkeys-audio/built-frame-data-bytes-too-large.decode.json"] = "frame 2 is flagged cut from the descriptor's size and decodes in full",
+        ["monkeys-audio/built-seek-first-entry-off-by-two.decode.json"] = "frame 2 is flagged cut from the seek table and decodes in full",
+        ["monkeys-audio/built-frame-data-bytes-too-small.decode.json"] = "frame 2 ends in a partial word past the descriptor's size, is flagged cut and decodes in full",
+        #endregion
+    };
+
     [Fact]
     public void DecodedSamplesNeverExceedTheCodedStageLessTheLostSamples()
     {
@@ -160,7 +170,7 @@ public class SamplesDefinitionTests
             long decoded = verification.GetProperty("decodedSamples").GetInt64();
             (long samples, long lost, _) = scan.Streams[0];
             long coded = Math.Max(samples, scan.Coded);
-            if (decoded > coded - lost)
+            if (decoded > coded - lost && !InvariantExceptions.ContainsKey(Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/')))
             {
                 failures.Add($"{Path.GetRelativePath(Fixtures.FixtureDirectory, path)}: decoded {decoded}, coded stage {coded}, lost {lost}");
             }
@@ -260,6 +270,32 @@ public class SamplesDefinitionTests
 
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them.
         { "ogg/opus-packets-corrupt.opus", 24648, 0 },
+
+        #region FLAC
+        // A cut frame counts its block size and is lost; an unreadable frame stays in the samples and is lost.
+        { "flac/built-cut-mid-frame.flac", 16384, 4096 },
+        { "flac/built-damaged-frame-after-frame.flac", 28096, 4096 },
+        { "flac/built-subframe-faults.flac", 4352, 2048 },
+        #endregion
+
+        #region TTA
+        // A cut frame counts its frame length and is lost; frames with no byte in the file count nothing.
+        { "tta/built-cut-mid-frame.tta", 92160, 46080 },
+        { "tta/built-seek-entry-too-large.tta", 100000, 7840 },
+        #endregion
+
+        #region WavPack
+        // A set with a cut block is lost once, by its first block's samples; the samples stay.
+        { "wavpack/built-truncated-last-block.wv", 24000, 6488 },
+        { "wavpack/built-block-size-too-small.wv", 24000, 11025 },
+        #endregion
+
+        #region Monkey's Audio
+        // Frames whose first byte is in the file count; the cut one is lost, and so is a frame too short for its start fields.
+        { "monkeys-audio/built-cut-mid-frame.ape", 147456, 73728 },
+        { "monkeys-audio/built-frame-too-short-for-crc.ape", 160000, 12544 },
+        { "monkeys-audio/built-cut-in-seek-table.ape", 0, 0 },
+        #endregion
     };
 
     [Theory]

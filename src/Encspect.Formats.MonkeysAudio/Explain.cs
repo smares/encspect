@@ -80,7 +80,7 @@ internal static class Explain
 
     public const string Statistics = "Figures computed over the frames of the stream.";
     public const string StatFrames = "The number of frames the seek table locates.";
-    public const string StatSamples = "The samples of each channel, from the frame sizes the header gives.";
+    public const string StatSamples = "The samples of each channel the frames declare (the header gives the frame size and the size of the last frame), added up for the frames whose first byte the file holds.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the header.";
     public const string StatChannels = "The number of channels, from the header.";
