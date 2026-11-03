@@ -35,6 +35,10 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
-  "libdca": true
+  "libdca": true,
+  "ffprobe_layout": "stereo",
+  "skip": {
+   "ffprobe layout": "ffprobe gives this AMODE 1 stream the layout stereo (measured in CI); Table 5-4 gives 1+1 no speaker positions, and the analyzer reports two unpositioned channels"
+  }
  }
 }

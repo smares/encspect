@@ -122,7 +122,11 @@ def check_ffprobe(path, manifest, report, problems):
     if check.get("ffprobe_profile", True) and actual.get("profile") != PROFILES[expected["codec"]]:
         problems.append(f"ffprobe's profile {actual.get('profile')}, expected {PROFILES[expected['codec']]}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
-    if "ffprobe_channels" not in check and (known is None or normalized(known) != normalized(expected["channel_layout"])):
+    if "ffprobe_layout" in check:
+        # An explained difference (the reason is in the manifest's skip): the layout ffprobe gives must still be the one explained.
+        if actual.get("channel_layout") != check["ffprobe_layout"]:
+            problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, the explained difference says {check['ffprobe_layout']}")
+    elif "ffprobe_channels" not in check and (known is None or normalized(known) != normalized(expected["channel_layout"])):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
     storage = statistic(report, "Lossless Storage Bit Width")
     if check.get("decode") and check.get("ffprobe_profile", True) and expected["codec"].startswith("DTS-HD Master Audio") and storage is not None:
@@ -325,6 +329,11 @@ MEDIAINFO_READS_OTHERWISE["exss-only-static-first-only"] = {"bitrate": "MediaInf
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}
+
+MEDIAINFO_READS_OTHERWISE["stereo-coding-dual-mono"] = {"channel layout": "MediaInfo names two front center channels for AMODE 1 (1+1, two independent mono signals), where Table 5-4 gives the arrangement "
+    "no speaker positions and the analyzer reports two unpositioned channels (" + MEASURED + ": front center, front center)"}
+MEDIAINFO_READS_OTHERWISE["stereo-coding-left-total"] = {"channel layout": "MediaInfo gives AMODE 4 (left total, right total) no channel layout, as it gives the Lt/Rt lossless asset none; the analyzer reports front left and "
+    "front right for the pair (" + MEASURED + ")"}
 
 # MediaInfo's commercial names (File_Dts.cpp, Streams_Fill) for the analyzer's codec names.
 COMMERCIAL = {"DTS": "DTS", "DTS-ES": "DTS-ES Discrete", "DTS 96/24": "DTS 96/24", "DTS Express": "DTS Express",
