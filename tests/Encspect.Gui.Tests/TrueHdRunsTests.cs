@@ -58,6 +58,24 @@ public class TrueHdRunsTests
         }
     }
 
+    // The units that wait for the next major sync after damage are lost samples: the stream counts them and the runs code them, so the locator's
+    // span is the stream's and a position leads to a frame of a run.
+    [Fact]
+    public void Lost_units_after_damage_are_in_the_samples_the_runs_code()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.Directory, "truehd", "built-sync-crc-mismatch.thd"));
+        StreamInfo stream = report.Streams[0];
+        FrameRuns runs = stream.Series.First(s => s.Name == "Bitrate").Runs!;
+        Assert.Equal((3200L, 640L), (stream.Samples, stream.LostSamples));
+        Assert.Equal(stream.Samples, runs.Samples.ToArray().Sum());
+        SampleLocator locator = SampleLocator.For(stream)!;
+        Assert.Equal(stream.Samples, locator.Total);
+        for (long position = 0; position < stream.Samples; position += 40)
+        {
+            Assert.InRange(locator.FrameIndexAt(position), 0, runs.FrameCount - 1);
+        }
+    }
+
     [AvaloniaFact]
     public void A_click_inside_a_run_selects_the_frame_in_the_tree_and_keeps_the_clicked_column()
     {
