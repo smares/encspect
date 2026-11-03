@@ -30,6 +30,403 @@
         "Statistics"
       ],
       "name": "Lost Samples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Lost Samples",
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
     }
-  ]
+  ],
+  "changed": [
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Average Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Smallest Frame"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Minimum Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Audio Blocks"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Audio Blocks Read"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Bands Coded as Sum/Difference"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "D45"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "Reuse"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "categorySeries",
+        "lostSamples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/sample-short.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Frames"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Average Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Smallest Frame"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Minimum Bitrate"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Audio Blocks"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Audio Blocks Read"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Bands Coded as Sum/Difference"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "D45"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "Reuse"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Exponent Strategies",
+        "D15"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
+      ]
+    },
+    {
+      "path": [
+        "AC-3",
+        "Statistics",
+        "Frames With Extension Type A"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "categorySeries",
+        "isVbr",
+        "lostSamples",
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
+      ]
+    }
+  ],
+  "removed": []
 }
