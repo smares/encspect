@@ -1,0 +1,24 @@
+{
+ "note": "The samples alignment (docs/design/samples-definition.md): units the data cuts and units that cannot be read are counted by the samples they declare where they were not, and reported in the new statistic Lost Samples and the stream's lostSamples.",
+ "goldens": [
+  "tests/fixtures/adts/corrupt-syntax.report.json",
+  "tests/fixtures/adts/damaged-length.report.json",
+  "tests/fixtures/adts/sbr-in-truncated-frame.report.json",
+  "tests/fixtures/adts/truncated.report.json"
+ ],
+ "added": [
+  {
+   "scope": "stream",
+   "key": "lostSamples"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "ADTS",
+    "Statistics"
+   ],
+   "name": "Lost Samples"
+  }
+ ],
+ "changed": []
+}
