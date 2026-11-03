@@ -1,5 +1,5 @@
 {
-  "note": "Samples alignment (docs/design/samples-definition.md): a Monkey's Audio frame counts its declared blocks when its first byte is in the file; the frames the data cuts and those too short for their start fields are lost. The samples are no longer the header's total: they change where a frame has no byte in the file (four files) and where the seek table lists fewer frames than the header (two).",
+  "note": "Samples alignment (docs/design/samples-definition.md): a Monkey's Audio frame counts its declared blocks when its first byte is in the file; the frames the data cuts and those too short for their start fields are lost. The samples are no longer the header's total: they change where a frame has no byte in the file (four files) and where the seek table lists fewer frames than the header (two). The bitrate figures (average, frame sizes, series) cover the frames the file holds whole, as FLAC's and TTA's do, so they change where a frame is cut or has no byte in the file.",
   "goldens": [
     "tests/fixtures/monkeys-audio/built-cut-after-first-frame.report.json",
     "tests/fixtures/monkeys-audio/built-cut-in-seek-table.report.json",
@@ -53,6 +53,24 @@
       ],
       "fields": [
         "value"
+      ]
+    },
+    {
+      "path": [
+        "Monkey's Audio",
+        "Statistics"
+      ],
+      "fields": [
+        "children",
+        "value"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "isVbr",
+        "series"
       ]
     }
   ]

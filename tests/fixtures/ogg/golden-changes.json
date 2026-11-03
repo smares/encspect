@@ -257,6 +257,22 @@
         "tests/fixtures/ogg/huge-lacing.report.json",
         "tests/fixtures/ogg/truncated-page.report.json"
       ]
+    },
+    {
+      "path": [
+        "Ogg",
+        "Pages",
+        "Page",
+        "Body"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json",
+        "tests/fixtures/ogg/huge-lacing.report.json",
+        "tests/fixtures/ogg/truncated-page.report.json"
+      ]
     }
   ],
   "note": " Samples alignment (docs/design/samples-definition.md): the packets of a page that fails its CRC and the packets with bytes present of a truncated page, and a packet left unfinished at the end of the stream, are handed to the codec parser, the cut ones flagged; a stream gains lostSamples and the statistics node Lost Samples. bad-crc, truncated-page, huge-lacing and eos-inside-packet gain packets (their packet and statistics nodes change), frames-corrupt counts a packet with missing frames by the frames present.",

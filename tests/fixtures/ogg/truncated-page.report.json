@@ -302,20 +302,20 @@
                     },
                     {
                       "name": "IsVbr",
-                      "value": true,
+                      "value": false,
                       "offset": 205,
                       "length": 1214
                     },
                     {
                       "name": "Average Bitrate",
-                      "value": 20.727272727272727,
+                      "value": 20.8,
                       "unit": "kbps",
                       "offset": 205,
                       "length": 1214
                     },
                     {
                       "name": "Minimum Bitrate",
-                      "value": 19.2,
+                      "value": 20.8,
                       "unit": "kbps",
                       "offset": 205,
                       "length": 1214
@@ -329,20 +329,14 @@
                     },
                     {
                       "name": "Packet Sizes",
-                      "value": 2,
+                      "value": 1,
                       "unit": "sizes",
                       "offset": 205,
                       "length": 1214,
                       "children": [
                         {
-                          "name": "48 bytes",
-                          "value": "1 packet (4.5%), 19.2 kbps",
-                          "offset": 205,
-                          "length": 1214
-                        },
-                        {
                           "name": "52 bytes",
-                          "value": "21 packets (95.5%), 20.8 kbps",
+                          "value": "21 packets (100.0%), 20.8 kbps",
                           "offset": 205,
                           "length": 1214
                         }
@@ -3363,7 +3357,7 @@
                     },
                     {
                       "name": "Body",
-                      "value": "100 bytes, not read as packets: the page is cut short",
+                      "value": "100 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page is cut short",
                       "offset": 1319,
                       "length": 100
                     }
@@ -3394,8 +3388,8 @@
         "samples": 6897,
         "lostSamples": 320,
         "duration": 0.4310625,
-        "averageBitrate": 20.727272727272727,
-        "isVbr": true,
+        "averageBitrate": 20.8,
+        "isVbr": false,
         "playbackGroup": 1,
         "encoder": "speexenc 1.2.1",
         "encoderConfidence": "High",
@@ -3450,7 +3444,7 @@
               20.8,
               20.8,
               20.8,
-              19.2
+              0
             ]
           },
           {
@@ -3461,7 +3455,7 @@
               0
             ],
             "values": [
-              20.7
+              20.8
             ]
           }
         ]

@@ -1,0 +1,4724 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "vorbis-cut-last-packet.ogg",
+    "root": {
+      "name": "File",
+      "value": "Ogg",
+      "offset": 0,
+      "length": 2332,
+      "children": [
+        {
+          "name": "Ogg",
+          "value": 5,
+          "unit": "pages",
+          "offset": 0,
+          "length": 2332,
+          "children": [
+            {
+              "name": "Logical Stream",
+              "value": "Vorbis",
+              "offset": 0,
+              "length": 2332,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 185270320,
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Vorbis",
+                  "offset": 28,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 5,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 2332
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 35,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 2332
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 40660,
+                  "offset": 1639,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": false,
+                  "offset": 1638,
+                  "length": 1
+                },
+                {
+                  "name": "Identification Header",
+                  "value": "1 channel, 44100 Hz",
+                  "offset": 28,
+                  "length": 30,
+                  "children": [
+                    {
+                      "name": "Packet Type",
+                      "value": 1,
+                      "offset": 28,
+                      "length": 1
+                    },
+                    {
+                      "name": "Vorbis String",
+                      "value": "vorbis",
+                      "offset": 29,
+                      "length": 6
+                    },
+                    {
+                      "name": "Vorbis Version",
+                      "value": 0,
+                      "offset": 35,
+                      "length": 4
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "offset": 39,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "Mono: front center",
+                      "offset": 39,
+                      "length": 1
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 40,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate Maximum",
+                      "value": "0 (not set)",
+                      "offset": 44,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate Nominal",
+                      "value": "0 (not set)",
+                      "offset": 48,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate Minimum",
+                      "value": "0 (not set)",
+                      "offset": 52,
+                      "length": 4
+                    },
+                    {
+                      "name": "Bitrate Hint",
+                      "value": "None set: the encoder gives no hint",
+                      "offset": 44,
+                      "length": 12
+                    },
+                    {
+                      "name": "Blocksize 0",
+                      "value": 256,
+                      "unit": "samples",
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Blocksize 1",
+                      "value": 2048,
+                      "unit": "samples",
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Framing Bit",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    }
+                  ]
+                },
+                {
+                  "name": "Comment Header",
+                  "value": "\\x03vorbis",
+                  "offset": 87,
+                  "length": 7
+                },
+                {
+                  "name": "Vorbis Comment",
+                  "kind": "Tag",
+                  "value": 1,
+                  "unit": "comments",
+                  "offset": 94,
+                  "length": 44,
+                  "children": [
+                    {
+                      "name": "Vendor Length",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 94,
+                      "length": 4
+                    },
+                    {
+                      "name": "Vendor",
+                      "value": "Encspect fixture",
+                      "offset": 98,
+                      "length": 16
+                    },
+                    {
+                      "name": "Comment Count",
+                      "value": 1,
+                      "offset": 114,
+                      "length": 4
+                    },
+                    {
+                      "name": "TITLE",
+                      "value": "Cut Vorbis",
+                      "offset": 118,
+                      "length": 20,
+                      "children": [
+                        {
+                          "name": "Length",
+                          "value": 16,
+                          "unit": "bytes",
+                          "offset": 118,
+                          "length": 4
+                        },
+                        {
+                          "name": "Field Name",
+                          "value": "TITLE",
+                          "offset": 122,
+                          "length": 5
+                        },
+                        {
+                          "name": "Value",
+                          "value": "Cut Vorbis",
+                          "offset": 128,
+                          "length": 10
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Detection",
+                      "value": "High",
+                      "offset": 94,
+                      "length": 44,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "The vendor string and 1 comment fit the data",
+                          "offset": 94,
+                          "length": 44
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Framing Bit",
+                  "value": true,
+                  "offset": 138,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Setup Header",
+                  "value": "1 codebook, 1 floor, 1 residue, 1 mapping, 2 modes",
+                  "offset": 139,
+                  "length": 66,
+                  "children": [
+                    {
+                      "name": "Packet Type",
+                      "value": 5,
+                      "offset": 139,
+                      "length": 1
+                    },
+                    {
+                      "name": "Vorbis String",
+                      "value": "vorbis",
+                      "offset": 140,
+                      "length": 6
+                    },
+                    {
+                      "name": "Codebooks",
+                      "value": "1 codebook",
+                      "offset": 146,
+                      "length": 20,
+                      "bitOffset": 0,
+                      "bitLength": 159,
+                      "bitOrder": "leastSignificantFirst",
+                      "children": [
+                        {
+                          "name": "Codebook Count",
+                          "value": 1,
+                          "offset": 146,
+                          "length": 1
+                        },
+                        {
+                          "name": "Codebook 0",
+                          "value": "1 dimension, 2 entries, lookup type 1",
+                          "offset": 147,
+                          "length": 19,
+                          "bitOffset": 0,
+                          "bitLength": 151,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Sync Pattern",
+                              "value": 5653314,
+                              "offset": 147,
+                              "length": 3
+                            },
+                            {
+                              "name": "Dimensions",
+                              "value": 1,
+                              "offset": 150,
+                              "length": 2
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 2,
+                              "offset": 152,
+                              "length": 3
+                            },
+                            {
+                              "name": "IsOrdered",
+                              "value": false,
+                              "offset": 155,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsSparse",
+                              "value": false,
+                              "offset": 155,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Codeword Lengths",
+                              "value": "2 of 2 entries used, 1 bit each",
+                              "offset": 155,
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 10,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Lookup Type",
+                              "value": 1,
+                              "offset": 156,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Minimum Value",
+                              "value": 0,
+                              "offset": 157,
+                              "length": 4
+                            },
+                            {
+                              "name": "Delta Value",
+                              "value": 1,
+                              "offset": 161,
+                              "length": 4
+                            },
+                            {
+                              "name": "Value Bits",
+                              "value": 1,
+                              "unit": "bits",
+                              "offset": 165,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsSequence",
+                              "value": false,
+                              "offset": 165,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Multiplicands",
+                              "value": "2 values of 1 bit",
+                              "offset": 165,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Time Domain Transforms",
+                      "value": "1 placeholder",
+                      "offset": 165,
+                      "length": 4,
+                      "bitOffset": 7,
+                      "bitLength": 22,
+                      "bitOrder": "leastSignificantFirst",
+                      "children": [
+                        {
+                          "name": "Time Count",
+                          "value": 1,
+                          "offset": 165,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Time Type",
+                          "value": 0,
+                          "offset": 166,
+                          "length": 3,
+                          "bitOffset": 5,
+                          "bitLength": 16,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Floors",
+                      "value": "1 floor, type 1",
+                      "offset": 168,
+                      "length": 5,
+                      "bitOffset": 5,
+                      "bitLength": 33,
+                      "bitOrder": "leastSignificantFirst",
+                      "children": [
+                        {
+                          "name": "Floor Count",
+                          "value": 1,
+                          "offset": 168,
+                          "length": 2,
+                          "bitOffset": 5,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Floor 0",
+                          "value": "type 1, 0 partitions, 2 X values",
+                          "offset": 169,
+                          "length": 4,
+                          "bitOffset": 3,
+                          "bitLength": 27,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Floor Type",
+                              "value": 1,
+                              "offset": 169,
+                              "length": 3,
+                              "bitOffset": 3,
+                              "bitLength": 16,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Partitions",
+                              "value": 0,
+                              "offset": 171,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Partition Classes",
+                              "value": "",
+                              "offset": 172,
+                              "length": 0
+                            },
+                            {
+                              "name": "Classes",
+                              "value": "0 classes",
+                              "offset": 172,
+                              "length": 0
+                            },
+                            {
+                              "name": "Multiplier",
+                              "value": 1,
+                              "offset": 172,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Range Bits",
+                              "value": 4,
+                              "unit": "bits",
+                              "offset": 172,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "X List",
+                              "value": "0 values",
+                              "offset": 172,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 0,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Residues",
+                      "value": "1 residue, type 0",
+                      "offset": 172,
+                      "length": 15,
+                      "bitOffset": 6,
+                      "bitLength": 112,
+                      "bitOrder": "leastSignificantFirst",
+                      "children": [
+                        {
+                          "name": "Residue Count",
+                          "value": 1,
+                          "offset": 172,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Residue 0",
+                          "value": "type 0, coefficients 0 to 0, partitions of 1, 1 classification",
+                          "offset": 173,
+                          "length": 14,
+                          "bitOffset": 4,
+                          "bitLength": 106,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Residue Type",
+                              "value": 0,
+                              "offset": 173,
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 16,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Begin",
+                              "value": 0,
+                              "offset": 175,
+                              "length": 4,
+                              "bitOffset": 4,
+                              "bitLength": 24,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "End",
+                              "value": 0,
+                              "offset": 178,
+                              "length": 4,
+                              "bitOffset": 4,
+                              "bitLength": 24,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Partition Size",
+                              "value": 1,
+                              "offset": 181,
+                              "length": 4,
+                              "bitOffset": 4,
+                              "bitLength": 24,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Classifications",
+                              "value": 1,
+                              "offset": 184,
+                              "length": 2,
+                              "bitOffset": 4,
+                              "bitLength": 6,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Classbook",
+                              "value": 0,
+                              "offset": 185,
+                              "length": 2,
+                              "bitOffset": 2,
+                              "bitLength": 8,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Cascade",
+                              "value": "0x00",
+                              "offset": 186,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Books",
+                              "value": "0 books",
+                              "offset": 186,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 0,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Mappings",
+                      "value": "1 mapping, no coupling",
+                      "offset": 186,
+                      "length": 7,
+                      "bitOffset": 6,
+                      "bitLength": 50,
+                      "bitOrder": "leastSignificantFirst",
+                      "children": [
+                        {
+                          "name": "Mapping Count",
+                          "value": 1,
+                          "offset": 186,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mapping 0",
+                          "value": "1 submap, no coupling",
+                          "offset": 187,
+                          "length": 6,
+                          "bitOffset": 4,
+                          "bitLength": 44,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Mapping Type",
+                              "value": 0,
+                              "offset": 187,
+                              "length": 3,
+                              "bitOffset": 4,
+                              "bitLength": 16,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasSubmaps",
+                              "value": false,
+                              "offset": 189,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasCoupling",
+                              "value": false,
+                              "offset": 189,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Reserved",
+                              "value": 0,
+                              "offset": 189,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Submap 0",
+                              "value": "floor 0, residue 0",
+                              "offset": 190,
+                              "length": 3,
+                              "children": [
+                                {
+                                  "name": "Time Configuration",
+                                  "value": 0,
+                                  "offset": 190,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Floor",
+                                  "value": 0,
+                                  "offset": 191,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Residue",
+                                  "value": 0,
+                                  "offset": 192,
+                                  "length": 1
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Modes",
+                      "value": "2 modes: 1 long, 1 short",
+                      "offset": 193,
+                      "length": 11,
+                      "children": [
+                        {
+                          "name": "Mode Count",
+                          "value": 2,
+                          "offset": 193,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode 0",
+                          "value": "short block, mapping 0",
+                          "offset": 193,
+                          "length": 6,
+                          "bitOffset": 6,
+                          "bitLength": 41,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Block Flag",
+                              "value": "0 (short block)",
+                              "offset": 193,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Window Type",
+                              "value": 0,
+                              "offset": 193,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 16,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Transform Type",
+                              "value": 0,
+                              "offset": 195,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 16,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Mapping",
+                              "value": 0,
+                              "offset": 197,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Mode 1",
+                          "value": "long block, mapping 0",
+                          "offset": 198,
+                          "length": 6,
+                          "bitOffset": 7,
+                          "bitLength": 41,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Block Flag",
+                              "value": "1 (long block)",
+                              "offset": 198,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Window Type",
+                              "value": 0,
+                              "offset": 199,
+                              "length": 2
+                            },
+                            {
+                              "name": "Transform Type",
+                              "value": 0,
+                              "offset": 201,
+                              "length": 2
+                            },
+                            {
+                              "name": "Mapping",
+                              "value": 0,
+                              "offset": 203,
+                              "length": 1
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Framing Bit",
+                      "value": true,
+                      "offset": 204,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "value": "48 packets, 0.929 s",
+                  "offset": 248,
+                  "length": 2084,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 48,
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Long Blocks",
+                      "value": "40 packets (83.3%)",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Short Blocks",
+                      "value": "8 packets (16.7%)",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Decoded Samples",
+                      "value": 40960,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Start Offset",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Start Trimming",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "End Trimming",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 40960,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Lost Samples",
+                      "value": 1024,
+                      "unit": "samples",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.9287981859410431,
+                      "unit": "s",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "IsVbr",
+                      "value": true,
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 17.376742788461538,
+                      "unit": "kbps",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 11.36953125,
+                      "unit": "kbps",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 143.325,
+                      "unit": "kbps",
+                      "offset": 248,
+                      "length": 2084
+                    },
+                    {
+                      "name": "Packet Sizes",
+                      "value": "3 sizes",
+                      "offset": 248,
+                      "length": 2084,
+                      "children": [
+                        {
+                          "name": "Long Blocks",
+                          "value": "33 to 52 bytes, 41.7 on average",
+                          "offset": 248,
+                          "length": 2084
+                        },
+                        {
+                          "name": "Short Blocks",
+                          "value": "33 to 52 bytes, 42.8 on average",
+                          "offset": 248,
+                          "length": 2084
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Modes",
+                      "value": "2 modes used",
+                      "offset": 248,
+                      "length": 2084,
+                      "children": [
+                        {
+                          "name": "Mode 0 (short block)",
+                          "value": "8 packets (16.7%)",
+                          "offset": 248,
+                          "length": 2084
+                        },
+                        {
+                          "name": "Mode 1 (long block)",
+                          "value": "40 packets (83.3%)",
+                          "offset": 248,
+                          "length": 2084
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Packets",
+                  "kind": "Stream",
+                  "value": 48,
+                  "unit": "packets",
+                  "offset": 248,
+                  "length": 2084,
+                  "children": [
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 248,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 248,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 248,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 248,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 248,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 248,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 288,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 288,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 288,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 288,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 288,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 288,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 340,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 340,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 340,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 340,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 340,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 340,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 373,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 373,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 373,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 373,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 373,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 373,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 413,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 413,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 413,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 413,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 413,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 413,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 465,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 465,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 465,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 465,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 465,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 465,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 498,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 498,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 498,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 498,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 498,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 498,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 538,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 538,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 538,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 538,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 538,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 538,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 590,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 590,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 590,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 590,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 590,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 590,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 623,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 623,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 623,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 623,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "0 (short)",
+                          "offset": 623,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 623,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, short block of 256, mode 0",
+                      "offset": 663,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 663,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 663,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 414,
+                          "unit": "bits",
+                          "offset": 663,
+                          "length": 52,
+                          "bitOffset": 2,
+                          "bitLength": 414,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, short block of 256, mode 0",
+                      "offset": 715,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 715,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 715,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 262,
+                          "unit": "bits",
+                          "offset": 715,
+                          "length": 33,
+                          "bitOffset": 2,
+                          "bitLength": 262,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, short block of 256, mode 0",
+                      "offset": 748,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 748,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 748,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 318,
+                          "unit": "bits",
+                          "offset": 748,
+                          "length": 40,
+                          "bitOffset": 2,
+                          "bitLength": 318,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, short block of 256, mode 0",
+                      "offset": 788,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 788,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 788,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 414,
+                          "unit": "bits",
+                          "offset": 788,
+                          "length": 52,
+                          "bitOffset": 2,
+                          "bitLength": 414,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 840,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 840,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 840,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "0 (short)",
+                          "offset": 840,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 840,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 840,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 873,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 873,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 873,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 873,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 873,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 873,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 956,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 956,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 956,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 956,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 956,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 956,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1008,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1008,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1008,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1008,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1008,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1008,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1041,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1041,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1041,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1041,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1041,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1041,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1081,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1081,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1081,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1081,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1081,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1081,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1133,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1133,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1133,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1133,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1133,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1133,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1166,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1166,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1166,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1166,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1166,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1166,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1206,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1206,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1206,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1206,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1206,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1206,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1258,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1258,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1258,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1258,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1258,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1258,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1291,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1291,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1291,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1291,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1291,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1291,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1331,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1331,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1331,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1331,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1331,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1331,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1383,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1383,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1383,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1383,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1383,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1383,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1416,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1416,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1416,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1416,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1416,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1416,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1456,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1456,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1456,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1456,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1456,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1456,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1508,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1508,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1508,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1508,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "0 (short)",
+                          "offset": 1508,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1508,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, short block of 256, mode 0",
+                      "offset": 1541,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1541,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 1541,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 318,
+                          "unit": "bits",
+                          "offset": 1541,
+                          "length": 40,
+                          "bitOffset": 2,
+                          "bitLength": 318,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, short block of 256, mode 0",
+                      "offset": 1581,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1581,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 1581,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 414,
+                          "unit": "bits",
+                          "offset": 1581,
+                          "length": 52,
+                          "bitOffset": 2,
+                          "bitLength": 414,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, short block of 256, mode 0",
+                      "offset": 1676,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1676,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 1676,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 262,
+                          "unit": "bits",
+                          "offset": 1676,
+                          "length": 33,
+                          "bitOffset": 2,
+                          "bitLength": 262,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, short block of 256, mode 0",
+                      "offset": 1709,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1709,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 0,
+                          "offset": 1709,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 318,
+                          "unit": "bits",
+                          "offset": 1709,
+                          "length": 40,
+                          "bitOffset": 2,
+                          "bitLength": 318,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1749,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1749,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1749,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "0 (short)",
+                          "offset": 1749,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1749,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1749,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1801,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1801,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1801,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1801,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1801,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1801,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1834,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1834,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1834,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1834,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1834,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1834,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1874,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1874,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1874,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1874,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1874,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1874,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 1926,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1926,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1926,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1926,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1926,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 1926,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 1959,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1959,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1959,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1959,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1959,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 1959,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 1999,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 1999,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 1999,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1999,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 1999,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 1999,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 2051,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2051,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2051,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2051,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2051,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 2051,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 2084,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2084,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2084,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2084,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2084,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 2084,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 2124,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2124,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2124,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2124,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2124,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 2124,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "33 bytes, long block of 2048, mode 1",
+                      "offset": 2176,
+                      "length": 33,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2176,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2176,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2176,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2176,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 260,
+                          "unit": "bits",
+                          "offset": 2176,
+                          "length": 33,
+                          "bitOffset": 4,
+                          "bitLength": 260,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "40 bytes, long block of 2048, mode 1",
+                      "offset": 2209,
+                      "length": 40,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2209,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2209,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2209,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2209,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 316,
+                          "unit": "bits",
+                          "offset": 2209,
+                          "length": 40,
+                          "bitOffset": 4,
+                          "bitLength": 316,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "52 bytes, long block of 2048, mode 1",
+                      "offset": 2249,
+                      "length": 52,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2249,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2249,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2249,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2249,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 412,
+                          "unit": "bits",
+                          "offset": 2249,
+                          "length": 52,
+                          "bitOffset": 4,
+                          "bitLength": 412,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "31 bytes, long block of 2048, mode 1",
+                      "offset": 2301,
+                      "length": 31,
+                      "children": [
+                        {
+                          "name": "Packet Type",
+                          "value": "0 (audio)",
+                          "offset": 2301,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Mode Number",
+                          "value": 1,
+                          "offset": 2301,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Previous Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2301,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Next Window Flag",
+                          "value": "1 (long)",
+                          "offset": 2301,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Audio Data",
+                          "value": 244,
+                          "unit": "bits",
+                          "offset": 2301,
+                          "length": 31,
+                          "bitOffset": 4,
+                          "bitLength": 244,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pages",
+              "kind": "Stream",
+              "value": 5,
+              "unit": "pages",
+              "offset": 0,
+              "length": 2332,
+              "children": [
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0B0B0030, sequence 0, granule 0, beginning of stream",
+                  "offset": 0,
+                  "length": 58,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 2,
+                      "offset": 5,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": true,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 6,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 185270320,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 1218755873,
+                      "offset": 22,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1218755873,
+                          "offset": 22,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 26,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 27,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 30,
+                          "unit": "bytes",
+                          "offset": 27,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "30 bytes, packet 0",
+                      "offset": 28,
+                      "length": 30
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0B0B0030, sequence 1, granule 0",
+                  "offset": 58,
+                  "length": 147,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 58,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 62,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 63,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 63,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 63,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 63,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 64,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 185270320,
+                      "offset": 72,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 1,
+                      "offset": 76,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 4285887507,
+                      "offset": 80,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 4285887507,
+                          "offset": 80,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 2,
+                      "offset": 84,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 2,
+                      "unit": "lacing values",
+                      "offset": 85,
+                      "length": 2,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 85,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 66,
+                          "unit": "bytes",
+                          "offset": 86,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 1",
+                      "offset": 87,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "66 bytes, packet 2",
+                      "offset": 139,
+                      "length": 66
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0B0B0030, sequence 2, granule 11776",
+                  "offset": 205,
+                  "length": 708,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 205,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 209,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 210,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 210,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 210,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 210,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 11776,
+                      "offset": 211,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 185270320,
+                      "offset": 219,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 2,
+                      "offset": 223,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 2656091874,
+                      "offset": 227,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 2656091874,
+                          "offset": 227,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 16,
+                      "offset": 231,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 16,
+                      "unit": "lacing values",
+                      "offset": 232,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 232,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 233,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 234,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 235,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 236,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 237,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 238,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 239,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 240,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 241,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 242,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 243,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 244,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 245,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 246,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 247,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 3",
+                      "offset": 248,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 4",
+                      "offset": 288,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 5",
+                      "offset": 340,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 6",
+                      "offset": 373,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 7",
+                      "offset": 413,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 8",
+                      "offset": 465,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 9",
+                      "offset": 498,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 10",
+                      "offset": 538,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 11",
+                      "offset": 590,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 12",
+                      "offset": 623,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 13",
+                      "offset": 663,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 14",
+                      "offset": 715,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 15",
+                      "offset": 748,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 16",
+                      "offset": 788,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 17",
+                      "offset": 840,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 18",
+                      "offset": 873,
+                      "length": 40
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0B0B0030, sequence 3, granule 26816",
+                  "offset": 913,
+                  "length": 720,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 913,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 917,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 918,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 918,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 26816,
+                      "offset": 919,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 185270320,
+                      "offset": 927,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 3,
+                      "offset": 931,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3997194023,
+                      "offset": 935,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3997194023,
+                          "offset": 935,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 16,
+                      "offset": 939,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 16,
+                      "unit": "lacing values",
+                      "offset": 940,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 940,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 941,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 942,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 943,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 944,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 945,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 946,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 947,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 948,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 949,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 950,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 951,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 952,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 953,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 954,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 955,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 19",
+                      "offset": 956,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 20",
+                      "offset": 1008,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 21",
+                      "offset": 1041,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 22",
+                      "offset": 1081,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 23",
+                      "offset": 1133,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 24",
+                      "offset": 1166,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 25",
+                      "offset": 1206,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 26",
+                      "offset": 1258,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 27",
+                      "offset": 1291,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 28",
+                      "offset": 1331,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 29",
+                      "offset": 1383,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 30",
+                      "offset": 1416,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 31",
+                      "offset": 1456,
+                      "length": 52
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "33 bytes, packet 32",
+                      "offset": 1508,
+                      "length": 33
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "40 bytes, packet 33",
+                      "offset": 1541,
+                      "length": 40
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "52 bytes, packet 34",
+                      "offset": 1581,
+                      "length": 52
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x0B0B0030, sequence 4, granule 40660, end of stream, cut short",
+                  "offset": 1633,
+                  "length": 699,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 1633,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 1637,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 4,
+                      "offset": 1638,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 1638,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 1638,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": true,
+                          "offset": 1638,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 40660,
+                      "offset": 1639,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 185270320,
+                      "offset": 1647,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 4,
+                      "offset": 1651,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 894502828,
+                      "offset": 1655,
+                      "length": 4
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 16,
+                      "offset": 1659,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 16,
+                      "unit": "lacing values",
+                      "offset": 1660,
+                      "length": 16,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1660,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 1661,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 1662,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1663,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 1664,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 1665,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1666,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 1667,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 1668,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1669,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 1670,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 1671,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1672,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 40,
+                          "unit": "bytes",
+                          "offset": 1673,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 52,
+                          "unit": "bytes",
+                          "offset": 1674,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 33,
+                          "unit": "bytes",
+                          "offset": 1675,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Body",
+                      "value": "656 bytes, dropped by libogg and so by decoders, but handed to the codec parser as packets: the page is cut short",
+                      "offset": 1676,
+                      "length": 656
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "codec": "Vorbis",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 40960,
+        "lostSamples": 1024,
+        "duration": 0.9287981859410431,
+        "averageBitrate": 17.376742788461538,
+        "isVbr": true,
+        "playbackGroup": 1,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              248,
+              288,
+              340,
+              373,
+              413,
+              465,
+              498,
+              538,
+              590,
+              623,
+              663,
+              715,
+              748,
+              788,
+              840,
+              873,
+              956,
+              1008,
+              1041,
+              1081,
+              1133,
+              1166,
+              1206,
+              1258,
+              1291,
+              1331,
+              1383,
+              1416,
+              1456,
+              1508,
+              1541,
+              1581,
+              1676,
+              1709,
+              1749,
+              1801,
+              1834,
+              1874,
+              1926,
+              1959,
+              1999,
+              2051,
+              2084,
+              2124,
+              2176,
+              2209,
+              2249,
+              2301
+            ],
+            "values": [
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              143.325,
+              90.95625,
+              110.25,
+              143.325,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              110.25,
+              143.325,
+              90.95625,
+              110.25,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              11.36953125,
+              13.78125,
+              17.915625,
+              0
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              16.9
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "ogg.page-truncated",
+        "message": "The page at 0x661 is cut short after 699 bytes of 701 bytes; decoders drop it with its packets.",
+        "offset": 1633,
+        "length": 699,
+        "path": [
+          0,
+          1,
+          4
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "ogg.eos-missing",
+        "message": "The logical stream 0x0B0B0030 has no end-of-stream page: its last page at 0x661 sets the flag but is damaged, so decoders drop it, and it ends before the end of the data, so the file was probably cut short or not finished.",
+        "offset": 1638,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          4,
+          2
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
