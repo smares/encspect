@@ -21,7 +21,8 @@ every child of that name. A change file:
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
-                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
+                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"},
+                  {"scope": "node", "parent": ["MP4", "Track 1 Samples", "AAC"], "name": "Access Unit", "last": 1}],  # one more node of a kind the parent has, last
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
@@ -103,6 +104,17 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
                         stream[entry["array"]] = kept
                     else:
                         stream.pop(entry["array"], None)
+        elif scope == "node" and "last" in entry:
+            # The entry adds the last N children of that name, nodes of a kind the parent already has (a unit that the data ends inside, after the whole ones).
+            for parent in matching(report["root"], entry["parent"]):
+                children = parent.get("children", [])
+                positions = [i for i, c in enumerate(children) if c.get("name") == entry["name"]]
+                dropped = set(positions[max(0, len(positions) - entry["last"]):])
+                kept = [c for i, c in enumerate(children) if i not in dropped]
+                if kept:
+                    parent["children"] = kept
+                else:
+                    parent.pop("children", None)
         elif scope == "node":
             if (tuple(entry["parent"]), entry["name"]) in renamed_nodes or (old is not None and has_child(old, entry["parent"], entry["name"])):
                 continue
