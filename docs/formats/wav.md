@@ -54,6 +54,8 @@ Sources:
 
 A WAVE file of linear PCM, IEEE float, A-law or mu-law reports a stream: codec, sample rate, channels, layout, bits per sample, the samples from the `data` size and the block alignment, the duration and the average bitrate. The statistics node lists them, with the container width where it differs from the valid bits, the sample format and the byte order.
 
+- **Samples:** whole sample frames of the bytes the data chunk holds in the file, plus any silent samples the wavl list states; a partial sample frame counts nothing and no sample is lost, so Lost Samples never appears. A `fact` count is a stated count, not a declared one. The IEC 61937 bursts below count the samples of their coding (AC-3, E-AC-3, DTS, ADTS), with Lost Samples from its parser.
+
 - A compressed format (Microsoft ADPCM, IMA ADPCM, GSM 6.10, ATRAC, WMA, Vorbis in WAVE and so on) is named by its format tag. The stream reports the codec name, the rate and channels from the header, the duration from `fact` where there is one, and the bitrate from the header's average bytes per second. The coding is not analyzed (`wav.coding-not-analyzed`, info).
 - A tag with no name in the table is `Other` and `wav.coding-unknown`.
 - Routes: the data chunk goes to the codec parser through `ParseStream`, with no configuration (the codec parsers take nothing from the `fmt ` chunk, and AC-3's would read its extra bytes as a dac3 or dec3 box):

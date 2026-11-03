@@ -106,7 +106,9 @@ internal static class Explain
     public const string Statistics = "Figures computed over the whole stream.";
     public const string StatUnits = "How many access units the stream holds, counted from the first major sync.";
     public const string StatMajorSyncs = "How many access units carry a major sync.";
-    public const string StatSamples = "The samples of each channel, summed over the access units that could be read, less those an end of stream marker drops.";
+    public const string StatSamples = "The samples of each channel that the access units declare, the units that are lost included, less those an end of stream marker drops.";
+
+    public const string StatCodedSamples = "The samples of each channel that the access units declare, before an end of stream marker drops any.";
     public const string StatDuration = "The samples divided by the sampling rate.";
     public const string StatRate = "The sampling rate the first major sync states.";
     public const string StatChannels = "The channels of the highest presentation the analyzer decodes, which is the one of the highest substream it reads (of the first three).";

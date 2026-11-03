@@ -541,6 +541,13 @@ public class WmaProTests
         Assert.StartsWith("The last packet ends with ", finding.Message, StringComparison.Ordinal);
         Node packets = WmaStream.Child(WmaStream.StreamNode(context), "Packets");
         Assert.Equal("Unfinished Frame", packets.Children[^1].Children[^1].Name);
+
+        // The frame that no packet finishes counts in the coded stage and is lost (samples-definition.md, question 9 (c)).
+        Node node = WmaStream.StreamNode(context);
+        long frames = long.Parse(WmaStream.Statistic(node, "Frames"), System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal($"{(frames + 1) * 2048} samples", WmaStream.Statistic(node, "Coded Samples"));
+        Assert.Equal("2048 samples", WmaStream.Statistic(node, "Lost Samples"));
+        Assert.Equal(2048, context.Streams[0].LostSamples);
     }
 
     // The two fixtures rewritten without the length prefix (WithoutLengthPrefix): the frames that start in the last packet are read from the

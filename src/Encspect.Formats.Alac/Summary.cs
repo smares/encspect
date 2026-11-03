@@ -212,6 +212,10 @@ internal static class Summary
         if (cookie is not null)
         {
             statistics.Add(cover("Samples", NodeValue.Integer(samples, "samples", "sample"), isStated ? Explain.StatSamplesStated : Explain.StatSamples, null));
+            if (s.Lost > 0)
+            {
+                statistics.Add(cover("Lost Samples", NodeValue.Integer(s.Lost, "samples", "sample"), StreamInfo.LostSamplesDescription, Topics.SamplesAndLostSamples));
+            }
             statistics.Add(cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration, null));
             statistics.Add(cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate, null));
             statistics.Add(cover("Channels", NodeValue.Integer(channels, "channels", "channel"), Explain.StatChannels, null));
@@ -243,6 +247,7 @@ internal static class Summary
             ChannelLayout = cookie?.Layout,
             BitsPerSample = cookie is { BitDepth: > 0 } ? cookie.BitDepth : null,
             Samples = samples,
+            LostSamples = s.Lost,
             Duration = duration,
             AverageBitrate = figures?.AverageBitrate,
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,

@@ -39,6 +39,8 @@ Sources:
 
 A file with a Common Chunk reports a stream: codec, sample rate, channels, layout, bits per sample, sample frames, duration and average bitrate. The statistics node adds the compression type, the sample format and the byte order for the linear codings.
 
+- **Samples:** whole sample frames of the bytes the sound data holds in the file (a Common Chunk count the data cannot hold is clipped to it); a partial sample frame counts nothing and no sample is lost, so Lost Samples never appears.
+
 - The sample rate is read from the 80-bit number; infinity, not a number, zero, negative values and values under 1 are `aiff.sample-rate-invalid`, and the stream then has no duration.
 - **Compression types.** `NONE` and `twos` (signed big-endian PCM), `sowt` (little-endian PCM), `in24` and `in32` (24 and 32 bits), `raw ` (unsigned 8 bits), `fl32` and `fl64` (floating point), `alaw` and `ulaw`, `ima4`, `GSM `, `ACE2`, `ACE8`, `MAC3` and `MAC6`. An unlisted type is `Other` with `aiff.compression-unknown`. A FORM of type `AIFF` has no compression type (its samples are `NONE`); an `AIFC` Common Chunk that ends with the sample rate is `aiff.compression-type-missing`.
 - **Length.** For the codings that store samples one after another, the Common Chunk's sample frames are checked against the sound data: a count that the data cannot hold is clipped to what it holds (`aiff.sound-data-short`), a count of 0 with data is counted from the data (`aiff.sample-frames-zero`), and bytes beyond the stated frames with no block size to explain them are `aiff.sound-data-extra`.

@@ -21,6 +21,7 @@ import asf_model as m
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "windows"))
 import make_wma_pro_no_length_prefix as no_prefix  # noqa: E402
+import make_wma_damaged_variants as damaged  # noqa: E402
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "asf"
 
@@ -446,6 +447,31 @@ fixture(no_prefix.NAME, no_prefix.DESCRIPTION, no_length_prefix_file, [],
         {"ffprobe": True, "wma_frames": "Windows Media Audio Professional"})
 
 
+# Fixtures with a cut media object and with damage, from committed Windows files (docs/design/samples-definition.md, "Lost samples").
+def damaged_fixture(name, findings, reason):
+    variant = next(v for v in damaged.VARIANTS if v[0] == name)
+    fixture(name, variant[3], lambda: variant[2]((OUT / variant[1]).read_bytes()), findings, {"ffprobe": False, "reason": reason})
+
+
+damaged_fixture("derived-windows-wma92-stereo-44k-128-object-cut",
+                [finding("asf.file-size", "but the file holds"), finding("asf.object-truncated", "the file is cut short"), finding("asf.object-incomplete", "handed to the codec's parser"),
+                 finding("wma.frame-stuffing", "followed by zero bits"), finding("wma.frame-filler", "followed by bits that are not zero"),
+                 finding("asf.packet-truncated", "ends before its header or a payload does"), finding("wma.superframe-short", "fewer bytes than the block alignment")],
+                "the file is cut inside a media object.")
+damaged_fixture("derived-windows-wma92lossless-stereo-44k-16-object-cut",
+                [finding("asf.file-size", "but the file holds"), finding("asf.index-missing", "holds no Index Object"), finding("asf.object-truncated", "the file is cut short"),
+                 finding("asf.object-incomplete", "handed to the codec's parser"), finding("asf.packet-truncated", "ends before its header or a payload does"),
+                 finding("wma.packet-short", "fewer bytes than the block alignment"), finding("wma.frame-invalid", "needs more bits than it has")],
+                "the file is cut inside a media object.")
+damaged_fixture("derived-windows-wma92-stereo-44k-128-damaged",
+                [finding("wma.reservoir-at-end", "bits after its last frame"), finding("wma.frame-stuffing", "followed by zero bits"), finding("wma.frame-invalid", "needs more bits than it has"),
+                 finding("wma.frame-filler", "followed by bits that are not zero")],
+                "bytes of a media object are overwritten on purpose.")
+damaged_fixture("derived-windows-wma92lossless-stereo-44k-16-damaged",
+                [finding("wma.packet-sequence", "do not follow the packet before"), finding("wma.frame-invalid", "tile header lays out subframes")],
+                "a sequence number is changed on purpose.")
+
+
 def two_codecs():
     return m.asf_file(
         [m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)),
@@ -749,6 +775,12 @@ def main():
         derived = {}
         if name == no_prefix.NAME:
             derived = {"derived": no_prefix.derived(no_prefix.rewrite((OUT / no_prefix.SOURCE).read_bytes())[1])}
+        elif name in [v[0] for v in damaged.VARIANTS]:
+            variant = next(v for v in damaged.VARIANTS if v[0] == name)
+            derived = {"derived": {"from": variant[1], "tool": "scripts/fixtures/windows/make_wma_damaged_variants.py", "note": "Not an encoder's output: the source's bytes with a cut or damage added."}}
+            source = json.loads((OUT / (variant[1][:-4] + ".provenance.json")).read_text(encoding="utf-8"))
+            record = damaged.provenance(name, variant[1], variant[3], data, source)
+            (OUT / f"{name}.provenance.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         elif name.startswith("derived-"):
             derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}}
         manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}

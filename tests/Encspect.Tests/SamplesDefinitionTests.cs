@@ -82,7 +82,7 @@ public class SamplesDefinitionTests
                 else if (top == "findings" && name == "code")
                 {
                     reader.Read();
-                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString()!.EndsWith(".codec-not-analyzed", StringComparison.Ordinal);
+                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString() is { } code && (code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal) || code == "alac.tuning-invalid");
                 }
             }
             else if (reader.TokenType == JsonTokenType.StartObject && top == "streams" && reader.CurrentDepth == 3)
@@ -262,11 +262,100 @@ public class SamplesDefinitionTests
     // pins the cases the definition leaves as they are; the per-format commits add the rest with their goldens.
     public static TheoryData<string, long, long> RuleCases => new()
     {
-        // Rule 2: a cut ADTS frame counts its declared samples (the lost samples come with the ADTS commit).
-        { "adts/truncated.aac", 12288, 0 },
+        // Region: MPEG audio. Rule 2: a frame cut by the end of the data or the next frame counts its declared 1,152 samples and is lost.
+        { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
+        { "vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
 
-        // Rule 3: bytes skipped while searching for sync declare nothing.
+        #region AC-3 and E-AC-3
+        // A cut frame and a frame whose blocks break are lost whole; a failing CRC and an unread coding tool are not.
+        { "ac3/cut-frame.ac3", 9216, 1536 },
+        { "ac3/truncated.ac3", 9216, 1536 },
+        { "ac3/truncated-in-skip.eac3", 6144, 1536 },
+        { "ac3/bad-blocks.ac3", 9216, 4608 },
+        { "ac3/crc-damaged.ac3", 12288, 0 },
+        { "ac3/aht.eac3", 4608, 0 },
+        { "wav/built-iec61937-cut-in-payload.wav", 7680, 1536 },
+        { "wav/built-iec61937-cut-odd-payload.wav", 7680, 1536 },
+        #endregion
+
+        #region WAV, Wave64 and AIFF
+        // Whole sample frames of the bytes present: a partial frame counts nothing and nothing is lost.
+        { "wav/built-partial-sample-frame.wav", 49, 0 },
+        { "wav/built-w64-partial-sample-frame.w64", 49, 0 },
+        { "wav/built-truncated-data.wav", 40, 0 },
+        { "aiff/built-truncated.aiff", 40, 0 },
+        { "aiff/built-sound-data-short.aiff", 50, 0 },
+        #endregion
+
+        #region TrueHD and MLP
+        // A cut unit, units that break the syntax and the units that wait for the next major sync are lost at the samples of the sync in force.
+        { "truehd/built-unit-cut.thd", 3200, 40 },
+        { "truehd/built-sync-crc-mismatch.thd", 3200, 640 },
+        { "truehd/built-mlp-sync-crc-mismatch.mlp", 2560, 640 },
+        { "truehd/built-parity-mismatch.thd", 3200, 480 },
+        { "truehd/built-directory-end-past-unit.thd", 3200, 320 },
+        { "truehd/built-block-size-invalid.thd", 1920, 640 },
+        // Question 12 (b): units that use what the analyzer leaves aside and skipped bytes count nothing; a failing checksum alone is not lost.
+        { "truehd/built-mlp-group-rates.mlp", 1280, 0 },
+        { "truehd/built-data-skipped.thd", 2760, 0 },
+        { "truehd/built-substream-crc-mismatch.thd", 3200, 0 },
+        // An end of stream marker's drop is a trim, not a loss.
+        { "truehd/external-truehd-stereo-48k-24-odd-length.thd", 7213, 0 },
+        #endregion
+
+        #region ASF and WMA
+        // Standard WMA, off Microsoft's rule: an invalid frame and the frames its superframe declares after it count a frame length and are lost.
+        { "asf/writer-stamp-last.asf", 4096, 4096 },
+        { "asf/writer-stamp-not-last.asf", 4096, 4096 },
+        { "asf/fragments-in-two-streams.asf", 4096, 4096 },
+        // Voice: a cut, broken or dropped superframe counts its stated samples, or 480, and is lost.
+        // The container hands a cut media object over flagged cut, and the codec parser counts what the bytes present declare: the cut Voice
+        // object finishes the superframe before it, the frames a cut standard object declares by its first byte are lost, and so is the Lossless
+        // frame that starts at a declared start and runs past the cut.
+        { "asf/voice-truncated.asf", 11060, 0 },
+        { "asf/derived-windows-wma92-stereo-44k-128-object-cut.asf", 135168, 6144 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.asf", 88064, 2048 },
+        // Damage: an invalid standard frame and the frames its superframe declares after it; the Lossless frames that start where a packet's header
+        // points or after a valid frame and cannot be used after a lost packet.
+        { "asf/derived-windows-wma92-stereo-44k-128-damaged.asf", 133120, 14336 },
+        { "asf/derived-windows-wma92lossless-stereo-44k-16-damaged.asf", 51336, 6144 },
+        { "asf/voice-invalid-superframes.asf", 11520, 1440 },
+        { "asf/voice-object-not-whole.asf", 8160, 480 },
+        { "asf/voice-spillover.asf", 8160, 960 },
+        // Voice objects that declare no unit the file holds (an orphan spillover, a short packet) count nothing and lose nothing.
+        { "asf/voice-object-short.asf", 8160, 0 },
+        #endregion
+
+        #region DTS and DTS-HD
+        { "dts/cut-frame.dts", 3072, 512 },
+        { "dts/truncated.dts", 3072, 512 },
+        { "dts/fsize-too-large.dts", 3072, 512 },
+        { "dts/exss-overrun.dts", 2048, 512 },
+        { "dts/dtshd-stream-truncated.dtshd", 2048, 512 },
+        #endregion
+
+        // Region: Musepack. A frame cut by the end of the data counts 1,152 in Coded Samples and is lost; samples compose as before.
+        { "musepack/sv7-truncated.mpc", 46751, 1152 },
+        { "musepack/sv8-truncated.mpc", 45599, 4608 },
+
+        // Region: ADTS and AAC. Rule 2: a cut frame counts its declared samples and is lost; rule 3: bytes skipped while searching for sync
+        // declare nothing; a block that breaks the syntax (question 8) is lost; a declaration the bytes contradict is not (question 5).
+        { "adts/truncated.aac", 12288, 1024 },
+        { "adts/sbr-in-truncated-frame.aac", 4096, 2048 },
         { "adts/damaged-header.aac", 29696, 0 },
+        { "adts/blocks-missing.aac", 10240, 0 },
+        { "adts/corrupt-syntax.aac", 21504, 6144 },
+
+        // Region: MP4. Rule 1: a sample whose first byte is in the file counts; one the file ends inside is lost; rule 3 for samples outside.
+        { "mp4/truncated.m4a", 10240, 1024 },
+        { "mp4/sample-outside-mdat.m4a", 20480, 10240 },
+
+        // Region: ALAC. An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read).
+        { "alac/built-element-invalid-shift.m4a", 10000, 4096 },
+        { "alac/built-residual-run-too-long.m4a", 6004, 100 },
+
+        // A cookie the walk refuses for every frame is a configuration refused as a whole: counted, not lost.
+        { "alac/built-tuning-kb-zero.m4a", 10000, 0 },
 
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them, and the packets that break RFC 6716 are lost there.
         { "ogg/opus-packets-corrupt.opus", 24648, 14400 },
@@ -323,6 +412,56 @@ public class SamplesDefinitionTests
         Report report = Analyzer.CreateDefault().AnalyzeFile(path);
         StreamInfo stream = report.Streams[0];
         Assert.Equal((samples, lost), (stream.Samples, stream.LostSamples));
+    }
+
+    // Coded Samples stands next to a trimmed Samples (TrueHD: the 27 samples an end of stream marker drops).
+    [Fact]
+    public void TrueHdCodedSamplesStandNextToItsTrimmedSamples()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "truehd", "external-truehd-stereo-48k-24-odd-length.thd"));
+        Node statistics = Fixtures.Resolve(report.Root, "Dolby TrueHD/Statistics").Single();
+        Assert.Equal(7240L, statistics.Children.Single(c => c.Name == "Coded Samples").Value?.AsInteger());
+        Assert.Equal(7213L, report.Streams[0].Samples);
+    }
+
+    // A container that hands a block cut by the end of the file (MappedBytes.IsCut) to a codec parser, of whatever codec: the parser reports no
+    // bug, counts the packet where it can and keeps its series whole (an empty cut packet once broke the AAC coding series).
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(20)]
+    [InlineData(400)]
+    public void AMatroskaFileCutInsideItsLastBlockProducesNoParserBug(int cut)
+    {
+        int analyzed = 0;
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "matroska")).Where(f => f.EndsWith(".mka", StringComparison.Ordinal) || f.EndsWith(".mkv", StringComparison.Ordinal) || f.EndsWith(".webm", StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        {
+            byte[] data = File.ReadAllBytes(path);
+            if (data.Length <= cut)
+            {
+                continue;
+            }
+
+            Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(path), new MemoryStream(data, 0, data.Length - cut), new AnalysisOptions { Decoding = new DecodeOptions() });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+            Assert.All(report.Streams, s => Assert.True(s.LostSamples >= 0));
+            analyzed++;
+        }
+
+        Assert.True(analyzed > 20);
+    }
+
+    [Fact]
+    public void ACutAacBlockInMatroskaIsCountedAndLost()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "matroska", "aac-delay.mka");
+        byte[] data = File.ReadAllBytes(path);
+        StreamInfo whole = Analyzer.CreateDefault().Analyze("whole.mka", new MemoryStream(data)).Streams.Single();
+        Report report = Analyzer.CreateDefault().Analyze("cut.mka", new MemoryStream(data, 0, data.Length - 3));
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        StreamInfo cut = report.Streams.Single();
+        Assert.Equal(whole.Samples, cut.Samples);
+        Assert.Equal(1024, cut.LostSamples);
     }
 
     [Fact]

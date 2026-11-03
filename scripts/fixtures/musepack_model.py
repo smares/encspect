@@ -90,7 +90,7 @@ def sv7(data):
     past the length or out of range, mean it is not there."""
     w = Words(data)
     h = sv7_header(w)
-    bit, frames, truncated, extra_missing, final = 200, [], False, False, None
+    bit, frames, truncated, extra_missing, final, cut = 200, [], False, False, None, 0
     for i in range(h["frames"] + 1):
         if i == h["frames"]:
             last = (final if h["gapless"] and final is not None else h["last"]) or FRAME
@@ -104,12 +104,14 @@ def sv7(data):
                 break
         if bit + 20 > w.bits:
             truncated = bit < w.bits
+            cut = 1 if truncated else 0
             break
         length = w.read(bit, 20)
         data_end = bit + 20 + length
         end = data_end + (11 if i == h["frames"] - 1 else 0)
         if end > w.bits:
             truncated = True
+            cut = 1
             break
         used, mask, noise, overrun, invalid = bands(w, bit + 20, min(data_end, w.bits), min(h["max_band"], 31), h["ms"])
         frames.append({"bit": bit, "length": length, "used": used, "ms": mask, "noise": noise, "overrun": overrun, "invalid": invalid})
@@ -119,9 +121,11 @@ def sv7(data):
     stream_end = len(data) if truncated else ((bit + 31) // 32) * 4
     last = (final if h["gapless"] and final is not None else h["last"]) or FRAME
     announced = 0 if not h["frames"] else h["frames"] * FRAME - FRAME + last if h["gapless"] else h["frames"] * FRAME - DELAY
-    samples = max(0, min(announced, len(frames) * FRAME - DELAY))
+    # A frame cut by the end of the data and a damaged frame (resolutions past its length or out of range) declare their samples and are lost.
+    samples = max(0, min(announced, (len(frames) + cut) * FRAME - DELAY))
+    lost = (cut + sum(1 for f in frames if f["overrun"] or f["invalid"])) * FRAME
     return {"header": h, "frames": frames, "end": stream_end, "truncated": truncated, "extra_missing": extra_missing, "final": final,
-            "samples": samples, "rate": RATES[h["rate"]], "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
+            "samples": samples, "lost": lost, "cut": cut, "rate": RATES[h["rate"]], "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
 
 
 # libmpcdec 1.2.6 huffsv46.c mpc_table_Region_A, B, C: (code, length, index into Q_res) for subbands
@@ -190,9 +194,13 @@ def old(data):
     final = w.read(bit, 11) if readable and keeps_last and frames else None
     last_end = bit + 20 + w.read(bit, 20) if readable and not keeps_last else None
     decoded = len(frames) if readable else max(0, h["frames"] - 1) if h["version"] in (4, 5) else 0
-    samples = (decoded - 1) * FRAME + last_frame_output(final) - DELAY if final is not None else max(0, decoded * FRAME - DELAY)
+    # The last frame of a version 4 or 5 stream that runs past the end of the data declares its samples and is lost (the encoders write whole words only).
+    last_runs_past = last_end - w.bits if last_end is not None else None
+    cut = 1 if last_runs_past is not None and last_runs_past > 0 else 0
+    lost = (cut + sum(1 for f in frames if f["overrun"])) * FRAME if readable else 0
+    samples = (decoded - 1) * FRAME + last_frame_output(final) - DELAY if final is not None else max(0, (decoded + (cut if readable else 0)) * FRAME - DELAY)
     return {"header": h, "readable": readable, "frames": frames, "last_runs_past": last_end - w.bits if last_end is not None else None,
-            "final": final, "samples": samples, "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
+            "final": final, "samples": samples, "lost": lost, "cut": cut, "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
 
 
 def size(data, position, limit=None):
@@ -257,22 +265,27 @@ def sv8(data):
                                    "ms": (p[at + 1] >> 3) & 1, "power": p[at + 1] & 7})
     complete = sh is not None and sh["complete"]
     audio = [(o, l) for o, l, k, d, h in found if k == "AP" and d == l]
-    frames, audio_bytes = 0, 0
+    frames, audio_bytes, cut = 0, 0, 0
     if sh:
         per = 4 ** sh["power"] if complete else 64
         expected = (sh["samples"] + DELAY + FRAME - 1) // FRAME if complete and sh["samples"] else None
-        for i, (_, length) in enumerate(audio):
-            left = expected - i * per if expected is not None and i == len(audio) - 1 else per
+        every = [(o, l, d == l) for o, l, k, d, h in found if k == "AP"]
+        for i, (_, length, whole) in enumerate(every):
+            left = expected - i * per if expected is not None and i == len(every) - 1 else per
             count = left if 0 < left <= per else per
             # Decoders stop at the sample count, so the packets after it hold no frames they decode.
+            if not whole:
+                # A packet cut by the end of the data declares its frames all the same: they are coded and lost.
+                cut += min(count, max(0, expected - frames - cut)) if expected is not None else count
+                continue
             if expected is not None:
                 count = min(count, max(0, expected - frames))
             frames += count
             audio_bytes += length if count else 0
     # libmpcdec r495 adds the delay to the sample count in a signed 64-bit integer, which wraps for the top 481 values: it outputs nothing.
     wraps = complete and sh["samples"] > 2 ** 63 - 1 - DELAY
-    samples = max(0, min(sh["samples"], frames * FRAME - DELAY) - sh["silence"]) if complete and not wraps else 0
-    return {"packets": found, "stop": stop, "sh": sh, "complete": complete, "frames": frames, "samples": samples,
+    samples = max(0, min(sh["samples"], (frames + cut) * FRAME - DELAY) - sh["silence"]) if complete and not wraps else 0
+    return {"packets": found, "stop": stop, "sh": sh, "complete": complete, "frames": frames, "cut": cut, "lost": cut * FRAME, "samples": samples,
             "rate": RATES[sh["rate"]] if complete and sh["rate"] < 4 else 0, "audio_bytes": audio_bytes}
 
 
@@ -333,6 +346,9 @@ def manifest(data, start, end, extra=None):
         coded = s["frames"] * FRAME
         info = {"codec": "Musepack SV8", "sample_rate": s["rate"], "channels": sh["channels"] if s["complete"] else 0, "samples": s["samples"],
                 "average_bitrate": s["audio_bytes"] * 8 * s["rate"] / coded / 1000 if coded and s["rate"] else None}
+        if s["lost"]:
+            info["lost_samples"] = s["lost"]
+            result["coded_samples"] = (s["frames"] + s["cut"]) * FRAME
         if sh:
             header = {}
             if sh["samples"] is not None:
@@ -360,6 +376,9 @@ def manifest(data, start, end, extra=None):
         coded = len(s["frames"]) * FRAME
         info = {"codec": "Musepack SV7", "sample_rate": s["rate"], "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * s["rate"] / coded / 1000 if coded else None}
+        if s["lost"]:
+            info["lost_samples"] = s["lost"]
+            result["coded_samples"] = (len(s["frames"]) + s["cut"]) * FRAME
     else:
         s = old(stream)
         h = s["header"]
@@ -374,6 +393,10 @@ def manifest(data, start, end, extra=None):
         coded = len(s["frames"]) * FRAME
         info = {"codec": f"Musepack SV{h['version']}", "sample_rate": 44100, "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * 44100 / coded / 1000 if s["readable"] and coded else None}
+        if s["lost"]:
+            info["lost_samples"] = s["lost"]
+        if s["lost"]:
+            result["coded_samples"] = (len(s["frames"]) + s["cut"]) * FRAME
     info["duration"] = info["samples"] / info["sample_rate"] if info["sample_rate"] else 0
     result["stream_infos"] = [info]
     result.update(extra or {})

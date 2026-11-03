@@ -113,6 +113,7 @@ public sealed class WmaProParser : ICodecParser
             Channels = p.Channels,
             ChannelLayout = layout,
             Samples = reader.Samples,
+            LostSamples = reader.LostSamples,
             Duration = duration,
             AverageBitrate = duration > 0 ? p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000 : null,
             IsVbr = configuration.IsVbr ?? false,

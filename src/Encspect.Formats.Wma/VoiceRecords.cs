@@ -201,6 +201,7 @@ internal sealed class VoiceTotals
     public long Superframes;
     public long Invalid;
     public long Samples;
+    public long LostSamples;
     public long SuperframeBits;
     public long SmallestBits = long.MaxValue;
     public long LargestBits;

@@ -147,6 +147,28 @@ internal sealed class WmaPacketReader
 
     public long LongPackets { get; private set; }
 
+    // The declared samples, at the coded stage, of the frames that are lost (docs/design/samples-definition.md). Professional: each invalid frame and
+    // the frame the last packet starts and no packet finishes (wma.frame-unfinished) count a frame length. Lossless: each invalid frame that starts at
+    // a declared frame start counts a frame length; bits read after a loss before the next declared start, which include the bits that finish a lost
+    // frame, count nothing.
+    public long LostSamples => _isLossless ? DeclaredInvalidFrames * _p.FrameLength : (InvalidFrames + UnfinishedFrames + CutFrames) * _p.FrameLength;
+
+    // The invalid Lossless frames that start where a packet's header points or right after a frame of the same run.
+    public long DeclaredInvalidFrames { get; private set; }
+
+    // Whether the frame being read starts at a declared frame start (Lossless).
+    private bool _isDeclaredStart;
+
+    // Whether the bits kept for the next run begin where a packet's header points (its count of bits that finish the frame before was passed on).
+    private bool _isSavedDeclared;
+
+    // The frame that the last packet starts and no packet finishes, in a stream that has one.
+    public long UnfinishedFrames => !_isLossless && UnfinishedBits > 0 && ValidFrames > 0 ? 1 : 0;
+
+    // The frames' declared samples before any trim: every valid frame counts a frame length, and in a Professional stream so does every invalid
+    // one and the unfinished one.
+    public long CodedSamples => _isLossless ? (ValidFrames + DeclaredInvalidFrames) * _p.FrameLength : (ValidFrames + InvalidFrames + UnfinishedFrames + CutFrames) * _p.FrameLength;
+
     public long TrimmedSamples { get; private set; }
 
     public long TrimmedFrames { get; private set; }
@@ -277,6 +299,11 @@ internal sealed class WmaPacketReader
                     count == 1
                         ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}."
                         : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}.");
+                if (packet.IsCut && record.HasHeader)
+                {
+                    CountCutFrames(packet.Span, length * 8);
+                }
+
                 MarkLoss();
                 return;
             }
@@ -393,6 +420,44 @@ internal sealed class WmaPacketReader
 
         MostFramesInPacket = Math.Max(MostFramesInPacket, _framesInCall);
     }
+
+    // The frames a cut object declares: the packet's header points to the first frame, and with the length prefix each frame states the bits to the
+    // next. A frame counts where its start is in the bytes present; it is lost, and counts a frame length in the samples (docs/design/samples-definition.md).
+    private void CountCutFrames(ReadOnlySpan<byte> bytes, int packetBits)
+    {
+        IStreamParameters p = _p;
+        bytes.CopyTo(_packetBuffer);
+        Array.Clear(_packetBuffer, bytes.Length, _packetBuffer.Length - bytes.Length);
+        var bits = new Bits(_packetBuffer, packetBits) { Position = 6 };
+        int stated = (int)bits.Read(p.CountWidth);
+        int position = p.HeaderBits + Math.Min(stated, Math.Max(0, packetBits - p.HeaderBits));
+        long frames = 0;
+        if (!p.HasLengthPrefix)
+        {
+            frames = position < packetBits ? 1 : 0;
+        }
+        else
+        {
+            while (position + p.CountWidth <= packetBits)
+            {
+                bits.Position = position;
+                int declared = (int)bits.Peek(p.CountWidth);
+                if (declared == 0)
+                {
+                    break;
+                }
+
+                frames++;
+                position += declared;
+            }
+        }
+
+        CutFrames += frames;
+        Samples += frames * p.FrameLength;
+    }
+
+    // The frames that cut media objects declare (Professional): counted in the samples and lost.
+    public long CutFrames { get; private set; }
 
     private ref PacketRecord Record(int packet) => ref System.Runtime.InteropServices.CollectionsMarshal.AsSpan(Data.Packets)[packet];
 
@@ -694,7 +759,7 @@ internal sealed class WmaPacketReader
         }
         else if (tail > 0)
         {
-            Save(packet, start, tail);
+            Save(packet, start, tail, taken == count);
         }
     }
 
@@ -714,8 +779,10 @@ internal sealed class WmaPacketReader
 
         var parts = new List<FramePart>(_saved);
         var joined = new Bits(_savedBuffer, total);
+        bool isRunDeclared = _isSavedDeclared;
         int position = isLostStart ? Math.Min(_lastOff, total) : 0;
         bool isFirst = true;
+        bool isPreviousValid = false;
         bool isOk = true;
         bool isTrailerOne = false;
         bool isTrailerSet = false;
@@ -726,7 +793,10 @@ internal sealed class WmaPacketReader
             _context.CancellationToken.ThrowIfCancellationRequested();
             bool isInHeaderCall = isFirst && isHeaderCall;
             _isFirstOfRun = isInHeaderCall;
+            _isDeclaredStart = isFirst ? isRunDeclared && !isLostStart : isPreviousValid;
             FrameOutcome result = ReadOne(joined, position, total, 0, [], parts, position, isFirst && isLostStart);
+            _isDeclaredStart = false;
+            isPreviousValid = result.IsValid;
             isFirst = false;
             if (!result.IsValid && result.Fault is not ((int)LosslessFault.NeedsMoreBits or (int)LosslessFault.TrimTooLarge))
             {
@@ -839,11 +909,13 @@ internal sealed class WmaPacketReader
         _saved.Clear();
         _savedBits = 0;
         _savedOff = 0;
+        _isSavedDeclared = false;
     }
 
-    private void Save(int packet, int startBit, int bits)
+    private void Save(int packet, int startBit, int bits, bool isDeclared = false)
     {
         ClearSaved();
+        _isSavedDeclared = isDeclared;
         if (_isLossless)
         {
             _lastOff = startBit & 7;
@@ -1026,6 +1098,7 @@ internal sealed class WmaPacketReader
             BitrateY.Add(rate);
         }
 
+        long before = Samples;
         if (_isLossless)
         {
             Samples += OutputOf(result);
@@ -1058,6 +1131,18 @@ internal sealed class WmaPacketReader
 
         if (!result.IsValid)
         {
+            // An invalid Professional frame declares a frame length whatever a decoder outputs for it.
+            long declared = _isLossless ? Math.Max(0, p.FrameLength - result.TrimEnd) : p.FrameLength;
+            if ((!_isLossless || _isDeclaredStart) && Samples - before < declared)
+            {
+                Samples += declared - (Samples - before);
+            }
+
+            if (_isLossless && _isDeclaredStart)
+            {
+                DeclaredInvalidFrames++;
+            }
+
             return;
         }
 

@@ -237,8 +237,8 @@ public class AsfFixtureTests
         HashSet<int> routed = [.. collected.Select(c => c.Stream)];
         Assert.Equal(
             expected.EnumerateArray().Where(o => routed.Contains(o[0].GetInt32())).OrderBy(o => o[0].GetInt32())
-                .Select(o => $"{o[0].GetInt32()},{o[2].GetInt64()},{string.Join(';', o[4].EnumerateArray().Select(r => $"{r[0].GetInt64()}+{r[1].GetInt64()}"))}"),
-            collected.Select(c => $"{c.Stream},{c.Object.Length},{string.Join(';', c.Object.FileRanges().Select(r => $"{r.Offset}+{r.Length}"))}"));
+                .Select(o => $"{o[0].GetInt32()},{o[2].GetInt64()},{string.Join(';', o[4].EnumerateArray().Select(r => $"{r[0].GetInt64()}+{r[1].GetInt64()}"))}{(o.GetArrayLength() > 5 ? ",cut" : string.Empty)}"),
+            collected.Select(c => $"{c.Stream},{c.Object.Length},{string.Join(';', c.Object.FileRanges().Select(r => $"{r.Offset}+{r.Length}"))}{(c.Object.IsCut ? ",cut" : string.Empty)}"));
     }
 
     private static void CheckFindings(JsonElement expected, IReadOnlyList<Finding> findings)

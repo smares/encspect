@@ -118,6 +118,16 @@ internal static class Summary
         }
 
         statistics.Add(Cover("Samples", NodeValue.Integer(a.Samples, "samples"), Explain.StatSamples));
+        if (a.CodedSamples != a.Samples)
+        {
+            statistics.Add(Cover("Coded Samples", NodeValue.Integer(a.CodedSamples, "samples"), Explain.StatCodedSamples));
+        }
+
+        if (a.LostSamples > 0)
+        {
+            statistics.Add(Cover("Lost Samples", NodeValue.Integer(a.LostSamples, "samples"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         statistics.Add(Cover("Sampling Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
         statistics.Add(Cover("Channels", NodeValue.Integer(channels, "channels"), Explain.StatChannels, Topics.ChannelLayouts));
@@ -183,6 +193,7 @@ internal static class Summary
             ChannelLayout = layout,
             BitsPerSample = followed.BitDepth,
             Samples = a.Samples,
+            LostSamples = a.LostSamples,
             Duration = duration,
             AverageBitrate = a.Figures?.AverageBitrate,
             IsVbr = a.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
