@@ -65,6 +65,18 @@ public sealed class SampleLocator
         long end = measured is null ? stream.Samples : measured.FirstPosition + measured.Samples + measured.LostSamples - measured.LeadingLostSamples;
         long total = stream.Samples > 0 ? stream.Samples : measured is null ? 0 : measured.Samples + measured.LostSamples;
         long origin = total <= 0 ? 0 : stream.Samples > 0 && end >= total ? end - total : measured is null ? 0 : measured.FirstPosition - measured.LeadingLostSamples;
+
+        // A lost last unit that the units cover but the stream's sample count does not (a count from a header that the blocks outrun) would put
+        // the origin late by the surplus: the units' span is then the one the frames cover.
+        if (measured is { TrailingLostSamples: > 0 } && stream.Samples > 0)
+        {
+            long start = measured.FirstPosition - measured.LeadingLostSamples;
+            if (end - start > total)
+            {
+                (total, origin) = (end - start, start);
+            }
+        }
+
         return offsets.Length == 0 || total <= 0 ? null : new SampleLocator(offsets, total, Math.Max(0, origin), frames!.Runs);
     }
 
