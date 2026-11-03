@@ -530,6 +530,8 @@ internal static class Sv7Parser
         int rate = SampleRates[h.RateIndex];
         var figures = new StreamFigures(rate);
         long complete = 0;
+        long cutFrames = 0;
+        long lostFrames = 0;
         Frame? firstBad = null;
         Frame? firstOverrun = null;
         int bad = 0;
@@ -544,10 +546,13 @@ internal static class Sv7Parser
             Frame frame = state.Frames[i];
             if ((frame.Flags & Flags.Truncated) != 0)
             {
+                // A frame cut by the end of the data declares its 1,152 samples all the same (Coded Samples, Lost Samples).
+                cutFrames++;
                 continue;
             }
 
             complete++;
+            lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun)) != 0 ? 1 : 0;
             figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0);
             if ((frame.Flags & Flags.BadResolution) != 0)
             {
@@ -622,8 +627,10 @@ internal static class Sv7Parser
         // libmpcdec r495: true gapless keeps the last frame's samples, otherwise the synthesis
         // filter's delay is cut off the end; the output never runs past the frames decoded.
         long frames = complete;
+        long coded = complete + cutFrames;
+        long lost = (cutFrames + lostFrames) * FrameSamples;
         long announced = h.Frames == 0 ? 0 : h.Gapless ? (h.Frames * FrameSamples) - FrameSamples + LastFrameSamples(h, state.FinalSamples) : (h.Frames * FrameSamples) - SynthesisDelay;
-        long samples = Math.Max(0, Math.Min(announced, (frames * FrameSamples) - SynthesisDelay));
+        long samples = Math.Max(0, Math.Min(announced, (coded * FrameSamples) - SynthesisDelay));
         double duration = rate > 0 ? samples / (double)rate : 0;
 
         Node Cover(string name, NodeValue? value, string description) =>
@@ -652,9 +659,13 @@ internal static class Sv7Parser
 
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
-        statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * FrameSamples, "samples", "sample"), Explain.CodedSamples));
+        statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * FrameSamples, "samples", "sample"), Explain.CodedSamples));
         statistics.Add(Cover("Decoder Delay", NodeValue.Integer(SynthesisDelay, "samples", "sample"), Explain.DecoderDelay));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
+        if (lost > 0)
+        {
+            statistics.Add(new Node("Lost Samples", node.Offset, node.Length, NodeValue.Integer(lost, "samples", "sample")) { Description = StreamInfo.LostSamplesDescription, Topic = Topics.SamplesAndLostSamples });
+        }
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         figures.AddTo(statistics, Cover, "Frame", "frames", inBytes: false, out Node bitrate);
         statistics.Add(new Node("Frames With Mid/Side", node.Offset, node.Length, $"{StreamFigures.Counted(state.FramesWithMidSide, "Frame", "frames")} ({StreamFigures.Share(state.FramesWithMidSide, frames)})")
@@ -685,6 +696,7 @@ internal static class Sv7Parser
             ChannelMode = h.MidSide ? "Stereo, mid/side per subband" : "Stereo",
             ChannelLayout = ChannelLayouts.Stereo,
             Samples = samples,
+            LostSamples = lost,
             Duration = duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = true,

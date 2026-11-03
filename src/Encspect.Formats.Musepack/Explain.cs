@@ -3,6 +3,7 @@ namespace Encspect.Formats.Musepack;
 // The background articles the Musepack nodes point to, by the IDs the host's topic library serves.
 internal static class Topics
 {
+    public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string SubbandCoding = "musepack-subband-coding";
     public const string Sv7Stream = "musepack-sv7-stream";
     public const string OldStreams = "musepack-sv4-to-sv6";
@@ -148,7 +149,7 @@ internal static class Explain
     public const string Statistics = "Figures computed over the stream's frames or audio packets.";
     public const string StatFrames = "The frames of 1,152 samples per channel that the stream codes.";
     public const string StatPackets = "The audio packets of the stream.";
-    public const string CodedSamples = "The samples per channel the frames code: 1,152 per frame.";
+    public const string CodedSamples = "The samples per channel the frames code: 1,152 per frame, a frame cut by the end of the data included.";
     public const string DecoderDelay = "The samples a decoder drops at the start: the synthesis filter's delay of 481 samples (libmpcdec r495 MPC_DECODER_SYNTH_DELAY), plus the beginning silence of SV8.";
     public const string StatSamples = "The samples per channel decoders output: the coded samples less the decoder delay and the end of the last frame that is not audio (libmpcdec r495).";
     public const string StatDuration = "The duration of the output samples at the sample rate.";

@@ -91,8 +91,15 @@ public class MusepackFixtureTests
         }
 
         CheckStreamInfos(manifest.GetProperty("stream_infos"), report.Streams);
+        if (manifest.TryGetProperty("coded_samples", out JsonElement coded))
+        {
+            Assert.Equal(coded.GetInt64(), Descendants(report.Root).Single(n => n.Name == "Coded Samples").Value is { } value ? long.Parse(value.ToString()!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture) : -1);
+        }
+
         CheckFindings(manifest.GetProperty("findings"), report.Findings);
     }
+
+    private static IEnumerable<Node> Descendants(Node node) => node.Children.SelectMany(c => Descendants(c).Prepend(c));
 
     [Theory]
     [MemberData(nameof(Names))]
@@ -152,7 +159,8 @@ public class MusepackFixtureTests
         Assert.Equal($"The header counts 28 frames, but the data holds {whole} whole ones: the stream is cut short.", missing.Message);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
-        Assert.Equal(whole, report.Streams.Single().Samples is { } samples ? (samples + 481) / 1152 : -1);
+        Assert.Equal(whole + 1, report.Streams.Single().Samples is { } samples ? (samples + 481) / 1152 : -1);
+        Assert.Equal(1152, report.Streams.Single().LostSamples);
         List<Node> frames = stream.Children.Where(c => c.Kind == NodeKind.Frame).ToList();
         Assert.Equal(whole + 1, frames.Count);
         Assert.DoesNotContain(frames.SelectMany(f => f.Children), c => c.Name == "Last Frame Samples");
@@ -611,6 +619,7 @@ public class MusepackFixtureTests
         Assert.Equal(info.GetProperty("sample_rate").GetInt32(), stream.SampleRate);
         Assert.Equal(info.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.Equal(info.GetProperty("samples").GetInt64(), stream.Samples);
+        Assert.Equal(info.TryGetProperty("lost_samples", out JsonElement lost) ? lost.GetInt64() : 0, stream.LostSamples);
         Assert.Equal(info.GetProperty("duration").GetDouble(), stream.Duration, 9);
         if (info.GetProperty("average_bitrate").ValueKind == JsonValueKind.Null)
         {
