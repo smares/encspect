@@ -194,13 +194,15 @@ def old(data):
     final = w.read(bit, 11) if readable and keeps_last and frames else None
     last_end = bit + 20 + w.read(bit, 20) if readable and not keeps_last else None
     decoded = len(frames) if readable else max(0, h["frames"] - 1) if h["version"] in (4, 5) else 0
-    # The last frame of a version 4 or 5 stream that runs past the end of the data declares its samples and is lost (the encoders write whole words only).
+    # The last frame of a version 4 or 5 stream is coded, whole or cut, but decoders do not decode it, so it is trimmed from the samples; it is lost only where
+    # the data cut it (the encoders write whole words only).
     last_runs_past = last_end - w.bits if last_end is not None else None
+    last_coded = 1 if readable and not keeps_last and last_end is not None else 0
     cut = 1 if last_runs_past is not None and last_runs_past > 0 else 0
     lost = (cut + sum(1 for f in frames if f["overrun"])) * FRAME if readable else 0
-    samples = (decoded - 1) * FRAME + last_frame_output(final) - DELAY if final is not None else max(0, (decoded + (cut if readable else 0)) * FRAME - DELAY)
+    samples = (decoded - 1) * FRAME + last_frame_output(final) - DELAY if final is not None else max(0, decoded * FRAME - DELAY)
     return {"header": h, "readable": readable, "frames": frames, "last_runs_past": last_end - w.bits if last_end is not None else None,
-            "final": final, "samples": samples, "lost": lost, "cut": cut, "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
+            "final": final, "samples": samples, "lost": lost, "cut": cut, "last_coded": last_coded, "frame_bits": sum(f["length"] + 20 for f in frames) + (11 if final is not None else 0)}
 
 
 def size(data, position, limit=None):
@@ -395,8 +397,8 @@ def manifest(data, start, end, extra=None):
                 "average_bitrate": s["frame_bits"] * 44100 / coded / 1000 if s["readable"] and coded else None}
         if s["lost"]:
             info["lost_samples"] = s["lost"]
-        if s["lost"]:
-            result["coded_samples"] = (len(s["frames"]) + s["cut"]) * FRAME
+        if s["lost"] or s["last_coded"]:
+            result["coded_samples"] = (len(s["frames"]) + s["last_coded"]) * FRAME
     info["duration"] = info["samples"] / info["sample_rate"] if info["sample_rate"] else 0
     result["stream_infos"] = [info]
     result.update(extra or {})

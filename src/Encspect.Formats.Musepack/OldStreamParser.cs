@@ -479,6 +479,8 @@ internal static class OldStreamParser
         Frame? firstOverrun = null;
         int overruns = 0;
         long cut = 0;
+        long lastFrames = 0;
+        long lostLast = 0;
         long lostFrames = 0;
         for (int i = 0; i < state.Frames.Count; i++)
         {
@@ -490,9 +492,19 @@ internal static class OldStreamParser
             Frame frame = state.Frames[i];
             if ((frame.Flags & (FrameFlags.Truncated | FrameFlags.Last)) != 0)
             {
-                // A frame cut by the end of the data, and the last frame of an SV4 or SV5 stream that runs past it (the encoders write whole
-                // words only), declare their samples all the same (Coded Samples, Lost Samples).
-                cut += (frame.Flags & FrameFlags.Truncated) != 0 || (frame.Flags & FrameFlags.Last) != 0 && state.LastRunsPast > 0 ? 1 : 0;
+                // A frame cut by the end of the data counts its declared samples (Coded Samples, Samples, Lost Samples). The last frame of an SV4 or SV5
+                // stream is coded all the same, whole or cut, but decoders do not decode it, so it is trimmed from the samples (the end of the last frame);
+                // it is lost only where the data cut it (the encoders write whole words only).
+                if ((frame.Flags & FrameFlags.Truncated) != 0)
+                {
+                    cut++;
+                }
+                else
+                {
+                    lastFrames++;
+                    lostLast += state.LastRunsPast > 0 ? 1 : 0;
+                }
+
                 continue;
             }
 
@@ -549,11 +561,11 @@ internal static class OldStreamParser
         // libmpcdec refuses give none. A damaged frame stops libmpcdec earlier; the count assumes the
         // frames whole.
         long frames = h.IsReadable ? decoded : h.Version is 4 or 5 ? Math.Max(0, h.Frames - 1) : 0;
-        long coded = frames + (h.IsReadable ? cut : 0);
-        long lost = h.IsReadable ? (cut + lostFrames) * Sv7Parser.FrameSamples : 0;
+        long coded = frames + (h.IsReadable ? cut + lastFrames : 0);
+        long lost = h.IsReadable ? (cut + lostLast + lostFrames) * Sv7Parser.FrameSamples : 0;
         long samples = state.FinalSamples is { } given && decoded > 0
             ? ((decoded - 1) * Sv7Parser.FrameSamples) + LastFrameOutput(given) - Sv7Parser.SynthesisDelay
-            : Math.Max(0, (coded * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
+            : Math.Max(0, ((frames + (h.IsReadable ? cut : 0)) * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay);
         double duration = samples / (double)sampleRate;
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
         Node? bitrate = null;
