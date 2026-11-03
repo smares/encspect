@@ -939,7 +939,7 @@ def manifest(data, kind, extra=None):
                 tally["pair_codings"][code] += 1
                 frame_pairs.append(code)
         samples = w["samples"]
-        if fault_code and size > 0:
+        if fault_code and status != "tuning" and size > 0:
             # A frame whose first byte is there declares its samples all the same: its first element's, else the cookie's frame length; one that cannot be read is lost.
             samples = samples or c["frame_length"]
             lost_samples += samples

@@ -94,7 +94,8 @@ internal sealed class State
 
             // A frame whose first byte is there declares its samples all the same: those of its first element if that was read, else the
             // cookie's frame length. One that cannot be read, or that the container says is cut, is lost.
-            bool isLost = (flags & FrameFlags.Unreadable) != 0 || (packet.IsCut && length > 0);
+            // A cookie the walk refuses for every frame (alac.tuning-invalid) is a configuration the decoder refuses as a whole: no frame is lost for it.
+            bool isLost = ((flags & FrameFlags.Unreadable) != 0 && _walk.Fault != WalkFault.Tuning) || (packet.IsCut && length > 0);
             if (isLost && length > 0)
             {
                 samples = samples > 0 ? samples : cookie.FrameLength;

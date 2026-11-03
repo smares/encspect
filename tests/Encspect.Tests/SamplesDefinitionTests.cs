@@ -82,7 +82,7 @@ public class SamplesDefinitionTests
                 else if (top == "findings" && name == "code")
                 {
                     reader.Read();
-                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString()!.EndsWith(".codec-not-analyzed", StringComparison.Ordinal);
+                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString() is { } code && (code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal) || code == "alac.tuning-invalid");
                 }
             }
             else if (reader.TokenType == JsonTokenType.StartObject && top == "streams" && reader.CurrentDepth == 3)
@@ -275,6 +275,9 @@ public class SamplesDefinitionTests
         // Region: ALAC. An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read).
         { "alac/built-element-invalid-shift.m4a", 10000, 4096 },
         { "alac/built-residual-run-too-long.m4a", 6004, 100 },
+
+        // A cookie the walk refuses for every frame is a configuration refused as a whole: counted, not lost.
+        { "alac/built-tuning-kb-zero.m4a", 10000, 0 },
 
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them.
         { "ogg/opus-packets-corrupt.opus", 24648, 0 },
