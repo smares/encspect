@@ -399,4 +399,29 @@ public class MatroskaFindingTests
         Assert.Equal(2, shown.Count);
         Assert.All(shown, text => Assert.StartsWith("ID 0x0123456789ABCDEF,", text, StringComparison.Ordinal));
     }
+
+    // A whole block lists every frame, a frame of 0 bytes included (RFC 9559, section 10.3 allows a lace size of 0).
+    [Fact]
+    public void AWholeBlockListsItsZeroByteFrame()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/lacing-zero-size-frame.mka");
+        var sizes = new List<long>();
+        var stack = new Stack<Node>([report.Root]);
+        while (stack.Count > 0)
+        {
+            Node node = stack.Pop();
+            foreach (Node child in node.Children)
+            {
+                if (child.Name == "Frame" && node.Name == "SimpleBlock")
+                {
+                    sizes.Add(child.Value!.AsInteger()!.Value);
+                }
+
+                stack.Push(child);
+            }
+        }
+
+        Assert.Equal(4, sizes.Count);
+        Assert.Equal(1, sizes.Count(size => size == 0));
+    }
 }

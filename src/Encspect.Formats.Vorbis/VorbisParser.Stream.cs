@@ -528,7 +528,7 @@ public sealed partial class VorbisParser
         {
             int kind = record.IsLong ? 1 : 0;
 
-            // The block counts cover the packets handed over whole.
+            // The block counts and sizes cover the packets handed over whole.
             if (!isCut)
             {
                 _modeCounts[record.Mode]++;
@@ -540,11 +540,7 @@ public sealed partial class VorbisParser
                 {
                     _shortBlocks++;
                 }
-            }
 
-
-            if (!isCut)
-            {
                 _wholeBlocks[kind]++;
                 _blockBytes[kind] += record.Length;
                 _smallest[kind] = Math.Min(_smallest[kind], record.Length);

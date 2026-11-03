@@ -289,7 +289,9 @@ public sealed partial class OggParser
                 _gap = true;
             }
 
-            long bodyPresent = isTruncated ? Math.Max(0, page.Length - PageHeader.FixedLength - page.Segments) : long.MaxValue;
+            // A truncated page whose segment table is itself cut has no body in the file, and not even the offset of its packets lies inside the data: it hands
+            // over none (an empty packet there would have a position past the page).
+            long bodyPresent = !isTruncated ? long.MaxValue : page.LacingPresent < page.Segments ? -1 : Math.Max(0, page.Length - PageHeader.FixedLength - page.Segments);
             int segments = isTruncated ? page.LacingPresent : page.Segments;
             PageOutcome outcome = _assembler.Feed((page.Flags & Pages.Continued) != 0, region.Lacing.Span(page.Lacing, segments), _runs);
             if (outcome.ContinuationMissing)

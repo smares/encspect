@@ -114,6 +114,16 @@ def _():
     return build(standard(cluster(0, *items)))
 
 
+@fixture("lacing-zero-size-frame", "A Xiph-laced block whose middle frame has a size of 0 (RFC 9559 section 10.3 allows it), between two whole ones.",
+         findings=[("opus.packet-r1", "the packet is empty")], streams=[OPUS], valid=False)
+def _():
+    items = [
+        simple_block(1, 0, [opus_packet(0, 1, 40)], key=True),
+        simple_block(1, 20, [opus_packet(1, 1, 40), b"", opus_packet(2, 1, 30)], lacing="xiph", key=True),
+    ]
+    return build(standard(cluster(0, *items)))
+
+
 @fixture("lacing-invalid", "Blocks whose lacing headers do not add up (RFC 9559 section 10.3): Xiph sizes that exceed the block, an EBML size that makes a "
          "frame negative, fixed-size frames that do not divide the block, and a header cut short.",
          findings=[("matroska.lacing-invalid", "does not add up")], streams=[OPUS], valid=False)

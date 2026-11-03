@@ -224,7 +224,7 @@ def hand_over(data, pages, s):
         present = min(count, r["length"] - 27) if truncated else count
         lacing = data[offset + 27:offset + 27 + present]
         body = offset + 27 + count
-        room = max(0, r["length"] - 27 - count) if truncated else float("inf")
+        room = (-1 if present < count else max(0, r["length"] - 27 - count)) if truncated else float("inf")  # a cut segment table leaves no body
         # The runs of the segment table: (start, length, ends).
         runs, start, length, index, orphan = [], 0, 0, 0, False
         if r["flags"] & m.CONTINUED and pending is None and present:

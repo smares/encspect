@@ -132,6 +132,24 @@ public class OggTests
         Assert.Contains(report.Findings, f => f.Code == "ogg.page-truncated");
     }
 
+    // A page cut inside its segment table has no body in the file; its empty packets (lacing values of 0) are not handed over, since their position
+    // would lie past the page (found by the fuzz test: a finding on a node outside the tree).
+    [Fact]
+    public void AnEmptyPacketOnAPageCutInsideItsSegmentTableIsNotHandedOver()
+    {
+        byte[] file = File.ReadAllBytes(OggFixture("speex-narrowband.spx"));
+        int last = file.AsSpan().LastIndexOf("OggS"u8);
+        byte[] cut = file[..(last + 27 + 3)];
+        cut[last + 27] = 0;
+        cut[last + 28] = 0;
+        cut[last + 29] = 0;
+
+        Report report = Analyzer.CreateDefault().Analyze("cut.spx", new MemoryStream(cut));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "speex.empty-packet");
+        Assert.All(report.Findings, f => Assert.True(f.Node is null || f.Path is not null, f.Code));
+    }
+
     [Fact]
     public void ACommentThatSpansPagesKeepsItsRanges()
     {
