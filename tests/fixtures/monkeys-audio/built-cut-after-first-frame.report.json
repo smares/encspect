@@ -244,14 +244,21 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 160000,
+                  "value": 147456,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 27424
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 73728,
                   "unit": "samples",
                   "offset": 0,
                   "length": 27424
                 },
                 {
                   "name": "Duration",
-                  "value": 3.6281179138321997,
+                  "value": 3.3436734693877552,
                   "unit": "s",
                   "offset": 0,
                   "length": 27424
@@ -458,8 +465,9 @@
         ],
         "channelLayoutName": "mono",
         "bitsPerSample": 16,
-        "samples": 160000,
-        "duration": 3.6281179138321997,
+        "samples": 147456,
+        "lostSamples": 73728,
+        "duration": 3.3436734693877552,
         "averageBitrate": 300.17988,
         "isVbr": true,
         "verification": {

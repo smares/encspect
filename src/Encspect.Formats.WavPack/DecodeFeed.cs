@@ -33,6 +33,13 @@ internal sealed class DecodeFeed
         if (header.HasAudio && isUnreadable)
         {
             s.UnreadableBlocks++;
+            // A version libwavpack does not decode refuses the stream as a whole, not a unit of it (wavpack.version-unsupported).
+            bool isVersionKnown = header.Version is >= BlockHeader.MinVersion and <= BlockHeader.MaxVersion;
+            if (isVersionKnown && s.SetOffset != s.LastLostSet)
+            {
+                s.LastLostSet = s.SetOffset;
+                s.LostSamples += s.SetSamples;
+            }
         }
 
         bool followsGap = header.HasAudio && s.FollowsGap;

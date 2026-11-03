@@ -242,7 +242,7 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "10 packets, 0.395 s",
+                  "value": "10 packets, 0.375 s",
                   "offset": 205,
                   "length": 312,
                   "children": [
@@ -260,7 +260,7 @@
                     },
                     {
                       "name": "Coded Samples",
-                      "value": 3200,
+                      "value": 3040,
                       "unit": "samples",
                       "offset": 205,
                       "length": 312
@@ -281,14 +281,21 @@
                     },
                     {
                       "name": "Samples",
-                      "value": 3160,
+                      "value": 3000,
+                      "unit": "samples",
+                      "offset": 205,
+                      "length": 312
+                    },
+                    {
+                      "name": "Lost Samples",
+                      "value": 960,
                       "unit": "samples",
                       "offset": 205,
                       "length": 312
                     },
                     {
                       "name": "Duration",
-                      "value": 0.395,
+                      "value": 0.375,
                       "unit": "s",
                       "offset": 205,
                       "length": 312
@@ -301,7 +308,7 @@
                     },
                     {
                       "name": "Average Bitrate",
-                      "value": 6.24,
+                      "value": 6.568421052631579,
                       "unit": "kbps",
                       "offset": 205,
                       "length": 312
@@ -1606,9 +1613,10 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 3160,
-        "duration": 0.395,
-        "averageBitrate": 6.24,
+        "samples": 3000,
+        "lostSamples": 960,
+        "duration": 0.375,
+        "averageBitrate": 6.568421052631579,
         "isVbr": true,
         "playbackGroup": 1,
         "encoder": "speexenc 1.2.1",
@@ -1658,6 +1666,20 @@
       }
     ],
     "findings": [
+      {
+        "severity": "Warning",
+        "code": "speex.granule-beyond-packets",
+        "message": "The last granule position, 3160 at 0xAE, is 160 samples beyond what the packets before it hold; decoders end the stream earlier than it says.",
+        "offset": 174,
+        "length": 8,
+        "path": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "count": 1
+      },
       {
         "severity": "Warning",
         "code": "speex.frame-invalid",

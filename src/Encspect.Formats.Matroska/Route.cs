@@ -463,6 +463,7 @@ internal sealed partial class FileReader
                 int size = (int)records.FrameSize(block, f);
                 byte[] data = ReadAt(position, size);
                 MappedBytes packet;
+                bool isCut = block.IsCut && (block.Lacing == Lacing.FixedSize || f == block.Frames - 1);
                 try
                 {
                     packet = decoder is null ? new MappedBytes(data, position) : decoder.Decode(data, position, this);
@@ -474,7 +475,7 @@ internal sealed partial class FileReader
                     yield break;
                 }
 
-                yield return packet;
+                yield return isCut ? packet.AsCut() : packet;
                 position += size;
             }
         }

@@ -171,6 +171,7 @@ public class MonkeysAudioFixtureTests
         Assert.Equal(info.GetProperty("channels").GetInt32(), stream.Channels);
         Assert.Equal(info.GetProperty("channel_mode").GetString(), stream.ChannelMode);
         Assert.Equal(info.GetProperty("samples").GetInt64(), stream.Samples);
+        Assert.Equal(info.GetProperty("lost_samples").GetInt64(), stream.LostSamples);
         Assert.Equal(info.GetProperty("duration").GetDouble(), stream.Duration, 9);
         Assert.Equal(info.GetProperty("bits_per_sample").ValueKind == JsonValueKind.Null ? null : info.GetProperty("bits_per_sample").GetInt32(), stream.BitsPerSample);
         Assert.Equal(info.GetProperty("encoder").GetString(), stream.Encoder);

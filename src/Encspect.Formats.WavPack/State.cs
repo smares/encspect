@@ -222,6 +222,12 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public long CountedSamples { get; set; }
 
+    // The samples of the sets that hold a block the parser cannot read (cut, malformed or refused), once for each set, as the set's
+    // first block declares them; part of CountedSamples. LastLostSet is the offset of the set last added.
+    public long LostSamples { get; set; }
+
+    public long LastLostSet { get; set; } = -1;
+
     public int FirstSetChannels { get; set; }
 
     public uint FormatFlags { get; set; }

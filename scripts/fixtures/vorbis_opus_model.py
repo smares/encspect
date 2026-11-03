@@ -470,13 +470,13 @@ def read_setup(packet, channels):
     return {"value": value, "groups": groups, "modes": modes, "problems": problems}
 
 
-def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=True):
+def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=True, cuts=()):
     """What the analyzer reports for a Vorbis stream's audio packets.
 
     ident: the identification header's bytes; setup: read_setup()'s result, or None; packets: the
     audio packets as (offset, bytes, ranges); positions: (audio packet index, granule, is end of
     stream) for each packet that carries a granule position; gaps: the indexes of audio packets
-    that follow packets the container lost."""
+    that follow packets the container lost; cuts: the indexes of audio packets the container handed over cut, whose blocks' samples are lost."""
     fields = struct.unpack_from("<IBI", ident, 7) if len(ident) >= 30 else None
     version, channels, rate = fields if fields else (1, 0, 0)
     b0, b1 = (1 << (ident[28] & 15), 1 << (ident[28] >> 4)) if fields else (0, 0)
@@ -487,6 +487,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
 
     records, findings = [], []
     decoded, previous, blocks, first_returned, second_returned, last_returned = 0, None, 0, 0, 0, 0
+    lost_total = 0
     sizes, long_bytes, short_bytes, long_sizes, short_sizes = set(), 0, 0, [], []
     mode_counts = {}
     after_gap = after_skip = False
@@ -543,6 +544,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 second_returned = returned
             last_returned = returned
             decoded += returned
+            lost_total += returned if index in cuts else 0
             previous = (is_long, flags, index)
             if (after_gap or after_skip) and count_base is None:
                 count_base = decoded
@@ -612,6 +614,8 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
                 if gap_trim:
                     statistics["Gap Trimming"] = plural(gap_trim, "sample", "samples")
             statistics["Samples"] = plural(samples, "sample", "samples")
+            if lost_total:
+                statistics["Lost Samples"] = plural(lost_total, "sample", "samples")
             statistics["Duration"] = fmt(samples / rate, 3) + " s"
             statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
             total = sum(len(d) for _, d, _ in packets)
@@ -633,6 +637,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     info = None if fields is None else {
         "codec": "Vorbis", "sample_rate": min(rate, 2 ** 31 - 1), "channels": channels, "channel_layout": VORBIS_SPEAKERS.get(channels, []),
         "samples": samples,
+        "lost_samples": lost_total if has_time else 0,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": sum(len(d) for _, d, _ in packets) * 8.0 * rate / decoded / 1000 if has_time and decoded else None,
         "is_vbr": len(sizes) > 1,
@@ -882,7 +887,7 @@ def opus_channel_mode(packet):
     return f"{channels} {'channel' if channels == 1 else 'channels'}"
 
 
-def opus_expectations(head, packets, positions, gaps=()):
+def opus_expectations(head, packets, positions, gaps=(), cuts=()):
     """What the analyzer reports for an Opus stream's audio packets: head the OpusHead packet,
     packets (offset, bytes, ranges), positions (audio packet index, granule, is end of stream)."""
     has_head = len(head) >= 19 and (head[18] == 0 or len(head) >= 21)
@@ -894,7 +899,7 @@ def opus_expectations(head, packets, positions, gaps=()):
     codes = [0, 0, 0, 0]
     modes, bandwidths, frame_sizes = [0, 0, 0], [0] * 5, {}
     frames = empty = padding_total = parts = 0
-    decoded = 0
+    decoded = total_lost = 0
     sizes = [len(d) for _, d, _ in packets]
     first_offset = offset = last = None
     after_gap = False
@@ -903,6 +908,7 @@ def opus_expectations(head, packets, positions, gaps=()):
     for index, (_, data, _) in enumerate(packets):
         after_gap |= index in gaps
         position, lost, first_samples, entry = 0, False, None, []
+        packet_lost = index in cuts
         for s in range(streams):
             if lost:
                 continue
@@ -911,6 +917,7 @@ def opus_expectations(head, packets, positions, gaps=()):
             position += taken
             if rule:
                 lost = True
+                packet_lost = True
                 findings.append("opus.self-delimiting" if rule == "SD" else f"opus.packet-{rule.lower()}")
             if toc is None:
                 entry.append(None)
@@ -919,6 +926,7 @@ def opus_expectations(head, packets, positions, gaps=()):
             if first_samples is None:
                 first_samples = samples
             elif samples != first_samples:
+                packet_lost = True
                 findings.append("opus.stream-durations-differ")
             parts += 1
             stereo[1 if toc & 4 else 0] += 1
@@ -939,6 +947,7 @@ def opus_expectations(head, packets, positions, gaps=()):
         if samples:
             bitrates.append(len(data) * 8.0 * 48000 / samples / 1000)
         decoded += samples
+        total_lost += samples if packet_lost else 0
         for at, granule, is_end in positions:
             if at != index or not has_head:
                 continue
@@ -976,6 +985,8 @@ def opus_expectations(head, packets, positions, gaps=()):
             statistics["Start Offset"] = plural(first_offset, "sample", "samples")
             statistics["End Trimming"] = plural(trim, "sample", "samples")
         statistics["Samples"] = plural(samples, "sample", "samples")
+        if total_lost:
+            statistics["Lost Samples"] = plural(total_lost, "sample", "samples")
         statistics["Duration"] = fmt(samples / 48000, 3) + " s"
         statistics["IsVbr"] = "true" if varies else "false"
         if decoded:
@@ -1013,7 +1024,7 @@ def opus_expectations(head, packets, positions, gaps=()):
             statistics["Padding"] = plural(padding_total, "byte", "bytes")
 
     info = None if len(head) < 19 or not has_head else {
-        "codec": "Opus", "sample_rate": 48000, "channels": head[9], "samples": samples, "duration": samples / 48000,
+        "codec": "Opus", "sample_rate": 48000, "channels": head[9], "samples": samples, "lost_samples": total_lost, "duration": samples / 48000,
         "average_bitrate": sum(sizes) * 8.0 * 48000 / decoded / 1000 if decoded else None, "is_vbr": varies,
         "channel_mode": opus_channel_mode(head) if head[9] else None, "channel_layout": opus_speakers(head),
     }

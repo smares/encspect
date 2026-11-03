@@ -162,7 +162,7 @@ internal static class Explain
 
     public const string Statistics = "Figures computed over the frames of the stream.";
     public const string StatFrames = "The number of frames in the stream, a frame the data cuts short included.";
-    public const string StatSamples = "The samples of each channel the frames hold, added up; a frame the data cuts short is not counted.";
+    public const string StatSamples = "The samples of each channel the frames declare with their block sizes, added up; a frame the data cuts short counts its block size.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from STREAMINFO or, without it, the first frame.";
     public const string StatChannels = "The number of channels, from STREAMINFO or, without it, the first frame.";

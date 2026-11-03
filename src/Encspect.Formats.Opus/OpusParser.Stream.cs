@@ -151,6 +151,10 @@ public sealed partial class OpusParser
         // the pre-skip included, offset by where the stream starts; the last page's may be
         // smaller, which trims the end.
         private long _decoded;
+
+        // The samples at the coded stage of the packets that are cut (a container's flag) or break RFC 6716 section 3.4 or the self-delimited
+        // framing: part of _decoded.
+        private long _lost;
         private int _lastPacketSamples;
         private long? _firstOffset;
         private long? _offset;
@@ -400,13 +404,19 @@ public sealed partial class OpusParser
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
 
-            ReadParts(packet, index);
+            bool isMalformed = ReadParts(packet, index);
             _lastPacketSamples = _records.SamplesOf(index);
             _decoded += _lastPacketSamples;
+            if (packet.IsCut || isMalformed)
+            {
+                _lost += _lastPacketSamples;
+            }
+
             TrackPosition(packet);
         }
 
-        private void ReadParts(MappedBytes packet, int index)
+        // Returns whether a part breaks the framing or the streams of the packet differ in duration, which decoders refuse.
+        private bool ReadParts(MappedBytes packet, int index)
         {
             ReadOnlySpan<byte> data = packet.Span;
             int streams = _records.StreamCount;
@@ -453,6 +463,8 @@ public sealed partial class OpusParser
                 _findings.Add(Severity.Warning, "opus.stream-durations-differ", PacketNode(_records, index), count =>
                     $"{Count(count, "multistream packet holds", "multistream packets hold")} streams of different durations: in the first, at 0x{_records.OffsetOf(index):X}, stream {d.Stream} codes {Counts.Of(d.Samples, "sample", "samples")} where stream 0 codes {d.First}; every stream of a packet must code the same duration, and decoders treat the others as malformed (RFC 7845, section 3).");
             }
+
+            return broken is not null || differs is not null;
         }
 
         private void Report(int index, int stream, PartStatus status, string error)
@@ -578,6 +590,7 @@ public sealed partial class OpusParser
                     ChannelMode = head.Channels > 0 ? head.ChannelMode : null,
                     ChannelLayout = head.Speakers,
                     Samples = samples,
+                    LostSamples = _lost,
                     Duration = samples / (double)Rate,
                     AverageBitrate = _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,
                     IsVbr = _sizesDiffer,

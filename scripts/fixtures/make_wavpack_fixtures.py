@@ -552,6 +552,32 @@ def regions(data, name):
     return [("WavPack", 0, len(data))]
 
 
+# The samples of the units the reader cannot read, worked out by hand from the file's sets (docs/design/samples-definition.md): a set with a
+# block that is cut, malformed or refused is lost once, by its first block's samples. They equal the coded samples less the samples libwavpack
+# unpacks (DECODES) where it decodes the rest of the file; a stream libwavpack refuses to open still has its refused units lost. DSD counts bits.
+LOST = {
+    "audio-without-bitstream": 6488,
+    "block-size-too-small": 11025,
+    "block-trailing-byte": 11025,
+    "channel-info-zero": 12000,
+    "channels-change": 1000,
+    "decorr-terms-invalid": 11025,
+    "dsd-fast-history-only": 65536,
+    "dsd-high-rate-step": 65536,
+    "dsd-high-short": 65536,
+    "dsd-invalid": 65536,
+    "dsd-stored-size": 65536,
+    "flags-invalid": 12000,
+    "md5-file-cut": 6488,
+    "reorder-too-long": 11025,
+    "subblock-overrun": 6487,
+    "subblock-sizes-mixed": 11025,
+    "truncated-last-block": 6488,
+    "unknown-subblocks": 11025,
+    "weights-without-terms": 6487,
+}
+
+
 def decode(name):
     """The expectation of the decoder pass for the fixture: it does not open, or opens and unpacks this many samples with this many errors."""
     result = DECODES[name]
@@ -573,6 +599,8 @@ def main():
             end = top[1][1] + top[1][2]
         result = m.manifest(data, start, end, {"regions": [{"name": n, "offset": o, "length": l} for n, o, l in top], "description": description,
                                                "findings": [{"code": c, "contains": t} for c, t in findings], "crosscheck": {"valid": valid, "decode": decode(name)}})
+        for info in result["stream_infos"]:
+            info["lost_samples"] = LOST.get(name, 0)
         (DIRECTORY / f"{full}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         count += 1
     print(f"Wrote {count} hand-built fixtures to {DIRECTORY}")

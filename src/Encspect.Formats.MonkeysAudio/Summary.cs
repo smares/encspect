@@ -99,12 +99,17 @@ internal static class Summary
         Node stream = s.Stream;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, stream.Offset, stream.Length, value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", stream.Offset, stream.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
-        long samples = h.TotalFrames == 0 ? 0 : h.TotalBlocks;
+        long samples = h.TotalFrames == 0 ? 0 : s.Samples;
         int rate = (int)Math.Min(h.SampleRate, int.MaxValue);
         double duration = rate > 0 ? samples / (double)rate : 0;
         IReadOnlyList<Speaker>? layout = Layout(h.Channels, s.Wav?.Mask);
         statistics.Add(Cover("Frames", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
+        if (s.LostSamples > 0 && h.TotalFrames > 0)
+        {
+            statistics.Add(Cover("Lost Samples", NodeValue.Integer(s.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         if (rate > 0)
         {
@@ -168,6 +173,7 @@ internal static class Summary
             ChannelLayout = layout,
             BitsPerSample = h.BitsPerSample > 0 ? h.BitsPerSample : null,
             Samples = samples,
+            LostSamples = h.TotalFrames > 0 ? s.LostSamples : 0,
             Duration = duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = figures is { Units: > 0 } && figures.MaximumBitrate > figures.MinimumBitrate,
