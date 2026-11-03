@@ -352,7 +352,7 @@ def old_manifest(name, data):
     verify = [{**base, "checked": checked, "failed": failed}]
     findings = ["monkeys-audio.old-format"] + (["monkeys-audio.final-frame-blocks"] if a.final_blocks > a.blocks_per_frame else []) + extra
     return {"length": len(data), "file_version": a.version, "seek_entries": a.seek_entries, "regions": [{"name": "Monkey's Audio", "offset": 0, "length": len(data)}],
-            "frames": frames, "stream_infos": [m.old_stream_info(a, bits, samples)], "decoded_samples": written, "pcm_samples": written,
+            "frames": frames, "stream_infos": [m.old_stream_info(a, bits, *m.declared(data, a), coded=samples)], "decoded_samples": written, "pcm_samples": written,
             "verification": {"default": {"isVerified": m.verdict(default), "decoding": "notRequested", "checksums": default},
                              "verify": {"isVerified": m.verdict(verify), "decoding": status, "checksums": verify}},
             "decode_findings": [{"code": code, "count": count} for code, count in found], "findings": [*[finding(c) for c in findings], *m.wav_header(a.header_data, a.channels)[1]], "encoder": {"tool": TOOL if name.startswith("old-version-") else TOOL_OLD},

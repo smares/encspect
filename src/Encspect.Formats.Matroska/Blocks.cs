@@ -19,6 +19,7 @@ internal sealed partial class FileReader
             DataLength = (uint)Math.Min(dataLength, uint.MaxValue),
             HeaderLength = (byte)element.Length,
             IsInGroup = isInGroup,
+            IsCut = element.End is { } declared && declared > end,
         };
         string name = isInGroup ? "Block" : "SimpleBlock";
         if (dataLength > MaxBlock)

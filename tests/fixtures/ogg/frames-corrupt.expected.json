@@ -214,13 +214,14 @@
     "statistics": {
      "Packets": "10",
      "Frames": "14",
-     "Coded Samples": "3200 samples",
+     "Coded Samples": "3040 samples",
      "Encoder Delay": "40 samples",
      "End Trimming": "0 samples",
-     "Samples": "3160 samples",
-     "Duration": "0.395 s",
+     "Samples": "3000 samples",
+     "Lost Samples": "960 samples",
+     "Duration": "0.375 s",
      "IsVbr": "true",
-     "Average Bitrate": "6.2 kbps",
+     "Average Bitrate": "6.6 kbps",
      "Minimum Bitrate": "0.0 kbps",
      "Maximum Bitrate": "12.0 kbps",
      "Packet Sizes": "7 sizes",
@@ -250,9 +251,10 @@
    "channel_layout": [
     "front center"
    ],
-   "samples": 3160,
-   "duration": 0.395,
-   "average_bitrate": 6.24,
+   "samples": 3000,
+   "lost_samples": 960,
+   "duration": 0.375,
+   "average_bitrate": 6.568421052631579,
    "is_vbr": true,
    "playback_group": 1
   }
@@ -273,6 +275,10 @@
   {
    "code": "speex.missing-frames",
    "contains": "fewer frames than the 2 per packet"
+  },
+  {
+   "code": "speex.granule-beyond-packets",
+   "contains": "160 samples beyond what the packets before it hold"
   },
   {
    "code": "speex.empty-packet",

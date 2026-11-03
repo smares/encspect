@@ -57,6 +57,9 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
+    // Of Samples, those of the frames that were cut by the data or that could not be read.
+    public long Lost { get; private set; }
+
     // The largest packet, for the cookie's statement of it.
     public long Largest { get; private set; }
 
@@ -88,6 +91,17 @@ internal sealed class State
             FrameWalker.Walk(packet.Span, cookie, _walk, Tally, _kept, isDetailed ? Records.Store : null, _cancellation);
             flags |= _walk.Flags;
             samples = _walk.HasSamples ? _walk.Samples : 0;
+
+            // A frame whose first byte is there declares its samples all the same: those of its first element if that was read, else the
+            // cookie's frame length. One that cannot be read, or that the container says is cut, is lost.
+            // A cookie the walk refuses for every frame (alac.tuning-invalid) is a configuration the decoder refuses as a whole: no frame is lost for it.
+            bool isLost = ((flags & FrameFlags.Unreadable) != 0 && _walk.Fault != WalkFault.Tuning) || (packet.IsCut && length > 0);
+            if (isLost && length > 0)
+            {
+                samples = samples > 0 ? samples : cookie.FrameLength;
+                Lost += samples;
+            }
+
             elements = _walk.Elements;
             walked = _walk.Walked;
             if (_walk.HasEnd && walked < length)

@@ -163,6 +163,11 @@ public sealed partial class SpeexParser
                 }
 
                 Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
+                if (_lost > 0)
+                {
+                    Add("Lost Samples", NodeValue.Integer(_lost, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+                }
+
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
                 Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
                 Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _coded / 1000, 1, "kbps"), Explain.AverageBitrate);

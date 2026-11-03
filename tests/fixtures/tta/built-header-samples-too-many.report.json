@@ -183,14 +183,21 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 92160,
+                  "value": 138240,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 950
+                },
+                {
+                  "name": "Lost Samples",
+                  "value": 46080,
                   "unit": "samples",
                   "offset": 0,
                   "length": 950
                 },
                 {
                   "name": "Duration",
-                  "value": 2.089795918367347,
+                  "value": 3.1346938775510202,
                   "unit": "s",
                   "offset": 0,
                   "length": 950
@@ -396,8 +403,9 @@
         "channels": 2,
         "channelMode": "Stereo",
         "bitsPerSample": 16,
-        "samples": 92160,
-        "duration": 2.089795918367347,
+        "samples": 138240,
+        "lostSamples": 46080,
+        "duration": 3.1346938775510202,
         "averageBitrate": 1.9446875,
         "isVbr": true,
         "verification": {

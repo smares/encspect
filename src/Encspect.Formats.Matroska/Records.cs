@@ -101,6 +101,10 @@ internal struct BlockRecord
     public BlockStatus Status;
     public bool IsInGroup;
 
+    // The block states more bytes than the file or its parent element holds (matroska.element-truncated, matroska.element-overruns-parent),
+    // so its last frame, or every frame of one with fixed-size lacing, is cut.
+    public bool IsCut;
+
     public readonly Lacing Lacing => (Lacing)((Flags >> 1) & 3);
 
     // SimpleBlock only (RFC 9559 section 10.2).

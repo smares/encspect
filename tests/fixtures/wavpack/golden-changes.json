@@ -1,0 +1,38 @@
+{
+  "note": "Samples alignment (docs/design/samples-definition.md): a WavPack set with a block the parser cannot read (cut, malformed or refused) is lost once, by its first block's samples; the stream gains lostSamples and the statistics node Lost Samples. The samples do not change.",
+  "goldens": [
+    "tests/fixtures/wavpack/built-audio-without-bitstream.report.json",
+    "tests/fixtures/wavpack/built-block-size-too-small.report.json",
+    "tests/fixtures/wavpack/built-block-trailing-byte.report.json",
+    "tests/fixtures/wavpack/built-channel-info-zero.report.json",
+    "tests/fixtures/wavpack/built-channels-change.report.json",
+    "tests/fixtures/wavpack/built-decorr-terms-invalid.report.json",
+    "tests/fixtures/wavpack/built-dsd-fast-history-only.report.json",
+    "tests/fixtures/wavpack/built-dsd-high-rate-step.report.json",
+    "tests/fixtures/wavpack/built-dsd-high-short.report.json",
+    "tests/fixtures/wavpack/built-dsd-invalid.report.json",
+    "tests/fixtures/wavpack/built-dsd-stored-size.report.json",
+    "tests/fixtures/wavpack/built-flags-invalid.report.json",
+    "tests/fixtures/wavpack/built-md5-file-cut.report.json",
+    "tests/fixtures/wavpack/built-reorder-too-long.report.json",
+    "tests/fixtures/wavpack/built-subblock-overrun.report.json",
+    "tests/fixtures/wavpack/built-subblock-sizes-mixed.report.json",
+    "tests/fixtures/wavpack/built-truncated-last-block.report.json",
+    "tests/fixtures/wavpack/built-unknown-subblocks.report.json",
+    "tests/fixtures/wavpack/built-weights-without-terms.report.json"
+  ],
+  "added": [
+    {
+      "scope": "stream",
+      "key": "lostSamples"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics"
+      ],
+      "name": "Lost Samples"
+    }
+  ]
+}

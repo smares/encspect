@@ -388,7 +388,8 @@ public class FlacFindingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
-    // Pages the Ogg layer lost before the first frame are named as a cause of its starting above sample 0.
+    // Pages the Ogg layer lost before the first frame are named as a cause of its starting above sample 0. A page that fails its CRC is not lost (its
+    // packets are handed over), so the second page is taken out whole and the sequence numbers show the gap.
     [Fact]
     public void AFirstFrameAfterLostPagesIsNamedForBothCauses()
     {
@@ -404,7 +405,9 @@ public class FlacFindingTests
             }
         }
 
-        file[at + 28] ^= 0xFF;
+        int segments = file[at + 26];
+        int length = 27 + segments + file.AsSpan(at + 27, segments).ToArray().Sum(b => b);
+        file = [.. file[..at], .. file[(at + length)..]];
 
         Report report = Analyzer.CreateDefault().Analyze("lost.oga", new MemoryStream(file));
 

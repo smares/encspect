@@ -21,7 +21,9 @@ every child of that name. A change file:
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
-                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
+                  {"scope": "finding", "code": "speex.granule-beyond-packets"},          # a finding the golden gains; one the old report has stays
+                  {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"},
+                  {"scope": "node", "parent": ["MP4", "Track 1 Samples", "AAC"], "name": "Access Unit", "last": 1}],  # one more node of a kind the parent has, last
       "renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}],  # only where the old report has it
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
@@ -86,6 +88,8 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
     path and its new name) is the renamed node and stays, and so does one that the old report has under that name; a node comes out only
     when its children have come out too, which takes an entry for each (the deepest entries run first), so a child nobody listed fails."""
     for entry in sorted(added, key=lambda e: -len(e["parent"]) if e.get("scope") == "node" else 1):
+        if entry.get("scope") == "finding" and "code" not in entry:
+            raise ChangeError(f"an added entry with the scope finding needs a code: {json.dumps(entry)}")
         scope = entry.get("scope")
         if scope == "report":
             report.pop(entry["key"], None)
@@ -107,6 +111,25 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
                         stream[entry["array"]] = kept
                     else:
                         stream.pop(entry["array"], None)
+        elif scope == "node" and "last" in entry:
+            # The entry adds up to N children of that name at the end, nodes of a kind the parent already has (a unit that the data ends
+            # inside, after the whole ones): only the surplus over the old report's count of them is taken back, so a golden without the
+            # addition is left alone.
+            olds = matching(old["root"], entry["parent"]) if old is not None else []
+            for number, parent in enumerate(matching(report["root"], entry["parent"])):
+                children = parent.get("children", [])
+                positions = [i for i, c in enumerate(children) if c.get("name") == entry["name"]]
+                known = sum(1 for c in olds[number].get("children", []) if c.get("name") == entry["name"]) if number < len(olds) else 0
+                surplus = min(entry["last"], max(0, len(positions) - known)) if old is not None else entry["last"]
+                dropped = set(positions[len(positions) - surplus:]) if surplus > 0 else set()
+                kept = [c for i, c in enumerate(children) if i not in dropped]
+                if kept:
+                    parent["children"] = kept
+                else:
+                    parent.pop("children", None)
+        elif scope == "finding":
+            # A finding the change adds (entry: {"scope": "finding", "code": ...}): every finding of the code comes out of the new report.
+            report["findings"] = [f for f in report.get("findings", []) if f.get("code") != entry["code"] or (old is not None and any(g.get("code") == entry["code"] for g in old.get("findings", [])))]
         elif scope == "node":
             if (tuple(entry["parent"]), entry["name"]) in renamed_nodes or (old is not None and has_child(old, entry["parent"], entry["name"])):
                 continue

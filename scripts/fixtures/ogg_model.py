@@ -395,12 +395,15 @@ def share(count, total, singular, plural_form):
     return f"{plural(count, singular, plural_form)} ({fmt_decimal(count * 100.0 / total, 1)}%)"
 
 
-def speex_expectations(header, packets, positions, gaps=()):
+def speex_expectations(header, packets, positions, gaps=(), cuts=()):
     """What the analyzer reports for a Speex stream.
 
     header: the header packet's bytes; packets: the audio packets as (offset, bytes, ranges);
     positions: (audio packet index, granule, is end of stream) for each packet that carries a
-    granule position; gaps: the indexes of audio packets that follow packets the container lost.
+    granule position; gaps: the indexes of audio packets that follow packets the container lost; cuts: the indexes of audio packets the
+    container handed over cut. A packet counts the samples of the frames per packet its header gives, empty or damaged ones included
+    (docs/design/samples-definition.md, question 11); one that holds fewer frames than that without a fault counts the frames present
+    (question 5); an empty, corrupt or cut packet is lost.
     """
     if len(header) >= 80:
         rate, mode, _, channels = struct.unpack_from("<4i", header, 36)
@@ -415,14 +418,33 @@ def speex_expectations(header, packets, positions, gaps=()):
 
     frames, sizes, counts = [], {}, [{}, {}, {}]
     inband = stereo = total_frames = total_bytes = 0
-    for offset, data, ranges in packets:
+    ends, coded_so_far, lost = [], 0, 0
+    for number, (offset, data, ranges) in enumerate(packets):
         sizes[len(data)] = sizes.get(len(data), 0) + 1
         total_bytes += len(data)
+        samples, is_lost = per_packet, number in cuts
         if not data or not valid_mode:
             frames.append([])
+            is_lost = is_lost or (not data and valid_mode)
+            coded_so_far += samples
+            lost += samples if is_lost else 0
+            ends.append(coded_so_far)
             continue
         found, end, requests, stereo_requests = walk(data, mode, walked + 1)
+        faulty = end in ("invalid", "overrun")
+        if len(found) > walked:
+            broken = False
+        elif faulty and len(found) == walked:
+            broken = False
+        else:
+            broken = faulty
         found = found[:walked]
+        if len(found) < walked and not faulty and number not in cuts:
+            samples = frame_size * len(found)
+        is_lost = is_lost or broken
+        coded_so_far += samples
+        lost += samples if is_lost else 0
+        ends.append(coded_so_far)
         frames.append(found)
         inband += requests
         stereo += stereo_requests
@@ -432,7 +454,7 @@ def speex_expectations(header, packets, positions, gaps=()):
                 key = value if value is not None else "absent"
                 counts[layer][key] = counts[layer].get(key, 0) + 1
 
-    coded = len(packets) * per_packet
+    coded = coded_so_far
     first_delay = delay = None
     after_gap = False
     last = None
@@ -440,7 +462,7 @@ def speex_expectations(header, packets, positions, gaps=()):
     for index, granule, is_end in (positions if has_time else []):
         after_gap |= any(previous < g <= index for g in gaps)
         previous = index
-        at = (index + 1) * per_packet
+        at = ends[index]
         d = at - granule
         if first_delay is None:
             # Only the last position: libspeex's lookahead is assumed.
@@ -462,6 +484,8 @@ def speex_expectations(header, packets, positions, gaps=()):
             statistics["Encoder Delay"] = plural(first_delay, "sample", "samples")
             statistics["End Trimming"] = plural(trim, "sample", "samples")
         statistics["Samples"] = plural(samples, "sample", "samples")
+        if lost:
+            statistics["Lost Samples"] = plural(lost, "sample", "samples")
         statistics["Duration"] = fmt_decimal(samples / rate, 3) + " s"
         statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
         statistics["Average Bitrate"] = fmt_decimal(total_bytes * 8.0 * rate / coded / 1000, 1) + " kbps"
@@ -494,6 +518,7 @@ def speex_expectations(header, packets, positions, gaps=()):
         # Speex codes one channel, or two as intensity stereo, which decodes to left and right.
         "channel_layout": ["front center"] if channels <= 1 else ["front left", "front right"],
         "samples": samples,
+        "lost_samples": lost if has_time else 0,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": total_bytes * 8.0 * rate / coded / 1000 if has_time and coded else None,
         "is_vbr": len(sizes) > 1,

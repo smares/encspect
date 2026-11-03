@@ -829,7 +829,7 @@ def corrupt():
     data, rows = concat(frames)
     out = [("corrupt-syntax.aac", data, manifest(
         "Valid mono frames with six broken ones between them: codebook 12, a section past max_sfb, max_sfb 60 at 44100 Hz, a block that ends "
-        "inside its spectral data, an escape sequence of nine leading ones, and predictor data in AAC LC. Each block's reading stops there.", data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
+        "inside its spectral data, an escape sequence of nine leading ones, and predictor data in AAC LC. Each block's reading stops there.", data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024, lost_samples=6 * 1024)],
         {"ADTS/Frame[2]/Raw Data Block/SCE/Channel/Section Data/Section": "codebook 12 (reserved), bands 0-3",
          "ADTS/Statistics/Raw Data Blocks/Unreadable Blocks": share(6, len(rows), "block")},
         findings,
@@ -1126,7 +1126,7 @@ def sbr_evidence():
     out.append(("adts", "sbr-in-truncated-frame.aac", data, manifest(
         "ADTS at 22050 Hz of two channel pair frames and a third that holds two blocks, each a channel pair followed by SBR data, and ends 5 bytes "
         "before its stated length: a damaged frame, so its SBR data counts for nothing and the stream stays AAC LC.",
-        data, rows, [stream("AAC LC", core, 2, "Stereo", 4 * 1024)], {},
+        data, rows, [stream("AAC LC", core, 2, "Stereo", 4 * 1024, lost_samples=2 * 1024)], {},
         [["aac.frame-truncated", "has"]],
         skip={**skip, "ffprobe": "ffmpeg drops the cut frame.", "decode": "ffmpeg drops the cut frame.",
               "faad_trace": "faad2 reads one raw data block per ADTS frame and does not read the cut frame of two blocks."}, rate=core)))

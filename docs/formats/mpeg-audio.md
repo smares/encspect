@@ -29,6 +29,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 
 Each MPEG Audio region reports:
 
+- **Units counted:** each audio frame counts the samples its header declares (1,152, 576 or 384). A frame cut by the end of the data or by the next frame counts them too, in Samples and Duration, and they are also reported as Lost Samples (and the stream's `lostSamples`); the frame count, the bitrates and the distribution leave the cut frame out.
 - duration, a bitrate summary, and the bitrate distribution with the frame sizes of each bitrate;
   - The free-format entry is named with the average bitrate its frame lengths give, in whole kbps: `free (400 kbps): 21 frames (100.0%)`.
 - the counts a VBR header claims against the ones counted, and the gapless sample count;

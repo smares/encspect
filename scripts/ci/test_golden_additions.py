@@ -168,6 +168,18 @@ class CheckTests(unittest.TestCase):
         unlisted = report([*OLD_STATS, node("Block Sizes", [node("Short", value=1), node("Bogus", value=2)])])
         self.assertTrue(self.check(report(OLD_STATS), unlisted, change))
 
+    def test_nodes_of_a_kind_the_parent_has_are_taken_back_from_the_end_when_the_entry_says_how_many(self):
+        old = report([node("Frames", value=10)])
+        new = report([node("Frames", value=10)])
+        old["root"]["children"][1]["children"] = [node("Frame"), node("Frame"), node("Statistics", [node("Frames", value=10)])]
+        new["root"]["children"][1]["children"] = [node("Frame"), node("Frame"), node("Frame"), node("Statistics", [node("Frames", value=10)])]
+        change = {"added": [{"scope": "node", "parent": ["MPEG Audio"], "name": "Frame", "last": 1}]}
+        self.assertEqual([], self.check(old, new, change))
+        self.assertNotEqual([], self.check(old, new, {"added": [{"scope": "node", "parent": ["MPEG Audio"], "name": "Frame", "last": 0}]}))
+
+        # Only the surplus over the old report goes: an unchanged golden of the same folder is left alone.
+        self.assertEqual([], self.check(old, old, change))
+
     def test_an_added_node_that_the_old_report_has_is_not_an_addition(self):
         change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
                   "changed": [{"path": ["MPEG Audio", "Statistics", "Stereo Coding"], "fields": ["value"]}]}

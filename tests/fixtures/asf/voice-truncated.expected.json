@@ -450,6 +450,10 @@
   "messages": [],
   "ffmpeg": {
    "samples": 10760
+  },
+  "analyzer": {
+   "samples": 11060,
+   "reason": "ffmpeg returns the cut media object as a short packet and drops the superframe it ends; the analyzer finishes that superframe with the bytes it holds and counts its 300 more samples"
   }
  }
 }

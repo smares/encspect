@@ -1113,6 +1113,7 @@ internal static class Sv8Parser
         int rate = header is { RateIndex: < 4 and { } rateIndex } ? Sv7Parser.SampleRates[rateIndex] : 0;
         var figures = new StreamFigures(rate);
         long frames = 0;
+        long cut = 0;
         for (int i = 0; i < state.AudioPackets.Count; i++)
         {
             if (i % 4096 == 0)
@@ -1123,6 +1124,9 @@ internal static class Sv8Parser
             Packet packet = state.Packets[state.AudioPackets[i]];
             if (packet.IsTruncated)
             {
+                // A packet cut by the end of the data declares its frames all the same (Coded Samples, Lost Samples); its bytes are no audio packet's.
+                long declared = state.FramesIn(state.AudioPackets[i]);
+                cut += header is { Samples: > 0 } ? Math.Min(declared, Math.Max(0, header.ExpectedFrames - frames - cut)) : declared;
                 continue;
             }
 
@@ -1151,7 +1155,9 @@ internal static class Sv8Parser
         }
 
         long silence = header?.Silence ?? 0;
-        long samples = header is null || header.OverflowsDecoder ? 0 : Math.Max(0, Math.Min(header.Samples, (frames * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
+        long coded = frames + cut;
+        long lost = cut * Sv7Parser.FrameSamples;
+        long samples = header is null || header.OverflowsDecoder ? 0 : Math.Max(0, Math.Min(header.Samples, (coded * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
         double duration = rate > 0 ? samples / (double)rate : 0;
 
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
@@ -1180,9 +1186,13 @@ internal static class Sv8Parser
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("Audio Packets", NodeValue.Integer(figures.Units, "packets", "packet"), Explain.StatPackets));
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
-        statistics.Add(Cover("Coded Samples", NodeValue.Integer(frames * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
+        statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
         statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay + silence, "samples", "sample"), Explain.DecoderDelay));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
+        if (lost > 0)
+        {
+            statistics.Add(new Node("Lost Samples", node.Offset, node.Length, NodeValue.Integer(lost, "samples", "sample")) { Description = StreamInfo.LostSamplesDescription, Topic = Topics.SamplesAndLostSamples });
+        }
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         figures.AddTo(statistics, Cover, "Packet", "packets", inBytes: true, out Node bitrate);
         state.Leading.Add(statistics);
@@ -1207,6 +1217,7 @@ internal static class Sv8Parser
                 _ => null,
             },
             Samples = samples,
+            LostSamples = lost,
             Duration = duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = true,

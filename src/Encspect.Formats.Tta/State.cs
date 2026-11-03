@@ -76,6 +76,9 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
+    // The samples of the frames the data cuts short; part of Samples.
+    public long LostSamples { get; private set; }
+
     // The entries added, recorded or not, which is the index the next one takes; and those with a frame the records do not keep (past
     // Records.MaxEntries).
     public long Listed { get; private set; }
@@ -119,6 +122,13 @@ internal sealed class State
             if (FirstCut.Index < 0)
             {
                 FirstCut = (index, entry);
+            }
+
+            long declared = Records.SamplesOf(index);
+            if (declared > 0)
+            {
+                Samples += declared;
+                LostSamples += declared;
             }
         }
         else if ((entry.Status & EntryStatus.TooSmall) != 0)

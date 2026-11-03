@@ -1179,14 +1179,21 @@
                         },
                         {
                           "name": "Samples",
-                          "value": 5904,
+                          "value": 10000,
+                          "unit": "samples",
+                          "offset": 605,
+                          "length": 11445
+                        },
+                        {
+                          "name": "Lost Samples",
+                          "value": 4096,
                           "unit": "samples",
                           "offset": 605,
                           "length": 11445
                         },
                         {
                           "name": "Duration",
-                          "value": 0.13387755102040816,
+                          "value": 0.22675736961451248,
                           "unit": "s",
                           "offset": 605,
                           "length": 11445
@@ -1385,7 +1392,7 @@
                         },
                         {
                           "name": "Average Bitrate",
-                          "value": 683.729268292683,
+                          "value": 403.77959999999996,
                           "unit": "kbps",
                           "offset": 605,
                           "length": 11445
@@ -1398,7 +1405,7 @@
                         },
                         {
                           "name": "Smallest Frame",
-                          "value": 4775,
+                          "value": 3,
                           "unit": "bytes",
                           "offset": 605,
                           "length": 11445
@@ -1412,7 +1419,7 @@
                         },
                         {
                           "name": "Minimum Bitrate",
-                          "value": 411.2841796875,
+                          "value": 0.2583984375,
                           "unit": "kbps",
                           "offset": 605,
                           "length": 11445
@@ -1430,14 +1437,20 @@
                           "length": 11445,
                           "children": [
                             {
+                              "name": "0 to 31 kbps",
+                              "value": "1 frame (33.3%)",
+                              "offset": 605,
+                              "length": 11445
+                            },
+                            {
                               "name": "384 to 415 kbps",
-                              "value": "1 frame (50.0%)",
+                              "value": "1 frame (33.3%)",
                               "offset": 605,
                               "length": 11445
                             },
                             {
                               "name": "1280 to 1311 kbps",
-                              "value": "1 frame (50.0%)",
+                              "value": "1 frame (33.3%)",
                               "offset": 605,
                               "length": 11445
                             }
@@ -1722,8 +1735,8 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": 3,
-                          "unit": "bytes",
+                          "value": 4096,
+                          "unit": "samples",
                           "offset": 5380,
                           "length": 3,
                           "children": [
@@ -2068,9 +2081,10 @@
         ],
         "channelLayoutName": "stereo",
         "bitsPerSample": 16,
-        "samples": 5904,
-        "duration": 0.13387755102040816,
-        "averageBitrate": 683.729268292683,
+        "samples": 10000,
+        "lostSamples": 4096,
+        "duration": 0.22675736961451248,
+        "averageBitrate": 403.77959999999996,
         "isVbr": true,
         "playbackGroup": 1,
         "series": [
@@ -2082,10 +2096,12 @@
             "quantity": "Bitrate",
             "x": [
               605,
+              5380,
               5383
             ],
             "values": [
               411.2841796875,
+              0.2583984375,
               1300.95
             ]
           },
@@ -2099,7 +2115,7 @@
               0
             ],
             "values": [
-              684
+              404
             ]
           }
         ],
@@ -2131,7 +2147,15 @@
             "valueCounts": [
               [
                 1,
-                2
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
               ]
             ],
             "runs": [
@@ -2162,7 +2186,15 @@
             "valueCounts": [
               [
                 1,
-                2
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
               ]
             ],
             "runs": [

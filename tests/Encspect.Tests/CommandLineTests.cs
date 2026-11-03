@@ -175,7 +175,8 @@ public class CommandLineTests
         Assert.Equal(3, lines.Length);
         Assert.StartsWith("Path,Format,Streams,Codec,Duration (s)", lines[0]);
         Assert.EndsWith(",MPEG Audio,1,MPEG-1 Layer III,0.549,24192,128.0,44100,Joint stereo,\"stereo (front left, front right)\",LAME 3.100,High,,,\"ID3v2, ID3v1\",0,0,0,false,,false,,,,,,,,,0", lines[1]);
-        Assert.EndsWith(",0,3,0,false,,false,,,,,,,,,0", lines[2]);
+        // The second file is a Layer III stream whose last frame is cut: its 1,152 declared samples are lost.
+        Assert.EndsWith(",0,3,0,false,,false,,,,,,,,,1152", lines[2]);
     }
 
     [Theory]

@@ -113,9 +113,17 @@ internal static class Adif
 
         config = config with { SbrFound = log.Tally.IsSbrEvident, PsFound = log.Tally.IsPsEvident };
         var figures = new StreamFigures(config.OutputSampleRate);
-        for (int i = 0; i < blocks.Count && blocks[i].IsRead; i++)
+        for (int i = 0; i < blocks.Count; i++)
         {
-            figures.Add(blocks[i].Offset, blocks[i].Length, config.OutputFrameLength);
+            if (blocks[i].IsRead)
+            {
+                figures.Add(blocks[i].Offset, blocks[i].Length, config.OutputFrameLength);
+            }
+            else
+            {
+                // The block that breaks counts its declared samples all the same and is lost; its extent is not known, so its bytes are not counted.
+                figures.AddUnreadable(config.OutputFrameLength);
+            }
         }
 
         if (run.Blocks > 0)
@@ -174,6 +182,7 @@ internal static class Adif
             ChannelMode = config.ChannelMode,
             ChannelLayout = config.OutputLayout,
             Samples = figures.Samples,
+            LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = header.IsVbr,

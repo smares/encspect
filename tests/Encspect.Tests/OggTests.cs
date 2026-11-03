@@ -87,13 +87,15 @@ public class OggTests
         byte[] file = File.ReadAllBytes(OggFixture("bad-crc.spx"));
         new Analyzer(DefaultParsers.Tags, [new OggParser()], [codec]).Analyze("bad-crc.spx", new MemoryStream(file));
 
-        // 2 headers and 30 audio packets on pages of 1, 1, 10, 10 and 10, the fourth page failing its CRC.
-        Assert.Equal(22, codec.Packets.Count);
+        // 2 headers and 30 audio packets on pages of 1, 1, 10, 10 and 10, the fourth page failing its CRC: its packets are handed over like the
+        // others (docs/design/samples-definition.md, question 2).
+        Assert.Equal(32, codec.Packets.Count);
         MappedBytes[] positioned = [.. codec.Packets.Where(p => p.EndPosition is not null)];
-        Assert.Equal([0, 0, (10 * 160) - 40, (30 * 160) - 40], positioned.Select(p => p.EndPosition!.Value));
+        Assert.Equal([0, 0, (10 * 160) - 40, (20 * 160) - 40, (30 * 160) - 40], positioned.Select(p => p.EndPosition!.Value));
         Assert.All(positioned, p => Assert.Equal(("Granule Position", 8L), (p.EndPositionField!.Name, p.EndPositionField.Length)));
-        Assert.Equal([21], Indexes(codec.Packets, p => p.IsEndOfStream));
-        Assert.Equal([12], Indexes(codec.Packets, p => p.FollowsGap));
+        Assert.Equal([31], Indexes(codec.Packets, p => p.IsEndOfStream));
+        Assert.Empty(Indexes(codec.Packets, p => p.FollowsGap));
+        Assert.Empty(Indexes(codec.Packets, p => p.IsCut));
     }
 
     [Fact]

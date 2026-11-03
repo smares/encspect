@@ -81,6 +81,9 @@ internal sealed class State
 
     public long Samples { get; private set; }
 
+    // The block sizes of the frames that are cut or unreadable (design: docs/design/samples-definition.md); part of Samples.
+    public long LostSamples { get; private set; }
+
     public long Crc8Failures { get; private set; }
 
     public long Crc16Failures { get; private set; }
@@ -316,6 +319,12 @@ internal sealed class State
                 $"The header of the frame at 0x{offset:X} has the CRC-8 0x{storedCrc8:X2}, but 0x{computedCrc8:X2} is computed over it; {(isCrc16Right ? "the rest of the frame reads and holds its CRC-16" : "the frame has no CRC-16 that holds either")}{(count > 1 ? $"; {Counts.Of(count - 1, "more header", "more headers")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.");
         }
 
+        Samples += header.BlockSize;
+        if (isCut || (status & EntryStatus.Unreadable) != 0)
+        {
+            LostSamples += header.BlockSize;
+        }
+
         if (isCut)
         {
             CutFrames++;
@@ -326,7 +335,6 @@ internal sealed class State
         }
         else
         {
-            Samples += header.BlockSize;
             if ((status & EntryStatus.Crc16Fails) != 0)
             {
                 Crc16Failures++;

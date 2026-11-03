@@ -99,7 +99,11 @@ internal sealed class State
 
     public long SpecialFrames { get; set; }
 
+    // The declared samples of the frames whose first byte is in the file, and of those the samples of the frames that are cut or too short
+    // for their start fields.
     public long Samples { get; set; }
+
+    public long LostSamples { get; set; }
 
     public bool HasGap { get; set; }
 

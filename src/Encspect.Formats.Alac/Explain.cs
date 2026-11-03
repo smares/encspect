@@ -98,7 +98,7 @@ internal static class Explain
     public const string StatPartialFrames = "The frames with an element that states its own sample count.";
     public const string StatUncompressedFrames = "The frames with an element that holds its samples uncompressed.";
     public const string StatUnreadableFrames = "The frames the analyzer could not read to their end.";
-    public const string StatSamples = "The samples of each channel the frames hold, added up; a frame that was not read, or whose first element is cut off, adds none.";
+    public const string StatSamples = "The samples of each channel the frames declare, added up: those of the frame's first element, or the cookie's frame length for a frame that cannot be read or whose first element is cut off.";
     public const string StatSamplesStated = "The samples of each channel that the container's duration states at the sample rate, since no frame was read.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the magic cookie.";

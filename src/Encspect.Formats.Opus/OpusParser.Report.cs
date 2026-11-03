@@ -149,6 +149,11 @@ public sealed partial class OpusParser
             }
 
             Add(node, "Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.OpusPreSkip);
+            if (_lost > 0)
+            {
+                Add(node, "Lost Samples", NodeValue.Integer(_lost, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic);
+            }
+
             Add(node, "Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
             Add(node, "IsVbr", NodeValue.Boolean(_sizesDiffer), Explain.StatIsVbr, Topics.BitrateModes);
             if (_decoded > 0)

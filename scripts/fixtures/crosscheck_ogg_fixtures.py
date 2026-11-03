@@ -171,7 +171,9 @@ def check_packets(name, manifest, problems, pages=True):
             problems.append(f"oggz info: {stream['serial']} has {counts[serial][0]} packets in {counts[serial][1]} pages, the manifest {stream['packets']} in {stream['pages']}")
         for codec in ("speex", "vorbis", "opus"):
             if codec in stream:
-                audio = [p[1] for p in stream[codec]["packets"]]
+                # Packets the analyzer hands over from pages libogg drops, or cut, are not in oggz's list.
+                missing = set(stream[codec].get("oggz_missing", []))
+                audio = [p[1] for i, p in enumerate(stream[codec]["packets"]) if i not in missing]
                 if audio and sizes.get(serial, [])[-len(audio):] != [printed_size(n) for n in audio]:
                     problems.append(f"oggz dump: the audio packet sizes of {stream['serial']} differ from the manifest's")
 
