@@ -188,8 +188,8 @@ Every format gains `LostSamples`; goldens change only where it is above 0 or `sa
 - **Musepack.** A truncated frame counts 1,152 in Coded Samples and is lost; `samples` composes as before (the cap 66,150 does not apply).
   - `sv7-truncated.mpc` Coded Samples 46,080 → 47,232, `samples` 45,599 → 46,751; `sv7-damaged-length.mpc` 4,608 → 5,760, 4,127 → 5,279; `sv7-data-after-tag.mpc` 43,776 → 44,928, 43,295 → 44,447;
   - `sv8-truncated.mpc` (`musepack.packet-truncated`: the cut packet of 4 frames is left out) 41,472 → 46,080, 40,991 → 45,599, lost 4,608;
-  - `sv5-band-overrun.mpc`, `sv6-band-overrun.mpc`: one damaged frame, lost 1,152;
-  - `musepack.last-frame-unwritten` (the SV4/SV5 encoders write whole words) is on four SV5 files, `sv5-band-overrun`, `external-mppsv5-vbr`, `external-mppsv5-left-right-vbr`, `sv5-seek-tag` (31,775 samples, Coded Samples 32,256); counting and losing 1,152 on encoder-written files is a case of [question 4](#open-questions).
+  - `sv5-band-overrun.mpc`, `sv6-band-overrun.mpc`: one damaged frame, lost 1,152 (as built: `sv6-band-overrun.mpc` 32,256, lost 1,152; `sv5-band-overrun.mpc` also has the unwritten last frame, so its `samples` are 32,927 and lost 2,304); `sv7-resolution-invalid.mpc` (a frame with a resolution out of range, not listed above): `samples` stay at the cap 66,150, lost 1,152;
+  - `musepack.last-frame-unwritten` (the SV4/SV5 encoders write whole words) is on four SV5 files, `sv5-band-overrun`, `external-mppsv5-vbr`, `external-mppsv5-left-right-vbr`, `sv5-seek-tag` (31,775 samples, Coded Samples 32,256); counting and losing 1,152 on encoder-written files is a case of [question 4](#open-questions). As built: those four files read `samples` 32,927 (31,775 + 1,152) and lost 1,152; an SV4 or SV5 last frame that is whole stays uncounted, as decoders do not decode it.
 
 ## Cross-check statuses
 
