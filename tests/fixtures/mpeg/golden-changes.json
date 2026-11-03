@@ -1,6 +1,9 @@
 {
   "goldens": [
-    "tests/fixtures/mpeg/"
+    "tests/fixtures/layer2/",
+    "tests/fixtures/layer3/",
+    "tests/fixtures/mpeg/",
+    "tests/fixtures/vbr/"
   ],
   "added": [
     {
@@ -19,6 +22,9 @@
       ],
       "name": "Failed Frame Checksums",
       "goldens": [
+        "tests/fixtures/layer2/crc-mismatch.report.json",
+        "tests/fixtures/layer2/free-format-44100-crc-mismatch.report.json",
+        "tests/fixtures/layer2/scalefactor-overflow.report.json",
         "tests/fixtures/mpeg/mpeg1-layer3-crc-mismatch.report.json"
       ]
     }
