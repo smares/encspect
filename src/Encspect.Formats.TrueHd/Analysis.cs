@@ -54,6 +54,7 @@ internal sealed class Analysis
     private long _runOffset;
     private long _runFirstFrame;
     private long _runCoded;
+    private bool _isRunEnding;
 
     public Analysis(AnalysisContext context)
     {
@@ -361,7 +362,7 @@ internal sealed class Analysis
                 _isGapPending = true;
                 if (_sync is { UnitSamples: > 0 } syncInForce)
                 {
-                    Figure(offset, length, syncInForce.UnitSamples, bytes.Length, syncInForce.SampleRate, syncInForce.UnitSamples, true);
+                    AddLostToRun(syncInForce.UnitSamples);
                 }
 
                 LoseUnit(memory, offset, _sync);
@@ -1165,7 +1166,7 @@ internal sealed class Analysis
     private void Figure(long offset, int length, long samples, int available, int rate, long coded, bool isLost)
     {
         Figures ??= new StreamFigures(Records.StreamRate > 0 ? Records.StreamRate : 48000);
-        if (_runUnits > 0 && rate != _runRate)
+        if (_runUnits > 0 && (rate != _runRate || _isRunEnding))
         {
             FlushRun();
         }
@@ -1184,9 +1185,27 @@ internal sealed class Analysis
         ShortestUnit = Math.Min(ShortestUnit, available);
         LongestUnit = Math.Max(LongestUnit, available);
         // A unit that codes nothing ends its run, and trails it, so within a run the samples spread over the units that carry them.
-        if (_runUnits == RunLength || coded == 0 || isLost)
+        if (_runUnits == RunLength || coded == 0)
         {
             FlushRun();
+        }
+        else if (isLost)
+        {
+            // The units that wait for the next major sync after this one are lost too: they join its run, in the samples only.
+            _isRunEnding = true;
+        }
+    }
+
+    // The samples of a lost unit that is no unit of a run of its own: the run that is open, or the last one.
+    private void AddLostToRun(long samples)
+    {
+        if (_runUnits > 0)
+        {
+            _runCoded += samples;
+        }
+        else
+        {
+            Figures?.AddCoded(samples);
         }
     }
 
@@ -1195,9 +1214,10 @@ internal sealed class Analysis
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && _runUnits < RunLength, _runFirstFrame, _runCoded);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && !_isRunEnding && _runUnits < RunLength, _runFirstFrame, _runCoded);
         }
 
+        _isRunEnding = false;
         _runUnits = 0;
         _runBits = 0;
         _runSamples = 0;

@@ -100,6 +100,16 @@ internal sealed class StreamFigures(long firstRate)
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
     }
 
+    // Samples that a lost unit declares after the last run was closed: the run keeps the bitrate it was counted with and codes them.
+    public void AddCoded(long samples)
+    {
+        if (_points.Count > 0)
+        {
+            Point last = _points[_points.Count - 1];
+            _points.SetLast(last with { Samples = last.Samples + samples });
+        }
+    }
+
     // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the
     // units that start in it over their duration, rounded half to even.
     public List<Series> Series(Node? anchor, long frameCount, CancellationToken cancellation)
