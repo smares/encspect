@@ -2,8 +2,8 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41545312868",
-  "commit": "b3ffb037fcaefde222728b89eecc91ad698be661",
+  "id": "41550365565",
+  "commit": "d7dbf9563095dd404fa44d4675cc9b456254d6eb",
   "imageOS": "ubuntu26",
   "imageVersion": "20261026.180.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
@@ -21,8 +21,8 @@
    "imageVersion": "20261028.0489.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41545312868",
-   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
+   "runId": "41550365565",
+   "commit": "d7dbf9563095dd404fa44d4675cc9b456254d6eb"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
@@ -33,8 +33,8 @@
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41545312868",
-   "commit": "b3ffb037fcaefde222728b89eecc91ad698be661"
+   "runId": "41550365565",
+   "commit": "d7dbf9563095dd404fa44d4675cc9b456254d6eb"
   }
  },
  "statuses": [
@@ -159,7 +159,7 @@
      "analyzer": 22528,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
+     "reason": "Media Foundation's transform is not set up for the stream: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC ELD",
      "statusSource": "rule"
     }
    ],
@@ -288,7 +288,7 @@
      "analyzer": 23040,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform is not set up for the stream, refused: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC LD",
+     "reason": "Media Foundation's transform is not set up for the stream: the transform refuses the input media type (asStored 0xC00D36B4); Learn lists AAC-LC, HE-AAC and HE-AAC v2 only for the AAC decoder; the stream is ER AAC LD",
      "statusSource": "rule"
     }
    ],
@@ -2896,7 +2896,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 34 units (0 refused, 0 with an output error, the others and the drain gave no output)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 34 units (all 34 and the drain gave no output)"
       },
       "reader": {
        "samples": 0,
@@ -7662,7 +7662,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (all 66 and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -7699,7 +7699,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC LTP; no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (all 66 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC LTP; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
@@ -7777,7 +7777,7 @@
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
        "withoutTimestamps": 0,
-       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output)"
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 66 units (all 66 and the drain gave no output)"
       },
       "reader": {
        "samples": null,
@@ -7814,7 +7814,7 @@
      "analyzer": 67584,
      "status": "explained",
      "kind": "decoder-refuses-stream",
-     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (0 refused, 0 with an output error, the others and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
+     "reason": "Media Foundation's transform outputs nothing for any of its 66 units (all 66 and the drain gave no output); Learn lists no Main, SSR or LTP profile for the AAC decoder; the stream is AAC Main; no official decoder gives a reference here, and ffmpeg stays the reference",
      "statusSource": "rule"
     }
    ],
