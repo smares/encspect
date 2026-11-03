@@ -82,7 +82,7 @@ public class SamplesDefinitionTests
                 else if (top == "findings" && name == "code")
                 {
                     reader.Read();
-                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString() is { } code && (code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal) || code == "alac.tuning-invalid");
+                    isNotAnalyzed |= reader.TokenType == JsonTokenType.String && reader.GetString() is { } code && (code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal) || code == "alac.tuning-invalid"); // file-wide: no fixture has a cookie refused for every frame and a sample the container cut
                 }
             }
             else if (reader.TokenType == JsonTokenType.StartObject && top == "streams" && reader.CurrentDepth == 3)
@@ -180,6 +180,125 @@ public class SamplesDefinitionTests
         Assert.Empty(failures);
     }
 
+    // Where the decoding is Decoded the decoded samples equal the coded stage less the lost samples, except for the files listed here, each group with its reason.
+    // The per-format owners keep their group: a listed file that comes to equal fails the test, so the list never keeps a stale entry.
+    private static readonly Dictionary<string, string> EqualityExceptions = new()
+    {
+        #region FLAC
+        ["flac/built-frame-differs-from-streaminfo.decode.json"] = Reasons.flac,
+        #endregion
+
+        #region Monkey's Audio
+        ["monkeys-audio/built-audio-byte-flipped.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-final-frame-blocks-too-large.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-frame-data-bytes-too-large.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-frame-data-bytes-too-small.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-header-data-too-large.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-3800-residual-bit-flipped.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-3800-start-bit-outside-word.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-3910-residual-bit-flipped.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-version-3800.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-version-3820-crc.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-version-3850.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-old-version-3900.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-residual-bit-flipped.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-seek-entries-decreasing.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-seek-entry-beyond-data.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-seek-first-entry-off-by-two.decode.json"] = Reasons.monkeysaudio,
+        ["monkeys-audio/built-seek-first-entry-off.decode.json"] = Reasons.monkeysaudio,
+        #endregion
+
+        #region TrueHD
+        ["truehd/built-parameters-change.decode.json"] = Reasons.truehd,
+        ["truehd/built-splice-channel-count.decode.json"] = Reasons.truehd,
+        ["truehd/external-truehd-stereo-48k-24-odd-length.decode.json"] = Reasons.truehd,
+        #endregion
+
+        #region WavPack
+        ["wavpack/built-block-size-too-large.decode.json"] = Reasons.wavpack,
+        ["wavpack/built-channel-info-after-bad-block.decode.json"] = Reasons.wavpack,
+        ["wavpack/built-leading-block-without-set-md5.decode.json"] = Reasons.wavpack,
+        ["wavpack/built-set-channels-missing.decode.json"] = Reasons.wavpack,
+        ["wavpack/built-set-without-final-limit.decode.json"] = Reasons.wavpack,
+        ["wavpack/built-set-without-initial.decode.json"] = Reasons.wavpack,
+        #endregion
+
+        #region WavPack DSD
+        ["wavpack/built-dsd-md5-changed.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/built-dsd-rate-overflow.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/built-dsd-stored-mode.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-128.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64-high-md5.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64-high.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64-md5.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64-mono-md5.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64-mono.decode.json"] = Reasons.wavpackdsd,
+        ["wavpack/external-dsd-64.decode.json"] = Reasons.wavpackdsd,
+        #endregion
+
+    };
+
+    private static class Reasons
+    {
+        public const string flac =
+            "the decoder refuses every frame because the frame's block size disagrees with STREAMINFO; the parser reads the frames";
+
+        public const string monkeysaudio =
+            "the decoder stops at or refuses a frame that the parser reads without flagging it (units a decoder refuses for a reason the parser does not check show only in the measurements)";
+
+        public const string truehd =
+            "the decoder refuses units that the parser reads without flagging them (a change of the stream's parameters, an odd-length end trimmed from the samples)";
+
+        public const string wavpackdsd =
+            "the stream decodes to DSD, which counts at the DSD rate and decodes to one eighth";
+
+        public const string wavpack =
+            "the decoder decodes only the blocks of sets it accepts; the parser reads the blocks it refuses without flagging them";
+
+    }
+    [Fact]
+    public void DecodedSamplesEqualTheCodedStageLessTheLostSamplesWhereTheDecodingIsDecodedExceptWhereListed()
+    {
+        var failures = new List<string>();
+        int equal = 0;
+        foreach (string path in Goldens(".decode.json"))
+        {
+            string reportPath = path[..^".decode.json".Length] + ".report.json";
+            using JsonDocument decode = JsonDocument.Parse(File.ReadAllText(path));
+            if (!File.Exists(reportPath) || !decode.RootElement.TryGetProperty("verification", out JsonElement verification) || verification.GetProperty("decoding").GetString() != "Decoded")
+            {
+                continue;
+            }
+
+            Scan scan = ReadGolden(reportPath);
+            if (scan.Streams.Count != 1)
+            {
+                continue;
+            }
+
+            string name = Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/');
+            long decoded = verification.GetProperty("decodedSamples").GetInt64();
+            (long samples, long lost, _) = scan.Streams[0];
+            long wanted = Math.Max(samples, scan.Coded) - lost;
+            bool isListed = EqualityExceptions.ContainsKey(name) || InvariantExceptions.ContainsKey(name);
+            if (decoded == wanted)
+            {
+                equal++;
+                if (isListed)
+                {
+                    failures.Add($"{name}: decoded {decoded} equals the coded stage less the lost samples; remove it from the exceptions");
+                }
+            }
+            else if (!isListed)
+            {
+                failures.Add($"{name}: decoded {decoded}, coded stage less the lost samples {wanted}, and no exception lists it");
+            }
+        }
+
+        Assert.True(equal > 600, $"Only {equal} decode goldens were equal.");
+        Assert.Empty(failures);
+    }
+
     [Fact]
     public void LostSamplesAreWrittenAboveZeroOnlyAndTheSummaryAndCsvCarryThem()
     {
@@ -262,9 +381,13 @@ public class SamplesDefinitionTests
     // pins the cases the definition leaves as they are; the per-format commits add the rest with their goldens.
     public static TheoryData<string, long, long> RuleCases => new()
     {
-        // Region: MPEG audio. Rule 2: a frame cut by the end of the data or the next frame counts its declared 1,152 samples and is lost.
+        #region MPEG audio
+        // Rule 2: a frame cut by the end of the data or by the next frame counts its declared 1,152 samples and is lost.
         { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
         { "vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
+        { "mpeg/cut-frame-stream-change.mp3", 6912, 1152 },
+        { "mpeg/damaged-bitrate.mp3", 9216, 1152 },
+        #endregion
 
         #region AC-3 and E-AC-3
         // A cut frame and a frame whose blocks break are lost whole; a failing CRC and an unread coding tool are not.
@@ -334,28 +457,46 @@ public class SamplesDefinitionTests
         { "dts/dtshd-stream-truncated.dtshd", 2048, 512 },
         #endregion
 
-        // Region: Musepack. A frame cut by the end of the data counts 1,152 in Coded Samples and is lost; samples compose as before.
+        #region Musepack
+        // A frame cut by the end of the data counts 1,152 in Coded Samples and is lost (SV8: the 4 frames, 4,608, of the cut packet); samples compose as before.
         { "musepack/sv7-truncated.mpc", 46751, 1152 },
         { "musepack/sv8-truncated.mpc", 45599, 4608 },
+        // A damaged frame (resolutions past its length or out of range) is lost; the cap of the header's count leaves the samples.
+        { "musepack/sv6-band-overrun.mpc", 32256, 1152 },
+        { "musepack/sv7-resolution-invalid.mpc", 66150, 1152 },
+        // The SV4 and SV5 last frame is coded, trimmed from the samples and lost only where the data cut it.
+        { "musepack/sv5-seek-tag.mpc", 31775, 1152 },
+        { "musepack/external-mppsv4-vbr.mpc", 31775, 0 },
+        #endregion
 
-        // Region: ADTS and AAC. Rule 2: a cut frame counts its declared samples and is lost; rule 3: bytes skipped while searching for sync
-        // declare nothing; a block that breaks the syntax (question 8) is lost; a declaration the bytes contradict is not (question 5).
+        #region ADTS, ADIF and AAC
+        // Rule 2: a cut frame counts its declared samples and is lost; rule 3: bytes skipped while searching for sync declare nothing; a block that breaks
+        // the syntax (question 8) is lost; a declaration the bytes contradict (question 5) and a finding the reading survives are not.
         { "adts/truncated.aac", 12288, 1024 },
         { "adts/sbr-in-truncated-frame.aac", 4096, 2048 },
         { "adts/damaged-header.aac", 29696, 0 },
         { "adts/blocks-missing.aac", 10240, 0 },
         { "adts/corrupt-syntax.aac", 21504, 6144 },
+        { "adts/corrupt-soft.aac", 21504, 0 },
+        { "adts/adif.aac", 20480, 0 },
+        #endregion
 
-        // Region: MP4. Rule 1: a sample whose first byte is in the file counts; one the file ends inside is lost; rule 3 for samples outside.
+        #region MP4
+        // Rule 1: a sample whose first byte is in the file counts and the one the file ends inside is lost; a sample with no byte counts nothing (question 3).
+        // Blocks that break the syntax are lost (question 8).
         { "mp4/truncated.m4a", 10240, 1024 },
         { "mp4/sample-outside-mdat.m4a", 20480, 10240 },
+        { "mp4/chunk-sample-mismatch.m4a", 10240, 4096 },
+        #endregion
 
-        // Region: ALAC. An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read).
+        #region ALAC
+        // An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read) and is lost.
         { "alac/built-element-invalid-shift.m4a", 10000, 4096 },
         { "alac/built-residual-run-too-long.m4a", 6004, 100 },
 
         // A cookie the walk refuses for every frame is a configuration refused as a whole: counted, not lost.
         { "alac/built-tuning-kb-zero.m4a", 10000, 0 },
+        #endregion
 
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them, and the packets that break RFC 6716 are lost there.
         { "ogg/opus-packets-corrupt.opus", 24648, 14400 },
@@ -403,6 +544,13 @@ public class SamplesDefinitionTests
         { "monkeys-audio/built-cut-in-seek-table.ape", 0, 0 },
         #endregion
     };
+
+    [Fact]
+    public void AStreamChangeAfterACutFrameLeavesTheNextStreamWhole()
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "cut-frame-stream-change.mp3"));
+        Assert.Equal([(6912L, 1152L), (11520L, 0L)], report.Streams.Select(s => (s.Samples, s.LostSamples)));
+    }
 
     [Theory]
     [MemberData(nameof(RuleCases))]
