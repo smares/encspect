@@ -91,7 +91,7 @@ public class WmaLosslessPacketTests
         // declared samples and lost, and the decoder's 5,568 is the samples less the lost ones. The bits that finish the lost frame count nothing.
         StreamInfo stream = context.Streams[0];
         Assert.Equal(5_568, stream.Samples - stream.LostSamples);
-        Assert.True(stream.LostSamples > 0);
+        Assert.Equal(18_432L, stream.LostSamples);
         Node frames = WmaStream.Child(WmaStream.StreamNode(context), "Frames");
         // The first frame listed is the first that starts after the gap, which cannot be read before a seekable subframe has come; the five bits
         // before it are not shown as an invalid frame whose tile header lays out subframes the stream cannot have.
