@@ -235,34 +235,51 @@ def start_fields(data, a, f, version_has_special=True):
     return word & 0x7FFFFFFF, None
 
 
-def declared(data, a):
-    """(samples, lost samples) of the frames, by the definition in docs/design/samples-definition.md: a frame counts the blocks its header declares when
-    its first byte is in the file (or the seek table places it outside the frame data, where that cannot be told); it is lost when the data ends inside it
-    or holds less than the CRC and, where the frame flags them, the special frame codes it starts with."""
+def classify(data, a):
+    """Per frame, in order: (blocks, state) with state "misplaced" (the seek table puts it outside the frame data), "absent" (no byte in the file),
+    "lost" (the data ends inside it, or it is too short for the CRC and the special frame codes it starts with) or "held" (whole)."""
     avail = max(0, min(len(data), a.data_end) - a.word_start) // 4 * 4
     span = a.data_end - a.word_start
     has_crc = getattr(a, "has_crc", True)
     has_special = getattr(a, "has_special", True)
-    samples = lost = 0
+    out = []
     for f, frame in enumerate(a.frames):
         start, end = frame["start"], frame["end"]
         if start < 0 or start > span or end < start or end > span:
-            samples += frame["blocks"]
+            out.append((frame["blocks"], "misplaced"))
             continue
         if start >= avail:
+            out.append((frame["blocks"], "absent"))
             continue
-        samples += frame["blocks"]
         usable = min(end, avail)
         short = False
         if has_crc:
-            first = stream_bytes(data, a.word_start, start, min(start + 4, usable)) if usable - start >= 4 else b""
             if usable - start < 4:
                 short = True
-            elif has_special and struct.unpack(">I", first[:4])[0] & 0x80000000 and usable - start < 8:
-                short = True
-        if end > avail or short:
-            lost += frame["blocks"]
-    return samples, lost
+            else:
+                first = stream_bytes(data, a.word_start, start, start + 4)
+                short = bool(has_special and struct.unpack(">I", first[:4])[0] & 0x80000000 and usable - start < 8)
+        out.append((frame["blocks"], "lost" if end > avail or short else "held"))
+    return out
+
+
+def declared(data, a):
+    """(samples, lost samples) of the frames, by the definition in docs/design/samples-definition.md: a frame counts the blocks its header declares when
+    its first byte is in the file (or the seek table places it outside the frame data, where that cannot be told); it is lost when the data ends inside it
+    or holds less than the CRC and, where the frame flags them, the special frame codes it starts with."""
+    states = classify(data, a)
+    return (sum(b for b, st in states if st != "absent"), sum(b for b, st in states if st == "lost"))
+
+
+def held_totals(data, a, limit=None):
+    """(bits, blocks) of the frames the file holds whole, which the bitrate figures cover, among the first limit frames."""
+    states = classify(data, a)
+    bits = blocks = 0
+    for (b, st), frame in list(zip(states, a.frames))[:limit]:
+        if st == "held":
+            bits += (frame["end"] - frame["start"]) * 8
+            blocks += b
+    return bits, blocks
 
 
 def build(frames, level, bits, channels, rate, blocks_per_frame, final_blocks, header_data=b"", terminating=b"", junk=b"", version=3990, program=13420,  # 13420: the program version (13.42) these hand-built files imitate
@@ -353,8 +370,7 @@ def manifest(data, a, regions, encoder, findings, pcm, decode, frame_limit=64, f
         entries.append({"index": index, "offset": offset, "length": length, "samples": frame["blocks"], "crc": None if crc is None else f"0x{crc:08X}",
                         "special": None if special is None else f"0x{special:08X}", "start": frame["start"], "end": frame["end"]})
     rated = len(a.frames) if rated is None else rated
-    bits = sum((f["end"] - f["start"]) * 8 for f in a.frames[:rated])
-    coded = sum(f["blocks"] for f in a.frames[:rated])
+    bits, coded = held_totals(data, a, rated)
     samples, lost = declared(data, a) if a.total_frames else (0, 0)
     default = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed)
     verify = tallies(a, data, frames_complete, stored_crcs, md5_checked, md5_failed, decode.get("checked", 0), decode.get("failed", 0))

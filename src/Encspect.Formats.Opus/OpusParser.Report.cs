@@ -156,9 +156,9 @@ public sealed partial class OpusParser
 
             Add(node, "Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
             Add(node, "IsVbr", NodeValue.Boolean(_sizesDiffer), Explain.StatIsVbr, Topics.BitrateModes);
-            if (_decoded > 0)
+            if (_wholeDecoded > 0)
             {
-                Add(node, "Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _decoded / 1000, 1, "kbps"), Explain.AverageBitrate);
+                Add(node, "Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
             }
 
             (double minimum, double maximum) = BitrateRange();
@@ -168,8 +168,8 @@ public sealed partial class OpusParser
                 Add(node, "Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
             }
 
-            Node sizes = Add(node, "Packet Sizes", _sizesDiffer
-                ? $"{_smallest} to {_largest} bytes, {Math.Round(_bytes / (double)_packets, 1, MidpointRounding.ToEven).ToString("F1", CultureInfo.InvariantCulture)} on average"
+            Node sizes = Add(node, "Packet Sizes", _wholePackets == 0 ? "none whole" : _sizesDiffer
+                ? $"{_smallest} to {_largest} bytes, {Math.Round(_bytes / (double)_wholePackets, 1, MidpointRounding.ToEven).ToString("F1", CultureInfo.InvariantCulture)} on average"
                 : $"all {Count(_smallest, "byte", "bytes")}, as CBR encoding writes them", _sizesDiffer ? Explain.PacketSizes : Explain.PacketSizesConstant, Topics.BitrateModes);
 
             if (_frames > 0)
@@ -243,7 +243,7 @@ public sealed partial class OpusParser
                 }
 
                 int samples = _records.SamplesOf(i);
-                if (samples == 0)
+                if (samples == 0 || _cutPackets.Contains(i))
                 {
                     continue;
                 }
@@ -298,7 +298,7 @@ public sealed partial class OpusParser
                 }
 
                 int samples = _records.SamplesOf(i);
-                if (samples == 0)
+                if (samples == 0 || _cutPackets.Contains(i))
                 {
                     continue;
                 }

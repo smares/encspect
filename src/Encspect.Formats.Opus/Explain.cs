@@ -88,6 +88,7 @@ internal static class Explain
     public const string Encoder = "Which program or library encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: medium, as it rests on the libopus vendor string or on ffmpeg's ENCODER ID, which other software may write too.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText

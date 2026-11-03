@@ -155,6 +155,7 @@ internal static class Explain
     public const string Encoder = "Which library or program encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high for a vendor string a libvorbis, aoTuV or Lancer release is known to write, medium for an unknown string of their form or an encoder's name in a field other software may write.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText

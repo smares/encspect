@@ -194,6 +194,11 @@ internal static class Summary
         double duration = hasSamples && rate > 0 ? samples / (double)rate : 0;
         StreamFigures? figures = hasSamples ? Figures(s) : null;
         statistics.Add(cover("Frames", NodeValue.Integer(s.Frames, "frames", "frame"), Explain.StatFrames, Topics.Stream));
+        if (!hasSamples && s.LostSamples > 0)
+        {
+            statistics.Add(cover("Lost Samples", NodeValue.Integer(s.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         if (hasSamples)
         {
             statistics.Add(Cover3("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
@@ -241,7 +246,7 @@ internal static class Summary
             ChannelMode = channels switch { 1 => "Mono", 2 => "Stereo", > 2 => "Multichannel", _ => null },
             BitsPerSample = bits > 0 ? bits : null,
             Samples = samples,
-            LostSamples = hasSamples ? s.LostSamples : 0,
+            LostSamples = s.LostSamples,
             Duration = duration,
             AverageBitrate = figures?.AverageBitrate,
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,

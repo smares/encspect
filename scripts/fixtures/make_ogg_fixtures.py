@@ -259,9 +259,9 @@ def hand_over(data, pages, s):
             position += run_length
             runs.append((run_start, run_length, run_ends))
         for k, (run_start, run_length, run_ends) in enumerate(runs):
-            held = min(run_length, room - run_start)
-            if held <= 0 and truncated:
+            if truncated and (run_start > room if run_length == 0 else run_start >= room):
                 break
+            held = min(run_length, room - run_start)
             if pending is None:
                 pending = (bytearray(), [])
             at = body + run_start
@@ -875,6 +875,28 @@ def frames_corrupt():
     f.write()
 
 
+def truncated_page_empty_packet():
+    # frames-corrupt's audio on one page whose last byte the file lacks: the empty packet in the middle of the page is whole, so the packets
+    # after it are handed over and only the last one, which the cut falls in, is cut.
+    f = Fixture("truncated-page-empty-packet")
+    head = m.speex_header(8000, 0, frames_per_packet=2)
+    good = m.speex_packet([(3,), (3,)])
+    audio = [good, good, b"", good, good, good]
+    packets = [head, m.vorbis_comment(VENDOR, [])] + audio
+    granules = [0, 0] + [(i + 1) * 320 - 40 for i in range(len(audio))]
+    pages = m.pages_for(0x0000FA12, packets, granules, [1, 1, len(audio)])
+    for p in pages[:-1]:
+        f.w.write(p)
+    f.w.write(pages[-1], cut=27 + len(pages[-1].lacing) + len(pages[-1].body) - 1)
+    f.stream(0x0000FA12, pages)
+    f.finding("speex.empty-packet", "1 audio packet is empty")
+    f.finding("ogg.page-truncated", "is cut short")
+    f.finding("ogg.eos-missing", "")
+    f.crosscheck = {"valid": False, "oggz_validate": ["missing *** eos"], "packets": True, "not_compared": {
+        "ogginfo, ffprobe and speexdec": "they do not report a page cut short; libogg never returns it, so oggz dump lacks its packets, as the analyzer's packets do"}}
+    f.write()
+
+
 def deep_nesting():
     # Containers inside containers that the analyzer must not follow: a comment whose value is a
     # whole Ogg file, an unknown stream whose packets are Ogg pages, and 200 chained links of one
@@ -1025,7 +1047,7 @@ FIXTURES = [
     comment_edge_cases, writer_claims_differ, encoder_other_format, encoder_other_format_no_vendor, comment_empty, unknown_codec, tags_around, tag_signature_in_last_page,
     bad_crc, sequence_gap, truncated_page, missing_eos, garbage_between_pages, oggs_in_mp3, huge_lacing, continuation_errors,
     granule_errors, bos_missing, comment_invalid, header_invalid, header_bad_mode, header_short, frames_corrupt, deep_nesting,
-    eos_inside_packet, chained_same_serial, ignored_bits, comment_many, wideband_layer_skip,
+    eos_inside_packet, truncated_page_empty_packet, chained_same_serial, ignored_bits, comment_many, wideband_layer_skip,
 ]
 
 

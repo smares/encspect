@@ -460,10 +460,20 @@ internal sealed partial class FileReader
             long position = block.FramesOffset;
             for (int f = 0; f < block.Frames; f++)
             {
-                int size = (int)records.FrameSize(block, f);
+                long declared = records.FrameSize(block, f);
+
+                // A frame of a cut block that starts past the bytes present has none and is not handed over; the one the file ends inside is
+                // cut (the last frame of a lace that states its sizes, whose last size is the rest of the block, or of a single frame).
+                long present = Math.Min(declared, block.End - position);
+                if (present <= 0 && declared > 0)
+                {
+                    break;
+                }
+
+                int size = (int)present;
                 byte[] data = ReadAt(position, size);
                 MappedBytes packet;
-                bool isCut = block.IsCut && (block.Lacing == Lacing.FixedSize || f == block.Frames - 1);
+                bool isCut = block.IsCut && (present < declared || (block.Lacing != Lacing.FixedSize && f == block.Frames - 1));
                 try
                 {
                     packet = decoder is null ? new MappedBytes(data, position) : decoder.Decode(data, position, this);

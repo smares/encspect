@@ -246,9 +246,9 @@ public sealed partial class VorbisParser
 
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
                 Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
-                if (_decoded > 0)
+                if (_wholeDecoded > 0)
                 {
-                    Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _decoded / 1000, 1, "kbps"), Explain.AverageBitrate);
+                    Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
                 }
 
                 (double minimum, double maximum) = BitrateRange();
@@ -259,7 +259,7 @@ public sealed partial class VorbisParser
             Node sizes = Add("Packet Sizes", Count(_sizes.Count, "size", "sizes"), Explain.PacketSizes);
             for (int kind = 1; kind >= 0; kind--)
             {
-                long count = kind == 1 ? _longBlocks : _shortBlocks;
+                long count = _wholeBlocks[kind];
                 if (count > 0)
                 {
                     double average = _blockBytes[kind] / (double)count;
@@ -350,7 +350,7 @@ public sealed partial class VorbisParser
                 }
 
                 PacketRecord packet = _records.Packets[i];
-                if (!packet.IsBlock)
+                if (!packet.IsBlock || _cutPackets.Contains(i))
                 {
                     continue;
                 }

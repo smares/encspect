@@ -141,6 +141,11 @@ public sealed partial class VorbisParser
         private int _previousIndex = -1;
         private long _decoded;
 
+        // The audio packets a container cut, by index, and the samples of the others: the bitrate figures cover those.
+        private readonly HashSet<int> _cutPackets = [];
+        private long _wholeDecoded;
+        private readonly long[] _wholeBlocks = new long[2];
+
         // The samples returned by the blocks of packets a container cut (MappedBytes.IsCut) and whose mode still reads: part of _decoded.
         private long _lost;
         private long _lastReturned;
@@ -305,6 +310,16 @@ public sealed partial class VorbisParser
             _hasComment = true;
             Node prefix = Node.FromMapped("Comment Header", packet, 0, 7, "\\x03vorbis", description: Explain.CommentPrefix);
             _parent.Add(prefix);
+            if (packet.IsCut)
+            {
+                if (packet.Length > 7)
+                {
+                    _parent.Add(Node.FromMapped("Cut Comment Data", packet, 7, packet.Length, NodeValue.Integer(packet.Length - 7, "bytes", "byte"), description: Explain.CutCommentData));
+                }
+
+                return;
+            }
+
             MappedBytes body = packet.Slice(7);
             _comment = body.Length > 0 ? context.ParseTag(TagName, body, _parent) : null;
             int end = _comment is null ? 7 : 7 + (packet.IsOpaque ? CommentBytes(body.Span) : BytesBefore(body, _comment.End));
@@ -424,8 +439,18 @@ public sealed partial class VorbisParser
             }
 
             _packets++;
-            _bytes += packet.Length;
-            _sizes.Add(packet.Length);
+
+            // The sizes and bitrates cover the packets the container hands over whole, as the other formats' do: a cut packet counts in the samples only.
+            if (packet.IsCut)
+            {
+                _cutPackets.Add(index);
+            }
+            else
+            {
+                _bytes += packet.Length;
+                _sizes.Add(packet.Length);
+            }
+
             _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
@@ -512,9 +537,13 @@ public sealed partial class VorbisParser
                 _shortBlocks++;
             }
 
-            _blockBytes[kind] += record.Length;
-            _smallest[kind] = Math.Min(_smallest[kind], record.Length);
-            _largest[kind] = Math.Max(_largest[kind], record.Length);
+            if (!isCut)
+            {
+                _wholeBlocks[kind]++;
+                _blockBytes[kind] += record.Length;
+                _smallest[kind] = Math.Min(_smallest[kind], record.Length);
+                _largest[kind] = Math.Max(_largest[kind], record.Length);
+            }
 
             int size = _records.BlockSize(record);
             long returned = 0;
@@ -537,6 +566,10 @@ public sealed partial class VorbisParser
             if (isCut)
             {
                 _lost += returned;
+            }
+            else
+            {
+                _wholeDecoded += returned;
             }
 
             if (_afterGap || _afterSkipped)
@@ -709,7 +742,7 @@ public sealed partial class VorbisParser
                     Samples = samples,
                     LostSamples = HasTime ? _lost : 0,
                     Duration = HasTime ? samples / (double)Rate : 0,
-                    AverageBitrate = HasTime && _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,
+                    AverageBitrate = HasTime && _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
                     IsVbr = _sizes.Count > 1,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,

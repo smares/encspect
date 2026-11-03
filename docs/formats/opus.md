@@ -8,6 +8,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - **OpusTags:** through the [Vorbis comment](../tags/vorbis-comments.md) parser.
 - **Packets:** every packet's TOC byte and framing, multistream packets included, checked against the rules of RFC 6716.
 - **Samples:** each packet counts the samples its TOC byte and frame count byte declare (0 where they exceed 120 ms), a packet that breaks the rules, a multistream packet whose streams last different times and a packet the container cut included; Lost Samples counts those packets at this coded stage, inside the pre-skip or not.
+- **Bitrates:** the sizes and bitrates (average, smallest, largest, the series) cover the packets the container hands over whole; a cut packet counts in the samples only.
 
 ## Reported
 

@@ -152,6 +152,11 @@ public sealed partial class OpusParser
         // smaller, which trims the end.
         private long _decoded;
 
+        // The audio packets a container cut, by index, and the others' number and samples: the bitrate figures cover those.
+        private readonly HashSet<int> _cutPackets = [];
+        private int _wholePackets;
+        private long _wholeDecoded;
+
         // The samples at the coded stage of the packets that are cut (a container's flag) or break RFC 6716 section 3.4 or the self-delimited
         // framing: part of _decoded.
         private long _lost;
@@ -343,6 +348,16 @@ public sealed partial class OpusParser
         {
             _hasTags = true;
             Node prefix = _parent.Add(Node.FromMapped("Magic Signature", packet, 0, 8, "OpusTags", description: Explain.MagicTags));
+            if (packet.IsCut)
+            {
+                if (packet.Length > 8)
+                {
+                    _parent.Add(Node.FromMapped("Cut Comment Data", packet, 8, packet.Length, NodeValue.Integer(packet.Length - 8, "bytes", "byte"), description: Explain.CutCommentData));
+                }
+
+                return;
+            }
+
             MappedBytes body = packet.Slice(8);
             _comment = body.Length > 0 ? context.ParseTag(TagName, body, _parent) : null;
             if (_comment is null)
@@ -395,11 +410,22 @@ public sealed partial class OpusParser
             }
 
             _packets++;
-            _bytes += packet.Length;
-            _sizesDiffer |= _lastSize >= 0 && packet.Length != _lastSize;
-            _lastSize = packet.Length;
-            _smallest = Math.Min(_smallest, packet.Length);
-            _largest = Math.Max(_largest, packet.Length);
+
+            // The sizes and bitrates cover the packets the container hands over whole, as the other formats' do: a cut packet counts in the samples only.
+            if (packet.IsCut)
+            {
+                _cutPackets.Add(index);
+            }
+            else
+            {
+                _wholePackets++;
+                _bytes += packet.Length;
+                _sizesDiffer |= _lastSize >= 0 && packet.Length != _lastSize;
+                _lastSize = packet.Length;
+                _smallest = Math.Min(_smallest, packet.Length);
+                _largest = Math.Max(_largest, packet.Length);
+            }
+
             _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
@@ -407,6 +433,7 @@ public sealed partial class OpusParser
             bool isMalformed = ReadParts(packet, index);
             _lastPacketSamples = _records.SamplesOf(index);
             _decoded += _lastPacketSamples;
+            _wholeDecoded += packet.IsCut ? 0 : _lastPacketSamples;
             if (packet.IsCut || isMalformed)
             {
                 _lost += _lastPacketSamples;
@@ -453,12 +480,13 @@ public sealed partial class OpusParser
                 }
             }
 
-            if (broken is { } b)
+            // A packet the container cut is lost whatever its bytes hold: the container's finding reports the cut, not a syntax error of the packet.
+            if (broken is { } b && !packet.IsCut)
             {
                 Report(index, b.Stream, b.Status, b.Error);
             }
 
-            if (differs is { } d)
+            if (differs is { } d && !packet.IsCut)
             {
                 _findings.Add(Severity.Warning, "opus.stream-durations-differ", PacketNode(_records, index), count =>
                     $"{Count(count, "multistream packet holds", "multistream packets hold")} streams of different durations: in the first, at 0x{_records.OffsetOf(index):X}, stream {d.Stream} codes {Counts.Of(d.Samples, "sample", "samples")} where stream 0 codes {d.First}; every stream of a packet must code the same duration, and decoders treat the others as malformed (RFC 7845, section 3).");
@@ -592,7 +620,7 @@ public sealed partial class OpusParser
                     Samples = samples,
                     LostSamples = _lost,
                     Duration = samples / (double)Rate,
-                    AverageBitrate = _decoded > 0 ? _bytes * 8.0 * Rate / _decoded / 1000 : null,
+                    AverageBitrate = _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
                     IsVbr = _sizesDiffer,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,

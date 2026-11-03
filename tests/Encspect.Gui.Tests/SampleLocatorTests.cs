@@ -183,7 +183,7 @@ public class SampleLocatorTests
     [Fact]
     public void A_coded_end_past_the_stream_samples_is_located_over_the_units_span()
     {
-        // The shape of wavpack/built-set-without-final-limit.wv: the header states 3,000 samples, the blocks cover 17,000 and the last 16,000 are lost.
+        // The shape of wavpack/built-set-without-final-limit.wv: the sets declare 3,000 samples in all, at block indexes that cover 17,000 and the last 16,000 are lost.
         var measured = new StreamMeasurements { Status = MeasurementStatus.Incomplete, FirstPosition = 0, Samples = 1000, LostSamples = 16000, TrailingLostSamples = 16000 };
         SampleLocator locator = SampleLocator.For(Framed(3000, 17), measured)!;
         Assert.Equal((0L, 17000L), (locator.Base, locator.Total));

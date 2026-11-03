@@ -78,6 +78,7 @@ internal static class Explain
     public const string Encoder = "Which program encoded the stream, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high when speexenc's vendor string and the header's version agree, medium for an encoder's name alone, low when only the library's version points to it.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+    public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
 }
 
 internal static class SeriesText
