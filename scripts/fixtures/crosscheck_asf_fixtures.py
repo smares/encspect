@@ -243,8 +243,9 @@ def check_voice_decode(name, manifest, path, problems):
         # The decoder does not open: nothing is decoded, and the analyzer states what the container says.
         if samples != 0 or code == 0:
             problems.append(f"ffmpeg decodes {samples} samples (exit status {code}) where it should refuse the configuration")
-    elif analyzed != samples:
-        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}")
+    elif analyzed != crosscheck.get("analyzer", {}).get("samples", samples):
+        problems.append(f"the analyzer's golden report has {analyzed} samples, ffmpeg decodes {samples}"
+                        + (f" and the manifest expects the analyzer's {crosscheck['analyzer']['samples']}" if "analyzer" in crosscheck else ""))
 
 
 # What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
