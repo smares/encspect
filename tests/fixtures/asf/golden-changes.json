@@ -843,6 +843,37 @@
       "goldens": [
         "tests/fixtures/asf/fragments-in-two-streams.report.json"
       ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Coded Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
     }
   ],
   "removed": [
