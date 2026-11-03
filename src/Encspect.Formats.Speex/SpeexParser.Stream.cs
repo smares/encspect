@@ -372,6 +372,12 @@ public sealed partial class SpeexParser
                     $"{Count(count, "audio packet", "audio packets")} of this narrowband stream {(count == 1 ? "carries" : "carry")} wideband layers, which narrowband decoders skip. The first at 0x{packet.FileStart:X}.");
             }
 
+            // The frame tallies cover the packets handed over whole.
+            if (packet.IsCut)
+            {
+                return (frames, isBroken);
+            }
+
             _inBand += walk.InBand;
             _stereo += walk.Stereo;
             int first = _records.Packets[index].FirstFrame;

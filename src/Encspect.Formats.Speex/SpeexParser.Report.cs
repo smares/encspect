@@ -151,7 +151,7 @@ public sealed partial class SpeexParser
 
             void Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
-            Add("Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             Add("Frames", NodeValue.Integer(_frames), Explain.Frames);
             if (HasTime)
             {

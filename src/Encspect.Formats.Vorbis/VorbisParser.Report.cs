@@ -217,7 +217,7 @@ public sealed partial class VorbisParser
 
             Node Add(string name, NodeValue value, string description, string? topic = null) => node.Add(name, start, length, value, description, topic);
 
-            Add("Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             if (blocks > 0)
             {
                 Add("Long Blocks", Share(_longBlocks, blocks, "packet", "packets"), Explain.LongBlocks, Topics.VorbisBlocks);

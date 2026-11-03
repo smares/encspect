@@ -466,7 +466,10 @@ public sealed partial class OpusParser
                     broken = (s, part.Status, error!);
                 }
 
-                Tally(part);
+                if (!packet.IsCut)
+                {
+                    Tally(part);
+                }
                 if (part.HasToc)
                 {
                     if (samples < 0)

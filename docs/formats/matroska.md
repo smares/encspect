@@ -91,7 +91,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 ## Not covered
 
 - MPEG audio frames are counted at container level only: the MPEG parser reads a contiguous payload, and Matroska frames are packets.
-- FLAC, TrueHD, WavPack, PCM, MLP and the RealAudio and QuickTime IDs have no parser here (phase 3).
+- FLAC, TrueHD, WavPack, PCM, MLP and the RealAudio and QuickTime IDs have no parser here (phase 3). A cut block of such a track gives no lost samples (rule 5 of the samples definition: the frames are not read); WavPack's codec parser exists, but Matroska does not route `A_WAVPACK4` to it yet.
 - bzlib and lzo compression and all encryption are reported, not undone; zlib and header stripping are undone for any codec, but only Opus and Vorbis take the frames put together from other bytes (the other codec parsers need contiguous file bytes).
 - Protection of tracks that are not audio is not reported: Matroska creates no stream that is not audio, so the encryption of a video or subtitle track is not reported (the track gets `matroska.track-not-analyzed` and its elements are in the tree). ASF does report the protection of its video streams.
 - `A_MS/ACM` (a WAVEFORMATEX) is not routed.

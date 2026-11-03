@@ -529,9 +529,10 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
         else:
             records.append(f"{'L' if is_long else 'S'}{mode}")
             size = b1 if is_long else b0
-            mode_counts[mode] = mode_counts.get(mode, 0) + 1
-            block_counts[1 if is_long else 0] += 1
             if index not in cuts:
+                mode_counts[mode] = mode_counts.get(mode, 0) + 1
+            if index not in cuts:
+                block_counts[1 if is_long else 0] += 1
                 (long_sizes if is_long else short_sizes).append(len(data))
             returned = 0
             if previous is not None:
@@ -607,7 +608,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     short_count, long_count = block_counts
     block_count = long_count + short_count
     if packets:
-        statistics = {"Packets": str(len(packets))}
+        statistics = {"Packets": str(len(packets) - len(set(cuts)))}
         if block_count:
             statistics["Long Blocks"] = m.share(long_count, block_count, "packet", "packets")
             statistics["Short Blocks"] = m.share(short_count, block_count, "packet", "packets")
@@ -935,10 +936,12 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
             elif samples != first_samples:
                 packet_lost = True
                 findings.append("opus.stream-durations-differ")
+            entry.append([toc >> 3, 1 if toc & 4 else 0, toc & 3, len(lengths) if lengths else 0])
+            if index in cuts:  # the tallies cover the packets handed over whole
+                continue
             parts += 1
             stereo[1 if toc & 4 else 0] += 1
             codes[toc & 3] += 1
-            entry.append([toc >> 3, 1 if toc & 4 else 0, toc & 3, len(lengths) if lengths else 0])
             if lengths is None:
                 continue
             mode, bandwidth, size = toc_info(toc)
@@ -986,7 +989,7 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
     varies = len(set(sizes)) > 1
     statistics = None
     if packets:
-        statistics = {"Packets": str(len(packets)), "Frames": str(frames), "Decoded Samples": plural(decoded, "sample", "samples")}
+        statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(frames), "Decoded Samples": plural(decoded, "sample", "samples")}
         if has_head:
             statistics["Pre-skip"] = plural(pre_skip, "sample", "samples")
         if first_offset is not None:

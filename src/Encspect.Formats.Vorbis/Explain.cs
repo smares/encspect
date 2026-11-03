@@ -132,7 +132,7 @@ internal static class Explain
     public const string UnreadData = "The rest of a packet the analyzer could not read as a block: not audio, or its mode undefined or cut short.";
 
     public const string Statistics = "Figures over the stream's audio packets, from their blocks and the granule positions.";
-    public const string Packets = "How many audio packets the stream holds.";
+    public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string LongBlocks = "Packets that code a long block, and their share of the packets that code a block.";
     public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
     public const string DecodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";

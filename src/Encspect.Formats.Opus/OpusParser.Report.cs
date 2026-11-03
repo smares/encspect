@@ -134,7 +134,7 @@ public sealed partial class OpusParser
 
             Node Add(Node parent, string name, NodeValue value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
 
-            Add(node, "Packets", NodeValue.Integer(_packets), Explain.Packets);
+            Add(node, "Packets", NodeValue.Integer(_wholePackets), Explain.Packets);
             Add(node, "Frames", NodeValue.Integer(_frames), Explain.Frames);
             Add(node, "Decoded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.DecodedSamples, Topics.OpusToc);
             if (HasHead)

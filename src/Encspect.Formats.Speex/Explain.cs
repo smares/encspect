@@ -54,7 +54,7 @@ internal static class Explain
     public const string Unparsed = "Bits the analyzer could not read as frames, because a submode is undefined or a frame runs past the packet's end.";
 
     public const string Statistics = "Figures over the stream's audio packets, counted from their frames and the granule positions.";
-    public const string Packets = "How many audio packets the stream holds.";
+    public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string Frames = "How many frames the audio packets hold.";
     public const string CodedSamples = "The samples the frames code: the number of frames times the frame size.";
     public const string EncoderDelay = "Samples the first audio page's packets code beyond its granule position, which speexenc and ffmpeg set to the encoder's lookahead.";

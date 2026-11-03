@@ -495,6 +495,7 @@ internal static class Reader
             Notice(s, status, start, f);
             s.Findings.Redirect = null;
             s.Frames++;
+            s.WholeFrames += (status & EntryStatus.Cut) == 0 && ((status & EntryStatus.Misplaced) != 0 || start < available) ? 1 : 0;
 
             // A frame counts its declared blocks when its first byte is in the file (or the seek table places it outside the frame data, where
             // that cannot be told); a frame the data cuts or whose start fields it cannot hold is lost.

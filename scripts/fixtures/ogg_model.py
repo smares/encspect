@@ -451,6 +451,8 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         lost += samples if is_lost else 0
         ends.append(coded_so_far)
         frames.append(found)
+        if number in cuts:  # the frame tallies cover the packets handed over whole
+            continue
         inband += requests
         stereo += stereo_requests
         total_frames += len(found)
@@ -481,7 +483,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         trim = max(0, last[0] - delay - last[1])
     samples = min(max(coded - max(0, first_delay or 0) - trim, 0), coded) if has_time else 0
 
-    statistics = {"Packets": str(len(packets)), "Frames": str(total_frames)}
+    statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(total_frames)}
     if has_time and packets:
         bitrate = lambda size: size * 8.0 * rate / per_packet / 1000
         statistics["Coded Samples"] = plural(coded, "sample", "samples")

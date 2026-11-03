@@ -526,16 +526,22 @@ public sealed partial class VorbisParser
 
         private void AddBlock(int index, PacketRecord record, bool isCut)
         {
-            _modeCounts[record.Mode]++;
             int kind = record.IsLong ? 1 : 0;
-            if (record.IsLong)
+
+            // The block counts cover the packets handed over whole.
+            if (!isCut)
             {
-                _longBlocks++;
+                _modeCounts[record.Mode]++;
+                if (record.IsLong)
+                {
+                    _longBlocks++;
+                }
+                else
+                {
+                    _shortBlocks++;
+                }
             }
-            else
-            {
-                _shortBlocks++;
-            }
+
 
             if (!isCut)
             {
