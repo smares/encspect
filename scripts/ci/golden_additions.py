@@ -105,11 +105,16 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
                     else:
                         stream.pop(entry["array"], None)
         elif scope == "node" and "last" in entry:
-            # The entry adds the last N children of that name, nodes of a kind the parent already has (a unit that the data ends inside, after the whole ones).
-            for parent in matching(report["root"], entry["parent"]):
+            # The entry adds up to N children of that name at the end, nodes of a kind the parent already has (a unit that the data ends
+            # inside, after the whole ones): only the surplus over the old report's count of them is taken back, so a golden without the
+            # addition is left alone.
+            olds = matching(old["root"], entry["parent"]) if old is not None else []
+            for number, parent in enumerate(matching(report["root"], entry["parent"])):
                 children = parent.get("children", [])
                 positions = [i for i, c in enumerate(children) if c.get("name") == entry["name"]]
-                dropped = set(positions[max(0, len(positions) - entry["last"]):])
+                known = sum(1 for c in olds[number].get("children", []) if c.get("name") == entry["name"]) if number < len(olds) else 0
+                surplus = min(entry["last"], max(0, len(positions) - known)) if old is not None else entry["last"]
+                dropped = set(positions[len(positions) - surplus:]) if surplus > 0 else set()
                 kept = [c for i, c in enumerate(children) if i not in dropped]
                 if kept:
                     parent["children"] = kept

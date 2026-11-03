@@ -168,6 +168,9 @@ class CheckTests(unittest.TestCase):
         self.assertEqual([], self.check(old, new, change))
         self.assertNotEqual([], self.check(old, new, {"added": [{"scope": "node", "parent": ["MPEG Audio"], "name": "Frame", "last": 0}]}))
 
+        # Only the surplus over the old report goes: an unchanged golden of the same folder is left alone.
+        self.assertEqual([], self.check(old, old, change))
+
     def test_an_added_node_that_the_old_report_has_is_not_an_addition(self):
         change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"}],
                   "changed": [{"path": ["MPEG Audio", "Statistics", "Stereo Coding"], "fields": ["value"]}]}

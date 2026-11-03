@@ -252,11 +252,29 @@ public class SamplesDefinitionTests
     // pins the cases the definition leaves as they are; the per-format commits add the rest with their goldens.
     public static TheoryData<string, long, long> RuleCases => new()
     {
-        // Rule 2: a cut ADTS frame counts its declared samples (the lost samples come with the ADTS commit).
-        { "adts/truncated.aac", 12288, 0 },
+        // Region: MPEG audio. Rule 2: a frame cut by the end of the data or the next frame counts its declared 1,152 samples and is lost.
+        { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
+        { "vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
 
-        // Rule 3: bytes skipped while searching for sync declare nothing.
+        // Region: Musepack. A frame cut by the end of the data counts 1,152 in Coded Samples and is lost; samples compose as before.
+        { "musepack/sv7-truncated.mpc", 46751, 1152 },
+        { "musepack/sv8-truncated.mpc", 45599, 4608 },
+
+        // Region: ADTS and AAC. Rule 2: a cut frame counts its declared samples and is lost; rule 3: bytes skipped while searching for sync
+        // declare nothing; a block that breaks the syntax (question 8) is lost; a declaration the bytes contradict is not (question 5).
+        { "adts/truncated.aac", 12288, 1024 },
+        { "adts/sbr-in-truncated-frame.aac", 4096, 2048 },
         { "adts/damaged-header.aac", 29696, 0 },
+        { "adts/blocks-missing.aac", 10240, 0 },
+        { "adts/corrupt-syntax.aac", 21504, 6144 },
+
+        // Region: MP4. Rule 1: a sample whose first byte is in the file counts; one the file ends inside is lost; rule 3 for samples outside.
+        { "mp4/truncated.m4a", 10240, 1024 },
+        { "mp4/sample-outside-mdat.m4a", 20480, 10240 },
+
+        // Region: ALAC. An unreadable frame counts its declared samples (the cookie's frame length where its first element is not read).
+        { "alac/built-element-invalid-shift.m4a", 10000, 4096 },
+        { "alac/built-residual-run-too-long.m4a", 6004, 100 },
 
         // Trimming: Opus samples are the trimmed stage; the coded stage lies above them.
         { "ogg/opus-packets-corrupt.opus", 24648, 0 },
