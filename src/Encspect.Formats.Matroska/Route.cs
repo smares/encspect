@@ -370,6 +370,12 @@ internal sealed partial class FileReader
                 }
             }
 
+            if (added.Count == 1 && ContainerDuration(segment, track) is > 0 and var length)
+            {
+                ContainerLength.AddDuration(node, (name, value, description) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.Tracks },
+                    length, added[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
+            }
+
             CompareStreams(track, label, codec, added);
         }
     }

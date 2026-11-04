@@ -311,6 +311,8 @@ internal static class Explain
 
     public const string TrackSamples = "The bytes of one track's samples, which the sample tables place in the media data; the codec's nodes under it show each access unit.";
     public const string Gapless = "What the file says about the samples to trim for gapless playback: the edit list, the roll groups and Apple's iTunSMPB. Counted in the track's media timescale.";
+    public const string ContainerDuration = "The length of the track's media as the mdhd box states it, in seconds: its duration in the media's timescale (ISO/IEC 14496-12, 8.4.2). It is the header's statement, before the edit list, and is not counted from the samples.";
+    public const string ContainerSamples = "The length of the track's media as the mdhd box states it, in samples per channel: its duration in the media's timescale, given where the timescale is the sample rate of the sample entry (ISO/IEC 14496-12, 8.4.2).";
     public const string EditDelay = "The samples the edit list skips at the start: its media time, the encoder delay a player trims (ISO/IEC 14496-12 8.6.6).";
     public const string EditSamples = "The samples the edit list presents: its segment duration, converted to the media's timescale.";
     public const string EditPadding = "The samples left after the edit list's end: the padding in the last access units, which a player trims.";

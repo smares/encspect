@@ -231,6 +231,11 @@ internal static partial class Summary
         }
 
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
+        if (info is { TotalSamples: > 0 })
+        {
+            ContainerLength.AddSamples(statistics, (name, value, description) => cover(name, value, description, null), (long)info.Value.TotalSamples, rate, Explain.StatContainerSamples, Explain.StatContainerDuration);
+        }
+
         if (rate > 0)
         {
             statistics.Add(Cover3("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));

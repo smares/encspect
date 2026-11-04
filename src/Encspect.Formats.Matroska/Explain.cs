@@ -25,6 +25,8 @@ internal static class Explain
     public const string Frame = "One frame of the block's track: the unit its codec decodes, such as an audio frame, an access unit or a video picture (RFC 9559, section 10.3).";
     public const string BlockData = "The bytes of the block after its header, which the analyzer does not read as frames.";
 
+    public const string ContainerSamples = "The length of the track as its blocks' timestamps state it, in samples per channel: the Container Duration at the stream's sampling rate, rounded to the nearest sample, halves up. It is the container's statement and is not counted from the audio.";
+    public const string ContainerDuration = "The length of the track as its blocks' timestamps state it, in seconds: from the first block to the last and one more step (RFC 9559, section 11.2). It is the container's statement and is not counted from the audio.";
     public const string TrackFrames = "The frames of an audio track put together from the blocks that carry them, handed to the codec parser of the track's codec ID.";
     public const string TrackFramesEncrypted = "The frames of an audio track whose ContentEncodings encrypt them (RFC 9559, section 5.1.4.1.31.8). They are not read, since ciphertext is no valid coding; the codec parser is handed the clear configuration only.";
 }

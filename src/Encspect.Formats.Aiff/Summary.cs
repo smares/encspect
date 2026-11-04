@@ -157,6 +157,10 @@ internal static class Summary
 
         statistics.Add(Cover("Sample Frames", NodeValue.Integer(frames, "sample frames", "sample frame"), Explain.StatSampleFrames, Topics.PcmSamples));
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
+        if (common.IsRateValid && common.SampleRate > 0)
+        {
+            ContainerLength.AddSamples(statistics, (name, value, description) => Cover(name, value, description), common.Frames, common.SampleRate, Explain.StatContainerSamples, Explain.StatContainerDuration);
+        }
         if (common.IsRateValid)
         {
             statistics.Add(Cover("Sample Rate", common.SampleRate == Math.Floor(common.SampleRate) ? NodeValue.Integer((long)common.SampleRate, "Hz") : NodeValue.Decimal(common.SampleRate, 4, "Hz"), Explain.StatRate, Topics.ExtendedRate));
