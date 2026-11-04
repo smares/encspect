@@ -2888,6 +2888,27 @@
                           "length": 53642
                         },
                         {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 4995,
+                          "length": 53642,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4995,
+                              "length": 53642
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "65 frames (98.5%)",
+                              "offset": 4995,
+                              "length": 53642
+                            }
+                          ]
+                        },
+                        {
                           "name": "Channel Groups",
                           "value": "94 groups with a transform (45.0%)",
                           "offset": 4995,
@@ -29687,6 +29708,39 @@
               126.5,
               122.7,
               75.1
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 1
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 65
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                61
+              ]
             ]
           }
         ]

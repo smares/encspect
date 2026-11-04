@@ -82,7 +82,7 @@
                 },
                 {
                   "name": "Bitrate Mode",
-                  "value": "variable",
+                  "value": "constant",
                   "offset": 0,
                   "length": 12450
                 },
@@ -108,21 +108,21 @@
                 {
                   "name": "Minimum Buffer Fullness",
                   "value": 136,
-                  "unit": "words",
+                  "unit": "words per channel",
                   "offset": 0,
                   "length": 12450
                 },
                 {
                   "name": "Maximum Buffer Fullness",
                   "value": 145,
-                  "unit": "words",
+                  "unit": "words per channel",
                   "offset": 0,
                   "length": 12450
                 },
                 {
                   "name": "Average Buffer Fullness",
                   "value": 144.9,
-                  "unit": "words",
+                  "unit": "words per channel",
                   "offset": 0,
                   "length": 12450
                 },
@@ -31608,7 +31608,7 @@
           },
           {
             "name": "Buffer Fullness",
-            "unit": "words",
+            "unit": "words per channel",
             "axis": "frameOffset",
             "concept": "bitDistribution",
             "quantity": "Buffer Fullness",
@@ -31753,7 +31753,7 @@
           },
           {
             "name": "Buffer Fullness Over Time",
-            "unit": "words",
+            "unit": "words per channel",
             "axis": "seconds",
             "concept": "bitDistribution",
             "quantity": "Buffer Fullness",

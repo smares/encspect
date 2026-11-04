@@ -858,28 +858,6 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "End Trimming",
-      "goldens": [
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
         "DTS",
         "Statistics"
       ],
@@ -959,6 +937,28 @@
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
         "tests/fixtures/matroska/external-mkvmerge-eac3.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "End Trimming",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
       ]
     },
     {
@@ -1158,6 +1158,7 @@
       "name": "End Trimming",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
         "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
       ]
     },
@@ -1434,6 +1435,19 @@
         "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
         "tests/fixtures/matroska/external-ffmpeg-video.report.json",
         "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "Statistics"
+      ],
+      "name": "End Trimming",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
         "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
       ]
     },
@@ -1551,18 +1565,6 @@
       "name": "160 to 191 kbps",
       "goldens": [
         "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "End Trimming",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
       ]
     },
     {
@@ -1927,7 +1929,6 @@
         "value"
       ],
       "goldens": [
-        "tests/fixtures/matroska/block-groups.report.json",
         "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
         "tests/fixtures/matroska/external-ffmpeg-live.report.json",
         "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
@@ -1951,7 +1952,6 @@
         "value"
       ],
       "goldens": [
-        "tests/fixtures/matroska/block-groups.report.json",
         "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
         "tests/fixtures/matroska/external-ffmpeg-live.report.json",
         "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
@@ -1959,6 +1959,7 @@
         "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
         "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
         "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
         "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
         "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
         "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
@@ -1975,7 +1976,6 @@
         "value"
       ],
       "goldens": [
-        "tests/fixtures/matroska/block-groups.report.json",
         "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
         "tests/fixtures/matroska/external-ffmpeg-live.report.json",
         "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
@@ -1983,6 +1983,7 @@
         "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
         "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
         "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
         "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
         "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
         "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
@@ -1995,7 +1996,6 @@
         "samples"
       ],
       "goldens": [
-        "tests/fixtures/matroska/block-groups.report.json",
         "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
         "tests/fixtures/matroska/external-ffmpeg-live.report.json",
         "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
@@ -2037,6 +2037,7 @@
       ],
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
         "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
       ]
     },
@@ -2052,20 +2053,8 @@
       ],
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
         "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
       ]
     },
     {
@@ -2079,6 +2068,7 @@
         "value"
       ],
       "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
         "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
       ]
     },
@@ -2093,8 +2083,55 @@
         "value"
       ],
       "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
         "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
       ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "averageBitrate",
+        "duration",
+        "samples"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames",
+        "Statistics"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+      ]
+    }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
+    },
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
+    },
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
     }
   ]
 }

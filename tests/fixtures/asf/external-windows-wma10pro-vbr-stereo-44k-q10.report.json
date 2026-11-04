@@ -4272,6 +4272,27 @@
                           "length": 24082
                         },
                         {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 4995,
+                          "length": 24082,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "4 frames (6.1%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "62 frames (93.9%)",
+                              "offset": 4995,
+                              "length": 24082
+                            }
+                          ]
+                        },
+                        {
                           "name": "Channel Groups",
                           "value": "107 groups with a transform (48.9%)",
                           "offset": 4995,
@@ -32422,6 +32443,63 @@
               59,
               59.8,
               34.2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 4
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 62
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                9
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                21
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                21
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                7
+              ]
             ]
           }
         ]

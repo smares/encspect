@@ -4200,7 +4200,7 @@
                         },
                         {
                           "name": "Bitrate Mode",
-                          "value": "variable",
+                          "value": "constant",
                           "offset": 1649,
                           "length": 89510
                         },
@@ -4369,6 +4369,27 @@
                           "value": 2,
                           "offset": 1649,
                           "length": 89510
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 1649,
+                          "length": 89510,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "1 frame (1.5%)",
+                              "offset": 1649,
+                              "length": 89510
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "65 frames (98.5%)",
+                              "offset": 1649,
+                              "length": 89510
+                            }
+                          ]
                         },
                         {
                           "name": "Channel Groups",
@@ -31461,6 +31482,39 @@
               229,
               210.9,
               228
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 1
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 65
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                61
+              ]
             ]
           }
         ]

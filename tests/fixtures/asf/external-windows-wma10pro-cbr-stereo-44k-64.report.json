@@ -4484,7 +4484,7 @@
                         },
                         {
                           "name": "Bitrate Mode",
-                          "value": "variable",
+                          "value": "constant",
                           "offset": 1649,
                           "length": 33072
                         },
@@ -4605,6 +4605,21 @@
                           "value": 2,
                           "offset": 1649,
                           "length": 33072
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 1649,
+                          "length": 33072,
+                          "children": [
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "66 frames (100.0%)",
+                              "offset": 1649,
+                              "length": 33072
+                            }
+                          ]
                         },
                         {
                           "name": "Channel Groups",
@@ -24441,6 +24456,31 @@
               81.2,
               76,
               95.2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 66
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                66
+              ]
             ]
           }
         ]
