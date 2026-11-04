@@ -1549,6 +1549,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 140,
+                      "length": 591,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.6965986394557823,
+                          "unit": "s",
+                          "offset": 140,
+                          "length": 591
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 30720,
+                          "unit": "samples",
+                          "offset": 140,
+                          "length": 591
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1676,6 +1698,25 @@
                               "unit": "kbps",
                               "offset": 739,
                               "length": 1335
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 739,
+                              "length": 1335
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 739,
+                              "length": 1335,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "30 access units (100.0%)",
+                                  "offset": 739,
+                                  "length": 1335
+                                }
+                              ]
                             },
                             {
                               "name": "Independent Access Units",

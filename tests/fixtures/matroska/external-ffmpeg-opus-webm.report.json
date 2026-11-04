@@ -6494,7 +6494,7 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "76 packets, 1.514 s",
+                  "value": "76 packets, 1.500 s",
                   "offset": 517,
                   "length": 28774,
                   "children": [
@@ -6525,15 +6525,22 @@
                       "length": 28774
                     },
                     {
+                      "name": "End Trimming",
+                      "value": 648,
+                      "unit": "samples",
+                      "offset": 517,
+                      "length": 28774
+                    },
+                    {
                       "name": "Samples",
-                      "value": 72648,
+                      "value": 72000,
                       "unit": "samples",
                       "offset": 517,
                       "length": 28774
                     },
                     {
                       "name": "Duration",
-                      "value": 1.5135,
+                      "value": 1.5,
                       "unit": "s",
                       "offset": 517,
                       "length": 28774
@@ -6564,6 +6571,49 @@
                       "unit": "kbps",
                       "offset": 517,
                       "length": 28774
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 517,
+                      "length": 28774
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 517,
+                      "length": 28774,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "2 packets (2.6%)",
+                          "offset": 517,
+                          "length": 28774
+                        },
+                        {
+                          "name": "96 to 127 kbps",
+                          "value": "1 packet (1.3%)",
+                          "offset": 517,
+                          "length": 28774
+                        },
+                        {
+                          "name": "128 to 159 kbps",
+                          "value": "57 packets (75.0%)",
+                          "offset": 517,
+                          "length": 28774
+                        },
+                        {
+                          "name": "160 to 191 kbps",
+                          "value": "10 packets (13.2%)",
+                          "offset": 517,
+                          "length": 28774
+                        },
+                        {
+                          "name": "192 to 223 kbps",
+                          "value": "6 packets (7.9%)",
+                          "offset": 517,
+                          "length": 28774
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -10334,6 +10384,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1.5210133333333336,
+                  "unit": "s",
+                  "offset": 351,
+                  "length": 28940
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 73009,
+                  "unit": "samples",
+                  "offset": 351,
+                  "length": 28940
                 }
               ]
             }
@@ -10358,8 +10422,8 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 72648,
-        "duration": 1.5135,
+        "samples": 72000,
+        "duration": 1.5,
         "averageBitrate": 148.67368421052632,
         "isVbr": true,
         "playbackGroup": 1,

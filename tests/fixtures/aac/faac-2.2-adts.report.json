@@ -81,6 +81,62 @@
                   "length": 24565
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 24565
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 24565,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "5 frames (7.6%)",
+                      "offset": 0,
+                      "length": 24565
+                    },
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "4 frames (6.1%)",
+                      "offset": 0,
+                      "length": 24565
+                    },
+                    {
+                      "name": "96 to 127 kbps",
+                      "value": "16 frames (24.2%)",
+                      "offset": 0,
+                      "length": 24565
+                    },
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "37 frames (56.1%)",
+                      "offset": 0,
+                      "length": 24565
+                    },
+                    {
+                      "name": "160 to 191 kbps",
+                      "value": "3 frames (4.5%)",
+                      "offset": 0,
+                      "length": 24565
+                    },
+                    {
+                      "name": "224 to 255 kbps",
+                      "value": "1 frame (1.5%)",
+                      "offset": 0,
+                      "length": 24565
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 66,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 24565
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 66,
                   "unit": "blocks",

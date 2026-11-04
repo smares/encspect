@@ -719,6 +719,37 @@
                           "length": 24584
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 70,
+                          "length": 24584
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 70,
+                          "length": 24584,
+                          "children": [
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "2 access units (33.3%)",
+                              "offset": 70,
+                              "length": 24584
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "3 access units (50.0%)",
+                              "offset": 70,
+                              "length": 24584
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "1 access unit (16.7%)",
+                              "offset": 70,
+                              "length": 24584
+                            }
+                          ]
+                        },
+                        {
                           "name": "First Elements",
                           "offset": 70,
                           "length": 24584,

@@ -6039,6 +6039,31 @@
                           "length": 16050
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 394,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 394,
+                          "length": 16050,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "24 frames (54.5%)",
+                              "offset": 394,
+                              "length": 16050
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "20 frames (45.5%)",
+                              "offset": 394,
+                              "length": 16050
+                            }
+                          ]
+                        },
+                        {
                           "name": "Uses Bit Reservoir",
                           "value": false,
                           "offset": 394,

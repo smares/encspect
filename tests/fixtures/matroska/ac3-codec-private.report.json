@@ -609,6 +609,25 @@
                           "length": 7189
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 171,
+                          "length": 7189
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 171,
+                          "length": 7189,
+                          "children": [
+                            {
+                              "name": "448 to 479 kbps",
+                              "value": "4 frames (100.0%)",
+                              "offset": 171,
+                              "length": 7189
+                            }
+                          ]
+                        },
+                        {
                           "name": "Nominal Bitrate",
                           "value": 448,
                           "unit": "kbps",
@@ -12294,6 +12313,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.128,
+                  "unit": "s",
+                  "offset": 171,
+                  "length": 7189
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 6144,
+                  "unit": "samples",
+                  "offset": 171,
+                  "length": 7189
                 }
               ]
             }

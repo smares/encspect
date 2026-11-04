@@ -852,6 +852,25 @@
                           "unit": "kbps",
                           "offset": 205,
                           "length": 231
+                        },
+                        {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 205,
+                          "length": 231
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 205,
+                          "length": 231,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "6 access units (100.0%)",
+                              "offset": 205,
+                              "length": 231
+                            }
+                          ]
                         }
                       ]
                     },

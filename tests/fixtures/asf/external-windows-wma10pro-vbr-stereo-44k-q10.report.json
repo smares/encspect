@@ -4148,6 +4148,55 @@
                           "length": 24082
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 4995,
+                          "length": 24082
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 4995,
+                          "length": 24082,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "28 frames (42.4%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "10 frames (15.2%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "12 frames (18.2%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "10 frames (15.2%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "5 frames (7.6%)",
+                              "offset": 4995,
+                              "length": 24082
+                            },
+                            {
+                              "name": "160 to 191 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4995,
+                              "length": 24082
+                            }
+                          ]
+                        },
+                        {
                           "name": "Frames Spanning Packets",
                           "value": 7,
                           "offset": 4995,

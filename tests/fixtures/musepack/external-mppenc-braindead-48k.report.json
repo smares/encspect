@@ -352,10 +352,19 @@
                   ]
                 },
                 {
-                  "name": "Frames With Mid/Side",
-                  "value": "63 frames (100.0%)",
+                  "name": "Stereo Coding",
+                  "value": 63,
+                  "unit": "frames",
                   "offset": 0,
-                  "length": 59176
+                  "length": 59176,
+                  "children": [
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "63 frames (100.0%)",
+                      "offset": 0,
+                      "length": 59176
+                    }
+                  ]
                 },
                 {
                   "name": "Subband Stereo Coding",
@@ -7134,6 +7143,31 @@
             "values": [
               300,
               339
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 63
+              }
+            ],
+            "total": 63,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                63
+              ]
             ]
           }
         ]

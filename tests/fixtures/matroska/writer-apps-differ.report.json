@@ -753,6 +753,25 @@
                       "length": 87
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 257,
+                      "length": 87
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 257,
+                      "length": 87,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "2 packets (100.0%)",
+                          "offset": 257,
+                          "length": 87
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "40 to 41 bytes, 40.5 on average",
                       "offset": 257,
@@ -969,6 +988,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.04,
+                  "unit": "s",
+                  "offset": 124,
+                  "length": 220
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1920,
+                  "unit": "samples",
+                  "offset": 124,
+                  "length": 220
                 }
               ]
             },
@@ -1111,6 +1144,25 @@
                       "unit": "kbps",
                       "offset": 350,
                       "length": 87
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 350,
+                      "length": 87
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 350,
+                      "length": 87,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "2 packets (100.0%)",
+                          "offset": 350,
+                          "length": 87
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -1329,6 +1381,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.04,
+                  "unit": "s",
+                  "offset": 195,
+                  "length": 242
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1920,
+                  "unit": "samples",
+                  "offset": 195,
+                  "length": 242
                 }
               ]
             }

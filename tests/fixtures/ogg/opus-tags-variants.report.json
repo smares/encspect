@@ -316,6 +316,25 @@
                       "length": 260
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "constant",
+                      "offset": 173,
+                      "length": 260
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 173,
+                      "length": 260,
+                      "children": [
+                        {
+                          "name": "64 to 95 kbps",
+                          "value": "10 packets (100.0%)",
+                          "offset": 173,
+                          "length": 260
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "all 26 bytes, as CBR encoding writes them",
                       "offset": 173,
@@ -916,6 +935,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.025,
+                  "unit": "s",
+                  "offset": 142,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1200,
+                  "unit": "samples",
+                  "offset": 142,
+                  "length": 8
                 }
               ]
             },
@@ -1128,6 +1161,25 @@
                       "unit": "kbps",
                       "offset": 553,
                       "length": 260
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "constant",
+                      "offset": 553,
+                      "length": 260
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 553,
+                      "length": 260,
+                      "children": [
+                        {
+                          "name": "64 to 95 kbps",
+                          "value": "10 packets (100.0%)",
+                          "offset": 553,
+                          "length": 260
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -1730,6 +1782,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.025,
+                  "unit": "s",
+                  "offset": 522,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1200,
+                  "unit": "samples",
+                  "offset": 522,
+                  "length": 8
                 }
               ]
             },
@@ -1943,6 +2009,25 @@
                       "unit": "kbps",
                       "offset": 897,
                       "length": 260
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "constant",
+                      "offset": 897,
+                      "length": 260
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 897,
+                      "length": 260,
+                      "children": [
+                        {
+                          "name": "64 to 95 kbps",
+                          "value": "10 packets (100.0%)",
+                          "offset": 897,
+                          "length": 260
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -2545,6 +2630,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.025,
+                  "unit": "s",
+                  "offset": 866,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1200,
+                  "unit": "samples",
+                  "offset": 866,
+                  "length": 8
                 }
               ]
             },

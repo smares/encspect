@@ -240,6 +240,49 @@
                               "length": 20748
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 48,
+                              "length": 20748
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 48,
+                              "length": 20748,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "2 access units (3.0%)",
+                                  "offset": 48,
+                                  "length": 20748
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "2 access units (3.0%)",
+                                  "offset": 48,
+                                  "length": 20748
+                                },
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "7 access units (10.6%)",
+                                  "offset": 48,
+                                  "length": 20748
+                                },
+                                {
+                                  "name": "96 to 127 kbps",
+                                  "value": "54 access units (81.8%)",
+                                  "offset": 48,
+                                  "length": 20748
+                                },
+                                {
+                                  "name": "128 to 159 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 48,
+                                  "length": 20748
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 48,
                               "length": 20748,
@@ -46122,6 +46165,28 @@
                               ]
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 20912,
+                      "length": 700,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.5,
+                          "unit": "s",
+                          "offset": 20912,
+                          "length": 700
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 66150,
+                          "unit": "samples",
+                          "offset": 20912,
+                          "length": 700
                         }
                       ]
                     }

@@ -81,6 +81,32 @@
                   "length": 880
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "constant",
+                  "offset": 0,
+                  "length": 880
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 880,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "10 frames (100.0%)",
+                      "offset": 0,
+                      "length": 880
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 10,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 880
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 20,
                   "unit": "blocks",

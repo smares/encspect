@@ -300,6 +300,55 @@
                       "length": 5109
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 176,
+                      "length": 5109
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 176,
+                      "length": 5109,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "35 packets (64.8%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "32 to 63 kbps",
+                          "value": "11 packets (20.4%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "64 to 95 kbps",
+                          "value": "4 packets (7.4%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "96 to 127 kbps",
+                          "value": "1 packet (1.9%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "224 to 255 kbps",
+                          "value": "2 packets (3.7%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "384 to 415 kbps",
+                          "value": "1 packet (1.9%)",
+                          "offset": 176,
+                          "length": 5109
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "1 to 1001 bytes, 91.3 on average",
                       "offset": 176,
@@ -3897,6 +3946,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1.4695833333333332,
+                  "unit": "s",
+                  "offset": 3575,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 70540,
+                  "unit": "samples",
+                  "offset": 3575,
+                  "length": 8
                 }
               ]
             },

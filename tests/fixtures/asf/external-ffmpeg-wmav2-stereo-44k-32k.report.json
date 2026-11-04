@@ -5587,6 +5587,25 @@
                           "length": 9650
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 394,
+                          "length": 9650
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 394,
+                          "length": 9650,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "44 frames (100.0%)",
+                              "offset": 394,
+                              "length": 9650
+                            }
+                          ]
+                        },
+                        {
                           "name": "Uses Bit Reservoir",
                           "value": false,
                           "offset": 394,
@@ -5632,10 +5651,19 @@
                           ]
                         },
                         {
-                          "name": "Mid/Side Blocks",
-                          "value": "44 blocks (100.0%)",
+                          "name": "Stereo Coding",
+                          "value": 44,
+                          "unit": "frames",
                           "offset": 394,
-                          "length": 9650
+                          "length": 9650,
+                          "children": [
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "44 frames (100.0%)",
+                              "offset": 394,
+                              "length": 9650
+                            }
+                          ]
                         },
                         {
                           "name": "Noise-Substituted Blocks",
@@ -10807,6 +10835,31 @@
             "values": [
               23.6,
               24.8
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                44
+              ]
             ]
           }
         ]

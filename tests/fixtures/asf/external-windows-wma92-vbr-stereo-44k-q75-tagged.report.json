@@ -3437,6 +3437,79 @@
                           "length": 26990
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 5033,
+                          "length": 26990
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 5033,
+                          "length": 26990,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "22 frames (48.9%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "3 frames (6.7%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "2 frames (4.4%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "4 frames (8.9%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "2 frames (4.4%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "160 to 191 kbps",
+                              "value": "6 frames (13.3%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "192 to 223 kbps",
+                              "value": "2 frames (4.4%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "224 to 255 kbps",
+                              "value": "2 frames (4.4%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "448 to 479 kbps",
+                              "value": "1 frame (2.2%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "480 to 511 kbps",
+                              "value": "1 frame (2.2%)",
+                              "offset": 5033,
+                              "length": 26990
+                            }
+                          ]
+                        },
+                        {
                           "name": "Uses Bit Reservoir",
                           "value": true,
                           "offset": 5033,
@@ -3532,10 +3605,25 @@
                           ]
                         },
                         {
-                          "name": "Mid/Side Blocks",
-                          "value": "7 blocks (5.1%)",
+                          "name": "Stereo Coding",
+                          "value": 45,
+                          "unit": "frames",
                           "offset": 5033,
-                          "length": 26990
+                          "length": 26990,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "39 frames (86.7%)",
+                              "offset": 5033,
+                              "length": 26990
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "6 frames (13.3%)",
+                              "offset": 5033,
+                              "length": 26990
+                            }
+                          ]
                         },
                         {
                           "name": "Blocks without Coded Channels",
@@ -16557,6 +16645,55 @@
             "values": [
               17,
               608
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 39
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 6
+              }
+            ],
+            "total": 45,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                29
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                3
+              ]
             ]
           }
         ]

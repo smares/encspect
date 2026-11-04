@@ -200,6 +200,25 @@
                               "length": 28672
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 48,
+                              "length": 28672
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 48,
+                              "length": 28672,
+                              "children": [
+                                {
+                                  "name": "448 to 479 kbps",
+                                  "value": "16 frames (100.0%)",
+                                  "offset": 48,
+                                  "length": 28672
+                                }
+                              ]
+                            },
+                            {
                               "name": "Nominal Bitrate",
                               "value": 448,
                               "unit": "kbps",
@@ -47843,6 +47862,20 @@
                       "offset": 28836,
                       "length": 472,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.5,
+                          "unit": "s",
+                          "offset": 28836,
+                          "length": 472
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 24000,
+                          "unit": "samples",
+                          "offset": 28836,
+                          "length": 472
+                        },
                         {
                           "name": "Encoder Delay (Edit List)",
                           "value": 256,

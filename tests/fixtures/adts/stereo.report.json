@@ -81,6 +81,50 @@
                   "length": 2942
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 2942
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 2942,
+                  "children": [
+                    {
+                      "name": "96 to 127 kbps",
+                      "value": "2 frames (33.3%)",
+                      "offset": 0,
+                      "length": 2942
+                    },
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "2 frames (33.3%)",
+                      "offset": 0,
+                      "length": 2942
+                    },
+                    {
+                      "name": "224 to 255 kbps",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 2942
+                    },
+                    {
+                      "name": "256 to 287 kbps",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 2942
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2942
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 6,
                   "unit": "blocks",

@@ -1159,6 +1159,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 427,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 427
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 427
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2847,6 +2869,67 @@
                             {
                               "offset": 1618,
                               "length": 260
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 763,
+                          "length": 1115,
+                          "ranges": [
+                            {
+                              "offset": 763,
+                              "length": 302
+                            },
+                            {
+                              "offset": 1201,
+                              "length": 281
+                            },
+                            {
+                              "offset": 1618,
+                              "length": 260
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 763,
+                          "length": 1115,
+                          "ranges": [
+                            {
+                              "offset": 763,
+                              "length": 302
+                            },
+                            {
+                              "offset": 1201,
+                              "length": 281
+                            },
+                            {
+                              "offset": 1618,
+                              "length": 260
+                            }
+                          ],
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "30 access units (100.0%)",
+                              "offset": 763,
+                              "length": 1115,
+                              "ranges": [
+                                {
+                                  "offset": 763,
+                                  "length": 302
+                                },
+                                {
+                                  "offset": 1201,
+                                  "length": 281
+                                },
+                                {
+                                  "offset": 1618,
+                                  "length": 260
+                                }
+                              ]
                             }
                           ]
                         },

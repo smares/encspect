@@ -1141,6 +1141,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 449,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.064,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 449
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 3072,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 449
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1248,6 +1270,25 @@
                               "unit": "kbps",
                               "offset": 601,
                               "length": 3080
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 601,
+                              "length": 3080
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 601,
+                              "length": 3080,
+                              "children": [
+                                {
+                                  "name": "384 to 415 kbps",
+                                  "value": "6 frames (100.0%)",
+                                  "offset": 601,
+                                  "length": 3080
+                                }
+                              ]
                             },
                             {
                               "name": "Core Frames",

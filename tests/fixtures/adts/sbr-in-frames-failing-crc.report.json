@@ -81,6 +81,32 @@
                   "length": 800
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 800
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 800,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "12 frames (100.0%)",
+                      "offset": 0,
+                      "length": 800
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 12,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 800
+                },
+                {
                   "name": "Verified Frame Checksums",
                   "value": 0,
                   "unit": "frames",

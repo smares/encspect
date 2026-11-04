@@ -902,6 +902,25 @@
                           "length": 16392
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 5442,
+                          "length": 16392
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 5442,
+                          "length": 16392,
+                          "children": [
+                            {
+                              "name": "256 to 287 kbps",
+                              "value": "16 frames (100.0%)",
+                              "offset": 5442,
+                              "length": 16392
+                            }
+                          ]
+                        },
+                        {
                           "name": "Dialogue Normalization",
                           "value": -31,
                           "unit": "dB",
@@ -35843,6 +35862,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.512008896,
+                  "unit": "s",
+                  "offset": 5442,
+                  "length": 16392
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 24576,
+                  "unit": "samples",
+                  "offset": 5442,
+                  "length": 16392
                 }
               ]
             }

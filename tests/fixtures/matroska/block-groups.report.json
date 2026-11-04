@@ -812,7 +812,7 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "6 packets, 0.114 s",
+                  "value": "6 packets, 0.112 s",
                   "offset": 200,
                   "length": 335,
                   "children": [
@@ -843,15 +843,22 @@
                       "length": 335
                     },
                     {
+                      "name": "End Trimming",
+                      "value": 72,
+                      "unit": "samples",
+                      "offset": 200,
+                      "length": 335
+                    },
+                    {
                       "name": "Samples",
-                      "value": 5448,
+                      "value": 5376,
                       "unit": "samples",
                       "offset": 200,
                       "length": 335
                     },
                     {
                       "name": "Duration",
-                      "value": 0.1135,
+                      "value": 0.112,
                       "unit": "s",
                       "offset": 200,
                       "length": 335
@@ -882,6 +889,25 @@
                       "unit": "kbps",
                       "offset": 200,
                       "length": 335
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 200,
+                      "length": 335
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 200,
+                      "length": 335,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "6 packets (100.0%)",
+                          "offset": 200,
+                          "length": 335
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -1292,6 +1318,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.125,
+                  "unit": "s",
+                  "offset": 138,
+                  "length": 397
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 6000,
+                  "unit": "samples",
+                  "offset": 138,
+                  "length": 397
                 }
               ]
             }
@@ -1315,8 +1355,8 @@
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 5448,
-        "duration": 0.1135,
+        "samples": 5376,
+        "duration": 0.112,
         "averageBitrate": 17.333333333333332,
         "isVbr": true,
         "playbackGroup": 1,

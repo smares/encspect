@@ -2728,7 +2728,7 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "26 packets, 0.513 s",
+                  "value": "26 packets, 0.500 s",
                   "offset": 575,
                   "length": 22848,
                   "children": [
@@ -2759,15 +2759,22 @@
                       "length": 22848
                     },
                     {
+                      "name": "End Trimming",
+                      "value": 648,
+                      "unit": "samples",
+                      "offset": 575,
+                      "length": 22848
+                    },
+                    {
                       "name": "Samples",
-                      "value": 24648,
+                      "value": 24000,
                       "unit": "samples",
                       "offset": 575,
                       "length": 22848
                     },
                     {
                       "name": "Duration",
-                      "value": 0.5135,
+                      "value": 0.5,
                       "unit": "s",
                       "offset": 575,
                       "length": 22848
@@ -2798,6 +2805,55 @@
                       "unit": "kbps",
                       "offset": 575,
                       "length": 22848
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 575,
+                      "length": 22848
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 575,
+                      "length": 22848,
+                      "children": [
+                        {
+                          "name": "288 to 319 kbps",
+                          "value": "11 packets (42.3%)",
+                          "offset": 575,
+                          "length": 22848
+                        },
+                        {
+                          "name": "320 to 351 kbps",
+                          "value": "8 packets (30.8%)",
+                          "offset": 575,
+                          "length": 22848
+                        },
+                        {
+                          "name": "352 to 383 kbps",
+                          "value": "3 packets (11.5%)",
+                          "offset": 575,
+                          "length": 22848
+                        },
+                        {
+                          "name": "384 to 415 kbps",
+                          "value": "1 packet (3.8%)",
+                          "offset": 575,
+                          "length": 22848
+                        },
+                        {
+                          "name": "480 to 511 kbps",
+                          "value": "2 packets (7.7%)",
+                          "offset": 575,
+                          "length": 22848
+                        },
+                        {
+                          "name": "512 to 543 kbps",
+                          "value": "1 packet (3.8%)",
+                          "offset": 575,
+                          "length": 22848
+                        }
+                      ]
                     },
                     {
                       "name": "Packet Sizes",
@@ -8510,6 +8566,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.52104,
+                  "unit": "s",
+                  "offset": 390,
+                  "length": 23033
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 25010,
+                  "unit": "samples",
+                  "offset": 390,
+                  "length": 23033
                 }
               ]
             }
@@ -8529,8 +8599,8 @@
         "sampleRate": 48000,
         "channels": 4,
         "channelMode": "Ambisonics, order 1",
-        "samples": 24648,
-        "duration": 0.5135,
+        "samples": 24000,
+        "duration": 0.5,
         "averageBitrate": 348.7692307692308,
         "isVbr": true,
         "playbackGroup": 1,

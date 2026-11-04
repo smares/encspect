@@ -6153,6 +6153,31 @@
                           "length": 193761
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 4991,
+                          "length": 193761
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 4991,
+                          "length": 193761,
+                          "children": [
+                            {
+                              "name": "768 to 799 kbps",
+                              "value": "37 frames (88.1%)",
+                              "offset": 4991,
+                              "length": 193761
+                            },
+                            {
+                              "name": "800 to 831 kbps",
+                              "value": "5 frames (11.9%)",
+                              "offset": 4991,
+                              "length": 193761
+                            }
+                          ]
+                        },
+                        {
                           "name": "Frames Spanning Packets",
                           "value": 14,
                           "offset": 4991,
@@ -6219,10 +6244,19 @@
                           "length": 193761
                         },
                         {
-                          "name": "Seekable Subframes with Mid/Side Stereo",
+                          "name": "Stereo Coding",
                           "value": 5,
+                          "unit": "frames",
                           "offset": 4991,
-                          "length": 193761
+                          "length": 193761,
+                          "children": [
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "5 frames (100.0%)",
+                              "offset": 4991,
+                              "length": 193761
+                            }
+                          ]
                         },
                         {
                           "name": "Seekable Subframes with a Recursive Filter",
@@ -13360,6 +13394,67 @@
             "values": [
               787.3,
               783.9
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 5
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                8
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                8
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                11
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                8
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                3
+              ]
             ]
           }
         ]

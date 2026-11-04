@@ -83,6 +83,25 @@
                   "length": 4096
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "constant",
+                  "offset": 100,
+                  "length": 4096
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 100,
+                  "length": 4096,
+                  "children": [
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "8 frames (100.0%)",
+                      "offset": 100,
+                      "length": 4096
+                    }
+                  ]
+                },
+                {
                   "name": "Dialogue Normalization",
                   "value": -27,
                   "unit": "dB",

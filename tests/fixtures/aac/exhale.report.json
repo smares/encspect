@@ -2099,6 +2099,20 @@
                       "length": 875,
                       "children": [
                         {
+                          "name": "Container Duration",
+                          "value": 1.5,
+                          "unit": "s",
+                          "offset": 164,
+                          "length": 875
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 66150,
+                          "unit": "samples",
+                          "offset": 164,
+                          "length": 875
+                        },
+                        {
                           "name": "Encoder Delay (Edit List)",
                           "value": 0,
                           "unit": "samples",
@@ -2468,6 +2482,43 @@
                               "unit": "kbps",
                               "offset": 1147,
                               "length": 4330
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 1147,
+                              "length": 4330
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 1147,
+                              "length": 4330,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "62 access units (95.4%)",
+                                  "offset": 1147,
+                                  "length": 4330
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 1147,
+                                  "length": 4330
+                                },
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 1147,
+                                  "length": 4330
+                                },
+                                {
+                                  "name": "96 to 127 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 1147,
+                                  "length": 4330
+                                }
+                              ]
                             },
                             {
                               "name": "Independent Access Units",

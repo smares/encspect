@@ -2,14 +2,14 @@
   "goldens": [
     "tests/fixtures/ac3/"
   ],
-  "renamed": [
+  "added": [
     {
+      "scope": "node",
       "parent": [
         "AC-3",
         "Statistics"
       ],
-      "from": "Frames Failing a CRC",
-      "to": "Failed Frame Checksums",
+      "name": "Bitrate Mode",
       "goldens": [
         "tests/fixtures/ac3/aht.report.json",
         "tests/fixtures/ac3/annex-d.report.json",
@@ -81,6 +81,350 @@
       ]
     },
     {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Bitrate Distribution",
+      "goldens": [
+        "tests/fixtures/ac3/aht.report.json",
+        "tests/fixtures/ac3/annex-d.report.json",
+        "tests/fixtures/ac3/bad-blocks.report.json",
+        "tests/fixtures/ac3/bsi-fields.report.json",
+        "tests/fixtures/ac3/bsid-10.report.json",
+        "tests/fixtures/ac3/bsid-9.report.json",
+        "tests/fixtures/ac3/coding-ac3-core-dependent.report.json",
+        "tests/fixtures/ac3/coding-ac3-coupling.report.json",
+        "tests/fixtures/ac3/coding-ac3-dual-mono.report.json",
+        "tests/fixtures/ac3/coding-ac3-stereo.report.json",
+        "tests/fixtures/ac3/coding-ac3-surround.report.json",
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/coding-eac3-dependent.report.json",
+        "tests/fixtures/ac3/coding-eac3-nine-frames.report.json",
+        "tests/fixtures/ac3/coding-eac3-spx-default.report.json",
+        "tests/fixtures/ac3/coupling.report.json",
+        "tests/fixtures/ac3/crc-damaged.report.json",
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/dependent-first.report.json",
+        "tests/fixtures/ac3/dependent-repeated.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json",
+        "tests/fixtures/ac3/dmixmod-reserved.report.json",
+        "tests/fixtures/ac3/emdf-length-long.report.json",
+        "tests/fixtures/ac3/emdf-length-short.report.json",
+        "tests/fixtures/ac3/emdf-noise.report.json",
+        "tests/fixtures/ac3/emdf-padding.report.json",
+        "tests/fixtures/ac3/emdf-payload-size.report.json",
+        "tests/fixtures/ac3/emdf-payloads.report.json",
+        "tests/fixtures/ac3/emdf-reserved.report.json",
+        "tests/fixtures/ac3/emdf-truncated.report.json",
+        "tests/fixtures/ac3/emdf-version.report.json",
+        "tests/fixtures/ac3/enhanced-coupling.report.json",
+        "tests/fixtures/ac3/external-aften-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-aften-stereo-192k-blocksw.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-annex-d-5.1.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-5.1-256k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-mono-48k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-fixed-stereo-128k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mono-96k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-192k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-32k-320k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-44k-64k.report.json",
+        "tests/fixtures/ac3/frame-exponents.report.json",
+        "tests/fixtures/ac3/joc-after-blocks.report.json",
+        "tests/fixtures/ac3/joc-atmos.report.json",
+        "tests/fixtures/ac3/joc-auxiliary-data.report.json",
+        "tests/fixtures/ac3/joc-flag-both.report.json",
+        "tests/fixtures/ac3/joc-flag-mismatch.report.json",
+        "tests/fixtures/ac3/joc-incomplete.report.json",
+        "tests/fixtures/ac3/joc-reserved.report.json",
+        "tests/fixtures/ac3/joc-short.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames-cut.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames.report.json",
+        "tests/fixtures/ac3/junk-around.report.json",
+        "tests/fixtures/ac3/junk-mpeg-in-frames.report.json",
+        "tests/fixtures/ac3/reduced-rate.report.json",
+        "tests/fixtures/ac3/reserved-values.report.json",
+        "tests/fixtures/ac3/spectral-extension.report.json",
+        "tests/fixtures/ac3/stream-changes.report.json",
+        "tests/fixtures/ac3/substreams.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json",
+        "tests/fixtures/ac3/truncated.report.json",
+        "tests/fixtures/ac3/two-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "96 to 127 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/aht.report.json",
+        "tests/fixtures/ac3/dependent-first.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mono-96k.report.json",
+        "tests/fixtures/ac3/frame-exponents.report.json",
+        "tests/fixtures/ac3/spectral-extension.report.json",
+        "tests/fixtures/ac3/substreams.report.json",
+        "tests/fixtures/ac3/two-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "384 to 415 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/annex-d.report.json",
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/dmixmod-reserved.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-annex-d-5.1.report.json",
+        "tests/fixtures/ac3/reserved-values.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "192 to 223 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/bad-blocks.report.json",
+        "tests/fixtures/ac3/bsi-fields.report.json",
+        "tests/fixtures/ac3/coding-ac3-core-dependent.report.json",
+        "tests/fixtures/ac3/coding-ac3-coupling.report.json",
+        "tests/fixtures/ac3/coding-ac3-dual-mono.report.json",
+        "tests/fixtures/ac3/coding-ac3-stereo.report.json",
+        "tests/fixtures/ac3/coding-ac3-surround.report.json",
+        "tests/fixtures/ac3/coding-eac3-dependent.report.json",
+        "tests/fixtures/ac3/crc-damaged.report.json",
+        "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/external-aften-stereo-192k-blocksw.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-192k.report.json",
+        "tests/fixtures/ac3/joc-auxiliary-data.report.json",
+        "tests/fixtures/ac3/junk-around.report.json",
+        "tests/fixtures/ac3/junk-mpeg-in-frames.report.json",
+        "tests/fixtures/ac3/stream-changes.report.json",
+        "tests/fixtures/ac3/truncated.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "0 to 31 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/bsid-10.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "32 to 63 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/bsid-9.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-mono-48k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-44k-64k.report.json",
+        "tests/fixtures/ac3/reduced-rate.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "256 to 287 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-ac3-core-dependent.report.json",
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-5.1-256k.report.json",
+        "tests/fixtures/ac3/joc-after-blocks.report.json",
+        "tests/fixtures/ac3/joc-flag-both.report.json",
+        "tests/fixtures/ac3/substreams.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "128 to 159 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/coding-eac3-spx-default.report.json",
+        "tests/fixtures/ac3/emdf-length-long.report.json",
+        "tests/fixtures/ac3/emdf-length-short.report.json",
+        "tests/fixtures/ac3/emdf-padding.report.json",
+        "tests/fixtures/ac3/emdf-payload-size.report.json",
+        "tests/fixtures/ac3/emdf-payloads.report.json",
+        "tests/fixtures/ac3/emdf-reserved.report.json",
+        "tests/fixtures/ac3/emdf-truncated.report.json",
+        "tests/fixtures/ac3/emdf-version.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-fixed-stereo-128k.report.json",
+        "tests/fixtures/ac3/joc-flag-mismatch.report.json",
+        "tests/fixtures/ac3/joc-incomplete.report.json",
+        "tests/fixtures/ac3/joc-reserved.report.json",
+        "tests/fixtures/ac3/joc-short.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames-cut.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "768 to 799 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/coding-eac3-dependent.report.json",
+        "tests/fixtures/ac3/coding-eac3-nine-frames.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "416 to 447 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-eac3-dependent.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "896 to 927 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-eac3-nine-frames.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "4608 to 4639 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coding-eac3-nine-frames.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "160 to 191 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/coupling.report.json",
+        "tests/fixtures/ac3/dependent-repeated.report.json",
+        "tests/fixtures/ac3/enhanced-coupling.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "moov",
+        "trak"
+      ],
+      "name": "Gapless",
+      "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/dec3-dependent.report.json",
+        "tests/fixtures/ac3/joc-aht.report.json",
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json",
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "name": "Container Duration",
+      "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/dec3-dependent.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/joc-aht.report.json",
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json",
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "name": "Container Samples",
+      "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/dec3-dependent.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/joc-aht.report.json",
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json",
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "scope": "node",
       "parent": [
         "MP4",
         "mdat",
@@ -88,8 +432,7 @@
         "AC-3",
         "Statistics"
       ],
-      "from": "Frames Failing a CRC",
-      "to": "Failed Frame Checksums",
+      "name": "Bitrate Mode",
       "goldens": [
         "tests/fixtures/ac3/dac3-differs.report.json",
         "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
@@ -97,6 +440,39 @@
       ]
     },
     {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics"
+      ],
+      "name": "Bitrate Distribution",
+      "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "192 to 223 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "scope": "node",
       "parent": [
         "MP4",
         "mdat",
@@ -104,8 +480,7 @@
         "E-AC-3",
         "Statistics"
       ],
-      "from": "Frames Failing a CRC",
-      "to": "Failed Frame Checksums",
+      "name": "Bitrate Mode",
       "goldens": [
         "tests/fixtures/ac3/dec3-dependent.report.json",
         "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json",
@@ -118,17 +493,167 @@
       ]
     },
     {
+      "scope": "node",
       "parent": [
         "MP4",
-        "moov",
-        "trak",
-        "Gapless"
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics"
       ],
-      "from": "Padding (Edit List)",
-      "to": "Encoder Padding (Edit List)",
+      "name": "Bitrate Distribution",
       "goldens": [
-        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/dec3-dependent.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/joc-aht.report.json",
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "256 to 287 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/dec3-dependent.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "224 to 255 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "64 to 95 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/emdf-noise.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-44k-64k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "448 to 479 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/external-aften-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-5.1-448k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "448 to 479 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "96 to 127 kbps",
+      "goldens": [
         "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "320 to 351 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/external-ffmpeg-stereo-32k-320k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "128 to 159 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/joc-aht.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "512 to 543 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/joc-atmos.report.json",
+        "tests/fixtures/ac3/truncated-in-skip.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "512 to 543 kbps",
+      "goldens": [
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json"
       ]
     }
   ]

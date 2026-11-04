@@ -6,82 +6,76 @@
     {
       "scope": "node",
       "parent": [
-        "Musepack SV8",
-        "Statistics"
+        "Musepack SV6",
+        "Statistics",
+        "Stereo Coding"
       ],
-      "name": "Verified Header Checksums",
+      "name": "Left/right stereo",
       "goldens": [
-        "tests/fixtures/musepack/external-mpc2sv8.report.json",
-        "tests/fixtures/musepack/external-mpcenc-apetag.report.json",
-        "tests/fixtures/musepack/external-mpcenc-braindead.report.json",
-        "tests/fixtures/musepack/external-mpcenc-chapters.report.json",
-        "tests/fixtures/musepack/external-mpcenc-insane-32k.report.json",
-        "tests/fixtures/musepack/external-mpcenc-no-ei-no-st.report.json",
-        "tests/fixtures/musepack/external-mpcenc-packets.report.json",
-        "tests/fixtures/musepack/external-mpcenc-pns.report.json",
-        "tests/fixtures/musepack/external-mpcenc-radio-48k.report.json",
-        "tests/fixtures/musepack/external-mpcenc-replaygain.report.json",
-        "tests/fixtures/musepack/external-mpcenc-standard.report.json",
-        "tests/fixtures/musepack/external-mpcenc-telephone-mono.report.json",
-        "tests/fixtures/musepack/sv8-after-audio.report.json",
-        "tests/fixtures/musepack/sv8-audio-before-header.report.json",
-        "tests/fixtures/musepack/sv8-audio-packets-extra.report.json",
-        "tests/fixtures/musepack/sv8-bad-crc.report.json",
-        "tests/fixtures/musepack/sv8-channels-unsupported.report.json",
-        "tests/fixtures/musepack/sv8-chapter-items-cut.report.json",
-        "tests/fixtures/musepack/sv8-chapter-tag-cut.report.json",
-        "tests/fixtures/musepack/sv8-chapter-truncated.report.json",
-        "tests/fixtures/musepack/sv8-data-after-end.report.json",
-        "tests/fixtures/musepack/sv8-end-size.report.json",
-        "tests/fixtures/musepack/sv8-header-crc-zero.report.json",
-        "tests/fixtures/musepack/sv8-header-cut-after-crc.report.json",
-        "tests/fixtures/musepack/sv8-header-cut-before-coding.report.json",
-        "tests/fixtures/musepack/sv8-invalid-key-in-run.report.json",
-        "tests/fixtures/musepack/sv8-invalid-key.report.json",
-        "tests/fixtures/musepack/sv8-many-unknown-first.report.json",
-        "tests/fixtures/musepack/sv8-max-band-32.report.json",
-        "tests/fixtures/musepack/sv8-no-end.report.json",
-        "tests/fixtures/musepack/sv8-no-replaygain.report.json",
-        "tests/fixtures/musepack/sv8-packet-size-invalid.report.json",
-        "tests/fixtures/musepack/sv8-rate-reserved.report.json",
-        "tests/fixtures/musepack/sv8-replaygain-truncated.report.json",
-        "tests/fixtures/musepack/sv8-replaygain-version.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-huge.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-large.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-unknown.report.json",
-        "tests/fixtures/musepack/sv8-samples-beyond-packets.report.json",
-        "tests/fixtures/musepack/sv8-seek-mismatch.report.json",
-        "tests/fixtures/musepack/sv8-seek-table-short.report.json",
-        "tests/fixtures/musepack/sv8-seek-table-truncated.report.json",
-        "tests/fixtures/musepack/sv8-tag-inside.report.json",
-        "tests/fixtures/musepack/sv8-tags.report.json",
-        "tests/fixtures/musepack/sv8-truncated.report.json",
-        "tests/fixtures/musepack/sv8-unknown-key.report.json"
+        "tests/fixtures/musepack/derived-mppsv5-left-right-vbr-as-sv6.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "categorySeries",
+      "goldens": [
+        "tests/fixtures/musepack/derived-mppsv5-left-right-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/derived-mppsv5-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/external-mpp-1.7.9c.report.json",
+        "tests/fixtures/musepack/external-mppenc-0.90r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.04.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06-alpha.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.1.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11a.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11b.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.12.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.13g.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.14.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15u.report.json",
+        "tests/fixtures/musepack/external-mppenc-braindead-48k.report.json",
+        "tests/fixtures/musepack/external-mppenc-extra-frame.report.json",
+        "tests/fixtures/musepack/external-mppenc-pns.report.json",
+        "tests/fixtures/musepack/external-mppenc-standard.report.json",
+        "tests/fixtures/musepack/external-mppenc-telephone-mono.report.json",
+        "tests/fixtures/musepack/external-mppsv4-vbr.report.json",
+        "tests/fixtures/musepack/external-mppsv5-left-right-vbr.report.json",
+        "tests/fixtures/musepack/external-mppsv5-vbr.report.json",
+        "tests/fixtures/musepack/sv5-band-overrun.report.json",
+        "tests/fixtures/musepack/sv5-seek-tag.report.json",
+        "tests/fixtures/musepack/sv6-band-overrun.report.json",
+        "tests/fixtures/musepack/sv6-last-frame-samples-invalid.report.json",
+        "tests/fixtures/musepack/sv6-padding-word.report.json",
+        "tests/fixtures/musepack/sv6-seek-tag.report.json",
+        "tests/fixtures/musepack/sv7-claim-buschmann.report.json",
+        "tests/fixtures/musepack/sv7-claim-klemm.report.json",
+        "tests/fixtures/musepack/sv7-claim-mppenc.report.json",
+        "tests/fixtures/musepack/sv7-damaged-length.report.json",
+        "tests/fixtures/musepack/sv7-data-after-tag.report.json",
+        "tests/fixtures/musepack/sv7-encoder-above-116.report.json",
+        "tests/fixtures/musepack/sv7-encoder-claim.report.json",
+        "tests/fixtures/musepack/sv7-gapless-frame-missing-ape.report.json",
+        "tests/fixtures/musepack/sv7-header-fields.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-differ.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-invalid.report.json",
+        "tests/fixtures/musepack/sv7-resolution-invalid.report.json",
+        "tests/fixtures/musepack/sv7-tag-inside.report.json",
+        "tests/fixtures/musepack/sv7-tags.report.json",
+        "tests/fixtures/musepack/sv7-trailing-data.report.json",
+        "tests/fixtures/musepack/sv7-truncated.report.json",
+        "tests/fixtures/musepack/sv7-version-unknown.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "Musepack SV8",
-        "Statistics"
-      ],
-      "name": "Failed Header Checksums",
-      "goldens": [
-        "tests/fixtures/musepack/sv8-bad-crc.report.json",
-        "tests/fixtures/musepack/sv8-header-cut-after-crc.report.json"
-      ]
-    }
-  ],
-  "renamed": [
-    {
-      "parent": [
         "Musepack SV6",
-        "Statistics"
+        "Statistics",
+        "Stereo Coding"
       ],
-      "from": "Decoder Delay",
-      "to": "Start Trimming",
+      "name": "Mid/side stereo",
       "goldens": [
-        "tests/fixtures/musepack/derived-mppsv5-left-right-vbr-as-sv6.report.json",
         "tests/fixtures/musepack/derived-mppsv5-vbr-as-sv6.report.json",
         "tests/fixtures/musepack/sv6-band-overrun.report.json",
         "tests/fixtures/musepack/sv6-last-frame-samples-invalid.report.json",
@@ -90,69 +84,13 @@
       ]
     },
     {
-      "parent": [
-        "Musepack SV8",
-        "Statistics"
-      ],
-      "from": "Decoder Delay",
-      "to": "Start Trimming",
-      "goldens": [
-        "tests/fixtures/musepack/external-mpc2sv8.report.json",
-        "tests/fixtures/musepack/external-mpcenc-apetag.report.json",
-        "tests/fixtures/musepack/external-mpcenc-braindead.report.json",
-        "tests/fixtures/musepack/external-mpcenc-chapters.report.json",
-        "tests/fixtures/musepack/external-mpcenc-insane-32k.report.json",
-        "tests/fixtures/musepack/external-mpcenc-no-ei-no-st.report.json",
-        "tests/fixtures/musepack/external-mpcenc-packets.report.json",
-        "tests/fixtures/musepack/external-mpcenc-pns.report.json",
-        "tests/fixtures/musepack/external-mpcenc-radio-48k.report.json",
-        "tests/fixtures/musepack/external-mpcenc-replaygain.report.json",
-        "tests/fixtures/musepack/external-mpcenc-standard.report.json",
-        "tests/fixtures/musepack/external-mpcenc-telephone-mono.report.json",
-        "tests/fixtures/musepack/sv8-after-audio.report.json",
-        "tests/fixtures/musepack/sv8-audio-before-header.report.json",
-        "tests/fixtures/musepack/sv8-audio-packets-extra.report.json",
-        "tests/fixtures/musepack/sv8-bad-crc.report.json",
-        "tests/fixtures/musepack/sv8-channels-unsupported.report.json",
-        "tests/fixtures/musepack/sv8-chapter-items-cut.report.json",
-        "tests/fixtures/musepack/sv8-chapter-tag-cut.report.json",
-        "tests/fixtures/musepack/sv8-chapter-truncated.report.json",
-        "tests/fixtures/musepack/sv8-data-after-end.report.json",
-        "tests/fixtures/musepack/sv8-end-size.report.json",
-        "tests/fixtures/musepack/sv8-header-crc-zero.report.json",
-        "tests/fixtures/musepack/sv8-header-cut-after-crc.report.json",
-        "tests/fixtures/musepack/sv8-header-cut-before-coding.report.json",
-        "tests/fixtures/musepack/sv8-header-missing.report.json",
-        "tests/fixtures/musepack/sv8-invalid-key-in-run.report.json",
-        "tests/fixtures/musepack/sv8-invalid-key.report.json",
-        "tests/fixtures/musepack/sv8-many-unknown-first.report.json",
-        "tests/fixtures/musepack/sv8-max-band-32.report.json",
-        "tests/fixtures/musepack/sv8-no-end.report.json",
-        "tests/fixtures/musepack/sv8-no-replaygain.report.json",
-        "tests/fixtures/musepack/sv8-packet-size-invalid.report.json",
-        "tests/fixtures/musepack/sv8-rate-reserved.report.json",
-        "tests/fixtures/musepack/sv8-replaygain-truncated.report.json",
-        "tests/fixtures/musepack/sv8-replaygain-version.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-huge.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-large.report.json",
-        "tests/fixtures/musepack/sv8-sample-count-unknown.report.json",
-        "tests/fixtures/musepack/sv8-samples-beyond-packets.report.json",
-        "tests/fixtures/musepack/sv8-seek-mismatch.report.json",
-        "tests/fixtures/musepack/sv8-seek-table-short.report.json",
-        "tests/fixtures/musepack/sv8-seek-table-truncated.report.json",
-        "tests/fixtures/musepack/sv8-tag-inside.report.json",
-        "tests/fixtures/musepack/sv8-tags.report.json",
-        "tests/fixtures/musepack/sv8-truncated.report.json",
-        "tests/fixtures/musepack/sv8-unknown-key.report.json"
-      ]
-    },
-    {
+      "scope": "node",
       "parent": [
         "Musepack SV7",
-        "Statistics"
+        "Statistics",
+        "Stereo Coding"
       ],
-      "from": "Decoder Delay",
-      "to": "Start Trimming",
+      "name": "Mid/side stereo",
       "goldens": [
         "tests/fixtures/musepack/external-mpp-1.7.9c.report.json",
         "tests/fixtures/musepack/external-mppenc-0.90r.report.json",
@@ -183,7 +121,119 @@
         "tests/fixtures/musepack/sv7-header-fields.report.json",
         "tests/fixtures/musepack/sv7-last-frame-samples-differ.report.json",
         "tests/fixtures/musepack/sv7-last-frame-samples-invalid.report.json",
-        "tests/fixtures/musepack/sv7-no-frames.report.json",
+        "tests/fixtures/musepack/sv7-resolution-invalid.report.json",
+        "tests/fixtures/musepack/sv7-tag-inside.report.json",
+        "tests/fixtures/musepack/sv7-tags.report.json",
+        "tests/fixtures/musepack/sv7-trailing-data.report.json",
+        "tests/fixtures/musepack/sv7-truncated.report.json",
+        "tests/fixtures/musepack/sv7-version-unknown.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Musepack SV4",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo",
+      "goldens": [
+        "tests/fixtures/musepack/external-mppsv4-vbr.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Musepack SV5",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/musepack/external-mppsv5-left-right-vbr.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Musepack SV5",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo",
+      "goldens": [
+        "tests/fixtures/musepack/external-mppsv5-vbr.report.json",
+        "tests/fixtures/musepack/sv5-band-overrun.report.json",
+        "tests/fixtures/musepack/sv5-seek-tag.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Musepack SV7",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/musepack/sv7-header-fields.report.json"
+      ]
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "Musepack SV6",
+        "Statistics"
+      ],
+      "from": "Frames With Mid/Side",
+      "to": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/musepack/derived-mppsv5-left-right-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/derived-mppsv5-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/sv6-band-overrun.report.json",
+        "tests/fixtures/musepack/sv6-last-frame-samples-invalid.report.json",
+        "tests/fixtures/musepack/sv6-padding-word.report.json",
+        "tests/fixtures/musepack/sv6-seek-tag.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Musepack SV7",
+        "Statistics"
+      ],
+      "from": "Frames With Mid/Side",
+      "to": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/musepack/external-mpp-1.7.9c.report.json",
+        "tests/fixtures/musepack/external-mppenc-0.90r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.04.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06-alpha.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.1.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11a.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11b.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.12.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.13g.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.14.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15u.report.json",
+        "tests/fixtures/musepack/external-mppenc-braindead-48k.report.json",
+        "tests/fixtures/musepack/external-mppenc-extra-frame.report.json",
+        "tests/fixtures/musepack/external-mppenc-pns.report.json",
+        "tests/fixtures/musepack/external-mppenc-standard.report.json",
+        "tests/fixtures/musepack/external-mppenc-telephone-mono.report.json",
+        "tests/fixtures/musepack/sv7-claim-buschmann.report.json",
+        "tests/fixtures/musepack/sv7-claim-klemm.report.json",
+        "tests/fixtures/musepack/sv7-claim-mppenc.report.json",
+        "tests/fixtures/musepack/sv7-damaged-length.report.json",
+        "tests/fixtures/musepack/sv7-data-after-tag.report.json",
+        "tests/fixtures/musepack/sv7-encoder-above-116.report.json",
+        "tests/fixtures/musepack/sv7-encoder-claim.report.json",
+        "tests/fixtures/musepack/sv7-gapless-frame-missing-ape.report.json",
+        "tests/fixtures/musepack/sv7-header-fields.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-differ.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-invalid.report.json",
         "tests/fixtures/musepack/sv7-resolution-invalid.report.json",
         "tests/fixtures/musepack/sv7-tag-inside.report.json",
         "tests/fixtures/musepack/sv7-tags.report.json",
@@ -197,8 +247,8 @@
         "Musepack SV4",
         "Statistics"
       ],
-      "from": "Decoder Delay",
-      "to": "Start Trimming",
+      "from": "Frames With Mid/Side",
+      "to": "Stereo Coding",
       "goldens": [
         "tests/fixtures/musepack/external-mppsv4-vbr.report.json"
       ]
@@ -208,13 +258,125 @@
         "Musepack SV5",
         "Statistics"
       ],
-      "from": "Decoder Delay",
-      "to": "Start Trimming",
+      "from": "Frames With Mid/Side",
+      "to": "Stereo Coding",
       "goldens": [
         "tests/fixtures/musepack/external-mppsv5-left-right-vbr.report.json",
         "tests/fixtures/musepack/external-mppsv5-vbr.report.json",
         "tests/fixtures/musepack/sv5-band-overrun.report.json",
         "tests/fixtures/musepack/sv5-seek-tag.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "Musepack SV6",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "fields": [
+        "unit",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/musepack/derived-mppsv5-left-right-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/derived-mppsv5-vbr-as-sv6.report.json",
+        "tests/fixtures/musepack/sv6-band-overrun.report.json",
+        "tests/fixtures/musepack/sv6-last-frame-samples-invalid.report.json",
+        "tests/fixtures/musepack/sv6-padding-word.report.json",
+        "tests/fixtures/musepack/sv6-seek-tag.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Musepack SV7",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "fields": [
+        "unit",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/musepack/external-mpp-1.7.9c.report.json",
+        "tests/fixtures/musepack/external-mppenc-0.90r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.04.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06-alpha.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.06.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.1.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11a.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.11b.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.12.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.13g.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.14.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15r.report.json",
+        "tests/fixtures/musepack/external-mppenc-1.15u.report.json",
+        "tests/fixtures/musepack/external-mppenc-braindead-48k.report.json",
+        "tests/fixtures/musepack/external-mppenc-extra-frame.report.json",
+        "tests/fixtures/musepack/external-mppenc-pns.report.json",
+        "tests/fixtures/musepack/external-mppenc-standard.report.json",
+        "tests/fixtures/musepack/external-mppenc-telephone-mono.report.json",
+        "tests/fixtures/musepack/sv7-claim-buschmann.report.json",
+        "tests/fixtures/musepack/sv7-claim-klemm.report.json",
+        "tests/fixtures/musepack/sv7-claim-mppenc.report.json",
+        "tests/fixtures/musepack/sv7-damaged-length.report.json",
+        "tests/fixtures/musepack/sv7-data-after-tag.report.json",
+        "tests/fixtures/musepack/sv7-encoder-above-116.report.json",
+        "tests/fixtures/musepack/sv7-encoder-claim.report.json",
+        "tests/fixtures/musepack/sv7-gapless-frame-missing-ape.report.json",
+        "tests/fixtures/musepack/sv7-header-fields.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-differ.report.json",
+        "tests/fixtures/musepack/sv7-last-frame-samples-invalid.report.json",
+        "tests/fixtures/musepack/sv7-resolution-invalid.report.json",
+        "tests/fixtures/musepack/sv7-tag-inside.report.json",
+        "tests/fixtures/musepack/sv7-tags.report.json",
+        "tests/fixtures/musepack/sv7-trailing-data.report.json",
+        "tests/fixtures/musepack/sv7-truncated.report.json",
+        "tests/fixtures/musepack/sv7-version-unknown.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Musepack SV4",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "fields": [
+        "unit",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/musepack/external-mppsv4-vbr.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Musepack SV5",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "fields": [
+        "unit",
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/musepack/external-mppsv5-left-right-vbr.report.json",
+        "tests/fixtures/musepack/external-mppsv5-vbr.report.json",
+        "tests/fixtures/musepack/sv5-band-overrun.report.json",
+        "tests/fixtures/musepack/sv5-seek-tag.report.json"
+      ]
+    }
+  ],
+  "removed": [
+    {
+      "parent": [
+        "Musepack SV7",
+        "Statistics"
+      ],
+      "name": "Frames With Mid/Side",
+      "goldens": [
+        "tests/fixtures/musepack/sv7-no-frames.report.json"
       ]
     }
   ]

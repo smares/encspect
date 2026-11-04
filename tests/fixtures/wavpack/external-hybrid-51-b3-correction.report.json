@@ -176,10 +176,19 @@
                   "length": 58052
                 },
                 {
-                  "name": "Mid/Side Blocks",
-                  "value": "10 blocks of 10 stereo blocks (100.0%)",
+                  "name": "Stereo Coding",
+                  "value": 5,
+                  "unit": "stereo blocks",
                   "offset": 0,
-                  "length": 58052
+                  "length": 58052,
+                  "children": [
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "5 stereo blocks (100.0%)",
+                      "offset": 0,
+                      "length": 58052
+                    }
+                  ]
                 },
                 {
                   "name": "Verified Block Checksums",
@@ -22911,6 +22920,37 @@
             ],
             "values": [
               928
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "stereo block",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 5
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                5
+              ]
             ]
           }
         ]

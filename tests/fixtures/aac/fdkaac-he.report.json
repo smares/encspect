@@ -220,6 +220,25 @@
                               "length": 9753
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 48,
+                              "length": 9753
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 48,
+                              "length": 9753,
+                              "children": [
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "35 access units (100.0%)",
+                                  "offset": 48,
+                                  "length": 9753
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 48,
                               "length": 9753,
@@ -21068,6 +21087,20 @@
                       "offset": 9917,
                       "length": 603,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.6253968253968254,
+                          "unit": "s",
+                          "offset": 9917,
+                          "length": 603
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 35840,
+                          "unit": "samples",
+                          "offset": 9917,
+                          "length": 603
+                        },
                         {
                           "name": "Encoder Delay (iTunSMPB)",
                           "value": 2048,

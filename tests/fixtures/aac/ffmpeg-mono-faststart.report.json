@@ -1963,6 +1963,20 @@
                       "length": 837,
                       "children": [
                         {
+                          "name": "Container Duration",
+                          "value": 1.5213333333333334,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 837
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 73024,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 837
+                        },
+                        {
                           "name": "Encoder Delay (Edit List)",
                           "value": 1024,
                           "unit": "samples",
@@ -2347,6 +2361,37 @@
                               "unit": "kbps",
                               "offset": 1095,
                               "length": 12372
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 1095,
+                              "length": 12372
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 1095,
+                              "length": 12372,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "1 access unit (1.4%)",
+                                  "offset": 1095,
+                                  "length": 12372
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "37 access units (51.4%)",
+                                  "offset": 1095,
+                                  "length": 12372
+                                },
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "34 access units (47.2%)",
+                                  "offset": 1095,
+                                  "length": 12372
+                                }
+                              ]
                             },
                             {
                               "name": "First Elements",

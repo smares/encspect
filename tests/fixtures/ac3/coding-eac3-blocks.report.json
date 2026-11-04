@@ -83,6 +83,43 @@
                   "length": 3072
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 3072
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "128 to 159 kbps",
+                      "value": "3 frames (50.0%)",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "256 to 287 kbps",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "384 to 415 kbps",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "768 to 799 kbps",
+                      "value": "1 frame (16.7%)",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
                   "name": "Dialogue Normalization",
                   "value": -27,
                   "unit": "dB",

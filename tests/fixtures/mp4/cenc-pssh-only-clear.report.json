@@ -1535,6 +1535,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 615,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.46439909297052157,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 615
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 20480,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 615
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1695,6 +1717,25 @@
                               "unit": "kbps",
                               "offset": 802,
                               "length": 583
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 802,
+                              "length": 583
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 802,
+                              "length": 583,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "20 access units (100.0%)",
+                                  "offset": 802,
+                                  "length": 583
+                                }
+                              ]
                             },
                             {
                               "name": "First Elements",

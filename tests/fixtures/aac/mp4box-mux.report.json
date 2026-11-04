@@ -1712,6 +1712,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 165,
+                      "length": 750,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.5325170068027212,
+                          "unit": "s",
+                          "offset": 165,
+                          "length": 750
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 67584,
+                          "unit": "samples",
+                          "offset": 165,
+                          "length": 750
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2047,6 +2069,31 @@
                               "unit": "kbps",
                               "offset": 1043,
                               "length": 18120
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 1043,
+                              "length": 18120
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 1043,
+                              "length": 18120,
+                              "children": [
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "37 access units (56.1%)",
+                                  "offset": 1043,
+                                  "length": 18120
+                                },
+                                {
+                                  "name": "96 to 127 kbps",
+                                  "value": "29 access units (43.9%)",
+                                  "offset": 1043,
+                                  "length": 18120
+                                }
+                              ]
                             },
                             {
                               "name": "First Elements",

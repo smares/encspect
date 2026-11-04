@@ -101,6 +101,38 @@
                   "length": 4874
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 4874
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 4874,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "34 frames (97.1%)",
+                      "offset": 0,
+                      "length": 4874
+                    },
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "1 frame (2.9%)",
+                      "offset": 0,
+                      "length": 4874
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 35,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 4874
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 35,
                   "unit": "blocks",
