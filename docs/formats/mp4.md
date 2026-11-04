@@ -24,6 +24,8 @@ Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio]
 - **Boxes where they do not belong** are shown and reported (`mp4.box-misplaced`): a `moov` box inside another box is not the movie, a `traf` box inside a `traf` box is a track fragment of its own whose protection evidence counts for every track, and a `moof` box inside a `moof` box is a fragment of its own. The tracks of a second `moov` box (`mp4.duplicate-box`; players read the first) are shown and not analyzed.
 - **User data lists** may end in a 32-bit zero (QuickTime File Format, "User data list"); it is shown as a terminator, without a warning.
 
+- **Container Duration** and **Container Samples** under a track's "Gapless" node: the media duration of the mdhd box (ISO/IEC 14496-12, 8.4.2) in seconds, and in samples where the media timescale is the sample rate of the sample entry; the tkhd duration and the edit list are other figures.
+
 ## Limits
 
 The work and the memory the analysis takes are bounded by the file, not by what its boxes state:

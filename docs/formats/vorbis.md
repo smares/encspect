@@ -13,6 +13,7 @@ Vorbis in [Ogg](ogg.md).
 
 ## Reported
 
+- **Bitrate Mode** (variable, constant or unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate; the tally and the mode come from one helper for every format that has them (`BitrateDistribution`).
 - **Block Sizes**, the packets that code a block as a tally and a category series (long and short, with the series' time index of the seconds), named as MPEG audio and AAC name the grouping of their block types (it replaces the "Long Blocks" and "Short Blocks" nodes);
 - the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at what the packet that carries the first position returns and the end trimming at what the last packet returns, as libvorbis does; one larger than the first two blocks return, or the last packet, is a finding);
 - the count of samples the granule positions are checked against follows libvorbis's `vorbis_synthesis_blockin` (libvorbis 1.3.7; `oggdec` from vorbis-tools 1.4.2 and 1.4.3 write the same figures on the fixtures named here):

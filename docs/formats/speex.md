@@ -13,6 +13,7 @@ Speex in [Ogg](ogg.md).
 
 ## Reported
 
+- **Bitrate Mode** (variable, constant or unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate; the tally and the mode come from one helper for every format that has them (`BitrateDistribution`).
 - the delay, end trimming and duration;
 - bitrates and packet sizes;
 - the frames of each submode;

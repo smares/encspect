@@ -37,6 +37,7 @@ Musepack SV8, SV7, and SV4 to SV6.
 
 ## Reported
 
+- **Stereo Coding** (SV4 to SV7): a tally and a category series of the frames that code no subband as mid/side (left/right) and those that code at least one, in place of "Frames With Mid/Side"; the per-subband tally "Subband Stereo Coding" stays. SV8 builds none yet: its audio packets are counted, and their frames are not walked to their mid/side flags.
 - the samples decoders output, after the gapless trimming;
 - **Units counted:** each frame (SV8: each frame of an audio packet) counts 1,152 samples in Coded Samples. A frame cut by the end of the data, and a frame whose subband resolutions run past its length or out of range, count too and are also reported as Lost Samples (and the stream's `lostSamples`); the frame count and the bitrates leave them out. In SV4 and SV5 the last frame is coded, whole or cut, so it counts in Coded Samples, but decoders do not decode it, so it is trimmed from the samples (the end of the last frame); it is lost only where the data cut it; frames the parser does not read after a run of damaged ones count nothing;
 - bitrates per frame or packet, and per second;

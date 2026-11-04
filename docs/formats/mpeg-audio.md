@@ -39,7 +39,7 @@ Each MPEG Audio region reports:
   - **Joint Stereo Modes**, the stereo coding of the joint stereo frames of Layer III only, or **Intensity Stereo Bounds**, their intensity stereo bound in Layers I and II;
   - Layer III **Block Usage** (long, start, short, mixed, stop, reserved, granules counted per channel) and global gain per channel;
   - **Block Sizes**, the same granules grouped as EncSpot counts them: long (with start and stop), short, mixed, and the reserved block type apart, which EncSpot counts as long;
-  - the mean and largest main_data_begin, and the largest reservoir fill ("Maximum Reservoir Fill", the bytes the bit reservoir holds as a frame starts);
+  - the mean and largest main_data_begin, and the largest and the mean reservoir fill ("Maximum Reservoir Fill" and "Average Reservoir Fill", the bytes the bit reservoir holds as a frame starts);
   - **Verified Frame Checksums** and, above 0, **Failed Frame Checksums**: the protected frames whose stored CRC-16 equals the one computed over the header bits and the side information or bit allocation it covers (a frame whose covered bytes are cut has none and is in neither count);
   - the share of granules with scalefactor scaling;
   - whether padding, scfsi and scalefactor scaling are used;
@@ -149,4 +149,5 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 
 ## Not yet covered
 
+- Coded Bandwidth for Layer III: where the coded spectrum ends lies after the big-values region, in the count1 quadruples, and its extent follows only from decoding the Huffman-coded values of the big-values region with the 34 tables of ISO/IEC 11172-3 Annex B, which the analyzer does not carry. Side information alone gives no honest bound (big_values bounds only the big-values region), so no figure is reported; it comes with a Layer III decoder.
 - Layer III scalefactors and Huffman spectral data, and Layer II samples (planned: entropy pass, MP3 first).

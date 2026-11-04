@@ -37,6 +37,8 @@ Sources:
 
 ## Reported
 
+The Common Chunk's numSampleFrames is also reported as **Container Samples**, with **Container Duration** at the sample rate it states, beside the frames the sound data holds.
+
 A file with a Common Chunk reports a stream: codec, sample rate, channels, layout, bits per sample, sample frames, duration and average bitrate. The statistics node adds the compression type, the sample format and the byte order for the linear codings.
 
 - **Samples:** whole sample frames of the bytes the sound data holds in the file (a Common Chunk count the data cannot hold is clipped to it); a partial sample frame counts nothing and no sample is lost, so Lost Samples never appears.
