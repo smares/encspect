@@ -678,6 +678,12 @@ public sealed partial class OpusParser
         // What the last granule position cuts from the end: the end trimming.
         private long EndTrimming()
         {
+            // A container that has no granule positions states the padding itself (Matroska's DiscardPadding), capped at the samples the packets hold.
+            if (_isContained && context.Configuration?.DiscardPadding is { } padding)
+            {
+                return Math.Min((long)Math.Floor((padding * Rate) + 0.5), Math.Max(0, _decoded - (_head?.PreSkip ?? 0)));
+            }
+
             if (_lastPosition is not { } position || _offset is not { } offset || !_lastIsEnd)
             {
                 return 0;

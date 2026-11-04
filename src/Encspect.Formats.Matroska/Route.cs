@@ -291,6 +291,7 @@ internal sealed partial class FileReader
             ? new CodecConfiguration(privateData, privateNode)
             {
                 Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
+                DiscardPadding = track.Number is { } number && segment.DiscardPaddings.TryGetValue((uint)number, out long padding) && padding > 0 ? padding / 1e9 : null,
                 AreSamplesEncrypted = areFramesEncrypted,
                 Duration = seconds > 0 ? seconds : null,
             }

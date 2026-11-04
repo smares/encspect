@@ -63,6 +63,7 @@ internal static class Explain
     public const string CodedSamples = "The samples at 48 kHz the packets code, each the frames of its TOC times their duration, before the pre-skip and end trimming are dropped.";
     public const string StatPreSkip = "The samples at the start the decoder drops, from the identification header (RFC 7845, section 4.2).";
     public const string StartOffset = "The first audio page's granule position less the samples up to it: 0 for a stream that starts at its beginning, above 0 for one that starts later (RFC 7845, section 4.5).";
+    public const string EndTrimmingContainer = "The samples a decoder drops from the end, as the container states them: the DiscardPadding of the last block that has one (RFC 9559, section 5.1.3.5.7), at 48 kHz, rounded to the nearest sample, halves up, and no more than the packets hold after the pre-skip.";
     public const string EndTrimming = "Samples the packets code beyond the last granule position, which a decoder drops from the end (RFC 7845, section 4.4).";
     public const string Samples = "The samples at 48 kHz a decoder outputs: the decoded samples less the pre-skip and the end trimming.";
     public const string Duration = "The samples over 48 kHz, in seconds.";

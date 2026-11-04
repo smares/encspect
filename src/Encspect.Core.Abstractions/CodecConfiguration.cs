@@ -52,4 +52,8 @@ public sealed record CodecConfiguration
     // The built-in delay of the coding the container states, in seconds (Matroska's CodecDelay, RFC 9559 section 5.1.4.1.25): what a
     // decoder drops from the start of the decoded audio. Null when it states none.
     public double? Delay { get; init; }
+
+    // The padding at the end of the last block that the container states, in seconds (Matroska's DiscardPadding, RFC 9559 section 5.1.3.5.7): what a
+    // decoder drops from the end of the decoded audio. Null when it states none or a negative one.
+    public double? DiscardPadding { get; init; }
 }

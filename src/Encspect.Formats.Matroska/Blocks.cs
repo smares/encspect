@@ -432,6 +432,7 @@ internal sealed partial class FileReader
     {
         Records records = segment.Records;
         int blocks = 0;
+        int lastBlock = -1;
         long position = start;
         while (position < end)
         {
@@ -459,11 +460,16 @@ internal sealed partial class FileReader
             if (child.Id == Schema.Block && depth == 0)
             {
                 record.Block = ReadBlock(segment, cluster, child, childEnd, true);
+                lastBlock = record.Block;
                 blocks++;
             }
             else if (definition is { Type: ElementType.Unsigned or ElementType.Signed or ElementType.Float })
             {
                 record.Value = ReadNumberBits(child, childEnd, definition.Type);
+                if (child.Id == 0x75A2 && depth == 0 && lastBlock >= 0)
+                {
+                    segment.DiscardPaddings[records.Blocks[lastBlock].Track] = record.Value;
+                }
             }
 
             records.Children.Add(record);

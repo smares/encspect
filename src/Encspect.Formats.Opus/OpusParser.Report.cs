@@ -148,6 +148,11 @@ public sealed partial class OpusParser
                 Add(node, "End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimming, Topics.GranulePosition);
             }
 
+            if (_firstOffset is null && _isContained && context.Configuration?.DiscardPadding is not null)
+            {
+                Add(node, "End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimmingContainer, Topics.OpusPreSkip);
+            }
+
             Add(node, "Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.OpusPreSkip);
             if (_lost > 0)
             {
