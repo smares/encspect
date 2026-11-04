@@ -899,6 +899,7 @@ public sealed class RawAacParser : IFormatParser
             var frameHeader = new AdtsHeader(frame.Header);
             int counted = state.Details.TryGetValue(i, out FrameDetails? held) && held.BlocksHeld >= 0 ? held.BlocksHeld : frameHeader.RawDataBlocks;
             figures.Add(frame.Offset, frame.Length, config.OutputFrameLength * counted);
+            figures.SetFullness(frameHeader.IsVbr ? StreamFigures.Variable : frameHeader.BufferFullness);
 
             // A frame cut by the data or the next frame loses all its blocks (also one past the stream limit, whose blocks are not read).
             figures.AddLost(config.OutputFrameLength * (long)(frame.IsTruncated || frame.IsCut ? counted : frame.LostBlocks));
