@@ -175,6 +175,13 @@ public sealed partial class SpeexParser
                     Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeCoded / 1000, 1, "kbps"), Explain.AverageBitrate);
                     Add("Minimum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.First().Key), 1, "kbps"), Explain.MinimumBitrate);
                     Add("Maximum Bitrate", NodeValue.Decimal(PacketBitrate(_sizes.Last().Key), 1, "kbps"), Explain.MaximumBitrate);
+                    var rates = new BitrateDistribution();
+                    foreach ((int size, long count) in _sizes)
+                    {
+                        rates.Add(PacketBitrate(size), count);
+                    }
+
+                    rates.AddTo(node, (name, value, description) => node.Add(name, start, length, value, description), "Packet", "Packets");
                 }
             }
 

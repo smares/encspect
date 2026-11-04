@@ -46,6 +46,7 @@ internal static class StdReport
             Add("Largest Frame", NodeValue.Decimal(stream.LargestFrameBits / 8.0, 3, "bytes"), StdText.StatLargestFrame);
             Add("Minimum Bitrate", NodeValue.Decimal(FrameBitrate(stream.SmallestFrameBits, p), 1, "kbps"), StdText.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(FrameBitrate(stream.LargestFrameBits, p), 1, "kbps"), StdText.StatMaximumFrameBitrate);
+            stream.Distribution.AddTo(statistics, (name, value, description) => Add(name, value!, description), "Frame", "Frames");
         }
 
         Add("Uses Bit Reservoir", NodeValue.Boolean(p.UsesBitReservoir), StdText.StatUsesBitReservoir);

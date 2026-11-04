@@ -57,6 +57,8 @@ internal sealed class StdStream
 
     public long InvalidFrames { get; private set; }
 
+    public BitrateDistribution Distribution { get; } = new();
+
     public long SmallestFrameBits { get; private set; } = long.MaxValue;
 
     public long LargestFrameBits { get; private set; }
@@ -498,6 +500,7 @@ internal sealed class StdStream
             ValidFrames++;
             SmallestFrameBits = Math.Min(SmallestFrameBits, frame.Bits);
             LargestFrameBits = Math.Max(LargestFrameBits, frame.Bits);
+            Distribution.Add(frame.Bits * (Parameters.SampleRate / 1000.0) / Parameters.FrameLength);
         }
         else
         {

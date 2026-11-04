@@ -264,6 +264,7 @@ public sealed partial class VorbisParser
                 (double minimum, double maximum) = BitrateRange();
                 Add("Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add("Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
+                _distribution.AddTo(node, (name, value, description) => node.Add(name, start, length, value, description), "Packet", "Packets");
             }
 
             Node sizes = Add("Packet Sizes", Count(_sizes.Count, "size", "sizes"), Explain.PacketSizes);
@@ -326,6 +327,9 @@ public sealed partial class VorbisParser
         ];
 
         private Node? _blockSizesNode;
+
+        // The bitrate of each whole packet that codes a block, counted as the packets are read.
+        private readonly BitrateDistribution _distribution = new();
 
         private Node? AddPackets()
         {

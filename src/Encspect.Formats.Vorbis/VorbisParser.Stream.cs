@@ -542,6 +542,11 @@ public sealed partial class VorbisParser
                 }
 
                 _wholeBlocks[kind]++;
+                if (HasTime)
+                {
+                    _distribution.Add(PacketBitrate(record));
+                }
+
                 _blockBytes[kind] += record.Length;
                 _smallest[kind] = Math.Min(_smallest[kind], record.Length);
                 _largest[kind] = Math.Max(_largest[kind], record.Length);

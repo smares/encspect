@@ -181,6 +181,8 @@ internal sealed class WmaPacketReader
 
     public long DynamicRangeFrames { get; private set; }
 
+    public BitrateDistribution Distribution { get; } = new();
+
     public long SmallestBits { get; private set; } = long.MaxValue;
 
     public long LargestBits { get; private set; }
@@ -1242,6 +1244,7 @@ internal sealed class WmaPacketReader
         ValidFrames++;
         SmallestBits = Math.Min(SmallestBits, result.Bits);
         LargestBits = Math.Max(LargestBits, result.Bits);
+        Distribution.Add(RateOf(result.Bits, p));
         if (result.TrimStart != 0 || result.TrimEnd != 0)
         {
             TrimmedFrames++;
