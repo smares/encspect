@@ -33,6 +33,8 @@ OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "dts"
 FIXTURES = {}
 
 STEREO = ["front left", "front right"]
+SURROUND_2_2 = ["front left", "front right", "back left", "back right"]
+SURROUND_2_1 = ["front left", "front right", "back center"]
 SURROUND_5_1 = ["front center", "front left", "front right", "back left", "back right", "LFE"]
 SURROUND_5_1_WITH_REAR = ["front center", "front left", "front right", "side left", "side right", "back left", "back right", "LFE"]
 
@@ -345,6 +347,29 @@ def channels(n, **options):
                 sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(n)], **options)
 
 
+def build_stereo_coding():
+    """Stereo coding of the core's frames (Tables 5-18 and 5-19, 5-4 and 5.4.3): which flags count in which arrangement."""
+    def coded(name, description, amode, frames, counts, layout, mode, crosscheck=None, **fixed):
+        parts = [core(amode=amode, **fixed, **options) for options in frames]
+        total = len(parts)
+        fields = {"DTS/Statistics/Stereo Coding": f"{total} frames"}
+        for category, count in counts.items():
+            fields[f"DTS/Statistics/Stereo Coding/{category}"] = f"{count} {'frame' if count == 1 else 'frames'} ({round(count * 1000 / total) / 10:.1f}%)"
+        fixture(name, ".dts", description, b"".join(parts), rows(parts), [stream("DTS", 48000, layout, mode, total * 512)], [], fields=fields,
+                crosscheck=crosscheck or {"ffprobe": True, "decode": True, "libdca": True})
+
+    two = lambda **o: {"joinx": [0, 0], **o}
+    coded("stereo-coding-front", "Four stereo core frames: plain, with SUMF, with a joint intensity source (channel 2 copies channel 1), and with both.", 2, [two(), two(sumf=1), two(joinx=[0, 1]), two(sumf=1, joinx=[0, 1])],
+          {"Left/right stereo": 1, "Mid/side stereo": 1, "Intensity stereo": 1, "Mid/side and intensity stereo": 1}, STEREO, "2/0")
+    coded("stereo-coding-sum-difference", "Three 2/0 sum/difference core frames (AMODE 3), which are mid/side whatever SUMF says, one of them with SUMF set.", 3, [{}, {}, {"sumf": 1}], {"Mid/side stereo": 3}, STEREO, "2/0 sum/difference")
+    coded("stereo-coding-left-total", "Two left total and right total core frames (AMODE 4), one with SUMF set, which counts since the arrangement has front left and right channels.", 4, [{}, {"sumf": 1}], {"Left/right stereo": 1, "Mid/side stereo": 1}, STEREO, "2/0 left total, right total")
+    coded("stereo-coding-dual-mono", "Two dual mono core frames (AMODE 1), one with SUMF and SUMS set, which count for nothing: the channels are two mono signals.", 1, [{}, {"sumf": 1, "sums": 1}], {"Left/right stereo": 2}, ["discrete", "discrete"], "1+1",
+          crosscheck={"ffprobe": True, "decode": True, "libdca": True, "ffprobe_layout": "stereo",
+                      "skip": {"ffprobe layout": "ffprobe gives this AMODE 1 stream the layout stereo (measured in CI); Table 5-4 gives 1+1 no speaker positions, and the analyzer reports two unpositioned channels"}})
+    coded("stereo-coding-surround", "Four 2/2 core frames: plain, with SUMS, with SUMF, and with a joint intensity source (channel 4 copies channel 1).", 8, [{}, {"sums": 1}, {"sumf": 1}, {"joinx": [0, 0, 0, 1]}], {"Left/right stereo": 1, "Mid/side stereo": 2, "Intensity stereo": 1}, SURROUND_2_2, "2/2")
+    coded("stereo-coding-single-surround", "Two 2/1 core frames, one with SUMS set, which counts for nothing without a surround pair, and one with SUMF.", 6, [{"sums": 1}, {"sumf": 1}], {"Left/right stereo": 1, "Mid/side stereo": 1}, SURROUND_2_1, "2/1")
+
+
 def build_invalid_fields():
     same6 = [[i * 512, 512] for i in range(6)]
     parts = [core(ftype=1, short=5), core(nblks=19), core(subfs=3), core(**channels(3, amode=2)), core(subs=[31, 31]), core(joinx=[1, 0])]
@@ -556,13 +581,13 @@ def build_review():
     parts = [m.core_frame(size=1024, extensions=[m.xxch(chsets=((2, 0x180),), core_mask=0x3F, bad_crc=(i == 1), crc_chset=True, p=p)], **ext_options) for i in range(3)]
     fixture("xxch-bad-crc", ".dts", "Three 3/2 core frames with an LFE channel and an XXCH extension whose frame header CRC-16 fails in the second.", b"".join(parts), rows(parts),
             [stream("DTS-ES", 48000, SURROUND_5_1_WITH_REAR, "3/2", 3 * 512)],
-            [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "1 frame"},
+            [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "1 frame"},
             crosscheck=cc(ffprobe=False, decode=False, decode_errors={"0": "DSYNC check failed", "1024": "XXCH sync word not found", "2048": "DSYNC check failed"}, libdca_channels=6,
                           skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed')",
                                 "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC-16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"}))
     parts = [m.core_frame(size=512) + m.exss([dict(components=["xbr"], channels=2, mask=0x02, component_options={"xbr": {"bad_crc": True}})]) for _ in range(3)]
     fixture("xbr-bad-crc", ".dts", "Three units whose extension substream has an XBR component with a frame header CRC-16 that fails.", b"".join(parts), rows(parts),
-            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Frames Failing a CRC": "3 frames"},
+            [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "3 frames"},
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"}))
 
     # Profile precedence and the delivered sampling frequency.
@@ -673,6 +698,7 @@ def build_gate2():
 def main():
     build()
     build_gate2()
+    build_stereo_coding()
     import dts_lossless_fixtures
     api = dict(fixture=fixture, rows=rows, cc=cc, stream=stream)
     dts_lossless_fixtures.build(api)

@@ -51,6 +51,13 @@
                   "length": 475
                 },
                 {
+                  "name": "Verified Page Checksums",
+                  "value": 4,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 475
+                },
+                {
                   "name": "Packet Count",
                   "value": 27,
                   "unit": "packets",
@@ -1495,19 +1502,28 @@
                       "length": 155
                     },
                     {
-                      "name": "Long Blocks",
-                      "value": "20 packets (83.3%)",
+                      "name": "Block Sizes",
+                      "value": 24,
+                      "unit": "packets",
                       "offset": 320,
-                      "length": 155
+                      "length": 155,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "20 packets (83.3%)",
+                          "offset": 320,
+                          "length": 155
+                        },
+                        {
+                          "name": "Short",
+                          "value": "4 packets (16.7%)",
+                          "offset": 320,
+                          "length": 155
+                        }
+                      ]
                     },
                     {
-                      "name": "Short Blocks",
-                      "value": "4 packets (16.7%)",
-                      "offset": 320,
-                      "length": 155
-                    },
-                    {
-                      "name": "Decoded Samples",
+                      "name": "Coded Samples",
                       "value": 19968,
                       "unit": "samples",
                       "offset": 320,
@@ -3731,6 +3747,42 @@
             ],
             "values": [
               2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 20
+              },
+              {
+                "name": "Short",
+                "count": 4
+              }
+            ],
+            "total": 24,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                8
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

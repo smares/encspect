@@ -410,7 +410,7 @@ The statistics count what the walk read; a superframe "read" is one that did not
 | Frames | three per superframe read |
 | Samples, Duration | the sample counts of the superframes read (480 where none is stated); duration = samples / R |
 | Average Bitrate, Average Superframe Bitrate | packet bytes × 8 over the duration; the bits of the superframes read over the duration |
-| Smallest Superframe, Largest Superframe (bytes, from bits / 8), Minimum and Maximum Superframe Bitrate | over the superframes read; the bitrate is bits × R / 480 |
+| Smallest Superframe, Largest Superframe (bytes, from bits / 8), Minimum and Maximum Bitrate | over the superframes read; the bitrate is bits × R / 480 |
 | Superframes Spanning Packets | superframes read from the cache at a header (not the one read at the end) |
 | Most Superframes in a Packet | per packet: the superframes read in it plus 1 where it finished a cached one (whether that one was read or not); 1 for a packet that the cached superframe used up |
 | Superframes with a Sample Count, with Residual LSPs, with Additional Data | superframes read that have them (residual: read with F = 1) |
@@ -430,7 +430,7 @@ The series are the bitrate of each superframe (bits × R / its samples; 0 for on
   - "Block Alignment" (bytes), "Packet Bytes" (bytes);
   - "Average Bitrate" and "Average Superframe Bitrate" (where the duration is above 0; decimal, 1 place, kbps);
   - "Nominal Bitrate" (where above 0: the container's average bytes per second × 8 / 1,000; 1 place, kbps);
-  - where superframes were read: "Smallest Superframe" and "Largest Superframe" (bytes, bits / 8, 1 place), "Minimum Superframe Bitrate" and "Maximum Superframe Bitrate" (bits × R / 480 / 1,000; 1 place, kbps);
+  - where superframes were read: "Smallest Superframe" and "Largest Superframe" (bytes, bits / 8, 1 place), "Minimum Bitrate" and "Maximum Bitrate" (bits × R / 480 / 1,000; 1 place, kbps);
   - "Superframes Spanning Packets", "Most Superframes in a Packet", "Spillover Field" (bits), "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs" (a share), "Superframes with Additional Data", "Uses Postfilter" (boolean), "Pitch Range" (text);
   - "Ignored Bits", "Bits After the Last Superframe" and "Skipped Spillover Bits" (bits, each only above 0);
   - where frames were read, the groups "Frame Types" (value "N types"), "Fixed Codebooks" and "Adaptive Codebooks" (value "N kinds"), "Blocks per Frame" (value "N sizes").

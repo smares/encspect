@@ -51,13 +51,13 @@ public class AacGraphsTests
             [
                 ("Summary", "Coding Summary"),
                 ("Stereo Coding", "Stereo Coding"),
-                ("Block Switching", "Window Sequences"),
+                ("Block Switching", "Block Usage"),
                 ("Block Switching", "Block Sizes"),
                 ("Coded Bandwidth", "Coded Bandwidth"),
                 ("Bit Distribution", "Bitrate"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Window Sequences").Forms.Select(f => f.Title));
+        Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));
         Assert.Equal(["Per Frame", "Over Time", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Coded Bandwidth").Forms.Select(f => f.Title));
         window.Close();
     }
@@ -68,7 +68,7 @@ public class AacGraphsTests
         DetailWindow window = Open(Fixtures.Aac("ffmpeg-mono-faststart.m4a"));
 
         Assert.DoesNotContain(window.Model.Graphs.Choices, c => c.Title == "Stereo Coding");
-        Assert.Contains(("Block Switching", "Window Sequences"), window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
+        Assert.Contains(("Block Switching", "Block Usage"), window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         window.Close();
     }
 
@@ -76,7 +76,7 @@ public class AacGraphsTests
     public void A_file_of_six_channels_stacks_the_channel_streams_of_each_unit_in_one_row()
     {
         DetailWindow window = Open(Fixtures.Aac("faac-2.2-he-51-adts.aac"));
-        Choose(window, "Window Sequences", GraphForm.Frames);
+        Choose(window, "Block Usage", GraphForm.Frames);
         var graph = (CategoryGraph)window.Graph.Graph!;
 
         Assert.Equal(0, graph.Series.ValuesPerUnit);
@@ -120,10 +120,10 @@ public class AacGraphsTests
         ScreenshotTests.Save(stereo, $"aac-stereo-coding-frames-{variant}.png");
         Choose(stereo, "Stereo Coding", GraphForm.Summary);
         ScreenshotTests.Save(stereo, $"aac-stereo-coding-summary-{variant}.png");
-        Choose(stereo, "Window Sequences", GraphForm.OverTime);
-        ScreenshotTests.Save(stereo, $"aac-window-sequences-over-time-{variant}.png");
-        Choose(stereo, "Window Sequences", GraphForm.Frames);
-        ScreenshotTests.Save(stereo, $"aac-window-sequences-frames-{variant}.png");
+        Choose(stereo, "Block Usage", GraphForm.OverTime);
+        ScreenshotTests.Save(stereo, $"aac-block-usage-over-time-{variant}.png");
+        Choose(stereo, "Block Usage", GraphForm.Frames);
+        ScreenshotTests.Save(stereo, $"aac-block-usage-frames-{variant}.png");
         Choose(stereo, "Block Sizes", GraphForm.Summary);
         ScreenshotTests.Save(stereo, $"aac-block-sizes-summary-{variant}.png");
         Choose(stereo, "Coded Bandwidth", GraphForm.OverTime);
@@ -136,7 +136,7 @@ public class AacGraphsTests
 
         // Apple's encoder: short windows in more than a third of its channel streams.
         DetailWindow apple = Open(Fixtures.Aac("apple-lc-adts-cbr-st44.aac"));
-        Choose(apple, "Window Sequences", GraphForm.Frames);
+        Choose(apple, "Block Usage", GraphForm.Frames);
         ScreenshotTests.Save(apple, $"aac-apple-window-sequences-frames-{variant}.png");
         Choose(apple, "Block Sizes", GraphForm.Summary);
         ScreenshotTests.Save(apple, $"aac-apple-block-sizes-summary-{variant}.png");
@@ -144,7 +144,7 @@ public class AacGraphsTests
 
         // Six channels in an access unit: a row for each channel stream.
         DetailWindow surround = Open(Fixtures.Aac("faac-2.2-he-51-adts.aac"));
-        Choose(surround, "Window Sequences", GraphForm.Frames);
+        Choose(surround, "Block Usage", GraphForm.Frames);
         ScreenshotTests.Save(surround, $"aac-51-window-sequences-frames-{variant}.png");
         Choose(surround, "Stereo Coding", GraphForm.Frames);
         ScreenshotTests.Save(surround, $"aac-51-stereo-coding-frames-{variant}.png");
@@ -233,7 +233,7 @@ public class AacGraphLayoutTests
     public void The_over_time_view_of_a_stream_of_two_seconds_has_two_columns_and_the_last_lasts_as_long_as_it_does()
     {
         DetailWindow window = AacGraphsTests.Open(Fixtures.Aac("ffmpeg-adts.aac"));
-        AacGraphsTests.Choose(window, "Window Sequences", GraphForm.OverTime);
+        AacGraphsTests.Choose(window, "Block Usage", GraphForm.OverTime);
         var graph = (CategoryGraph)window.Graph.Graph!;
 
         Assert.Equal(2, graph.Series.Time!.Starts.Length);

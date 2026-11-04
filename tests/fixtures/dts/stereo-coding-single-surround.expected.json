@@ -1,0 +1,42 @@
+{
+ "description": "Two 2/1 core frames, one with SUMS set, which counts for nothing without a surround pair, and one with SUMF.",
+ "length": 1024,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 3,
+   "channel_mode": "2/1",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back center"
+   ],
+   "samples": 1024,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Stereo Coding": "2 frames",
+  "DTS/Statistics/Stereo Coding/Left/right stereo": "1 frame (50.0%)",
+  "DTS/Statistics/Stereo Coding/Mid/side stereo": "1 frame (50.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

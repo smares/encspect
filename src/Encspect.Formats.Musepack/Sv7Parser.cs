@@ -660,7 +660,7 @@ internal static class Sv7Parser
         Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
         statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * FrameSamples, "samples", "sample"), Explain.CodedSamples));
-        statistics.Add(Cover("Decoder Delay", NodeValue.Integer(SynthesisDelay, "samples", "sample"), Explain.DecoderDelay));
+        statistics.Add(Cover("Start Trimming", NodeValue.Integer(SynthesisDelay, "samples", "sample"), Explain.StartTrimming));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
         if (lost > 0)
         {

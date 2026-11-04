@@ -1,175 +1,35 @@
 {
- "note": "The samples alignment (docs/design/samples-definition.md): units the data cuts and units that cannot be read are counted by the samples they declare where they were not, and reported in the new statistic Lost Samples and the stream's lostSamples.",
- "goldens": [
-  "tests/fixtures/alac/built-element-invalid-shift.report.json",
-  "tests/fixtures/alac/built-element-reserved-bits.report.json",
-  "tests/fixtures/alac/built-element-unknown-cce.report.json",
-  "tests/fixtures/alac/built-element-unknown-pce.report.json",
-  "tests/fixtures/alac/built-frame-overrun-header.report.json",
-  "tests/fixtures/alac/built-frame-overrun-no-audio.report.json",
-  "tests/fixtures/alac/built-frame-overrun-residuals.report.json",
-  "tests/fixtures/alac/built-residual-run-too-long.report.json",
-  "tests/fixtures/alac/built-tuning-kb-zero.report.json"
- ],
- "added": [
-  {
-   "scope": "stream",
-   "key": "lostSamples"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics"
-   ],
-   "name": "Lost Samples"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Bitrate Distribution"
-   ],
-   "name": "0 to 31 kbps"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Bitrate Distribution"
-   ],
-   "name": "736 to 767 kbps"
-  }
- ],
- "changed": [
-  {
-   "scope": "stream",
-   "fields": [
-    "averageBitrate",
-    "categorySeries",
-    "duration",
-    "samples",
-    "series"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Frames",
-    "Frame"
-   ],
-   "fields": [
-    "unit",
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Average Bitrate"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Bitrate Distribution",
-    "1280 to 1311 kbps"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Bitrate Distribution",
-    "384 to 415 kbps"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Duration"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Largest Frame"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Minimum Bitrate"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Samples"
-   ],
-   "fields": [
-    "value"
-   ]
-  },
-  {
-   "path": [
-    "MP4",
-    "mdat",
-    "Track 1 Samples",
-    "Statistics",
-    "Smallest Frame"
-   ],
-   "fields": [
-    "value"
-   ]
-  }
- ]
+  "goldens": [
+    "tests/fixtures/alac/"
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (iTunSMPB)",
+      "to": "Encoder Padding (iTunSMPB)",
+      "goldens": [
+        "tests/fixtures/alac/apple-alac-m4a-st44q16.report.json",
+        "tests/fixtures/alac/apple-alac-m4a-st44q24.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (Edit List)",
+      "to": "Encoder Padding (Edit List)",
+      "goldens": [
+        "tests/fixtures/alac/external-ffmpeg-24-mono.report.json",
+        "tests/fixtures/alac/external-ffmpeg-24-stereo.report.json"
+      ]
+    }
+  ]
 }

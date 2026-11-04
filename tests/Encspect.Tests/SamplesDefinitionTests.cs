@@ -12,13 +12,13 @@ namespace Encspect.Tests;
 // The per-format commits add their fixtures to RuleCases as they change the golden.
 public class SamplesDefinitionTests
 {
-    private static readonly string[] CodedFigures = ["Coded Samples", "Decoded Samples"];
+    private static readonly string[] CodedFigures = ["Coded Samples"];
 
     private sealed record Scan(IReadOnlyList<(long Samples, long Lost, bool IsProtected)> Streams, long Coded, bool IsNotAnalyzed);
 
     // The figures of a golden read as a stream of tokens, so that the 700 MB of goldens are not parsed into documents: each stream's
-    // samples, lostSamples (absent reads 0) and whether it is protected, the largest coded-stage figure of the tree ("Coded Samples" or
-    // "Decoded Samples", an upper bound where a file has several streams), and whether a finding says a codec is not analyzed.
+    // samples, lostSamples (absent reads 0) and whether it is protected, the largest coded-stage figure of the tree ("Coded Samples"
+    // an upper bound where a file has several streams), and whether a finding says a codec is not analyzed.
     private static Scan ReadGolden(string path)
     {
         var reader = new Utf8JsonReader(File.ReadAllBytes(path), new JsonReaderOptions { MaxDepth = 4 * Node.MaxDepth });

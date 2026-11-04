@@ -84,7 +84,7 @@ def statistics(prefix, streams):
     for sequence, name in enumerate(WINDOW_NAMES):
         count = sum(1 for s in streams if s.sequence == sequence)
         if count:
-            fields[f"{prefix}/Statistics/Window Sequences/{name}"] = share(count, total, "channel stream")
+            fields[f"{prefix}/Statistics/Block Usage/{name}"] = share(count, total, "channel stream")
     for shape, name in enumerate(["Sine", "KBD"]):
         count = sum(1 for s in streams if s.shape == shape)
         if count:
@@ -413,7 +413,7 @@ def stereo_coding_elements():
         units.append(streams)
     data, rows = concat(adts_frames(blocks, channels=6))
     fields = {**pair_statistics("ADTS", pairs), **statistics("ADTS", [s for u in units for s in u]), **coding_fields("ADTS", units),
-              "ADTS/Statistics/Window Sequences": f"{sum(len(u) for u in units)} channel streams"}
+              "ADTS/Statistics/Block Usage": f"{sum(len(u) for u in units)} channel streams"}
     return "stereo-coding-elements.aac", data, manifest(
         "Three frames of a 5.1 stream, each holding a single channel element, two channel pair elements and an LFE element: six channel streams "
         "and two pairs in every unit, with mid/side, intensity stereo, left/right, mid/side in long start windows, eight short windows and a pair "
@@ -774,7 +774,7 @@ def object_types():
         "channel configuration 2, which provides for no coupling channel element.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)],
         {"ADTS/Frame/Raw Data Block/CCE/Target": "CPE 0, both channels", "ADTS/Frame/Raw Data Block/CCE/Gain Element Lists": "1",
          "ADTS/Frame[1]/Raw Data Block/CCE/IsIndependentlySwitched": "true",
-         "ADTS/Statistics/Window Sequences": "8 channel streams", **pair_statistics("ADTS", pairs), **coding_fields("ADTS", units)},
+         "ADTS/Statistics/Block Usage": "8 channel streams", **pair_statistics("ADTS", pairs), **coding_fields("ADTS", units)},
         [["aac.coupling-without-program", "4 raw data blocks hold a coupling channel element, which channel configuration 2 does not provide for"]],
         skip={"faad": "faad2 is built without coupling and stops at the element.", "faad_trace": "faad2 is built without coupling and stops at the element.",
               "decode": "ffmpeg's decoder finds no channel for the coupling element in a stream of channel configuration 2.",

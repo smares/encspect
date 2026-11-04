@@ -5641,14 +5641,14 @@
                           "length": 3102
                         },
                         {
-                          "name": "Minimum Superframe Bitrate",
+                          "name": "Minimum Bitrate",
                           "value": 4,
                           "unit": "kbps",
                           "offset": 4943,
                           "length": 3102
                         },
                         {
-                          "name": "Maximum Superframe Bitrate",
+                          "name": "Maximum Bitrate",
                           "value": 11.2,
                           "unit": "kbps",
                           "offset": 4943,
@@ -19690,6 +19690,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               5016,
               5100,
@@ -19799,6 +19801,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               1,

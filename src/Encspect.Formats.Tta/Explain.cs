@@ -13,6 +13,7 @@ internal static class Explain
     public const string AudioFormatEncrypted = "The audio format is 2: libtta-c 2.3 writes it in Encspect's test file of a stream encoded with a password, and FFmpeg 6.1.1 asks for a password to open such a file. The format description does not define the value.";
     public const string AudioFormatOther = "The audio format is neither 1 nor 2, the values in Encspect's test files (written by FFmpeg 6.1.1 and libtta-c 2.3); the format description does not define it.";
     public const string Channels = "The number of channels (TTA format description).";
+    public const string StatLayout = "The speakers the channels feed. The header states a channel count and no positions, so one channel is taken as the center and two as left and right; more are assigned none.";
     public const string BitsPerSample = "The number of bits of each sample; the compression theory page of the TTA authors names 8, 16 and 24.";
     public const string SampleRate = "The sample rate in Hz (TTA format description).";
     public const string HeaderSamples = "The number of samples in each channel of the stream (TTA format description, \"data length in samples\"); the seek table has one entry for each frame these samples fill.";

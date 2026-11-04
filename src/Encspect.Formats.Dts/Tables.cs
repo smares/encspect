@@ -86,6 +86,15 @@ internal static class Tables
     // 5.4.3: the core codes at most five channels; AMODE names more where extension channels carry the rest.
     public static int CoreChannels(int amode) => Math.Min(5, ArrangementChannels(amode));
 
+    // 5.4.2: SUMF is about the front left and right channels, so it means something where the arrangement has them (not 1+1, whose channels are
+    // two mono signals); SUMS is about the left and right surround channels (Table 5-4: SL and SR, or the rear pair LR and RR).
+    public static bool HasFrontPair(int amode) => amode is 2 or (>= 4 and <= 15);
+
+    public static bool HasSurroundPair(int amode) => amode is >= 8 and <= 15;
+
+    // Table 5-4 and C.3.5: the 2/0 sum/difference arrangement is decoded as sum/difference whatever SUMF says.
+    public static bool IsSumDifferenceArrangement(int amode) => amode == 3;
+
     // Table 5-4: the arrangement as the specification writes it, and in written-out words.
     public static string Arrangement(int amode) => amode switch
     {

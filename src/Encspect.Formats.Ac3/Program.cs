@@ -430,7 +430,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
         }
 
         Add("Frames With Compression Gain", NodeValue.Integer(CompressionFrames, "frames", "frame"), Explain.StatCompression, Topics.DialogueNormalization);
-        Add("Frames Failing a CRC", NodeValue.Integer(CrcErrors, "frames", "frame"), Explain.StatCrcErrors, Topics.Crc);
+        Add("Failed Frame Checksums", NodeValue.Integer(CrcErrors, "frames", "frame"), Explain.StatCrcErrors, Topics.Crc);
         Add("Audio Blocks", Blocked(Blocks), Explain.StatBlocks, Topics.AudioBlocks);
         Add("Audio Blocks Read", Blocked(BlocksRead), Explain.StatBlocksRead, Topics.AudioBlocks);
         if (BlocksRead > 0)

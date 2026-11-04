@@ -155,6 +155,15 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         }
         else
         {
+            if (samples != 0)
+            {
+                Figures.AddStereo(facts is { HasCore: true, HasAudioHeader: true, PrimaryChannels: >= 2 }
+                    ? (Tables.IsSumDifferenceArrangement(facts.Core.Amode)
+                        || (facts.IsSumDifferenceFront && Tables.HasFrontPair(facts.Core.Amode))
+                        || (facts.IsSumDifferenceSurround && Tables.HasSurroundPair(facts.Core.Amode)) ? 1 : 0) + (facts.HasJointIntensity ? 2 : 0)
+                    : null);
+            }
+
             Figures.Add(offset, length, samples);
             if (facts.HasHeaderOverrun)
             {
@@ -291,6 +300,8 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         return Layouts.Speakers(positions);
     }
 
+    public Node? StereoCodingNode { get; private set; }
+
     public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate)
     {
         Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate, node =>
@@ -305,6 +316,23 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         NodeValue Counted(int count) => NodeValue.Integer(count, "frames", "frame");
 
         Add("Core Frames", Counted(CoreFrames), Explain.StatCoreFrames, Topics.CoreFrames);
+        if (Figures.StereoUnits > 0)
+        {
+            Node stereo = Add("Stereo Coding", Counted(Figures.StereoUnits), Explain.StatStereoCoding, Topics.MidSideStereo);
+            for (int code = 0; code < StreamFigures.StereoCodings.Length; code++)
+            {
+                int count = Figures.StereoCounts[code];
+                if (count > 0)
+                {
+                    double percent = Math.Round(count * 100.0 / Figures.StereoUnits, 1, MidpointRounding.ToEven);
+                    Category category = StreamFigures.StereoCodings[code];
+                    stereo.Add(cover(category.Name, $"{count} {(count == 1 ? "frame" : "frames")} ({percent.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}%)", NodeKind.Detail, category.Description, null));
+                }
+            }
+
+            StereoCodingNode = stereo;
+        }
+
         Add("Extension Substream Frames", Counted(SubstreamFrames), Explain.StatSubstreamFrames, Topics.ExtensionSubstream);
         if (key.HasCore)
         {
@@ -350,10 +378,10 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             Add("Frames With Dynamic Range Coefficients", Counted(DynamicRangeFrames), Explain.StatFlags, Topics.DynamicRange);
             Add("Frames With Time Stamps", Counted(TimeStampFrames), Explain.StatFlags, Topics.CoreFrames);
             Add("Frames With Auxiliary Data", Counted(AuxiliaryFrames), Explain.StatFlags, Topics.CoreFrames);
-            Add("Frames With CRC", Counted(CrcFrames), Explain.StatFlags, Topics.Crc);
+            Add("Stored Frame Checksums", Counted(CrcFrames), Explain.StatStoredChecksums, Topics.Crc);
         }
 
-        Add("Frames Failing a CRC", Counted(CrcErrors), Explain.StatCrcErrors, Topics.Crc);
+        Add("Failed Frame Checksums", Counted(CrcErrors), Explain.StatCrcErrors, Topics.Crc);
         Add("Coding Components", ComponentsText(), Explain.StatComponents, Topics.ExtensionSubstream);
         if (Lossless is { } sets)
         {

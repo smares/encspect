@@ -133,9 +133,10 @@ internal static class Explain
 
     public const string Statistics = "Figures over the stream's audio packets, from their blocks and the granule positions.";
     public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
-    public const string LongBlocks = "Packets that code a long block, and their share of the packets that code a block.";
-    public const string ShortBlocks = "Packets that code a short block, and their share: encoders switch to short blocks at sudden sounds.";
-    public const string DecodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
+    public const string BlockSizes = "The packets that code a block, grouped by the size of the block: long (blocksize_1) or short (blocksize_0), with their shares.";
+    public const string SizeLong = "Packets that code a long block (blocksize_1), with their share of the packets that code a block.";
+    public const string SizeShort = "Packets that code a short block (blocksize_0), with their share of the packets that code a block.";
+    public const string CodedSamples = "The samples a decoder returns before trimming: each block returns a quarter of the previous block and a quarter of its own, the first nothing (section 4.3.8).";
     public const string StartOffset = "The first audio page's granule position less the samples returned up to it: 0 for a stream that starts at its beginning, below 0 where samples are discarded at the start, above where the stream starts later (section A.2).";
     public const string StartOffsetClamped = "The first audio page's granule position less the samples returned up to it, shown at the limit of a 64-bit figure: the position is at least that far from the samples returned (section A.2).";
     public const string StartTrimming = "Samples a decoder discards at the start because the first granule position is smaller than the samples returned, at most what the packet that carries the position returns (libvorbis, vorbis_synthesis_blockin; section A.2 allows at most what the first two blocks return). After a refused packet or a gap before the first position, libvorbis counts the samples returned from there, so a start offset below 0 can come with no start trimming.";
@@ -160,6 +161,7 @@ internal static class Explain
 
 internal static class SeriesText
 {
+    public const string BlockSizes = "The size of the block each audio packet codes, long or short, as the tally of Block Sizes counts them; a packet that codes no block has none.";
     public const string Bitrate = "The bitrate of each audio packet: its bits over the half block of samples it codes, 0 for a packet that codes no block.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets whose blocks start in it over the samples those blocks code.";
 }

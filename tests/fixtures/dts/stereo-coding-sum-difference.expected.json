@@ -1,0 +1,44 @@
+{
+ "description": "Three 2/0 sum/difference core frames (AMODE 3), which are mid/side whatever SUMF says, one of them with SUMF set.",
+ "length": 1536,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0 sum/difference",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Stereo Coding": "3 frames",
+  "DTS/Statistics/Stereo Coding/Mid/side stereo": "3 frames (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

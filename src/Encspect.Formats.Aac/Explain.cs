@@ -223,6 +223,8 @@ internal static partial class Explain
     public const string StatSamples = "Samples per channel at the output rate, before any gapless trimming: the access units times the samples each one decodes to.";
     public const string StatDuration = "The playing time of those samples, before any gapless trimming.";
     public const string AverageBitrate = "The bits of the access units divided by their playing time; container overhead and ADTS headers aside, the stream's bitrate.";
+    public const string StatChecksums = "The frames whose ADTS CRC-16 equals the one computed over the header and the elements it covers.";
+    public const string StatChecksumsFailed = "The frames whose ADTS CRC-16 differs from the one computed.";
     public const string Smallest = "The size of the smallest access unit or frame.";
     public const string Largest = "The size of the largest access unit or frame.";
     public const string MinimumBitrate = "The lowest bitrate of an access unit or frame: its bits over its playing time.";

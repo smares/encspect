@@ -188,6 +188,7 @@ internal static class Summary
         var statistics = new Node("Statistics", stream.Offset, stream.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         long rate = s.SampleRate;
         int channels = s.Channels;
+        IReadOnlyList<Speaker>? layout = channels switch { 1 => [Speaker.FrontCenter], 2 => [Speaker.FrontLeft, Speaker.FrontRight], _ => null };
         int bits = s.BitsPerSample;
         bool hasSamples = s.Header is { SampleRate: > 0 };
         long samples = hasSamples ? s.Samples : 0;
@@ -219,6 +220,10 @@ internal static class Summary
         if (channels > 0)
         {
             statistics.Add(Cover3("Channels", NodeValue.Integer(channels, "channels", "channel"), Explain.StatChannels));
+            if (layout is not null)
+            {
+                statistics.Add(cover("Channel Layout", ChannelLayouts.Describe(layout), Explain.StatLayout, Topics.Channels));
+            }
         }
 
         if (bits > 0)
@@ -244,6 +249,7 @@ internal static class Summary
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             ChannelMode = channels switch { 1 => "Mono", 2 => "Stereo", > 2 => "Multichannel", _ => null },
+            ChannelLayout = layout,
             BitsPerSample = bits > 0 ? bits : null,
             Samples = samples,
             LostSamples = s.LostSamples,

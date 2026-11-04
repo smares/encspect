@@ -3897,14 +3897,14 @@
                           "length": 49469
                         },
                         {
-                          "name": "Minimum Frame Bitrate",
+                          "name": "Minimum Bitrate",
                           "value": 3.8671875,
                           "unit": "kbps",
                           "offset": 1641,
                           "length": 49469
                         },
                         {
-                          "name": "Maximum Frame Bitrate",
+                          "name": "Maximum Bitrate",
                           "value": 566.2265625,
                           "unit": "kbps",
                           "offset": 1641,
@@ -3929,15 +3929,15 @@
                           "length": 49469
                         },
                         {
-                          "name": "Largest Bit Reservoir",
+                          "name": "Maximum Reservoir Fill",
                           "value": 1288,
                           "unit": "bytes",
                           "offset": 1641,
                           "length": 49469
                         },
                         {
-                          "name": "Average Bit Reservoir",
-                          "value": 439,
+                          "name": "Average Reservoir Fill",
+                          "value": 389.6666666666667,
                           "unit": "bytes",
                           "offset": 1641,
                           "length": 49469
@@ -25329,6 +25329,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               1721,
               1742,
@@ -25482,6 +25484,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               1,
@@ -25496,9 +25500,11 @@
             ]
           },
           {
-            "name": "Bit Reservoir",
+            "name": "Reservoir Fill",
             "unit": "bytes",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
             "x": [
               1719,
               7210,
@@ -25511,6 +25517,7 @@
               45647
             ],
             "values": [
+              0,
               21,
               677,
               96,
@@ -25518,8 +25525,24 @@
               1288,
               116,
               137,
-              792,
-              444
+              792
+            ]
+          },
+          {
+            "name": "Reservoir Fill Over Time",
+            "unit": "bytes",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Reservoir Fill",
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              198,
+              834,
+              348
             ]
           }
         ]

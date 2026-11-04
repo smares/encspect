@@ -1,0 +1,44 @@
+{
+ "description": "Two dual mono core frames (AMODE 1), one with SUMF and SUMS set, which count for nothing: the channels are two mono signals.",
+ "length": 1024,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "1+1",
+   "channel_layout": [
+    "discrete",
+    "discrete"
+   ],
+   "samples": 1024,
+   "is_vbr": false
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Stereo Coding": "2 frames",
+  "DTS/Statistics/Stereo Coding/Left/right stereo": "2 frames (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_layout": "stereo",
+  "skip": {
+   "ffprobe layout": "ffprobe gives this AMODE 1 stream the layout stereo (measured in CI); Table 5-4 gives 1+1 no speaker positions, and the analyzer reports two unpositioned channels"
+  }
+ }
+}

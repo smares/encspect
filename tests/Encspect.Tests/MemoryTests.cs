@@ -326,7 +326,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     {
         StreamInfo small = Assert.Single(few.Streams);
         StreamInfo large = Assert.Single(many.Streams);
-        Assert.Equal(["Window Sequences", "Block Sizes", "Stereo Coding"], large.CategorySeries.Select(c => c.Name));
+        Assert.Equal(["Block Usage", "Block Sizes", "Stereo Coding"], large.CategorySeries.Select(c => c.Name));
         long grown = large.CategorySeries.Sum(c => c.StorageBytes) - small.CategorySeries.Sum(c => c.StorageBytes);
         long index = large.CategorySeries.Count * 4L * ((units - fewer) / 1024 + 1);
         Assert.True(grown <= (units - fewer) * (long)categoryBytes + index, $"The category series grow by {grown / (double)(units - fewer):F3} bytes per further unit.");

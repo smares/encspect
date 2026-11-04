@@ -610,10 +610,13 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     if packets:
         statistics = {"Packets": str(len(packets) - len(set(cuts)))}
         if block_count:
-            statistics["Long Blocks"] = m.share(long_count, block_count, "packet", "packets")
-            statistics["Short Blocks"] = m.share(short_count, block_count, "packet", "packets")
+            statistics["Block Sizes"] = plural(block_count, "packet", "packets")
+            if long_count:
+                statistics["Block Sizes/Long"] = m.share(long_count, block_count, "packet", "packets")
+            if short_count:
+                statistics["Block Sizes/Short"] = m.share(short_count, block_count, "packet", "packets")
         if has_time and block_count:
-            statistics["Decoded Samples"] = plural(decoded, "sample", "samples")
+            statistics["Coded Samples"] = plural(decoded, "sample", "samples")
             if first_offset is not None:
                 statistics["Start Offset"] = plural(first_offset, "sample", "samples")
                 statistics["Start Trimming"] = plural(start_trim, "sample", "samples")
@@ -664,6 +667,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
 OPUS_MODES = ["SILK-only", "Hybrid", "CELT-only"]
 OPUS_BANDWIDTHS = ["Narrowband", "Mediumband", "Wideband", "Super-wideband", "Fullband"]
 OPUS_BANDWIDTH_RANGES = ["4 kHz", "6 kHz", "8 kHz", "12 kHz", "20 kHz"]
+OPUS_HERTZ = [4000, 6000, 8000, 12000, 20000]
 OPUS_LAYOUTS = VORBIS_LAYOUTS
 
 
@@ -989,9 +993,9 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
     varies = len(set(sizes)) > 1
     statistics = None
     if packets:
-        statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(frames), "Decoded Samples": plural(decoded, "sample", "samples")}
+        statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(frames), "Coded Samples": plural(decoded, "sample", "samples")}
         if has_head:
-            statistics["Pre-skip"] = plural(pre_skip, "sample", "samples")
+            statistics["Start Trimming"] = plural(pre_skip, "sample", "samples")
         if first_offset is not None:
             statistics["Start Offset"] = plural(first_offset, "sample", "samples")
             statistics["End Trimming"] = plural(trim, "sample", "samples")
@@ -1016,6 +1020,12 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
             for i, c in enumerate(bandwidths):
                 if c:
                     statistics[f"Bandwidths/{OPUS_BANDWIDTHS[i]} ({OPUS_BANDWIDTH_RANGES[i]})"] = m.share(c, frames, "frame", "frames")
+            hertz = [i for i, c in enumerate(bandwidths) if c]
+            most = max(range(len(bandwidths)), key=lambda i: (bandwidths[i], -i))
+            statistics["Coded Bandwidth"] = None
+            statistics["Coded Bandwidth/Lowest"] = f"{OPUS_HERTZ[hertz[0]]} Hz"
+            statistics["Coded Bandwidth/Most Common"] = f"{OPUS_HERTZ[most]} Hz"
+            statistics["Coded Bandwidth/Highest"] = f"{OPUS_HERTZ[hertz[-1]]} Hz"
             statistics["Frame Sizes"] = plural(len(frame_sizes), "size", "sizes")
             for size in sorted(frame_sizes):
                 statistics[f"Frame Sizes/{frame_duration(size)}"] = m.share(frame_sizes[size], frames, "frame", "frames")

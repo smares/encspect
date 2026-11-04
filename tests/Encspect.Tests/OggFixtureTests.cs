@@ -70,7 +70,7 @@ public class OggFixtureTests
         Report report = Fixtures.AnalyzeMpeg(name);
 
         Assert.Equal(samples, report.Streams.Single().Samples);
-        Assert.Equal($"{decoded} samples", Find(report.Root, "Decoded Samples")?.Value?.ToString());
+        Assert.Equal($"{decoded} samples", Find(report.Root, "Coded Samples")?.Value?.ToString());
         Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
         Assert.Contains(report.Findings, f => f.Code == "vorbis.granule-inconsistent");
         Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
@@ -89,7 +89,7 @@ public class OggFixtureTests
         Report report = Fixtures.AnalyzeMpeg(name);
 
         Assert.Equal(samples, report.Streams.Single().Samples);
-        Assert.Equal($"{decoded} samples", Find(report.Root, "Decoded Samples")?.Value?.ToString());
+        Assert.Equal($"{decoded} samples", Find(report.Root, "Coded Samples")?.Value?.ToString());
         Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
         Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
         Assert.Equal(name.Contains("extreme", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.granule-beyond-packets"));

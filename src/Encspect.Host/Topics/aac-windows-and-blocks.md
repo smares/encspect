@@ -20,4 +20,4 @@ references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_templ
 
 **max_sfb.** Only the lowest max_sfb scalefactor bands are coded; the bands above are zero. The top of the highest of them is the [coded bandwidth](coded-bandwidth).
 
-**The graphs.** Window Sequences shows the sequence of every channel stream of every access unit or frame, and Block Sizes groups them as long, with the start and stop windows, and short: the share of each per second, and a strip with a cell per unit. The statistics add the shapes, max_sfb distributions and coded bandwidth.
+**The graphs.** Block Usage shows the sequence of every channel stream of every access unit or frame, and Block Sizes groups them as long, with the start and stop windows, and short: the share of each per second, and a strip with a cell per unit. The statistics add the shapes, max_sfb distributions and coded bandwidth.

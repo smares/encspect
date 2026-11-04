@@ -1,285 +1,26 @@
 {
   "goldens": [
-    "tests/fixtures/ogg/bad-crc.report.json",
-    "tests/fixtures/ogg/eos-inside-packet.report.json",
-    "tests/fixtures/ogg/frames-corrupt.report.json",
-    "tests/fixtures/ogg/huge-lacing.report.json",
-    "tests/fixtures/ogg/opus-packets-corrupt.report.json",
-    "tests/fixtures/ogg/speex-wideband-layer-skip.report.json",
-    "tests/fixtures/ogg/truncated-page.report.json",
-    "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
-    "tests/fixtures/ogg/vorbis-granule-errors.report.json"
+    "tests/fixtures/ogg/"
   ],
-  "changed": [
-    {
-      "scope": "finding",
-      "code": "vorbis.end-trimming-large",
-      "fields": [
-        "message"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "vorbis.granule-inconsistent",
-      "fields": [
-        "message"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "vorbis.granule-beyond-packets",
-      "fields": [
-        "message"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "vorbis.start-trimming-large",
-      "fields": [
-        "message"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/vorbis-granule-errors.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Audio Packets"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/eos-inside-packet.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Audio Packets"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/eos-inside-packet.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/eos-inside-packet.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/huge-lacing.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Audio Packets"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/huge-lacing.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/huge-lacing.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/truncated-page.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Audio Packets"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/truncated-page.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "fields": [
-        "value",
-        "length",
-        "children"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/truncated-page.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "fields": [
-        "children",
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/frames-corrupt.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "averageBitrate",
-        "isVbr",
-        "series"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json",
-        "tests/fixtures/ogg/eos-inside-packet.report.json",
-        "tests/fixtures/ogg/frames-corrupt.report.json",
-        "tests/fixtures/ogg/huge-lacing.report.json",
-        "tests/fixtures/ogg/truncated-page.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Pages",
-        "Page",
-        "Body"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json",
-        "tests/fixtures/ogg/huge-lacing.report.json",
-        "tests/fixtures/ogg/truncated-page.report.json"
-      ]
-    }
-  ],
-  "note": " Samples alignment (docs/design/samples-definition.md): the packets of a page that fails its CRC and the packets with bytes present of a truncated page, and a packet left unfinished at the end of the stream, are handed to the codec parser, the cut ones flagged; a stream gains lostSamples and the statistics node Lost Samples. bad-crc, truncated-page, huge-lacing and eos-inside-packet gain packets (their packet and statistics nodes change), frames-corrupt counts a packet with missing frames by the frames present.",
   "added": [
     {
-      "scope": "stream",
-      "key": "lostSamples"
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "name": "Verified Page Checksums"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream"
+      ],
+      "name": "Failed Page Checksums",
+      "goldens": [
+        "tests/fixtures/ogg/bad-crc.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -288,22 +29,725 @@
         "Logical Stream",
         "Statistics"
       ],
-      "name": "Lost Samples",
+      "name": "Block Sizes",
       "goldens": [
-        "tests/fixtures/ogg/bad-crc.report.json",
-        "tests/fixtures/ogg/eos-inside-packet.report.json",
-        "tests/fixtures/ogg/frames-corrupt.report.json",
-        "tests/fixtures/ogg/huge-lacing.report.json",
-        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
-        "tests/fixtures/ogg/speex-wideband-layer-skip.report.json",
-        "tests/fixtures/ogg/truncated-page.report.json"
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-ident-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
       ]
     },
     {
-      "scope": "finding",
-      "code": "speex.granule-beyond-packets",
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Long",
       "goldens": [
-        "tests/fixtures/ogg/frames-corrupt.report.json"
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-ident-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Block Sizes"
+      ],
+      "name": "Short",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Coded Samples",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "categorySeries",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Start Trimming",
+      "goldens": [
+        "tests/fixtures/ogg/opus-head-invalid.report.json"
+      ]
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "from": "Decoded Samples",
+      "to": "Coded Samples",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "from": "Pre-skip",
+      "to": "Start Trimming",
+      "goldens": [
+        "tests/fixtures/ogg/external-ffmpeg-libopus-ambisonics.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libopus.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-opus.report.json",
+        "tests/fixtures/ogg/external-opusenc-24-mono.report.json",
+        "tests/fixtures/ogg/external-opusenc-51.report.json",
+        "tests/fixtures/ogg/external-opusenc-96.report.json",
+        "tests/fixtures/ogg/external-opusenc-cvbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-hard-cbr.report.json",
+        "tests/fixtures/ogg/external-opusenc-music-5ms.report.json",
+        "tests/fixtures/ogg/external-opusenc-speech.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-2.report.json",
+        "tests/fixtures/ogg/opus-ambisonics-family-3.report.json",
+        "tests/fixtures/ogg/opus-cut-last-packet.report.json",
+        "tests/fixtures/ogg/opus-encoder-fields.report.json",
+        "tests/fixtures/ogg/opus-encoder-other-format.report.json",
+        "tests/fixtures/ogg/opus-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/opus-family-255.report.json",
+        "tests/fixtures/ogg/opus-granule-edges.report.json",
+        "tests/fixtures/ogg/opus-multistream-51.report.json",
+        "tests/fixtures/ogg/opus-packets-corrupt.report.json",
+        "tests/fixtures/ogg/opus-stereo-cbr.report.json",
+        "tests/fixtures/ogg/opus-tags-variants.report.json",
+        "tests/fixtures/ogg/opus-toc-configs.report.json",
+        "tests/fixtures/ogg/opus-writer-claims-differ.report.json"
+      ]
+    }
+  ],
+  "removed": [
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Long Blocks",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-ident-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Short Blocks",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-ident-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Decoded Samples",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/opus-head-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-header-layout.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-invalid.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Pre-skip",
+      "goldens": [
+        "tests/fixtures/ogg/opus-head-invalid.report.json"
       ]
     }
   ]

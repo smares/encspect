@@ -1,93 +1,176 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): the units that are cut, break the syntax or wait for the next major sync after damage count at the samples of the sync in force and are lost, so samples, duration and the figures over the units change in these eight reports; external-truehd-stereo-48k-24-odd-length gains Coded Samples. The series field changes only in the samples each run of the Bitrate series codes (frameRuns), which add up to the stream's samples.",
   "goldens": [
-    "tests/fixtures/truehd/built-block-size-invalid.report.json",
-    "tests/fixtures/truehd/built-directory-end-past-unit.report.json",
-    "tests/fixtures/truehd/built-mlp-sync-crc-mismatch.report.json",
-    "tests/fixtures/truehd/built-parity-mismatch.report.json",
-    "tests/fixtures/truehd/built-restart-sync-invalid.report.json",
-    "tests/fixtures/truehd/built-substream-without-restart-header.report.json",
-    "tests/fixtures/truehd/built-sync-crc-mismatch.report.json",
-    "tests/fixtures/truehd/built-unit-cut.report.json",
-    "tests/fixtures/truehd/external-truehd-stereo-48k-24-odd-length.report.json"
+    "tests/fixtures/truehd/"
   ],
-  "added": [
+  "renamed": [
     {
-      "scope": "stream",
-      "key": "lostSamples"
-    },
-    {
-      "scope": "node",
       "parent": [
         "Dolby TrueHD",
         "Statistics"
       ],
-      "name": "Lost Samples"
+      "from": "Shortest Access Unit",
+      "to": "Smallest Access Unit",
+      "goldens": [
+        "tests/fixtures/truehd/built-atmos-signaled.report.json",
+        "tests/fixtures/truehd/built-audio-bit-flipped.report.json",
+        "tests/fixtures/truehd/built-block-size-check.report.json",
+        "tests/fixtures/truehd/built-block-size-invalid.report.json",
+        "tests/fixtures/truehd/built-data-skipped.report.json",
+        "tests/fixtures/truehd/built-directory-end-past-unit.report.json",
+        "tests/fixtures/truehd/built-leading-units.report.json",
+        "tests/fixtures/truehd/built-lossless-check-mismatch.report.json",
+        "tests/fixtures/truehd/built-parameters-change-within-unit.report.json",
+        "tests/fixtures/truehd/built-parameters-change.report.json",
+        "tests/fixtures/truehd/built-parity-mismatch.report.json",
+        "tests/fixtures/truehd/built-restart-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-restart-sync-invalid.report.json",
+        "tests/fixtures/truehd/built-signature-unexpected.report.json",
+        "tests/fixtures/truehd/built-splice-channel-count.report.json",
+        "tests/fixtures/truehd/built-substream-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-substream-parity-mismatch.report.json",
+        "tests/fixtures/truehd/built-substream-without-restart-header.report.json",
+        "tests/fixtures/truehd/built-sync-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-three-substreams.report.json",
+        "tests/fixtures/truehd/built-tiny-truehd-51.report.json",
+        "tests/fixtures/truehd/built-tiny-truehd-stereo.report.json",
+        "tests/fixtures/truehd/built-unit-cut.report.json",
+        "tests/fixtures/truehd/external-truehd-21-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-31-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-40-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-41-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-50-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-16-loud.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-24-cholesky.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-51-96k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-mono-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-176k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-192k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-44k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-interval-8.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-odd-length.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-search.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-silent.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-88k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-96k-24.report.json"
+      ]
     },
     {
-      "scope": "node",
+      "parent": [
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "from": "Longest Access Unit",
+      "to": "Largest Access Unit",
+      "goldens": [
+        "tests/fixtures/truehd/built-atmos-signaled.report.json",
+        "tests/fixtures/truehd/built-audio-bit-flipped.report.json",
+        "tests/fixtures/truehd/built-block-size-check.report.json",
+        "tests/fixtures/truehd/built-block-size-invalid.report.json",
+        "tests/fixtures/truehd/built-data-skipped.report.json",
+        "tests/fixtures/truehd/built-directory-end-past-unit.report.json",
+        "tests/fixtures/truehd/built-leading-units.report.json",
+        "tests/fixtures/truehd/built-lossless-check-mismatch.report.json",
+        "tests/fixtures/truehd/built-parameters-change-within-unit.report.json",
+        "tests/fixtures/truehd/built-parameters-change.report.json",
+        "tests/fixtures/truehd/built-parity-mismatch.report.json",
+        "tests/fixtures/truehd/built-restart-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-restart-sync-invalid.report.json",
+        "tests/fixtures/truehd/built-signature-unexpected.report.json",
+        "tests/fixtures/truehd/built-splice-channel-count.report.json",
+        "tests/fixtures/truehd/built-substream-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-substream-parity-mismatch.report.json",
+        "tests/fixtures/truehd/built-substream-without-restart-header.report.json",
+        "tests/fixtures/truehd/built-sync-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-three-substreams.report.json",
+        "tests/fixtures/truehd/built-tiny-truehd-51.report.json",
+        "tests/fixtures/truehd/built-tiny-truehd-stereo.report.json",
+        "tests/fixtures/truehd/built-unit-cut.report.json",
+        "tests/fixtures/truehd/external-truehd-21-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-31-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-40-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-41-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-50-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-16-loud.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-24-cholesky.report.json",
+        "tests/fixtures/truehd/external-truehd-51-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-51-96k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-mono-48k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-176k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-192k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-44k-16.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-interval-8.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-odd-length.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-search.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24-silent.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-48k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-88k-24.report.json",
+        "tests/fixtures/truehd/external-truehd-stereo-96k-24.report.json"
+      ]
+    },
+    {
       "parent": [
         "MLP",
         "Statistics"
       ],
-      "name": "Lost Samples"
+      "from": "Shortest Access Unit",
+      "to": "Smallest Access Unit",
+      "goldens": [
+        "tests/fixtures/truehd/built-mlp-group-rates.report.json",
+        "tests/fixtures/truehd/built-mlp-substream-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-mlp-sync-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-tiny-mlp-stereo.report.json",
+        "tests/fixtures/truehd/external-mlp-21-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-30-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-30-back-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-31-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-40-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-41-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-50-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-51-44k-16-loud.report.json",
+        "tests/fixtures/truehd/external-mlp-51-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-mono-44k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-quad-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-176k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-192k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-44k-16-odd-length.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-48k-24-interval-128.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-88k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-96k-16.report.json"
+      ]
     },
     {
-      "scope": "node",
       "parent": [
-        "Dolby TrueHD",
+        "MLP",
         "Statistics"
       ],
-      "name": "Coded Samples"
-    }
-  ],
-  "changed": [
-    {
-      "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "series"
-      ]
-    },
-    {
-      "path": [
-        "Dolby TrueHD",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "Dolby TrueHD",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "MLP",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "MLP",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
+      "from": "Longest Access Unit",
+      "to": "Largest Access Unit",
+      "goldens": [
+        "tests/fixtures/truehd/built-mlp-group-rates.report.json",
+        "tests/fixtures/truehd/built-mlp-substream-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-mlp-sync-crc-mismatch.report.json",
+        "tests/fixtures/truehd/built-tiny-mlp-stereo.report.json",
+        "tests/fixtures/truehd/external-mlp-21-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-30-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-30-back-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-31-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-40-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-41-48k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-50-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-51-44k-16-loud.report.json",
+        "tests/fixtures/truehd/external-mlp-51-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-mono-44k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-quad-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-176k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-192k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-44k-16-odd-length.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-48k-24-interval-128.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-48k-24.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-88k-16.report.json",
+        "tests/fixtures/truehd/external-mlp-stereo-96k-16.report.json"
       ]
     }
   ]

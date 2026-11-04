@@ -12,8 +12,10 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 
 ## Reported
 
-- the pre-skip and end trimming, at 48 kHz;
+- the pre-skip (the header field "Pre-skip", and "Start Trimming" in the statistics, the samples a decoder drops at the start, named as for Vorbis) and end trimming, at 48 kHz;
+- "Coded Samples", the samples the packets code before any trimming;
 - frames per mode, bandwidth and frame size;
+- **Coded Bandwidth**: the lowest, most common and highest bandwidth the frames' TOC bytes name, in whole hertz (4,000 for narrowband, 6,000, 8,000, 12,000 and 20,000 for fullband; RFC 6716, table 1), and the series "Coded Bandwidth" (Hz, per packet, the highest of the stream parts of a multistream packet; a packet that codes no samples or breaks the rules has none) and "Coded Bandwidth Over Time" (each second's highest), concept `codedBandwidth`. The "Bandwidths" tally keeps the names; the figure is the bandwidth the configuration states, not a measurement of the sound;
 - stereo packets and frame packing;
 - whether every packet has the same size, as CBR writes them;
 - the bitrates.

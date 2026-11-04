@@ -1,51 +1,86 @@
 {
-  "note": "Lost Samples (docs/design/samples-definition.md): a stream gains the key lostSamples and its statistics the node Lost Samples where program frames are cut or break their syntax. Frames that are cut or shortened by the end of the data or the container are in no frame count, size, bitrate or block tally (Frames, Average Bitrate, Smallest and Largest Frame, Minimum and Maximum Bitrate, Audio Blocks and the tallies of the blocks, the series), only in the samples and the lost samples; the coded series lose that frame's unit.",
   "goldens": [
-    "tests/fixtures/ac3/bad-blocks.report.json",
-    "tests/fixtures/ac3/cut-frame.report.json",
-    "tests/fixtures/ac3/sample-short.report.json",
-    "tests/fixtures/ac3/truncated-in-skip.report.json",
-    "tests/fixtures/ac3/truncated.report.json"
+    "tests/fixtures/ac3/"
   ],
-  "added": [
+  "renamed": [
     {
-      "scope": "stream",
-      "key": "lostSamples"
-    },
-    {
-      "scope": "node",
       "parent": [
         "AC-3",
         "Statistics"
       ],
-      "name": "Lost Samples"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Lost Samples"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Lost Samples",
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
       "goldens": [
+        "tests/fixtures/ac3/aht.report.json",
+        "tests/fixtures/ac3/annex-d.report.json",
+        "tests/fixtures/ac3/bad-blocks.report.json",
+        "tests/fixtures/ac3/bsi-fields.report.json",
+        "tests/fixtures/ac3/bsid-10.report.json",
+        "tests/fixtures/ac3/bsid-9.report.json",
+        "tests/fixtures/ac3/coding-ac3-core-dependent.report.json",
+        "tests/fixtures/ac3/coding-ac3-coupling.report.json",
+        "tests/fixtures/ac3/coding-ac3-dual-mono.report.json",
+        "tests/fixtures/ac3/coding-ac3-stereo.report.json",
+        "tests/fixtures/ac3/coding-ac3-surround.report.json",
+        "tests/fixtures/ac3/coding-eac3-blocks.report.json",
+        "tests/fixtures/ac3/coding-eac3-dependent.report.json",
+        "tests/fixtures/ac3/coding-eac3-nine-frames.report.json",
+        "tests/fixtures/ac3/coding-eac3-spx-default.report.json",
+        "tests/fixtures/ac3/coupling.report.json",
+        "tests/fixtures/ac3/crc-damaged.report.json",
         "tests/fixtures/ac3/cut-frame.report.json",
+        "tests/fixtures/ac3/dependent-first.report.json",
+        "tests/fixtures/ac3/dependent-repeated.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json",
+        "tests/fixtures/ac3/dmixmod-reserved.report.json",
+        "tests/fixtures/ac3/emdf-length-long.report.json",
+        "tests/fixtures/ac3/emdf-length-short.report.json",
+        "tests/fixtures/ac3/emdf-noise.report.json",
+        "tests/fixtures/ac3/emdf-padding.report.json",
+        "tests/fixtures/ac3/emdf-payload-size.report.json",
+        "tests/fixtures/ac3/emdf-payloads.report.json",
+        "tests/fixtures/ac3/emdf-reserved.report.json",
+        "tests/fixtures/ac3/emdf-truncated.report.json",
+        "tests/fixtures/ac3/emdf-version.report.json",
+        "tests/fixtures/ac3/enhanced-coupling.report.json",
+        "tests/fixtures/ac3/external-aften-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-aften-stereo-192k-blocksw.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-annex-d-5.1.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-5.1-256k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-mono-48k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-fixed-stereo-128k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mono-96k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-192k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-32k-320k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-stereo-44k-64k.report.json",
+        "tests/fixtures/ac3/frame-exponents.report.json",
+        "tests/fixtures/ac3/joc-after-blocks.report.json",
+        "tests/fixtures/ac3/joc-atmos.report.json",
+        "tests/fixtures/ac3/joc-auxiliary-data.report.json",
+        "tests/fixtures/ac3/joc-flag-both.report.json",
+        "tests/fixtures/ac3/joc-flag-mismatch.report.json",
+        "tests/fixtures/ac3/joc-incomplete.report.json",
+        "tests/fixtures/ac3/joc-reserved.report.json",
+        "tests/fixtures/ac3/joc-short.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames-cut.report.json",
+        "tests/fixtures/ac3/junk-adts-in-frames.report.json",
+        "tests/fixtures/ac3/junk-around.report.json",
+        "tests/fixtures/ac3/junk-mpeg-in-frames.report.json",
+        "tests/fixtures/ac3/reduced-rate.report.json",
+        "tests/fixtures/ac3/reserved-values.report.json",
+        "tests/fixtures/ac3/spectral-extension.report.json",
+        "tests/fixtures/ac3/stream-changes.report.json",
+        "tests/fixtures/ac3/substreams.report.json",
         "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
+        "tests/fixtures/ac3/truncated.report.json",
+        "tests/fixtures/ac3/two-blocks.report.json"
       ]
     },
     {
-      "scope": "node",
       "parent": [
         "MP4",
         "mdat",
@@ -53,380 +88,48 @@
         "AC-3",
         "Statistics"
       ],
-      "name": "Lost Samples",
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
       "goldens": [
+        "tests/fixtures/ac3/dac3-differs.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
         "tests/fixtures/ac3/sample-short.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "E-AC-3",
+        "Statistics"
+      ],
+      "from": "Frames Failing a CRC",
+      "to": "Failed Frame Checksums",
+      "goldens": [
+        "tests/fixtures/ac3/dec3-dependent.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json",
+        "tests/fixtures/ac3/joc-aht.report.json",
+        "tests/fixtures/ac3/joc-dec3-absent.report.json",
+        "tests/fixtures/ac3/joc-dec3-clear.report.json",
+        "tests/fixtures/ac3/joc-dec3-complexity.report.json",
+        "tests/fixtures/ac3/joc-dec3-unmatched.report.json",
+        "tests/fixtures/ac3/joc-dec3.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless"
+      ],
+      "from": "Padding (Edit List)",
+      "to": "Encoder Padding (Edit List)",
+      "goldens": [
+        "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+        "tests/fixtures/ac3/external-ffmpeg-mp4-eac3-stereo-96k.report.json"
       ]
     }
-  ],
-  "changed": [
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Frames"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Average Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Smallest Frame"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Minimum Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Audio Blocks"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Audio Blocks Read"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Bands Coded as Sum/Difference"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "D45"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "Reuse"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/truncated-in-skip.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "averageBitrate",
-        "categorySeries",
-        "lostSamples",
-        "series"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/cut-frame.report.json",
-        "tests/fixtures/ac3/sample-short.report.json",
-        "tests/fixtures/ac3/truncated.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Frames"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Average Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Smallest Frame"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Minimum Bitrate"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Audio Blocks"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Audio Blocks Read"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Bands Coded as Sum/Difference"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "D45"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "Reuse"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/sample-short.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Exponent Strategies",
-        "D15"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/truncated-in-skip.report.json"
-      ]
-    },
-    {
-      "path": [
-        "AC-3",
-        "Statistics",
-        "Frames With Extension Type A"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/truncated-in-skip.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "averageBitrate",
-        "categorySeries",
-        "isVbr",
-        "lostSamples",
-        "series"
-      ],
-      "goldens": [
-        "tests/fixtures/ac3/truncated-in-skip.report.json"
-      ]
-    }
-  ],
-  "removed": []
+  ]
 }

@@ -196,7 +196,7 @@ class Stream:
         bits_total = sum(x["size"] * 8 for _, x in done)
         average = bits_total * h["rate"] / whole / 1000 if whole else None
         return {"codec": "TTA", "sample_rate": h["rate"], "channels": h["channels"], "samples": samples, "lost_samples": lost, "duration": duration, "bits_per_sample": h["bits"],
-                "average_bitrate": average, "layout": []}
+                "average_bitrate": average, "layout": {1: ["front center"], 2: ["front left", "front right"]}.get(h["channels"], [])}
 
     def verification(self):
         h = self.header

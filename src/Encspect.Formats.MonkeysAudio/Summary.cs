@@ -142,7 +142,7 @@ internal static class Summary
         }
 
         statistics.Add(h.HasStoredCrc
-            ? Cover("Stored Frame CRCs", NodeValue.Integer(s.StoredCrcs, "frames", "frame"), Explain.StatStoredCrcs, Topics.Crc)
+            ? Cover("Stored Frame Checksums", NodeValue.Integer(s.StoredCrcs, "frames", "frame"), Explain.StatStoredCrcs, Topics.Crc)
             : Cover("Stored Frame Checksums", NodeValue.Integer(h.ReadsChecksum ? s.Frames : 0, "frames", "frame"), Explain.StatStoredChecksums, Topics.Crc));
         if (h.HasDescriptor)
         {

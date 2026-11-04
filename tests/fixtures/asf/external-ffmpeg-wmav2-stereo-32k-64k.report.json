@@ -5159,14 +5159,14 @@
                           "length": 19250
                         },
                         {
-                          "name": "Minimum Frame Bitrate",
+                          "name": "Minimum Bitrate",
                           "value": 9.53125,
                           "unit": "kbps",
                           "offset": 394,
                           "length": 19250
                         },
                         {
-                          "name": "Maximum Frame Bitrate",
+                          "name": "Maximum Bitrate",
                           "value": 63.609375,
                           "unit": "kbps",
                           "offset": 394,
@@ -8667,6 +8667,8 @@
             "name": "Bitrate",
             "unit": "kbps",
             "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               474,
               1003,
@@ -8740,6 +8742,8 @@
             "name": "Bitrate Over Time",
             "unit": "kbps",
             "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
             "x": [
               0,
               1

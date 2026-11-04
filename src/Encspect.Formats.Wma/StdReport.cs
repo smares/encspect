@@ -44,8 +44,8 @@ internal static class StdReport
         {
             Add("Smallest Frame", NodeValue.Decimal(stream.SmallestFrameBits / 8.0, 3, "bytes"), StdText.StatSmallestFrame);
             Add("Largest Frame", NodeValue.Decimal(stream.LargestFrameBits / 8.0, 3, "bytes"), StdText.StatLargestFrame);
-            Add("Minimum Frame Bitrate", NodeValue.Decimal(FrameBitrate(stream.SmallestFrameBits, p), 1, "kbps"), StdText.StatMinimumFrameBitrate);
-            Add("Maximum Frame Bitrate", NodeValue.Decimal(FrameBitrate(stream.LargestFrameBits, p), 1, "kbps"), StdText.StatMaximumFrameBitrate);
+            Add("Minimum Bitrate", NodeValue.Decimal(FrameBitrate(stream.SmallestFrameBits, p), 1, "kbps"), StdText.StatMinimumFrameBitrate);
+            Add("Maximum Bitrate", NodeValue.Decimal(FrameBitrate(stream.LargestFrameBits, p), 1, "kbps"), StdText.StatMaximumFrameBitrate);
         }
 
         Add("Uses Bit Reservoir", NodeValue.Boolean(p.UsesBitReservoir), StdText.StatUsesBitReservoir);
@@ -53,8 +53,18 @@ internal static class StdReport
         {
             Add("Frames per Superframe", NodeValue.Integer(stream.MaxFramesPerSuperframe), StdText.StatFramesPerSuperframe);
             Add("Frames Spanning Superframes", NodeValue.Integer(stream.SpanningFrames), StdText.StatFramesSpanning);
-            Add("Largest Bit Reservoir", NodeValue.Integer(stream.LargestReservoir, "bytes"), StdText.StatLargestReservoir);
-            Add("Average Bit Reservoir", NodeValue.Decimal((double)stream.ReservoirSum / stream.Superframes.Count, 1, "bytes"), StdText.StatAverageReservoir);
+            // The fill as each superframe starts: what the one before left for it, as the series shows it.
+            long largest = 0;
+            long sum = 0;
+            for (int i = 1; i < stream.Superframes.Count; i++)
+            {
+                int fill = stream.Superframes[i - 1].Kept;
+                largest = Math.Max(largest, fill);
+                sum += fill;
+            }
+
+            Add("Maximum Reservoir Fill", NodeValue.Integer(largest, "bytes"), StdText.StatLargestReservoir);
+            Add("Average Reservoir Fill", NodeValue.Decimal((double)sum / stream.Superframes.Count, 1, "bytes"), StdText.StatAverageReservoir);
             if (stream.FillerFrames > 0)
             {
                 Add("Frames Followed by Filler", NodeValue.Integer(stream.FillerFrames), StdText.StatFramesFollowedByFiller);
@@ -146,7 +156,7 @@ internal static class StdReport
             }
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = StdText.BitrateSeries } };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = StdText.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" } };
         if (seconds.Count > 0)
         {
             var starts = new double[seconds.Count];
@@ -158,7 +168,7 @@ internal static class StdReport
                 values[s] = count == 0 ? 0 : Math.Round((double)bits * p.SampleRate / ((double)count * p.FrameLength) / 1000, 1, MidpointRounding.ToEven);
             }
 
-            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries });
+            series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         if (p.UsesBitReservoir)
@@ -166,14 +176,43 @@ internal static class StdReport
             int count = stream.Superframes.Count;
             var x = new double[count];
             var kept = new double[count];
+            var perSecond = new List<(long Sum, int Count)>();
             for (int i = 0; i < count; i++)
             {
                 SuperframeRecord record = stream.Superframes[i];
                 x[i] = record.Offset;
-                kept[i] = record.Kept;
+                kept[i] = i == 0 ? 0 : stream.Superframes[i - 1].Kept;
+                int second = (int)((long)record.FirstFrame * p.FrameLength / p.SampleRate);
+                while (perSecond.Count <= second)
+                {
+                    perSecond.Add((0, 0));
+                }
+
+                (long sum, int n) = perSecond[second];
+                perSecond[second] = (sum + (long)kept[i], n + 1);
             }
 
-            series.Add(new Series("Bit Reservoir", "bytes", SeriesAxis.FrameOffset, x, kept) { Description = StdText.BitReservoirSeries });
+            series.Add(new Series("Reservoir Fill", "bytes", SeriesAxis.FrameOffset, x, kept)
+            {
+                Description = StdText.ReservoirFillSeries,
+                Concept = GraphConcept.BitDistribution,
+                Quantity = "Reservoir Fill",
+            });
+            var starts = new double[perSecond.Count];
+            var means = new double[perSecond.Count];
+            for (int s = 0; s < perSecond.Count; s++)
+            {
+                starts[s] = s;
+                means[s] = perSecond[s].Count > 0 ? Math.Round((double)perSecond[s].Sum / perSecond[s].Count, MidpointRounding.ToEven) : 0;
+            }
+
+            Node anchor = statistics.Children.FirstOrDefault(c => c.Name == "Maximum Reservoir Fill") ?? statistics;
+            series.Add(new Series("Reservoir Fill Over Time", "bytes", SeriesAxis.Seconds, starts, means, anchor)
+            {
+                Description = StdText.ReservoirFillOverTimeSeries,
+                Concept = GraphConcept.BitDistribution,
+                Quantity = "Reservoir Fill",
+            });
         }
 
         return series;

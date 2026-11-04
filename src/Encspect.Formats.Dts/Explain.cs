@@ -10,6 +10,8 @@ internal static class Topics
     public const string ExtensionSubstream = "dts-extension-substream";
     public const string DtsChannelArrangements = "dts-channel-arrangements";
     public const string Crc = "crc";
+    public const string MidSideStereo = "mid-side-stereo";
+    public const string IntensityStereo = "intensity-stereo";
     public const string BitrateModes = "bitrate-modes";
     public const string DialogueNormalization = "dialogue-normalization";
     public const string DynamicRange = "dialogue-normalization";
@@ -343,6 +345,13 @@ internal static class Explain
     public const string StatDialnorm = "The dialog normalization gains the frames carry (5.4.2, DIALNORM).";
     public const string StatResolution = "The resolution of the source PCM the frames state (5.4.2, PCMR).";
     public const string StatExtensions = "How many frames hold each core extension: XCh, X96 or XXCH (6).";
+    public const string StatStereoCoding = "How the core frames with two or more primary channels code their channels: with sum/difference channels (Tables 5-18 and 5-19; the arrangement AMODE 3 always, Table 5-4), with joint intensity coding (a JOINX above 0, 5.4.3), both, or neither.";
+    public const string StereoLeftRight = "Frames with no sum/difference coding and no joint intensity source, with their share.";
+    public const string StereoMidSide = "Frames with sum/difference coding, which stands for mid/side stereo: AMODE 3, SUMF where the arrangement has front left and right channels, or SUMS where it has left and right surround channels (5.4.1 Table 5-4, 5.4.2 Tables 5-18 and 5-19, C.3.5), with their share.";
+    public const string StereoIntensity = "Frames in which a channel copies subbands from an earlier channel by joint intensity coding (a JOINX above 0 that names a channel before it, 5.4.3), with their share.";
+    public const string StereoMidSideIntensity = "Frames with both sum/difference coding and a joint intensity source, with their share.";
+    public const string StereoCodingSeries = "How each core frame with two or more primary channels codes them, as the tally of Stereo Coding counts them; a frame without a core audio header or with one channel has none.";
+    public const string StatStoredChecksums = "The core frames whose header sets CPF, so that they store CRC words (5.4.2); the analyzer does not test these words (see Header CRCs).";
     public const string StatFlags = "How many frames set each optional feature of the core's header: dynamic range coefficients, a time stamp, auxiliary data, a CRC (5.4.2).";
     public const string StatCrcErrors = "How many frames have a CRC that fails, in an extension substream's or an extension's header (Annex B).";
     public const string StatComponents = "The coding components the frames hold, by Table E-2's names, and the StreamConstruction value that table gives them (E.2.2.3.2).";

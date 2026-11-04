@@ -38,7 +38,7 @@ The figures below are read from the committed goldens; the names are the report'
 ### Opus
 
 - Stream: `samples` and `duration` after the pre-skip and the end trimming (72,000 samples for `external-opusenc-96.opus`).
-- Nodes: "Pre-skip" (312), "Decoded Samples" (72,960: what the packets' TOC bytes give, before trimming), "End Trimming" (648), "Last Granule Position" (72,312), "Samples".
+- Nodes: "Pre-skip" (312), "Coded Samples" (72,960: what the packets' TOC bytes give, before trimming), "End Trimming" (648), "Last Granule Position" (72,312), "Samples".
 - Damage: the packet rules of RFC 6716 (`opus.packet-r1` to `-r7`, `opus.self-delimiting`), the granule cases (`opus.start-offset`, `opus.start-negative`, `opus.end-trimming-early`, `opus.end-trimming-large`, `opus.pre-skip-beyond`, `opus.granule-beyond-packets`), and Ogg's page findings (CRC, gaps, missing beginning- or end-of-stream pages).
 - Today: `crosscheck_ogg_fixtures.py` already requires `opusdec`'s written samples to equal the manifest's on the fixtures oggz validates; mapping families 2, 3 and 255 are skipped (libopusfile 0.12 refuses them), and the four damaged Opus fixtures are not compared with any decoder.
 - No committed Opus fixture has page damage: the Ogg page-damage fixtures (`bad-crc`, `sequence-gap`, `truncated-page`, `missing-eos`, `bos-missing`) are Speex or of no known codec. Page findings for Opus therefore come only from the derived variants (see [Fixtures](#fixtures)).
@@ -46,7 +46,7 @@ The figures below are read from the committed goldens; the names are the report'
 ### Vorbis
 
 - Stream: `samples` and `duration` after trimming (66,150 for `external-oggenc-q5.ogg`).
-- Nodes: "Decoded Samples" (67,136: the overlap of the blocks), "Start Trimming", "End Trimming" (986), "Last Granule Position"; the start trimming is capped at the first two blocks and the end trimming at the last block, and more is a finding.
+- Nodes: "Coded Samples" (67,136: the overlap of the blocks), "Start Trimming", "End Trimming" (986), "Last Granule Position"; the start trimming is capped at the first two blocks and the end trimming at the last block, and more is a finding.
 - Damage: setup and identification header findings, packet errors, granule errors, Ogg's page findings.
 - Today: `oggdec` must write the manifest's samples on the valid fixtures; `vorbis-packet-errors.ogg` skips it because `oggdec` writes 3,072 samples fewer, 1,024 for each of its three packets that code no block (1,024 is the overlap share of a long block of 2,048, `Blocksize 1`). That is the first known difference this design hands to the project lead.
 - Not compared with any decoder: `vorbis-header-layout`, `vorbis-ident-invalid`, `vorbis-setup-invalid`, `vorbis-setup-truncated`, `vorbis-vendor-variants` and `vorbis-packet-errors` (all `.ogg`). `vorbis-granule-errors.ogg` is damaged but valid for oggz, so `oggdec` is compared on it already.
@@ -62,10 +62,10 @@ The figures below are read from the committed goldens; the names are the report'
 
 - Stream: `samples` and `duration` count every access unit at the output rate: 1,024 per unit, 2,048 with SBR (24,576 for `apple-lc-m4a-cbr-st44.m4a`, which holds 22,050 samples of audio). `StreamInfo` carries no priming field.
 - MP4 gapless nodes live under the track's "Gapless" node, one set per source:
-  - "Encoder Delay (iTunSMPB)", "Samples (iTunSMPB)", "Padding (iTunSMPB)";
-  - "Encoder Delay (Edit List)", "Samples (Edit List)", "Padding (Edit List)", "Media Time", "Segment Duration", "Roll Distance".
+  - "Encoder Delay (iTunSMPB)", "Samples (iTunSMPB)", "Encoder Padding (iTunSMPB)";
+  - "Encoder Delay (Edit List)", "Samples (Edit List)", "Encoder Padding (Edit List)", "Media Time", "Segment Duration", "Roll Distance".
 - The words "Encoder Delay" and "Padding" alone are the words of the iTunSMPB item's value in the metadata (`meta / iTunes Metadata / iTunSMPB / data / Value`), not stream-level nodes.
-- A file with only an edit list has no iTunSMPB figures: `ffmpeg-lc.m4a` has `samples` 67,584 and "Samples (Edit List)" 66,150, and its "Padding (Edit List)" is 0, not 410.
+- A file with only an edit list has no iTunSMPB figures: `ffmpeg-lc.m4a` has `samples` 67,584 and "Samples (Edit List)" 66,150, and its "Encoder Padding (Edit List)" is 0, not 410.
 - Which rate iTunSMPB counts at is not settled. [aac.md](../formats/aac.md) says the core rate, which is the media timescale (`fdkaac-he.m4a`: 2,048 + 33,075 + 717 = 35,840, half of the stream's 71,680); the analyzer's own comment in `Mp4Parser.Metadata.cs` says "at the output sample rate". Both cannot hold (open question 11; question 2 for the project lead).
 - Findings on gapless data: an edit list and iTunSMPB that disagree, an iTunSMPB whose total is not the track's duration.
 - Damage: ADTS CRC failures, cut and truncated frames, `aac.blocks-missing`, resync gaps, MP4 sample table findings (`mp4.samples-overlap`, samples outside the file), and the SBR and parametric stereo rules (`aac.sbr-data-sparse`, `aac.ps-without-mono-core`, `aac.sbr-without-channel-element`), which decide whether the output rate doubles.
@@ -74,7 +74,7 @@ The figures below are read from the committed goldens; the names are the report'
 ### AC-3 and E-AC-3
 
 - Stream: `samples` and `duration` from the frames: 1,536 per AC-3 frame, 256 per E-AC-3 audio block; one stream per configuration (`stream-changes.ac3`), and the independent substreams of one file in one playback group.
-- In MP4 they carry edit lists: `external-ffmpeg-mp4-5.1-448k.mp4` and `external-ffmpeg-mp4-eac3-stereo-96k.mp4` have "Media Time" 256, "Samples (Edit List)" 23,712 and "Padding (Edit List)" 32, against a `samples` of 24,576.
+- In MP4 they carry edit lists: `external-ffmpeg-mp4-5.1-448k.mp4` and `external-ffmpeg-mp4-eac3-stereo-96k.mp4` have "Media Time" 256, "Samples (Edit List)" 23,712 and "Encoder Padding (Edit List)" 32, against a `samples` of 24,576.
 - Damage: `ac3.crc1-mismatch`, `ac3.crc2-mismatch`, `ac3.frame-truncated`, `ac3.block-overrun`, `ac3.dependent-excess`, `ac3.streams-limited`; frames that break are still counted (`crc-damaged.ac3`: 12,288 samples with both CRC findings).
 - Today: ffmpeg decodes each packet alone and must refuse exactly the damaged frames, and refuses every independent substream but 0; liba52 confirms the block ends. No decoder's output length is compared.
 
@@ -159,7 +159,7 @@ Stage names: the **coded** stage is the sum of what the stream's units code, bef
 
 - **Totals, per run of one output format.** A record holds one total per run of constant output format (rate, channels), in file order, and the comparison sets each against the analyzer's stream for that configuration. AC-3 reports one stream per configuration, and SBR that comes and goes changes the output rate in AAC; a single sum across formats would mix them.
 - **Totals, stage by stage:**
-  - Opus and Vorbis: reader-path totals with the stream's `samples` (trimmed); direct-path totals with "Decoded Samples" (coded);
+  - Opus and Vorbis: reader-path totals with the stream's `samples` (trimmed); direct-path totals with "Coded Samples" (coded);
   - `tta -d` with `samples`;
   - AAC and AC-3 in MP4, direct paths: totals with `samples` (coded).
   - AAC and AC-3 in MP4, readers: a reader's total with the analyzer's own figure of the source that reader is seen to apply, "Samples (Edit List)" or "Samples (iTunSMPB)", each source compared separately.
@@ -205,7 +205,7 @@ Each decoder path declares what it outputs, and the probe confirms it on one fil
 - **`opusdec` and `oggdec`** trim what the granule positions call for (RFC 7845 defines it for Opus): on the valid fixtures they already write the analyzer's trimmed `samples`; a start offset and damaged granule positions are to be confirmed.
 - **libopus fed directly** trims nothing: it returns every packet's samples.
 - **libvorbis fed directly** trims only if it is given granule positions.
-  - `vorbis_synthesis()` copies the packet's `granulepos` and `e_o_s` into the block (`synthesis.c`), and `vorbis_synthesis_blockin()` (`block.c`) cuts the start when the first granule position is smaller than the samples counted, and the end when the packet carries `e_o_s`. Packets from `ogg_stream_packetout` carry the page's granule position on the last packet of each page and the end-of-stream flag, so feeding them unchanged gives the trimmed count, not "Decoded Samples" (67,136 coded and 66,150 trimmed for `external-oggenc-q5.ogg`).
+  - `vorbis_synthesis()` copies the packet's `granulepos` and `e_o_s` into the block (`synthesis.c`), and `vorbis_synthesis_blockin()` (`block.c`) cuts the start when the first granule position is smaller than the samples counted, and the end when the packet carries `e_o_s`. Packets from `ogg_stream_packetout` carry the page's granule position on the last packet of each page and the end-of-stream flag, so feeding them unchanged gives the trimmed count, not "Coded Samples" (67,136 coded and 66,150 trimmed for `external-oggenc-q5.ogg`).
   - The direct path therefore sets `granulepos` to -1 and `e_o_s` to 0 on every packet before `vorbis_synthesis`, so that libvorbis computes nothing from granule positions, and the record says so.
   - A third run with the packets' real granule positions, recorded at the trimmed stage, shows libvorbis's own granule handling as a further witness (question 4 for the project lead, approved).
 - **FDK fed directly** outputs one frame per access unit; its `outputDelay` is recorded, not subtracted (see [Linux](#linux) for the concealment delay and the drain).
@@ -248,7 +248,7 @@ The lessons of the WMA check's reviews (W-1 to W-22, R2-1 to R2-9), as rules for
   - `comparison.json`: the same, for the check below.
 - **Committed results:** after a run is reviewed, the reference figures and the differences go into `tests/fixtures/<format>/official-decoders.json`: per fixture (path and SHA-256), each decoder's figure and stage, the decoder's version, the runner image and the run ID, and each difference with its status (see below).
   - **The check** is a test in `Encspect.Tests`, next to the golden tests of the format (`OggFixtureTests`, `Mp4FixtureTests`, `Ac3FixtureTests`, `TtaFixtureTests`), so it runs whenever a golden changes, not only when a cross-check job does. The cross-check jobs run only on path changes, and AC-3's folder is not in the job list of the gate.
-  - **What it compares** are the figures the reference speaks to: the stream's `samples`, "Decoded Samples" (Opus, Vorbis), "Samples (Edit List)" and "Samples (iTunSMPB)", and the unit findings; not the whole golden. A figure that equals the reference passes, one that differs passes only as a listed difference.
+  - **What it compares** are the figures the reference speaks to: the stream's `samples`, "Coded Samples" (Opus, Vorbis), "Samples (Edit List)" and "Samples (iTunSMPB)", and the unit findings; not the whole golden. A figure that equals the reference passes, one that differs passes only as a listed difference.
   - **Stale entries:** an entry whose SHA-256 no longer matches the fixture is stale. Failing it would mean that every regenerated fixture in these folders needs a macOS and Windows run before its pull request can pass, so such an entry gets the status `stale`, which the test lists and does not fail; the pull request description lists the stale entries (question 5 for the project lead, approved).
   - `tests/fixtures/apple` has no goldens, so nothing in `Encspect.Tests` reads its entries; those files stay in the run's artifact and in the docs.
   - This keeps the macOS and Windows results in CI without their runners (decision 7).
@@ -526,11 +526,11 @@ Rollout step 2 ran as workflow run 41325618652 (commit e39069a, `ci/official-dec
   - ffmpeg is set against files with one logical stream only (it decodes the first audio stream); `-flags2 +skip_manual` is the Opus coded count and is not used for Vorbis.
   - Eight variant rules (cut in three places, a changed byte, a page removed or repeated, a packet removed or repeated); the middle page is taken from the audio pages between the first and the last; 178 variants of 24 files; two files with a single audio page get none, and files of two audio pages have no mid-stream page.
   - Units: every packet the decoder refuses and every packet with a unit finding is listed, with the finding at the same bytes by the packet's ranges; a finding that merges several packets points to the first, so later refused packets are `noted`.
-  - The test checks stream `samples` and "Decoded Samples" per stream index, the listed differences, and the unit findings (any appearing, going or moving fails); `stale` entries are listed in the output and the job summary.
+  - The test checks stream `samples` and "Coded Samples" per stream index, the listed differences, and the unit findings (any appearing, going or moving fails); `stale` entries are listed in the output and the job summary.
   - The `compare` job keeps the reviewed statuses of the committed JSON when it writes its draft.
 - **Decisions on step 2** (the project lead, 2026-11-01; the analyzer, parsers and goldens do not change; each changed entry in `official-decoders.json` has the status, `statusSource` `reviewed` and a note with the reason, the date and the source):
   - `vorbis-packet-errors.ogg` and `vorbis-vendor-variants.ogg` (`oggdec` writes fewer samples; libvorbis and the analyzer agree): `keep`. The analyzer agrees with libvorbis fed packet by packet, with and without the real granule positions; `oggdec`'s shortfall is a reader behavior.
-  - `opus-packets-corrupt.opus`, coded stage (libopus refuses 11 packets with -4 that the analyzer counts by their TOC bytes): `explained`. "Decoded Samples" counts the positions the packets declare; the refused packets carry findings; under the gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples.
+  - `opus-packets-corrupt.opus`, coded stage (libopus refuses 11 packets with -4 that the analyzer counts by their TOC bytes): `explained`. "Coded Samples" counts the positions the packets declare; the refused packets carry findings; under the gaps-not-concealment rule (PLAN.md, #208) a future Encspect Opus decoder leaves them as gaps counted as lost samples.
   - Streams whose headers the decoder refuses while the analyzer counts samples (`vorbis-header-layout.ogg`, five links of `vorbis-setup-invalid.ogg`, eight streams of `opus-head-invalid.opus`): `keep`. The analyzer describes what the packets code, next to its findings on the invalid headers.
   - The extra acceptance (the reader equals the libvorbis granule run): declined, and `proposedReference` removed from the script and the JSON; both runs share libvorbis's granule handling.
   - Variant groups (in `comparison.txt` and the docs only): a repeated page of an Opus file, which `opusdec` skips while the analyzer and libogg count it (10 of 24 files): `noted`, the analyzer equals libogg's own packet stream. The 4 Vorbis files with a repeated page (the end-of-stream page) differed from `oggdec` by the first page's end trimming, 986 or 384 samples, which `oggdec` keeps and the analyzer dropped at the copy; and a repeated packet, where the analyzer was 38 to 128 samples below `oggdec` and ffmpeg agreed with `oggdec` (10 of the 14 Vorbis files): both resolved, see "Follow-up: repeated packets" below.

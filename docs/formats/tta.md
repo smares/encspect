@@ -57,7 +57,7 @@ A stream is verified when every stored checksum was compared, none failed and th
 
 ## Channel layout
 
-The header states a channel count and no speaker positions, so the stream names none: the channel mode is Mono for one channel, Stereo for two and Multichannel for more. (The description lists a channel mask for TTA2 only.)
+The header states a channel count and no speaker positions. The layout comes from the count, as for Monkey's Audio without a channel mask: one channel is the center, two are left and right, more are assigned none. The channel mode is Mono for one channel, Stereo for two and Multichannel for more, and the "Channel Layout" statistic and the stream's layout follow the same rule. (The description lists a channel mask for TTA2 only.)
 
 ## Encoder detection
 

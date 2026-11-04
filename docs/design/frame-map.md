@@ -49,7 +49,7 @@ Sources read: `CLAUDE.md`, `docs/PLAN.md`, `docs/gui.md`, the two designs above;
 
 - A square is a point of the series: a frame, packet, block or program frame as the [inventory](#inventory-the-per-unit-series-today) lists. The map never says more than the series does; the hover names it "Frame", as the per-frame line and the strip already do (`LineGraph.Describe`, the strip's hover).
 - **Squares stay in place when the entry changes.** A stream's frame offsets are those of its first per-frame series (`GraphsViewModel.For` takes them the same way for the per-second graphs). A series whose offsets are all among them is drawn on those squares, with an empty square where it has no value: MPEG's "Coded Bandwidth" and "Channel Bit Share" and AC-3's and AAC's "Coded Bandwidth" keep x values of their own where frames lack a value, and fall in this case. Toggling between them and the bitrate then keeps every square where it was.
-- A series whose units are not among the frames is drawn on squares of its own, and the caption says "One square per point of this series". The case to expect is WMA standard's "Bit Reservoir", one point per superframe at the superframe's offset, beside a bitrate per frame at offsets inside the superframes (`StandardReport.MakeSeries`); the map decides by the offsets, never by the format.
+- A series whose units are not among the frames is drawn on squares of its own, and the caption says "One square per point of this series". The case to expect is WMA standard's "Reservoir Fill", one point per superframe at the superframe's offset, beside a bitrate per frame at offsets inside the superframes (`StandardReport.MakeSeries`); the map decides by the offsets, never by the format.
 
 ### Findings: one square per kind, not every case
 
@@ -64,12 +64,12 @@ Read from the parsers' code at e8f51bc. Only MPEG audio, AAC and AC-3 build cate
 | Format | A square is | Numeric series per unit | Category series |
 | --- | --- | --- | --- |
 | MPEG audio | a frame | "Bitrate" (kbps; the header's bitrate, the computed one for free format), "Reservoir Fill" (bytes, Layer III), "Coded Bandwidth" (Hz, Layers I and II), "Channel Bit Share" (%, streams with a two-channel frame) | "Channel Modes", "Stereo Coding", "Joint Stereo Modes" (Layer III with joint stereo), "Intensity Stereo Bounds" (Layers I and II, ordered), "Block Usage" (Layer III; 4, 2 or 1 values: granules × channels), "Block Sizes" (a grouping of "Block Usage") |
-| AAC | an ADTS frame, an access unit (MP4, Matroska) or an ADIF block | "Bitrate", "Coded Bandwidth" (Hz) | "Window Sequences" (one value per channel stream, variable), "Block Sizes" (its grouping), "Stereo Coding" (one value per channel pair, variable) |
+| AAC | an ADTS frame, an access unit (MP4, Matroska) or an ADIF block | "Bitrate", "Coded Bandwidth" (Hz) | "Block Usage" (one value per channel stream, variable), "Block Sizes" (its grouping), "Stereo Coding" (one value per channel pair, variable) |
 | AC-3 and E-AC-3 | a program frame | "Bitrate", "Coded Bandwidth" (Hz) | "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension" (E-AC-3): one value per audio block, 6 fixed for AC-3, variable for E-AC-3 |
 | DTS | a frame | "Bitrate" | none |
 | Vorbis, Opus, Speex | a packet | "Bitrate" | none |
 | Musepack | a frame (SV4 to SV7) or an audio packet (SV8) | "Bitrate" | none |
-| WMA standard | a frame; a superframe for the reservoir | "Bitrate", "Bit Reservoir" (bytes) | none |
+| WMA standard | a frame; a superframe for the reservoir | "Bitrate", "Reservoir Fill" (bytes), "Reservoir Fill Over Time" | none |
 | WMA Pro | a frame | "Bitrate" | none |
 | WMA Voice | a superframe | "Bitrate" | none |
 | WavPack | a block | "Bitrate" | none |
@@ -210,7 +210,7 @@ Declared:
 Not declared; each keeps the file's own range:
 
 - **MPEG "Bitrate Over Time"** and the other per-second series: an average over a second falls between steps, and they have no map.
-- **Reservoir Fill and Bit Reservoir** (bytes): the bound depends on the main data begin field and the stream's bitrate, so no table or percentage is natural; the file's range shows what the stream used.
+- **Reservoir Fill** (bytes): the bound depends on the main data begin field and the stream's bitrate, so no table or percentage is natural; the file's range shows what the stream used.
 - **Coded bandwidth** (Hz): the ceiling is the sample rate's half, but the floor is what an encoder chose, and the shades should resolve that choice, not the whole band.
 - **Computed bitrates** of AAC, FLAC, Opus, Vorbis, Speex, DTS, WavPack, Monkey's Audio, Musepack, TTA, TrueHD and WMA: no table; each is a size over a duration, with floors that differ by an order of magnitude between files (FLAC about 600 to 1,400 kbps).
 - **Frame size and global gain** (follow-ups, not built): a high floor, and the range is a property of the encoder's settings, not of the format.

@@ -81,6 +81,20 @@
                   "length": 2238
                 },
                 {
+                  "name": "Verified Frame Checksums",
+                  "value": 5,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2238
+                },
+                {
+                  "name": "Failed Frame Checksums",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2238
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 6,
                   "unit": "blocks",
@@ -104,7 +118,7 @@
                   ]
                 },
                 {
-                  "name": "Window Sequences",
+                  "name": "Block Usage",
                   "value": 12,
                   "unit": "channel streams",
                   "offset": 0,
@@ -3398,7 +3412,7 @@
         ],
         "categorySeries": [
           {
-            "name": "Window Sequences",
+            "name": "Block Usage",
             "concept": "blockSwitching",
             "valueLabel": "channel stream",
             "categories": [
@@ -3453,7 +3467,7 @@
             ],
             "total": 12,
             "xSeries": "Bitrate",
-            "groupOf": "Window Sequences",
+            "groupOf": "Block Usage",
             "map": [
               0,
               0,

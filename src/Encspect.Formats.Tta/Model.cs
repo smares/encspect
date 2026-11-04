@@ -141,4 +141,5 @@ internal static class Topics
     public const string Coding = "tta-coding";
     public const string InMatroska = "tta-in-matroska";
     public const string Crc = "crc";
+    public const string Channels = "channel-layouts";
 }

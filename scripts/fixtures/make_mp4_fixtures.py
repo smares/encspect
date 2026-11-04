@@ -454,7 +454,7 @@ def gapless():
         track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2), edits=edits, extra=[sgpd_roll(-1), sbgp(len(samples))])
         meta = udta(ilst_meta(text_item(b"\xa9too", "hand-built"), freeform("iTunSMPB", value)))
         data, records, offsets = movie([track], moov_extra=[meta])
-        fields = {"MP4/moov/trak/Gapless/Encoder Delay (iTunSMPB)": f"{delay} samples", "MP4/moov/trak/Gapless/Padding (iTunSMPB)": f"{padding} samples",
+        fields = {"MP4/moov/trak/Gapless/Encoder Delay (iTunSMPB)": f"{delay} samples", "MP4/moov/trak/Gapless/Encoder Padding (iTunSMPB)": f"{padding} samples",
                   "MP4/moov/trak/Gapless/Samples (iTunSMPB)": f"{length} samples", "MP4/moov/trak/Gapless/Roll Distance": "-1 samples",
                   "MP4/moov/udta/meta/iTunes Metadata/iTunSMPB/data/Value/Encoder Delay": f"{delay} samples"}
         if edits:

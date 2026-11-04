@@ -36,6 +36,23 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void AddLost(long samples) => Lost += samples;
 
+    // The frames whose ADTS CRC was checked against the one computed, and those that differ (not verified or unchecked frames are in neither).
+    public long VerifiedChecksums { get; private set; }
+
+    public long FailedChecksums { get; private set; }
+
+    public void AddChecksum(bool isVerified)
+    {
+        if (isVerified)
+        {
+            VerifiedChecksums++;
+        }
+        else
+        {
+            FailedChecksums++;
+        }
+    }
+
     // A unit that counts its declared samples only: a packet the container cut is in no unit count, size or bitrate.
     public void AddSamples(long samples) => Samples += samples;
 
@@ -188,6 +205,15 @@ internal sealed class StreamFigures(int sampleRate)
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
+        }
+
+        if (VerifiedChecksums + FailedChecksums > 0)
+        {
+            statistics.Add(cover($"Verified {unitName} Checksums", NodeValue.Integer(VerifiedChecksums, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatChecksums));
+            if (FailedChecksums > 0)
+            {
+                statistics.Add(cover($"Failed {unitName} Checksums", NodeValue.Integer(FailedChecksums, unitPlural.ToLowerInvariant(), unitName.ToLowerInvariant()), NodeKind.Detail, Explain.StatChecksumsFailed));
+            }
         }
 
         return statistics;

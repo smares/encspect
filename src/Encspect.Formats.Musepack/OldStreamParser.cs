@@ -574,7 +574,7 @@ internal static class OldStreamParser
             Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
             statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), h.KeepsLastFrame ? Explain.Sv6StatFrames : Explain.OldStatFrames));
             statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
-            statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay, "samples", "sample"), Explain.DecoderDelay));
+            statistics.Add(Cover("Start Trimming", NodeValue.Integer(Sv7Parser.SynthesisDelay, "samples", "sample"), Explain.StartTrimming));
             statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), h.KeepsLastFrame ? Explain.Sv6StatSamples : Explain.OldStatSamples));
             if (lost > 0)
             {

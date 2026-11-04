@@ -230,6 +230,21 @@
                       "length": 2844
                     },
                     {
+                      "name": "Stereo Coding",
+                      "value": 3,
+                      "unit": "frames",
+                      "offset": 48,
+                      "length": 2844,
+                      "children": [
+                        {
+                          "name": "Left/right stereo",
+                          "value": "3 frames (100.0%)",
+                          "offset": 48,
+                          "length": 2844
+                        }
+                      ]
+                    },
+                    {
                       "name": "Extension Substream Frames",
                       "value": 4,
                       "unit": "frames",
@@ -326,14 +341,14 @@
                       "length": 2844
                     },
                     {
-                      "name": "Frames With CRC",
+                      "name": "Stored Frame Checksums",
                       "value": 0,
                       "unit": "frames",
                       "offset": 48,
                       "length": 2844
                     },
                     {
-                      "name": "Frames Failing a CRC",
+                      "name": "Failed Frame Checksums",
                       "value": 0,
                       "unit": "frames",
                       "offset": 48,
@@ -8979,6 +8994,42 @@
             ],
             "values": [
               552
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 3
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 3,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                3
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

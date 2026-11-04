@@ -13,14 +13,15 @@ Vorbis in [Ogg](ogg.md).
 
 ## Reported
 
-- long and short blocks;
+- **Block Sizes**, the packets that code a block as a tally and a category series (long and short, with the series' time index of the seconds), named as MPEG audio and AAC name the grouping of their block types (it replaces the "Long Blocks" and "Short Blocks" nodes);
 - the samples the overlap of blocks gives, checked against the granule positions with their start offset and trimming (the start trimming is capped at what the packet that carries the first position returns and the end trimming at what the last packet returns, as libvorbis does; one larger than the first two blocks return, or the last packet, is a finding);
 - the count of samples the granule positions are checked against follows libvorbis's `vorbis_synthesis_blockin` (libvorbis 1.3.7; `oggdec` from vorbis-tools 1.4.2 and 1.4.3 write the same figures on the fixtures named here):
   - it continues from the last granule position taken, so the samples of a repeated packet, or a jump of the positions in the middle, are not charged to the end trimming; each position that differs from the count continued from the position before it is counted in `vorbis.granule-inconsistent` (not each position that differs from the first page's);
   - a position counts only on a packet that codes a block: one on an empty, not-audio or invalid packet is not taken, and the packet after such a packet, or after a gap, starts a new count, counted from the first block after it; the first position taken is measured by that count (so a refused packet before it can leave no start trimming), and a later one below the samples counted since discards the difference at that page, at most the last packet's samples (`Gap Trimming`);
   - every end-of-stream page trims, at most the last packet's samples (more is `vorbis.end-trimming-large`; a trim the count does not reach is `vorbis.granule-beyond-packets`), and its position becomes the count, as every position does, so a repeated end-of-stream page keeps the first page's trim and trims nothing more, and a page that follows an end-of-stream page in sequence is measured from it;
   - the count is held as the last position and the samples decoded then, and the offsets are clamped, so a position of any size cannot overflow; a figure at the 64-bit limit is shown as "at least";
-- the bitrate of every packet and per second, and packet sizes.
+- the bitrate of every packet and per second, and packet sizes;
+- the samples before trimming as "Coded Samples" (the name Speex, Musepack, TrueHD and standard WMA use for the same stage).
 
 ## Channel layout
 
@@ -45,4 +46,5 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 ## Not yet covered
 
+- Coded bandwidth (Hz, as MPEG audio, AAC, AC-3 and Opus report it): not covered yet. Vorbis states no bandwidth field; where coding stops lies in the floor and residue data of the audio packets, which needs the frame-level parsing that comes with the format's decoder.
 - The floor and residue data of the audio packets (planned: entropy pass). The setup header's floor and residue configurations are read.

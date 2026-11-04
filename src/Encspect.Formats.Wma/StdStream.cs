@@ -47,10 +47,6 @@ internal sealed class StdStream
 
     public long SpanningFrames { get; private set; }
 
-    public long LargestReservoir { get; private set; }
-
-    public long ReservoirSum { get; private set; }
-
     public long InsideFrame { get; private set; }
 
     public long FillerFrames { get; private set; }
@@ -365,7 +361,6 @@ internal sealed class StdStream
             }
 
             record.Kept = reservoir.Bytes;
-            LargestReservoir = Math.Max(LargestReservoir, reservoir.Bytes);
             Superframes.Add(record);
             return;
         }
@@ -494,8 +489,6 @@ internal sealed class StdStream
         record.Kept = reservoir;
         Superframes.SetLast(record);
         MaxFramesPerSuperframe = Math.Max(MaxFramesPerSuperframe, frames);
-        LargestReservoir = Math.Max(LargestReservoir, reservoir);
-        ReservoirSum += reservoir;
     }
 
     private int AddFrame(StdFrameRecord frame)

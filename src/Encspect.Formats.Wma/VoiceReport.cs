@@ -73,8 +73,8 @@ internal static class VoiceReport
         {
             Add("Smallest Superframe", NodeValue.Decimal(t.SmallestBits / 8.0, 1, "bytes"), VoiceExplain.StatSmallestSuperframe);
             Add("Largest Superframe", NodeValue.Decimal(t.LargestBits / 8.0, 1, "bytes"), VoiceExplain.StatLargestSuperframe);
-            Add("Minimum Superframe Bitrate", NodeValue.Decimal(t.SmallestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMinimumBitrate);
-            Add("Maximum Superframe Bitrate", NodeValue.Decimal(t.LargestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMaximumBitrate);
+            Add("Minimum Bitrate", NodeValue.Decimal(t.SmallestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMinimumBitrate);
+            Add("Maximum Bitrate", NodeValue.Decimal(t.LargestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMaximumBitrate);
         }
 
         Add("Superframes Spanning Packets", NodeValue.Integer(t.SpanningPackets), VoiceExplain.StatSpanning);
@@ -181,10 +181,14 @@ internal static class VoiceReport
         var perSuperframe = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates)
         {
             Description = BitrateSeries,
+            Concept = GraphConcept.BitDistribution,
+            Quantity = "Bitrate",
         };
         var perSecond = new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, x.ToArray(), y.ToArray(), statistics)
         {
             Description = BitrateOverTimeSeries,
+            Concept = GraphConcept.BitDistribution,
+            Quantity = "Bitrate",
         };
         return [perSuperframe, perSecond];
     }

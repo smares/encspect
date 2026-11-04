@@ -112,7 +112,7 @@ internal sealed partial class UnitSyntax
             return;
         }
 
-        // Frames Failing a CRC counts a unit with a header CRC that fails, wherever the header lies.
+        // Failed Frame Checksums counts a unit with a header CRC that fails, wherever the header lies.
         if (issue == Issue.CrcMismatch)
         {
             Facts.HasCrcMismatch = true;

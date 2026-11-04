@@ -88,6 +88,21 @@
                   "length": 12320
                 },
                 {
+                  "name": "Stereo Coding",
+                  "value": 22,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 12320,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "22 frames (100.0%)",
+                      "offset": 0,
+                      "length": 12320
+                    }
+                  ]
+                },
+                {
                   "name": "Extension Substream Frames",
                   "value": 0,
                   "unit": "frames",
@@ -184,14 +199,14 @@
                   "length": 12320
                 },
                 {
-                  "name": "Frames With CRC",
+                  "name": "Stored Frame Checksums",
                   "value": 0,
                   "unit": "frames",
                   "offset": 0,
                   "length": 12320
                 },
                 {
-                  "name": "Frames Failing a CRC",
+                  "name": "Failed Frame Checksums",
                   "value": 0,
                   "unit": "frames",
                   "offset": 0,
@@ -19295,6 +19310,42 @@
             ],
             "values": [
               193
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 22
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 22,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                22
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

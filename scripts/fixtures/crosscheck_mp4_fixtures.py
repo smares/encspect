@@ -487,7 +487,7 @@ SERIES_SKIPPED = []
 def check_series(ours, theirs, report, problems, skipped=()):
     """Holds the coding series of the golden report to faad2's trace, unit by unit (see the module's documentation). Returns the number of
     units compared and the reason it compared none, or None."""
-    streams = [s for s in report["streams"] if any(c["name"] == "Window Sequences" for c in s.get("categorySeries", []))]
+    streams = [s for s in report["streams"] if any(c["name"] == "Block Usage" for c in s.get("categorySeries", []))]
     rate = core_rate(report)
     if len(streams) != 1:
         return 0, f"{len(streams)} streams have coding series"
@@ -498,12 +498,12 @@ def check_series(ours, theirs, report, problems, skipped=()):
     is960 = config_values(report, "Frame Length", 1024, ("AudioSpecificConfig",)) == 960
     stream = streams[0]
     by_name = {c["name"]: c for c in stream["categorySeries"]}
-    windows, pairs, sizes = by_name["Window Sequences"], by_name.get("Stereo Coding"), by_name["Block Sizes"]
+    windows, pairs, sizes = by_name["Block Usage"], by_name.get("Stereo Coding"), by_name["Block Sizes"]
     if [c["name"] for c in windows["categories"]] != WINDOW_SEQUENCES or (pairs and [c["name"] for c in pairs["categories"]] != STEREO_CODINGS):
         problems.append("the coding series' categories are not the window sequences and stereo codings the check expects")
         return 0, None
-    if [c["name"] for c in sizes["categories"]] != BLOCK_SIZES or sizes.get("groupOf") != "Window Sequences" or sizes.get("map") != [0, 0, 1, 0]:
-        problems.append("Block Sizes is not the grouping of Window Sequences into long (with start and stop) and short windows")
+    if [c["name"] for c in sizes["categories"]] != BLOCK_SIZES or sizes.get("groupOf") != "Block Usage" or sizes.get("map") != [0, 0, 1, 0]:
+        problems.append("Block Sizes is not the grouping of Block Usage into long (with start and stop) and short windows")
     xs = next((s["x"] for s in stream["series"] if s["name"] == windows.get("xSeries", "Bitrate")), None)
     if xs is None or len(xs) != len(series_units(windows, len(xs))):
         return 0, "the series' units have no x values in the report"
@@ -544,7 +544,7 @@ def check_trace(path, report, problems, skipped=()):
     units, reason = check_series(ours, theirs, report, problems, skipped)
     if units:
         SERIES_COMPARED.append((path.name, units))
-    elif reason and any(c["name"] == "Window Sequences" for st in report["streams"] for c in st.get("categorySeries", [])):
+    elif reason and any(c["name"] == "Block Usage" for st in report["streams"] for c in st.get("categorySeries", [])):
         SERIES_SKIPPED.append((path.name, reason))
     if len(theirs) != len(ours):
         problems.append(f"faad2 reads {len(theirs)} raw data blocks, the analyzer {len(ours)}")

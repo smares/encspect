@@ -173,8 +173,8 @@ internal static class Summary
         statistics.Add(Cover("Stored Lossless Checks", NodeValue.Integer(a.LosslessStored.Sum(), "checks", "check"), Explain.StatLosslessChecks, Topics.LosslessCheck));
         if (a.Units > a.LeadingUnits)
         {
-            statistics.Add(Cover("Shortest Access Unit", NodeValue.Integer(a.ShortestUnit, "bytes"), Explain.Smallest));
-            statistics.Add(Cover("Longest Access Unit", NodeValue.Integer(a.LongestUnit, "bytes"), Explain.Largest));
+            statistics.Add(Cover("Smallest Access Unit", NodeValue.Integer(a.ShortestUnit, "bytes"), Explain.Smallest));
+            statistics.Add(Cover("Largest Access Unit", NodeValue.Integer(a.LongestUnit, "bytes"), Explain.Largest));
         }
 
         Node Covered(string name, NodeValue? value, string description) => Cover(name, value, description, null);

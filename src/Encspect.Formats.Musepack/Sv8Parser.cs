@@ -633,7 +633,7 @@ internal static class Sv8Parser
             state.Findings.AddNow(Severity.Warning, "musepack.header-crc-zero", "The stream header's CRC is 0, which the SV8 specification calls invalid, and ffmpeg does not recognize the stream.", WithoutChildren(crc));
         }
 
-        var header = new StreamHeaderInfo { CrcVerified = whole && computed == stored };
+        var header = new StreamHeaderInfo { CrcVerified = whole && computed == stored, CrcFailed = whole && computed != stored };
         int position = 4;
         if (position >= f.Data.Length)
         {
@@ -1187,7 +1187,7 @@ internal static class Sv8Parser
         statistics.Add(Cover("Audio Packets", NodeValue.Integer(figures.Units, "packets", "packet"), Explain.StatPackets));
         statistics.Add(Cover("Frames", NodeValue.Integer(frames, "frames", "frame"), Explain.StatFrames));
         statistics.Add(Cover("Coded Samples", NodeValue.Integer(coded * Sv7Parser.FrameSamples, "samples", "sample"), Explain.CodedSamples));
-        statistics.Add(Cover("Decoder Delay", NodeValue.Integer(Sv7Parser.SynthesisDelay + silence, "samples", "sample"), Explain.DecoderDelay));
+        statistics.Add(Cover("Start Trimming", NodeValue.Integer(Sv7Parser.SynthesisDelay + silence, "samples", "sample"), Explain.StartTrimming));
         statistics.Add(Cover("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
         if (lost > 0)
         {
@@ -1195,6 +1195,15 @@ internal static class Sv8Parser
         }
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         figures.AddTo(statistics, Cover, "Packet", "packets", inBytes: true, out Node bitrate);
+        if (header is { CrcVerified: true } or { CrcFailed: true })
+        {
+            statistics.Add(Cover("Verified Header Checksums", NodeValue.Integer(header.CrcVerified ? 1 : 0, "headers", "header"), Explain.StatHeaderChecksums));
+            if (header.CrcFailed)
+            {
+                statistics.Add(Cover("Failed Header Checksums", NodeValue.Integer(1, "headers", "header"), Explain.StatHeaderChecksumsFailed));
+            }
+        }
+
         state.Leading.Add(statistics);
 
         int channels = header?.Channels ?? 0;
@@ -1266,6 +1275,8 @@ internal static class Sv8Parser
     private sealed class StreamHeaderInfo
     {
         public bool CrcVerified { get; init; }
+
+        public bool CrcFailed { get; init; }
 
         public int Version { get; set; }
 

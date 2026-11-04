@@ -5,6 +5,7 @@ internal static class Topics
 {
     public const string OggPages = "ogg-pages";
     public const string GranulePosition = "granule-position";
+    public const string Crc = "crc";
 }
 
 // What each Ogg node is. Constants only, shared by every node of their kind, from RFC 3533:
@@ -46,6 +47,8 @@ internal static class Explain
     public const string CodecUnknown = "No known codec: the stream's first packet starts with bytes no Ogg mapping is known for, or is missing.";
     public const string ChainLink = "Which link of a chained file the stream belongs to, counting from 1: chaining puts complete groups of streams one after another (RFC 3533, section 4).";
     public const string PageCount = "How many pages of the stream the file holds.";
+    public const string VerifiedPageChecksums = "The pages of the stream whose CRC-32 equals the one computed over the page (RFC 3533, section 6); a page cut short cannot be checked and is in neither count.";
+    public const string FailedPageChecksums = "The pages of the stream whose CRC-32 differs from the one computed.";
     public const string PacketCount = "How many complete packets libogg returns from the stream's pages, which leaves out the pages that fail their CRC check or are cut short; the codec parser may be handed more.";
     public const string LastGranulePosition = "The granule position of the stream's last page that has one, which gives the stream's length in the codec's units.";
     public const string HasEndOfStream = "Whether a page of the stream carries the end-of-stream flag, as RFC 3533 asks of the last page of every logical stream (section 4).";

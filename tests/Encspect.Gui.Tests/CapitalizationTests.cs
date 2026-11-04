@@ -124,7 +124,7 @@ public sealed class CapitalizationTests
         window.Close();
     }
 
-    // The entries and forms of an AAC file's graphs (Window Sequences, Block Sizes, Stereo Coding, Coded Bandwidth), each selected in turn.
+    // The entries and forms of an AAC file's graphs (Block Usage, Block Sizes, Stereo Coding, Coded Bandwidth), each selected in turn.
     [AvaloniaFact]
     public void Labels_of_the_graphs_of_an_aac_file_are_in_title_case()
     {
@@ -148,7 +148,7 @@ public sealed class CapitalizationTests
             }
         }
 
-        Assert.Contains("Window Sequences", labels);
+        Assert.Contains("Block Usage", labels);
         Assert.Contains("Coded Bandwidth", labels);
         Assert.Contains("Stereo Coding", labels);
         AssertTitleCase(labels);

@@ -665,7 +665,7 @@ public sealed partial class Mp4Parser
                 if (total > 0 && (long)total - edit.MediaTime - presented is var padding and >= 0)
                 {
                     editPadding = padding;
-                    nodes.Add(Cover("Padding (Edit List)", Units(padding), Explain.EditPadding));
+                    nodes.Add(Cover("Encoder Padding (Edit List)", Units(padding), Explain.EditPadding));
                 }
             }
         }
@@ -679,7 +679,7 @@ public sealed partial class Mp4Parser
         {
             nodes.Add(Cover("Encoder Delay (iTunSMPB)", Units(smpb.Delay), Explain.SmpbGaplessDelay));
             nodes.Add(Cover("Samples (iTunSMPB)", Units(smpb.Samples), Explain.SmpbGaplessSamples));
-            nodes.Add(Cover("Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
+            nodes.Add(Cover("Encoder Padding (iTunSMPB)", Units(smpb.Padding), Explain.SmpbGaplessPadding));
             long sum = smpb.Delay + smpb.Samples + smpb.Padding;
             // Apple's lossless writer shortens the last packet by the padding, so the track lasts delay plus samples.
             bool lossless = (track.ReadEntry ?? track.Entries.FirstOrDefault())?.EffectiveFormat == "alac";

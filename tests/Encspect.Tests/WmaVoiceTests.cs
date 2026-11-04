@@ -498,7 +498,7 @@ public class WmaVoiceTests
             "Superframe", "Is Speech", "Has Sample Count", "Sample Count", "LSPs", "Additional Data",
             "Frame", "Frame Type", "Pitch", "Silence Gain", "Window Index", "Blocks", "Block 1", "Block 8",
             "Writer", "Statistics", "Packets", "Superframes", "Frames", "Samples", "Duration", "Container Duration", "Container Samples", "Block Alignment", "Packet Bytes", "Average Bitrate", "Average Superframe Bitrate", "Nominal Bitrate",
-            "Smallest Superframe", "Largest Superframe", "Minimum Superframe Bitrate", "Maximum Superframe Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
+            "Smallest Superframe", "Largest Superframe", "Minimum Bitrate", "Maximum Bitrate", "Superframes Spanning Packets", "Most Superframes in a Packet",
             "Spillover Field", "Superframes with a Sample Count", "LSPs per Frame", "Superframes with Residual LSPs", "Superframes with Additional Data", "Uses Postfilter", "Pitch Range",
             "Ignored Bits", "Bits After the Last Superframe", "Skipped Spillover Bits", "Frame Types", "Fixed Codebooks", "Adaptive Codebooks", "Blocks per Frame", "Invalid Superframes",
         ];

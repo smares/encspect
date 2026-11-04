@@ -132,14 +132,14 @@ public sealed partial class OpusParser
                 Topic = Topics.OpusModes,
             });
 
-            Node Add(Node parent, string name, NodeValue value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
+            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
 
             Add(node, "Packets", NodeValue.Integer(_wholePackets), Explain.Packets);
             Add(node, "Frames", NodeValue.Integer(_frames), Explain.Frames);
-            Add(node, "Decoded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.DecodedSamples, Topics.OpusToc);
+            Add(node, "Coded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.CodedSamples, Topics.OpusToc);
             if (HasHead)
             {
-                Add(node, "Pre-skip", NodeValue.Integer(_head!.PreSkip, "samples", "sample"), Explain.StatPreSkip, Topics.OpusPreSkip);
+                Add(node, "Start Trimming", NodeValue.Integer(_head!.PreSkip, "samples", "sample"), Explain.StatPreSkip, Topics.OpusPreSkip);
             }
 
             if (_firstOffset is { } offset)
@@ -191,6 +191,19 @@ public sealed partial class OpusParser
                         Add(bandwidths, $"{Toc.BandwidthNames[b]} ({Toc.BandwidthRanges[b]})", Share(_bandwidths[b], _frames, "frame", "frames"), Explain.BandwidthShare);
                     }
                 }
+
+                Node coded = Add(node, "Coded Bandwidth", null, Explain.StatCodedBandwidth, Topics.CodedBandwidth);
+                int firstBand = Array.FindIndex(_bandwidths, c => c > 0);
+                int mostBand = 0;
+                for (int b = 1; b < _bandwidths.Length; b++)
+                {
+                    mostBand = _bandwidths[b] > _bandwidths[mostBand] ? b : mostBand;
+                }
+
+                Add(coded, "Lowest", NodeValue.Integer(Toc.BandwidthHertz[firstBand], "Hz"), Explain.BandwidthLowest);
+                Add(coded, "Most Common", NodeValue.Integer(Toc.BandwidthHertz[mostBand], "Hz"), Explain.BandwidthMostCommon);
+                Add(coded, "Highest", NodeValue.Integer(Toc.BandwidthHertz[Array.FindLastIndex(_bandwidths, c => c > 0)], "Hz"), Explain.BandwidthHighest);
+                _codedBandwidthNode = coded;
 
                 Node frameSizes = Add(node, "Frame Sizes", Count(_frameSizes.Count, "size", "sizes"), Explain.FrameSizes, Topics.OpusToc);
                 foreach ((int size, long count) in _frameSizes)
@@ -278,6 +291,8 @@ public sealed partial class OpusParser
         // Per packet, its bitrate at its offset (0 for one that codes no samples); per second of
         // audio, the bits of the packets that start in it over their duration, rounded half to even
         // to 0.1 kbps.
+        private Node? _codedBandwidthNode;
+
         private List<Series> Series(Node? anchor, Node? packets)
         {
             if (_packets == 0 || packets is null || _decoded == 0)
@@ -289,6 +304,10 @@ public sealed partial class OpusParser
             double[] offsets = _records.OffsetsForSeries(context.CancellationToken);
             var bitrates = new double[count];
             var seconds = new List<(long Bits, long Samples)>();
+            var highest = new List<int>();
+            var bandwidthX = new double[count];
+            var bandwidthY = new double[count];
+            int bandwidthCount = 0;
             long position = 0;
             for (int i = 0; i < count; i++)
             {
@@ -309,6 +328,24 @@ public sealed partial class OpusParser
                 while (seconds.Count <= second)
                 {
                     seconds.Add(default);
+                    highest.Add(-1);
+                }
+
+                int band = -1;
+                for (int s = 0; s < _records.PartCount(i); s++)
+                {
+                    PartRecord part = _records.Part(i, s);
+                    if (part.HasToc && part.Status == PartStatus.Valid)
+                    {
+                        band = Math.Max(band, Toc.Bandwidth(part.TocByte));
+                    }
+                }
+
+                if (band >= 0)
+                {
+                    bandwidthX[bandwidthCount] = offsets[i];
+                    bandwidthY[bandwidthCount++] = Toc.BandwidthHertz[band];
+                    highest[second] = Math.Max(highest[second], Toc.BandwidthHertz[band]);
                 }
 
                 seconds[second] = (seconds[second].Bits + (bytes * 8L), seconds[second].Samples + samples);
@@ -319,11 +356,47 @@ public sealed partial class OpusParser
             double[] rates = seconds
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
-            return
-            [
-                new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate },
-                new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
-            ];
+            var series = new List<Series>
+            {
+                new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate },
+                new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
+            };
+            if (bandwidthCount > 0)
+            {
+                Array.Resize(ref bandwidthX, bandwidthCount);
+                Array.Resize(ref bandwidthY, bandwidthCount);
+                series.Add(new("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, bandwidthX, bandwidthY)
+                {
+                    Description = SeriesText.CodedBandwidth,
+                    Concept = GraphConcept.CodedBandwidth,
+                    Quantity = "Coded Bandwidth",
+                });
+                int valued = 0;
+                for (int s = 0; s < highest.Count; s++)
+                {
+                    valued += highest[s] >= 0 ? 1 : 0;
+                }
+
+                var bandStarts = new double[valued];
+                var bandHighest = new double[valued];
+                for (int s = 0, n = 0; s < highest.Count; s++)
+                {
+                    if (highest[s] >= 0)
+                    {
+                        bandStarts[n] = s;
+                        bandHighest[n++] = highest[s];
+                    }
+                }
+
+                series.Add(new("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, bandStarts, bandHighest, _codedBandwidthNode)
+                {
+                    Description = SeriesText.CodedBandwidthOverTime,
+                    Concept = GraphConcept.CodedBandwidth,
+                    Quantity = "Coded Bandwidth",
+                });
+            }
+
+            return series;
         }
     }
 

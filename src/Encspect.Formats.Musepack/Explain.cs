@@ -150,12 +150,14 @@ internal static class Explain
     public const string StatFrames = "The frames of 1,152 samples per channel that the stream codes.";
     public const string StatPackets = "The audio packets of the stream.";
     public const string CodedSamples = "The samples per channel the frames code: 1,152 per frame, a frame cut by the end of the data included.";
-    public const string DecoderDelay = "The samples a decoder drops at the start: the synthesis filter's delay of 481 samples (libmpcdec r495 MPC_DECODER_SYNTH_DELAY), plus the beginning silence of SV8.";
-    public const string StatSamples = "The samples per channel decoders output: the coded samples less the decoder delay and the end of the last frame that is not audio (libmpcdec r495).";
+    public const string StartTrimming = "The samples a decoder drops at the start: the synthesis filter's delay of 481 samples (libmpcdec r495 MPC_DECODER_SYNTH_DELAY), plus the beginning silence of SV8.";
+    public const string StatSamples = "The samples per channel decoders output: the coded samples less the start trimming and the end of the last frame that is not audio (libmpcdec r495).";
     public const string StatDuration = "The duration of the output samples at the sample rate.";
     public const string AverageBitrate = "The bits of the frames or audio packets over the time their coded samples last.";
     public const string MinimumBitrate = "The bitrate of the smallest frame or packet over the time it codes.";
     public const string MaximumBitrate = "The bitrate of the largest frame or packet over the time it codes.";
+    public const string StatHeaderChecksums = "The stream header packets whose CRC-32 equals the one computed over the packet's bytes after it; 1 or 0, as an SV8 stream has one stream header.";
+    public const string StatHeaderChecksumsFailed = "The stream header packets whose CRC-32 differs from the one computed.";
     public const string Smallest = "The smallest frame or audio packet.";
     public const string Largest = "The largest frame or audio packet.";
     public const string BitrateMode = "Each frame is as long as its data, so the bitrate follows the audio (variable); only the headers of SV4 to SV6 have a bitrate field, which is set for a constant bitrate.";

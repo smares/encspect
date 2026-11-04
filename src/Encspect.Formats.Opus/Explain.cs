@@ -6,6 +6,7 @@ internal static class Topics
     public const string OpusModes = "opus-modes";
     public const string OpusToc = "opus-toc";
     public const string OpusPreSkip = "opus-pre-skip";
+    public const string CodedBandwidth = "coded-bandwidth";
     public const string OpusChannelMapping = "opus-channel-mapping";
     public const string GranulePosition = "granule-position";
     public const string BitrateModes = "bitrate-modes";
@@ -59,7 +60,7 @@ internal static class Explain
     public const string Statistics = "Figures over the stream's audio packets, counted from their TOC bytes and framing and from the granule positions.";
     public const string Packets = "How many audio packets the stream holds, not counting a packet the container cuts.";
     public const string Frames = "How many frames the audio packets hold, over all streams.";
-    public const string DecodedSamples = "The samples at 48 kHz the packets code, each the frames of its TOC times their duration, before the pre-skip and end trimming are dropped.";
+    public const string CodedSamples = "The samples at 48 kHz the packets code, each the frames of its TOC times their duration, before the pre-skip and end trimming are dropped.";
     public const string StatPreSkip = "The samples at the start the decoder drops, from the identification header (RFC 7845, section 4.2).";
     public const string StartOffset = "The first audio page's granule position less the samples up to it: 0 for a stream that starts at its beginning, above 0 for one that starts later (RFC 7845, section 4.5).";
     public const string EndTrimming = "Samples the packets code beyond the last granule position, which a decoder drops from the end (RFC 7845, section 4.4).";
@@ -73,6 +74,10 @@ internal static class Explain
     public const string PacketSizesConstant = "Every audio packet has the same size, as CBR encoding writes them.";
     public const string Modes = "How many frames use each mode: SILK for speech, CELT for music, hybrid for both in one frame (RFC 6716, section 2).";
     public const string ModeShare = "Frames of this mode, and their share of all frames.";
+    public const string StatCodedBandwidth = "The audio bandwidth the TOC bytes of the frames name, in whole hertz: 4,000, 6,000, 8,000, 12,000 or 20,000 for narrowband to fullband (RFC 6716, section 2, table 1). It is the bandwidth the stream's configuration states, not a measurement of the sound.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any frame.";
+    public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any frame.";
     public const string Bandwidths = "How many frames code each audio bandwidth (RFC 6716, section 2, table 1).";
     public const string BandwidthShare = "Frames of this bandwidth, and their share of all frames.";
     public const string FrameSizes = "How many frames have each duration (RFC 6716, section 3.1).";
@@ -94,5 +99,7 @@ internal static class Explain
 internal static class SeriesText
 {
     public const string Bitrate = "The bitrate of each audio packet: its bits over the samples it codes, 0 for a packet that codes none.";
+    public const string CodedBandwidth = "The coded bandwidth of each audio packet: the audio bandwidth its TOC byte names, in whole hertz, the highest of the stream parts of a packet with several; a packet that codes no samples has none (RFC 6716, section 2, table 1).";
+    public const string CodedBandwidthOverTime = "The highest coded bandwidth of the packets that start in each second of audio.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets that start in it over their duration.";
 }

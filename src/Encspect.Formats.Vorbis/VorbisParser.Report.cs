@@ -220,13 +220,23 @@ public sealed partial class VorbisParser
             Add("Packets", NodeValue.Integer(_packets - _cutPackets.Count), Explain.Packets);
             if (blocks > 0)
             {
-                Add("Long Blocks", Share(_longBlocks, blocks, "packet", "packets"), Explain.LongBlocks, Topics.VorbisBlocks);
-                Add("Short Blocks", Share(_shortBlocks, blocks, "packet", "packets"), Explain.ShortBlocks, Topics.VorbisBlocks);
+                Node blockSizes = Add("Block Sizes", NodeValue.Integer(blocks, "packets", "packet"), Explain.BlockSizes, Topics.VorbisBlocks);
+                if (_longBlocks > 0)
+                {
+                    blockSizes.Add("Long", start, length, Share(_longBlocks, blocks, "packet", "packets"), Explain.SizeLong);
+                }
+
+                if (_shortBlocks > 0)
+                {
+                    blockSizes.Add("Short", start, length, Share(_shortBlocks, blocks, "packet", "packets"), Explain.SizeShort);
+                }
+
+                _blockSizesNode = blockSizes;
             }
 
             if (HasTime && blocks > 0)
             {
-                Add("Decoded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.DecodedSamples, Topics.VorbisBlocks);
+                Add("Coded Samples", NodeValue.Integer(_decoded, "samples", "sample"), Explain.CodedSamples, Topics.VorbisBlocks);
                 if (_firstOffset is { } offset)
                 {
                     Add("Start Offset", NodeValue.Integer(offset, "samples", "sample"), Math.Abs(offset) == long.MaxValue ? Explain.StartOffsetClamped : Explain.StartOffset, Topics.GranulePosition);
@@ -309,6 +319,14 @@ public sealed partial class VorbisParser
         private static string Share(long count, long total, string singular, string plural) =>
             $"{Count(count, singular, plural)} ({Math.Round(count * 100.0 / total, 1, MidpointRounding.ToEven).ToString("F1", CultureInfo.InvariantCulture)}%)";
 
+        private static readonly Category[] BlockSizeCategories =
+        [
+            new("Long", Explain.SizeLong) { Topic = Topics.VorbisBlocks },
+            new("Short", Explain.SizeShort) { Topic = Topics.VorbisBlocks },
+        ];
+
+        private Node? _blockSizesNode;
+
         private Node? AddPackets()
         {
             if (_packets == 0)
@@ -329,11 +347,11 @@ public sealed partial class VorbisParser
         // second of audio, the bits of the packets whose blocks start in it over the samples those
         // blocks code, rounded half to even to 0.1 kbps. A stream whose blocks last longer than a
         // second, from a corrupt sample rate, has no per-second series.
-        private List<Series> Series(Node? anchor, Node? packets)
+        private (List<Series> Series, IReadOnlyList<CategorySeries> Categories) Series(Node? anchor, Node? packets)
         {
             if (!HasTime || _longBlocks + _shortBlocks == 0 || packets is null)
             {
-                return [];
+                return ([], []);
             }
 
             bool perSecond = _records.Blocksize1 / 2 <= Rate;
@@ -341,6 +359,8 @@ public sealed partial class VorbisParser
             double[] offsets = _records.OffsetsForSeries(context.CancellationToken);
             var bitrates = new double[count];
             var seconds = new List<(long Bits, long Samples)>();
+            var firstUnits = new List<int>();
+            var sizeSeries = new CategorySeriesBuilder("Block Sizes", BlockSizeCategories, "packet", 1, concept: GraphConcept.BlockSwitching);
             long position = 0;
             for (int i = 0; i < count; i++)
             {
@@ -352,9 +372,11 @@ public sealed partial class VorbisParser
                 PacketRecord packet = _records.Packets[i];
                 if (!packet.IsBlock || _cutPackets.Contains(i))
                 {
+                    sizeSeries.Add(CategorySeries.None);
                     continue;
                 }
 
+                sizeSeries.Add(packet.IsLong ? (byte)0 : (byte)1);
                 bitrates[i] = PacketBitrate(packet);
                 int half = _records.BlockSize(packet) / 2;
                 if (perSecond)
@@ -363,6 +385,7 @@ public sealed partial class VorbisParser
                     while (seconds.Count <= second)
                     {
                         seconds.Add(default);
+                        firstUnits.Add(i);
                     }
 
                     seconds[second] = (seconds[second].Bits + (packet.Length * 8L), seconds[second].Samples + half);
@@ -376,7 +399,9 @@ public sealed partial class VorbisParser
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
             var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
-            return perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null);
+            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            return (series, [blockSizes]);
         }
     }
 

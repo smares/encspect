@@ -9,6 +9,57 @@ internal sealed class StreamFigures(int sampleRate)
 {
     private readonly ChunkedList<Point> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
+    private readonly List<int> _firstUnits = [];
+    private CategorySeriesBuilder? _stereo;
+
+    // The units of each stereo coding (StereoCodings), and the units that have none.
+    public int[] StereoCounts { get; } = new int[StereoCodings.Length];
+
+    public int StereoUnits => StereoCounts.Sum();
+
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", Explain.StereoLeftRight) { Topic = Topics.MidSideStereo },
+        new("Mid/side stereo", Explain.StereoMidSide) { Topic = Topics.MidSideStereo },
+        new("Intensity stereo", Explain.StereoIntensity) { Topic = Topics.IntensityStereo },
+        new("Mid/side and intensity stereo", Explain.StereoMidSideIntensity) { Topic = Topics.IntensityStereo },
+    ];
+
+    // The stereo coding of the unit Add is about to count (a code of StereoCodings, or null for none); call it only for a unit that gets a point.
+    public void AddStereo(int? code)
+    {
+        _stereo ??= new CategorySeriesBuilder("Stereo Coding", StereoCodings, "frame", 1, concept: GraphConcept.StereoCoding);
+        while (_stereo.Count < _points.Count)
+        {
+            _stereo.Add(CategorySeries.None);
+        }
+
+        if (code is { } value)
+        {
+            StereoCounts[value]++;
+            _stereo.Add((byte)value);
+        }
+        else
+        {
+            _stereo.Add(CategorySeries.None);
+        }
+    }
+
+    public IReadOnlyList<CategorySeries> Categories(Series bitrate, Node anchor)
+    {
+        if (_stereo is null || StereoUnits == 0)
+        {
+            return [];
+        }
+
+        while (_stereo.Count < _points.Count)
+        {
+            _stereo.Add(CategorySeries.None);
+        }
+
+        TimeIndex? time = _seconds.Count == 0 ? null : new TimeIndex(Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray(), _firstUnits.ToArray());
+        return [_stereo.Build(bitrate.X, bitrate, anchor, Explain.StereoCodingSeries, Topics.MidSideStereo, time)];
+    }
 
     public int SampleRate => sampleRate;
 
@@ -90,6 +141,7 @@ internal sealed class StreamFigures(int sampleRate)
             while (_seconds.Count <= second)
             {
                 _seconds.Add(default);
+                _firstUnits.Add(_points.Count - 1);
             }
 
             (long bits, long counted) = _seconds[second];
