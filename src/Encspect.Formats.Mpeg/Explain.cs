@@ -227,6 +227,7 @@ internal static class Explain
     public const string DistributionEntry = "The frames at this bitrate, with their share of all frames. For free format, the name carries the average bitrate the frame lengths give.";
     public const string Unpadded = "The frames at this bitrate without a padding slot, by length.";
     public const string Padded = "The frames at this bitrate with a padding slot, by length.";
+    public const string AverageFill = "The mean bit reservoir fill the frames start with.";
     public const string MaximumFill = "The largest bit reservoir fill any frame starts with.";
     public const string HeaderCounts = "The counts the VBR header claims, next to those the analyzer counted in the frames it describes.";
     public const string ClaimedFrames = "The frame count the header gives.";
