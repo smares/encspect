@@ -554,6 +554,11 @@ internal static class Sv7Parser
             complete++;
             lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun)) != 0 ? 1 : 0;
             figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0);
+            if (frame.Length > 0)
+            {
+                state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);
+            }
+
             if ((frame.Flags & Flags.BadResolution) != 0)
             {
                 bad++;
@@ -668,11 +673,7 @@ internal static class Sv7Parser
         }
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         figures.AddTo(statistics, Cover, "Frame", "frames", inBytes: false, out Node bitrate);
-        statistics.Add(new Node("Frames With Mid/Side", node.Offset, node.Length, $"{StreamFigures.Counted(state.FramesWithMidSide, "Frame", "frames")} ({StreamFigures.Share(state.FramesWithMidSide, frames)})")
-        {
-            Description = Explain.FramesWithMidSide,
-            Topic = Topics.MidSideStereo,
-        });
+        Node? stereoNode = state.Stereo.AddTo(statistics, (name, value, description, topic) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = topic }, Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
         Node use = statistics.Add(new Node("Subband Stereo Coding", node.Offset, node.Length, NodeValue.Integer(state.FlaggedBands, "subbands", "subband"))
         {
             Description = Explain.MidSideUse,
@@ -687,6 +688,7 @@ internal static class Sv7Parser
         });
         state.Leading.Add(statistics);
 
+        List<Series> series = figures.Series(bitrate, state.Cancellation);
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
@@ -704,7 +706,8 @@ internal static class Sv7Parser
             EncoderConfidence = MusepackEncoder.ConfidenceOf(encoder),
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-            Series = figures.Series(bitrate, state.Cancellation),
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && state.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
         });
     }
 
@@ -744,6 +747,12 @@ internal static class Sv7Parser
         public byte NoiseChannels { get; init; }
     }
 
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", Explain.StereoLeftRight) { Topic = Topics.MidSideStereo },
+        new("Mid/side stereo", Explain.StereoMidSide) { Topic = Topics.MidSideStereo },
+    ];
+
     private sealed class State(WordLayout layout, Sv7Header header, CancellationToken cancellation)
     {
         public WordLayout Layout => layout;
@@ -771,6 +780,9 @@ internal static class Sv7Parser
         public long? DamagedFrom { get; set; }
 
         public long FramesWithMidSide { get; private set; }
+
+        // The coding of each frame that the series of bitrates has a point for.
+        public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
 
         public long MidSideBands { get; private set; }
 

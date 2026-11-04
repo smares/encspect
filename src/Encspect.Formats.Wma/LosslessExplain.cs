@@ -39,6 +39,10 @@ internal static class LosslessExplain
     public const string StatEscapes = "How many residual codes have a quotient of 32 or more, which takes an escape: a length code and extra bits added to the quotient.";
     public const string StatTransients = "How many channels of subframes set the transient bit.";
     public const string StatZeroLowBits = "How many subframes leave out zero low bits.";
+    public const string StatStereoCoding = "How the frames that have a seekable subframe code a stream of two channels: with mid/side in at least one seekable subframe, or as left and right in all.";
+    public const string StereoCodingSeries = "How each valid frame with a seekable subframe codes its two channels, as the tally of Stereo Coding counts them; another frame has none.";
+    public const string StereoLeftRight = "Frames whose seekable subframes all code the channels as left and right, with their share.";
+    public const string StereoMidSide = "Frames with at least one seekable subframe that codes the channels as their mean and difference, with their share.";
     public const string StatMidSide = "How many seekable subframes code the two channels as their mean (rounded down) and their difference.";
     public const string StatRecursive = "How many seekable subframes use a recursive filter.";
     public const string StatMultichannel = "How many seekable subframes use a multichannel filter.";

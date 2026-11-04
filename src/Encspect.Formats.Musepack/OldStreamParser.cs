@@ -511,6 +511,11 @@ internal static class OldStreamParser
             decoded++;
             lostFrames += (frame.Flags & FrameFlags.Overrun) != 0 ? 1 : 0;
             figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples, inSeries: frame.Length > 0);
+            if (frame.Length > 0)
+            {
+                state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);
+            }
+
             if ((frame.Flags & FrameFlags.Overrun) != 0)
             {
                 overruns++;
@@ -569,6 +574,7 @@ internal static class OldStreamParser
         double duration = samples / (double)sampleRate;
         Node Cover(string name, NodeValue? value, string description) => new(name, node.Offset, node.Length, value) { Description = description };
         Node? bitrate = null;
+        Node? stereoNode = null;
         if (h.IsReadable)
         {
             Node statistics = new("Statistics", node.Offset, node.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
@@ -583,12 +589,7 @@ internal static class OldStreamParser
             statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             figures.AddTo(statistics, Cover, "Frame", "frames", inBytes: false, out Node average);
             bitrate = average;
-            statistics.Add(new Node("Frames With Mid/Side", node.Offset, node.Length,
-                $"{StreamFigures.Counted(state.FramesWithMidSide, "Frame", "frames")} ({StreamFigures.Share(state.FramesWithMidSide, frames)})")
-            {
-                Description = Explain.FramesWithMidSide,
-                Topic = Topics.MidSideStereo,
-            });
+            stereoNode = state.Stereo.AddTo(statistics, (name, value, description, topic) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = topic }, Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
             Node use = statistics.Add(new Node("Subband Stereo Coding", node.Offset, node.Length, NodeValue.Integer(state.FlaggedBands, "subbands", "subband"))
             {
                 Description = Explain.MidSideUse,
@@ -599,6 +600,7 @@ internal static class OldStreamParser
             state.Leading.Add(statistics);
         }
 
+        List<Series> series = h.IsReadable ? figures.Series(bitrate, state.Cancellation) : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
@@ -614,7 +616,8 @@ internal static class OldStreamParser
             Duration = duration,
             AverageBitrate = h.IsReadable ? figures.AverageBitrate : null,
             IsVbr = h.Bitrate == 0,
-            Series = h.IsReadable ? figures.Series(bitrate, state.Cancellation) : [],
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && state.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
         });
     }
 
@@ -672,6 +675,8 @@ internal static class OldStreamParser
         public long? PaddingStart { get; set; }
 
         public long FramesWithMidSide { get; private set; }
+
+        public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding);
 
         public long MidSideBands { get; private set; }
 

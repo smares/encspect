@@ -59,6 +59,17 @@ internal sealed class StdStream
 
     public BitrateDistribution Distribution { get; } = new();
 
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", StdText.StereoLeftRight) { Topic = Topics.MidSideStereo },
+        new("Mid/side stereo", StdText.StereoMidSide) { Topic = Topics.MidSideStereo },
+    ];
+
+    // The coding of each valid frame of a stream of two channels, in the order of Frames (the units of the series of bitrates).
+    public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
+
+    private long _midSideSeen;
+
     public long SmallestFrameBits { get; private set; } = long.MaxValue;
 
     public long LargestFrameBits { get; private set; }
@@ -507,6 +518,9 @@ internal sealed class StdStream
             InvalidFrames++;
         }
 
+        long midSide = Totals.MidSide - _midSideSeen;
+        _midSideSeen = Totals.MidSide;
+        Stereo.Add(Parameters.Channels == 2 && frame.IsValid ? (midSide > 0 ? 1 : 0) : null);
         Frames.Add(frame);
         return Frames.Count - 1;
     }

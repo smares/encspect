@@ -84,6 +84,12 @@ internal sealed class WmaPacketReader
     // How many frames are kept as records (Data.Frames and what hangs on them); the figures count the others too.
     public long FrameLimit { get; init; } = long.MaxValue;
 
+    // For a stream of two channels (Lossless): the coding of each frame the series of bitrates has a point for. FrameStereo is called for every
+    // frame, in order, and gives the code of the frame (null for a frame without one).
+    public UnitCategoryTally? Stereo { get; init; }
+
+    public Func<int?>? FrameStereo { get; init; }
+
     // The frames read, those past FrameLimit included; a lost frame's end (see ReadRun) is no frame.
     public long FramesRead => _frameNumber;
 
@@ -1171,10 +1177,12 @@ internal sealed class WmaPacketReader
             rate = RateOf(result.Bits, p);
         }
 
+        int? stereo = FrameStereo?.Invoke();
         if (isRecorded)
         {
             BitrateX.Add(offset);
             BitrateY.Add(rate);
+            Stereo?.Add(result.IsValid ? stereo : null);
         }
 
         long before = Samples;

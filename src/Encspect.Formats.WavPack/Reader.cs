@@ -847,6 +847,11 @@ internal static class Reader
             if (!header.IsMono)
             {
                 s.StereoBlocks++;
+                if (s.SetStereoCodes.Count < State.MaxSetBlocks)
+                {
+                    s.SetStereoCodes.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
+                }
+
                 if ((header.Flags & BlockHeader.JointStereoFlag) != 0)
                 {
                     s.JointStereoBlocks++;
@@ -973,6 +978,7 @@ internal static class Reader
             s.SetSamples = header.Samples;
             s.SetBits = 0;
             s.SetBlocks = 0;
+            s.SetStereoCodes.Clear();
             s.SetChannels = 0;
             s.SetFirstEntry = entry;
             s.SetFormat = header.Flags & FormatMask;
@@ -1081,6 +1087,11 @@ internal static class Reader
             bool isDsd = (s.FormatFlags & BlockHeader.DsdFlag) != 0;
             s.Figures = new StreamFigures(NativeRate(s));
             s.FiguresScale = isDsd ? 8 : 1;
+        }
+
+        if (s.Figures is not null && s.SetBlocks <= State.MaxSetBlocks)
+        {
+            s.Stereo.AddAll((s.FormatFlags & BlockHeader.DsdFlag) != 0 ? [] : System.Runtime.InteropServices.CollectionsMarshal.AsSpan(s.SetStereoCodes));
         }
 
         s.Figures?.Add(s.SetOffset, s.SetBits, samples * s.FiguresScale, s.SetBlocks <= State.MaxSetBlocks);

@@ -181,7 +181,7 @@ public sealed partial class SpeexParser
                         rates.Add(PacketBitrate(size), count);
                     }
 
-                    rates.AddTo(node, (name, value, description) => node.Add(name, start, length, value, description), "Packet", "Packets");
+                    rates.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
                 }
             }
 

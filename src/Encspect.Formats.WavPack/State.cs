@@ -112,6 +112,18 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public int StereoBlocks { get; set; }
 
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", Explain.StatLeftRight) { Topic = Topics.MidSideStereo },
+        new("Mid/side stereo", Explain.StatMidSide) { Topic = Topics.MidSideStereo },
+    ];
+
+    // The coding of each stereo block, for each set of blocks that the series of bitrates has a point for (one value for each stereo block of the set).
+    public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "stereo block", GraphConcept.StereoCoding, isVariable: true);
+
+    // The codes of the stereo blocks of the set being read.
+    public List<byte> SetStereoCodes { get; } = [];
+
     public int JointStereoBlocks { get; set; }
 
     public int CrossDecorrBlocks { get; set; }

@@ -298,6 +298,9 @@ internal static class Explain
     public const string StatTargetBits = "The bitrate the hybrid encoder aimed at in the first hybrid block, in bits per sample and channel.";
     public const string StatTargetRate = "The target bitrate over all channels: the target bits per sample times the sample rate times the channels.";
     public const string StatPasses = "How many decorrelation passes the blocks use.";
+    public const string StatStereoCoding = "How the stereo blocks of the sets in the graphs code their two channels: as left and right, or as mid and side (joint stereo flag).";
+    public const string StereoCodingSeries = "The coding of each stereo block of each set of blocks, as the tally of Stereo Coding counts them; a set of mono blocks has none.";
+    public const string StatLeftRight = "The stereo blocks coded as left and right.";
     public const string StatMidSide = "The stereo blocks coded as mid and side instead of left and right.";
     public const string StatChecksums = "The blocks whose checksum sub-block equals the checksum worked out over the block's bytes.";
     public const string StatChecksumsFailed = "The blocks whose checksum differs from the one worked out, or that say they have one and hold none.";

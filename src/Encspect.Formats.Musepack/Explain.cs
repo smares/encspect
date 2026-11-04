@@ -166,6 +166,10 @@ internal static class Explain
     public const string MidSideUse = "The coded subbands of all frames, by how they are coded: mid and side, or left and right; subbands left out in both channels are not counted, those filled with noise are, since libmpcdec reads a mid/side flag for them.";
     public const string MidSideCount = "Coded subbands with the mid/side flag set, and their share of the coded subbands.";
     public const string LeftRightCount = "Coded subbands without the mid/side flag, and their share of the coded subbands.";
+    public const string StatStereoCoding = "How the frames code their two channels: as left and right, or with mid and side in at least one subband.";
+    public const string StereoCodingSeries = "How each frame codes its channels, as the tally of Stereo Coding counts them.";
+    public const string StereoLeftRight = "Frames that code no subband as mid and side, with their share.";
+    public const string StereoMidSide = "Frames that code at least one subband as mid and side, with their share.";
     public const string FramesWithMidSide = "Frames that code at least one subband as mid and side.";
     public const string NoiseCount = "Subband channels filled with noise (resolution -1) across all frames.";
 
