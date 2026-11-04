@@ -260,11 +260,14 @@ public sealed partial class OggParser
             if (made.Count == 1 && stream.LastGranulePage >= 0 && made[0].SampleRate > 0)
             {
                 PageRecord last = region.Pages[stream.LastGranulePage];
-                if (last.Granule > 0)
+                // The length is counted from where the stream starts: the codec parser's Start Offset (the first page's granule position less the samples before it), 0 when it reports none.
+                long startOffset = node.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == "Start Offset")?.Value?.AsInteger() ?? 0;
+                startOffset = Math.Clamp(startOffset, -(1L << 60), 1L << 60);
+                if (last.Granule - startOffset > 0)
                 {
                     long granuleOffset = last.Offset + 6;
                     ContainerLength.AddSamples(node, (name, value, description) => new Node(name, granuleOffset, 8, value) { Description = description, Topic = Topics.GranulePosition },
-                        last.Granule, made[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
+                        last.Granule - startOffset, made[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
                 }
             }
 

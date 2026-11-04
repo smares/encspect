@@ -85,7 +85,7 @@ internal static class VoiceReport
                 }
             }
 
-            distribution.AddTo(node, (name, value, description) => new Node(name, container.Offset, container.Length, value) { Description = description }, "Superframe", "Superframes");
+            distribution.AddTo(node, (name, value, description) => new Node(name, container.Offset, container.Length, value) { Description = description }, "Superframe", "Superframes", configuration?.IsVbr);
         }
 
         Add("Superframes Spanning Packets", NodeValue.Integer(t.SpanningPackets), VoiceExplain.StatSpanning);

@@ -12,8 +12,8 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 
 ## Reported
 
-- **Bitrate Mode** (variable, constant or unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate; the tally and the mode come from one helper for every format that has them (`BitrateDistribution`).
-- **End Trimming** in Matroska: the DiscardPadding of the last block that has one (RFC 9559, section 5.1.3.5.7) at 48 kHz, capped at the samples the packets hold after the pre-skip; a negative DiscardPadding and the DiscardPadding of other codecs are read and shown but not applied.
+- **Bitrate Mode** (the mode the stream or its container states where it states one (the nominal bitrates of AC-3 and DTS, 0x7FF in ADTS, the variable flag of ASF), else variable or constant by the units' own bitrates, unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate.
+- **End Trimming** in Matroska: the DiscardPadding of the track's last block (RFC 9559, section 5.1.3.5.7) at 48 kHz, capped at the samples the packets hold after the pre-skip; a negative DiscardPadding or one on another block is read and shown but not applied.
 - the pre-skip (the header field "Pre-skip", and "Start Trimming" in the statistics, the samples a decoder drops at the start, named as for Vorbis) and end trimming, at 48 kHz;
 - "Coded Samples", the samples the packets code before any trimming;
 - frames per mode, bandwidth and frame size;

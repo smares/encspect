@@ -62,6 +62,8 @@ internal static class Summary
 
         int? frameBytes = type?.FrameBytes(common.Channels, common.SampleSize);
         long frames = common.Frames;
+        // numSampleFrames counts compressed sample frames: packets of PacketSamples samples for ima4, ACE and MACE, and none is known for other packed codings.
+        long? statedSamples = frameBytes is > 0 ? frames : type is { PacketSamples: > 0 } counted ? frames * counted.PacketSamples : null;
         long dataBytes = 0;
         bool isLengthKnown = true;
         if (s.Sound is { } sound)
@@ -157,9 +159,9 @@ internal static class Summary
 
         statistics.Add(Cover("Sample Frames", NodeValue.Integer(frames, "sample frames", "sample frame"), Explain.StatSampleFrames, Topics.PcmSamples));
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
-        if (common.IsRateValid && common.SampleRate > 0)
+        if (common.IsRateValid && common.SampleRate > 0 && statedSamples is { } containerSamples)
         {
-            ContainerLength.AddSamples(statistics, (name, value, description) => Cover(name, value, description), common.Frames, common.SampleRate, Explain.StatContainerSamples, Explain.StatContainerDuration);
+            ContainerLength.AddSamples(statistics, (name, value, description) => Cover(name, value, description), containerSamples, common.SampleRate, Explain.StatContainerSamples, Explain.StatContainerDuration);
         }
         if (common.IsRateValid)
         {

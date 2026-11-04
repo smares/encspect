@@ -304,6 +304,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate)
     {
+        Figures.StatedVariable = _nominal.Count > 0 ? _nominal.Count > 1 || _nominal.Any(code => code is Tables.RateOpen or Tables.RateVariable or Tables.RateLossless) : null;
         Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate, node =>
         {
             if (Figures.LostSamples > 0)

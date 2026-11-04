@@ -37,6 +37,10 @@ internal sealed class ProTally
     public long[] Sizes = new long[8];
     public long Groups;
     public long GroupsWithTransform;
+
+    // In a stream of two channels, the groups of both channels and those with the transform on (sum and difference, so mid/side) in at least one band.
+    public long PairGroups;
+    public long MidSidePairs;
     public long BandsTransformed;
     public long BandsOfTransformedGroups;
     public long ExtendedHeaders;
@@ -575,6 +579,12 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
 
             groups.Add((group, bits.Position - groupAt, onBands));
             tally.Groups++;
+            if (size == 2 && isValid && parameters.Channels == 2)
+            {
+                tally.PairGroups++;
+                tally.MidSidePairs += onBands > 0 ? 1 : 0;
+            }
+
             if (onBands >= 0)
             {
                 tally.GroupsWithTransform++;

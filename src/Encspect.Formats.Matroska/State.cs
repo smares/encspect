@@ -308,6 +308,6 @@ internal sealed class SegmentState
     // track costs its own blocks and not all of them.
     public Dictionary<ulong, List<int>>? BlocksByTrack { get; set; }
 
-    // The DiscardPadding of the last block group that has one, in nanoseconds, by track number (RFC 9559 section 5.1.3.5.7).
-    public Dictionary<uint, long> DiscardPaddings { get; } = [];
+    // The DiscardPadding of the last block group that has one, in nanoseconds, with the block it belongs to, by track number (RFC 9559 section 5.1.3.5.7).
+    public Dictionary<uint, (long Padding, int Block)> DiscardPaddings { get; } = [];
 }

@@ -170,7 +170,6 @@ internal static class Explain
     public const string StereoCodingSeries = "How each frame codes its channels, as the tally of Stereo Coding counts them.";
     public const string StereoLeftRight = "Frames that code no subband as mid and side, with their share.";
     public const string StereoMidSide = "Frames that code at least one subband as mid and side, with their share.";
-    public const string FramesWithMidSide = "Frames that code at least one subband as mid and side.";
     public const string NoiseCount = "Subband channels filled with noise (resolution -1) across all frames.";
 
     public const string BitrateSeries = "The bitrate of each frame or audio packet: its bits over the time its samples last.";

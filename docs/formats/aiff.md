@@ -37,7 +37,7 @@ Sources:
 
 ## Reported
 
-The Common Chunk's numSampleFrames is also reported as **Container Samples**, with **Container Duration** at the sample rate it states, beside the frames the sound data holds.
+The Common Chunk's numSampleFrames is also reported as **Container Samples** (times the samples of a packet for ima4, ACE and MACE; none for other packed codings), with **Container Duration** at the sample rate it states, beside the frames the sound data holds.
 
 A file with a Common Chunk reports a stream: codec, sample rate, channels, layout, bits per sample, sample frames, duration and average bitrate. The statistics node adds the compression type, the sample format and the byte order for the linear codings.
 

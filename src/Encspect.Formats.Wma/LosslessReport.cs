@@ -72,7 +72,7 @@ internal static class LosslessReport
             Add("Largest Frame", NodeValue.Decimal(reader.LargestBits / 8.0, 1, "bytes"), ProExplain.StatLargestFrame);
             Add("Minimum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
-            reader.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description }, "Frame", "Frames");
+            reader.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description }, "Frame", "Frames", configuration?.IsVbr);
         }
 
         Add("Frames Spanning Packets", NodeValue.Integer(reader.SpanningFrames), ProExplain.StatFramesSpanningPackets, Topics.WmaPackets);

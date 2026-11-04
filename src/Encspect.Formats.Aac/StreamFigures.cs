@@ -105,6 +105,9 @@ internal sealed class StreamFigures(int sampleRate)
 
     private readonly BitrateDistribution _distribution = new();
 
+    // The bitrate mode the stream states (true for variable), or null when it states none.
+    public bool? StatedVariable { get; set; }
+
     public double MinimumBitrate { get; private set; } = double.MaxValue;
 
     public double MaximumBitrate { get; private set; }
@@ -239,7 +242,7 @@ internal sealed class StreamFigures(int sampleRate)
                 }
             }
 
-            series.Add(new("Buffer Fullness", "words", SeriesAxis.FrameOffset, x, y)
+            series.Add(new("Buffer Fullness", "words per channel", SeriesAxis.FrameOffset, x, y)
             {
                 Description = Explain.BufferFullnessSeries,
                 Concept = GraphConcept.BitDistribution,
@@ -277,7 +280,7 @@ internal sealed class StreamFigures(int sampleRate)
                 {
                     Array.Resize(ref starts, valued);
                     Array.Resize(ref means, valued);
-                    series.Add(new("Buffer Fullness Over Time", "words", SeriesAxis.Seconds, starts, means, _fullnessNode)
+                    series.Add(new("Buffer Fullness Over Time", "words per channel", SeriesAxis.Seconds, starts, means, _fullnessNode)
                     {
                         Description = Explain.BufferFullnessOverTimeSeries,
                         Concept = GraphConcept.BitDistribution,
@@ -310,14 +313,15 @@ internal sealed class StreamFigures(int sampleRate)
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
-            _distribution.AddTo(statistics, (name, value, description) => cover(name, value, NodeKind.Detail, description), unitName, unitPlural);
+            StatedVariable ??= VariableSignaling > 0 ? true : _fullnessCount > 0 && _fullnessMaximum > 0 ? false : null;
+            _distribution.AddTo(statistics, (name, value, description) => cover(name, value, NodeKind.Detail, description), unitName, unitPlural, StatedVariable);
         }
 
         if (_fullnessCount > 0)
         {
-            statistics.Add(cover("Minimum Buffer Fullness", NodeValue.Integer(_fullnessMinimum, "words", "word"), NodeKind.Detail, Explain.StatMinimumFullness));
-            _fullnessNode = statistics.Add(cover("Maximum Buffer Fullness", NodeValue.Integer(_fullnessMaximum, "words", "word"), NodeKind.Detail, Explain.StatMaximumFullness));
-            statistics.Add(cover("Average Buffer Fullness", NodeValue.Decimal(Math.Round((double)_fullnessSum / _fullnessCount, 1, MidpointRounding.ToEven), 1, "words"), NodeKind.Detail, Explain.StatAverageFullness));
+            statistics.Add(cover("Minimum Buffer Fullness", NodeValue.Integer(_fullnessMinimum, "words per channel", "word per channel"), NodeKind.Detail, Explain.StatMinimumFullness));
+            _fullnessNode = statistics.Add(cover("Maximum Buffer Fullness", NodeValue.Integer(_fullnessMaximum, "words per channel", "word per channel"), NodeKind.Detail, Explain.StatMaximumFullness));
+            statistics.Add(cover("Average Buffer Fullness", NodeValue.Decimal(Math.Round((double)_fullnessSum / _fullnessCount, 1, MidpointRounding.ToEven), 1, "words per channel"), NodeKind.Detail, Explain.StatAverageFullness));
         }
 
         if (VariableSignaling > 0)

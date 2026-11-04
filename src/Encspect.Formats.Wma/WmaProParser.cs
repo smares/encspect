@@ -72,7 +72,22 @@ public sealed class WmaProParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new ProTally();
-        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings, PacketLimit, new ProFrameReader(p, new ProTally()));
+        long pairsSeen = 0;
+        long midSideSeen = 0;
+        int? FrameStereo()
+        {
+            long pairs = tally.PairGroups - pairsSeen;
+            long midSide = tally.MidSidePairs - midSideSeen;
+            pairsSeen = tally.PairGroups;
+            midSideSeen = tally.MidSidePairs;
+            return pairs == 0 ? null : midSide > 0 ? 1 : 0;
+        }
+
+        var reader = new WmaPacketReader(p, new ProFrameReader(p, tally), false, p.Channels, fault => ProExplain.Reason((ProFault)fault), context, findings, PacketLimit, new ProFrameReader(p, new ProTally()))
+        {
+            Stereo = p.Channels == 2 ? new UnitCategoryTally("Stereo Coding", ProReport.StereoCodings, "frame", GraphConcept.StereoCoding) : null,
+            FrameStereo = p.Channels == 2 ? FrameStereo : null,
+        };
         reader.Run(packets);
 
         var nodes = new ProNodes(reader.Data, p);
@@ -105,6 +120,7 @@ public sealed class WmaProParser : ICodecParser
         }
 
         IReadOnlyList<Speaker>? layout = WmaStreams.Layout(p.ChannelMask, p.Channels);
+        IReadOnlyList<Series> series = frameCount > 0 ? ProReport.Series(p, reader, stream) : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -121,7 +137,8 @@ public sealed class WmaProParser : ICodecParser
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
-            Series = frameCount > 0 ? ProReport.Series(p, reader, stream) : [],
+            Series = series,
+            CategorySeries = ProReport.Categories(reader, series, stream),
         });
 
         findings.Flush(context);

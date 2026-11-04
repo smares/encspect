@@ -528,6 +528,7 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 | "Blocks" | every block of every frame, failed ones included |
 | "Block Sizes" | the number of sizes seen, with a child per size seen, from the largest down ("2048 samples"): "n blocks (x.x%)" of all blocks |
 | ["Mid/Side Blocks"] | stereo, where a block has a known size: blocks with the flag set, as a share of those blocks |
+| ["Stereo Coding"] | stereo: a tally and a category series (the unit is the valid frame) of "Left/right stereo" and "Mid/side stereo", mid/side where at least one block of the frame has the flag; the series has a value for each frame of "Bitrate", none for an invalid one (gap wave 2) |
 | ["Noise-Substituted Blocks"] | with noise substitution: blocks with a coded channel and a flagged band, as a share of all blocks |
 | "Blocks without Coded Channels" | blocks with no coded flag set, failed blocks that stopped before their flags included |
 | "Blocks Reusing Exponents" | blocks with a coded channel that did not send exponents, those that stopped before the decision included |

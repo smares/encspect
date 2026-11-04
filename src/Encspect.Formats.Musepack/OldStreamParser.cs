@@ -674,8 +674,6 @@ internal static class OldStreamParser
 
         public long? PaddingStart { get; set; }
 
-        public long FramesWithMidSide { get; private set; }
-
         public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding);
 
         public long MidSideBands { get; private set; }
@@ -685,7 +683,6 @@ internal static class OldStreamParser
         public void Count(Frame frame)
         {
             int midSide = System.Numerics.BitOperations.PopCount(frame.MidSide);
-            FramesWithMidSide += midSide > 0 ? 1 : 0;
             MidSideBands += midSide;
             FlaggedBands += frame.FlaggedBands;
         }

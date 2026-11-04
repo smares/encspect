@@ -779,8 +779,6 @@ internal static class Sv7Parser
 
         public long? DamagedFrom { get; set; }
 
-        public long FramesWithMidSide { get; private set; }
-
         // The coding of each frame that the series of bitrates has a point for.
         public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
 
@@ -793,7 +791,6 @@ internal static class Sv7Parser
         public void Count(Frame frame, Bands bands)
         {
             int midSide = System.Numerics.BitOperations.PopCount(frame.MidSide);
-            FramesWithMidSide += midSide > 0 ? 1 : 0;
             MidSideBands += midSide;
             FlaggedBands += bands.Flagged;
             NoiseChannels += bands.Noise;

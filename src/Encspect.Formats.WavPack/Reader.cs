@@ -847,11 +847,6 @@ internal static class Reader
             if (!header.IsMono)
             {
                 s.StereoBlocks++;
-                if (s.SetStereoCodes.Count < State.MaxSetBlocks)
-                {
-                    s.SetStereoCodes.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
-                }
-
                 if ((header.Flags & BlockHeader.JointStereoFlag) != 0)
                 {
                     s.JointStereoBlocks++;
@@ -1023,6 +1018,11 @@ internal static class Reader
 
         s.SetBits += length * 8;
         s.SetBlocks++;
+        if (!header.IsMono && s.SetStereoCodes.Count < State.MaxSetBlocks)
+        {
+            s.SetStereoCodes.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
+        }
+
         s.SetChannels += header.IsMono ? 1 : 2;
         if (header.IsFinal)
         {

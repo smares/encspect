@@ -46,7 +46,7 @@ internal static class StdReport
             Add("Largest Frame", NodeValue.Decimal(stream.LargestFrameBits / 8.0, 3, "bytes"), StdText.StatLargestFrame);
             Add("Minimum Bitrate", NodeValue.Decimal(FrameBitrate(stream.SmallestFrameBits, p), 1, "kbps"), StdText.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(FrameBitrate(stream.LargestFrameBits, p), 1, "kbps"), StdText.StatMaximumFrameBitrate);
-            stream.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = Topics.WmaStandard }, "Frame", "Frames");
+            stream.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = Topics.WmaStandard }, "Frame", "Frames", configuration?.IsVbr);
         }
 
         Add("Uses Bit Reservoir", NodeValue.Boolean(p.UsesBitReservoir), StdText.StatUsesBitReservoir);
@@ -91,6 +91,11 @@ internal static class StdReport
             {
                 Add($"{p.BlockLength(k).ToString(CultureInfo.InvariantCulture)} samples", Share(totals.BySize[k], totals.Blocks), StdText.StatBlockSizes, sizes);
             }
+        }
+
+        if (p.Channels == 2 && totals.KnownSize > 0)
+        {
+            Add("Mid/Side Blocks", Share(totals.MidSide, totals.KnownSize), StdText.StatMidSideBlocks);
         }
 
         stream.Stereo.AddTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard }, StdText.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
