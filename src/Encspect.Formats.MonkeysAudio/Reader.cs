@@ -442,7 +442,8 @@ internal static class Reader
                 long usable = Math.Min(end, available);
                 if (canFields)
                 {
-                    if (usable - start >= 4)
+                    // The CRC and the special frame codes are the 64 stream bits from the frame's start bit, which may lie past the frame's first word.
+                    if (usable - start >= StartBytes(startBit, 32))
                     {
                         (crc, special, bool hasSpecial) = ReadStart(source, wordStart, start, usable, h.HasSpecialFrames, startBit);
                         s.StoredCrcs++;
@@ -453,7 +454,7 @@ internal static class Reader
                             bool isSilent = h.Channels == 1 ? (special & 1) != 0 : h.Channels == 2 && (special & 3) == 3;
                             s.SilentFrames += isSilent ? 1 : 0;
                             s.PseudoStereoFrames += h.Channels == 2 && (special & 4) != 0 && !isSilent ? 1 : 0;
-                            if (usable - start < 8)
+                            if (usable - start < StartBytes(startBit, 64))
                             {
                                 status |= EntryStatus.NoStartFields;
                                 s.ShortFrames++;
@@ -562,7 +563,8 @@ internal static class Reader
     private static (uint Crc, uint Special, bool HasSpecial) ReadStart(Source source, long dataStart, long start, long usable, bool hasSpecialFrames, int bit)
     {
         long firstWord = start >> 2;
-        ReadOnlySpan<byte> words = source.Window(dataStart + (firstWord << 2), 12);
+        long lastWord = (start + StartBytes(bit, 64) - 1 + 4) >> 2;
+        ReadOnlySpan<byte> words = source.Window(dataStart + (firstWord << 2), (int)((lastWord - firstWord + 1) << 2));
         uint word = Shifted(words, firstWord, start, bit);
         if (!hasSpecialFrames)
         {
@@ -574,9 +576,12 @@ internal static class Reader
             return (word, 0, false);
         }
 
-        uint special = usable - start >= 8 ? Shifted(words, firstWord, start + 4, bit) : 0;
+        uint special = usable - start >= StartBytes(bit, 64) ? Shifted(words, firstWord, start + 4, bit) : 0;
         return (word & 0x7FFFFFFF, special, true);
     }
+
+    // The bytes from a frame's start that the first count stream bits after its start bit touch.
+    private static int StartBytes(int bit, int count) => ((bit + count - 1) >> 3) + 1;
 
     // The 32 stream bits that start at bit of the byte index: a frame of version 3.80 may start inside a byte.
     private static uint Shifted(ReadOnlySpan<byte> words, long firstWord, long index, int bit)
