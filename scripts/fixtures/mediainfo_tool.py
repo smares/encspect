@@ -145,6 +145,12 @@ def value(node, *names):
     return None if found is None else found.get("value")
 
 
+def statistics(root, name):
+    """The first Statistics node below root that holds a node of this name, or None: a container's
+    Statistics (such as MP4's Container Samples) can come before the codec's."""
+    return next((n for n in walk(root) if n.get("kind") == "Statistics" and child(n, name) is not None), None)
+
+
 def leading_number(value):
     """The number a value starts with, as "8 (AC-3)" gives 8; None without one."""
     if isinstance(value, (int, float)) and not isinstance(value, bool):

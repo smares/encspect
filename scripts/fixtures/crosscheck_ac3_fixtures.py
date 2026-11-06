@@ -607,7 +607,7 @@ def check_mediainfo(path, tally):
     expected_mode = {2: "Dolby Surround EX", 3: "Dolby Pro Logic IIz"}.get(ex, expected_mode)
     expected_mode = "Dolby Headphone" if headphone == 2 else expected_mode
     tally.compare("surround mode", audio.get("Format_Settings_Mode"), expected_mode)
-    statistics = next(n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics")
+    statistics = mi.statistics(report["root"], "Frames")
     nominal = mi.leading_number(mi.value(statistics, "Nominal Bitrate"))
     tally.compare("bitrate", audio.get("BitRate"), str(math.floor((nominal or stream["averageBitrate"]) * 1000 + 0.5)))
     tally.compare("bitrate mode", audio.get("BitRate_Mode"), "VBR" if stream["isVbr"] else "CBR")
