@@ -263,7 +263,7 @@ public sealed partial class OggParser
                 // The length is counted from where the stream starts: the codec parser's start offset (the first page's granule position less the samples before it), 0
                 // when it reports none. An offset of more than the last position either way (a clamped one included) leaves no honest length, and no figure is given.
                 long startOffset = made[0].StartOffset ?? 0;
-                if (Math.Abs((Int128)startOffset) <= last.Granule && last.Granule - startOffset > 0)
+                if (Int128.Abs(startOffset) <= last.Granule && last.Granule - startOffset > 0)
                 {
                     long granuleOffset = last.Offset + 6;
                     ContainerLength.AddSamples(node, (name, value, description) => new Node(name, granuleOffset, 8, value) { Description = description, Topic = Topics.GranulePosition },
