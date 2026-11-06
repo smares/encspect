@@ -36,6 +36,15 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void AddLost(long samples) => Lost += samples;
 
+    // The samples a decoder drops from the end, as the container states them; no more than the samples counted.
+    public long Trimmed { get; private set; }
+
+    public void TrimEnd(long samples)
+    {
+        Trimmed = Math.Clamp(samples, 0, Samples);
+        Samples -= Trimmed;
+    }
+
     // The frames whose ADTS CRC was checked against the one computed, and those that differ (not verified or unchecked frames are in neither).
     public long VerifiedChecksums { get; private set; }
 
@@ -305,6 +314,11 @@ internal sealed class StreamFigures(int sampleRate)
             Node node = cover("Lost Samples", NodeValue.Integer(Lost, "samples", "sample"), NodeKind.Detail, StreamInfo.LostSamplesDescription);
             statistics.Add(new Node(node.Name, node.Offset, node.Length, node.Value) { Kind = node.Kind, Ranges = node.Ranges, Description = node.Description, Topic = Topics.SamplesAndLostSamples });
         }
+        if (Trimmed > 0)
+        {
+            statistics.Add(cover("End Trimming", NodeValue.Integer(Trimmed, "samples", "sample"), NodeKind.Detail, Explain.StatEndTrimming));
+        }
+
         statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)
@@ -313,7 +327,7 @@ internal sealed class StreamFigures(int sampleRate)
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
-            StatedVariable ??= VariableSignaling > 0 ? true : _fullnessCount > 0 && _fullnessMaximum > 0 ? false : null;
+            StatedVariable ??= VariableSignaling > 0 ? true : _fullnessCount > 0 ? false : null;
             _distribution.AddTo(statistics, (name, value, description) => cover(name, value, NodeKind.Detail, description), unitName, unitPlural, StatedVariable);
         }
 

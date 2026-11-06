@@ -169,7 +169,7 @@ One concept has one name in every format that has it (CLAUDE.md, "One concept, o
 | (none) | "Block Sizes" (tally and category series) | Vorbis |
 | (none) | "Coded Bandwidth" (tally, "Coded Bandwidth" and "Coded Bandwidth Over Time" in Hz) | Opus |
 | (none) | "Channel Layout" (statistic and stream layout) | TTA |
-| "Mid/Side Blocks", "Frames With Mid/Side", "Independent Frames", "Left/Side Frames", "Side/Right Frames", "Mid/Side Frames", "Seekable Subframes with Mid/Side Stereo" | "Stereo Coding" (tally and category series; entries "Left/right stereo", "Mid/side stereo", FLAC also "Left/side stereo" and "Side/right stereo") | WavPack, Musepack SV4 to SV7, FLAC, WMA (standard, Professional, Lossless) |
+| "Mid/Side Blocks" (WavPack only; standard WMA keeps it beside the new tally), "Frames With Mid/Side", "Independent Frames", "Left/Side Frames", "Side/Right Frames", "Mid/Side Frames", "Seekable Subframes with Mid/Side Stereo" | "Stereo Coding" (tally and category series; entries "Left/right stereo", "Mid/side stereo", FLAC also "Left/side stereo" and "Side/right stereo") | WavPack, Musepack SV4 to SV7, FLAC, WMA (standard, Professional, Lossless) |
 | (none) | "Bitrate Mode" and "Bitrate Distribution" (one helper, `BitrateDistribution`) | AAC, AC-3, DTS, Opus, Vorbis, Speex, WMA |
 | (none) | "Container Samples" and "Container Duration" | MP4, Matroska, Ogg, FLAC, WAV, AIFF (WMA had them) |
 | (none) | "Buffer Fullness" (words per channel, as the encoder states it; its own name beside the computed "Reservoir Fill" in bytes) | AAC (ADTS) |

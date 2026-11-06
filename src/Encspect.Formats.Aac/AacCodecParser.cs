@@ -115,6 +115,12 @@ public sealed class AacCodecParser : ICodecParser
             figures.AddLost(log.Lost * frame);
         }
 
+        // The padding at the end of the last block that the container states (Matroska's DiscardPadding) is what a decoder drops.
+        if (context.Configuration?.DiscardPadding is { } padding && rate > 0)
+        {
+            figures.TrimEnd((long)Math.Floor((padding * rate) + 0.5));
+        }
+
         var leading = new List<Node>();
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
         if (config is { ImplicitPossible: true } && !encrypted)

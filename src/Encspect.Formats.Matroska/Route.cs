@@ -365,12 +365,6 @@ internal sealed partial class FileReader
                     };
                 }
 
-                // Opus takes the padding itself; the other codecs' parsers know nothing of it, so the trimmed stage is made here.
-                if (codec != "opus" && DiscardOf(segment, track) is > 0 and var discardSeconds && stream.SampleRate > 0)
-                {
-                    updated = TrimEnd(node, updated, discardSeconds);
-                }
-
                 if (updated != stream)
                 {
                     _context.UpdateStream(stream, updated);
@@ -532,40 +526,6 @@ internal sealed partial class FileReader
 
         List<int>? blocks = segment.BlocksByTrack?.GetValueOrDefault(number);
         return blocks is { Count: > 0 } && blocks[^1] == found.Block ? found.Padding / 1e9 : 0;
-    }
-
-    // The samples of a stream less the padding at the end of its last block, and the End Trimming and the figures of the codec parser's statistics that
-    // follow from it (Samples, Duration, Coded Samples stay).
-    private static StreamInfo TrimEnd(Node frames, StreamInfo stream, double paddingSeconds)
-    {
-        long trim = Math.Min((long)Math.Floor((paddingSeconds * stream.SampleRate) + 0.5), stream.Samples);
-        if (trim <= 0)
-        {
-            return stream;
-        }
-
-        long samples = stream.Samples - trim;
-        double duration = samples / (double)stream.SampleRate;
-        Node? statistics = frames.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)
-            ?? frames.Children.SelectMany(c => c.Children).FirstOrDefault(c => c.Kind == NodeKind.Statistics);
-        if (statistics is not null)
-        {
-            foreach (Node child in statistics.Children)
-            {
-                if (child.Name == "Samples")
-                {
-                    child.Value = NodeValue.Integer(samples, "samples");
-                }
-                else if (child.Name == "Duration")
-                {
-                    child.Value = NodeValue.Decimal(duration, 3, "s");
-                }
-            }
-
-            statistics.Add(new Node("End Trimming", statistics.Offset, statistics.Length, NodeValue.Integer(trim, "samples", "sample")) { Description = Explain.EndTrimming, Topic = Topics.Tracks });
-        }
-
-        return stream with { Samples = samples, Duration = duration, AverageBitrate = stream.AverageBitrate is { } rate && duration > 0 ? rate * stream.Duration / duration : stream.AverageBitrate };
     }
 
     // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.

@@ -50,6 +50,10 @@ public sealed record StreamInfo
     // the data, the next unit or the container cuts them short, when their syntax breaks, or when they cannot be read until the next sync point.
     public long LostSamples { get; init; }
 
+    // Where the stream starts in the granule positions of its container: the first page's position less the samples before it (Ogg Opus and Vorbis'
+    // Start Offset), 0 for a stream that starts at its beginning; null where the codec has no such figure. A value past what a position can hold is clamped.
+    public long? StartOffset { get; init; }
+
     // What the "Lost Samples" statistic says, for the parsers that report it. A figure with its basis, never a verdict about the audio.
     public const string LostSamplesDescription =
         "The samples per channel that the stream's units declare and that could not be read as whole units, counted before any trim, so they need not lie inside the stream's samples: the declared samples of units cut short by the end of the data, the next unit or their container, units that break the syntax, and units that cannot be read until the stream's next sync point.";

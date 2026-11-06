@@ -247,6 +247,10 @@ public sealed partial class VorbisParser
                         Add("Gap Trimming", NodeValue.Integer(_gapTrim, "samples", "sample"), Explain.GapTrimming, Topics.GranulePosition);
                     }
                 }
+                else if (_isContained && context.Configuration?.DiscardPadding is not null)
+                {
+                    Add("End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimmingContainer, Topics.GranulePosition);
+                }
 
                 Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
                 if (_lost > 0)

@@ -622,6 +622,7 @@ public sealed partial class OpusParser
                     ChannelLayout = head.Speakers,
                     Samples = samples,
                     LostSamples = _lost,
+                    StartOffset = _firstOffset,
                     Duration = samples / (double)Rate,
                     AverageBitrate = _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
                     IsVbr = _sizesDiffer,

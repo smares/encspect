@@ -223,6 +223,7 @@ internal static partial class Explain
     public const string StatSamples = "Samples per channel at the output rate, before any gapless trimming: the access units times the samples each one decodes to.";
     public const string StatDuration = "The playing time of those samples, before any gapless trimming.";
     public const string AverageBitrate = "The bits of the access units divided by their playing time; container overhead and ADTS headers aside, the stream's bitrate.";
+    public const string StatEndTrimming = "The samples a decoder drops from the end, as the container states them: the DiscardPadding of the track's last block (RFC 9559, section 5.1.3.5.7), at the sampling rate, rounded to the nearest sample, halves up, and no more than the samples counted. The Samples and the Duration are less by it.";
     public const string StatMinimumFullness = "The lowest adts_buffer_fullness of the frames that state one, in 32-bit words per channel (ISO/IEC 14496-3 1.A.3.2.1): how full the encoder said the decoder's input buffer would be after the frame. Frames that signal a variable bitrate are not counted.";
     public const string StatMaximumFullness = "The highest adts_buffer_fullness of the frames that state one, in 32-bit words per channel.";
     public const string StatAverageFullness = "The mean adts_buffer_fullness of the frames that state one, in 32-bit words per channel.";

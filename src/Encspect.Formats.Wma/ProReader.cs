@@ -504,6 +504,12 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
         return ReadScaleFactorsAndCoefficients(members, length, size, bands);
     }
 
+    // A group of both channels of a stream of two channels, read without a fault.
+    internal static bool IsPair(int size, bool isValid, int channels) => size == 2 && isValid && channels == 2;
+
+    // The transform of such a pair is sum and difference, mid/side, where it is on in at least one band (onBands is -1 where it is off).
+    internal static bool IsMidSide(int onBands) => onBands > 0;
+
     private bool ReadTransform(int members, int bands)
     {
         Bits bits = _bits;
@@ -579,10 +585,10 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
 
             groups.Add((group, bits.Position - groupAt, onBands));
             tally.Groups++;
-            if (size == 2 && isValid && parameters.Channels == 2)
+            if (IsPair(size, isValid, parameters.Channels))
             {
                 tally.PairGroups++;
-                tally.MidSidePairs += onBands > 0 ? 1 : 0;
+                tally.MidSidePairs += IsMidSide(onBands) ? 1 : 0;
             }
 
             if (onBands >= 0)
