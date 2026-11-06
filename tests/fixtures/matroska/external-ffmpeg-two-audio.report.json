@@ -64383,7 +64383,7 @@
                 {
                   "name": "Statistics",
                   "kind": "Statistics",
-                  "value": "95 packets, 1.522 s",
+                  "value": "95 packets, 1.500 s",
                   "offset": 4983,
                   "length": 30878,
                   "children": [
@@ -64417,6 +64417,13 @@
                     {
                       "name": "Coded Samples",
                       "value": 67136,
+                      "unit": "samples",
+                      "offset": 4983,
+                      "length": 30878
+                    },
+                    {
+                      "name": "End Trimming",
+                      "value": 986,
                       "unit": "samples",
                       "offset": 4983,
                       "length": 30878
@@ -64556,13 +64563,6 @@
                           "length": 30878
                         }
                       ]
-                    },
-                    {
-                      "name": "End Trimming",
-                      "value": 986,
-                      "unit": "samples",
-                      "offset": 4983,
-                      "length": 30878
                     }
                   ]
                 },
@@ -69712,7 +69712,7 @@
         "channelLayoutName": "stereo",
         "samples": 66150,
         "duration": 1.5,
-        "averageBitrate": 42.32000000000001,
+        "averageBitrate": 41.69846282173499,
         "isVbr": true,
         "playbackGroup": 1,
         "writer": "FFmpeg (Lavf60.16.100)",
