@@ -709,6 +709,633 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": 2,
+              "unit": "frames",
+              "offset": 506,
+              "length": 47363,
+              "children": [
+                {
+                  "name": "Packet",
+                  "value": 1,
+                  "offset": 506,
+                  "length": 40400,
+                  "children": [
+                    {
+                      "name": "Samples",
+                      "value": 22050,
+                      "unit": "samples",
+                      "offset": 506,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block",
+                      "kind": "Frame",
+                      "value": 22050,
+                      "unit": "samples",
+                      "offset": 510,
+                      "length": 40396,
+                      "children": [
+                        {
+                          "name": "Flags",
+                          "value": 79435825,
+                          "offset": 510,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Bytes Per Sample",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsMono",
+                              "value": false,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsHybrid",
+                              "value": false,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesJointStereo",
+                              "value": true,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesCrossChannelDecorrelation",
+                              "value": true,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridNoiseShaping",
+                              "value": false,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFloatingPoint",
+                              "value": false,
+                              "offset": 510,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasExtendedIntegers",
+                              "value": false,
+                              "offset": 511,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridBitrateControl",
+                              "value": false,
+                              "offset": 511,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridBalance",
+                              "value": false,
+                              "offset": 511,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsInitialBlock",
+                              "value": true,
+                              "offset": 511,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFinalBlock",
+                              "value": true,
+                              "offset": 511,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Left Shift",
+                              "value": 0,
+                              "unit": "bits",
+                              "offset": 511,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Maximum Magnitude",
+                              "value": 15,
+                              "unit": "bits",
+                              "offset": 512,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Sample Rate",
+                              "value": 44100,
+                              "unit": "Hz",
+                              "offset": 512,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasReservedFlag",
+                              "value": false,
+                              "offset": 513,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasBlockChecksum",
+                              "value": false,
+                              "offset": 513,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesIirNoiseShaping",
+                              "value": false,
+                              "offset": 513,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFalseStereo",
+                              "value": false,
+                              "offset": 513,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsDsd",
+                              "value": false,
+                              "offset": 513,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "CRC",
+                          "value": 3592404284,
+                          "offset": 514,
+                          "length": 4
+                        },
+                        {
+                          "name": "Sub-blocks",
+                          "offset": 518,
+                          "length": 40388,
+                          "children": [
+                            {
+                              "name": "Decorrelation Terms",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 518,
+                              "length": 4
+                            },
+                            {
+                              "name": "Decorrelation Weights",
+                              "value": 4,
+                              "unit": "bytes",
+                              "offset": 522,
+                              "length": 6
+                            },
+                            {
+                              "name": "Decorrelation Samples",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 528,
+                              "length": 10
+                            },
+                            {
+                              "name": "Entropy Variables",
+                              "value": 12,
+                              "unit": "bytes",
+                              "offset": 538,
+                              "length": 14
+                            },
+                            {
+                              "name": "WavPack Bitstream",
+                              "value": 40350,
+                              "unit": "bytes",
+                              "offset": 552,
+                              "length": 40354
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Packet",
+                  "value": 2,
+                  "offset": 40913,
+                  "length": 6956,
+                  "children": [
+                    {
+                      "name": "Samples",
+                      "value": 1950,
+                      "unit": "samples",
+                      "offset": 40913,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block",
+                      "kind": "Frame",
+                      "value": 1950,
+                      "unit": "samples",
+                      "offset": 40917,
+                      "length": 6952,
+                      "children": [
+                        {
+                          "name": "Flags",
+                          "value": 79435809,
+                          "offset": 40917,
+                          "length": 4,
+                          "children": [
+                            {
+                              "name": "Bytes Per Sample",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsMono",
+                              "value": false,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsHybrid",
+                              "value": false,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesJointStereo",
+                              "value": false,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesCrossChannelDecorrelation",
+                              "value": true,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridNoiseShaping",
+                              "value": false,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFloatingPoint",
+                              "value": false,
+                              "offset": 40917,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasExtendedIntegers",
+                              "value": false,
+                              "offset": 40918,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridBitrateControl",
+                              "value": false,
+                              "offset": 40918,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesHybridBalance",
+                              "value": false,
+                              "offset": 40918,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsInitialBlock",
+                              "value": true,
+                              "offset": 40918,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFinalBlock",
+                              "value": true,
+                              "offset": 40918,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Left Shift",
+                              "value": 0,
+                              "unit": "bits",
+                              "offset": 40918,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Maximum Magnitude",
+                              "value": 15,
+                              "unit": "bits",
+                              "offset": 40919,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 5,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "Sample Rate",
+                              "value": 44100,
+                              "unit": "Hz",
+                              "offset": 40919,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasReservedFlag",
+                              "value": false,
+                              "offset": 40920,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "HasBlockChecksum",
+                              "value": false,
+                              "offset": 40920,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "UsesIirNoiseShaping",
+                              "value": false,
+                              "offset": 40920,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsFalseStereo",
+                              "value": false,
+                              "offset": 40920,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            },
+                            {
+                              "name": "IsDsd",
+                              "value": false,
+                              "offset": 40920,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "CRC",
+                          "value": 3179062420,
+                          "offset": 40921,
+                          "length": 4
+                        },
+                        {
+                          "name": "Sub-blocks",
+                          "offset": 40925,
+                          "length": 6944,
+                          "children": [
+                            {
+                              "name": "Decorrelation Terms",
+                              "value": 2,
+                              "unit": "bytes",
+                              "offset": 40925,
+                              "length": 4
+                            },
+                            {
+                              "name": "Decorrelation Weights",
+                              "value": 4,
+                              "unit": "bytes",
+                              "offset": 40929,
+                              "length": 6
+                            },
+                            {
+                              "name": "Decorrelation Samples",
+                              "value": 8,
+                              "unit": "bytes",
+                              "offset": 40935,
+                              "length": 10
+                            },
+                            {
+                              "name": "Entropy Variables",
+                              "value": 12,
+                              "unit": "bytes",
+                              "offset": 40945,
+                              "length": 14
+                            },
+                            {
+                              "name": "WavPack Bitstream",
+                              "value": 6906,
+                              "unit": "bytes",
+                              "offset": 40959,
+                              "length": 6910
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 506,
+                  "length": 47363,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 2,
+                      "unit": "packets",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Blocks",
+                      "value": 2,
+                      "unit": "blocks",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 24000,
+                      "unit": "samples",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.54421768707483,
+                      "unit": "s",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "Stream Version",
+                      "value": 1040,
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "IsHybrid",
+                      "value": false,
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "IsFloatingPoint",
+                      "value": false,
+                      "offset": 506,
+                      "length": 47363
+                    },
+                    {
+                      "name": "IsDsd",
+                      "value": false,
+                      "offset": 506,
+                      "length": 47363
+                    }
+                  ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1,
+                  "unit": "s",
+                  "offset": 506,
+                  "length": 47363
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 44100,
+                  "unit": "samples",
+                  "offset": 506,
+                  "length": 47363
+                }
+              ]
             }
           ]
         }
@@ -719,40 +1346,58 @@
         "nodes": [
           [
             0,
-            1,
-            3,
-            1
+            2
           ]
         ],
-        "codec": "WavPack",
+        "codec": "WavPack lossless",
         "sampleRate": 44100,
         "channels": 2,
-        "samples": 0,
-        "duration": 1,
-        "averageBitrate": 378.848,
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 24000,
+        "duration": 0.54421768707483,
+        "averageBitrate": 696.1332,
         "isVbr": false,
         "playbackGroup": 1,
+        "verification": {
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "block header CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 2,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "extended CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "writer": "FFmpeg (Lavf60.16.100)",
         "writerConfidence": "Low",
         "series": []
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 1 is coded as WavPack (A_WAVPACK4), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 340,
-        "length": 12,
-        "path": [
-          0,
-          1,
-          3,
-          1,
-          5
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]
