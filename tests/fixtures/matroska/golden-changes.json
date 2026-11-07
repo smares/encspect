@@ -597,7 +597,9 @@
       ],
       "name": "Average Bitrate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -609,7 +611,9 @@
       ],
       "name": "Bitrate Mode",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -645,7 +649,9 @@
       ],
       "name": "Minimum Bitrate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -657,7 +663,9 @@
       ],
       "name": "Maximum Bitrate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -669,7 +677,9 @@
       ],
       "name": "Bitrate Distribution",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -1171,20 +1181,12 @@
     {
       "scope": "stream",
       "array": "series",
-      "name": "Bitrate",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
-      ]
+      "name": "Bitrate"
     },
     {
       "scope": "stream",
       "array": "series",
-      "name": "Bitrate Over Time",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
-      ]
+      "name": "Bitrate Over Time"
     },
     {
       "scope": "stream",
@@ -3591,6 +3593,44 @@
       "scope": "node",
       "parent": [
         "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Encoder",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Encoder"
+      ],
+      "name": "Confidence",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Encoder"
+      ],
+      "name": "Evidence",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
         "Track 1 Frames",
         "Statistics"
       ],
@@ -3608,6 +3648,19 @@
         "Statistics"
       ],
       "name": "Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Audio Blocks",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
@@ -3664,6 +3717,125 @@
         "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Stereo Coding",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Smallest Block Set",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Largest Block Set",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "640 to 671 kbps",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Bitrate Distribution"
+      ],
+      "name": "1248 to 1279 kbps",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "categorySeries",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "encoder",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "encoderConfidence",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
     }
   ],
   "changed": [
@@ -3672,11 +3844,14 @@
       "fields": [
         "averageBitrate",
         "bitsPerSample",
+        "categorySeries",
         "channelLayout",
         "channelLayoutName",
         "channelMode",
         "codec",
         "duration",
+        "encoder",
+        "encoderConfidence",
         "isVbr",
         "nodes",
         "samples",
