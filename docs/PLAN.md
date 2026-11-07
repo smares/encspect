@@ -62,11 +62,11 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Playback | None | Pure analyzer; removes BASS, native binaries and licensing questions |
 | Plugins | Build-time modules only | No runtime loading, so no version policy and no publishing restrictions |
 | Decoding | Optional, per format, inside the format's project ([decoders.md](design/decoders.md), approved 2026-10-22) | For checksum verification and for the measurements of the decoded audio ([spectral-analysis.md](design/spectral-analysis.md)); formats without a decoder still get the full structure report |
-| No FFmpeg fallback | No `ffmpeg` fallback for decoding; FFmpeg stays a cross-check tool (decoders.md, decision 9, 2026-10-22) | Keeps the no-bundled-decoders rule; settles the plan's former open question |
+| No FFmpeg fallback | No `ffmpeg` fallback for decoding; FFmpeg stays a cross-check tool ([decoders.md](design/decoders.md), decision 9, 2026-10-22) | Keeps the no-bundled-decoders rule; settles the plan's former open question |
 | Hosting and CI | GitHub, hosted runners | Covers Windows, macOS (Apple Silicon) and Linux on x64 and ARM64 |
 | Name | Encspect | Detenc and Framescope were already taken |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |
-| Licensed sources | Permissive only, with notices | Decoders and parsers follow specifications and BSD, MIT or Apache reference code, with their notices in the source and in `THIRD-PARTY-NOTICES.md`. Nothing is ported from LGPL or GPL code: where that is the only detailed source, a clean-room split applies (CLAUDE.md) |
+| Licensed sources | Permissive only, with notices | Decoders and parsers follow specifications and BSD, MIT or Apache reference code, with their notices in the source and in [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md). Nothing is ported from LGPL or GPL code: where that is the only detailed source, a clean-room split applies ([CLAUDE.md](../CLAUDE.md)) |
 | Routes | Containers route only the codec and container combinations that writers in the wild produce (the project lead, 2026-11-07) | Routing what nobody writes costs code and fixtures for no file; see the list below the table |
 | Releases | 0.1.0 as a GitHub pre-release after Gate 2 (the project lead, 2026-10-17) | Replaced the earlier rule of no public version until development ends |
 
@@ -157,7 +157,7 @@ The largest risks were a wrong core contract and spec details that no reviewer c
 - **Spec details wrong:** known-input fixtures and tool cross-checks are the safety net.
 - **Decoders:** quality, license and upkeep vary, and some formats may have no decoder; the measurements that need decoded audio stay optional per format.
 - **Closed formats:** TAK and OptimFROG are poorly documented, so they get only what their headers reveal.
-- **Shared misreadings:** where a model written for this project and the one reference tool agree (faad2's trace for AAC, mctoolamed for MPEG-2 multichannel), a misreading both share would pass; second opinions and real files narrow it. Details are in each format's page and in development.md.
+- **Shared misreadings:** where a model written for this project and the one reference tool agree (faad2's trace for AAC, mctoolamed for MPEG-2 multichannel), a misreading both share would pass; second opinions and real files narrow it. Details are in each format's page and in [development.md](development.md).
 - **Heuristic encoder detection:** files without tags can be misidentified, so results carry a confidence. Encoder habits are trusted only where encodes with that encoder confirm them, which leaves out encoders that no longer run.
 - **Tools and references disappearing:** checks rely on old tools and on files the repository may not hold. Vendored sources, pinned downloads with fallback addresses, a last copy in the private repository and a weekly download check guard them ([development.md, "Conformance streams and downloads"](development.md#conformance-streams-and-downloads)).
 - **Large inputs:** multi-gigabyte files and million-frame reports need streaming reads, compact frame records, nodes built on demand and a virtualized tree. Memory tests hold every parser to a bound per frame ([architecture.md, "Large inputs"](architecture.md#large-inputs)).
@@ -275,7 +275,7 @@ Done in this order before Gate 2:
 
 - **TrueHD and MLP,** raw `.thd` and `.mlp` files and the codec parser, with the decoder that checks the lossless checks: [truehd.md](formats/truehd.md).
 - **Clean room:** FFmpeg's LGPL source is the only detailed one, so one agent wrote the code-free description [truehd-format.md](design/truehd-format.md), and an agent that had not read FFmpeg implemented from it, with FFmpeg as a black-box cross-check.
-- **Scope set by what can be checked:** a field is added only where FFmpeg's source or one of Dolby's public documents states it; Dolby's documents had not been read when the description was written (truehd-format.md, "Sources").
+- **Scope set by what can be checked:** a field is added only where FFmpeg's source or one of Dolby's public documents states it; Dolby's documents had not been read when the description was written ([truehd-format.md](design/truehd-format.md), "Sources").
 - **Containers:** Matroska routes `A_TRUEHD` and `A_MLP` (#229); MP4's `mlpa` is planned (FFmpeg writes it).
 
 #### Measurements and the GUI's graphs
@@ -346,7 +346,7 @@ After Gate 3, in this order:
 
 The order is not fixed.
 
-- **The measurements' later steps** (step 6 of spectral-analysis.md).
+- **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md)).
 - **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the project lead, 2026-11-07).
 - **Small separate items:**
   - WavPack 1 to 3;
