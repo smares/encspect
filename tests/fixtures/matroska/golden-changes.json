@@ -340,7 +340,9 @@
       ],
       "name": "Channel Layout",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -352,7 +354,9 @@
       ],
       "name": "Bits Per Sample",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -3686,7 +3690,46 @@
         "Track 1 Frames",
         "Statistics"
       ],
+      "name": "IsLossless",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
       "name": "IsHybrid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "IsCorrectionFileCreated",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "IsCorrectionFile",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
@@ -3713,6 +3756,19 @@
         "Statistics"
       ],
       "name": "IsDsd",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Decorrelation Passes",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
