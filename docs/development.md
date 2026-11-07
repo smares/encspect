@@ -6,7 +6,7 @@ dotnet test -c Release
 dotnet run -c Release --project src/Encspect.Cli -- --offsets file.mp3
 ```
 
-The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the design is in the [plan](PLAN.md).
+The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the architecture is in [architecture.md](architecture.md), and the goals and the order of work in the [plan](PLAN.md).
 
 ## Tests
 
@@ -693,6 +693,41 @@ The cross-check jobs run Ubuntu 26.04's packages. `tool_versions.py` holds the v
   - The build is `./configure --isomedia-only --enable-log --enable-crypto --enable-ogg --enable-odf --enable-od-parse --enable-od-dump --use-freetype=no --static-bin` and `make`: the ISO file format, the importers and exporters, the box dump (`-diso`), the sample listing (`-dtsx`), `-add` and `-crypt`, the descriptor dump that shows the `esds` bitrates, and the Opus box (`dOps`) that the dump reads only with the Ogg feature, linked statically with no optional library. It takes about 35 seconds on four cores.
   - The `mp4-crosscheck` job caches `.cache/tools/gpac` under `gpac-<image>-<architecture>-<hash of gpac_tool.py>`, and adds it to the path with `$GITHUB_PATH`. Locally, `python3 scripts/fixtures/gpac_tool.py` builds it and prints the directory to put on the `PATH`.
 
+### MPEG audio
+
+- **Frames:** a CI job checks every fixture manifest before the parser is checked:
+  - ffprobe: frame positions and lengths;
+  - libmad through madplay: CRC verdicts, and frame counts where ffmpeg resyncs differently;
+  - mpg123: frame counts of free-format streams, which ffmpeg cannot read.
+- **Layer III:**
+  - minimp3 (a pinned commit, built in CI) confirms every side-information field and the bit reservoir before each frame;
+  - mp3guessenc confirms block usage, stereo modes, global gain, the largest main_data_begin, the ancillary data and the frame sizes;
+  - EncSpot confirms the mean and largest main_data_begin and the scalefactor scaling share;
+  - the hand-built frames carry main data that ffmpeg, mpg123 and libmad must decode to pure silence, which they only do when every granule's bits sit where the side information and the reservoir say.
+- **Layer II:** minimp3 confirms every allocation, scfsi and scalefactor; the hand-built frames decode to silence in the same decoders; mctoolamed and mp3guessenc confirm the multichannel extension.
+- **ISO/IEC 13818-4:** the report on all 35 audio conformance streams must match their manifest.
+- **Xing, Info, LAME and VBRI headers:**
+  - mp3guessenc confirms nearly every field and both CRC verdicts;
+  - mpg123 confirms the counts, encoder string, VBR method, ReplayGain, delay and padding;
+  - ffprobe confirms the duration, the start time, and the encoder string and ReplayGain, which it only accepts when the tag CRC holds;
+  - the peak is the one field no tool reports;
+  - getID3 (a pinned commit, run with PHP in CI) confirms the version and preset of every fixture by LAME 3.90 to 3.92.
+- **Signatures:** mp3guessenc confirms the encoder string in ancillary data where it finds it on a byte boundary, the mp3PRO and MP3 Surround signatures and the OFL block, in hand-built and Fraunhofer-encoded fixtures, and the ancillary bytes and rate of three mp3PRO files from the FFmpeg sample archive. CI downloads those at pinned hashes, because they are commercial music.
+- **Statistics:** mp3guessenc confirms the frame count, length, average bitrate, bitrate histogram and every coding statistic, where it takes the same frames as audio; ffmpeg and mpg123 confirm the samples they decode. At an exact tie their floating-point rounding may differ from Encspect's by one in the last digit.
+- **EncSpot:**
+  - it confirms the mean and largest main_data_begin, the scalefactor scaling share, the bitrate histogram, the frame count and the mode, where it reads the statistics' frames;
+  - its mode and block counts, which its console port does not print, are compared in an emulation of its source;
+  - it skips the first frame it finds and, without a VBR header, starts 2000 bytes into the stream, so elsewhere the check compares it with an emulation of how it reads the file;
+  - its tagless encoder guesses, which follow the encoders of 2002, are compared with the analyzer's encoder for encoder-written fixtures; where they differ, the cross-check lists EncSpot's name and why.
+- **Encoder-written fixtures:**
+  - LAME, TwoLAME, Shine, ffmpeg, Fraunhofer's MP3 Surround encoder, and the Helix encoder (5.2.4 and 5.0 r11 from source);
+  - BladeEnc 0.80, 0.82, 0.84, 0.92.0, 0.92.7, 0.93.6 and 0.94.2, built from source, one release per group that writes the same bytes; those before 0.92 as 32-bit programs, as they assume a 32-bit long;
+  - LAME 3.90.1, 3.91, 3.92, 3.93.1, 3.94 beta 1, 3.98 beta 8, 3.99 alpha 12, 3.99.5, 3.101 and 4.0, built from source (the betas, the alpha and 3.99.5 from tags of LAME's Subversion repository); 3.101 writes "LAME3.101" with no room for the release marker, 4.0 writes "LAME4.0 " and a NUL byte;
+  - the Windows builds of LAME 3.91 and 3.90.3 under Wine; the private repository keeps 3.90.3, which only a download site still serves;
+  - Gogo-no-coda 3.12 (its Windows release under Wine) and Xing's tompg 3.0 under Wine, the only source of encoder-written Layer I, whose forbidden bit allocations libmad rejects as the analyzer reports them.
+- **Encoders licensed for private evaluation only** (Fraunhofer's l3enc 2.60 and 2.61, the mp3enc 3.0 and 3.1 demos, Thomson's mp3PRO encoder) are run by hand with `check_restricted_encoders.py`, which keeps nothing they write. The Fraunhofer trait rule, mp3guessenc and the mp3PRO OFL block are checked on their output.
+- **Fraunhofer's MP3 Surround encoder** 1.5 (`fhg_tool.py`) is used under its limited-use license, which the project's owner accepted for this non-commercial project.
+
 ### MPEG audio: sources of the tables
 
 The rules these were written from are in `docs/design/mpeg-clean-room-rules.md`; none of them is ported from LGPL or GPL code.
@@ -907,6 +942,25 @@ The figures were measured with the load average above the 1.5 that earlier steps
   - The script was run with FFmpeg 8.0.1, built from the release tarball (SHA-256 `05ee0b03119b45c0bdb4df654b96802e909e0a752f72e4fe3794f487229e5a41`, signature checked against the FFmpeg release key) with only the demuxers (wav, w64, aiff, spdif and the raw ones), parsers and decoders it needs, (the fixtures of the first version of these parsers were also compared with Ubuntu 24.04's 6.1.1, with the same result on all 140 compared; this change was compared with 8.0.1 only): over all the earlier WAV and AIFF fixtures (codec, rate, channels, bits, duration, bit rate), the two versions differ in one: 8.0.1 refuses `aiff/built-chunk-repeated.aiff`, whose second Common Chunk states another channel count than the first (aiffdec.c returns an invalid-data error where it did not), where 6.1.1 reads the first; the fixture lists a finding and is not compared. The run of this change with 8.0.1 and MediaInfo 26.01: 215 fixtures compared, no disagreement.
   - Every skip prints its reason. sox was not used: it is not installed on the machines the fixtures were made on, and nothing in the checks needs it that FFmpeg's w64 and WAV muxers and the two readers do not give.
 - Tests: `WavFixtureTests` and `AiffFixtureTests` (manifests, goldens, detection and the targeted field tests, BW64, Wave64 and `CHAN` among them), `Iec61937Tests` (the fields of a burst, the routes, AAC as ADTS frames, what is no chain, the bounds on silence and on a lead-in of pause bursts, the listed bursts, the stuffing and a gap of 960,000 pause bursts that must be read in linear time), `FindingCoverageTests.EveryWavCodeIsAsserted` and `EveryAiffCodeIsAsserted`, the corrupt-file tests (`CorruptWavFileTests`, `CorruptWavBuiltFileTests`, `CorruptAiffFileTests`, whose variants are also decoded and measured, with the budgets lowered) and `PcmMalformedInputTests` (a data chunk cut short, odd sizes, a block alignment that disagrees, 65,535 channels, widths no coding has, a sound data offset past the end, every truncation of a file), `DecoderChargeTests` and `DecoderWorkTests` (the charge and the time of the PCM decoder), the long inputs `wav` and `aiff` (2,060 chunks) of the thread and release tests, the memory tests (`TheSamplesOfAWaveFileCostNothing`, `ManyChunksStayCompact`, and for the node budget and the caps on tables `NestedListsOfManyChunksStayWithinTheNodeBudget`, `RepeatedTableChunksStayWithinTheNodeBudget` and `BigTablesCostNoMoreThanTheirCaps`: 600 lists of 600 chunks, 300 table chunks of 1,024 records, a `ds64` table of a million entries and 2 million cue points; `ManyBurstsCostNothingPerBurst`: 100,000 bursts; the kept bytes of `TheSamplesOfAWaveFileCostNothing` are bounded absolutely, since a reading of them is good to the 64 KB at which `Live()` stops collecting), and the cancellation and parallel-analysis tests.
+
+### AC-3 and E-AC-3
+
+- **Encoder fixtures** (`make_external_ac3_fixtures.py`): ffmpeg 6.1 (ac3, ac3_fixed, eac3) and Aften write mono, stereo and 3/2 + LFE, 44.1 and 32 kHz, Annex D, block switching (Aften), raw and in MP4.
+- **Derived fixtures** (the same script, with the analyzer): encoder frames rewritten where the report puts their fields, for what the encoders do not write but needs real mantissas:
+  - delta bit allocation in the coupling channel and both channels of ffmpeg's 2/0 AC-3;
+  - spectral extension with delta bit allocation in ffmpeg's mono E-AC-3.
+  - A block whose allocation changes gets the mantissa length the analyzer gives, which the cross-checks then test.
+- **Hand-built frames** (`make_ac3_fixtures.py`, `ac3_model.py`, reproducible in CI) cover what no encoder at hand writes:
+  - every BSI field, damaged CRCs, truncated and cut frames, junk, bsid 9 and 10, reserved values, invalid blocks;
+  - substreams and dependent substreams, frame exponent strategies, spectral extension, coupling, AHT, enhanced coupling, reduced sample rates, and dac3 and dec3 that disagree;
+  - their SNR offsets are 0, so their mantissas take no bits: they check the syntax up to the mantissas, not the bit allocation.
+- **`crosscheck_ac3_fixtures.py`** checks the manifests with ffprobe (codec, rate, channels, layout, packets, bitrate) and with ffmpeg decoding each packet with CRC checking (the damaged ones must fail).
+- **AC-3 block ends:** liba52 (`a52_blocks.c`) must end every audio block of every AC-3 frame at the bit the manifest gives, and the tests hold the analyzer to the same bits. This covers the bit allocation with coupling, delta bit allocation in the coupling channel and the channels, block switching, LFE, and 44.1 and 32 kHz.
+- **E-AC-3 block starts:** ffmpeg exposes no block positions, so every frame is rewritten with a skip field inserted where the report puts each block's mantissas, and ffmpeg must decode the result to the same samples.
+  - As a negative control, moving each skip field of the first frame by one bit either way must change the samples.
+  - A block's mantissa length is confirmed by where the next block starts; the last block's end is not checked.
+  - The control runs on the encoder fixtures (coupling, LFE, 5.1) and the derived one (spectral extension and delta bit allocation with nonzero allocation). The hand-built ones turn it off, since a moved skip field changes nothing where no mantissa takes a bit.
+- **Object audio:** hand-built fixtures (`emdf_model.py`), Dolby's own JOC test files downloaded in CI (`check_eac3_samples.py`), and the ffprobe and MediaInfo cross-check.
 
 ### DTS
 
@@ -1469,6 +1523,10 @@ The models that compute the expected values are:
 - **HE-AAC by other encoders:** `check_sbr_samples.py` checks `tests/conformance/sbr-samples.json` against 13 downloaded files from FFmpeg's FATE suite: the MPEG-4 audio SBR and parametric stereo conformance streams (`al_sbr_*`) and Coding Technologies' aacPlus decoder check streams (`CT_DecoderCheck/File1` to `File7`; the `sbr_*` files there are the same bytes). They are fetched from the FATE server (`fate-suite.ffmpeg.org`), with copies in the private repository (`sbr/`) as the fallback.
   - Without `--analyzer`, ffprobe's profile, sample rate and channels are compared with the manifest.
   - With `--analyzer`, the analyzer must report the manifest's codec and findings and name no encoder, so the FAAC 2.x SBR layout rule is held against files it must not match.
+- **aoTuV:** its sources live in its site's repository, AO-Yumi/aotuv_web, served as ao-yumi.github.io/aotuv_web (aotuv.org no longer resolves), and its 2018 and 2020 rebuilds in AO-Yumi/vorbis_aotuv.
+  - `aotuv_tool.py` pins each archive by SHA-256 and fetches it from the repository at a fixed commit or from the site, the rebuilds by their commits (01157fe and 1eda0f0), and Rarewares' Windows builds of oggenc2.88 on aoTuV and Lancer by SHA-256.
+  - The Wayback Machine's copies of aotuv.org could not be reached when they were pinned, so they are no fallback yet.
+- **Encoders only regenerate committed fixtures,** so losing one stops new fixtures, not the checks.
 - **Vendored tools:** minimp3, mp3guessenc and EncSpot are built from the sources in `third_party` (see its README), so the checks do not depend on a download or a distribution's package version.
 - **Pinned downloads:** everything still downloaded is pinned by its SHA-256 and falls back to the Wayback Machine's copy where one exists (`downloads.py`). The weekly `sources` workflow checks every address (`check_sources.py`; a pull request checks the ones it adds or changes), and that FAAC's repositories still serve each release tag at its pinned commit.
   - **Retries:** curl runs with `--retry 5 --retry-delay 15 --retry-all-errors`, so it repeats every failure, a 404 or a certificate failure included, five times over 75 seconds. `fetch()` then tries every address once, and only if none served the file, makes up to three more rounds, so a dead original never delays a working fallback.

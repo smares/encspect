@@ -4,10 +4,21 @@ Vorbis in [Ogg](ogg.md).
 
 ## What is read
 
-- **Identification header:** with its bitrate hints and channel layout.
+- **Identification header** (Vorbis I specification, section 4.2.2): every field, the bitrate hint the three bitrate fields give together, and the channel layout of section 4.3.9 for one to eight channels.
+  - Findings for what libvorbis 1.3.7 refuses (`_vorbis_unpack_info`): a version other than 0, no channels, a sample rate of 0, block sizes outside 64 to 8192 or a short one larger than the long one, no framing bit.
+  - The comment header's "\x03vorbis" prefix and the framing bit after the comment are read too, and so are the page layout and header granule positions of section A.2.
 - **Comment header:** through the [Vorbis comment](../tags/vorbis-comments.md) parser.
 - **Setup header:** field by field: codebooks, floors, residues, mappings with their square polar coupling steps, and modes.
-- **Audio packets:** each packet's mode and block size.
+  - It is walked as a decoder unpacks it (section 4.2.4), least significant bit first, without building Huffman trees or lookup tables; every field is a node at its bits, and each group's value gives its counts and key parameters.
+  - Codebooks: the sync pattern, dimensions, entries, ordered and sparse flags, codeword lengths (summarized as used entries and their range) and lookup (minimum, delta, value bits, sequence flag and the multiplicands as one node).
+  - Also: the time domain placeholders, each floor of type 0 or 1 with its parameters, classes and X list, each residue with its range, partition size, classifications, cascade and books, each mapping with its submaps, coupling steps, channel mux, floors and residues, and each mode.
+  - Findings for what breaks the specification: a sync pattern, lookup, floor, residue or mapping type it does not define; references to codebooks, floors, residues or mappings that do not exist; coupling steps that name one channel twice or one beyond the stream; reserved fields; window or transform types other than 0; no framing bit.
+  - Findings for what libvorbis 1.3.7 refuses beyond it, from its sources: `ilog(dimensions) + ilog(entries)` above 24; codeword lengths that do not form a complete prefix code, except a single entry of length 1; more than 63 or repeated floor 1 X values; floor 0 parameters of 0 and books without lookup; residue classbooks too small for their classifications.
+  - A structure that cannot be followed (an undefined type, the end of the packet) stops the walk; what was read stays in the tree.
+- **Audio packets** (section 4.3.1): the packet type bit, the mode number in `ilog(modes - 1)` bits, which gives the block size, and a long block's previous and next window flags. Each packet keeps an 8-byte record (length, mode, flags).
+  - Findings: window flags that contradict the neighbors' sizes, empty packets, packets with the type bit set, undefined or missing modes, granule positions that do not match the packets or go beyond them.
+  - The first audio page's granule position may start the stream later (an info) or discard samples at the start, at most what the first two blocks return, which libvorbisfile also discards no more than (oggdec confirms it); the second audio packet must then end its page.
+- **Memory:** a packet keeps its 8-byte record and its two values of the per-packet bitrate series, 26 bytes per packet with its share of the page records on linux-x64. A 278 MB file of 245,000 packets (libvorbis at quality 10) gives its CSV in 1.9 s at a peak of 80 MB, and its whole JSON report in 3.3 s at 202 MB.
 - **Samples:** each block counts the samples its overlap with the previous block returns (the first block none); Gap Trimming, like the start and end trimming, takes samples off the trimmed stage only. A packet the container cut whose mode still reads counts its block and is counted again as Lost Samples; a cut packet whose mode does not read declares nothing.
 - **Bitrates:** the sizes and bitrates cover the packets the container hands over whole; a cut packet counts in the samples only.
 
@@ -31,9 +42,12 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 ## Encoder detection
 
 - **Encoder**, from the vendor string:
-  - libvorbis by release;
-  - aoTuV by release, from its sources and builds;
-  - Lancer.
+  - libvorbis by release: it writes its vendor string into every comment header it encodes, and the tags of its repository give each release's (1.0 to 1.3.7; 1.1.1 and 1.1.2 write the same, 1.2.1 has no tag), which name "libvorbis 1.3.7" with high confidence;
+  - aoTuV by release, with high confidence: lib/info.c of each source release on aoTuV's site (beta 1a to beta 6.03 and its 2014 and 2015 rebuilds), the 2018 and 2020 rebuilds ("… (based on libvorbis 1.3.6)" and "… 1.3.7)") and the reference binaries of a1 to a3 and b1, whose sources are gone, give them; beta 6.03 of 2011, 2014 and 2015 write the same "AO; aoTuV [20110424] (based on Xiph.Org's libVorbis)"; `aotuv_tool.py --vendors` checks the table against the sources;
+  - Rarewares' oggenc2.88 on aoTuV b6.03 (2020) writes "AO; aoTuV 6.03 (2020) (based on libVorbis 1.3.7)" and its Lancer SSE2 build "BS; LancerMod(SSE2) (based on aoTuV 6.03 (2020))", both confirmed by fixtures they wrote under Wine;
+  - other strings of these forms (Lancer's SSE3 build, whose binary holds its own) name aoTuV or Lancer with medium confidence, and other libvorbis-form strings name libvorbis with their date, with medium confidence;
+  - setup headers do not tell aoTuV from libvorbis where a vendor string was rewritten: at quality 10 aoTuV b5.7, b6.03 and libvorbis 1.3.7 write the same setup header, and at quality 5 b5.7 writes libvorbis 1.3.7's, so no habit is used;
+  - oggenc writes no ENCODER field.
 - **Encoder, too:** an ENCODER field that is ffmpeg's libavcodec ID ("Lavc60.31.102 libvorbis"), shown as "FFmpeg (Lavc60.31.102 libvorbis)" with medium confidence (bit-exact, without a version: "Lavc libvorbis", shown "FFmpeg (Lavc libvorbis)"). A vendor string that names libvorbis wins over it; an ID of another codec's encoder never becomes the encoder, stays as evidence under it, as does an own ID that a vendor string outranks (every ENCODER field is weighed, not the first), and is `vorbis.encoder-other-format`.
 - **Writer:** any other ENCODER field, which section 5.2.2 of the Vorbis I specification does not list, and a vendor string that is ffmpeg's muxer version ("Lavf60.16.100"): ffmpeg rewrites the vendor string, so its Ogg Vorbis files name the writer "FFmpeg (Lavf60.16.100)". Two claims that name different software are `vorbis.writer-claim-differs`, and software known to write another format is `vorbis.writer-other-format`.
 - **In a container:** a stream whose headers a container holds apart (a Matroska track's CodecPrivate) weighs the container's claims about the file first (the Segment's WritingApp and MuxingApp, after the file's tags) and then its own comment's. The container's writer is the stream's, and a comment that names other software is `vorbis.writer-claim-differs` against it (a copied Ogg file's vendor "Lavf60.16.100" in a file mkvmerge wrote).

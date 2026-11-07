@@ -15,7 +15,7 @@ Box by box:
 - QuickTime's chan atom (Core Audio's layout tags, channel bitmap and channel labels) and the ISO chnl box;
 - protection: the sinf box of a protected sample entry (frma, schm, schi with tenc), pssh, senc, saiz and saio boxes, the `seig` sample group, and the entries and boxes of iTunes protection and Audible (see "Protected tracks").
 
-Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, or [AC-3 and E-AC-3](ac3.md) or [DTS](dts.md).
+Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md) or [Apple Lossless](alac.md). Other codings, among them FLAC (`fLaC`), Opus and Dolby TrueHD (`mlpa`), are shown as boxes with `mp4.codec-not-analyzed`.
 
 - **Units counted:** a sample counts when its first byte is in the file; one the file ends inside is handed to the codec parser with the bytes present and flagged as cut (`MappedBytes.IsCut`), so a raw AAC access unit of 1,024 samples counts them and is also reported as lost samples; a sample with no byte in the file or of 0 bytes counts nothing.
 - **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg.packets-not-analyzed`).
@@ -37,11 +37,17 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 
 ## Findings
 
-- broken box sizes and inconsistent sample tables;
+- broken box sizes and inconsistent sample tables:
+  - a box that declares more bytes than its parent holds is read up to the parent's end with a warning;
+  - one whose size is smaller than its header ends the reading of its parent's boxes;
+  - boxes nest at most 40 deep (a warning), so the tree stays within the nesting limit with the fields and the codec's nodes under the deepest box;
+  - stts and stsz counting different samples, stsc's order and sample description indexes, and chunks that hold fewer or more samples than stsz sizes;
+- required boxes missing or present twice, and ftyp not first;
+- edit lists with empty edits, more than one media edit, a rate other than 1, a media time below -1 or media past its end;
 - samples outside the file or outside mdat, samples the file ends inside (reported with the samples outside it, `mp4.sample-outside-file`), and samples that overlap;
 - boxes where they do not belong (a moov inside another box, a traf in a traf, a moof in a moof) and more boxes than the limit;
-- durations that disagree;
-- moov after mdat;
+- durations that disagree: mdhd's duration against the sum of stts's durations, tkhd's against the edit list or the media (ISO/IEC 14496-12 8.3.2.3);
+- no moov, and moov after mdat (an info: the file does not start playing before it is read to the end);
 - an edit list and iTunSMPB that disagree on the encoder delay or padding, or an iTunSMPB whose total is not the track's duration (Apple Lossless's duration leaves out the padding, which is accepted);
 - a chan or chnl layout that disagrees with the codec's.
 - a text item of a user data atom that states more bytes than the atom holds (`mp4.text-size-invalid`), and bytes at the end of such an atom that are too few for an item's size and language (`mp4.text-item-truncated`).
@@ -94,11 +100,16 @@ A protected track is reported on its stream (`StreamInfo.Protection`: the scheme
 
 ## Apple Lossless
 
-An `alac` sample entry is shown with the container; its samples are not analyzed yet (`mp4.codec-not-analyzed`, phase 3).
+An `alac` sample entry that holds an `alac` box (the magic cookie) goes to the [ALAC](alac.md) codec parser with its samples, which reads them frame by frame. An entry without the box stays at container level (`mp4.codec-not-analyzed`), and an encrypted track hands over the cookie only.
 
 ## Channel layout
 
 The codec's layout counts. The chan and chnl boxes complete a stream whose codec states no layout.
+
+- **chan** (QuickTime, Core Audio's AudioChannelLayout): a layout tag named and decoded from Apple's constants in CoreAudioBaseTypes.h, a channel bitmap in the WAVE channel mask's order, or a description per channel with its label, flags and coordinates.
+- **chnl** (ISO/IEC 14496-12, version 0): the stream structure, a ChannelConfiguration of ISO/IEC 23091-3 with its omitted channels, or a speaker position per channel of the sample entry, with azimuth and elevation for an explicit one, and the object count.
+- In both, Ls and Rs are the back pair unless the layout also has rear surrounds.
+- The container's layout completes the codec's only where the channel counts agree. One that names other speakers is a warning (`mp4.channel-layout-differs`), also where a mono AAC core meets a stereo container, since implicit parametric stereo is read from the blocks and a core without it is mono.
 
 ## Encoder detection
 

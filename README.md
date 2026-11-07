@@ -37,16 +37,17 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth), the loudness (integrated, range, maxima; ITU-R BS.1770 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Phase 2, the lossy formats, is done; the frames of every WMA codec are read by clean-room rewrites. Next: the lossless formats, among them the decoders of phase 3 (the frames of WMA Lossless are read).
+Phases 2 and 3, the lossy and the lossless formats with the lossless decoders, are done, and so are the measurements and the cross-checks against the formats' official decoders. Next: decoders for the lossy formats ([plan](docs/PLAN.md#next)).
 
 ## Documentation
 
 - [Command line](docs/cli.md)
 - [GUI](docs/gui.md)
 - [Formats](docs/formats/README.md) and [tags](docs/tags/README.md)
+- [Architecture](docs/architecture.md): the parts, the result model, routes and format detection
 - [Development](docs/development.md): building, tests, fixtures and cross-checks
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
-- [Plan](docs/PLAN.md): goals, architecture and rollout
+- [Plan](docs/PLAN.md): goals, decisions, what is built and what comes next
 - [Release notes](docs/releases/0.1.0.md)
 
 ## Quick start

@@ -58,6 +58,13 @@ Only the other files are analyzed.
 - **Size:** it keeps the 50,000 files used most recently.
 - **Refreshing:** View, Refresh (F5, Cmd+R on macOS) lists the folder again. View, Clear Summary Cache empties the cache and analyzes the folder from scratch.
 - **Scope:** the detail window never uses the cache, and the CLI keeps none.
+- **Why the key has a hash:** the hash of the first and last 64 KiB catches taggers that rewrite tags and keep the time. A hash of the whole file would cost as much reading as the analysis.
+- **The file ID** is the volume serial number and file index from `GetFileInformationByHandle` on Windows, and the device and inode on Linux (`statx`, whose struct is the same on every architecture) and macOS (`fstat`, `fstat$INODE64` on x64), called on the open file through the C library the process has loaded, never through private .NET APIs. FreeBSD and other systems have none, and the other parts of the key carry on without it.
+- **The build** is the host's informational version, which names the commit, plus the module version IDs of the host's, the parsers' and the GUI's assemblies (the GUI derives parts of the summary). A deterministic build changes them exactly when their code changes, so uncommitted changes miss the cache too.
+- **The store:** one binary file, read whole when first needed and ending in a SHA-256 of its contents, so a corrupt or truncated store reads as empty and is replaced. No SQLite, whose e_sqlite3 is a bundled native library.
+- **Writes** are batched off the UI thread a moment after the last change. Each merges the store on disk with the process's changes and renames a temporary file over it, so two GUI instances at once never corrupt it and at worst lose a batch of each other's entries.
+- **Least recently used** entries are dropped past 50,000. A cache hit only notes the time of use in memory, written with the next new entry or when the GUI closes, so a warm folder does not rewrite the store.
+- **Forced formats:** a forced analysis is never cached; the file list, which fills the cache, never forces.
 
 ## Detail window
 

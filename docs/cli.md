@@ -195,7 +195,7 @@ Makes the exit code 1 when a finding of that severity or worse turns up.
 
 ## Format detection
 
-The host picks the format from the evidence each parser finds: its class, where the matched structure starts, and how many consistent and checksum-verified frames it found (see "Format detection" in the [plan](PLAN.md)). Two things show in the report when detection is not the whole story, and only then:
+The host picks the format from the evidence each parser finds: its class, where the matched structure starts, and how many consistent and checksum-verified frames it found (see [Format detection](architecture.md#format-detection)). Two things show in the report when detection is not the whole story, and only then:
 
 - **Also matches:** other formats whose evidence is real, not a stray header-like match: the chosen format's class, or, above class 30, a frame that passes a checksum or a chain of eight frames or more. A format whose data lies inside a container's declared data (AC-3 frames in an MP4 file) is the container's payload and not listed.
 - **Forced:** the analysis ran the format `--as` named.

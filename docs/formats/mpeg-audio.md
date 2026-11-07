@@ -16,6 +16,103 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 - **mp3PRO and MP3 Surround:** detected from the signature their encoders put into the ancillary data of every frame.
 - **Fraunhofer's Original File Length block.**
 
+### Frames and sync
+
+- **Sync:** a header starts a stream only where one of these holds:
+  - two more frames of the same version, layer and sample rate follow at the positions its length predicts;
+  - its one or two frames end exactly at the end of the data, and each passes the structural checks: in Layers I and II the audio data fits the frame and uses no forbidden bit allocation; in Layer III the side information fits, passes the side-information checks below, and holds no more main data than the frame and its main_data_begin.
+  - So a file of one or two frames still parses, and a single 4-byte match in other data is not taken for audio.
+- **Leading junk:** the first frame is searched within 1 MiB after any leading zero bytes, which are common padding and cheap to skip.
+- **Gaps:** everything between frames that is not a frame is a gap: junk before the first frame, lost sync between frames, data after the last one.
+- **Regions:** each stretch of data between tags is one "MPEG Audio" region. Findings of one kind are reported once per stream, with a count.
+- **Once in sync,** a frame is taken on its header only while a frame follows it.
+  - Where none does, a stream that starts inside the frame, after its header and CRC, cuts it short there. It is reported as a frame that was cut or whose header is damaged, so the next frame is not swallowed and the damage is located.
+  - A free-format stream may instead have changed its frame length.
+- **Stream changes** are reported both where frames of two streams touch and where sync is found again after a gap.
+- **Free format:**
+  - A frame too short for the header, CRC and side information or bit allocation is no frame, so data with a header every few bytes does not sync.
+  - A free-format stream whose frame length changes breaks the fixed bitrate ISO/IEC 11172-3 requires: a warning.
+  - Parsing asks no more of a free-format chain than of any other: a stream that starts at a chain of frames is read, protected or not.
+- **Layer II CRC:** it covers the bit allocation and scfsi, so its length follows from the allocation tables.
+- **MPEG 2.5** extends only Layer III, so Layer I or II frames at its rates are a warning; decoders play them.
+
+### Layer I audio data
+
+- Bit allocation per subband and channel (one above the joint stereo bound), the scalefactors, the length of the samples and the ancillary data after them (ISO/IEC 11172-3 2.4.1.5).
+- Warnings:
+  - the forbidden allocation 15: libmad rejects the frame, mpg123 reads 16-bit samples, as the report does;
+  - scalefactor index 63;
+  - audio data longer than the frame.
+
+### Layer III side information
+
+- **Fields:** per granule and channel part2_3_length, big_values, global_gain, scalefac_compress, block type and mixed-block flag, table selects, region counts, subblock_gain, preflag, scalefac_scale and count1table_select; scfsi per channel; mid/side and intensity stereo per frame.
+- **Reservoir fill:** the free bytes after the previous frame's main data, up to what main_data_begin can reach (511 bytes in MPEG-1, 255 in MPEG-2 and 2.5).
+- **The bit reservoir split:** each frame's bytes after the side information are split by owner, so every byte is accounted for:
+  - its own main data;
+  - main data of later frames ("Bit Reservoir");
+  - ancillary data no frame uses.
+- **Main data runs** through the data of consecutive frames of one stream, skipping headers and side information, and continue across junk and tags between frames.
+  - A stream change, including a switch to or from free format, starts with an empty reservoir.
+  - Reported: main data that begins before the stream (a cut file), overlaps the previous frame's (missing frames), reaches back across a gap (decoders disagree there) or does not fit the frame.
+- **A Xing, Info or VBRI header frame** stays in the reservoir as a frame without main data, as minimp3 and mp3guessenc keep it.
+  - mpg123 and ffmpeg skip it, so main data that begins in it is a warning, as after `ffmpeg -ss -c copy`. The header frame's unused bytes show which frame's main data they hold.
+  - The header frame does not count as the stream's first frame, so main data that reaches back past it begins before the stream.
+- **Side-information checks:** big_values above 288, the reserved block type, Huffman tables 4 and 14, scalefactors longer than part2_3_length, scfsi on a channel with short blocks, and mid/side or intensity stereo with different block types in the two channels. libmad rejects the last two.
+- **The decoder buffer** of ISO/IEC 11172-3 holds one frame at the highest bitrate (bitrate_index 14) at the stream's sample rate:
+  - so main_data_begin plus the frame's length may not exceed that frame's length, and main_data_begin is 0 at 320 kbps;
+  - only MPEG-1 is checked: LAME's `--strictly-enforce-ISO` applies the rule to MPEG-2 with its top bitrate of 160 kbps, but that reading of ISO/IEC 13818-3 has not been confirmed against its text;
+  - breaking it is a warning, which says that LAME has not enforced the limit by default since 3.81 and that decoders accept it.
+
+### Layer II audio data and multichannel
+
+- **Bit allocation** per subband and channel from the allocation tables: ISO/IEC 11172-3 Annex B, and ISO/IEC 13818-3 for the lower sampling rates.
+  - Free format takes Table B.2a at 48 kHz and B.2b at the other rates, as their captions say and libmad reads it; mpg123 takes B.2a at every rate.
+  - Also read: scfsi and scalefactors, the length of the sample data and where the ancillary data starts. The same tables let Layer II CRCs be verified.
+- **Warnings:**
+  - audio data longer than the frame, also where the allocation, scfsi or scalefactors already run past it; the CRC is still verified wherever the allocation and scfsi it covers fit;
+  - scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 leaves undefined, although TwoLAME writes it and ffmpeg, mpg123 and libmad decode it.
+- **The MPEG-2 multichannel extension** (ISO/IEC 13818-3) rides in the ancillary data of an MPEG-1 Layer II frame, so the stereo base stays playable.
+  - Read: the multichannel header (center, surround and LFE channels, audio mix, dematrix procedure, multilingual channels with their layer and sampling rate, whether an extension bitstream exists), the channel configuration such as 3/2 plus LFE, its CRC, and how many bytes the multichannel data takes.
+  - The frame header has no flag for it, so it is detected by structure and consistency across frames, like a tag, never by a single match.
+  - A file carries it once the multichannel CRC holds in at least two frames and in at least half of the frames whose multichannel side information fits the frame. Random ancillary data passes the 16-bit CRC about once in 65,536 frames, so a long recording passes it a few times by chance; mp3guessenc likewise wants a share of the stream.
+  - Then each frame whose CRC fails is reported, and so is the reserved center value, which is read as no center.
+  - An `n_ad_bytes` that declares more ancillary data than the frame holds after the multichannel header and CRC is a warning; the multichannel data of such a frame ends after its CRC.
+- **Channels with the extension:** the stream's channels follow the extension where the file carries it and every frame whose multichannel CRC holds, or whose side information continues in the extension bitstream, states the same speakers.
+  - The order: left and right from the base, then the center (phantom coded or not), the mono surround as the back center, the surround pair as the back pair or a second stereo program's two discrete channels, then the LFE. This is the order of mctoolamed's output channels.
+  - 3/2 + LFE is 5.1 in six channels; multilingual channels are counted apart.
+  - A possible, unverified extension keeps the stereo base, and so does a stream whose configuration changes, with an info finding.
+  - The conformance manifest records each stream's channels and layout, and mctoolamed's channel files and multilingual channels confirm them.
+- **The extension bitstream:** where one exists, the multichannel data continues in it, after the base frame's bits minus `n_ad_bytes` of MPEG-1 ancillary data at its end.
+  - It is a separate file, so frames whose multichannel side information does not fit the base frame are reported as continuing there, with their CRC not verified.
+  - Where no frame's side information fits, no CRC can confirm the extension. If nine in ten candidate frames carry the same multichannel header and continue in an extension bitstream, it is reported as a possible, unverified extension.
+- Layers I and III can carry the extension too; the ISO conformance set has one stream of each (tests 22 and 23). They are not read yet.
+
+### Xing, Info and VBRI headers
+
+- **Xing and Info:** flags, frame and byte counts, the seek table, quality.
+  - Read only in Layer III, where the side information would end without a CRC (36, 21 or 13 bytes into the frame, as LAME writes them even into a protected frame).
+  - Read only when every byte between the frame header, or its CRC, and the header is zero, as mpg123 requires, so audio data that happens to contain "Xing" is not taken for one.
+  - A header that does not fit its frame and a TOC that decreases are warnings.
+  - The frame decodes as silence in decoders that do not skip it, so it stays in the bit reservoir as a frame without main data (see the bit reservoir above).
+- **The LAME extension** is read only after an encoder string that starts `LAME`, `L` and a version (`L3.99a12`), or ffmpeg's `Lavc` or `Lavf`, as mp3guessenc and ffmpeg require. Other text there is shown as a string and names nothing.
+  - Fields: encoder string, tag revision, VBR method, lowpass, peak, ReplayGain fields, encoding flags, ATH type, minimum or ABR bitrate, delay and padding, noise shaping, stereo mode, source sample rate, MP3 gain (a sign bit and seven bits of 1.5 dB steps), preset, music length (0 means not set, an info), tag CRC and music CRC.
+  - The tag CRC covers the frame's bytes before it; the music CRC the bytes after the frame up to the music length, which counts from the start of the frame. Both are verified.
+- **A failing tag CRC or music CRC** is a warning, also where the encoder is to blame: the field breaks the tag's specification and readers act on it. Two such causes get a finding of their own that names them:
+  - ffmpeg writes the tag CRC over the frame's first 190 bytes wherever the tag starts, which is only correct for MPEG-1 stereo, so LAME and ffmpeg itself reject it and ignore the tag's encoder string and ReplayGain;
+  - in a file that continues a `--nogap` sequence, LAME continues the previous file's music CRC, so it cannot confirm that the audio is unchanged, and an edit such as MP3Gain's would look no different.
+  - Otherwise a failing music CRC means the audio changed after encoding.
+- **Music length:** one shorter than the tag's own frame leaves the music CRC unverified, with a finding of its own. So does one that runs past the end of the file: an info where the stream is cut short (its own findings report that), a warning where the stream holds every frame its header counts.
+- **Old LAME versions:**
+  - LAME before 3.90 wrote only a version string, which is reported as such.
+  - LAME 3.90 to 3.92 have Dibrom's `--alt-preset` modes and the older `--preset` names but leave the preset field empty, which 3.93 added. Where the VBR method, Xing quality, noise shaping, stereo mode, ATH type, lowpass and (but for VBR) bitrate field are those a preset sets, the report names the preset next to the empty field.
+  - The preset settings come from encodes with every preset by 3.90 and 3.92 built from source, and by the Windows builds of 3.91 and of HydrogenAudio's 3.90.3, the 3.90 line it recommended for years, keyed as getID3 keys them.
+  - Those two Windows builds write some lowpasses 100 Hz higher (getID3 lists the same for 3.91), and 3.90.3 shapes noise differently in standard and extreme. getID3's other 3.90.3 values, and its medium presets, belong to a modified build and are not used.
+  - 3.90.3's version, "LAME3.90.3", does not fit the tag's nine bytes, which hold "LAME3.90."; LAME writes it whole into the padding of the frames, from where the analyzer completes it, as getID3 and mp3guessenc do.
+  - LAME before 3.95 computed ReplayGain against 83 dB instead of 89 dB, so a gain it determined itself reads 6 dB lower than a later version's. The report says so next to the value, which it keeps as stored (mpg123 adds the 6 dB).
+- **VBRI** (Fraunhofer): version, delay, quality, byte and frame counts and the seek table, 36 bytes into the frame in every mode. Warnings: a version other than 1, which ffmpeg ignores, and a seek table entry size outside 1 to 4 bytes, which leaves the table unread.
+- **A VBR header in the middle of a stream,** after any earlier frame of it, across gaps and tags, is a warning: files were probably joined, so the first header's counts and TOC cover only part of the stream, and players that only look at the first frame play the second as a frame of silence.
+
 ## Detection
 
 - Sniffing gives class 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data. It reports where the chain starts, its frames (up to 16) and how many of them pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4).
@@ -50,7 +147,7 @@ Each MPEG Audio region reports:
   - Layers I and II count each channel's allocation, scalefactor selection information (scfsi, Layer II), scalefactors and samples. Above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total; the scfsi and the scalefactors stay per channel.
   - The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames (in a frame with both tools only below the intensity stereo region), so a stream that switches between them mixes the two. The overall share is bit-weighted: the first channel's bits over both channels' bits in all frames.
 
-Streams follow the stream rule shared with ADTS, AC-3 and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync"):
+Streams follow the stream rule shared with ADTS, AC-3 and DTS ([architecture](../architecture.md#stream-changes), "Stream changes"):
 - A change of version, layer, sample rate or free format ends the stream and starts another, also where an earlier configuration returns. `mpeg.stream-changed` is one Info finding with the number of changes.
 - The file has at most 64 streams. The frames from the change that would start stream 65 on are in no stream and are counted in one warning, `mpeg.streams-limited`.
 
@@ -65,6 +162,20 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
   - The series of a stream that a tag splits are over the stream, the tally's over each region; `CategorySummaryTests` sums them per group of regions and streams that overlap.
   - A series exists where its tally node does: a file without joint stereo frames has no "Joint Stereo Modes".
 - the **numeric series** "Coded Bandwidth" (Hz, Layers I and II, `codedBandwidth`) and "Channel Bit Share" (percent, stereo, joint stereo and dual channel frames, `bitDistribution`), each per frame and per second ("Coded Bandwidth Over Time" is each second's highest, "Channel Bit Share Over Time" bits over bits of the frames that start in it), anchored to the statistics nodes of the same names. A frame without a value (a mono frame in a stream that changes mode, a frame whose bits are all 0, a Layer I or II frame whose allocation does not fit) has no point, so such a series has its own x values; a mono stream has no share.
+
+### Counting and the VBR header's claims
+
+- **Which frames:** the Statistics node counts the region's complete audio frames: not a frame holding a VBR header, not a truncated last frame.
+- **Clock:** time runs on a clock of 1/14,112,000 s (ffmpeg's time base for MP3, which every MPEG sample rate divides), so frames of different sample rates add up exactly; figures are rounded half to even.
+- **When the coding statistics are counted:** the tallies are counted while the frames are read; the category series add a byte per value, derived at the end from the kept frame records.
+- **A VBR header's counts** are compared with the frames and bytes counted from the header to the end of its stream (the next header or a change of version, layer or sample rate, across gaps and tags).
+  - A truncated last frame was written whole, so it counts there and in the gapless sample count.
+  - Xing's and Fraunhofer's encoders count the header's own frame and LAME does not, so either count holds; a mismatch is a warning.
+  - Behind a LAME tag the count also sets where the music ends, since the delay and padding count from the frames after the header. LAME 3.94 beta 1 counts the header frame too, so ffmpeg and mpg123, which take the length from the count, play one frame more than was encoded. That is a warning, and the report's own sample count follows the frames.
+- **Gapless figures from a LAME tag:** the encoder delay, the padding and the exact sample count, the frames' samples minus both.
+  - This is what ffmpeg and mpg123 output with their gapless trimming when the padding covers their own 529-sample decoder delay.
+  - Delay and padding longer than the stream are a warning.
+- **A header names its own frames:** each header's counts and gapless figures cover the frames from it to the next header or a change of stream, and say so where those are not all of the region's.
 
 ## Ancillary data
 
@@ -123,6 +234,10 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
 - **mp3PRO:** the stream is not MPEG-1, signature byte 0 has all of the bits 0xC0 set, and byte 1 has the bit 0x08 set.
 - **MP3 Surround:** the stream is MPEG-1 at 44100 or 48000 Hz, byte 0 has all of the bits 0xCF set, and byte 1 has all of the bits 0x30 set.
 - **Report:** the total segment bytes and their data rate over the stream's audio frames.
+- **What the extensions are:** mp3PRO keeps spectral band replication data, from which an mp3PRO decoder restores the high frequencies of an MPEG-2 or 2.5 core; MP3 Surround keeps the spatial data that turns an MPEG-1 stereo downmix at 44.1 or 48 kHz back into 5.1 channels. What the extension data holds is not read.
+- **In the report:** the region gets an Enhancement node with the ancillary bytes and their data rate, and an info finding says that decoders without support play only the core or the downmix.
+- **The block's delay** counts the samples before the audio in a plain decoder's output, the decoder's 529 included, which ffmpeg's output of encoder-written fixtures confirms. mp3guessenc adds 576 for MP3 Surround; the report keeps the stored value.
+- **mp3PRO's block** counts at twice the core's sample rate, the rate an mp3PRO decoder outputs: a real encode by Thomson's mp3PRO encoder stores 88,200 samples for two seconds at 44,100 Hz in a 22,050 Hz stream.
 
 ### R5. Layer III statistics
 
@@ -146,6 +261,57 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 - **Encoder, from the stream:** the LAME tag, and the version string LAME writes into ancillary data, name the encoder with a confidence level. Without a tag, Shine, Helix, Fraunhofer's encoders and TwoLAME are recognized from habits their encodes show, with low confidence.
 - **Encoder, from tags:** an ID3v2 TSSE frame, which the ID3v2 specification defines as the used audio encoder and its settings, names the encoder with low confidence; naming the same encoder as low-confidence evidence from the stream, it raises that to medium. A different name is an information finding (`mpeg.encoder-claim-differs`).
 - **Writer:** ffmpeg's muxer version ("Lavf60.16.100") in a TSSE frame, in an APEv2 Encoder item and in the LAME tag it writes, to seekable output with the Xing header enabled (FFmpeg n6.1.1 `mp3enc.c`): a tag laid out as its muxer writes it (an encoder string of `Lavc…` or `Lavf…`, or the CRC over the first 190 bytes) names the writer "FFmpeg" without a version, with low confidence; a bare `Lavf` is what it writes without encoder metadata. Any APEv2 Encoder item is the writer's too. ffmpeg's `Lavc…` encoder ID names the encoder. The writer is shown apart from the encoder; two claims that name different software are an information finding (`mpeg.writer-claim-differs`), and software known to write another format is `mpeg.writer-other-format`.
+
+### Tags and headers that name the encoder
+
+- **A LAME tag** names its encoder: high confidence when its CRC holds, medium when not. A VBRI header names Fraunhofer (high).
+- **ffmpeg's LAME tag:** ffmpeg writes a LAME tag into every MP3 it muxes, with the encoder string of the stream it copies (a remux of a LAME file keeps `LAME3.100`) or its own.
+  - `Lavc` means libavcodec encoded, which it does only with libmp3lame or libshine. So LAME's version in the ancillary data, or Shine's traits behind it, are medium confidence; other evidence keeps its own; without any, `Lavc` names ffmpeg (medium).
+  - `Lavf` marks a remux of a stream whose encoder ffmpeg did not know and names no encoder: the stream's evidence names it as it would alone, with the tag as support.
+- **Which frames a header names:** a header names the encoder of the frames it describes, from its frame to the next header or a change of stream.
+  - Only a header in a region's first frame names the region's encoder from its tag. Where the region also holds frames it does not describe, or headers that name another encoder, files were joined, and that name is at most medium confidence.
+  - A header further on names no more than the frames after it: the stream's other evidence names the region's encoder, which such a header supports where it names the same. Without any, the header names it with low confidence.
+- **LAME writes its version twice** (libmp3lame/version.c):
+  - into the tag's nine bytes: `LAME`, major.minor and a marker (`a` alpha, `b` beta, `r` a release with a patch level above 0 that does not fit, a space otherwise; 3.99 alphas wrote `L3.99a12`; 3.100 and later have no room for a marker);
+  - whole, into the padding it drains into ancillary data (`3.98 (beta)`, `3.99 (alpha 12)`, `3.99.5`).
+  - The report spells the version out (`LAME 3.98 (beta)`, `LAME 3.99 (alpha 12)`, `LAME 3.99.x` for an `r` without a patch level) and keeps the raw text in the tag's node.
+  - Where the two agree on major.minor and marker, the name takes the more specific one and lists both as evidence when the ancillary one carries a marker. Where they disagree, the tag's is shown, and a warning says the frames and the tag may come from different encoders.
+- **Helix:** the maintained Helix encoder (hmp3 5.2.4) writes a LAME tag whose encoder string is `LAMEH5.24`; it names Helix, not LAME, with the tag's confidence.
+- **mp3PRO and MP3 Surround** name the encoder with medium confidence: Fraunhofer's MP3 Surround encoder, or an mp3PRO encoder, since several licensees wrote those (see "Ancillary data").
+- **The Original File Length block** names Fraunhofer with medium confidence; a VBRI header still decides the encoder, with high confidence.
+
+### Signatures in the padding
+
+- Encoders fill unused bits with their name and version, a strong hint without tags.
+- **LAME** writes `LAME3.100` (possibly cut short to `LAME`) into ancillary data mid-stream and into the padding of the last frame, even when the Info tag is disabled.
+  - A version that runs to the end of the ancillary data may be cut short there (`LAME3.10`), so a whole one elsewhere is preferred, and a cut one names only LAME.
+  - The string starts wherever the main data ends, at any bit position, and can run on into the next frame's data. So it is searched at every bit offset in the ancillary data the bit reservoir split identifies, joined across frames, not in raw frame bytes.
+  - Found alone, it is low confidence.
+- **TwoLAME** writes zeros.
+- **Gogo-no-coda** (3.12) fills the bits no frame uses with `GOGO` over and over, found at any bit position as two in a row (low confidence alone). In VBR it writes `GOGO` where its Xing header's quality belongs, which names it with medium confidence and is shown as such instead of a number.
+- Which other encoders sign their padding, and how, is established from encoder-written fixtures before it is used.
+
+### Habits of encoders without tags
+
+- **The rule:** an encoder's habits are low-confidence evidence, used only where encodes of known signals with that encoder show them every time and the other encoders available for testing do not, over at least 20 frames.
+- **Shine** never uses the bit reservoir, short blocks, scalefactor scaling or ancillary data. Behind ffmpeg's `Lavc` tag, which only libmp3lame and libshine encodes carry, that is medium confidence.
+- **Helix** without its tag (5.2.4 and 5.0 r11) sets the copyright and original bits in every frame and uses scfsi and scalefactor scaling.
+- **Xing's encoder** (tompg 3.0) never switches to short blocks, not even at a tone's onset where every other encoder does, never uses scfsi, and sets the original bit in every frame.
+- **BladeEnc** switches to short blocks without scalefactor scaling, codes plain stereo or mono at one bitrate in MPEG-1, and from 0.82 on leaves ancillary data at most in its last frame.
+  - Checked on every surviving source release from 0.80 to 0.94.2 and the Windows builds of 0.82, 0.90 and 0.91.
+  - 0.80 and 0.81 drain an overflowing bit reservoir into ancillary data mid-stream, as the ISO dist10 encoder does, and mp3guessenc does not name them either.
+- **Fraunhofer's encoders** use scalefactor scaling and short blocks but never scfsi (MPEG-1 only, since MPEG-2 has no scfsi).
+- **TwoLAME and Xing** both write scalefactor index 63 into Layer II, which names them together.
+- **mp3guessenc** agrees on every Layer III encode of these encoders. Its rules for encoders that cannot be run here (older releases) are not used, since on encoders that can, it names Shine "Xing" and Helix "Lame".
+- **Silence** gives an encoder nothing to decide, so its traits do not show there, and a silent stream may match another encoder's habits.
+
+### The TSSE frame
+
+- An ID3v2 TSSE frame (TSS in ID3v2.2) is the weakest evidence of the encoder: whatever software writes the tag fills it in. That may be the encoder (LAME's front end writes `LAME 64bits version 3.100 (http://lame.sf.net)`), a later tagger or ffmpeg's muxer, and it is kept when the audio is re-encoded.
+- The tag parser hands the text to the host, which passes the claims of every accepted tag, in file order, to the format parser.
+- Names match on whole words, so `Flame` does not name LAME nor `Remixing` Xing. A claim never lowers or overrides a LAME tag or VBRI header.
+- ffmpeg writes its own version (`Lavf60.16.100`) whatever encoder it used, so that text is a claim of the writer role, also in an APEv2 item or the LAME tag ffmpeg writes: it is shown as the writer "FFmpeg (Lavf60.16.100)", never as evidence of the encoder.
+- A claim of the encoder role that names another encoder than the stream points to is an info finding on the tag frame, not a change of encoder.
 
 ## Not yet covered
 

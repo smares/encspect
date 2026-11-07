@@ -2,6 +2,13 @@
 
 Musepack SV8, SV7, and SV4 to SV6.
 
+- **Detection:** a stream starts after any ID3v2 tag with its magic number; APEv2 and ID3v1 tags after it are the host's. An ID3v2 tag that an ID3v2.4 SEEK frame finds inside the stream breaks it: the stream is read up to it, and the bytes after it are reported as not read.
+- **Sources:**
+  - the SV8 specification (Musepack's, which trac.musepack.net no longer serves; mutagen-specs keeps a copy, pinned at its commit);
+  - libmpcdec and libmpcenc of musepack_src r495 (Debian's orig tarball, pinned by SHA-256, the source of Ubuntu's musepack-tools) and mppenc 1.16's source;
+  - libmpcdec 1.2.6 for stream versions 4 to 6, with the Portable Musepack decoder (mpc.zip of 2004, pinned by SHA-256 and kept in the private repository), the C++ code libmpcdec 1.2.6 was ported to C from: the same reading in an earlier form, not a second one;
+  - ffmpeg 6.1's mpc and mpc8 demuxers.
+
 ## What is read
 
 - **SV8**, packet by packet:

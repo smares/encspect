@@ -14,6 +14,8 @@ Sources:
 ## What is read
 
 - The RIFF header: the chunk ID (`RIFF`, `RIFX`, `RF64`, `BW64`), the size and the form type `WAVE`.
+  - The sniff needs the form type, so a RIFF file of another form (an AVI, `RMP3` wrapped MPEG audio) and a WavPack file with a RIFF wrapper (which starts with `wvpk`) are not claimed.
+  - A WAVE file whose data chunk holds MPEG audio is a WAV file, not an MPEG one: the MPEG chain starts later and WAV's class is 100. The same holds for a DTS stream in its PCM samples, which the WAV parser hands to the DTS parser.
 - Every chunk is a node. A chunk has a 4-character ID, a 32-bit size, the data and, for an odd size, a pad byte. A chunk the parser does not know is named by its FourCC and shows its size.
 - `fmt `:
   - WAVEFORMATEX: the format tag, channels, sample rate, average bytes per second, block alignment, bits per sample and the extra data;
