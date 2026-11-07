@@ -4364,6 +4364,109 @@
                           "length": 160826
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 4983,
+                          "length": 160826
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 4983,
+                          "length": 160826,
+                          "children": [
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "30 frames (45.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "160 to 191 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "224 to 255 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "256 to 287 kbps",
+                              "value": "3 frames (4.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "288 to 319 kbps",
+                              "value": "3 frames (4.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "320 to 351 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "352 to 383 kbps",
+                              "value": "5 frames (7.6%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "384 to 415 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "416 to 447 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "448 to 479 kbps",
+                              "value": "4 frames (6.1%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "480 to 511 kbps",
+                              "value": "4 frames (6.1%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "512 to 543 kbps",
+                              "value": "4 frames (6.1%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "544 to 575 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "576 to 607 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "608 to 639 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            }
+                          ]
+                        },
+                        {
                           "name": "Frames Spanning Packets",
                           "value": 0,
                           "offset": 4983,
@@ -4437,6 +4540,27 @@
                           "value": 2,
                           "offset": 4983,
                           "length": 160826
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 4983,
+                          "length": 160826,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "65 frames (98.5%)",
+                              "offset": 4983,
+                              "length": 160826
+                            }
+                          ]
                         },
                         {
                           "name": "Channel Groups",
@@ -31286,6 +31410,39 @@
               289.7,
               286.6,
               321.6
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 1
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 65
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                61
+              ]
             ]
           }
         ]

@@ -6031,6 +6031,31 @@
                           "length": 16050
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 354,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 354,
+                          "length": 16050,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "15 frames (34.1%)",
+                              "offset": 354,
+                              "length": 16050
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "29 frames (65.9%)",
+                              "offset": 354,
+                              "length": 16050
+                            }
+                          ]
+                        },
+                        {
                           "name": "Uses Bit Reservoir",
                           "value": false,
                           "offset": 354,
@@ -6080,6 +6105,21 @@
                           "value": "44 blocks (100.0%)",
                           "offset": 354,
                           "length": 16050
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 44,
+                          "unit": "frames",
+                          "offset": 354,
+                          "length": 16050,
+                          "children": [
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "44 frames (100.0%)",
+                              "offset": 354,
+                              "length": 16050
+                            }
+                          ]
                         },
                         {
                           "name": "Blocks without Coded Channels",
@@ -10725,6 +10765,31 @@
             "values": [
               31.1,
               34.2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                44
+              ]
             ]
           }
         ]

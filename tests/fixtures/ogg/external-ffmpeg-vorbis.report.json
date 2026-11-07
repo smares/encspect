@@ -3978,6 +3978,67 @@
                       "length": 13173
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 3492,
+                      "length": 13173
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 3492,
+                      "length": 13173,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "9 packets (13.6%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "32 to 63 kbps",
+                          "value": "44 packets (66.7%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "64 to 95 kbps",
+                          "value": "1 packet (1.5%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "96 to 127 kbps",
+                          "value": "1 packet (1.5%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "128 to 159 kbps",
+                          "value": "1 packet (1.5%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "160 to 191 kbps",
+                          "value": "6 packets (9.1%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "192 to 223 kbps",
+                          "value": "2 packets (3.0%)",
+                          "offset": 3492,
+                          "length": 13173
+                        },
+                        {
+                          "name": "224 to 255 kbps",
+                          "value": "2 packets (3.0%)",
+                          "offset": 3492,
+                          "length": 13173
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "31 sizes",
                       "offset": 3492,
@@ -7646,6 +7707,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1.5005895691609978,
+                  "unit": "s",
+                  "offset": 12084,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 66176,
+                  "unit": "samples",
+                  "offset": 12084,
+                  "length": 8
                 }
               ]
             },

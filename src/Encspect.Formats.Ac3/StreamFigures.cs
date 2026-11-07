@@ -29,6 +29,11 @@ internal sealed class StreamFigures(int sampleRate)
 
     public int Largest { get; private set; }
 
+    private readonly BitrateDistribution _distribution = new();
+
+    // The bitrate mode the stream states (true for variable), or null when it states none.
+    public bool? StatedVariable { get; set; }
+
     public double MinimumBitrate { get; private set; } = double.MaxValue;
 
     public double MaximumBitrate { get; private set; }
@@ -75,6 +80,7 @@ internal sealed class StreamFigures(int sampleRate)
         Largest = Math.Max(Largest, length);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
+        _distribution.Add(bitrate);
     }
 
     // The intervals "Bitrate Over Time" is counted over, with the first unit that starts in each; null without them.
@@ -135,6 +141,7 @@ internal sealed class StreamFigures(int sampleRate)
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
+            _distribution.AddTo(statistics, (name, value, description) => cover(name, value, NodeKind.Detail, description), unitName, unitPlural, StatedVariable);
         }
 
         return statistics;

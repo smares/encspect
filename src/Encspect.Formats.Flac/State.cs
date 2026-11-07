@@ -98,6 +98,17 @@ internal sealed class State
 
     public long[] AssignmentFrames { get; } = new long[4];
 
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", Explain.StatIndependent) { Topic = Topics.ChannelAssignment },
+        new("Left/side stereo", Explain.StatLeftSide) { Topic = "left-side-stereo" },
+        new("Side/right stereo", Explain.StatSideRight) { Topic = Topics.ChannelAssignment },
+        new("Mid/side stereo", Explain.StatMidSide) { Topic = Topics.MidSideStereo },
+    ];
+
+    // The channel assignment of each frame of two channels that the series of bitrates has a point for.
+    public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
+
     public long[] SubframeTypes { get; } = new long[4];
 
     public long WastedSubframes { get; private set; }
@@ -348,6 +359,7 @@ internal sealed class State
             MinFrameLength = Math.Min(MinFrameLength, coded);
             Figures ??= new StreamFigures(Info is { SampleRate: > 0 } rate ? rate.SampleRate : header.SampleRate);
             Figures.Add(offset, coded * 8L, header.BlockSize);
+            Stereo.Add(header.Channels == 2 ? (int)header.Assignment : null);
         }
 
         if (header.IsVariable)

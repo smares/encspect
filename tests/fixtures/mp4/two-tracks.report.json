@@ -1397,6 +1397,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 559,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.5572789115646258,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 559
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 24576,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 559
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2578,6 +2600,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 703,
+                      "length": 531,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.8359183673469388,
+                          "unit": "s",
+                          "offset": 703,
+                          "length": 531
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 18432,
+                          "unit": "samples",
+                          "offset": 703,
+                          "length": 531
+                        }
+                      ]
                     }
                   ]
                 }
@@ -2881,6 +2925,79 @@
                                 {
                                   "offset": 2183,
                                   "length": 157
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 1242,
+                              "length": 1098,
+                              "ranges": [
+                                {
+                                  "offset": 1242,
+                                  "length": 201
+                                },
+                                {
+                                  "offset": 1560,
+                                  "length": 132
+                                },
+                                {
+                                  "offset": 1847,
+                                  "length": 185
+                                },
+                                {
+                                  "offset": 2183,
+                                  "length": 157
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 1242,
+                              "length": 1098,
+                              "ranges": [
+                                {
+                                  "offset": 1242,
+                                  "length": 201
+                                },
+                                {
+                                  "offset": 1560,
+                                  "length": 132
+                                },
+                                {
+                                  "offset": 1847,
+                                  "length": 185
+                                },
+                                {
+                                  "offset": 2183,
+                                  "length": 157
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "24 access units (100.0%)",
+                                  "offset": 1242,
+                                  "length": 1098,
+                                  "ranges": [
+                                    {
+                                      "offset": 1242,
+                                      "length": 201
+                                    },
+                                    {
+                                      "offset": 1560,
+                                      "length": 132
+                                    },
+                                    {
+                                      "offset": 1847,
+                                      "length": 185
+                                    },
+                                    {
+                                      "offset": 2183,
+                                      "length": 157
+                                    }
+                                  ]
                                 }
                               ]
                             },
@@ -11980,6 +12097,67 @@
                                 {
                                   "offset": 2032,
                                   "length": 151
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 1443,
+                              "length": 740,
+                              "ranges": [
+                                {
+                                  "offset": 1443,
+                                  "length": 117
+                                },
+                                {
+                                  "offset": 1692,
+                                  "length": 155
+                                },
+                                {
+                                  "offset": 2032,
+                                  "length": 151
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 1443,
+                              "length": 740,
+                              "ranges": [
+                                {
+                                  "offset": 1443,
+                                  "length": 117
+                                },
+                                {
+                                  "offset": 1692,
+                                  "length": 155
+                                },
+                                {
+                                  "offset": 2032,
+                                  "length": 151
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "18 access units (100.0%)",
+                                  "offset": 1443,
+                                  "length": 740,
+                                  "ranges": [
+                                    {
+                                      "offset": 1443,
+                                      "length": 117
+                                    },
+                                    {
+                                      "offset": 1692,
+                                      "length": 155
+                                    },
+                                    {
+                                      "offset": 2032,
+                                      "length": 151
+                                    }
+                                  ]
                                 }
                               ]
                             },

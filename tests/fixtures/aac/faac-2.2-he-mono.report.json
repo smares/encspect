@@ -240,6 +240,31 @@
                               "length": 6200
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 44,
+                              "length": 6200
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 44,
+                              "length": 6200,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "22 access units (57.9%)",
+                                  "offset": 44,
+                                  "length": 6200
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "16 access units (42.1%)",
+                                  "offset": 44,
+                                  "length": 6200
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 44,
                               "length": 6200,
@@ -14091,6 +14116,20 @@
                       "offset": 6360,
                       "length": 629,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.6213333333333333,
+                          "unit": "s",
+                          "offset": 6360,
+                          "length": 629
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 38912,
+                          "unit": "samples",
+                          "offset": 6360,
+                          "length": 629
+                        },
                         {
                           "name": "Encoder Delay (Edit List)",
                           "value": 1040,

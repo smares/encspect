@@ -636,6 +636,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             if rates:
                 statistics["Minimum Bitrate"] = fmt(min(rates), 1) + " kbps"
                 statistics["Maximum Bitrate"] = fmt(max(rates), 1) + " kbps"
+                m.distribution(statistics, [s * 8.0 * rate / (b1 // 2) / 1000 for s in long_sizes] + [s * 8.0 * rate / (b0 // 2) / 1000 for s in short_sizes], "packet", "packets")
         statistics["Packet Sizes"] = plural(len(sizes), "size", "sizes")
         for name, group in (("Long Blocks", long_sizes), ("Short Blocks", short_sizes)):
             if group:
@@ -1009,6 +1010,7 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
         if bitrates:
             statistics["Minimum Bitrate"] = fmt(min(bitrates), 1) + " kbps"
             statistics["Maximum Bitrate"] = fmt(max(bitrates), 1) + " kbps"
+            m.distribution(statistics, bitrates, "packet", "packets")
         statistics["Packet Sizes"] = ("none whole" if not sizes else f"{min(sizes)} to {max(sizes)} bytes, {m.fmt_decimal(sum(sizes) / len(sizes), 1)} on average" if varies
                                       else f"all {plural(sizes[0], 'byte', 'bytes')}, as CBR encoding writes them")
         if frames:

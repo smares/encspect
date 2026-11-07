@@ -65,7 +65,7 @@ LIBDCA_CHANNELS = {0: 1, 1: 2, 2: 2, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 1
 
 def nominal_bitrate(report):
     """The nominal bitrate in bit/s the golden report's statistics give, or None where they give none or several."""
-    statistics = next((n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics"), None)
+    statistics = mi.statistics(report["root"], "Nominal Bitrate")
     text = str(mi.value(statistics, "Nominal Bitrate")) if statistics else ""
     if "," in text:
         return None
@@ -74,14 +74,14 @@ def nominal_bitrate(report):
 
 
 def statistic(report, name):
-    """The value of the named node of the golden report's first statistics, or None."""
-    statistics = next((n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics"), None)
+    """The value of the named node of the golden report's first statistics that hold it, or None."""
+    statistics = mi.statistics(report["root"], name)
     return mi.value(statistics, name) if statistics else None
 
 
 def core_rate(report, fallback):
     """The sampling frequency of the core frames, which libdca reads, from the golden report's statistics; the stream's rate is the highest the extensions state."""
-    statistics = next((n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics"), None)
+    statistics = mi.statistics(report["root"], "Sampling Frequency")
     number = mi.leading_number(str(mi.value(statistics, "Sampling Frequency"))) if statistics else None
     return int(number) if number else fallback
 
@@ -376,8 +376,7 @@ def check_mediainfo(path, tally):
     if sync is not None:
         tally.compare("word size", audio.get("Format_Settings_Mode"), str(mi.leading_number(mi.value(sync, "Word Size"))))
         tally.compare("byte order", audio.get("Format_Settings_Endianness"), "Big" if mi.value(sync, "IsBigEndian") else "Little")
-    statistics = next(n for n in mi.walk(report["root"]) if n.get("kind") == "Statistics")
-    extension = mi.leading_number(mi.value(statistics, "Extension Sampling Frequency"))
+    extension = mi.leading_number(mi.value(mi.statistics(report["root"], "Extension Sampling Frequency"), "Extension Sampling Frequency"))
     tally.compare("sampling rate", audio.get("SamplingRate"), str(extension or stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
     layout = (audio.get("ChannelLayout") or "")

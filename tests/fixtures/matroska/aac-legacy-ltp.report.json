@@ -650,6 +650,25 @@
                           "length": 1752
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 175,
+                          "length": 1752
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 175,
+                          "length": 1752,
+                          "children": [
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "4 access units (100.0%)",
+                              "offset": 175,
+                              "length": 1752
+                            }
+                          ]
+                        },
+                        {
                           "name": "First Elements",
                           "offset": 175,
                           "length": 1752,
@@ -2474,6 +2493,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.09333333333333334,
+                  "unit": "s",
+                  "offset": 175,
+                  "length": 1752
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 4116,
+                  "unit": "samples",
+                  "offset": 175,
+                  "length": 1752
                 }
               ]
             }

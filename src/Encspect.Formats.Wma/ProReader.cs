@@ -37,6 +37,10 @@ internal sealed class ProTally
     public long[] Sizes = new long[8];
     public long Groups;
     public long GroupsWithTransform;
+
+    // In a stream of two channels, the groups of both channels and those with the transform on (sum and difference, so mid/side) in at least one band.
+    public long PairGroups;
+    public long MidSidePairs;
     public long BandsTransformed;
     public long BandsOfTransformedGroups;
     public long ExtendedHeaders;
@@ -500,6 +504,12 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
         return ReadScaleFactorsAndCoefficients(members, length, size, bands);
     }
 
+    // A group of both channels of a stream of two channels, read without a fault.
+    internal static bool IsPair(int size, bool isValid, int channels) => size == 2 && isValid && channels == 2;
+
+    // The transform of such a pair is sum and difference, mid/side, where it is on in at least one band (onBands is -1 where it is off).
+    internal static bool IsMidSide(int onBands) => onBands > 0;
+
     private bool ReadTransform(int members, int bands)
     {
         Bits bits = _bits;
@@ -575,6 +585,12 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
 
             groups.Add((group, bits.Position - groupAt, onBands));
             tally.Groups++;
+            if (IsPair(size, isValid, parameters.Channels))
+            {
+                tally.PairGroups++;
+                tally.MidSidePairs += IsMidSide(onBands) ? 1 : 0;
+            }
+
             if (onBands >= 0)
             {
                 tally.GroupsWithTransform++;

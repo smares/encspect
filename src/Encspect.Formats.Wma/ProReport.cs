@@ -6,6 +6,16 @@ namespace Encspect.Formats.Wma;
 // The figures over a Professional stream (docs/design/wma-pro-format.md, "Statistics"): the Statistics node and the series.
 internal static class ProReport
 {
+    public static readonly Category[] StereoCodings =
+    [
+        new("Left/right stereo", ProExplain.StereoLeftRight) { Topic = Topics.WmaChannelTransforms },
+        new("Mid/side stereo", ProExplain.StereoMidSide) { Topic = Topics.WmaChannelTransforms },
+    ];
+
+    public static IReadOnlyList<CategorySeries> Categories(WmaPacketReader reader, IReadOnlyList<Series> series, Node stream) =>
+        reader.Stereo is { } stereo && stream.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node
+            && series.Count > 0 && series[0].Name == "Bitrate" && stereo.Build(series[0], node, ProExplain.StereoCodingSeries, Topics.WmaChannelTransforms, null) is { } built ? [built] : [];
+
     public static Node Statistics(ProParameters p, WmaPacketReader reader, ProTally tally, Node parent, double duration, CodecConfiguration? configuration)
     {
         long frames = reader.Data.Frames.Count;
@@ -58,6 +68,7 @@ internal static class ProReport
             Add("Largest Frame", NodeValue.Decimal(reader.LargestBits / 8.0, 1, "bytes"), ProExplain.StatLargestFrame);
             Add("Minimum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
+            reader.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description }, "Frame", "Frames", configuration?.IsVbr);
         }
 
         Add("Frames Spanning Packets", NodeValue.Integer(reader.SpanningFrames), ProExplain.StatFramesSpanningPackets, Topics.WmaPackets);
@@ -79,6 +90,7 @@ internal static class ProReport
         Add("Channels per Subframe", NodeValue.Decimal(tally.Subframes == 0 ? 0 : tally.ChannelSubframes / (double)tally.Subframes, 2), ProExplain.StatChannelsPerSubframe, Topics.WmaSubframes);
         if (p.Channels > 1)
         {
+            reader.Stereo?.AddTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic }, ProExplain.StatStereoCoding, Topics.WmaChannelTransforms, "Frame", "Frames");
             Add("Channel Groups", NodeValue.Text(WmaText.Share(tally.GroupsWithTransform, tally.Groups, "group with a transform", "groups with a transform")), ProExplain.StatChannelGroups, Topics.WmaChannelTransforms);
         }
 

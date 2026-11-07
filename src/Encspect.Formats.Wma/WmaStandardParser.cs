@@ -107,6 +107,7 @@ public sealed class WmaStandardParser : ICodecParser
             }
         }
 
+        IReadOnlyList<Series> series = statistics is not null ? StdReport.Series(parameters, stream, statistics) : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [streamNode],
@@ -124,7 +125,8 @@ public sealed class WmaStandardParser : ICodecParser
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
-            Series = statistics is not null ? StdReport.Series(parameters, stream, statistics) : [],
+            Series = series,
+            CategorySeries = statistics is not null ? StdReport.Categories(stream, series, statistics) : [],
         });
 
         findings.Flush(context);

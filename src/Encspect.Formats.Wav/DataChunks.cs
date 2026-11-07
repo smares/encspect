@@ -228,6 +228,11 @@ internal static class DataChunks
         }
 
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
+        if (s.FactNode is not null && s.FactSamples64 <= long.MaxValue)
+        {
+            ContainerLength.AddSamples(statistics, (name, value, description) => Cover(name, value, description), (long)s.FactSamples64, rate, Explain.StatContainerSamples, Explain.StatContainerDuration);
+        }
+
         statistics.Add(Cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
         statistics.Add(Cover("Channels", NodeValue.Integer(channels, "channels", "channel"), Explain.StatChannels, Topics.ChannelLayouts));
         if (layout is not null)

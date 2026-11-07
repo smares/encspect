@@ -542,6 +542,11 @@ public sealed partial class VorbisParser
                 }
 
                 _wholeBlocks[kind]++;
+                if (HasTime)
+                {
+                    _distribution.Add(PacketBitrate(record));
+                }
+
                 _blockBytes[kind] += record.Length;
                 _smallest[kind] = Math.Min(_smallest[kind], record.Length);
                 _largest[kind] = Math.Max(_largest[kind], record.Length);
@@ -744,6 +749,7 @@ public sealed partial class VorbisParser
                     ChannelLayout = VorbisParser.Speakers(id.Channels),
                     Samples = samples,
                     LostSamples = HasTime ? _lost : 0,
+                    StartOffset = _firstOffset,
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
                     IsVbr = _sizes.Count > 1,
@@ -829,6 +835,12 @@ public sealed partial class VorbisParser
         // What the end-of-stream positions cut from the end: the end trimming.
         private long EndTrimming()
         {
+            // A container that has no granule positions states the padding itself (Matroska's DiscardPadding), capped at the samples decoded.
+            if (_isContained && context.Configuration?.DiscardPadding is { } padding)
+            {
+                return Math.Min((long)Math.Floor((padding * Rate) + 0.5), _decoded);
+            }
+
             if (_beyondPackets is { } beyond)
             {
                 _findings.Add(Severity.Warning, "vorbis.granule-beyond-packets", beyond.Field, _ =>

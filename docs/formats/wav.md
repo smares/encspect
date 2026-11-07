@@ -52,6 +52,8 @@ Sources:
 
 ## Reported
 
+A fact chunk's sample length is also reported as **Container Samples**, with **Container Duration** at the sample rate, beside the samples the data holds.
+
 A WAVE file of linear PCM, IEEE float, A-law or mu-law reports a stream: codec, sample rate, channels, layout, bits per sample, the samples from the `data` size and the block alignment, the duration and the average bitrate. The statistics node lists them, with the container width where it differs from the valid bits, the sample format and the byte order.
 
 - **Samples:** whole sample frames of the bytes the data chunk holds in the file, plus any silent samples the wavl list states; a partial sample frame counts nothing and no sample is lost, so Lost Samples never appears. A `fact` count is a stated count, not a declared one. The IEC 61937 bursts below count the samples of their coding (AC-3, E-AC-3, DTS, ADTS), with Lost Samples from its parser.

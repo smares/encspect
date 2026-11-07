@@ -486,6 +486,31 @@
                           "length": 14238
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 86,
+                          "length": 14238
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 86,
+                          "length": 14238,
+                          "children": [
+                            {
+                              "name": "416 to 447 kbps",
+                              "value": "2 frames (66.7%)",
+                              "offset": 86,
+                              "length": 14238
+                            },
+                            {
+                              "name": "448 to 479 kbps",
+                              "value": "1 frame (33.3%)",
+                              "offset": 86,
+                              "length": 14238
+                            }
+                          ]
+                        },
+                        {
                           "name": "Nominal Bitrate",
                           "value": 448,
                           "unit": "kbps",

@@ -1354,6 +1354,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 534,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.2,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 534
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 9600,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 534
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1461,6 +1483,25 @@
                               "unit": "kbps",
                               "offset": 686,
                               "length": 1080
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 686,
+                              "length": 1080
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 686,
+                              "length": 1080,
+                              "children": [
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "20 access units (100.0%)",
+                                  "offset": 686,
+                                  "length": 1080
+                                }
+                              ]
                             }
                           ]
                         },

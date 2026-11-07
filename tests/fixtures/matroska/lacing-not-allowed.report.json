@@ -485,6 +485,25 @@
                       "length": 80
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "constant",
+                      "offset": 204,
+                      "length": 80
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 204,
+                      "length": 80,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "2 packets (100.0%)",
+                          "offset": 204,
+                          "length": 80
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "all 40 bytes, as CBR encoding writes them",
                       "offset": 204,

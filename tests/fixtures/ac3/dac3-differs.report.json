@@ -1075,6 +1075,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 432,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.192,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 432
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 9216,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 432
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1182,6 +1204,25 @@
                               "unit": "kbps",
                               "offset": 584,
                               "length": 4608
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 584,
+                              "length": 4608
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 584,
+                              "length": 4608,
+                              "children": [
+                                {
+                                  "name": "192 to 223 kbps",
+                                  "value": "6 frames (100.0%)",
+                                  "offset": 584,
+                                  "length": 4608
+                                }
+                              ]
                             },
                             {
                               "name": "Nominal Bitrate",

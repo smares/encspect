@@ -1166,6 +1166,43 @@
                           "length": 8918
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 5454,
+                          "length": 8918
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 5454,
+                          "length": 8918,
+                          "children": [
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "4 access units (16.7%)",
+                              "offset": 5454,
+                              "length": 8918
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "8 access units (33.3%)",
+                              "offset": 5454,
+                              "length": 8918
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "9 access units (37.5%)",
+                              "offset": 5454,
+                              "length": 8918
+                            },
+                            {
+                              "name": "160 to 191 kbps",
+                              "value": "3 access units (12.5%)",
+                              "offset": 5454,
+                              "length": 8918
+                            }
+                          ]
+                        },
+                        {
                           "name": "First Elements",
                           "offset": 5454,
                           "length": 8918,
@@ -23262,6 +23299,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.5572702350000001,
+                  "unit": "s",
+                  "offset": 5454,
+                  "length": 8918
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 24576,
+                  "unit": "samples",
+                  "offset": 5454,
+                  "length": 8918
                 }
               ]
             }

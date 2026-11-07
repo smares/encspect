@@ -1182,6 +1182,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 489,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.313469387755102,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 489
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 13824,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 489
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1307,6 +1329,13 @@
                             {
                               "name": "Maximum Reservoir Fill",
                               "value": 381,
+                              "unit": "bytes",
+                              "offset": 641,
+                              "length": 5004
+                            },
+                            {
+                              "name": "Average Reservoir Fill",
+                              "value": 349.2,
                               "unit": "bytes",
                               "offset": 641,
                               "length": 5004

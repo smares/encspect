@@ -81,6 +81,46 @@
                   "length": 1053
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "constant",
+                  "offset": 0,
+                  "length": 1053
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 1053,
+                  "children": [
+                    {
+                      "name": "0 to 31 kbps",
+                      "value": "30 frames (100.0%)",
+                      "offset": 0,
+                      "length": 1053
+                    }
+                  ]
+                },
+                {
+                  "name": "Minimum Buffer Fullness",
+                  "value": 256,
+                  "unit": "words per channel",
+                  "offset": 0,
+                  "length": 1053
+                },
+                {
+                  "name": "Maximum Buffer Fullness",
+                  "value": 256,
+                  "unit": "words per channel",
+                  "offset": 0,
+                  "length": 1053
+                },
+                {
+                  "name": "Average Buffer Fullness",
+                  "value": 256,
+                  "unit": "words per channel",
+                  "offset": 0,
+                  "length": 1053
+                },
+                {
                   "name": "Raw Data Blocks",
                   "value": 30,
                   "unit": "blocks",
@@ -14161,6 +14201,90 @@
             ],
             "values": [
               12
+            ]
+          },
+          {
+            "name": "Buffer Fullness",
+            "unit": "words per channel",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Buffer Fullness",
+            "x": [
+              0,
+              13,
+              65,
+              114,
+              160,
+              203,
+              243,
+              280,
+              314,
+              345,
+              372,
+              396,
+              417,
+              435,
+              450,
+              503,
+              553,
+              600,
+              644,
+              685,
+              723,
+              758,
+              790,
+              818,
+              843,
+              865,
+              884,
+              900,
+              954,
+              1005
+            ],
+            "values": [
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256,
+              256
+            ]
+          },
+          {
+            "name": "Buffer Fullness Over Time",
+            "unit": "words per channel",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Buffer Fullness",
+            "x": [
+              0
+            ],
+            "values": [
+              256
             ]
           },
           {

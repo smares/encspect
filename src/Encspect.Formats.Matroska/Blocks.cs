@@ -427,11 +427,23 @@ internal sealed partial class FileReader
         return item;
     }
 
+    // The DiscardPadding of a block group, which may come before or after its Block (EBML does not order children): kept for the track, the last in the file winning.
+    private static void NoteDiscard(SegmentState segment, Records records, int block, long padding)
+    {
+        uint track = records.Blocks[block].Track;
+        if (!segment.DiscardPaddings.TryGetValue(track, out (long Padding, int Block) known) || block >= known.Block)
+        {
+            segment.DiscardPaddings[track] = (padding, block);
+        }
+    }
+
     // Returns how many Blocks the range holds.
     private int ReadGroupChildren(SegmentState segment, ClusterRecord cluster, long start, long end, int depth, string parentName, long groupOffset)
     {
         Records records = segment.Records;
         int blocks = 0;
+        int lastBlock = -1;
+        long? pendingDiscard = null;
         long position = start;
         while (position < end)
         {
@@ -459,11 +471,28 @@ internal sealed partial class FileReader
             if (child.Id == Schema.Block && depth == 0)
             {
                 record.Block = ReadBlock(segment, cluster, child, childEnd, true);
+                lastBlock = record.Block;
+                if (pendingDiscard is { } early)
+                {
+                    NoteDiscard(segment, records, lastBlock, early);
+                    pendingDiscard = null;
+                }
                 blocks++;
             }
             else if (definition is { Type: ElementType.Unsigned or ElementType.Signed or ElementType.Float })
             {
                 record.Value = ReadNumberBits(child, childEnd, definition.Type);
+                if (child.Id == 0x75A2 && depth == 0)
+                {
+                    if (lastBlock >= 0)
+                    {
+                        NoteDiscard(segment, records, lastBlock, record.Value);
+                    }
+                    else
+                    {
+                        pendingDiscard = record.Value;
+                    }
+                }
             }
 
             records.Children.Add(record);

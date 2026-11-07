@@ -1125,6 +1125,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 428,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.128,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 428
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 6144,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 428
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1233,6 +1255,25 @@
                               "unit": "kbps",
                               "offset": 580,
                               "length": 8192
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 580,
+                              "length": 8192
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 580,
+                              "length": 8192,
+                              "children": [
+                                {
+                                  "name": "512 to 543 kbps",
+                                  "value": "4 frames (100.0%)",
+                                  "offset": 580,
+                                  "length": 8192
+                                }
+                              ]
                             },
                             {
                               "name": "Dialogue Normalization",

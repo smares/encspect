@@ -81,7 +81,23 @@ public sealed class WmaLosslessParser : ICodecParser
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
         var tally = new LosslessTally();
-        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings, probe: new LosslessFrameReader(p, new LosslessTally())) { FrameLimit = FrameLimit };
+        long seekableSeen = 0;
+        long midSideSeen = 0;
+        int? FrameStereo()
+        {
+            long seekable = tally.Seekable - seekableSeen;
+            long midSide = tally.MidSide - midSideSeen;
+            seekableSeen = tally.Seekable;
+            midSideSeen = tally.MidSide;
+            return seekable == 0 ? null : midSide > 0 ? 1 : 0;
+        }
+
+        var reader = new WmaPacketReader(p, new LosslessFrameReader(p, tally), true, p.Channels, fault => LosslessExplain.Reason((LosslessFault)fault), context, findings, probe: new LosslessFrameReader(p, new LosslessTally()))
+        {
+            FrameLimit = FrameLimit,
+            Stereo = p.Channels == 2 ? new UnitCategoryTally("Stereo Coding", LosslessReport.StereoCodings, "frame", GraphConcept.StereoCoding) : null,
+            FrameStereo = p.Channels == 2 ? FrameStereo : null,
+        };
         reader.Run(packets);
 
         var nodes = new LosslessNodes(reader.Data, p);
@@ -112,6 +128,7 @@ public sealed class WmaLosslessParser : ICodecParser
                 $"The stream has more than {WmaPacketReader.MaxPackets} media objects; the {reader.Skipped} after them are not read, so the statistics and the series cover the first {WmaPacketReader.MaxPackets}.", parent);
         }
 
+        IReadOnlyList<Series> series = frameCount > 0 ? LosslessReport.Series(p, reader, stream) : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -128,7 +145,8 @@ public sealed class WmaLosslessParser : ICodecParser
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
-            Series = frameCount > 0 ? LosslessReport.Series(p, reader, stream) : [],
+            Series = series,
+            CategorySeries = LosslessReport.Categories(reader, series, stream),
         });
 
         findings.Flush(context);

@@ -173,6 +173,25 @@
                               "length": 843
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 36,
+                              "length": 843
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 36,
+                              "length": 843,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "30 access units (100.0%)",
+                                  "offset": 36,
+                                  "length": 843
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 36,
                               "length": 843,
@@ -11628,6 +11647,28 @@
                               ]
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 995,
+                      "length": 579,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.6965986394557823,
+                          "unit": "s",
+                          "offset": 995,
+                          "length": 579
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 30720,
+                          "unit": "samples",
+                          "offset": 995,
+                          "length": 579
                         }
                       ]
                     }

@@ -85,6 +85,10 @@ internal static class ProExplain
     public const string StatSubframeSizes = "How many different subframe lengths occur; each size lists how many subframes have it.";
     public const string StatSubframeSize = "How many subframes have this length, and their share of all.";
     public const string StatChannelsPerSubframe = "The average number of channels a subframe is shared by.";
+    public const string StatStereoCoding = "How the valid frames of a stream of two channels code them: with the channel transform of the pair on, which is sum and difference, so mid/side, in at least one scale factor band, or as left and right in all (the channel transform of a subframe).";
+    public const string StereoCodingSeries = "How each valid frame of a stream of two channels codes them, as the tally of Stereo Coding counts them; a frame with no pair of channels read has none.";
+    public const string StereoLeftRight = "Frames whose pairs of channels have the transform off in every band, with their share.";
+    public const string StereoMidSide = "Frames with a pair of channels whose transform, sum and difference, is on in at least one band, with their share.";
     public const string StatChannelGroups = "How many channel groups use a transform, and their share of all groups.";
     public const string StatBandsTransformed = "In how many scale factor bands of the groups with a transform the transform applies, and their share.";
     public const string StatPostprocessingFrames = "How many frames set the postprocessing bit.";

@@ -6450,6 +6450,43 @@
                       "length": 3070
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 2693,
+                      "length": 3070
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 2693,
+                      "length": 3070,
+                      "children": [
+                        {
+                          "name": "32 to 63 kbps",
+                          "value": "20 packets (66.7%)",
+                          "offset": 2693,
+                          "length": 3070
+                        },
+                        {
+                          "name": "96 to 127 kbps",
+                          "value": "4 packets (13.3%)",
+                          "offset": 2693,
+                          "length": 3070
+                        },
+                        {
+                          "name": "128 to 159 kbps",
+                          "value": "2 packets (6.7%)",
+                          "offset": 2693,
+                          "length": 3070
+                        },
+                        {
+                          "name": "160 to 191 kbps",
+                          "value": "4 packets (13.3%)",
+                          "offset": 2693,
+                          "length": 3070
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "22 sizes",
                       "offset": 2693,
@@ -7970,6 +8007,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.6900000000000001,
+                  "unit": "s",
+                  "offset": 143,
+                  "length": 5620
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 30429,
+                  "unit": "samples",
+                  "offset": 143,
+                  "length": 5620
                 }
               ]
             }

@@ -3012,6 +3012,55 @@
                           "length": 23954
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 4995,
+                          "length": 23954
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 4995,
+                          "length": 23954,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "32 frames (48.5%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "6 frames (9.1%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "7 frames (10.6%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "13 frames (19.7%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "6 frames (9.1%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "160 to 191 kbps",
+                              "value": "2 frames (3.0%)",
+                              "offset": 4995,
+                              "length": 23954
+                            }
+                          ]
+                        },
+                        {
                           "name": "Frames Spanning Packets",
                           "value": 3,
                           "offset": 4995,
@@ -3085,6 +3134,27 @@
                           "value": 2,
                           "offset": 4995,
                           "length": 23954
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 4995,
+                          "length": 23954,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "1 frame (1.5%)",
+                              "offset": 4995,
+                              "length": 23954
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "65 frames (98.5%)",
+                              "offset": 4995,
+                              "length": 23954
+                            }
+                          ]
                         },
                         {
                           "name": "Channel Groups",
@@ -29959,6 +30029,39 @@
               56,
               57.9,
               39.2
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 1
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 65
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                61
+              ]
             ]
           }
         ]

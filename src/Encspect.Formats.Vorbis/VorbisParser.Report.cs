@@ -247,6 +247,10 @@ public sealed partial class VorbisParser
                         Add("Gap Trimming", NodeValue.Integer(_gapTrim, "samples", "sample"), Explain.GapTrimming, Topics.GranulePosition);
                     }
                 }
+                else if (_isContained && context.Configuration?.DiscardPadding is not null)
+                {
+                    Add("End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimmingContainer, Topics.GranulePosition);
+                }
 
                 Add("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.GranulePosition);
                 if (_lost > 0)
@@ -264,6 +268,7 @@ public sealed partial class VorbisParser
                 (double minimum, double maximum) = BitrateRange();
                 Add("Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add("Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
+                _distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
             }
 
             Node sizes = Add("Packet Sizes", Count(_sizes.Count, "size", "sizes"), Explain.PacketSizes);
@@ -326,6 +331,9 @@ public sealed partial class VorbisParser
         ];
 
         private Node? _blockSizesNode;
+
+        // The bitrate of each whole packet that codes a block, counted as the packets are read.
+        private readonly BitrateDistribution _distribution = new();
 
         private Node? AddPackets()
         {

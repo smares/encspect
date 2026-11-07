@@ -81,6 +81,31 @@
                   "length": 2304
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 2304
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 2304,
+                  "children": [
+                    {
+                      "name": "416 to 447 kbps",
+                      "value": "3 frames (75.0%)",
+                      "offset": 0,
+                      "length": 2304
+                    },
+                    {
+                      "name": "864 to 895 kbps",
+                      "value": "1 frame (25.0%)",
+                      "offset": 0,
+                      "length": 2304
+                    }
+                  ]
+                },
+                {
                   "name": "Core Frames",
                   "value": 4,
                   "unit": "frames",

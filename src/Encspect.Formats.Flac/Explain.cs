@@ -171,6 +171,10 @@ internal static class Explain
     public const string StatStrategy = "Whether the frames count in whole frames (fixed block size) or in samples (variable block size), or both.";
     public const string StatSmallestBlock = "The smallest block size of any frame, in samples.";
     public const string StatLargestBlock = "The largest block size of any frame, in samples.";
+    public const string StatStereoCoding = "How the frames of two channels code them: each channel by itself (left/right stereo), as left and side, as side and right, or as mid and side (RFC 9639, section 9.1.3).";
+    public const string StereoCodingSeries = "The channel assignment of each frame of two channels, as the tally of Stereo Coding counts them; a frame of another number of channels has none.";
+    public const string StatContainerSamples = "The length of the stream as the STREAMINFO block states it, in samples per channel (RFC 9639, section 8.2); 0 there means unknown, and no figure is given. It is the header's statement and is not counted from the frames.";
+    public const string StatContainerDuration = "The length of the stream as the STREAMINFO block states it, in seconds: its total number of samples at its sample rate (RFC 9639, section 8.2). It is the header's statement and is not counted from the frames.";
     public const string StatIndependent = "The stereo frames whose two channels are coded each by itself.";
     public const string StatLeftSide = "The stereo frames coded as the left channel and the side channel, the difference of left and right.";
     public const string StatSideRight = "The stereo frames coded as the side channel and the right channel.";

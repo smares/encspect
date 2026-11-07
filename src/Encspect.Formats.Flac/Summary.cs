@@ -231,6 +231,11 @@ internal static partial class Summary
         }
 
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
+        if (info is { TotalSamples: > 0 })
+        {
+            ContainerLength.AddSamples(statistics, (name, value, description) => cover(name, value, description, null), (long)info.Value.TotalSamples, rate, Explain.StatContainerSamples, Explain.StatContainerDuration);
+        }
+
         if (rate > 0)
         {
             statistics.Add(Cover3("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
@@ -259,19 +264,7 @@ internal static partial class Summary
         }
 
         long stereo = s.AssignmentFrames.Sum();
-        if (channels == 2 && stereo > 0)
-        {
-            string[] names = ["Independent Frames", "Left/Side Frames", "Side/Right Frames", "Mid/Side Frames"];
-            string[] descriptions = [Explain.StatIndependent, Explain.StatLeftSide, Explain.StatSideRight, Explain.StatMidSide];
-            for (int i = 0; i < 4; i++)
-            {
-                if (i == 0 || s.AssignmentFrames[i] > 0)
-                {
-                    statistics.Add(cover(names[i], $"{StreamFigures.Counted(s.AssignmentFrames[i], "frame", "frames")} of {StreamFigures.Counted(stereo, "stereo frame", "stereo frames")} ({StreamFigures.Share(s.AssignmentFrames[i], stereo)})",
-                        descriptions[i], i == 3 ? Topics.MidSideStereo : i == 1 ? "left-side-stereo" : Topics.ChannelAssignment));
-                }
-            }
-        }
+        Node? stereoNode = s.Stereo.AddTo(statistics, cover, Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
 
         if (s.Subframes > 0)
         {
@@ -340,6 +333,7 @@ internal static partial class Summary
             > 2 => "Multichannel",
             _ => null,
         };
+        List<Series> series = s.Figures?.Series(anchor, s.Context.CancellationToken) ?? [];
         return new StreamInfo
         {
             Nodes = [stream],
@@ -359,7 +353,8 @@ internal static partial class Summary
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Verification = verification,
-            Series = s.Figures?.Series(anchor, s.Context.CancellationToken) ?? [],
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
         };
     }
 

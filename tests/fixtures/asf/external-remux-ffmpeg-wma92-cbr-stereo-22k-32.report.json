@@ -3338,6 +3338,55 @@
                           "length": 16050
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "variable",
+                          "offset": 701,
+                          "length": 16050
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 701,
+                          "length": 16050,
+                          "children": [
+                            {
+                              "name": "0 to 31 kbps",
+                              "value": "47 frames (71.2%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "32 to 63 kbps",
+                              "value": "5 frames (7.6%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "64 to 95 kbps",
+                              "value": "6 frames (9.1%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "96 to 127 kbps",
+                              "value": "6 frames (9.1%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "128 to 159 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "192 to 223 kbps",
+                              "value": "1 frame (1.5%)",
+                              "offset": 701,
+                              "length": 16050
+                            }
+                          ]
+                        },
+                        {
                           "name": "Uses Bit Reservoir",
                           "value": true,
                           "offset": 701,
@@ -3431,6 +3480,27 @@
                           "value": "114 blocks (83.8%)",
                           "offset": 701,
                           "length": 16050
+                        },
+                        {
+                          "name": "Stereo Coding",
+                          "value": 66,
+                          "unit": "frames",
+                          "offset": 701,
+                          "length": 16050,
+                          "children": [
+                            {
+                              "name": "Left/right stereo",
+                              "value": "22 frames (33.3%)",
+                              "offset": 701,
+                              "length": 16050
+                            },
+                            {
+                              "name": "Mid/side stereo",
+                              "value": "44 frames (66.7%)",
+                              "offset": 701,
+                              "length": 16050
+                            }
+                          ]
                         },
                         {
                           "name": "Blocks without Coded Channels",
@@ -16713,6 +16783,135 @@
               87,
               105,
               97
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 22
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 44
+              }
+            ],
+            "total": 66,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                8
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                5
+              ]
             ]
           }
         ]

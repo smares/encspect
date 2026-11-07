@@ -81,6 +81,31 @@
                   "length": 4180
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "constant",
+                  "offset": 0,
+                  "length": 4180
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 4180,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "10 frames (66.7%)",
+                      "offset": 0,
+                      "length": 4180
+                    },
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "5 frames (33.3%)",
+                      "offset": 0,
+                      "length": 4180
+                    }
+                  ]
+                },
+                {
                   "name": "Nominal Bitrate",
                   "value": 64,
                   "unit": "kbps",

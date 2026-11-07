@@ -75,6 +75,17 @@ internal static class VoiceReport
             Add("Largest Superframe", NodeValue.Decimal(t.LargestBits / 8.0, 1, "bytes"), VoiceExplain.StatLargestSuperframe);
             Add("Minimum Bitrate", NodeValue.Decimal(t.SmallestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMinimumBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(t.LargestBits * (rate / (double)VoiceParameters.SuperframeSamples / 1000), 1, "kbps"), VoiceExplain.StatMaximumBitrate);
+            var distribution = new BitrateDistribution();
+            for (int i = 0; i < stream.SuperframeRecords.Count; i++)
+            {
+                VoiceSuperframe sf = stream.SuperframeRecords[i];
+                if (sf.Outcome == VoiceOutcome.Read)
+                {
+                    distribution.Add(sf.Needed * (rate / (double)VoiceParameters.SuperframeSamples / 1000));
+                }
+            }
+
+            distribution.AddTo(node, (name, value, description) => new Node(name, container.Offset, container.Length, value) { Description = description }, "Superframe", "Superframes", configuration?.IsVbr);
         }
 
         Add("Superframes Spanning Packets", NodeValue.Integer(t.SpanningPackets), VoiceExplain.StatSpanning);

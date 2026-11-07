@@ -220,6 +220,37 @@
                               "length": 5793
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 48,
+                              "length": 5793
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 48,
+                              "length": 5793,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "45 access units (67.2%)",
+                                  "offset": 48,
+                                  "length": 5793
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "21 access units (31.3%)",
+                                  "offset": 48,
+                                  "length": 5793
+                                },
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 48,
+                                  "length": 5793
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 48,
                               "length": 5793,
@@ -27858,6 +27889,20 @@
                       "offset": 5957,
                       "length": 728,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.555736961451247,
+                          "unit": "s",
+                          "offset": 5957,
+                          "length": 728
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 68608,
+                          "unit": "samples",
+                          "offset": 5957,
+                          "length": 728
+                        },
                         {
                           "name": "Encoder Delay (iTunSMPB)",
                           "value": 2048,

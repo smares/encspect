@@ -381,6 +381,20 @@
                   "length": 32872
                 },
                 {
+                  "name": "Container Duration",
+                  "value": 0.3401360544217687,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 32872
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 15000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 32872
+                },
+                {
                   "name": "Sample Rate",
                   "value": 44100,
                   "unit": "Hz",
@@ -428,22 +442,25 @@
                   "length": 32872
                 },
                 {
-                  "name": "Independent Frames",
-                  "value": "0 frames of 3 stereo frames (0.0%)",
+                  "name": "Stereo Coding",
+                  "value": 3,
+                  "unit": "frames",
                   "offset": 0,
-                  "length": 32872
-                },
-                {
-                  "name": "Left/Side Frames",
-                  "value": "2 frames of 3 stereo frames (66.7%)",
-                  "offset": 0,
-                  "length": 32872
-                },
-                {
-                  "name": "Mid/Side Frames",
-                  "value": "1 frame of 3 stereo frames (33.3%)",
-                  "offset": 0,
-                  "length": 32872
+                  "length": 32872,
+                  "children": [
+                    {
+                      "name": "Left/side stereo",
+                      "value": "2 frames (66.7%)",
+                      "offset": 0,
+                      "length": 32872
+                    },
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 32872
+                    }
+                  ]
                 },
                 {
                   "name": "Subframe Types",
@@ -1800,6 +1817,43 @@
             ],
             "values": [
               578
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 2
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 1
+              }
+            ],
+            "total": 3,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                1
+              ]
             ]
           }
         ]

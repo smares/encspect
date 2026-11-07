@@ -291,6 +291,7 @@ internal sealed partial class FileReader
             ? new CodecConfiguration(privateData, privateNode)
             {
                 Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
+                DiscardPadding = DiscardOf(segment, track) is > 0 and var padding ? padding : null,
                 AreSamplesEncrypted = areFramesEncrypted,
                 Duration = seconds > 0 ? seconds : null,
             }
@@ -368,6 +369,14 @@ internal sealed partial class FileReader
                 {
                     _context.UpdateStream(stream, updated);
                 }
+            }
+
+            double containerPadding = DiscardOf(segment, track);
+            double containerDelay = track.CodecDelayNode is null ? 0 : track.CodecDelay / 1e9;
+            if (added.Count == 1 && ContainerDuration(segment, track) - containerDelay - containerPadding is > 0 and var length)
+            {
+                ContainerLength.AddDuration(node, (name, value, description) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.Tracks },
+                    length, added[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
             }
 
             CompareStreams(track, label, codec, added);
@@ -504,6 +513,19 @@ internal sealed partial class FileReader
         }
 
         return Math.Max(0, ContainerDuration(segment, track) - delay);
+    }
+
+    // The DiscardPadding of the track's last block in seconds, 0 where the track has none, a negative one (padding at the start of a block) or it is on
+    // another block: RFC 9559 (section 5.1.3.5.7) gives it per block, and only the last block's ends the audio.
+    private static double DiscardOf(SegmentState segment, TrackInfo track)
+    {
+        if (track.Number is not { } number || !segment.DiscardPaddings.TryGetValue((uint)number, out (long Padding, int Block) found) || found.Padding <= 0)
+        {
+            return 0;
+        }
+
+        List<int>? blocks = segment.BlocksByTrack?.GetValueOrDefault(number);
+        return blocks is { Count: > 0 } && blocks[^1] == found.Block ? found.Padding / 1e9 : 0;
     }
 
     // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.

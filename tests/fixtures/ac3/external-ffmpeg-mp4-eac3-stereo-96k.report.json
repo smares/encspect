@@ -201,6 +201,25 @@
                               "length": 6144
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 48,
+                              "length": 6144
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 48,
+                              "length": 6144,
+                              "children": [
+                                {
+                                  "name": "96 to 127 kbps",
+                                  "value": "16 frames (100.0%)",
+                                  "offset": 48,
+                                  "length": 6144
+                                }
+                              ]
+                            },
+                            {
                               "name": "Dialogue Normalization",
                               "value": -31,
                               "unit": "dB",
@@ -25270,6 +25289,20 @@
                       "offset": 6308,
                       "length": 475,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.5,
+                          "unit": "s",
+                          "offset": 6308,
+                          "length": 475
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 24000,
+                          "unit": "samples",
+                          "offset": 6308,
+                          "length": 475
+                        },
                         {
                           "name": "Encoder Delay (Edit List)",
                           "value": 256,

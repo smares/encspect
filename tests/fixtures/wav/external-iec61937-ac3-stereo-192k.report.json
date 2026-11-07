@@ -557,6 +557,25 @@
                           "length": 19200
                         },
                         {
+                          "name": "Bitrate Mode",
+                          "value": "constant",
+                          "offset": 86,
+                          "length": 19200
+                        },
+                        {
+                          "name": "Bitrate Distribution",
+                          "offset": 86,
+                          "length": 19200,
+                          "children": [
+                            {
+                              "name": "192 to 223 kbps",
+                              "value": "4 frames (100.0%)",
+                              "offset": 86,
+                              "length": 19200
+                            }
+                          ]
+                        },
+                        {
                           "name": "Nominal Bitrate",
                           "value": 192,
                           "unit": "kbps",

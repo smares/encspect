@@ -13,6 +13,7 @@ Speex in [Ogg](ogg.md).
 
 ## Reported
 
+- **Bitrate Mode** (the mode the stream or its container states where it states one (the nominal bitrates of AC-3 and of DTS without extension substreams, 0x7FF in ADTS, the variable flag of ASF), else variable or constant by the units' own bitrates, unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate.
 - the delay, end trimming and duration;
 - bitrates and packet sizes;
 - the frames of each submode;

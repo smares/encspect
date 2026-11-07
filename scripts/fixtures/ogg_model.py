@@ -395,6 +395,22 @@ def share(count, total, singular, plural_form):
     return f"{plural(count, singular, plural_form)} ({fmt_decimal(count * 100.0 / total, 1)}%)"
 
 
+def distribution(statistics, rates, singular, plural_form):
+    """Bitrate Mode and Bitrate Distribution (BitrateDistribution.cs): ranges of 32 kbps, the last from 32,000 kbps."""
+    if not rates:
+        return
+    statistics["Bitrate Mode"] = "unknown" if len(rates) == 1 else "variable" if max(rates) > min(rates) else "constant"
+    statistics["Bitrate Distribution"] = None
+    bins = {}
+    for rate in rates:
+        key = min(1000, int(rate // 32))
+        bins[key] = bins.get(key, 0) + 1
+    for key in sorted(bins):
+        name = f"{key * 32} kbps and more" if key == 1000 else f"{key * 32} to {key * 32 + 31} kbps"
+        count = bins[key]
+        statistics[f"Bitrate Distribution/{name}"] = f"{count} {singular if count == 1 else plural_form} ({round(count * 1000.0 / len(rates)) / 10:.1f}%)"
+
+
 def speex_expectations(header, packets, positions, gaps=(), cuts=()):
     """What the analyzer reports for a Speex stream.
 
@@ -499,6 +515,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
             statistics["Average Bitrate"] = fmt_decimal(total_bytes * 8.0 * rate / whole_coded / 1000, 1) + " kbps"
             statistics["Minimum Bitrate"] = fmt_decimal(bitrate(min(sizes)), 1) + " kbps"
             statistics["Maximum Bitrate"] = fmt_decimal(bitrate(max(sizes)), 1) + " kbps"
+            distribution(statistics, [bitrate(size) for size, count in sorted(sizes.items()) for _ in range(count)], "packet", "packets")
     if packets:
         statistics["Packet Sizes"] = plural(len(sizes), "size", "sizes")
         for size in sorted(sizes):

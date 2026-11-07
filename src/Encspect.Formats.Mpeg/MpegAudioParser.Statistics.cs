@@ -48,6 +48,8 @@ public sealed partial class MpegAudioParser
         long cutEnd = 0;
         bool hasSideInfo = true;
         int maximumFill = 0;
+        long fillSum = 0;
+        int fillFrames = 0;
         int crcVerified = 0;
         int crcFailed = 0;
         int free = 0;
@@ -81,6 +83,8 @@ public sealed partial class MpegAudioParser
             hasSideInfo &= frame.HasSideInfo;
             region.Tally.AddFigure(FigureOf(state.Build, frame, header));
             maximumFill = Math.Max(maximumFill, frame.ReservoirFill);
+            fillSum += frame.ReservoirFill;
+            fillFrames++;
             if (frame is { Crc: >= 0, ComputedCrc: >= 0 })
             {
                 if (frame.Crc == frame.ComputedCrc)
@@ -157,6 +161,7 @@ public sealed partial class MpegAudioParser
         if (hasSideInfo)
         {
             region.MaximumFill = Add("Maximum Reservoir Fill", NodeValue.Integer(maximumFill, "bytes"), Explain.MaximumFill, Topics.BitReservoir);
+            Add("Average Reservoir Fill", NodeValue.Decimal(RoundHalfEven((Int128)fillSum * 10, fillFrames) / 10.0, 1, "bytes"), Explain.AverageFill, Topics.BitReservoir);
         }
 
         AddTally(node, region, start, length, bits / 8, ticks);

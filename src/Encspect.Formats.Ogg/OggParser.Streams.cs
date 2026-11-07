@@ -257,6 +257,20 @@ public sealed partial class OggParser
         {
             // A codec that reports several streams is not known to play them together here: one group number cannot say that they follow each other (Matroska and MP4 mark the ones their codec reports as playing together).
             List<StreamInfo> made = [.. context.Streams.Skip(streamsBefore)];
+            if (made.Count == 1 && stream.LastGranulePage >= 0 && made[0].SampleRate > 0)
+            {
+                PageRecord last = region.Pages[stream.LastGranulePage];
+                // The length is counted from where the stream starts: the codec parser's start offset (the first page's granule position less the samples before it), 0
+                // when it reports none. An offset of more than the last position either way (a clamped one included) leaves no honest length, and no figure is given.
+                long startOffset = made[0].StartOffset ?? 0;
+                if (Int128.Abs(startOffset) <= last.Granule && last.Granule - startOffset > 0)
+                {
+                    long granuleOffset = last.Offset + 6;
+                    ContainerLength.AddSamples(node, (name, value, description) => new Node(name, granuleOffset, 8, value) { Description = description, Topic = Topics.GranulePosition },
+                        last.Granule - startOffset, made[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
+                }
+            }
+
             if (made.Count == 1)
             {
                 context.UpdateStream(made[0], made[0] with { PlaybackGroup = region.GroupBase + stream.Link });

@@ -643,6 +643,16 @@ public sealed partial class Mp4Parser
         Node Cover(string name, NodeValue value, string description) =>
             new(name, track.Box.Offset, track.Box.Length, value) { Description = description, Topic = Topics.EditListsAndPriming };
         NodeValue Units(long count) => NodeValue.Integer(count, "samples", "sample");
+        if (track.MediaDuration is { } mediaUnits && mediaUnits != uint.MaxValue && mediaUnits != ulong.MaxValue && track.Timescale > 0
+            && (mediaUnits > 0 || state.Fragments == 0))
+        {
+            nodes.Add(Cover("Container Duration", NodeValue.Decimal(mediaUnits / (double)track.Timescale, 3, "s"), Explain.ContainerDuration));
+            if ((track.ReadEntry ?? track.Entries.FirstOrDefault()) is { } entry && entry.SampleRate == track.Timescale && mediaUnits <= long.MaxValue)
+            {
+                nodes.Add(Cover("Container Samples", Units((long)mediaUnits), Explain.ContainerSamples));
+            }
+        }
+
         ulong total = 0;
         foreach ((uint count, uint delta) in track.TimeToSample ?? [])
         {

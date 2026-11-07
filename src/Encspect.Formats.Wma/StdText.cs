@@ -77,6 +77,10 @@ internal static class StdText
     public const string StatUsesNoiseSubstitution = "Whether noise substitution is on, derived from the sampling rate and the bitrate.";
     public const string StatBlocks = "How many blocks were read, failed ones included.";
     public const string StatBlockSizes = "How many block sizes occur, with the share of blocks at each.";
+    public const string StatStereoCoding = "How the valid frames of a stream of two channels code them: with mid/side in at least one block, or as left and right in all.";
+    public const string StereoCodingSeries = "How each valid frame codes its two channels, as the tally of Stereo Coding counts them; an invalid frame has none.";
+    public const string StereoLeftRight = "Valid frames in which no block is coded as mid/side, with their share.";
+    public const string StereoMidSide = "Valid frames in which at least one block is coded as mid/side, with their share.";
     public const string StatMidSideBlocks = "Blocks coded as mid/side, as a share of the blocks whose size is known.";
     public const string StatNoiseSubstitutedBlocks = "Blocks with a coded channel and a band replaced by noise, as a share of all blocks.";
     public const string StatBlocksWithoutCoded = "Blocks in which no channel is coded.";

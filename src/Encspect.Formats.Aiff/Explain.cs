@@ -97,6 +97,8 @@ internal static class Explain
     public const string Statistics = "Figures over the audio the file describes: its length, rate, channels and the bits of its samples.";
     public const string StatCodec = "The coding of the sound, from the compression type of the Common Chunk; uncompressed in a FORM AIFF.";
     public const string StatCompressionType = "The compression type of the Common Chunk.";
+    public const string StatContainerSamples = "The length of the stream as the Common Chunk states it, in samples per channel: numSampleFrames, times the samples of a packet for ima4, ACE and MACE, whose compressed sample frames are packets; none for other packed codings. The frames the sound data holds are Sample Frames.";
+    public const string StatContainerDuration = "The length of the stream as the Common Chunk states it, in seconds: the same count at the sample rate it states.";
     public const string StatSampleFrames = "The number of sample frames: the Common Chunk's count, or, when the sound data holds fewer, the frames it holds.";
     public const string StatDuration = "The length of the audio: the sample frames divided by the sample rate.";
     public const string StatRate = "The sample rate in Hz, from the Common Chunk's extended number.";

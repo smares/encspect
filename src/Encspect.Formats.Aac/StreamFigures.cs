@@ -36,6 +36,15 @@ internal sealed class StreamFigures(int sampleRate)
 
     public void AddLost(long samples) => Lost += samples;
 
+    // The samples a decoder drops from the end, as the container states them; no more than the samples counted.
+    public long Trimmed { get; private set; }
+
+    public void TrimEnd(long samples)
+    {
+        Trimmed = Math.Clamp(samples, 0, Samples);
+        Samples -= Trimmed;
+    }
+
     // The frames whose ADTS CRC was checked against the one computed, and those that differ (not verified or unchecked frames are in neither).
     public long VerifiedChecksums { get; private set; }
 
@@ -63,9 +72,50 @@ internal sealed class StreamFigures(int sampleRate)
         Lost += samples;
     }
 
+    // adts_buffer_fullness of each unit that was added, by unit: the value, NoFullness for a unit without one, or Variable for 0x7FF (variable bitrate
+    // signaling, which is no fill). Empty for a stream without ADTS headers.
+    private readonly ChunkedList<int> _fullness = new();
+    public const int NoFullness = -1;
+    public const int Variable = -2;
+    private long _fullnessSum;
+    private long _fullnessCount;
+    private int _fullnessMaximum;
+    private int _fullnessMinimum = int.MaxValue;
+    private Node? _fullnessNode;
+
+    public long VariableSignaling { get; private set; }
+
+    // The buffer fullness of the unit Add counted last (Add first).
+    public void SetFullness(int value)
+    {
+        int unit = _points.Count - 1;
+        while (_fullness.Count < unit)
+        {
+            _fullness.Add(NoFullness);
+        }
+
+        _fullness.Add(value);
+        if (value == Variable)
+        {
+            VariableSignaling++;
+        }
+        else if (value >= 0)
+        {
+            _fullnessSum += value;
+            _fullnessCount++;
+            _fullnessMaximum = Math.Max(_fullnessMaximum, value);
+            _fullnessMinimum = Math.Min(_fullnessMinimum, value);
+        }
+    }
+
     public int Smallest { get; private set; } = int.MaxValue;
 
     public int Largest { get; private set; }
+
+    private readonly BitrateDistribution _distribution = new();
+
+    // The bitrate mode the stream states (true for variable), or null when it states none.
+    public bool? StatedVariable { get; set; }
 
     public double MinimumBitrate { get; private set; } = double.MaxValue;
 
@@ -105,6 +155,7 @@ internal sealed class StreamFigures(int sampleRate)
         Largest = Math.Max(Largest, length);
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
+        _distribution.Add(bitrate);
     }
 
     private void Merge()
@@ -182,6 +233,72 @@ internal sealed class StreamFigures(int sampleRate)
             });
         }
 
+        if (_fullnessCount > 0 && _fullnessNode is not null)
+        {
+            var x = new double[_fullnessCount];
+            var y = new double[_fullnessCount];
+            for (int i = 0, n = 0; i < _fullness.Count; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                }
+
+                if (_fullness[i] >= 0)
+                {
+                    x[n] = offsets[i];
+                    y[n++] = _fullness[i];
+                }
+            }
+
+            series.Add(new("Buffer Fullness", "words per channel", SeriesAxis.FrameOffset, x, y)
+            {
+                Description = Explain.BufferFullnessSeries,
+                Concept = GraphConcept.BitDistribution,
+                Quantity = "Buffer Fullness",
+            });
+            if (_seconds.Count > 0)
+            {
+                int intervals = _seconds.Count;
+                var starts = new double[intervals];
+                var means = new double[intervals];
+                int valued = 0;
+                for (int interval = 0; interval < intervals; interval++)
+                {
+                    int from = _firstUnits[interval];
+                    int to = interval + 1 < intervals ? _firstUnits[interval + 1] : _fullness.Count;
+                    long sum = 0;
+                    int count = 0;
+                    for (int unit = from; unit < to && unit < _fullness.Count; unit++)
+                    {
+                        if (_fullness[unit] >= 0)
+                        {
+                            sum += _fullness[unit];
+                            count++;
+                        }
+                    }
+
+                    if (count > 0)
+                    {
+                        starts[valued] = interval * (double)_spanSeconds;
+                        means[valued++] = Math.Round((double)sum / count, MidpointRounding.ToEven);
+                    }
+                }
+
+                if (valued > 0)
+                {
+                    Array.Resize(ref starts, valued);
+                    Array.Resize(ref means, valued);
+                    series.Add(new("Buffer Fullness Over Time", "words per channel", SeriesAxis.Seconds, starts, means, _fullnessNode)
+                    {
+                        Description = Explain.BufferFullnessOverTimeSeries,
+                        Concept = GraphConcept.BitDistribution,
+                        Quantity = "Buffer Fullness",
+                    });
+                }
+            }
+        }
+
         return series;
     }
 
@@ -197,6 +314,11 @@ internal sealed class StreamFigures(int sampleRate)
             Node node = cover("Lost Samples", NodeValue.Integer(Lost, "samples", "sample"), NodeKind.Detail, StreamInfo.LostSamplesDescription);
             statistics.Add(new Node(node.Name, node.Offset, node.Length, node.Value) { Kind = node.Kind, Ranges = node.Ranges, Description = node.Description, Topic = Topics.SamplesAndLostSamples });
         }
+        if (Trimmed > 0)
+        {
+            statistics.Add(cover("End Trimming", NodeValue.Integer(Trimmed, "samples", "sample"), NodeKind.Detail, Explain.StatEndTrimming));
+        }
+
         statistics.Add(cover("Duration", NodeValue.Decimal(Duration, 3, "s"), NodeKind.Detail, Explain.StatDuration));
         bitrate = statistics.Add(cover("Average Bitrate", AverageBitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", NodeKind.Detail, Explain.AverageBitrate));
         if (Count > 0)
@@ -205,6 +327,20 @@ internal sealed class StreamFigures(int sampleRate)
             statistics.Add(cover($"Largest {unitName}", NodeValue.Integer(Largest, "bytes"), NodeKind.Detail, Explain.Largest));
             statistics.Add(cover("Minimum Bitrate", NodeValue.Decimal(MinimumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MinimumBitrate));
             statistics.Add(cover("Maximum Bitrate", NodeValue.Decimal(MaximumBitrate, 1, "kbps"), NodeKind.Detail, Explain.MaximumBitrate));
+            StatedVariable ??= VariableSignaling > 0 ? true : _fullnessCount > 0 ? false : null;
+            _distribution.AddTo(statistics, (name, value, description) => cover(name, value, NodeKind.Detail, description), unitName, unitPlural, StatedVariable);
+        }
+
+        if (_fullnessCount > 0)
+        {
+            statistics.Add(cover("Minimum Buffer Fullness", NodeValue.Integer(_fullnessMinimum, "words per channel", "word per channel"), NodeKind.Detail, Explain.StatMinimumFullness));
+            _fullnessNode = statistics.Add(cover("Maximum Buffer Fullness", NodeValue.Integer(_fullnessMaximum, "words per channel", "word per channel"), NodeKind.Detail, Explain.StatMaximumFullness));
+            statistics.Add(cover("Average Buffer Fullness", NodeValue.Decimal(Math.Round((double)_fullnessSum / _fullnessCount, 1, MidpointRounding.ToEven), 1, "words per channel"), NodeKind.Detail, Explain.StatAverageFullness));
+        }
+
+        if (VariableSignaling > 0)
+        {
+            statistics.Add(cover("Frames Signaling Variable Bitrate", NodeValue.Integer(VariableSignaling, "frames", "frame"), NodeKind.Detail, Explain.StatVariableSignaling));
         }
 
         if (VerifiedChecksums + FailedChecksums > 0)

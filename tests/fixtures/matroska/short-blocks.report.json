@@ -577,6 +577,25 @@
                       "length": 102
                     },
                     {
+                      "name": "Bitrate Mode",
+                      "value": "constant",
+                      "offset": 199,
+                      "length": 102
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 199,
+                      "length": 102,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "2 packets (100.0%)",
+                          "offset": 199,
+                          "length": 102
+                        }
+                      ]
+                    },
+                    {
                       "name": "Packet Sizes",
                       "value": "all 40 bytes, as CBR encoding writes them",
                       "offset": 199,
@@ -793,6 +812,20 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.0235,
+                  "unit": "s",
+                  "offset": 138,
+                  "length": 163
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1128,
+                  "unit": "samples",
+                  "offset": 138,
+                  "length": 163
                 }
               ]
             }

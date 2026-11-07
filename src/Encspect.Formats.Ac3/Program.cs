@@ -394,6 +394,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     public Node Statistics(Func<string, NodeValue?, NodeKind, string, string?, Node> cover, out Node bitrate, out CodingNodes coding)
     {
+        // Only AC-3 states a nominal bitrate (bsid 8 and below, frmsizecod); E-AC-3 frames state their sizes only.
+        Figures.StatedVariable = !key.IsEac3 && !HasEac3 && _nominal.Count > 0 ? _nominal.Count > 1 : null;
         Node statistics = Figures.Statistics((name, value, kind, description) => cover(name, value, kind, description, null), "Frame", "Frames", out bitrate, node =>
         {
             if (LostSamples > 0)

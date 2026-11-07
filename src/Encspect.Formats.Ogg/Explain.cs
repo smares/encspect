@@ -46,6 +46,8 @@ internal static class Explain
     public const string Codec = "The codec the stream's first packet names by its first bytes, such as \"Speex\" and three spaces or 0x01 and \"vorbis\" (RFC 3533, section 4).";
     public const string CodecUnknown = "No known codec: the stream's first packet starts with bytes no Ogg mapping is known for, or is missing.";
     public const string ChainLink = "Which link of a chained file the stream belongs to, counting from 1: chaining puts complete groups of streams one after another (RFC 3533, section 4).";
+    public const string ContainerSamples = "The length of the stream as its last page states it, in samples per channel: the last granule position less the stream's Start Offset, the position it starts at (RFC 3533, section 6; RFC 7845, section 4.5 for Opus, which counts at 48 kHz and includes the pre-skip). It is the page's statement and is not counted from the packets.";
+    public const string ContainerDuration = "The length of the stream as its last page states it, in seconds: the last granule position less the Start Offset, at the stream's sampling rate. It is the page's statement and is not counted from the packets.";
     public const string PageCount = "How many pages of the stream the file holds.";
     public const string VerifiedPageChecksums = "The pages of the stream whose CRC-32 equals the one computed over the page (RFC 3533, section 6); a page cut short cannot be checked and is in neither count.";
     public const string FailedPageChecksums = "The pages of the stream whose CRC-32 differs from the one computed.";

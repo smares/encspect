@@ -26,6 +26,7 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 
 ## What is graphed
 
+- **Bitrate Mode** (the mode the stream or its container states where it states one (the nominal bitrates of AC-3 and of DTS without extension substreams, 0x7FF in ADTS, the variable flag of ASF), else variable or constant by the units' own bitrates, unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate.
 A program frame is the unit of every series: an AC-3 syncframe, or an E-AC-3 independent frame with the dependent frames of its program frame. The series are recorded while the audio blocks are read, so each equals its statistics node, and they share the stream's time index and the x values of "Bitrate".
 
 - **Flag series**, one value for each audio block read, in the order of the blocks (the independent frame's, then each dependent frame's). A stream has the series whose statistics node it has:

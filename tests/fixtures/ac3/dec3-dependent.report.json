@@ -1103,6 +1103,28 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 144,
+                      "length": 427,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.128,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 427
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 6144,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 427
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1211,6 +1233,25 @@
                               "unit": "kbps",
                               "offset": 579,
                               "length": 4480
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "constant",
+                              "offset": 579,
+                              "length": 4480
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 579,
+                              "length": 4480,
+                              "children": [
+                                {
+                                  "name": "256 to 287 kbps",
+                                  "value": "4 frames (100.0%)",
+                                  "offset": 579,
+                                  "length": 4480
+                                }
+                              ]
                             },
                             {
                               "name": "Dependent Frames",

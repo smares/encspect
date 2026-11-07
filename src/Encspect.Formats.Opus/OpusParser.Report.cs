@@ -148,6 +148,11 @@ public sealed partial class OpusParser
                 Add(node, "End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimming, Topics.GranulePosition);
             }
 
+            if (_firstOffset is null && _isContained && context.Configuration?.DiscardPadding is not null)
+            {
+                Add(node, "End Trimming", NodeValue.Integer(trim, "samples", "sample"), Explain.EndTrimmingContainer, Topics.OpusPreSkip);
+            }
+
             Add(node, "Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.Samples, Topics.OpusPreSkip);
             if (_lost > 0)
             {
@@ -161,11 +166,13 @@ public sealed partial class OpusParser
                 Add(node, "Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
             }
 
-            (double minimum, double maximum) = BitrateRange();
+            var distribution = new BitrateDistribution();
+            (double minimum, double maximum) = BitrateRange(distribution);
             if (maximum > 0)
             {
                 Add(node, "Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add(node, "Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
+                distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
             }
 
             Node sizes = Add(node, "Packet Sizes", _wholePackets == 0 ? "none whole" : _sizesDiffer
@@ -244,7 +251,7 @@ public sealed partial class OpusParser
         }
 
         // A packet's bitrate: its bits over the samples it codes.
-        private (double Minimum, double Maximum) BitrateRange()
+        private (double Minimum, double Maximum) BitrateRange(BitrateDistribution distribution)
         {
             double minimum = double.MaxValue;
             double maximum = 0;
@@ -264,6 +271,7 @@ public sealed partial class OpusParser
                 double bitrate = _records.LengthOf(i) * 8.0 * Rate / samples / 1000;
                 minimum = Math.Min(minimum, bitrate);
                 maximum = Math.Max(maximum, bitrate);
+                distribution.Add(bitrate);
             }
 
             return (minimum == double.MaxValue ? 0 : minimum, maximum);

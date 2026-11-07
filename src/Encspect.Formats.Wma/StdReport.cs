@@ -46,6 +46,7 @@ internal static class StdReport
             Add("Largest Frame", NodeValue.Decimal(stream.LargestFrameBits / 8.0, 3, "bytes"), StdText.StatLargestFrame);
             Add("Minimum Bitrate", NodeValue.Decimal(FrameBitrate(stream.SmallestFrameBits, p), 1, "kbps"), StdText.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(FrameBitrate(stream.LargestFrameBits, p), 1, "kbps"), StdText.StatMaximumFrameBitrate);
+            stream.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = Topics.WmaStandard }, "Frame", "Frames", configuration?.IsVbr);
         }
 
         Add("Uses Bit Reservoir", NodeValue.Boolean(p.UsesBitReservoir), StdText.StatUsesBitReservoir);
@@ -97,6 +98,8 @@ internal static class StdReport
             Add("Mid/Side Blocks", Share(totals.MidSide, totals.KnownSize), StdText.StatMidSideBlocks);
         }
 
+        stream.Stereo.AddTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard }, StdText.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
+
         if (p.UsesNoiseSubstitution)
         {
             Add("Noise-Substituted Blocks", Share(totals.NoiseSubstituted, totals.Blocks), StdText.StatNoiseSubstitutedBlocks);
@@ -121,6 +124,10 @@ internal static class StdReport
     }
 
     private static double FrameBitrate(long bits, StdParameters p) => bits * (p.SampleRate / 1000.0) / p.FrameLength;
+
+    public static IReadOnlyList<CategorySeries> Categories(StdStream stream, IReadOnlyList<Series> series, Node statistics) =>
+        statistics.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node && series.Count > 0 && series[0].Name == "Bitrate"
+            && stream.Stereo.Build(series[0], node, StdText.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereo ? [stereo] : [];
 
     public static IReadOnlyList<Series> Series(StdParameters p, StdStream stream, Node statistics)
     {

@@ -207,6 +207,8 @@ def region_fields(frames, all_frames):
 
     if all(f.layer == "III" for f in audio):
         fields["Statistics/Maximum Reservoir Fill"] = bytes_text(max(f.fill for f in audio))
+        mean = rounded(Fraction(sum(f.fill for f in audio) * 10, len(audio)))
+        fields["Statistics/Average Reservoir Fill"] = f"{mean // 10}.{mean % 10} bytes"
 
     if all(f.coding is not None for f in frames):
         fields.update(coding_fields(frames, audio, ticks))

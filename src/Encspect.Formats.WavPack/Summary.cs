@@ -303,10 +303,7 @@ internal static partial class Summary
             statistics.Add(cover("Decorrelation Passes", s.TermsMinimum == s.TermsMaximum ? NodeValue.Integer(s.TermsMinimum, "passes", "pass") : $"{s.TermsMinimum} to {s.TermsMaximum} passes", Explain.StatPasses, Topics.Decorrelation));
         }
 
-        if (s.StereoBlocks > 0 && !isDsd)
-        {
-            statistics.Add(cover("Mid/Side Blocks", $"{StreamFigures.Counted(s.JointStereoBlocks, "block", "blocks")} of {StreamFigures.Counted(s.StereoBlocks, "stereo block", "stereo blocks")} ({StreamFigures.Share(s.JointStereoBlocks, s.StereoBlocks)})", Explain.StatMidSide, Topics.MidSideStereo));
-        }
+        Node? stereoNode = isDsd ? null : s.Stereo.AddTo(statistics, cover, Explain.StatStereoCoding, Topics.MidSideStereo, "Stereo Block", "Stereo Blocks");
 
         statistics.Add(cover("Verified Block Checksums", NodeValue.Integer(s.ChecksumValid, "blocks", "block"), Explain.StatChecksums, Topics.Crc));
         if (s.ChecksumInvalid + s.ChecksumMissing > 0)
@@ -344,6 +341,7 @@ internal static partial class Summary
             > 2 => "Multichannel",
             _ => null,
         };
+        List<Series> series = s.Figures?.Series(anchor, s.Cancellation) ?? [];
         return new StreamInfo
         {
             Nodes = [stream],
@@ -362,7 +360,8 @@ internal static partial class Summary
             EncoderConfidence = HasVersionFiveFeatures(s) ? Confidence.Medium : Confidence.Low,
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-            Series = s.Figures?.Series(anchor, s.Cancellation) ?? [],
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
             Verification = s.Feed.Finish(s, isCorrection),
         };
     }

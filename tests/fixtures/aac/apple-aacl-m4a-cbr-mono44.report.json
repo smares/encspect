@@ -1612,6 +1612,20 @@
                       "length": 649,
                       "children": [
                         {
+                          "name": "Container Duration",
+                          "value": 0.5224489795918368,
+                          "unit": "s",
+                          "offset": 144,
+                          "length": 649
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 23040,
+                          "unit": "samples",
+                          "offset": 144,
+                          "length": 649
+                        },
+                        {
                           "name": "Encoder Delay (iTunSMPB)",
                           "value": 584,
                           "unit": "samples",
@@ -2097,6 +2111,31 @@
                               "unit": "kbps",
                               "offset": 4096,
                               "length": 2026
+                            },
+                            {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 4096,
+                              "length": 2026
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 4096,
+                              "length": 2026,
+                              "children": [
+                                {
+                                  "name": "0 to 31 kbps",
+                                  "value": "29 access units (64.4%)",
+                                  "offset": 4096,
+                                  "length": 2026
+                                },
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "16 access units (35.6%)",
+                                  "offset": 4096,
+                                  "length": 2026
+                                }
+                              ]
                             }
                           ]
                         },

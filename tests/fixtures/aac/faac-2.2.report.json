@@ -214,6 +214,55 @@
                               "length": 24103
                             },
                             {
+                              "name": "Bitrate Mode",
+                              "value": "variable",
+                              "offset": 44,
+                              "length": 24103
+                            },
+                            {
+                              "name": "Bitrate Distribution",
+                              "offset": 44,
+                              "length": 24103,
+                              "children": [
+                                {
+                                  "name": "32 to 63 kbps",
+                                  "value": "5 access units (7.6%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                },
+                                {
+                                  "name": "64 to 95 kbps",
+                                  "value": "5 access units (7.6%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                },
+                                {
+                                  "name": "96 to 127 kbps",
+                                  "value": "16 access units (24.2%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                },
+                                {
+                                  "name": "128 to 159 kbps",
+                                  "value": "37 access units (56.1%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                },
+                                {
+                                  "name": "160 to 191 kbps",
+                                  "value": "2 access units (3.0%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                },
+                                {
+                                  "name": "224 to 255 kbps",
+                                  "value": "1 access unit (1.5%)",
+                                  "offset": 44,
+                                  "length": 24103
+                                }
+                              ]
+                            },
+                            {
                               "name": "First Elements",
                               "offset": 44,
                               "length": 24103,
@@ -30908,6 +30957,20 @@
                       "offset": 24263,
                       "length": 736,
                       "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 1.5325170068027212,
+                          "unit": "s",
+                          "offset": 24263,
+                          "length": 736
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 67584,
+                          "unit": "samples",
+                          "offset": 24263,
+                          "length": 736
+                        },
                         {
                           "name": "Encoder Delay (Edit List)",
                           "value": 1024,

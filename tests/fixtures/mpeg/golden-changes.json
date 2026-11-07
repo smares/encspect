@@ -1,8 +1,9 @@
 {
   "goldens": [
-    "tests/fixtures/layer2/",
     "tests/fixtures/layer3/",
     "tests/fixtures/mpeg/",
+    "tests/fixtures/stats/",
+    "tests/fixtures/tags/",
     "tests/fixtures/vbr/"
   ],
   "added": [
@@ -12,21 +13,7 @@
         "MPEG Audio",
         "Statistics"
       ],
-      "name": "Verified Frame Checksums"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "name": "Failed Frame Checksums",
-      "goldens": [
-        "tests/fixtures/layer2/crc-mismatch.report.json",
-        "tests/fixtures/layer2/free-format-44100-crc-mismatch.report.json",
-        "tests/fixtures/layer2/scalefactor-overflow.report.json",
-        "tests/fixtures/mpeg/mpeg1-layer3-crc-mismatch.report.json"
-      ]
+      "name": "Average Reservoir Fill"
     }
   ]
 }

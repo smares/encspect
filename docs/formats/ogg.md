@@ -8,6 +8,7 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
 - **Logical streams:** each stream's packets are followed across pages, in multiplexed and chained files, with resync after damage.
 - **Codecs:** each stream's packets go to the codec parser its first packet names.
 - **Packets handed over:** the packets of a page that fails its CRC reach the codec parser as the page holds them, and so do the packets with bytes present on a truncated page, the one the data cuts flagged as cut (`MappedBytes.IsCut`); a packet left unfinished at the end of a stream is handed over cut. libogg drops these pages, so a decoder lacks their packets; the codec parsers count the packets' declared samples and record a cut packet as lost samples. The granule position of a truncated page is not used.
+- **Length:** a logical stream that its codec parser reports once also lists **Container Samples** (its last granule position less the stream's Start Offset) and **Container Duration** (that length at the stream's sampling rate); for Opus the position counts at 48 kHz and includes the pre-skip.
 - **Playback groups:** the streams of one link play at the same time, so they share a playback group and the summary counts the longest once; the links of a chain follow one another and add up.
 - **Limits:**
   - a stretch of data follows 4,096 logical streams plus one per 8 KiB of data; the pages of later streams are recorded and counted in `ogg.too-many-streams` (an info naming the limit), not followed;
