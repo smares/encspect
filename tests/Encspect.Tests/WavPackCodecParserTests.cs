@@ -240,6 +240,11 @@ public class WavPackCodecParserTests
         Assert.Contains(statistics.Children, c => c.Name == "Smallest Block Set");
         Assert.Contains(statistics.Children, c => c.Name == "Stereo Coding");
         Assert.Equal(3, statistics.Children.Single(c => c.Name == "Audio Blocks").Value?.AsInteger());
+        Assert.Equal(16, statistics.Children.Single(c => c.Name == "Bits Per Sample").Value?.AsInteger());
+        Assert.True(statistics.Children.Single(c => c.Name == "IsLossless").Value?.AsBoolean());
+        Assert.Contains(statistics.Children, c => c.Name == "Decorrelation Passes");
+        Assert.Contains(statistics.Children, c => c.Name == "Channel Layout");
+        Assert.Contains(statistics.Children, c => c.Name == "IsCorrectionFile");
     }
 
     [Fact]

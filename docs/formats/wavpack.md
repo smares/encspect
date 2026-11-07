@@ -119,7 +119,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - Playback and any output other than the checksum comparison (the PCM sink feeds the measurements and tests, not an export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
 - Zeroing or concealing a block that fails its CRC.
 - WavPack hybrid correction data in Matroska (BlockAdditions, BlockAddIDType 1) is not read; the stream is reported from its main blocks.
-- WavPack in Matroska: Decorrelation Passes, Bits Per Sample, IsLossless, Verified Block Checksums and the compression mode are not reported, since the packets hold no full block headers; Stereo Coding, the bitrate series and statistics, the block set figures and the encoder are, from the packets.
+- WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).

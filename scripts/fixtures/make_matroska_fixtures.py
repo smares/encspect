@@ -1040,7 +1040,7 @@ def _():
 
 
 @fixture("flac-private-after-last", "An A_FLAC track whose CodecPrivate holds a STREAMINFO block with the last-block flag followed by a PADDING block: the bytes after the last block are "
-         "not read as metadata.", findings=[("flac.total-samples-mismatch", "STREAMINFO says")], streams=[("FLAC", 44100, 1)], valid=False)
+         "not read as metadata, and the route names them.", findings=[("matroska.codec-private-trailing", "after the metadata block that has the last-block flag"), ("flac.total-samples-mismatch", "STREAMINFO says")], streams=[("FLAC", 44100, 1)], valid=False)
 def _():
     return flac_frames(4, bytes(flac_private()) + bytes([0x01, 0x00, 0x00, 0x04, 0, 0, 0, 0]))
 

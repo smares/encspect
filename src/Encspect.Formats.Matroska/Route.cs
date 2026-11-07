@@ -264,6 +264,7 @@ internal sealed partial class FileReader
         }
 
         List<MappedBytes> headers = [];
+        MappedBytes? flacTrailing = null;
         if (codec is "vorbis" or "opus" or "flac")
         {
             if (privateData is null)
@@ -280,7 +281,7 @@ internal sealed partial class FileReader
             }
             else if (codec == "flac")
             {
-                if (!TryFlacHeaders(privateData, headers, out string? flacWhy))
+                if (!TryFlacHeaders(privateData, headers, out flacTrailing, out string? flacWhy))
                 {
                     _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
                         $"The CodecPrivate of {label} does not hold the \"fLaC\" marker and the metadata blocks the codec mapping gives it (draft-ietf-cellar-codec, section 3.4): it {flacWhy}. Its frames cannot be analyzed.", track.CodecPrivateNode ?? anchor);
@@ -337,7 +338,7 @@ internal sealed partial class FileReader
             last = Math.Max(last, header.FileEnd);
         }
 
-        // The FLAC parser also describes the marker in front of the headers.
+        // The FLAC parser also describes the marker in front of the headers, and the route the bytes after the last block.
         if (codec == "flac" && privateData is not null)
         {
             first = Math.Min(first, privateData.FileStart);
@@ -351,6 +352,14 @@ internal sealed partial class FileReader
             Topic = areFramesEncrypted ? Topics.ContentEncryption : Topics.Tracks,
         };
         _file.Add(node);
+        if (flacTrailing is not null)
+        {
+            var trailingNode = Node.FromMapped("Trailing CodecPrivate Data", flacTrailing, 0, flacTrailing.Length, NodeValue.Integer(flacTrailing.Length, "bytes"), description: Explain.CodecPrivateTrailing);
+            node.Add(trailingNode);
+            int trailingLength = flacTrailing.Length;
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-trailing",
+                $"The CodecPrivate of {label} holds {Counts.Of(trailingLength, "byte", "bytes")} after the metadata block that has the last-block flag, which the codec mapping does not define (draft-ietf-cellar-codec, section 3.4); they are not read as metadata.", trailingNode);
+        }
 
         // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
@@ -404,9 +413,10 @@ internal sealed partial class FileReader
 
     // The CodecPrivate of A_FLAC (draft-ietf-cellar-codec, section 3.4): the "fLaC" marker and the metadata blocks, each a 4-byte header and its data, the last
     // with the last-block flag. Each block is handed over as a header packet, as Ogg's header packets are; a block the data cuts short is handed over as it is.
-    private static bool TryFlacHeaders(MappedBytes data, List<MappedBytes> headers, out string? why)
+    private static bool TryFlacHeaders(MappedBytes data, List<MappedBytes> headers, out MappedBytes? trailing, out string? why)
     {
         why = null;
+        trailing = null;
         ReadOnlySpan<byte> span = data.Span;
         if (span.Length < 8 || !span[..4].SequenceEqual("fLaC"u8))
         {
@@ -420,7 +430,18 @@ internal sealed partial class FileReader
             int length = (span[position + 1] << 16) | (span[position + 2] << 8) | span[position + 3];
             int size = (int)Math.Min(4L + length, span.Length - position);
             headers.Add(data.Slice(position, size));
-            if ((span[position] & 0x80) != 0 || position + size >= span.Length)
+            if ((span[position] & 0x80) != 0)
+            {
+                // Bytes after the block with the last-block flag are not metadata: the route names them.
+                if (position + size < span.Length)
+                {
+                    trailing = data.Slice(position + size, span.Length - position - size);
+                }
+
+                return true;
+            }
+
+            if (position + size >= span.Length)
             {
                 return true;
             }

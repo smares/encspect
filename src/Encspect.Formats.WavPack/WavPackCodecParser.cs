@@ -66,6 +66,11 @@ public sealed class WavPackCodecParser : ICodecParser
         private readonly UnitCategoryTally _stereo = new("Stereo Coding", State.StereoCodings, "stereo block", GraphConcept.StereoCoding, isVariable: true);
         private readonly List<byte> _setStereo = [];
         private bool _hasNewConfig;
+        private bool _hasLossyBlocks;
+        private ConfigValue? _config;
+        private int _termsBlocks;
+        private int _termsMinimum = int.MaxValue;
+        private int _termsMaximum;
         private bool _hasChecksum;
         private long _extraBlocks;
         private long _md5Blocks;
@@ -108,7 +113,7 @@ public sealed class WavPackCodecParser : ICodecParser
             {
                 long cutBytes = packet.Length;
                 _findings.Add(Severity.Warning, "wavpack.matroska-packet-cut", () => node ?? context.Parent, _ =>
-                    $"The data ends inside the packet at 0x{packet.FileStart:X}, after {Counts.Of(cutBytes, "byte", "bytes")} of its {Counts.Of(samples, "sample", "samples")}.", "packet");
+                    $"The data ends inside the packet at 0x{packet.FileStart:X}, which holds {Counts.Of(samples, "sample", "samples")}: only {Counts.Of(cutBytes, "byte", "bytes")} of it {(cutBytes == 1 ? "is" : "are")} in the file.", "packet");
             }
 
             var blocks = new List<ReducedBlock>();
@@ -273,7 +278,7 @@ public sealed class WavPackCodecParser : ICodecParser
 
             if (isPlausible)
             {
-                CountSubBlocks(rebuilt);
+                CountSubBlocks(rebuilt, header);
                 _hasChecksum |= (header.Flags & BlockHeader.HasChecksumFlag) != 0;
                 if (!header.IsMono && _setStereo.Count < State.MaxSetBlocks)
                 {
@@ -311,8 +316,10 @@ public sealed class WavPackCodecParser : ICodecParser
         }
 
         // The sub-blocks a decoder reads the extra CRC and the MD5 from, counted so the checksums can be declared.
-        private void CountSubBlocks(ReadOnlySpan<byte> block)
+        private void CountSubBlocks(ReadOnlySpan<byte> block, in BlockHeader header)
         {
+            byte int32SentBits = 0;
+            byte floatFlags = 0;
             int position = BlockHeader.Length;
             bool hasExtra = false;
             bool hasMd5 = false;
@@ -320,12 +327,41 @@ public sealed class WavPackCodecParser : ICodecParser
             {
                 hasExtra |= sub.Function == SubBlockIds.WvxBitstream;
                 _hasNewConfig |= sub.Function == SubBlockIds.NewConfigBlock;
+                ReadOnlySpan<byte> data = block.Slice(sub.DataStart, sub.DataLength);
+                switch (sub.Function)
+                {
+                    case SubBlockIds.ConfigBlock:
+                        _config ??= Decode.Config(data);
+                        break;
+                    case SubBlockIds.DecorrTerms:
+                        if (Decode.Terms(data, header.IsMono) is { } terms)
+                        {
+                            _termsBlocks++;
+                            _termsMinimum = Math.Min(_termsMinimum, terms.Length);
+                            _termsMaximum = Math.Max(_termsMaximum, terms.Length);
+                        }
+
+                        break;
+                    case SubBlockIds.Int32Info when data.Length == 4:
+                        int32SentBits = data[0];
+                        break;
+                    case SubBlockIds.FloatInfo when data.Length == 4:
+                        floatFlags = data[0];
+                        break;
+                }
+
                 _hasChecksum |= sub.Function == SubBlockIds.BlockChecksum;
                 hasMd5 |= sub.Function is SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum && sub.DataLength == 16;
                 position = sub.Next;
             }
 
             _extraBlocks += hasExtra ? 1 : 0;
+            // As the file reader decides it: bits dropped from integers or floats with no extra bitstream to restore them.
+            if (header.HasAudio)
+            {
+                _hasLossyBlocks |= !hasExtra && (((header.Flags & BlockHeader.Int32Flag) != 0 && int32SentBits != 0) || (header.IsFloat && (floatFlags & 0x2E) != 0));
+            }
+
             _md5Blocks += hasMd5 ? 1 : 0;
         }
 
@@ -464,10 +500,40 @@ public sealed class WavPackCodecParser : ICodecParser
             statistics.Add(Stat("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             statistics.Add(Stat("Sample Rate", NodeValue.Integer(_rate, "Hz"), first.IsDsd ? Explain.StatRateDsd : Explain.StatRate));
             statistics.Add(Stat("Channels", NodeValue.Integer(_channels, "channels", "channel"), Explain.StatChannels, Topics.Channels));
+            List<Speaker>? layout = ChannelLayouts.FromWaveMask(_channelMask, _channels);
+            if (layout is not null)
+            {
+                statistics.Add(Stat("Channel Layout", ChannelLayouts.Describe(layout), Explain.StatLayout, Topics.Channels));
+            }
+
             statistics.Add(Stat("Stream Version", NodeValue.Hex(_version, 4), Explain.StreamVersionOfCodecPrivate, Topics.Matroska));
+            int shifted = (first.BytesPerSample * 8) - first.LeftShift;
+            int? bits = first.IsDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null;
+            if (bits is { } sampleBits)
+            {
+                statistics.Add(Stat("Bits Per Sample", NodeValue.Integer(sampleBits, "bits", "bit"), first.IsDsd ? Explain.StatBitsDsd : Explain.StatBits));
+            }
+
+            bool isLossless = !first.IsHybrid && !_hasLossyBlocks;
+            statistics.Add(Stat("IsLossless", NodeValue.Boolean(isLossless), Explain.StatIsLossless, Topics.Hybrid));
             statistics.Add(Stat("IsHybrid", NodeValue.Boolean(first.IsHybrid), Explain.StatIsHybrid, Topics.Hybrid));
+            bool isCorrectionCreated = _config is { } created && (created.Flags & Decode.ConfigCreateWvc) != 0;
+            statistics.Add(Stat("IsCorrectionFileCreated", NodeValue.Boolean(isCorrectionCreated), Explain.StatIsCorrectionFileCreated, Topics.Hybrid));
+            statistics.Add(Stat("IsCorrectionFile", NodeValue.Boolean(false), Explain.StatIsCorrectionFile, Topics.Hybrid));
             statistics.Add(Stat("IsFloatingPoint", NodeValue.Boolean(first.IsFloat), Explain.StatIsFloat, Topics.FloatAndLargeIntegers));
             statistics.Add(Stat("IsDsd", NodeValue.Boolean(first.IsDsd), Explain.StatIsDsd, Topics.Dsd));
+            if (_config is { } config)
+            {
+                string mode = (config.Flags & Decode.ConfigVeryHighMode) != 0 ? "very high" : (config.Flags & Decode.ConfigHighMode) != 0 ? "high" : (config.Flags & Decode.ConfigFastMode) != 0 ? "fast" : "normal";
+                statistics.Add(Stat("Compression Mode", mode, Explain.StatMode));
+                statistics.Add(Stat("Extra Processing Level", config.ExtraLevel is { } level ? NodeValue.Integer(level) : "none", Explain.StatExtraLevel, Topics.Decorrelation));
+            }
+
+            if (_termsBlocks > 0)
+            {
+                statistics.Add(Stat("Decorrelation Passes", _termsMinimum == _termsMaximum ? NodeValue.Integer(_termsMinimum, "passes", "pass") : $"{_termsMinimum} to {_termsMaximum} passes", Explain.StatPasses, Topics.Decorrelation));
+            }
+
             Node? stereoNode = first.IsDsd ? null : _stereo.AddTo(statistics, (name, value, description, topic) => Stat(name, value ?? NodeValue.Text(string.Empty), description, topic),
                 Explain.StatStereoCoding, Topics.MidSideStereo, "Stereo Block", "Stereo Blocks");
             Node? average = null;
@@ -488,11 +554,10 @@ public sealed class WavPackCodecParser : ICodecParser
             context.Parent.Add(encoder);
             context.Parent.Add(statistics);
             List<Series> series = _figures?.Series(average, context.CancellationToken) ?? [];
-            int shifted = (first.BytesPerSample * 8) - first.LeftShift;
             context.AddStream(new StreamInfo
             {
                 Nodes = [context.Parent],
-                Codec = first.IsHybrid ? "WavPack hybrid" : "WavPack lossless",
+                Codec = first.IsHybrid ? "WavPack hybrid" : _hasLossyBlocks ? "WavPack lossy" : "WavPack lossless",
                 SampleRate = _rate,
                 Channels = _channels,
                 ChannelLayout = ChannelLayouts.FromWaveMask(_channelMask, _channels),

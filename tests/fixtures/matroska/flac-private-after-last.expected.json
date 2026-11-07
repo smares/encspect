@@ -1,5 +1,5 @@
 {
- "description": "An A_FLAC track whose CodecPrivate holds a STREAMINFO block with the last-block flag followed by a PADDING block: the bytes after the last block are not read as metadata.",
+ "description": "An A_FLAC track whose CodecPrivate holds a STREAMINFO block with the last-block flag followed by a PADDING block: the bytes after the last block are not read as metadata, and the route names them.",
  "length": 5607,
  "format": "Matroska",
  "ebml": {
@@ -299,6 +299,10 @@
   }
  ],
  "findings": [
+  {
+   "code": "matroska.codec-private-trailing",
+   "contains": "after the metadata block that has the last-block flag"
+  },
   {
    "code": "flac.total-samples-mismatch",
    "contains": "STREAMINFO says"
