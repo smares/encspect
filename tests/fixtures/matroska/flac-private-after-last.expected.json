@@ -1,0 +1,314 @@
+{
+ "description": "An A_FLAC track whose CodecPrivate holds a STREAMINFO block with the last-block flag followed by a PADDING block: the bytes after the last block are not read as metadata, and the route names them.",
+ "length": 5607,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 203,
+     "length": 5404,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 5567,
+   "declared_end": 5607
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   5567,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     94,
+     [
+      [
+       "TrackEntry",
+       114,
+       89,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         8
+        ],
+        [
+         "CodecPrivate",
+         135,
+         53
+        ],
+        [
+         "Audio",
+         188,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           190,
+           10
+          ],
+          [
+           "Channels",
+           200,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     203,
+     5404,
+     [
+      [
+       "Timestamp",
+       209,
+       3
+      ],
+      [
+       "SimpleBlock",
+       212,
+       1412
+      ],
+      [
+       "SimpleBlock",
+       1624,
+       1362
+      ],
+      [
+       "SimpleBlock",
+       2986,
+       1310
+      ],
+      [
+       "SimpleBlock",
+       4296,
+       1311
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 212,
+   "length": 1412,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     219,
+     1405
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1624,
+   "length": 1362,
+   "track": 1,
+   "timestamp": 104,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1631,
+     1355
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2986,
+   "length": 1310,
+   "track": 1,
+   "timestamp": 208,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2993,
+     1303
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4296,
+   "length": 1311,
+   "track": 1,
+   "timestamp": 312,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4303,
+     1304
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_FLAC",
+   "private": [
+    138,
+    50
+   ],
+   "channels": 1,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 44100,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-trailing",
+   "contains": "after the metadata block that has the last-block flag"
+  },
+  {
+   "code": "flac.total-samples-mismatch",
+   "contains": "STREAMINFO says"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

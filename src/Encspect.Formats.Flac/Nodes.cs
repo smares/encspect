@@ -42,7 +42,8 @@ internal static class Nodes
         Entry e = r.Entries[index];
         bool hasRanges = (e.Status & EntryStatus.HasRanges) != 0;
         int size = hasRanges ? (int)r.Ranges[index].Sum(x => x.Length) : (int)e.Length;
-        FieldMap map = hasRanges ? FieldMap.Of(r.Ranges[index], size) : FieldMap.At(e.Offset);
+        FieldMap map = hasRanges ? FieldMap.Of(r.Ranges[index], size)
+            : (e.Status & EntryStatus.IsOpaque) != 0 ? FieldMap.Whole(e.Offset, e.Length) : FieldMap.At(e.Offset);
         int headerLength = Math.Min(HeaderLength(e), size);
         var children = new List<Node> { Header(r, e, map, headerLength) };
         bool isCut = (e.Status & EntryStatus.Cut) != 0;

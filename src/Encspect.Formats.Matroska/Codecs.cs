@@ -19,6 +19,10 @@ internal static class Codecs
         "A_OPUS" or "A_OPUS/EXPERIMENTAL" => "opus",
         "A_ALAC" => "alac",
         "A_TTA1" => "tta",
+        "A_FLAC" => "flac",
+        "A_WAVPACK4" => "wavpack",
+        "A_TRUEHD" => "truehd",
+        "A_MLP" => "mlp",
         _ => null,
     };
 
@@ -33,6 +37,9 @@ internal static class Codecs
         "opus" => KnownWriters.Opus,
         "alac" => KnownWriters.Alac,
         "tta" => KnownWriters.Tta,
+        "flac" => KnownWriters.Flac,
+        "wavpack" => KnownWriters.WavPack,
+        "truehd" or "mlp" => KnownWriters.TrueHd,
         _ => null,
     };
 

@@ -71,7 +71,8 @@ public class DecoderSessionInvariantTests
 
                 // A container states the finding once for each stream it does not hand over, at the track's sample entry, which no node of
                 // the stream's own covers: the findings are a budget of streams that may lack a session, not a pass for the whole file.
-                int notAnalyzed = report.Findings.Count(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal));
+                int notAnalyzed = report.Findings.Count(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal)
+                    || f.Code is "matroska.codec-private-missing" or "matroska.codec-private-invalid");
                 var withoutSession = new List<string>();
                 foreach (StreamInfo stream in report.Streams.Where(s => DecoderOfCodec.ContainsKey(s.Codec)))
                 {
@@ -110,12 +111,9 @@ public class DecoderSessionInvariantTests
         }
     }
 
-    // The fixtures the design names, whose streams have a decoder that the analysis never starts: a FLAC, WavPack or TrueHD stream in
-    // Matroska or MP4, which the container does not hand to its codec's parser.
+    // The fixtures the design names, whose streams have a decoder that the analysis never starts: a FLAC stream in MP4, which the container does not
+    // hand to its codec's parser.
     [Theory]
-    [InlineData("matroska/external-ffmpeg-flac.mka", "FLAC")]
-    [InlineData("matroska/external-ffmpeg-truehd.mka", "Dolby TrueHD")]
-    [InlineData("matroska/external-ffmpeg-wavpack.mka", "WavPack")]
     [InlineData("mp4/ffmpeg-cenc-flac.mp4", "FLAC")]
     public void A_stream_the_container_does_not_hand_over_has_no_verification_and_a_finding_says_why(string name, string codec)
     {
@@ -123,5 +121,19 @@ public class DecoderSessionInvariantTests
         StreamInfo stream = Assert.Single(report.Streams, s => s.Codec == codec);
         Assert.Null(stream.Verification);
         Assert.Contains(report.Findings, f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal));
+    }
+
+    // Matroska hands these codecs to their parsers: the stream has a session and no finding says it was not analyzed.
+    [Theory]
+    [InlineData("matroska/external-ffmpeg-flac.mka", "FLAC")]
+    [InlineData("matroska/external-ffmpeg-truehd.mka", "Dolby TrueHD")]
+    [InlineData("matroska/external-ffmpeg-wavpack.mka", "WavPack lossless")]
+    [InlineData("matroska/external-ffmpeg-mlp-51.mka", "MLP")]
+    public void A_stream_matroska_hands_over_has_a_session(string name, string codec)
+    {
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, name));
+        StreamInfo stream = Assert.Single(report.Streams, s => s.Codec == codec);
+        Assert.NotNull(stream.Verification);
+        Assert.DoesNotContain(report.Findings, f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal));
     }
 }

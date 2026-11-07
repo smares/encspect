@@ -101,7 +101,7 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 ## Not covered
 
 - Stereo coding (how the matrix channels combine, as the "Stereo Coding" series of MPEG audio, AAC and ALAC report channel pairs): not covered yet. It needs the matrix and channel data of the substream blocks, the frame-level parsing that comes with the format's decoder.
-- MP4 and Matroska: neither container routes the codec yet (`mp4.codec-not-analyzed`, `matroska.codec-not-analyzed`). The codec parser (`truehd` and `mlp`) is registered and reads a payload or packets handed to it; the routes come with the container steps.
+- MP4: the container does not route the codec yet (`mp4.codec-not-analyzed`). Matroska routes `A_TRUEHD` and `A_MLP` to the codec parser (`truehd` and `mlp`), which reads the packets, one access unit each; a track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
 - The fourth (Atmos) substream, and MLP streams whose two channel groups have different sampling rates (`truehd.unsupported`; the units are not read, decoded or counted).
 - A negative output shift, and matrices with more than 5 channels together with noise type 0, which the description marks unsupported in FFmpeg (`truehd.unsupported`).
 - Playback and any output other than the checksum comparison.

@@ -105,8 +105,8 @@ public class AudioPanelTests
     [AvaloniaFact]
     public void A_stream_the_analysis_does_not_decode_says_so_with_the_codec_and_never_that_no_decoder_exists()
     {
-        // MPEG audio has no decoder; FLAC in Matroska has one, but the container does not hand the stream to its codec parser.
-        foreach ((string path, string codec) in new[] { (Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "MPEG-1 Layer III"), (Fixtures.Matroska("external-ffmpeg-flac.mka"), "FLAC") })
+        // MPEG audio has no decoder; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
+        foreach ((string path, string codec) in new[] { (Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "MPEG-1 Layer III"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
         {
             DetailWindow window = Open(path, decode: false);
             AudioCaption caption = window.Model.Graphs.SelectedStream!.Caption!;
@@ -116,6 +116,16 @@ public class AudioPanelTests
             Assert.DoesNotContain(window.GraphChoices.GetVisualDescendants().OfType<Button>(), b => b.Classes.Contains("decode") && b.IsEffectivelyVisible);
             window.Close();
         }
+    }
+
+    [AvaloniaFact]
+    public void A_stream_that_matroska_hands_to_a_codec_parser_with_a_decoder_offers_decoding()
+    {
+        DetailWindow window = Open(Fixtures.Matroska("external-ffmpeg-flac.mka"), decode: false);
+        GraphChoiceGroup audio = window.Model.Graphs.ChoiceGroups.Single(g => g.Heading == "Audio");
+        Assert.True(audio.OffersDecode);
+        Assert.True(window.Model.Graphs.CanDecode);
+        window.Close();
     }
 
     [Fact]

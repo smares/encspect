@@ -1,0 +1,1066 @@
+{
+ "description": "A file that ends inside the last frame of an A_TRUEHD track (forty access units of external-ffmpeg-truehd, one per millisecond as ffmpeg stamps them): the frame the file ends in is handed to the TrueHD parser flagged as cut and counted as lost samples.",
+ "length": 1635,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 152,
+     "length": 1483,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 40
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 1595,
+   "declared_end": 1643
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   1595,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     43,
+     [
+      [
+       "TrackEntry",
+       114,
+       38,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         10
+        ],
+        [
+         "Audio",
+         137,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           139,
+           10
+          ],
+          [
+           "Channels",
+           149,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     152,
+     1483,
+     [
+      [
+       "Timestamp",
+       158,
+       3
+      ],
+      [
+       "SimpleBlock",
+       161,
+       110
+      ],
+      [
+       "SimpleBlock",
+       271,
+       34
+      ],
+      [
+       "SimpleBlock",
+       305,
+       34
+      ],
+      [
+       "SimpleBlock",
+       339,
+       30
+      ],
+      [
+       "SimpleBlock",
+       369,
+       32
+      ],
+      [
+       "SimpleBlock",
+       401,
+       32
+      ],
+      [
+       "SimpleBlock",
+       433,
+       32
+      ],
+      [
+       "SimpleBlock",
+       465,
+       34
+      ],
+      [
+       "SimpleBlock",
+       499,
+       30
+      ],
+      [
+       "SimpleBlock",
+       529,
+       32
+      ],
+      [
+       "SimpleBlock",
+       561,
+       32
+      ],
+      [
+       "SimpleBlock",
+       593,
+       30
+      ],
+      [
+       "SimpleBlock",
+       623,
+       34
+      ],
+      [
+       "SimpleBlock",
+       657,
+       30
+      ],
+      [
+       "SimpleBlock",
+       687,
+       34
+      ],
+      [
+       "SimpleBlock",
+       721,
+       32
+      ],
+      [
+       "SimpleBlock",
+       753,
+       110
+      ],
+      [
+       "SimpleBlock",
+       863,
+       36
+      ],
+      [
+       "SimpleBlock",
+       899,
+       30
+      ],
+      [
+       "SimpleBlock",
+       929,
+       30
+      ],
+      [
+       "SimpleBlock",
+       959,
+       32
+      ],
+      [
+       "SimpleBlock",
+       991,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1021,
+       32
+      ],
+      [
+       "SimpleBlock",
+       1053,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1083,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1113,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1143,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1173,
+       32
+      ],
+      [
+       "SimpleBlock",
+       1205,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1235,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1265,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1295,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1325,
+       104
+      ],
+      [
+       "SimpleBlock",
+       1429,
+       34
+      ],
+      [
+       "SimpleBlock",
+       1463,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1493,
+       32
+      ],
+      [
+       "SimpleBlock",
+       1525,
+       30
+      ],
+      [
+       "SimpleBlock",
+       1555,
+       28
+      ],
+      [
+       "SimpleBlock",
+       1583,
+       32
+      ],
+      [
+       "SimpleBlock",
+       1615,
+       20
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 161,
+   "length": 110,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     167,
+     104
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 271,
+   "length": 34,
+   "track": 1,
+   "timestamp": 1,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     277,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 305,
+   "length": 34,
+   "track": 1,
+   "timestamp": 2,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     311,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 339,
+   "length": 30,
+   "track": 1,
+   "timestamp": 3,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     345,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 369,
+   "length": 32,
+   "track": 1,
+   "timestamp": 4,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     375,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 401,
+   "length": 32,
+   "track": 1,
+   "timestamp": 5,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     407,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 433,
+   "length": 32,
+   "track": 1,
+   "timestamp": 6,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     439,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 465,
+   "length": 34,
+   "track": 1,
+   "timestamp": 7,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     471,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 499,
+   "length": 30,
+   "track": 1,
+   "timestamp": 8,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     505,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 529,
+   "length": 32,
+   "track": 1,
+   "timestamp": 9,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     535,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 561,
+   "length": 32,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     567,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 593,
+   "length": 30,
+   "track": 1,
+   "timestamp": 11,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     599,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 623,
+   "length": 34,
+   "track": 1,
+   "timestamp": 12,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     629,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 657,
+   "length": 30,
+   "track": 1,
+   "timestamp": 13,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     663,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 687,
+   "length": 34,
+   "track": 1,
+   "timestamp": 14,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     693,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 721,
+   "length": 32,
+   "track": 1,
+   "timestamp": 15,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     727,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 753,
+   "length": 110,
+   "track": 1,
+   "timestamp": 16,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     759,
+     104
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 863,
+   "length": 36,
+   "track": 1,
+   "timestamp": 17,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     869,
+     30
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 899,
+   "length": 30,
+   "track": 1,
+   "timestamp": 18,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     905,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 929,
+   "length": 30,
+   "track": 1,
+   "timestamp": 19,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     935,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 959,
+   "length": 32,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     965,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 991,
+   "length": 30,
+   "track": 1,
+   "timestamp": 21,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     997,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1021,
+   "length": 32,
+   "track": 1,
+   "timestamp": 22,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1027,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1053,
+   "length": 30,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1059,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1083,
+   "length": 30,
+   "track": 1,
+   "timestamp": 24,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1089,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1113,
+   "length": 30,
+   "track": 1,
+   "timestamp": 25,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1119,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1143,
+   "length": 30,
+   "track": 1,
+   "timestamp": 26,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1149,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1173,
+   "length": 32,
+   "track": 1,
+   "timestamp": 27,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1179,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1205,
+   "length": 30,
+   "track": 1,
+   "timestamp": 28,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1211,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1235,
+   "length": 30,
+   "track": 1,
+   "timestamp": 29,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1241,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1265,
+   "length": 30,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1271,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1295,
+   "length": 30,
+   "track": 1,
+   "timestamp": 31,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1301,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1325,
+   "length": 104,
+   "track": 1,
+   "timestamp": 32,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1331,
+     98
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1429,
+   "length": 34,
+   "track": 1,
+   "timestamp": 33,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1435,
+     28
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1463,
+   "length": 30,
+   "track": 1,
+   "timestamp": 34,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1469,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1493,
+   "length": 32,
+   "track": 1,
+   "timestamp": 35,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1499,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1525,
+   "length": 30,
+   "track": 1,
+   "timestamp": 36,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1531,
+     24
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1555,
+   "length": 28,
+   "track": 1,
+   "timestamp": 37,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1561,
+     22
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1583,
+   "length": 32,
+   "track": 1,
+   "timestamp": 38,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1589,
+     26
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1615,
+   "length": 20,
+   "track": 1,
+   "timestamp": 39,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1621,
+     14
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_TRUEHD",
+   "private": null,
+   "channels": 1,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Dolby TrueHD",
+   "sample_rate": 44100,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.element-truncated",
+   "contains": "The Segment states"
+  },
+  {
+   "code": "matroska.element-truncated",
+   "contains": "2 elements state a size that runs past the end of the file"
+  },
+  {
+   "code": "truehd.unit-cut",
+   "contains": "ends inside the access unit"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -25,8 +25,10 @@ internal static class Explain
     public const string Frame = "One frame of the block's track: the unit its codec decodes, such as an audio frame, an access unit or a video picture (RFC 9559, section 10.3).";
     public const string BlockData = "The bytes of the block after its header, which the analyzer does not read as frames.";
 
-    public const string ContainerSamples = "The length of the track as its blocks' timestamps give it, in samples per channel: the Container Duration at the stream's sampling rate, rounded to the nearest sample, halves up. It is an estimate at the precision of the timestamps, not a count from the audio.";
+    public const string ContainerSamples = "The length of the track as its blocks' timestamps give it, in samples per channel: the Container Duration at the stream's sampling rate, rounded to the nearest sample, halves up. It is an estimate at the precision of the timestamps, not a count from the audio, and a coarse one for a track of few blocks, whose last block is counted as long as the average step.";
     public const string ContainerDuration = "The length of the track as its blocks' timestamps give it, in seconds: from the first block to the last and one more average step, less the CodecDelay and the DiscardPadding of the last block (RFC 9559, sections 5.1.4.1.25 and 5.1.3.5.7, 11.2). It is an estimate at the precision of the timestamps, not a count from the audio.";
+    public const string CodecPrivateTrailing = "Bytes of the track's CodecPrivate after the last metadata block of its FLAC header: the codec mapping defines the marker and the metadata blocks only.";
+
     public const string TrackFrames = "The frames of an audio track put together from the blocks that carry them, handed to the codec parser of the track's codec ID.";
     public const string TrackFramesEncrypted = "The frames of an audio track whose ContentEncodings encrypt them (RFC 9559, section 5.1.4.1.31.8). They are not read, since ciphertext is no valid coding; the codec parser is handed the clear configuration only.";
 }

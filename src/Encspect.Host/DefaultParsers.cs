@@ -57,7 +57,7 @@ public static class DefaultParsers
     public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MonkeysAudioParser(), new TtaParser(), new TrueHdParser(), new MatroskaParser(), new WavParser(), new Wave64Parser(), new AiffParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4 and, as ADTS frames, in WAV bursts,
-    // Speex, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg, WavPack, TTA and ALAC in Matroska, ALAC in MP4, Windows Media Audio in ASF, Dolby TrueHD and MLP in MP4 and Matroska once their containers route to them.
+    // Speex, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg and Matroska, WavPack, TTA and ALAC in Matroska, ALAC in MP4, Windows Media Audio in ASF, Dolby TrueHD and MLP in Matroska, and in MP4 once its container routes to them.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
         [Mpeg, new AacCodecParser(), new AdtsPacketParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser(), new DtsCodecParser(), new FlacCodecParser(), new WavPackCodecParser(), new TtaCodecParser(), new AlacCodecParser(), TrueHdCodecParser.TrueHd, TrueHdCodecParser.Mlp];
 

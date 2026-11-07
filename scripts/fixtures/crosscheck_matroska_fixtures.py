@@ -51,11 +51,11 @@ EXTENSIONS = (".mka", ".mkv", ".webm")
 # ffprobe's codec names for the Matroska codec IDs, and MediaInfo's formats for the analyzer's codec names.
 FFPROBE_CODECS = {
     "A_OPUS": "opus", "A_VORBIS": "vorbis", "A_AC3": "ac3", "A_EAC3": "eac3", "A_DTS": "dts", "A_AAC": "aac", "A_MPEG/L3": "mp3", "A_MPEG/L2": "mp2",
-    "A_FLAC": "flac", "A_ALAC": "alac", "A_TTA1": "tta", "A_TRUEHD": "truehd", "A_WAVPACK4": "wavpack", "A_PCM/INT/LIT": "pcm_s16le",
+    "A_FLAC": "flac", "A_ALAC": "alac", "A_TTA1": "tta", "A_TRUEHD": "truehd", "A_MLP": "mlp", "A_WAVPACK4": "wavpack", "A_PCM/INT/LIT": "pcm_s16le",
 }
 MEDIAINFO_FORMATS = {
     "opus": "Opus", "vorbis": "Vorbis", "ac3": "AC-3", "eac3": "E-AC-3", "dts": "DTS", "aac": "AAC", "mp3": "MPEG Audio", "mp2": "MPEG Audio",
-    "flac": "FLAC", "alac": "ALAC", "tta": "TTA", "truehd": "MLP FBA", "wavpack": "WavPack", "pcm_s16le": "PCM",
+    "flac": "FLAC", "alac": "ALAC", "tta": "TTA", "truehd": "MLP FBA", "mlp": "MLP", "wavpack": "WavPack", "pcm_s16le": "PCM",
 }
 
 # The analyzer's reading against MediaInfo's, per fixture and field: MediaInfo's own reading with the evidence (MediaInfoLib v26.01,

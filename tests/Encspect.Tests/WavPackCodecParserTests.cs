@@ -48,7 +48,11 @@ public class WavPackCodecParserTests
             {
                 int length = BinaryPrimitives.ReadInt32LittleEndian(all.AsSpan(at));
                 at += 4;
-                packets.Add(new MappedBytes(all.AsMemory(at, length), at));
+                // A negative length stands for a packet the container cut.
+                bool isCut = length < 0;
+                length = Math.Abs(length);
+                MappedBytes packet = new(all.AsMemory(at, length), at);
+                packets.Add(isCut ? packet.AsCut() : packet);
                 at += length;
             }
 
@@ -129,15 +133,17 @@ public class WavPackCodecParserTests
         return [.. packet];
     }
 
-    internal static byte[] Container(IEnumerable<byte[]> packets, ushort? version = 0x410)
+    internal static byte[] Container(IEnumerable<byte[]> packets, ushort? version = 0x410, bool isLastCut = false)
     {
         var file = new List<byte>("PKTS"u8.ToArray());
         byte[] version2 = version is { } v ? BitConverter.GetBytes(v) : [];
         file.AddRange(BitConverter.GetBytes((ushort)version2.Length));
         file.AddRange(version2);
-        foreach (byte[] packet in packets)
+        byte[][] all = [.. packets];
+        for (int i = 0; i < all.Length; i++)
         {
-            file.AddRange(BitConverter.GetBytes(packet.Length));
+            byte[] packet = all[i];
+            file.AddRange(BitConverter.GetBytes(isLastCut && i == all.Length - 1 ? -packet.Length : packet.Length));
             file.AddRange(packet);
         }
 
@@ -199,11 +205,46 @@ public class WavPackCodecParserTests
     {
         (Report report, _) = Decode(Container(Packets("external-lossless-16-stereo.wv")));
         Node packets = report.Root.Children.Single();
-        Assert.Equal(["Packet", "Packet", "Packet", "Statistics"], packets.Children.Select(c => c.Name));
+        Assert.Equal(["Packet", "Packet", "Packet", "Encoder", "Statistics"], packets.Children.Select(c => c.Name));
         Node block = packets.Children[0].Children.Single(c => c.Name == "Block");
         Assert.Equal(["Flags", "CRC", "Sub-blocks"], block.Children.Select(c => c.Name));
         Assert.Equal(11025, packets.Children[0].Children.Single(c => c.Name == "Samples").Value?.AsInteger());
         Assert.Equal(11025 + 6487 + 6488, packets.Children.Single(c => c.Name == "Statistics").Children.Single(c => c.Name == "Samples").Value?.AsInteger());
+    }
+
+    [Fact]
+    public void ACutPacketIsNamedAsCutAndItsSamplesAreLost()
+    {
+        List<byte[]> packets = Packets("external-lossless-16-stereo.wv");
+        packets[^1] = packets[^1][..^30];
+        (Report report, _) = Decode(Container(packets, isLastCut: true));
+
+        Assert.Single(report.Findings, f => f.Code == "wavpack.matroska-packet-cut");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "wavpack.matroska-packet-invalid" or "wavpack.matroska-block-invalid");
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(6488, stream.LostSamples);
+        Assert.Equal(24000, stream.Samples);
+        Node statistics = report.Root.Children.Single().Children.Single(c => c.Name == "Statistics");
+        Assert.Equal(6488, statistics.Children.Single(c => c.Name == "Lost Samples").Value?.AsInteger());
+    }
+
+    [Fact]
+    public void TheStreamHasTheBlockSetFiguresStereoCodingAndEncoder()
+    {
+        (Report report, _) = Decode(Container(Packets("external-lossless-16-stereo.wv")));
+        StreamInfo stream = report.Streams.Single();
+        Assert.Equal(["Bitrate", "Bitrate Over Time"], stream.Series.Select(x => x.Name));
+        Assert.Equal("Stereo Coding", Assert.Single(stream.CategorySeries).Name);
+        Assert.NotNull(stream.Encoder);
+        Node statistics = report.Root.Children.Single().Children.Single(c => c.Name == "Statistics");
+        Assert.Contains(statistics.Children, c => c.Name == "Smallest Block Set");
+        Assert.Contains(statistics.Children, c => c.Name == "Stereo Coding");
+        Assert.Equal(3, statistics.Children.Single(c => c.Name == "Audio Blocks").Value?.AsInteger());
+        Assert.Equal(16, statistics.Children.Single(c => c.Name == "Bits Per Sample").Value?.AsInteger());
+        Assert.True(statistics.Children.Single(c => c.Name == "IsLossless").Value?.AsBoolean());
+        Assert.Contains(statistics.Children, c => c.Name == "Decorrelation Passes");
+        Assert.Contains(statistics.Children, c => c.Name == "Channel Layout");
+        Assert.Contains(statistics.Children, c => c.Name == "IsCorrectionFile");
     }
 
     [Fact]

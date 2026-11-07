@@ -47,6 +47,12 @@ public class WavPackFindingTests
     private static readonly Dictionary<string, Func<byte[]>> PacketCrafts = new()
     {
         ["wavpack.matroska-packet-invalid"] = () => WavPackCodecParserTests.Container([[1, 0, 0, 0], .. WavPackCodecParserTests.Packets("external-lossless-16-mono.wv")]),
+        ["wavpack.matroska-packet-cut"] = () =>
+        {
+            List<byte[]> packets = WavPackCodecParserTests.Packets("external-lossless-16-mono.wv");
+            packets[^1] = packets[^1][..^20];
+            return WavPackCodecParserTests.Container(packets, isLastCut: true);
+        },
         ["wavpack.matroska-block-invalid"] = () =>
         {
             List<byte[]> packets = WavPackCodecParserTests.Packets("external-lossless-16-mono.wv");

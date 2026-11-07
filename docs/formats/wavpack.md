@@ -98,7 +98,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - The `wavpack` codec parser reads the packets of an `A_WAVPACK4` track: a packet is the sample count, and for each block its flags, CRC and size (the size is left out when the block holds the initial and the final flag), then the block's data without the 32-byte header (FFmpeg, `matroskadec.c`, `matroska_parse_wavpack`). It rebuilds the headers (the version from the two bytes of CodecPrivate, 0x410 if there are none; block index and total samples 0) and analyzes and decodes the blocks as a file's.
 - The packet nodes list the first 256 packets; later decode findings have no node of their own to point to.
-- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). The Matroska route that calls the parser is not built: Matroska gives an `A_WAVPACK4` track `matroska.codec-not-analyzed`, so the parser does not run on a Matroska file.
+- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-packet-cut` (the file ends inside a packet), `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). Matroska routes `A_WAVPACK4` tracks to the parser (see [the Matroska format](matroska.md)): the CodecPrivate is the stream version, and a packet that is cut, or holds a block that cannot be read, is counted in the stream's lost samples with the samples it declares. A track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
 
 ## Tags
 
@@ -112,12 +112,14 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - Sub-blocks: `wavpack.subblock-overrun`, `wavpack.subblock-size` (including decorrelation weights or samples before any decorrelation terms, and a new config block that reorders more channels than its layout has), `wavpack.subblock-unknown`, `wavpack.optional-subblock-unknown`, `wavpack.decorr-terms-invalid`, `wavpack.channel-info-invalid`, `wavpack.channel-info-ignored`, `wavpack.dsd-invalid` (including a stored mode whose audio is not exactly the bytes the block counts, a fast mode that ends right after the history bits, and a high mode with fewer than 13 (mono) or 20 (stereo) bytes after the mode or a rate step other than 20), `wavpack.dsd-flag-mismatch`, `wavpack.sample-rate-missing`, `wavpack.sample-rate-zero`, `wavpack.sample-rate-implausible` (a DSD bit rate over 2,147,483,647 Hz), `wavpack.audio-without-bitstream`.
 - Stream: `wavpack.no-blocks`, `wavpack.no-audio`, `wavpack.first-block-index`, `wavpack.block-index-gap`, `wavpack.block-index-overlap`, `wavpack.block-set-broken`, `wavpack.total-samples-mismatch`, `wavpack.total-samples-unknown`, `wavpack.format-changes`, `wavpack.mixed-streams`, `wavpack.channel-count-mismatch`, `wavpack.correction-file`, `wavpack.encoder-claim-differs`, `wavpack.writer-claim-differs`, `wavpack.writer-other-format`.
 - Decoding: `wavpack.audio-crc-mismatch`, `wavpack.md5-mismatch`, `wavpack.md5-needs-correction-file`, `wavpack.md5-set-too-large`.
-- Matroska: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed`.
+- Matroska: `wavpack.matroska-packet-invalid`, `wavpack.matroska-packet-cut`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed`.
 
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink feeds the measurements and tests, not an export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
 - Zeroing or concealing a block that fails its CRC.
-- WavPack in Matroska: the track is not routed to the codec parser, so the stream has no lost samples (the definition's rule 5: a stream whose units are not read) whatever the file holds; the route is planned.
+- WavPack hybrid correction data in Matroska (BlockAdditions, BlockAddIDType 1) is not read; the stream is reported from its main blocks.
+- WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
+- WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).
