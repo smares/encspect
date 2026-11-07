@@ -513,6 +513,13 @@
               "length": 5469,
               "children": [
                 {
+                  "name": "Trailing CodecPrivate Data",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 180,
+                  "length": 8
+                },
+                {
                   "name": "Stream Marker",
                   "value": "fLaC",
                   "offset": 138,
@@ -2004,6 +2011,19 @@
         "path": [
           0,
           2
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "matroska.codec-private-trailing",
+        "message": "The CodecPrivate of Track 1 holds 8 bytes after the metadata block that has the last-block flag, which the codec mapping does not define (draft-ietf-cellar-codec, section 3.4); they are not read as metadata.",
+        "offset": 180,
+        "length": 8,
+        "path": [
+          0,
+          2,
+          0
         ],
         "count": 1
       }
