@@ -39,6 +39,8 @@ Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, 
 
 Phases 2 and 3, the lossy and the lossless formats with the lossless decoders, are done, and so are the measurements and the cross-checks against the formats' official decoders. Next: decoders for the lossy formats ([plan](docs/PLAN.md#next)).
 
+The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
+
 ## Documentation
 
 - [Command line](docs/cli.md)

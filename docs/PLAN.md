@@ -305,7 +305,7 @@ After Gate 3, in this order:
 ### Next
 
 1. **Lossy decoders, with the entropy pass,** one pull request per decoder; the measurements of lossy streams and gap wave 3 wait for them.
-   - Design: `docs/design/lossy-decoders.md`, signed off by the project lead on 2026-11-08.
+   - Design: [lossy-decoders.md](design/lossy-decoders.md), signed off by the project lead on 2026-11-08.
    - Order:
      1. groundwork: determinism and the PCM comparison tools;
      2. the ALAC and TTA decoders, small and exact, checked bit for bit (the project lead, 2026-11-08);
