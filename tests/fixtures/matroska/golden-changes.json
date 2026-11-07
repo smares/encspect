@@ -3671,24 +3671,21 @@
       "scope": "stream",
       "fields": [
         "averageBitrate",
+        "bitsPerSample",
+        "channelLayout",
+        "channelLayoutName",
+        "channelMode",
+        "codec",
         "duration",
         "isVbr",
-        "samples"
+        "nodes",
+        "samples",
+        "series",
+        "verification"
       ],
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "averageBitrate",
-        "codec",
-        "duration",
-        "samples"
-      ],
-      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json",
         "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
@@ -3714,27 +3711,12 @@
   "bitrate": [
     {
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
-      ],
-      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
-    },
-    {
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
-      ],
-      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
-    },
-    {
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json"
-      ],
-      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
-    },
-    {
-      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
         "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ],
-      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
+      "reason": "The stream is now the codec parser's: it reports the figures of the track's packets, so its average bitrate (the bytes over the duration) is the parser's own."
     }
   ]
 }
