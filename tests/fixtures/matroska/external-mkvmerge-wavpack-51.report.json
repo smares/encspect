@@ -1440,6 +1440,26 @@
                   ]
                 },
                 {
+                  "name": "Encoder",
+                  "value": "WavPack 4 stream, no WavPack 5 features",
+                  "offset": 5455,
+                  "length": 154668,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "The stream version is 0x410 and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well",
+                      "offset": 5455,
+                      "length": 154668
+                    }
+                  ]
+                },
+                {
                   "name": "Statistics",
                   "kind": "Statistics",
                   "offset": 5455,
@@ -1454,6 +1474,13 @@
                     },
                     {
                       "name": "Blocks",
+                      "value": 3,
+                      "unit": "blocks",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Audio Blocks",
                       "value": 3,
                       "unit": "blocks",
                       "offset": 5455,
@@ -1510,6 +1537,81 @@
                       "value": false,
                       "offset": 5455,
                       "length": 154668
+                    },
+                    {
+                      "name": "Stereo Coding",
+                      "value": 3,
+                      "unit": "stereo blocks",
+                      "offset": 5455,
+                      "length": 154668,
+                      "children": [
+                        {
+                          "name": "Left/right stereo",
+                          "value": "2 stereo blocks (66.7%)",
+                          "offset": 5455,
+                          "length": 154668
+                        },
+                        {
+                          "name": "Mid/side stereo",
+                          "value": "1 stereo block (33.3%)",
+                          "offset": 5455,
+                          "length": 154668
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 2474.688,
+                      "unit": "kbps",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "unknown",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Smallest Block Set",
+                      "value": 154668,
+                      "unit": "bytes",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Largest Block Set",
+                      "value": 154668,
+                      "unit": "bytes",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 2474.688,
+                      "unit": "kbps",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 2474.688,
+                      "unit": "kbps",
+                      "offset": 5455,
+                      "length": 154668
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 5455,
+                      "length": 154668,
+                      "children": [
+                        {
+                          "name": "2464 to 2495 kbps",
+                          "value": "1 block set (100.0%)",
+                          "offset": 5455,
+                          "length": 154668
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1589,9 +1691,69 @@
             }
           ]
         },
+        "encoder": "WavPack 4 stream, no WavPack 5 features",
+        "encoderConfidence": "Low",
         "writer": "mkvmerge v82.0 ('I'm The President') 64-bit",
         "writerConfidence": "Low",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              5455
+            ],
+            "values": [
+              2474.688
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              2475
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "stereo block",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 2
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 1
+              }
+            ],
+            "total": 3,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                3,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ]
+          }
+        ]
       }
     ],
     "findings": []

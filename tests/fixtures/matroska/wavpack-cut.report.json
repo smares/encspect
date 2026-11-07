@@ -906,6 +906,26 @@
                   ]
                 },
                 {
+                  "name": "Encoder",
+                  "value": "WavPack 4 stream, no WavPack 5 features",
+                  "offset": 178,
+                  "length": 47338,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "The stream version is 0x410 and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well",
+                      "offset": 178,
+                      "length": 47338
+                    }
+                  ]
+                },
+                {
                   "name": "Statistics",
                   "kind": "Statistics",
                   "offset": 178,
@@ -920,6 +940,13 @@
                     },
                     {
                       "name": "Blocks",
+                      "value": 2,
+                      "unit": "blocks",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Audio Blocks",
                       "value": 2,
                       "unit": "blocks",
                       "offset": 178,
@@ -983,6 +1010,81 @@
                       "value": false,
                       "offset": 178,
                       "length": 47338
+                    },
+                    {
+                      "name": "Stereo Coding",
+                      "value": 1,
+                      "unit": "stereo blocks",
+                      "offset": 178,
+                      "length": 47338,
+                      "children": [
+                        {
+                          "name": "Mid/side stereo",
+                          "value": "1 stereo block (100.0%)",
+                          "offset": 178,
+                          "length": 47338
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 695.7656999999999,
+                      "unit": "kbps",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Smallest Block Set",
+                      "value": 6931,
+                      "unit": "bytes",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Largest Block Set",
+                      "value": 40400,
+                      "unit": "bytes",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 646.4,
+                      "unit": "kbps",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 1253.9778461538463,
+                      "unit": "kbps",
+                      "offset": 178,
+                      "length": 47338
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 178,
+                      "length": 47338,
+                      "children": [
+                        {
+                          "name": "640 to 671 kbps",
+                          "value": "1 block set (50.0%)",
+                          "offset": 178,
+                          "length": 47338
+                        },
+                        {
+                          "name": "1248 to 1279 kbps",
+                          "value": "1 block set (50.0%)",
+                          "offset": 178,
+                          "length": 47338
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1027,7 +1129,7 @@
         "lostSamples": 1950,
         "duration": 0.54421768707483,
         "averageBitrate": 695.7656999999999,
-        "isVbr": false,
+        "isVbr": true,
         "playbackGroup": 1,
         "verification": {
           "decoding": "notRequested",
@@ -1059,9 +1161,71 @@
             }
           ]
         },
+        "encoder": "WavPack 4 stream, no WavPack 5 features",
+        "encoderConfidence": "Low",
         "writer": "encspect fixtures",
         "writerConfidence": "Low",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              178,
+              40585
+            ],
+            "values": [
+              646.4,
+              1253.9778461538463
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              696
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "stereo block",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 1
+              }
+            ],
+            "total": 1,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                1
+              ]
+            ]
+          }
+        ]
       }
     ],
     "findings": [
@@ -1092,8 +1256,8 @@
       },
       {
         "severity": "Warning",
-        "code": "wavpack.matroska-block-invalid",
-        "message": "The block at 0x9E8D has a size that is odd, so libwavpack's reader would not take its header for a block's.",
+        "code": "wavpack.matroska-packet-cut",
+        "message": "The data ends inside the packet at 0x9E89, after 6931 bytes of its 1950 samples.",
         "offset": 40585,
         "length": 6931,
         "path": [
