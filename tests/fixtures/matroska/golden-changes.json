@@ -6,34 +6,610 @@
     {
       "scope": "node",
       "parent": [
+        "Matroska"
+      ],
+      "name": "Track 1 Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Stream Marker",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Metadata Block",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
+        "Metadata Block"
+      ],
+      "name": "Block Header",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block",
+        "Block Header"
+      ],
+      "name": "IsLastBlock",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block",
+        "Block Header"
+      ],
+      "name": "Block Type",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block",
+        "Block Header"
+      ],
+      "name": "Block Length",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Minimum Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Maximum Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Minimum Frame Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Maximum Frame Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Channels",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Bits Per Sample",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "Total Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Metadata Block"
+      ],
+      "name": "MD5 Signature",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Writer"
+      ],
+      "name": "Confidence",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Writer"
+      ],
+      "name": "Evidence",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Statistics",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Frames",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Duration",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Container Duration",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Container Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Channels",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Channel Layout",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Bits Per Sample",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Blocking Strategy",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Smallest Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Largest Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Subframe Types",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Subframe Types"
+      ],
+      "name": "Constant",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Subframe Types"
+      ],
+      "name": "Verbatim",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Subframe Types"
+      ],
+      "name": "Fixed Predictor",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Subframe Types"
+      ],
+      "name": "Linear Predictor",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Average Predictor Order",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Highest Predictor Order",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Coefficient Precision",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Subframes With Wasted Bits",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Partition Orders",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics",
+        "Partition Orders"
+      ],
+      "name": "Order 0",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Rice With 5-Bit Parameters",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Escaped Partitions",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Verified Header Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Verified Frame Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "MD5 Signature",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Average Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
         "Statistics"
       ],
       "name": "Bitrate Mode",
       "goldens": [
-        "tests/fixtures/matroska/aac-delay.report.json",
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
-        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-invalid-output.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
-        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/aac-private-bzlib.report.json",
-        "tests/fixtures/matroska/aac-private-encrypted.report.json",
-        "tests/fixtures/matroska/aac-private-stripped.report.json",
-        "tests/fixtures/matroska/aac-private-zlib.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
       ]
     },
     {
@@ -41,32 +617,59 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
+        "Statistics"
+      ],
+      "name": "Smallest Frame",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Largest Frame",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Minimum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Maximum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
         "Statistics"
       ],
       "name": "Bitrate Distribution",
       "goldens": [
-        "tests/fixtures/matroska/aac-delay.report.json",
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
-        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-invalid-output.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
-        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/aac-private-bzlib.report.json",
-        "tests/fixtures/matroska/aac-private-encrypted.report.json",
-        "tests/fixtures/matroska/aac-private-stripped.report.json",
-        "tests/fixtures/matroska/aac-private-zlib.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
       ]
     },
     {
@@ -74,336 +677,23 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/aac-delay.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-invalid-output.report.json",
-        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
-        "tests/fixtures/matroska/aac-private-bzlib.report.json",
-        "tests/fixtures/matroska/aac-private-encrypted.report.json",
-        "tests/fixtures/matroska/aac-private-stripped.report.json",
-        "tests/fixtures/matroska/aac-private-zlib.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/matroska/aac-delay.report.json",
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
-        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
-        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/aac-private-stripped.report.json",
-        "tests/fixtures/matroska/aac-private-zlib.report.json",
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/ac3-codec-private.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/compression-hides-encryption.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encrypted-3des-aes-settings.report.json",
-        "tests/fixtures/matroska/encrypted-3des.report.json",
-        "tests/fixtures/matroska/encrypted-aac-delay.report.json",
-        "tests/fixtures/matroska/encrypted-aac.report.json",
-        "tests/fixtures/matroska/encrypted-cbc.report.json",
-        "tests/fixtures/matroska/encrypted-chain.report.json",
-        "tests/fixtures/matroska/encrypted-in-chain-middle.report.json",
-        "tests/fixtures/matroska/encrypted-next-encoding.report.json",
-        "tests/fixtures/matroska/encrypted-over-3des.report.json",
-        "tests/fixtures/matroska/encrypted-over-algorithm-none.report.json",
-        "tests/fixtures/matroska/encrypted-track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/encrypted-under-bzlib.report.json",
-        "tests/fixtures/matroska/encrypted-vorbis.report.json",
-        "tests/fixtures/matroska/encrypted.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/encryption-missing.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-alac.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-eac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/aac-delay.report.json",
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
-        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
-        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/aac-private-stripped.report.json",
-        "tests/fixtures/matroska/aac-private-zlib.report.json",
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/ac3-codec-private.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/compression-hides-encryption.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encrypted-3des-aes-settings.report.json",
-        "tests/fixtures/matroska/encrypted-3des.report.json",
-        "tests/fixtures/matroska/encrypted-aac-delay.report.json",
-        "tests/fixtures/matroska/encrypted-aac.report.json",
-        "tests/fixtures/matroska/encrypted-cbc.report.json",
-        "tests/fixtures/matroska/encrypted-chain.report.json",
-        "tests/fixtures/matroska/encrypted-in-chain-middle.report.json",
-        "tests/fixtures/matroska/encrypted-next-encoding.report.json",
-        "tests/fixtures/matroska/encrypted-over-3des.report.json",
-        "tests/fixtures/matroska/encrypted-over-algorithm-none.report.json",
-        "tests/fixtures/matroska/encrypted-track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/encrypted-under-bzlib.report.json",
-        "tests/fixtures/matroska/encrypted-vorbis.report.json",
-        "tests/fixtures/matroska/encrypted.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/encryption-missing.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-alac.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-eac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "AAC",
         "Statistics",
         "Bitrate Distribution"
       ],
       "name": "96 to 127 kbps",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Frames",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
       ]
     },
     {
@@ -411,16 +701,881 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
+        "Frames"
+      ],
+      "name": "Frame",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame"
+      ],
+      "name": "Frame Header",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Sync Code",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Blocking Strategy",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Channel Assignment",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Sample Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Reserved Bit",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Frame Number",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "CRC-8",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame"
+      ],
+      "name": "Subframe",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Reserved Bit",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Subframe Type",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Predictor Order",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Wasted Bits",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Warm-up Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Coefficient Precision",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Coefficient Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Coefficients",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe"
+      ],
+      "name": "Residual",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual"
+      ],
+      "name": "Residual Coding Method",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual"
+      ],
+      "name": "Partition Order",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual"
+      ],
+      "name": "Partitions",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual",
+        "Partitions"
+      ],
+      "name": "Partition",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual",
+        "Partitions",
+        "Partition"
+      ],
+      "name": "Rice Parameter",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Subframe",
+        "Residual"
+      ],
+      "name": "Rice Parameter Range",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame"
+      ],
+      "name": "CRC-16",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame"
+      ],
+      "name": "Computed CRC-16",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame"
+      ],
+      "name": "IsCrc16Valid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Frames",
+        "Frame",
+        "Frame Header"
+      ],
+      "name": "Uncommon Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Container Duration"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Container Samples"
+    },
+    {
+      "scope": "stream",
+      "key": "bitsPerSample"
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayout"
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName"
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Bitrate Over Time",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "Dolby TrueHD",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD"
+      ],
+      "name": "Statistics",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Access Units",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Major Syncs",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Coded Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Duration",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Sampling Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Channels",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Channel Layout",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Bits Per Sample",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Substreams",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Presentations",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "SignalsAtmos",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Restart Headers",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Verified Parity Nibbles",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Verified Major Sync Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Verified Restart Header Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Verified Substream Checksums",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Stored Lossless Checks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Smallest Access Unit",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Largest Access Unit",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Average Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Smallest Run",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Largest Run",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Minimum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Maximum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "name": "Bitrate Distribution",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
         "Statistics",
         "Bitrate Distribution"
       ],
       "name": "224 to 255 kbps",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -428,16 +1583,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
+        "Dolby TrueHD",
         "Statistics",
         "Bitrate Distribution"
       ],
       "name": "256 to 287 kbps",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-lc.report.json",
-        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
-        "tests/fixtures/matroska/writer-lavc-id.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -445,16 +1597,11 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD"
       ],
-      "name": "128 to 159 kbps",
+      "name": "Access Unit",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -462,19 +1609,12 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit"
       ],
-      "name": "64 to 95 kbps",
+      "name": "Unit Header",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -482,19 +1622,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Unit Header"
       ],
-      "name": "32 to 63 kbps",
+      "name": "Check Nibble",
       "goldens": [
-        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
-        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -502,101 +1636,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Unit Header"
       ],
-      "name": "Bitrate Mode",
+      "name": "Unit Length",
       "goldens": [
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-invalid.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-not-allowed.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -604,101 +1650,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Unit Header"
       ],
-      "name": "Bitrate Distribution",
+      "name": "Input Timing",
       "goldens": [
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-invalid.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-not-allowed.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -706,99 +1664,12 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit"
       ],
-      "name": "0 to 31 kbps",
+      "name": "Major Sync",
       "goldens": [
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-invalid.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-not-allowed.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -806,16 +1677,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AC-3",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "Bitrate Mode",
+      "name": "Sync Word",
       "goldens": [
-        "tests/fixtures/matroska/ac3-codec-private.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -823,16 +1691,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AC-3",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "Bitrate Distribution",
+      "name": "Stream Type",
       "goldens": [
-        "tests/fixtures/matroska/ac3-codec-private.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -840,17 +1705,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AC-3",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "448 to 479 kbps",
+      "name": "Format Info",
       "goldens": [
-        "tests/fixtures/matroska/ac3-codec-private.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -858,13 +1719,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "DTS",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "Bitrate Mode",
+      "name": "Sampling Rate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -872,13 +1734,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "DTS",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "Bitrate Distribution",
+      "name": "6-Channel Multichannel Type",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -886,14 +1749,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "DTS",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "768 to 799 kbps",
+      "name": "8-Channel Multichannel Type",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -901,13 +1764,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "E-AC-3",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "Bitrate Mode",
+      "name": "2-Channel Modifier",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-eac3.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -915,13 +1779,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "E-AC-3",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "Bitrate Distribution",
+      "name": "6-Channel Modifier",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-eac3.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -929,14 +1794,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "E-AC-3",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "256 to 287 kbps",
+      "name": "6-Channel Assignment",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-eac3-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-eac3.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -944,21 +1809,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "End Trimming",
+      "name": "8-Channel Modifier",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -966,27 +1824,14 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "Format Info"
       ],
-      "name": "96 to 127 kbps",
+      "name": "8-Channel Assignment",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -994,26 +1839,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "128 to 159 kbps",
+      "name": "Signature",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1021,26 +1853,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "160 to 191 kbps",
+      "name": "Flags",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1048,25 +1867,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "192 to 223 kbps",
+      "name": "Reserved",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1074,12 +1881,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "288 to 319 kbps",
+      "name": "IsVariableRate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1087,12 +1895,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "320 to 351 kbps",
+      "name": "Peak Data Rate",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1100,12 +1909,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "352 to 383 kbps",
+      "name": "Substream Count",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1113,12 +1923,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "384 to 415 kbps",
+      "name": "Extended Substream Info",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1126,13 +1937,13 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "480 to 511 kbps",
+      "name": "Substream Info",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
@@ -1140,379 +1951,1197 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "512 to 543 kbps",
+      "name": "Channel Meaning",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync"
       ],
-      "name": "End Trimming",
+      "name": "CRC",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "CRC"
       ],
-      "name": "Bitrate Mode",
+      "name": "Computed",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Major Sync",
+        "CRC"
       ],
-      "name": "Bitrate Distribution",
+      "name": "IsValid",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit"
       ],
-      "name": "0 to 31 kbps",
+      "name": "Substream Directory",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory"
       ],
-      "name": "96 to 127 kbps",
+      "name": "Substream 0 Entry",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory",
+        "Substream 0 Entry"
       ],
-      "name": "128 to 159 kbps",
+      "name": "HasExtraWord",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory",
+        "Substream 0 Entry"
       ],
-      "name": "160 to 191 kbps",
+      "name": "IsNonRestart",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory",
+        "Substream 0 Entry"
       ],
-      "name": "192 to 223 kbps",
+      "name": "HasCheckData",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "WebM",
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory",
+        "Substream 0 Entry"
+      ],
+      "name": "Reserved Bit",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream Directory",
+        "Substream 0 Entry"
+      ],
+      "name": "Substream End",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit"
+      ],
+      "name": "IsParityValid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit"
+      ],
+      "name": "Substream 0",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "Block 0",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0"
+      ],
+      "name": "Restart Header",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Restart Sync",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Noise Type",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Output Timing",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "First Coded Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Last Coded Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Last Matrix Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Noise Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Noise Seed",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Largest Output Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Largest LSB Count",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Largest Bit Depth",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Largest Bit Depth, Second",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "HasBlockSizeCheck",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Lossless Check",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Skipped Bits",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "Channel Assignments",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header",
+        "Channel Assignments"
+      ],
+      "name": "Matrix Channel 0",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header"
+      ],
+      "name": "CRC",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header",
+        "CRC"
+      ],
+      "name": "Computed",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Restart Header",
+        "CRC"
+      ],
+      "name": "IsValid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0"
+      ],
+      "name": "Decoding Parameters",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters"
+      ],
+      "name": "Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters"
+      ],
+      "name": "Output Shifts",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters"
+      ],
+      "name": "Quantizer Step Sizes",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters"
+      ],
+      "name": "Channel 0 Parameters",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "Huffman Offset",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "Codebook",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 0",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "LSB Count",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "Block 1",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1"
+      ],
+      "name": "Decoding Parameters",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters"
+      ],
+      "name": "Block Size",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters"
+      ],
+      "name": "Channel 0 Parameters",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "FIR Filter",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "Huffman Offset",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "Codebook",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Block 1",
+        "Decoding Parameters",
+        "Channel 0 Parameters"
+      ],
+      "name": "LSB Count",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "Padding",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "Parity Byte",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Parity Byte"
+      ],
+      "name": "IsValid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "CRC-8",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "CRC-8"
+      ],
+      "name": "IsValid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0"
+      ],
+      "name": "Restart Header",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Restart Sync",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Noise Type",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Output Timing",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "First Coded Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Last Coded Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Last Matrix Channel",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Noise Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Noise Seed",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Largest Output Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Largest LSB Count",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Largest Bit Depth",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Largest Bit Depth, Second",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "HasBlockSizeCheck",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Lossless Check",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Skipped Bits",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "Channel Assignments",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header",
+        "Channel Assignments"
+      ],
+      "name": "Matrix Channel 0",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header"
+      ],
+      "name": "CRC",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header",
+        "CRC"
+      ],
+      "name": "Computed",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Access Unit",
+        "Substream 0",
+        "Restart Header",
+        "CRC"
+      ],
+      "name": "IsValid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
         "Track 1 Frames"
       ],
-      "name": "Container Duration",
+      "name": "Packet",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "End Trimming",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "32 to 63 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "160 to 191 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "192 to 223 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "32 to 63 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -1520,20 +3149,12 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Packet"
       ],
-      "name": "32 to 63 kbps",
+      "name": "Samples",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib-framing.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -1541,16 +3162,12 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
+        "Packet"
       ],
-      "name": "64 to 95 kbps",
+      "name": "Block",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
@@ -1558,553 +3175,566 @@
       "parent": [
         "Matroska",
         "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Packet",
+        "Block"
       ],
-      "name": "160 to 191 kbps",
+      "name": "Flags",
       "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
         "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "160 to 191 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
         "Track 1 Frames",
-        "AAC",
-        "Statistics"
+        "Packet",
+        "Block",
+        "Flags"
       ],
-      "name": "Bitrate Mode",
+      "name": "Bytes Per Sample",
       "goldens": [
-        "tests/fixtures/matroska/webm-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/webm-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/webm-aac.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 2 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 2 Frames"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 2 Frames"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
         "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
       ],
-      "name": "224 to 255 kbps",
+      "name": "IsMono",
       "goldens": [
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
         "Matroska",
-        "Track 2 Frames",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
       ],
-      "name": "256 to 287 kbps",
+      "name": "IsHybrid",
       "goldens": [
-        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesJointStereo",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesCrossChannelDecorrelation",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesHybridNoiseShaping",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "IsFloatingPoint",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "HasExtendedIntegers",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesHybridBitrateControl",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesHybridBalance",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "IsInitialBlock",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "IsFinalBlock",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "Left Shift",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "Maximum Magnitude",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "HasReservedFlag",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "HasBlockChecksum",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "UsesIirNoiseShaping",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "IsFalseStereo",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Flags"
+      ],
+      "name": "IsDsd",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block"
+      ],
+      "name": "CRC",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block"
+      ],
+      "name": "Sub-blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Sub-blocks"
+      ],
+      "name": "Decorrelation Terms",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Sub-blocks"
+      ],
+      "name": "Decorrelation Weights",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Sub-blocks"
+      ],
+      "name": "Decorrelation Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Sub-blocks"
+      ],
+      "name": "Entropy Variables",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Packet",
+        "Block",
+        "Sub-blocks"
+      ],
+      "name": "WavPack Bitstream",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Packets",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Blocks",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "Stream Version",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "IsHybrid",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "IsFloatingPoint",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "name": "IsDsd",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
     }
   ],
   "changed": [
     {
-      "path": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
+      "scope": "stream",
       "fields": [
-        "value"
+        "averageBitrate",
+        "duration",
+        "isVbr",
+        "samples"
       ],
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
       ]
     },
     {
       "scope": "stream",
       "fields": [
+        "averageBitrate",
+        "codec",
         "duration",
         "samples"
       ],
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
       ]
-    },
+    }
+  ],
+  "removed": [
     {
-      "path": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "path": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "path": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "path": [
+      "parent": [
         "Matroska",
-        "Track 2 Frames",
-        "Statistics"
+        "Segment",
+        "Info"
       ],
-      "fields": [
-        "value"
-      ],
+      "name": "Writer",
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
       ]
     },
     {
-      "path": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Samples"
-      ],
-      "fields": [
-        "value"
-      ],
+      "scope": "finding",
+      "code": "matroska.codec-not-analyzed"
+    }
+  ],
+  "bitrate": [
+    {
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
+        "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
     },
     {
-      "path": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Duration"
-      ],
-      "fields": [
-        "value"
-      ],
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
-      ]
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
+    },
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-wavpack.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
+    },
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-wavpack.report.json"
+      ],
+      "reason": "The DiscardPadding of the track's last block is applied to the samples and the duration, so the average bitrate, the bytes over the duration, is higher by the same share."
     }
   ]
 }
