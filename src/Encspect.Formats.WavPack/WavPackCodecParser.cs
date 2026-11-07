@@ -59,6 +59,8 @@ public sealed class WavPackCodecParser : ICodecParser
         private long _samples;
         private long _bytes;
         private long _invalid;
+        private long _lost;
+        private bool _isPacketLost;
         private long _extraBlocks;
         private long _md5Blocks;
         private long _start = -1;
@@ -82,6 +84,7 @@ public sealed class WavPackCodecParser : ICodecParser
             _packets++;
             _bytes += packet.Length;
             _hasGap |= packet.FollowsGap;
+            _isPacketLost = packet.IsCut;
             ReadOnlySpan<byte> data = packet.Span;
             Node? node = _listed < MaxListedPackets ? NewPacketNode(packet, index) : null;
             if (data.Length < 12)
@@ -144,6 +147,7 @@ public sealed class WavPackCodecParser : ICodecParser
             if (fault is not null)
             {
                 string message = fault;
+                _isPacketLost = true;
                 _invalid++;
                 _findings.Add(Severity.Warning, "wavpack.matroska-packet-invalid", () => node ?? context.Parent, _ => $"The packet at 0x{packet.FileStart:X} {message}; the blocks before it are read.", "packet");
             }
@@ -154,6 +158,8 @@ public sealed class WavPackCodecParser : ICodecParser
             }
 
             _samples += samples;
+            // A packet that is cut or holds a block that cannot be read is lost whole: it declares its samples, which the stream counts.
+            _lost += _isPacketLost ? samples : 0;
         }
 
         private Node? NewPacketNode(MappedBytes packet, int index)
@@ -218,6 +224,7 @@ public sealed class WavPackCodecParser : ICodecParser
             if (!isPlausible)
             {
                 _invalid++;
+                _isPacketLost = true;
                 string reason = ImplausibleReason(block.DataLength, rebuilt);
                 _findings.Add(Severity.Warning, "wavpack.matroska-block-invalid", () => packetNode ?? context.Parent,
                     _ => $"The block at 0x{fileStart:X} has {reason}, so libwavpack's reader would not take its header for a block's.", "header");
@@ -411,6 +418,11 @@ public sealed class WavPackCodecParser : ICodecParser
             statistics.Add(Stat("Packets", NodeValue.Integer(_packets, "packets", "packet"), Explain.StatPackets, Topics.Matroska));
             statistics.Add(Stat("Blocks", NodeValue.Integer(_blocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
             statistics.Add(Stat("Samples", NodeValue.Integer(_samples, "samples", "sample"), Explain.StatSamples));
+            if (_lost > 0)
+            {
+                statistics.Add(Stat("Lost Samples", NodeValue.Integer(_lost * (first.IsDsd ? 8 : 1), first.IsDsd ? "bits" : "samples", first.IsDsd ? "bit" : "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+            }
+
             statistics.Add(Stat("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
             statistics.Add(Stat("Sample Rate", NodeValue.Integer(_rate, "Hz"), first.IsDsd ? Explain.StatRateDsd : Explain.StatRate));
             statistics.Add(Stat("Channels", NodeValue.Integer(_channels, "channels", "channel"), Explain.StatChannels, Topics.Channels));
@@ -429,6 +441,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 ChannelLayout = ChannelLayouts.FromWaveMask(_channelMask, _channels),
                 BitsPerSample = first.IsDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null,
                 Samples = _samples * (first.IsDsd ? 8 : 1),
+                LostSamples = _lost * (first.IsDsd ? 8 : 1),
                 Duration = duration,
                 AverageBitrate = duration > 0 ? _bytes * 8 / duration / 1000 : null,
                 Verification = verification,

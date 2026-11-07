@@ -1,0 +1,584 @@
+{
+ "description": "mkvmerge mkvmerge v82.0",
+ "length": 63448,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 13782,
+     "length": 49310,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 20832,
+    "muxing_app": "libebml v1.4.5 + libmatroska v1.7.1",
+    "writing_app": "mkvmerge v82.0 ('I'm The President') 64-bit",
+    "duration": 8000.0
+   },
+   "length": 63408,
+   "declared_end": 63448
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   63408,
+   [
+    [
+     "SeekHead",
+     52,
+     65,
+     [
+      [
+       "Seek",
+       57,
+       15,
+       [
+        [
+         "SeekID",
+         60,
+         7
+        ],
+        [
+         "SeekPosition",
+         67,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       72,
+       15,
+       [
+        [
+         "SeekID",
+         75,
+         7
+        ],
+        [
+         "SeekPosition",
+         82,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       87,
+       15,
+       [
+        [
+         "SeekID",
+         90,
+         7
+        ],
+        [
+         "SeekPosition",
+         97,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       102,
+       15,
+       [
+        [
+         "SeekID",
+         105,
+         7
+        ],
+        [
+         "SeekPosition",
+         112,
+         5
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     117,
+     4034
+    ],
+    [
+     "Info",
+     4151,
+     137,
+     [
+      [
+       "TimestampScale",
+       4157,
+       6
+      ],
+      [
+       "MuxingApp",
+       4163,
+       38
+      ],
+      [
+       "WritingApp",
+       4201,
+       46
+      ],
+      [
+       "Duration",
+       4247,
+       11
+      ],
+      [
+       "DateUTC",
+       4258,
+       11
+      ],
+      [
+       "SegmentUUID",
+       4269,
+       19
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     4288,
+     8423,
+     [
+      [
+       "TrackEntry",
+       4294,
+       8417,
+       [
+        [
+         "TrackNumber",
+         4297,
+         3
+        ],
+        [
+         "TrackUID",
+         4300,
+         11
+        ],
+        [
+         "TrackType",
+         4311,
+         3
+        ],
+        [
+         "Language",
+         4314,
+         7
+        ],
+        [
+         "CodecID",
+         4321,
+         8
+        ],
+        [
+         "CodecPrivate",
+         4329,
+         8352
+        ],
+        [
+         "DefaultDuration",
+         12681,
+         8
+        ],
+        [
+         "LanguageBCP47",
+         12689,
+         7
+        ],
+        [
+         "Audio",
+         12696,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           12698,
+           6
+          ],
+          [
+           "Channels",
+           12704,
+           3
+          ],
+          [
+           "BitDepth",
+           12707,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     12711,
+     1071
+    ],
+    [
+     "Cluster",
+     13782,
+     49310,
+     [
+      [
+       "Timestamp",
+       13789,
+       3
+      ],
+      [
+       "SimpleBlock",
+       13792,
+       9847
+      ],
+      [
+       "BlockGroup",
+       23639,
+       39453,
+       [
+        [
+         "Block",
+         23643,
+         39445
+        ],
+        [
+         "BlockDuration",
+         63088,
+         4
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     63092,
+     22,
+     [
+      [
+       "CuePoint",
+       63097,
+       17,
+       [
+        [
+         "CueTime",
+         63099,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         63102,
+         12,
+         [
+          [
+           "CueTrack",
+           63104,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           63107,
+           4
+          ],
+          [
+           "CueRelativePosition",
+           63111,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     63114,
+     334,
+     [
+      [
+       "Tag",
+       63120,
+       328,
+       [
+        [
+         "Targets",
+         63124,
+         14,
+         [
+          [
+           "TagTrackUID",
+           63127,
+           11
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63138,
+         19,
+         [
+          [
+           "TagName",
+           63141,
+           6
+          ],
+          [
+           "TagString",
+           63147,
+           10
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63157,
+         35,
+         [
+          [
+           "TagName",
+           63160,
+           11
+          ],
+          [
+           "TagString",
+           63171,
+           21
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63192,
+         26,
+         [
+          [
+           "TagName",
+           63195,
+           19
+          ],
+          [
+           "TagString",
+           63214,
+           4
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63218,
+         29,
+         [
+          [
+           "TagName",
+           63221,
+           18
+          ],
+          [
+           "TagString",
+           63239,
+           8
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63247,
+         75,
+         [
+          [
+           "TagName",
+           63250,
+           26
+          ],
+          [
+           "TagString",
+           63276,
+           46
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63322,
+         56,
+         [
+          [
+           "TagName",
+           63325,
+           31
+          ],
+          [
+           "TagString",
+           63356,
+           22
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         63378,
+         70,
+         [
+          [
+           "TagName",
+           63381,
+           19
+          ],
+          [
+           "TagString",
+           63400,
+           48
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 13792,
+   "length": 9847,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     13799,
+     9840
+    ]
+   ]
+  },
+  {
+   "name": "Block",
+   "offset": 23643,
+   "length": 39445,
+   "track": 1,
+   "timestamp": 4096,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     23651,
+     39437
+    ]
+   ],
+   "in_group": true
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 6410242333107136610,
+   "type": 2,
+   "codec": "A_FLAC",
+   "private": [
+    4333,
+    8348
+   ],
+   "channels": 6,
+   "rate": 48000.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v82.0 ('I'm The President') 64-bit",
+   "confidence": "Low"
+  }
+ ],
+ "encoder": {
+  "tool": "mkvmerge mkvmerge v82.0",
+  "arguments": [],
+  "inputs": [
+   "flac/external-16-6ch.flac"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

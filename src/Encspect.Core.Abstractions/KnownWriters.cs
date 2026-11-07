@@ -23,6 +23,7 @@ public static class KnownWriters
     public const string WindowsMedia = "wma";
     public const string Tta = "tta";
     public const string Alac = "alac";
+    public const string TrueHd = "truehd";
 
     private static readonly Dictionary<string, (string Kind, string Label)> Rows = new(StringComparer.OrdinalIgnoreCase)
     {

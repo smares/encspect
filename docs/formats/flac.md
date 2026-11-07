@@ -109,6 +109,6 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
-- FLAC in MP4 and Matroska: neither container routes the codec yet (`mp4.codec-not-analyzed`, `matroska.codec-not-analyzed`), so such a stream gets no FLAC analysis. `flac.payload-not-analyzed` is the codec parser's answer to a container that hands it a whole payload, which no container does today.
+- FLAC in MP4: the container does not route the codec yet (`mp4.codec-not-analyzed`), so such a stream gets no FLAC analysis. `flac.payload-not-analyzed` is the codec parser's answer to a container that hands it a whole payload, which no container does today.
 - The contents of PICTURE data and the audio of an APPLICATION block.
 - Subset conformance (the limits of the FLAC subset) is not judged.

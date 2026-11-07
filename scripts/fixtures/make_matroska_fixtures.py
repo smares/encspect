@@ -958,6 +958,62 @@ def _():
     return data[:-25]
 
 
+def cut_lossless(source, codec, channels, rate, count, with_private, step_ms, cut=25):
+    """The first count blocks of a committed external fixture in a track of its own, the file cut inside the last block's frame."""
+    manifest = json.loads((OUT / f"{source}.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / f"{source}.mka").read_bytes()
+    private = None
+    if with_private:
+        offset, length = manifest["tracks"][0]["private"]
+        private = data[offset:offset + length]
+    chosen = [b for b in manifest["blocks"] if b["frames"]][:count]
+    items = [simple_block(1, i * step_ms, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(chosen)]
+    return file_of(*standard(cluster(0, *items), track=[audio_track(codec=codec, channels=channels, rate=rate, private=private)]))[:-cut]
+
+
+@fixture("flac-cut", "A file that ends inside the last frame of an A_FLAC track (five frames of external-ffmpeg-flac with its CodecPrivate): the frame the file ends in is "
+         "handed to the FLAC parser flagged as cut and counted as lost samples.",
+         findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "2 elements state a size that runs past the end of the file"), ("flac.total-samples-mismatch", "STREAMINFO says"), ("flac.frame-cut", "ends inside the frame")],
+         valid=False, streams=[("FLAC", 44100, 1)])
+def _():
+    return cut_lossless("external-ffmpeg-flac", "A_FLAC", 1, 44100.0, 5, True, 104)
+
+
+@fixture("wavpack-cut", "A file that ends inside the last block of an A_WAVPACK4 track (the two blocks of external-ffmpeg-wavpack with its two-byte CodecPrivate): the frame the file ends in is handed to the WavPack parser flagged as cut and counted as lost samples.",
+         findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "2 elements state a size that runs past the end of the file"), ("wavpack.matroska-block-invalid", "has a size that is odd")],
+         valid=False, streams=[("WavPack lossless", 44100, 2)])
+def _():
+    return cut_lossless("external-ffmpeg-wavpack", "A_WAVPACK4", 2, 44100.0, 2, True, 500)
+
+
+@fixture("truehd-cut", "A file that ends inside the last frame of an A_TRUEHD track (forty access units of external-ffmpeg-truehd, one per millisecond as ffmpeg stamps them): "
+         "the frame the file ends in is handed to the TrueHD parser flagged as cut and counted as lost samples.",
+         findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "2 elements state a size that runs past the end of the file"), ("truehd.unit-cut", "ends inside the access unit")],
+         valid=False, streams=[("Dolby TrueHD", 44100, 1)])
+def _():
+    return cut_lossless("external-ffmpeg-truehd", "A_TRUEHD", 1, 44100.0, 40, False, 1, cut=8)
+
+
+def flac_frames(count, private):
+    manifest = json.loads((OUT / "external-ffmpeg-flac.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-flac.mka").read_bytes()
+    chosen = [b for b in manifest["blocks"] if b["frames"]][:count]
+    items = [simple_block(1, i * 104, data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]], key=True) for i, b in enumerate(chosen)]
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_FLAC", channels=1, rate=44100.0, private=private)]))
+
+
+@fixture("flac-private-missing", "An A_FLAC track with no CodecPrivate, which holds the marker and the metadata blocks the FLAC parser needs: the frames are not analyzed.",
+         findings=[("matroska.codec-private-missing", "marker and metadata blocks")], streams=[("FLAC", 44100, 1)], valid=False)
+def _():
+    return flac_frames(4, None)
+
+
+@fixture("flac-private-invalid", "An A_FLAC track whose CodecPrivate does not start with the fLaC marker: the frames are not analyzed.",
+         findings=[("matroska.codec-private-invalid", "does not start with the marker")], streams=[("FLAC", 44100, 1)], valid=False)
+def _():
+    return flac_frames(4, b"OggS" + bytes(range(38)))
+
+
 @fixture("truncated-header", "A file that ends inside an element header, in the middle of a Cluster.",
          findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "An element states a size"),
                    ("matroska.element-header-invalid", "ends inside its element header")], valid=False, streams=[OPUS])

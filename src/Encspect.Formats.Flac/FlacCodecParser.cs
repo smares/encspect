@@ -24,7 +24,15 @@ public sealed class FlacCodecParser : ICodecParser
         }
 
         var state = new State(context, isContained: true) { Stream = context.Parent };
-        var reader = new PacketReader(state);
+        // A container with a configuration (Matroska's CodecPrivate: the "fLaC" marker and the metadata blocks) hands the blocks over as the header packets,
+        // with no Ogg mapping header before them.
+        bool isMapped = context.Configuration is null;
+        if (context.Configuration is { Data.Length: >= 4 } configuration && configuration.Data.Span[..4].SequenceEqual("fLaC"u8))
+        {
+            state.AddLeading(Node.FromMapped("Stream Marker", configuration.Data, 0, 4, "fLaC", description: Explain.Marker, topic: Topics.Stream));
+        }
+
+        var reader = new PacketReader(state, isMapped);
         int index = 0;
         foreach (MappedBytes packet in packets)
         {
@@ -39,7 +47,7 @@ public sealed class FlacCodecParser : ICodecParser
         reader.Finish();
     }
 
-    private sealed class PacketReader(State s)
+    private sealed class PacketReader(State s, bool isMapped)
     {
         private readonly SubframeFacts[] _facts = new SubframeFacts[8];
         private readonly PartitionLog[] _logs = [new(), new(), new(), new(), new(), new(), new(), new()];
@@ -71,7 +79,7 @@ public sealed class FlacCodecParser : ICodecParser
                 return;
             }
 
-            if (index == 0)
+            if (index == 0 && isMapped)
             {
                 Mapping(packet);
             }

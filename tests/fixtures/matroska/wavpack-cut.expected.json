@@ -1,0 +1,276 @@
+{
+ "description": "A file that ends inside the last block of an A_WAVPACK4 track (the two blocks of external-ffmpeg-wavpack with its two-byte CodecPrivate): the frame the file ends in is handed to the WavPack parser flagged as cut and counted as lost samples.",
+ "length": 47516,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 160,
+     "length": 47356,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 47476,
+   "declared_end": 47541
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   47476,
+   [
+    [
+     "Info",
+     47,
+     63,
+     [
+      [
+       "TimestampScale",
+       52,
+       7
+      ],
+      [
+       "Duration",
+       59,
+       11
+      ],
+      [
+       "MuxingApp",
+       70,
+       20
+      ],
+      [
+       "WritingApp",
+       90,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     110,
+     50,
+     [
+      [
+       "TrackEntry",
+       115,
+       45,
+       [
+        [
+         "TrackNumber",
+         117,
+         3
+        ],
+        [
+         "TrackUID",
+         120,
+         5
+        ],
+        [
+         "TrackType",
+         125,
+         3
+        ],
+        [
+         "CodecID",
+         128,
+         12
+        ],
+        [
+         "CodecPrivate",
+         140,
+         5
+        ],
+        [
+         "Audio",
+         145,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           147,
+           10
+          ],
+          [
+           "Channels",
+           157,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     160,
+     47356,
+     [
+      [
+       "Timestamp",
+       167,
+       3
+      ],
+      [
+       "SimpleBlock",
+       170,
+       40408
+      ],
+      [
+       "SimpleBlock",
+       40578,
+       6938
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 170,
+   "length": 40408,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     178,
+     40400
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 40578,
+   "length": 6938,
+   "track": 1,
+   "timestamp": 500,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     40585,
+     6931
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_WAVPACK4",
+   "private": [
+    143,
+    2
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "WavPack lossless",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.element-truncated",
+   "contains": "The Segment states"
+  },
+  {
+   "code": "matroska.element-truncated",
+   "contains": "2 elements state a size that runs past the end of the file"
+  },
+  {
+   "code": "wavpack.matroska-block-invalid",
+   "contains": "has a size that is odd"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

@@ -175,8 +175,8 @@ internal sealed partial class FileReader
 
         bool areFramesEncrypted = plan.Frames.IsEncrypted;
         string? problem = plan.Frames.Describe();
-        // Vorbis and Opus cannot be set up without their CodecPrivate.
-        bool needsCodecPrivate = codec is "vorbis" or "opus";
+        // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
+        bool needsCodecPrivate = codec is "vorbis" or "opus" or "flac";
         if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !needsCodecPrivate)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
@@ -211,7 +211,7 @@ internal sealed partial class FileReader
         // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
         // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
-        if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" || codecId == "A_AAC"))
+        if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" or "flac" or "wavpack" || codecId == "A_AAC"))
         {
             _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
                 $"{label} ({codecId}) has a CodecPrivate, which the codec mapping does not define for it (draft-ietf-cellar-codec, section 3.4), so it is not handed to the codec parser.",
@@ -262,12 +262,12 @@ internal sealed partial class FileReader
         }
 
         List<MappedBytes> headers = [];
-        if (codec is "vorbis" or "opus")
+        if (codec is "vorbis" or "opus" or "flac")
         {
             if (privateData is null)
             {
                 _findings.AddNow(Severity.Warning, "matroska.codec-private-missing",
-                    $"{label} is coded as {Codecs.NameOf(codecId)} but has no CodecPrivate, which holds its {(codec == "vorbis" ? "three headers" : "identification header")} (draft-ietf-cellar-codec, section 3.4); its frames cannot be analyzed.", anchor);
+                    $"{label} is coded as {Codecs.NameOf(codecId)} but has no CodecPrivate, which holds its {(codec == "vorbis" ? "three headers" : codec == "flac" ? "marker and metadata blocks" : "identification header")} (draft-ietf-cellar-codec, section 3.4); its frames cannot be analyzed.", anchor);
                 AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
@@ -275,6 +275,16 @@ internal sealed partial class FileReader
             if (codec == "opus")
             {
                 headers.Add(privateData);
+            }
+            else if (codec == "flac")
+            {
+                if (!TryFlacHeaders(privateData, headers, out string? flacWhy))
+                {
+                    _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                        $"The CodecPrivate of {label} does not hold the \"fLaC\" marker and the metadata blocks the codec mapping gives it (draft-ietf-cellar-codec, section 3.4): it {flacWhy}. Its frames cannot be analyzed.", track.CodecPrivateNode ?? anchor);
+                    AddContainerStream(segment, track, null, plan.Protection);
+                    return;
+                }
             }
             else if (!TryUnlaceVorbisHeaders(privateData, headers, out string? why))
             {
@@ -323,6 +333,13 @@ internal sealed partial class FileReader
         {
             first = Math.Min(first, header.FileStart);
             last = Math.Max(last, header.FileEnd);
+        }
+
+        // The FLAC parser also describes the marker in front of the headers.
+        if (codec == "flac" && privateData is not null)
+        {
+            first = Math.Min(first, privateData.FileStart);
+            last = Math.Max(last, privateData.FileEnd);
         }
 
         var node = new Node($"{prefix}Track {track.Number} Frames", first, Math.Max(0, last - first),
@@ -381,6 +398,36 @@ internal sealed partial class FileReader
 
             CompareStreams(track, label, codec, added);
         }
+    }
+
+    // The CodecPrivate of A_FLAC (draft-ietf-cellar-codec, section 3.4): the "fLaC" marker and the metadata blocks, each a 4-byte header and its data, the last
+    // with the last-block flag. Each block is handed over as a header packet, as Ogg's header packets are; a block the data cuts short is handed over as it is.
+    private static bool TryFlacHeaders(MappedBytes data, List<MappedBytes> headers, out string? why)
+    {
+        why = null;
+        ReadOnlySpan<byte> span = data.Span;
+        if (span.Length < 8 || !span[..4].SequenceEqual("fLaC"u8))
+        {
+            why = span.Length < 8 ? "is shorter than a marker and a block header" : "does not start with the marker";
+            return false;
+        }
+
+        int position = 4;
+        while (position + 4 <= span.Length)
+        {
+            int length = (span[position + 1] << 16) | (span[position + 2] << 8) | span[position + 3];
+            int size = (int)Math.Min(4L + length, span.Length - position);
+            headers.Add(data.Slice(position, size));
+            if ((span[position] & 0x80) != 0 || position + size >= span.Length)
+            {
+                return true;
+            }
+
+            position += size;
+        }
+
+        why = "ends inside a block header";
+        return false;
     }
 
     // The three headers of A_VORBIS (draft-ietf-cellar-codec, section 3.4.41): the number of packets minus one, the Xiph-laced lengths of

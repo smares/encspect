@@ -98,7 +98,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - The `wavpack` codec parser reads the packets of an `A_WAVPACK4` track: a packet is the sample count, and for each block its flags, CRC and size (the size is left out when the block holds the initial and the final flag), then the block's data without the 32-byte header (FFmpeg, `matroskadec.c`, `matroska_parse_wavpack`). It rebuilds the headers (the version from the two bytes of CodecPrivate, 0x410 if there are none; block index and total samples 0) and analyzes and decodes the blocks as a file's.
 - The packet nodes list the first 256 packets; later decode findings have no node of their own to point to.
-- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). The Matroska route that calls the parser is not built: Matroska gives an `A_WAVPACK4` track `matroska.codec-not-analyzed`, so the parser does not run on a Matroska file.
+- Findings: `wavpack.matroska-packet-invalid`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed` (a container handed the whole payload). Matroska routes `A_WAVPACK4` tracks to the parser (see [the Matroska format](matroska.md)): the CodecPrivate is the stream version, and a packet that is cut, or holds a block that cannot be read, is counted in the stream's lost samples with the samples it declares. A track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
 
 ## Tags
 
@@ -118,6 +118,6 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - Playback and any output other than the checksum comparison (the PCM sink feeds the measurements and tests, not an export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
 - Zeroing or concealing a block that fails its CRC.
-- WavPack in Matroska: the track is not routed to the codec parser, so the stream has no lost samples (the definition's rule 5: a stream whose units are not read) whatever the file holds; the route is planned.
+- WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).
