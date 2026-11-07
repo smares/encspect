@@ -66,7 +66,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Name | Encspect | Detenc and Framescope were already taken |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |
 | Licensed sources | Permissive only, with notices | Decoders and parsers follow specifications and BSD, MIT or Apache reference code, with their notices in the source and in `THIRD-PARTY-NOTICES.md`. Nothing is ported from LGPL or GPL code: where that is the only detailed source, a clean-room split applies (CLAUDE.md) |
-| Routes | Containers route only the codec and container combinations that writers in the wild produce (the project lead, 2026-11-07) | A combination nobody writes (WavPack in ASF and the like) stays at container level: the track is named and the `codec-not-analyzed` finding stays. The table is in [formats/README.md](formats/README.md#codecs-in-containers) |
+| Routes | Containers route only the codec and container combinations that writers in the wild produce (the project lead, 2026-11-07) | A combination nobody writes (WavPack in ASF and the like) stays at container level: the track is named and the `codec-not-analyzed` finding stays. Planned: PCM in MP4 and Matroska, MP3 and AC-3 in ASF; TrueHD as IEC 61937 MAT bursts in WAV is not planned. The table is in [formats/README.md](formats/README.md#codecs-in-containers) |
 | Releases | 0.1.0 as a GitHub pre-release after Gate 2 (the project lead, 2026-10-17) | Replaced the earlier rule of no public version until development ends |
 
 ## Architecture
@@ -294,7 +294,8 @@ After Gate 3, in this order:
 1. **Routes that known writers produce,** each its own pull request after the codec parsers it routes to:
    - MP4: FLAC (`fLaC`, FFmpeg), Opus (FFmpeg), Dolby TrueHD (`mlpa`, FFmpeg), PCM (FFmpeg);
    - MPEG audio as packets: MP4 tracks whose samples lie in several stretches and Matroska tracks (FFmpeg, mkvmerge), and the MPEG audio bursts of IEC 61937 in WAV (FFmpeg's spdif muxer); the MPEG parser reads one contiguous payload only today;
-   - Matroska: PCM (FFmpeg, mkvmerge), and `A_MS/ACM` by the WAVEFORMATEX format tag, in older Matroska files (the muxer that writes it is still to be confirmed with a fixture);
+   - Matroska: PCM (FFmpeg, mkvmerge);
+   - ASF: MP3 and AC-3 (the project lead, 2026-11-07);
    - Matroska header stripping for AAC, AC-3, DTS and MPEG audio (mkvmerge writes it): a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
 2. **Phase 4:** TAK and OptimFROG at header level only.
 3. **Phase 5:** [More formats](#more-formats).
@@ -325,6 +326,7 @@ The order is not fixed.
   - AAC USAC, ER AAC and SBR envelope data.
 - **ALAC, TTA and WMA Lossless decoders:** they store no checksum over decoded audio, so phase 3 left them out (decoders.md, decision 5).
 - **The measurements' later steps** (step 6 of spectral-analysis.md).
+- **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the project lead, 2026-11-07).
 - **Small separate items:**
   - WavPack 1 to 3;
   - finding the `.wvc` that belongs to a `.wv` (host access to a companion file);
