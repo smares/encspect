@@ -124,7 +124,7 @@ internal static class Layouts
     }
 
     // The speakers of positions in their order. A format's only surround pair is the back pair; where there is also a rear pair, the
-    // surround pair is the side pair (plan, "Streams and series"). A position named twice, or without one, is discrete.
+    // surround pair is the side pair (docs/architecture.md, "Channel layout"). A position named twice, or without one, is discrete.
     public static IReadOnlyList<Speaker> Speakers(IReadOnlyList<Position> positions)
     {
         bool rear = positions.Contains(Position.LeftRear);

@@ -323,7 +323,7 @@ New candidates, for the lead to pick:
 | Series | Formats | Source | Cost | Why on a map |
 | --- | --- | --- | --- | --- |
 | **Frame checks** (category: CRC matches, CRC differs, no CRC) | MPEG audio | `Entry.Crc` and `Entry.ComputedCrc` in the frame record (code) | cheap | Marks every damaged frame, where findings ring only the first case; shows whether the encoder wrote CRCs at all. |
-| | AC-3 and E-AC-3 | the CRC verdicts in the 16-byte frame record (plan, "Phase 2: AC-3 and E-AC-3") | cheap | The same. |
+| | AC-3 and E-AC-3 | the CRC verdicts in the 16-byte frame record ([ac3.md](../formats/ac3.md), "Memory") | cheap | The same. |
 | | FLAC | `Crc16Fails` and `Crc8Fails` of the frame entry (`Model.cs`) | cheap | The same, for the CRC-8 and CRC-16 apart. |
 | | TTA | each frame record's stored and computed CRC-32 (`Model.cs`, `IsCrcValid`) | cheap | The same. |
 | | DTS, TrueHD and MLP, AAC (ADTS) | their CRC checks (`Crc16.cs`, `Checks.cs`, the ADTS error check) | **unverified** which verdicts are kept per unit | The same. |

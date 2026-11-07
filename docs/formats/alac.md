@@ -62,3 +62,8 @@ ALAC stores no checksum and has no decoder, so no figure is compared. The stream
 - CAF files, and any decoded view of the samples: no waveform, spectrum or lowpass for ALAC, and no check of the audio.
 - The program and coupling channel elements (tags 5 and 2), which the reference decoder refuses.
 - Channel layouts other than the cookie's.
+
+## Articles
+
+- **Articles:** `alac`, `alac-adaptive-golomb`, `alac-prediction`.
+- **Shared with other formats:** `mid-side-stereo`, `wasted-bits`, `channel-layouts`.

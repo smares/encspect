@@ -45,7 +45,7 @@ internal static class Ac3Names
 
     // The speakers of the coded channels in coded order, the LFE last (5.4.2.3). A format's only
     // surround pair is the back pair; with a rear pair from a dependent substream it becomes the side
-    // pair (plan, "Streams and series"), which Speakers of a program sorts out.
+    // pair (docs/architecture.md, "Channel layout"), which Speakers of a program sorts out.
     public static Speaker[] Speakers(int acmod, bool lfeon)
     {
         Speaker[] front = acmod switch

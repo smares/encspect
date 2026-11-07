@@ -23,7 +23,9 @@ flowchart TD
 - The host sniffs the format, lets tag parsers claim their regions, then hands the rest to a format parser.
 - A container hands what it holds back to the host, which passes it on to a codec or tag parser.
 - **Tags are separate from formats,** because ID3, APE and Lyrics3 appear in many of them.
-- **Decoders** are optional and live in their format's project, in its `Decoding` namespace, apart from its parsers. Parsers reach them only through the host, so no parser depends on one; `DecodingBoundaryTests` checks this in the compiled assemblies. The contract is [decoders.md](design/decoders.md).
+- **Decoders** are optional and live in their format's project, in its `Decoding` namespace, apart from its parsers.
+  - Parsers reach them only through the host, so no parser depends on one; `DecodingBoundaryTests` checks this in the compiled assemblies.
+  - The contract is [decoders.md](design/decoders.md).
 - **Measurements** of the decoded audio are host code that reads the decoders' PCM and adds figures to the stream: [spectral-analysis.md](design/spectral-analysis.md).
 - **The library:** the core, the host and the parsers are a front-end-agnostic library ([library.md](library.md)). The abstractions are no published API yet, so they still change as the formats need.
 
@@ -41,7 +43,9 @@ flowchart TD
   - So an APE item named "Frame" is tag content, and a Monkey's Audio stream named "APE" is no tag.
 - **Bit positions:** a field that does not cover whole bytes also carries its bit offset within its first byte and its width in bits (`Node.FromBits`), so the hex view can mark the exact bits.
   - Its byte offset and length still cover every byte it touches.
-  - Bits count from the most significant bit. Formats that pack bits least significant first (Vorbis) number them from the least significant bit instead: `Node.FromBits` takes a `BitOrder`, and `Node.BitOrder` says how `BitOffset` counts. Such a field's bits run on from the top of one byte into the bottom of the next.
+  - Bits count from the most significant bit.
+    - Formats that pack bits least significant first (Vorbis) number them from the least significant bit instead: `Node.FromBits` takes a `BitOrder`, and `Node.BitOrder` says how `BitOffset` counts.
+    - Such a field's bits run on from the top of one byte into the bottom of the next.
   - The order takes one bit of the int that holds the bit position, so nodes keep their size.
   - JSON writes `bitOffset`, `bitLength` and, where it applies, `bitOrder` (`leastSignificantFirst`); the text tree with `--offsets` shows `[0x1+3, 2 bits]` or `[0x1+3, 2 bits, LSB first]`.
 - **Node ranges:** a node whose bytes are not contiguous in the file (a packet that spans Ogg pages, a field that a page header splits) carries `Ranges`, its file ranges in order.
@@ -88,7 +92,12 @@ flowchart TD
 - **A stream is what the format says it is:** an MPEG stream continues across a tag embedded in it and ends where the version, layer, sample rate or free format changes, so one stream may span several regions and one region hold several streams.
 - **How many:** a raw stream parser (MPEG audio, ADTS, AC-3 and E-AC-3, DTS) reports at most 64 streams per file (see "Stream changes"). A container reports one stream per track, or per stream its codec parser finds in it, bounded by its own record and node budgets, not by this cap.
 - **The summary and the CSV** read streams only: they count real streams, add up durations and samples, and weigh the average bitrate by duration. The CSV's Channel Layout column is the first stream's described layout, next to its channel mode.
-- **Playback groups:** streams that play at the same time share a `StreamInfo.PlaybackGroup` (the tracks of an MP4 movie or a Matroska Segment, the streams of an Ogg chain link or an ASF file, the independent substreams of an E-AC-3 file). The summary counts the longest of a group once.
+- **Playback groups:** streams that play at the same time share a `StreamInfo.PlaybackGroup`: the tracks of an MP4 movie or a Matroska Segment, the streams of an Ogg chain link or an ASF file, the independent substreams of an E-AC-3 file.
+  - The summary and the CSV count the longest stream of a group once, and add up the groups and the streams without one.
+  - In MP4 and Matroska every stream that comes from a track gets its movie's or Segment's group, also when the codec parser reports several for one track that play together (E-AC-3 independent substreams).
+  - Streams of a track that follow one another (a configuration change) are not grouped.
+  - An ASF file's streams are interleaved in one Data Object, so they play together or are bitrate alternatives of which one plays; either way the longest counts once, without the Bitrate Mutual Exclusion Object being read for it.
+  - A DTS file's assets are not separate streams, so they need no group.
 - **Series:** a stream carries `Series` for graphs: numbers with a unit over an x axis of frame offsets or seconds.
   - A series may name the node it belongs with, after which the text tree prints it in one line.
   - A series may carry a `Concept` (stereo coding, block switching, coded bandwidth, bit distribution), which the GUI lists graphs under.
@@ -164,7 +173,8 @@ One rule for the raw stream formats MPEG audio, ADTS, AC-3 and E-AC-3, and DTS:
   - DTS: the core and extension configuration.
 - **A configuration that returns** starts a stream of its own, so no stream is reused.
 - **Counting:** every change is counted in one Info finding `<format>.stream-changed`, with the number of changes, never added per change.
-- **The cap:** a file has at most 64 streams. The change that would start stream 65 starts none: the units from there on (frames; DTS units) are in no stream, left out of every stream's figures and statistics, and counted in one Warning `<format>.streams-limited` that names the first of them.
+- **The cap:** a file has at most 64 streams.
+  - The change that would start stream 65 starts none: the units from there on (frames; DTS units) are in no stream, left out of every stream's figures and statistics, and counted in one Warning `<format>.streams-limited` that names the first of them.
 - **E-AC-3:** the cap counts the streams of all independent substreams together. The units in no stream are those of the substream whose change would start stream 65, and of every later change of any substream; a substream that already has its stream and does not change keeps it, since the independent substreams play at the same time.
 - **Why:** the cap, the counted findings and the linear algorithms keep a stream that changes at every frame from growing the report.
   - `ComplexityTests` alternates the configuration of MPEG audio, ADTS and DTS files for it, `Ac3ProgramTests` that of AC-3 files, and `MemoryTests` that of ADTS files.
@@ -207,13 +217,19 @@ Parsers never reference each other; they reach other parsers only through routes
 - **`CodecConfiguration`,** optional on both codec routes: what the container stores about the coding apart from its data, as mapped bytes with the container's node that holds them, and whether the container states a variable or a constant bitrate.
   - MP4 keeps AAC's AudioSpecificConfig in the esds box inside moov, far from the samples in mdat, so the codec parser builds its configuration nodes there and its other nodes under the data's node.
   - `CodecConfiguration.Claims` carries encoder claims that hold for that one stream (MP4's sample-entry layout of one track). The routed codec parser sees them in `EncoderClaims` after the file's claims; they never go back to the caller, and they take effect only through the host's router.
-- **`claims` on the route:** what the container states about the stream (a Matroska Segment's WritingApp and MuxingApp). The codec parser weighs these after the file's. What a codec parser claims itself (the comment of a Vorbis stream) stays with its stream and is not handed to the codec parsers that run after it.
+- **`claims` on the route:** what the container states about the stream (a Matroska Segment's WritingApp and MuxingApp).
+  - The codec parser weighs these after the file's.
+  - What a codec parser claims itself (the comment of a Vorbis stream) stays with its stream and is not handed to the codec parsers that run after it.
 - **The exception boundary holds on routes:** truncation, invalid data or a parser bug inside the routed data become findings on the container's node (`parse.truncated`, `parse.invalid`, `parse.failed`), and the container carries on; cancellation passes through.
 - **Depth:** routes nest a few levels at most (`parse.too-deep`).
 - **MPEG audio** is the codec `mpeg-audio` for one payload, which it analyzes as it would the same bytes as a file, at their file offsets. `DefaultParsers.Codecs` lists the codecs.
 - **Mapped bytes:** `MappedBytes` holds bytes that a container or tag took apart (a packet put together from its pages, ID3v2 data with unsynchronization undone) with a map of segments back to the file: `OffsetOf`, `FileLength`, `FileRanges`, `Slice`, and opaque bytes (decompressed data) that map to their whole source.
   - A `BitReader` over them maps bit positions to file offsets (`FileOffsetOf`), and `Node.FromMapped` and `Node.FromBits` over mapped bytes build nodes at the file bytes the fields came from.
-  - A packet also carries what the container knows about its place in the stream: `EndPosition`, the container's position at its end in the codec's units where it records one (Ogg's granule position, on the last packet a page completes), with `EndPositionField`, the node of that field, for findings; `IsEndOfStream` on the last packet of a stream the container says has ended; `FollowsGap` on the first packet after packets the container lost; and `IsCut` on a packet the file ends inside.
+  - A packet also carries what the container knows about its place in the stream:
+    - `EndPosition`, the container's position at its end in the codec's units where it records one (Ogg's granule position, on the last packet a page completes), with `EndPositionField`, the node of that field, for findings;
+    - `IsEndOfStream` on the last packet of a stream the container says has ended;
+    - `FollowsGap` on the first packet after packets the container lost;
+    - `IsCut` on a packet the file ends inside.
 
 ## Format detection
 

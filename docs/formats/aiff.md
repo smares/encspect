@@ -98,3 +98,8 @@ The AIFF parser starts a `pcm` session (the decoder is the one WAV uses, describ
 ## Tests and fixtures
 
 See "WAV and AIFF" in [development.md](../development.md).
+
+## Articles
+
+- **Articles:** `aiff-container`, `aiff-common-chunk`, `extended-sample-rate`, `aiff-sound-data`, `aiff-c-compression`, `aiff-markers-and-loops`.
+- **Shared with other formats:** `channel-layouts`, `id3v2-in-chunks`.

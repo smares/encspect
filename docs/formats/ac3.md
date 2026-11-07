@@ -28,7 +28,9 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
   - The checks of 7.10.2 are findings. A block that reuses what no earlier block of the frame set is read on with what it has (a warning); an undefined value, such as a bandwidth code above 60 or a reserved strategy, stops the reading of the frame's blocks there (also a warning).
   - Checks 1 to 17 and 21 to 28 are made; 18 to 20 concern mantissa values, which are not read. An E-AC-3 block 0 that sends no bit allocation parameters where bamode is 1 breaks check 12 as an AC-3 block does.
   - Fields that run past the frame's end are named by the part they are in: `ac3.block-overrun` for an audio block, `ac3.header-overrun` for the bit stream information or audfrm.
-  - Auxiliary data (auxdatal, auxdatae) is read from the frame's end, and the error check holds crc2 (and crcrsv). AC-3's crc1 covers the first 5/8 of the frame and crc2 the rest (7.10.1); E-AC-3's one CRC the whole frame after the sync word. A mismatch is a warning, and the frame is still read.
+  - Auxiliary data (auxdatal, auxdatae) is read from the frame's end, and the error check holds crc2 (and crcrsv).
+    - AC-3's crc1 covers the first 5/8 of the frame and crc2 the rest (7.10.1); E-AC-3's one CRC the whole frame after the sync word.
+    - A mismatch is a warning, and the frame is still read.
   - A field that the end of the file cuts is `ac3.frame-truncated` alone when it fits its frame (`truncated-in-skip`); `ac3.block-overrun` is for a field or an audio block that does not fit the frame.
 - **Streams and programs:** a program is an independent substream (AC-3 has one) with the dependent substreams after each of its frames; one stream is a run of a program's frames with one configuration.
   - A program frame is an independent frame with its dependent frames. It holds each dependent substream ID once (Annex E 2.3.1.2 allows at most 8); a dependent frame that repeats an ID ends the program frame, is left out of its figures and statistics (the Dependent Frames count too), and is counted in `ac3.dependent-excess`, as are the dependent frames after it up to the next independent frame.
@@ -105,6 +107,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
   - emdf_container_length counting the bytes after the length field (389 in a 393-byte skip field);
   - the payload list ending with a bare 5-bit ID 0;
   - codecdatae 0, protection lengths 2 and 1, JOC with the downmix configuration 3, the complexity index 16, and a program of dynamic objects with an LFE channel.
+  - On the first file the analyzer reports 5,669 containers, 15 objects and complexity index 16, in agreement with ffprobe and MediaInfo.
   - `joc-atmos` is laid out like them. The other placements (after the last block, in the auxiliary data field) follow H.1 and are hand-built; MediaInfo 24.01 and 26.01 parse a container before the auxiliary data field only.
 - **Interpretations:**
   - The syntax tables end the payloads at an ID of 0 without a configuration or size, although H.2.2.2.4 says an ID of 0 comes with zero fields; Dolby's file follows the tables.
@@ -130,3 +133,9 @@ No encoder is named from the frames, since no fixture confirms anything that ide
 - **The witnesses.** `ExtAudioFile` equals the converter in 65 of 68 files; it outputs nothing for a frame that is cut and the converter outputs more than the coded stage less the lost samples (`cut-frame.ac3`, `truncated.ac3`, `truncated-in-skip.eac3`: 7,392, 7,392 and 4,320 against 8,928, 8,928 and 5,856): the converter is `noted` with both figures and no cause, and the reader is `explained` (the analyzer less 288 equals the converter, and the reader's total is the coded stage less the lost samples and the same 288). ffmpeg 8.0.1 equals the analyzer in 65 of 68 and counts fewer in `cut-frame.ac3`, `sample-short.mp4` and `junk-around.ac3` (6,144 each). The statuses follow the cross-check rules of [samples-definition.md](../design/samples-definition.md); no `samples` changes.
 - **The edit list** of the two MP4 files with one (`external-ffmpeg-mp4-5.1-448k.mp4`, `external-ffmpeg-mp4-eac3-stereo-96k.mp4`: 23,712 against `samples` 24,576) has no reference: `ExtAudioFile` applies no edit list to AC-3 and E-AC-3 in MP4 (its packet table says 24,576 valid frames, no priming and no padding), so the trimmed stage is not compared.
 - The figures, the run and every difference are in `tests/fixtures/ac3/official-decoders.json`, which `Ac3OfficialDecodersTests` holds the analyzer to, together with the `ac3` findings (warnings and errors) at the listed byte ranges. Nothing is `pending`; the analyzer has not been changed.
+
+## Articles
+
+- **Articles:** `ac3-frames-and-bsi`, `ac3-audio-blocks`, `ac3-coupling`, `ac3-rematrixing`, `dialogue-normalization`, `eac3-substreams`, `eac3-spectral-extension`.
+- **Shared with other formats:** `channel-layouts`, `crc`, `encoder-detection`, `intensity-stereo`, `mid-side-stereo`.
+- `ac3-coupling` links to `intensity-stereo`, `ac3-rematrixing` to `mid-side-stereo`.

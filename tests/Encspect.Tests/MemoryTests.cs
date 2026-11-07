@@ -14,7 +14,7 @@ namespace Encspect.Tests;
 public class MemoryCollection;
 
 // A long file's report keeps compact records of its frames, and the passes over them never hold
-// every frame's decoded side information or nodes at once (plan, "Large inputs"). Measured over a
+// every frame's decoded side information or nodes at once (docs/architecture.md, "Large inputs"). Measured over a
 // stream built in memory, alone, since the heap is the whole process's: what the report keeps,
 // and the most the analysis holds live at once (Measure). The peak bounds are about twice what
 // linux-x64 measures, so they hold on other platforms, and below what keeping each packet's bytes
@@ -102,7 +102,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
     // An MP4 file keeps a compact record per access unit, the arrays of its graphs and each raw data
     // block without its Huffman-coded data, and reads its sample tables into arrays of the entries
-    // the boxes hold, never the samples' bytes at once (plan, "Large inputs"): 60 bytes kept per
+    // the boxes hold, never the samples' bytes at once (docs/architecture.md, "Large inputs"): 60 bytes kept per
     // sample on linux-x64 and a peak of 100, and with the coding series (13 bytes a stereo sample) 74 and 113. The bounds leave room for a platform that measures
     // nearly twice that, as macOS on arm64 did for the Ogg records, and stay below what keeping a
     // sample's node or bytes would cost.
@@ -619,7 +619,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     private const long TinyPeakBound = 180;
 
     // An ASF file keeps a compact record per packet and per payload (the nodes are built when read), and its media
-    // objects, which go to the codec parser one at a time and are never kept (plan, "Large inputs"). Measured over
+    // objects, which go to the codec parser one at a time and are never kept (docs/architecture.md, "Large inputs"). Measured over
     // a Windows Media Audio stream of ffmpeg's encoder (its frames read), a 743-byte superframe repeated, and over PCM payloads: the
     // bounds are far below what keeping each media object's bytes or nodes would cost.
     [Fact]

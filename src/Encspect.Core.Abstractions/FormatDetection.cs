@@ -10,5 +10,5 @@ public sealed record FormatCandidate(string Format, SniffResult Evidence);
 // does not match. When the analysis is forced, Detected is the format detection would have chosen,
 // or null if it would have found none, and Alternatives are the others that matched.
 //
-// Which candidates are alternatives is the host's policy (plan, "Format detection").
+// Which candidates are alternatives is the host's policy (docs/architecture.md, "Alternatives").
 public sealed record FormatDetection(string? Format, SniffResult Evidence, IReadOnlyList<FormatCandidate> Alternatives, bool IsForced = false, string? Detected = null);

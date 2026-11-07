@@ -244,3 +244,8 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 - The audio of any codec (no decoder is built).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 - The contents of script commands and markers beyond their fields (planned: later, a separate item).
+
+## Articles
+
+- **Articles:** `asf-container`, `asf-packets`, `asf-metadata`, `asf-index`, `waveformatex`, `wma-standard`, `wma-pro`, `wma-lossless`, `wma-voice`, `wma-superframes`, `wma-bit-reservoir`, `wma-frames-and-blocks`, `wma-voice-superframes`, `wma-voice-frames`, `wma-packets`, `wma-subframes`, `wma-channel-transforms`, `wma-scale-factors`, `wma-coefficients`, `wma-lossless-subframes`.
+- **Shared with other formats:** `encoder-detection`.

@@ -27,6 +27,8 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | AIFF and AIFF-C (all compression types at header level; the uncompressed, float, A-law and mu-law types decoded for measurements) | [aiff.md](aiff.md) |
 | Matroska and WebM (audio tracks routed to the codec parsers; video at container level) | [matroska.md](matroska.md) |
 
+The formats not read yet, in the order they are planned, are on [planned.md](planned.md).
+
 ## Codecs in containers
 
 Which container hands which codec to its codec parser, and which codecs are decoded. A container routes only the combinations that writers in the wild produce; a combination nobody writes stays at container level, with the track named and a `codec-not-analyzed` finding.
@@ -50,11 +52,11 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is phase 5) | no |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | no |
-| Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned (IEC 61937 MAT bursts are named and timed) | yes | yes |
+| Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
 | Musepack | not planned | not planned | not planned | not planned | not planned | yes | no |
-| PCM | planned (FFmpeg) | planned (FFmpeg, mkvmerge) | not planned | the container's own stream | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64 and AIFF |
+| PCM | planned (FFmpeg) | planned (FFmpeg, mkvmerge) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64 and AIFF |
 
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
 - **`A_MS/ACM`** in older Matroska files holds a WAVEFORMATEX; routing it by its format tag, which reaches every codec parser the format tag names, comes once a real file from a muxer that writes it is committed as a fixture.
@@ -62,7 +64,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 
 ## Common to every format
 
-- **Streams:** each format reports its audio streams with codec, sample rate, channels, duration, average bitrate, whether the bitrate varies, and the encoder with a confidence level. The summary and the CSV read the streams. Streams that play at the same time (the tracks of an MP4 movie, of a Matroska Segment, the streams of one Ogg chain link or of one ASF file, the independent substreams of E-AC-3) share a playback group, and the summary counts the longest of a group once.
+- **Streams:** each format reports its audio streams with codec, sample rate, channels, duration, average bitrate, whether the bitrate varies, and the encoder with a confidence level. The summary and the CSV read the streams. Streams that play at the same time share a playback group, and the summary counts the longest of a group once ([architecture.md](../architecture.md#streams-and-series)).
 - **Series:** numbers for graphs, per frame or packet and per second of audio, such as the bitrate. A **category series** holds the category of each value of each frame or packet (block types, stereo coding), with the counts over the stream that equal the tally node it is anchored to, and groups under the shared headings "Stereo Coding", "Block Switching", "Coded Bandwidth" and "Bit Distribution" in the GUI; the design is [coding-graphs.md](../design/coding-graphs.md).
 - **Channel layout:** every stream names the speaker each channel feeds, in the stream's own order, with a common name such as 5.1 where it has one. Channels without a speaker position, such as the two programs of MPEG dual channel, are discrete. Each format's page says where its layout comes from.
 - **Findings:** damage and violations of a specification are findings that point to the node they concern. Damaged input never ends the analysis.

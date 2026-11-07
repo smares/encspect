@@ -15,15 +15,45 @@ Box by box:
 - QuickTime's chan atom (Core Audio's layout tags, channel bitmap and channel labels) and the ISO chnl box;
 - protection: the sinf box of a protected sample entry (frma, schm, schi with tenc), pssh, senc, saiz and saio boxes, the `seig` sample group, and the entries and boxes of iTunes protection and Audible (see "Protected tracks").
 
+**The boxes in detail:**
+
+- **Headers:** the 32-bit size, the 64-bit size after a size of 1, size 0 to the end of its parent, a uuid box's user type, and a full box's version and flags. The file's boxes sit under one MP4 node; bytes after the last box are trailing data.
+- **The run of top-level boxes** ends at the first type ISO/IEC 14496-12 does not place at the top level, which is also the end `DeclaredEnd` gives.
+  - A trailing ID3v1 or APE tag after the boxes is the file's; a `TAG` inside the last box is the container's (a near miss).
+  - A last box of size 0 declares no end.
+- **Movie and track:** ftyp and styp; moov, mvhd, trak, tkhd, edts and elst, mdia, mdhd (with its packed language), hdlr (QuickTime's component type and Pascal string name too), minf, smhd, dinf and dref.
+- **Sample tables:** stbl with stsd and its sample entries, stts, ctts, stsc, stsz, stz2, stco, co64, stss, sgpd (roll and pre-roll distances) and sbgp. They are read a block at a time into arrays of the entries the box holds, never more, whatever count it declares.
+- **Sample entries:** the audio sample entry with esds and its ES_Descriptor, DecoderConfigDescriptor (object type, bitrates) and DecoderSpecificInfo, and btrt.
+  - QuickTime's sound sample descriptions of version 1 and 2, with their wave box, are read where the file is QuickTime's (without ftyp, or with the brand `qt  `) or the stsd box is of version 0, as ffmpeg reads them.
+  - ISO/IEC 14496-12's own version 1 keeps version 0's layout.
+- **Fragments:** mvex, mehd, trex, moof, mfhd, traf, tfhd, tfdt, trun, sidx, mfra, tfra and mfro.
+- **Metadata boxes:** udta with QuickTime's international text atoms, meta (a full box, or QuickTime's plain container), keys, ilst, ID32 and Nero's chpl.
+
+**Metadata:**
+
+- **The tag:** an item list is a tag of the container, a Tag node named "iTunes Metadata"; under an `mdta` handler it is "QuickTime Metadata", and its items are named by their keys.
+- **Items** are named for what they are ("Title", "Track Number"); a freeform item ("----") by its name atom.
+- **Data types:** each data atom's value is typed by its well-known type: UTF-8, UTF-16, S/JIS, signed and unsigned integers of every width, floats, point, rectangle, images. The implicit type of track and disc numbers and of the ID3v1 genre is decoded.
+- **iTunSMPB:** its hexadecimal words are read into the encoder delay, padding and samples, each a node at its characters.
+- **Encoding Params:** read into its pairs of key and value: vers, acbf (Core Audio's bitrate control modes CBR, ABR, constrained VBR and VBR), brat, cdcv.
+- **ID32:** its ID3v2 tag goes to the ID3v2 tag parser through `ParseTag`, so its TSSE frame reaches the codec as a claim.
+
+**Routes:**
+
+- **AAC:** object types 0x40 and 0x66 to 0x68 go to "aac", with the DecoderSpecificInfo as the `CodecConfiguration`.
+- **Bitrate mode:** whether the bitrate varies comes from Encoding Params, else from an avgBitrate of 0 (ISO/IEC 14496-1 7.2.6.6.2).
+- **Where the samples node goes:** into the mdat box that holds all the track's samples, or with its ranges into the MP4 node where they span boxes.
+
 Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md) or [Apple Lossless](alac.md). Other codings, among them FLAC (`fLaC`), Opus and Dolby TrueHD (`mlpa`), are shown as boxes with `mp4.codec-not-analyzed`.
 
 - **Units counted:** a sample counts when its first byte is in the file; one the file ends inside is handed to the codec parser with the bytes present and flagged as cut (`MappedBytes.IsCut`), so a raw AAC access unit of 1,024 samples counts them and is also reported as lost samples; a sample with no byte in the file or of 0 bytes counts nothing.
 - **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg.packets-not-analyzed`).
-- **Playback groups:** the audio tracks of a movie play at the same time, so every stream that comes from a track has the movie's playback group, also when the codec parser reports several for one track that play together (E-AC-3 independent substreams); the summary counts the longest once. Streams of a track that follow one another (a configuration change) are not grouped.
+- **Playback groups:** the audio tracks of a movie play at the same time, so every stream that comes from a track has the movie's playback group ([architecture.md](../architecture.md#streams-and-series)).
 - **The track's handler** is the one in its `mdia` box (ISO/IEC 14496-12 8.4.3); the handler of a `meta` box in the `trak` box is the metadata's.
 - **Boxes where they do not belong** are shown and reported (`mp4.box-misplaced`): a `moov` box inside another box is not the movie, a `traf` box inside a `traf` box is a track fragment of its own whose protection evidence counts for every track, and a `moof` box inside a `moof` box is a fragment of its own. The tracks of a second `moov` box (`mp4.duplicate-box`; players read the first) are shown and not analyzed.
 - **User data lists** may end in a 32-bit zero (QuickTime File Format, "User data list"); it is shown as a terminator, without a warning.
 
+- **The Gapless node** under the trak box holds what the edit list (the first media edit's media time, the presented samples and the padding after them), the roll and pre-roll groups and iTunSMPB say, counted in the media's timescale: the sample rate for AAC LC, and the core's rate as fdkaac writes HE-AAC.
 - **Container Duration** and **Container Samples** under a track's "Gapless" node: the media duration of the mdhd box (ISO/IEC 14496-12, 8.4.2) in seconds, and in samples where the media timescale is the sample rate of the sample entry (nothing for a fragmented file whose mdhd states 0); the tkhd duration and the edit list are other figures.
 
 ## Limits
@@ -122,3 +152,9 @@ Apple's AudioToolbox is named from the layout of its files (see [AAC](aac.md)):
 - with a free box before mdat that puts the audio data on a 4,096-byte boundary, the writer is named, "Apple AudioToolbox", with low confidence, whether or not there is an sbtd box.
 
 Apple's writer adds the sbtd box to M4A and M4B files, not to MP4 or 3GP files. Sound Check adds a `udta/ludt/tlou` loudness box to the track, shown as an unread box, and a freeform iTunNORM item. A remux by other software drops the signs. The layout is the writer's: afconvert's `-d 0` copies the packets of another file as they are (run 4), and the writer gives every copy the padding, and the stream type byte 0x14 when the source is ADTS (an fdkaac stream copied that way gets the writer Apple at low confidence and no encoder; ffmpeg's and FAAC's keep their version text and are named by it as the encoder, with the writer Apple next to it), but never the sbtd box. An M4A source keeps its own esds, with the stream type byte 0x15, so its copy shows no layout and is not named. afconvert writes an iTunSMPB and no Encoding Params or ©too.
+
+## Articles
+
+- **Articles:** `iso-base-media-format`, `mp4-sample-tables`, `fragmented-mp4`, `edit-lists-and-priming`, `itunes-metadata`, `quicktime-user-data`.
+- **Shared with other formats:** `channel-layouts`, `gapless-playback`, `encoder-detection`, `id3v2`.
+- The chan and chnl boxes point to `channel-layouts`, which MPEG audio and AAC share.

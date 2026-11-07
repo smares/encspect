@@ -63,3 +63,8 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 - Coded bandwidth (Hz, as MPEG audio, AAC, AC-3 and Opus report it): not covered yet. Vorbis states no bandwidth field; where coding stops lies in the floor and residue data of the audio packets, which needs the frame-level parsing that comes with the format's decoder.
 - The floor and residue data of the audio packets (planned: entropy pass). The setup header's floor and residue configurations are read.
+
+## Articles
+
+- **Articles:** `vorbis-blocks`, `vorbis-setup-header`, `square-polar-coupling`.
+- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`, `replaygain`.

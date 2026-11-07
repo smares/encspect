@@ -81,7 +81,7 @@ In the other 73 ID3v2.4 tags, every frame is below 128 bytes, so either decision
 **Documentation:**
 
 - Describe the rule in `docs/tags/id3.md`.
-- Restore the plain-size clause of the ID3v2 bullet in `docs/PLAN.md` (the ID3v2 bullet under "v1 vertical slice: MP3") in the rule's own terms. It now points to this file.
+- Restore the plain-size clause of the ID3v2 bullet in `docs/PLAN.md` (the ID3v2 bullet under "v1 vertical slice: MP3") in the rule's own terms. It now points to this file. (Since the plan's restructuring of 2026-11-07, the rule is in [id3.md](../tags/id3.md).)
 
 One rule that meets these requirements is the one the license audit proposed: choose the plain reading only when its frame chain ends exactly at the padding or the end of the tag, with valid IDs, and the syncsafe chain does not. A model of that rule, written for this description, gives the required outcome on all 77 tags. The implementer may choose it or another one.
 

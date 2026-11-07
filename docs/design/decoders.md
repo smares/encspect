@@ -606,7 +606,7 @@ WMA Lossless, later:
 | WAV, AIFF | none | | | |
 | ALAC | none | | | FFmpeg `alac.c`; Apple's `ALACDecoder.cpp` 224-579 |
 | WMA Lossless | none in FFmpeg | | | `wmalosslessdec.c`; no specification is public, so beyond FFmpeg this is **unverified** |
-| WavPack | Block checksum sub-block (5.0 and later) | coded data | parser (done) | plan, "Phase 2: WavPack" |
+| WavPack | Block checksum sub-block (5.0 and later) | coded data | parser (done) | [wavpack.md](../formats/wavpack.md) |
 | WavPack | Block header CRC: `crc * 3 + s` per sample of each channel; without the correction file over the samples the main file decodes to (lossy in hybrid mode), with it the correction block's header holds the one compared | decoded audio | decoder | `unpack.c` 152-157, 451, 812-826; `open_utils.c` 1043-1044 |
 | WavPack | Extended CRC of floats and of integers above 24 bits (the extra bitstream) | decoded audio | decoder | `unpack.c` 707-726, 821 |
 | WavPack | MD5, one stored: `ID_MD5_CHECKSUM` (0x26) where the qmode's low byte is 0 (WAV layout: little-endian, 8-bit unsigned), else `ID_ALT_MD5_CHECKSUM` (0x29) in the qmode's layout (big-endian, signed bytes, unsigned words, reordered channels); `wvunpack` compares it only for lossless decoding with an unchanged qmode | decoded audio | decoder | `pack_utils.c` 783-791, `wavpack.h` 186-189, `wvunpack.c` 1996, 2157-2159 |

@@ -12,7 +12,9 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
 - **Declared end:** Ogg states no size, but each page states its own length, so the chain of pages from the start of the data ends where the next bytes are not a page that fits and the last page passes its CRC.
   - A trailing tag signature before that end lies inside the last pages and is a near miss.
   - ID3v2 before the Ogg data and APE and ID3v1 after it, which taggers write, are the file's tags.
-- **Two passes:** the scan keeps a 56-byte record and the segment table of each page and follows each stream's packets through their lacing values, reporting what breaks the specification, without building nodes. Then each stream's packets are read again page by page and handed on, so the packets a codec gets are the ones the scan counted. Page nodes are built in blocks of 1,024 when read.
+- **Two passes:** the scan keeps a 56-byte record and the segment table of each page and follows each stream's packets through their lacing values, reporting what breaks the specification, without building nodes.
+  - Then each stream's packets are read again page by page and handed on, so the packets a codec gets are the ones the scan counted.
+  - Page nodes are built in blocks of 1,024 when read.
 - **Window:** the scan reads through two windows of 256 KiB and replaces the one used least recently, so a search that probes ahead of its position does not read the window again for every candidate. A candidate page is checked against the page that must follow it before its CRC is computed.
 - **Logical streams:** each stream's packets are followed across pages, in multiplexed and chained files, with resync after damage.
   - A beginning-of-stream page after other pages, or after every stream of the current link has ended, starts the next link of a chain; streams of one link are multiplexed.
@@ -65,3 +67,9 @@ Findings of one kind are reported once per stream, with a count.
 - **Analyzed:** Speex, Vorbis and Opus.
 - **Streams past the limit** above, and the packets of any stream over 64 MiB, are not read.
 - Anything that needs decoding: no audio is rebuilt.
+
+## Articles
+
+- **Articles:** `ogg-pages`, `granule-position`.
+- **Shared with other formats:** `crc`.
+- The Ogg page CRC points to `ogg-pages`, since `crc` is about the MPEG frame CRC; `crc` links to `ogg-pages`.

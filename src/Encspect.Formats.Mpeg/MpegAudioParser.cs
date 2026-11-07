@@ -7,7 +7,7 @@ namespace Encspect.Formats.Mpeg;
 // MPEG-1, 2 and 2.5 audio, Layers I to III, at frame-header level. A header starts a stream only
 // when two more frames of the same stream follow at the positions its length predicts, or when
 // its one or two frames end exactly at the end of the data and each holds what its header
-// promises (plan, "File layout and tags"). Once in sync, frames are followed by their lengths and
+// promises (docs/formats/mpeg-audio.md, "Frames and sync"). Once in sync, frames are followed by their lengths and
 // never searched inside; anything that is not a frame is a gap.
 public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 {

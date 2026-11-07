@@ -2,7 +2,7 @@ namespace Encspect.Core;
 
 // What a format parser's Sniff found: how sure it is, and the evidence behind that, so the host can
 // rank formats that claim the same bytes without a score that hides where a chain starts or how
-// well it holds up (plan, "Format detection").
+// well it holds up (docs/architecture.md, "Format detection").
 //
 // Two candidates are ranked by Class first. Candidates of the same class that do not overlap are
 // ranked by the earlier Offset, then more VerifiedFrames, then more Frames. Candidates of the same
@@ -13,7 +13,7 @@ namespace Encspect.Core;
 //
 // Class is what the parser is sure of, from 0 (not this format) to 100 (certain), by the kind of
 // structure found: a signature, a chain at the start of the data, a chain further in. The classes
-// are the table in the plan; a parser puts a match in the class where its kind of evidence belongs
+// are the table in docs/architecture.md, "Classes"; a parser puts a match in the class where its kind of evidence belongs
 // and leaves where it starts and how far it holds to the other fields.
 //
 // Offset is the file offset where the matched structure starts (a signature, the first frame of

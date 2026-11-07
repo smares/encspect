@@ -30,8 +30,8 @@ namespace Encspect.Host;
 
 public static class DefaultParsers
 {
-    // The order is the evaluation order at each anchor (plan, "Tag detection and false
-    // positives", rule 3): APE, Lyrics3, ID3v2 found through its footer, then ID3v1. ID3v1 has
+    // The order is the evaluation order at each anchor (docs/tags/README.md, "Evaluation order
+    // and ownership"): APE, Lyrics3, ID3v2 found through its footer, then ID3v1. ID3v1 has
     // almost nothing to validate, so it goes after the others; otherwise a "TAG" at EOF-128 inside
     // a validated APE or appended ID3v2.4 tag would be claimed as an ID3v1 tag. The Enhanced TAG
     // has only a 4-byte signature and goes last for the same reason.
@@ -51,13 +51,13 @@ public static class DefaultParsers
 
     // The host takes the format whose sniff has the best evidence: the highest class, then the
     // earliest start of the matched structure, then the most checksum-verified frames, then the most
-    // consistent frames (SniffResult.Compare; plan, "Format detection"). The order of this list only
+    // consistent frames (SniffResult.Compare; docs/architecture.md, "Ranking"). The order of this list only
     // breaks a tie in all four, which the report names as format.ambiguous, so no format depends on
     // its place here.
     public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MonkeysAudioParser(), new TtaParser(), new TrueHdParser(), new MatroskaParser(), new WavParser(), new Wave64Parser(), new AiffParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4 and, as ADTS frames, in WAV bursts,
-    // Speex, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg and Matroska, WavPack, TTA and ALAC in Matroska, ALAC in MP4, Windows Media Audio in ASF, Dolby TrueHD and MLP in Matroska, and in MP4 once its container routes to them.
+    // Speex in Ogg, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg and Matroska, WavPack, TTA and ALAC in Matroska, ALAC in MP4, Windows Media Audio in ASF, Dolby TrueHD and MLP in Matroska, and in MP4 once its container routes to them.
     public static IReadOnlyList<ICodecParser> Codecs { get; } =
         [Mpeg, new AacCodecParser(), new AdtsPacketParser(), new SpeexParser(), new VorbisParser(), new OpusParser(), new Ac3CodecParser(Ac3CodecParser.Ac3), new Ac3CodecParser(Ac3CodecParser.Eac3), new WmaStandardParser(), new WmaProParser(), new WmaLosslessParser(), new WmaVoiceParser(), new DtsCodecParser(), new FlacCodecParser(), new WavPackCodecParser(), new TtaCodecParser(), new AlacCodecParser(), TrueHdCodecParser.TrueHd, TrueHdCodecParser.Mlp];
 

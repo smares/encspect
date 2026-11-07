@@ -114,3 +114,8 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
 - DTS:X beyond the sync word of its extension data, and the prediction, decorrelation and entropy parameters of the XLL bands, the band data itself and the mapping coefficients of channel sets that are not loudspeaker feeds. An XLL frame that does not start at the start of its component (peak bit rate smoothing carries one over several access units, 7.5.3.4) is reported as missing its sync word; the real samples used here start every frame at its component.
 - The core's optional information (time stamp, auxiliary data) beyond its flags (planned: entropy pass, as DTS coding statistics).
 - DTS-HD files (`.dtshd`) are read by their own parser, see [dtshd.md](dtshd.md).
+
+## Articles
+
+- **Articles:** `dts-core-frames`, `dts-audio-coding-header`, `dts-bitstream-forms`, `dts-core-extensions`, `dts-extension-substream`, `dts-channel-arrangements`, `dts-lossless-extension`, `dtshd-file`.
+- **Shared with other formats:** `crc`, `bitrate-modes`, `encoder-detection`, `channel-layouts`, `dialogue-normalization`.

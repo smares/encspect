@@ -2,6 +2,9 @@
 
 The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Written from ATSC A/103:2014 Annex E ("DTS-HD File Structure", Tables E.1 to E.20), with FFmpeg 6.1.1's `libavformat/dtshddec.c` and MediaInfo 24.01's `File_Dts.cpp` for what they read. The stream inside is read by the [DTS](dts.md) parser.
 
+- All 13 chunks the standard defines are read.
+- Fixtures: 16 hand-built `.dtshd` files, beside 32 hand-built XLL and DTS:X fixtures in the DTS folder, built to decode silently in FFmpeg; no real `.dtshd` or DTS:X file could be found at a public address.
+
 ## What is read
 
 - **Chunks:** an 8-character ID, a 64-bit big endian size and a payload. The size covers the payload, reserved bytes and the one to three zero bytes that bring the next chunk to a 32-bit boundary (E.2.1). Every chunk is a node with its size, its fields, and the reserved bytes or padding that follow them.

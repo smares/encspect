@@ -163,6 +163,8 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
   - A series exists where its tally node does: a file without joint stereo frames has no "Joint Stereo Modes".
 - the **numeric series** "Coded Bandwidth" (Hz, Layers I and II, `codedBandwidth`) and "Channel Bit Share" (percent, stereo, joint stereo and dual channel frames, `bitDistribution`), each per frame and per second ("Coded Bandwidth Over Time" is each second's highest, "Channel Bit Share Over Time" bits over bits of the frames that start in it), anchored to the statistics nodes of the same names. A frame without a value (a mono frame in a stream that changes mode, a frame whose bits are all 0, a Layer I or II frame whose allocation does not fit) has no point, so such a series has its own x values; a mono stream has no share.
 
+- **The tools' own labels** for these figures: mp3guessenc's "stereo mode frame count" is "Joint Stereo Modes" in Layer III, its "size distr" the frame sizes under each bitrate, its "Max reservoir" the largest main_data_begin; EncSpot's "Av. Reservoir" (which it truncates to whole bytes) and "Max. Reservoir" are the mean and largest main_data_begin, and its "Scalefac" the share of granules with scalefactor scaling.
+
 ### Counting and the VBR header's claims
 
 - **Which frames:** the Statistics node counts the region's complete audio frames: not a frame holding a VBR header, not a truncated last frame.
@@ -171,7 +173,9 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
 - **A VBR header's counts** are compared with the frames and bytes counted from the header to the end of its stream (the next header or a change of version, layer or sample rate, across gaps and tags).
   - A truncated last frame was written whole, so it counts there and in the gapless sample count.
   - Xing's and Fraunhofer's encoders count the header's own frame and LAME does not, so either count holds; a mismatch is a warning.
-  - Behind a LAME tag the count also sets where the music ends, since the delay and padding count from the frames after the header. LAME 3.94 beta 1 counts the header frame too, so ffmpeg and mpg123, which take the length from the count, play one frame more than was encoded. That is a warning, and the report's own sample count follows the frames.
+  - Behind a LAME tag the count also sets where the music ends, since the delay and padding count from the frames after the header.
+    - LAME 3.94 beta 1 counts the header frame too, so ffmpeg and mpg123, which take the length from the count, play one frame more than was encoded.
+    - That is a warning, and the report's own sample count follows the frames.
 - **Gapless figures from a LAME tag:** the encoder delay, the padding and the exact sample count, the frames' samples minus both.
   - This is what ffmpeg and mpg123 output with their gapless trimming when the padding covers their own 529-sample decoder delay.
   - Delay and padding longer than the stream are a warning.

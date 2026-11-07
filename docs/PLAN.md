@@ -44,9 +44,10 @@ The tool tells you everything technically knowable about an audio file's structu
 - Audio playback.
 - Runtime-loadable plugins. Formats are separate projects, composed at build time.
 - Editing or writing tags.
-- Bundling external decoders or native audio libraries. The one exception is what the GUI framework itself needs: Skia and HarfBuzz, and the platform backends (ANGLE on Windows, Avalonia.Native on macOS); Linux needs none beyond Skia and HarfBuzz (see [gui.md](gui.md)).
+- Bundling external decoders or native audio libraries.
+  - The one exception is what the GUI framework itself needs: Skia and HarfBuzz, and the platform backends (ANGLE, `av_libglesv2`, on Windows; Avalonia.Native, `libAvaloniaNative`, on macOS); Linux needs none beyond Skia and HarfBuzz (see [gui.md](gui.md)).
 - Quality verdicts. The report says what the file shows, never whether it sounds good: no rating from an encoder's reputation or the bitrate, such as EncSpot's good, ok or bad.
-- The entropy-coded data of the lossy codings (MP3 scalefactors and Huffman data, and the like) waits for the entropy pass under [Later](#later); v1 stopped at headers, side information and metadata.
+- For v1: scalefactor and Huffman-table level MP3 analysis. v1 stopped at headers, side information and metadata; the entropy pass is under [Later](#later).
 
 ## Decisions so far
 
@@ -66,8 +67,16 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Name | Encspect | Detenc and Framescope were already taken |
 | License | MIT | Default in the .NET ecosystem; each dependency's license is still checked individually |
 | Licensed sources | Permissive only, with notices | Decoders and parsers follow specifications and BSD, MIT or Apache reference code, with their notices in the source and in `THIRD-PARTY-NOTICES.md`. Nothing is ported from LGPL or GPL code: where that is the only detailed source, a clean-room split applies (CLAUDE.md) |
-| Routes | Containers route only the codec and container combinations that writers in the wild produce (the project lead, 2026-11-07) | A combination nobody writes (WavPack in ASF and the like) stays at container level: the track is named and the `codec-not-analyzed` finding stays. Planned: PCM in MP4 and Matroska, MP3 and AC-3 in ASF; TrueHD as IEC 61937 MAT bursts in WAV is not planned. The table is in [formats/README.md](formats/README.md#codecs-in-containers) |
+| Routes | Containers route only the codec and container combinations that writers in the wild produce (the project lead, 2026-11-07) | Routing what nobody writes costs code and fixtures for no file; see the list below the table |
 | Releases | 0.1.0 as a GitHub pre-release after Gate 2 (the project lead, 2026-10-17) | Replaced the earlier rule of no public version until development ends |
+
+**The routes decision in detail** (the project lead, 2026-11-07):
+
+- A combination nobody writes (WavPack in ASF and the like) stays at container level: the track is named, and the `codec-not-analyzed` finding stays.
+- Planned: PCM in MP4 and Matroska, and MP3 and AC-3 in ASF; the other planned routes are under [Then, in order](#then-in-order), each with the muxer that writes it where one is known.
+- Not planned: Dolby TrueHD as IEC 61937 MAT bursts in WAV. The lead decided so knowing that FFmpeg's spdif muxer writes such bursts and that HDMI captures hold them; the bursts stay named and timed.
+- `A_MS/ACM` in Matroska waits under [Later](#later) for a real file.
+- The table of every combination is in [formats/README.md](formats/README.md#codecs-in-containers).
 
 ## Architecture
 
@@ -80,8 +89,12 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 
 - **Decision:** the core, the host and the parsers stay a front-end-agnostic library, and the CLI and GUI are only two front ends of it.
 - **Why:** a third party could one day build its own GUI on them or analyze files from its own program.
-- **What follows:** nothing that belongs to one front end goes below it (no UI types, dialogs, settings, caches or console output in the host, Core.Abstractions or a parser), and front ends reach the analysis only through the host's public API (`Analyzer`, `Report`, the writers, the topic library).
-- **Not planned yet:** offering the library. It would take NuGet packages, a deliberately public API under semantic versioning with an API-compatibility check in CI, and a contract declared stable once the format phases stop extending it. The options are in [library.md](library.md).
+- **What follows:**
+  - nothing that belongs to one front end goes below it: no UI types, dialogs, settings, caches or console output in the host, Core.Abstractions or a parser;
+  - front ends reach the analysis only through the host's public API (`Analyzer`, `Report`, the writers, the topic library), and add nothing to it that another front end could not use.
+- **Not planned yet:** offering the library.
+  - It would take NuGet packages, a deliberately public API under semantic versioning with an API-compatibility check in CI, and a contract declared stable once the format phases stop extending it.
+  - The options are in [library.md](library.md).
 
 ## Format detection
 
@@ -111,7 +124,7 @@ Nobody reads the code line by line, so correctness comes from automated checks t
 4. **Golden reports:** each fixture has a stored expected report; any output change shows up as a diff that has to be approved.
 5. **Corrupt-file tests and fuzzing:** truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool. The fuzzer fails on `parse.failed` and on children that could not be built, as on an escaping exception.
 6. **Spec references in the code:** each parsed field cites the spec section it implements.
-7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions.
+7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions; its findings are recorded in the pull request.
 
 - The per-format fixtures, tools and their pinned versions are in [development.md, "Fixtures and cross-checks"](development.md#fixtures-and-cross-checks).
 - Nothing merges with a red pipeline. Work is pushed to its own branch, never to main directly.
@@ -167,19 +180,22 @@ MP3 came first, then the other lossy formats, then the lossless ones; each later
 | Gate 3 | Pipeline green, review findings fixed | passed, 2026-11-01 at 5f054cc |
 | 3, continued | Official-decoder cross-checks (built); lossyWAV and lossyFLAC detection (paused) | see "Phase 3, continued" |
 | Next | Lossy decoders | in design |
-| 4 | TAK and OptimFROG at header level only | planned |
+| 4 | TAK and OptimFROG at header level only ([planned.md](formats/planned.md#phase-4-header-level-only)) | planned |
 | 5 | More formats, the better documented first | planned |
 | 6 | Sequenced formats: MIDI, tracker modules and chiptunes | planned |
 | Later | The items under "Later", order not fixed | planned |
 
 **Gates in detail**
 
-- **Gate 1** (October 2026): six independent reviews (ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI) found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract).
+- **Gate 1** (October 2026): six independent reviews found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract).
+  - Areas: ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI.
   - The contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records.
-- **Gate 2** (2026-10-18, fa4e0c5): ten independent reviews (ASF and WMA; WavPack; AAC; Ogg, Speex, Vorbis and Opus; AC-3 and E-AC-3; Musepack; MP4; DTS; Matroska and WebM; the host, contract and front ends), each followed by a review of its fixes and a verification.
+- **Gate 2** (2026-10-18, fa4e0c5): ten independent reviews, each followed by a review of its fixes and a verification.
+  - Areas: ASF and WMA; WavPack; AAC; Ogg, Speex, Vorbis and Opus; AC-3 and E-AC-3; Musepack; MP4; DTS; Matroska and WebM; the host, contract and front ends.
   - Every finding was fixed in #98 to #110, one pull request per area, plus the shared record containers, QuickTime user data as tags, one stream-change rule for the raw stream formats with the APE item budget, and the host's contract and naming.
   - Release 0.1.0 followed it; Gate 3 work started after that.
-- **Gate 3** (2026-11-01, 5f054cc): ten independent reviews (the decoder host; FLAC; WavPack; Monkey's Audio; TrueHD and MLP; TTA and ALAC; WAV and AIFF; WMA Lossless; the measurements; the front ends), each followed by a review of its fixes.
+- **Gate 3** (2026-11-01, 5f054cc): ten independent reviews, each followed by a review of its fixes.
+  - Areas: the decoder host; FLAC; WavPack; Monkey's Audio; TrueHD and MLP; TTA and ALAC; WAV and AIFF; WMA Lossless; the measurements; the front ends.
   - Every finding was fixed in #189 to #198, one pull request per area, plus a fuzz finding in WMA superframes (#201).
 - Each gate's push run and nightly run were green on every platform.
 
@@ -305,10 +321,11 @@ After Gate 3, in this order:
 
 - **lossyWAV and lossyFLAC detection:** paused by the project lead. The plan as it stood:
   - lossyWAV sets the lowest bits of every channel to zero in fixed blocks, as many in each block as its noise allows, so that a lossless coder stores them almost for free; lossyFLAC is its output in FLAC at the same block size;
-  - the pattern: zeroed low bits in most blocks, in all channels at once, a count that changes from block to block, and block edges on one fixed grid. Audio that is lossless throughout has none or a constant count;
+  - the pattern: zeroed low bits in most blocks, in all channels at once, a count that changes from block to block, and block edges on one fixed grid. Audio that is lossless throughout has none or a constant count (a 16-bit recording in a 24-bit file);
   - FLAC from the wasted bits of each subframe, which the parser reads already; WavPack, Monkey's Audio, TrueHD and WAV from a measurement of the decoded audio;
-  - reported as figures with their basis and as an encoder claim for lossyWAV with a confidence, backed by files lossyWAV writes (GPL, used only as a black-box tool for fixtures). No finding says a file is not lossless;
-  - limits: silence and audio truncated on purpose also have zeroed bits; processing after lossyWAV removes the pattern; another tool that zeroes bits per block the same way looks the same. Whether lossyWAV leaves a marker of its own is checked with its files first.
+  - reported as figures with their basis (the share of blocks with zeroed low bits, the distribution of their counts, the block grid found) and as an encoder claim for lossyWAV with a confidence;
+  - backed by files lossyWAV writes (GPL, used only as a black-box tool for fixtures). No finding says a file is not lossless;
+  - limits: silence and audio truncated on purpose also have zeroed bits; processing after lossyWAV (gain, dither, resampling) removes the pattern; another tool that zeroes bits per block the same way looks the same. Whether lossyWAV leaves a marker of its own is checked with its files first.
 - **Coding graphs for the remaining formats:** on hold. The survey and the order are in [coding-graphs.md](design/coding-graphs.md).
 - **Parallel decoding:** approved, deferred by the project lead on 2026-10-26 in favor of new formats and deeper analysis ([parallel-decoding.md](design/parallel-decoding.md)).
 - **Detection pre-check:** recorded, not to be built (the project lead, 2026-10-26; [detection-precheck.md](design/detection-precheck.md)).
@@ -334,27 +351,27 @@ The order is not fixed.
 
 ### More formats
 
-Phase 5, in this order; each is its own pull request with fixtures, cross-checks and a review, and a container's routes to these codecs follow as in phase 3. The better a format is documented, the sooner it comes:
+Phase 5, in this order; the better a format is documented, the sooner it comes. Specifications, extensions, scope and the reason for each place are in [planned.md](formats/planned.md).
 
-1. **CAF** (Apple Core Audio Format): the container of ALAC, AAC and PCM on Apple systems, from Apple's public specification, with routes to the codec parsers that exist.
-2. **DSF and DSDIFF:** the DSD files of SACD rips and downloads, from Sony's and Philips' specifications; the DST-compressed form of DSDIFF named and measured.
-3. **Sun AU, VOC, IRCAM and NIST SPHERE:** small headers of their own and the encodings they name.
-4. **AC-4:** raw AC-4 from its free ETSI specifications, and MP4's `ac-4` sample entry.
-5. **AAC in LATM and LOAS:** the transport of broadcast AAC, handed to the AAC codec parser.
-6. **AMR and AMR-WB:** the `.amr` storage format and 3GP's `samr` and `sawb` entries.
-7. **MPEG transport and program streams** as audio containers, with their audio streams handed to the codec parsers; video streams are named, not read.
-8. **MPEG-H 3D Audio:** MHAS packets and the configuration; MP4's `mha1` and `mhm1` entries.
-9. **MPEG-4 ALS:** from its specification and the reference software where its license allows.
-10. **Shorten:** from Tony Robinson's technical report; its reference code is not freely licensed, so it is not followed.
-11. **Proprietary formats whose only detailed public source is FFmpeg (LGPL),** at header and frame level, each built clean-room as TrueHD was, in this order: OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio (the RealMedia container with Cook, RealAudio 14.4 and 28.8, and RealAudio Lossless); TwinVQ; QDesign Music; Nellymoser.
+1. CAF
+2. DSF and DSDIFF
+3. Sun AU, VOC, IRCAM and NIST SPHERE
+4. AC-4
+5. AAC in LATM and LOAS
+6. AMR and AMR-WB
+7. MPEG transport and program streams
+8. MPEG-H 3D Audio
+9. MPEG-4 ALS
+10. Shorten
+11. The formats whose only detailed public source is FFmpeg, clean-room: OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser
 
 ### Sequenced formats
 
-Phase 6, in this order. These files hold instructions for making sound, not coded audio, so they are analyzed at the structure level and never rendered; the result model gains node kinds for their patterns, instruments and samples where the existing kinds do not fit.
+Phase 6, in this order, analyzed at the structure level and never rendered ([planned.md](formats/planned.md#phase-6-sequenced-formats)):
 
-1. **MIDI:** Standard MIDI Files and RMID: the tracks and events, tempo and time-signature maps, the duration from the tempo map, and which extensions (General MIDI, GS, XG) the SysEx messages name.
-2. **Tracker modules:** MOD, S3M, XM, IT and OpenMPT's MPTM, then MO3 and UMX: patterns, instruments and samples, the song length from a walk of the order list, and which tracker wrote the file. libopenmpt (BSD) may be followed with its notice where the documentation stops.
-3. **Chiptunes:** the headers and metadata of SID, NSF, SPC, VGM and GBS; the music itself is code for an emulated chip and is not read.
+1. MIDI
+2. Tracker modules
+3. Chiptunes
 
 ### Not planned
 

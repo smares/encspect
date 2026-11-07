@@ -7,7 +7,9 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - **OpusHead:** with every channel mapping family: mono and stereo, the Vorbis order up to 7.1, ambisonics in families 2 and 3, and family 255.
   - Fields (RFC 7845 section 5.1): version, channels, pre-skip, input sample rate, output gain in 1/256 dB, the mapping family and, for families other than 0, the stream and coupled counts and the channel mapping table.
   - The input sample rate is information only: Opus always decodes at 48 kHz, so the stream's rate is 48 kHz and the header keeps the input's apart.
-  - The table gives each output channel with the stream it comes from and its place: a speaker of family 1 (Vorbis order, up to 7.1), an ambisonic channel number or the non-diegetic pair of family 2 (RFC 8486), or silence. Family 3 replaces it with a demixing matrix of C rows by N + M columns of Q15 coefficients, reported by its dimensions. Families 0 and 1 also get a Channel Layout node.
+  - The table gives each output channel with the stream it comes from and its place: a speaker of family 1 (Vorbis order, up to 7.1), an ambisonic channel number or the non-diegetic pair of family 2 (RFC 8486), or silence.
+    - Family 3 replaces it with a demixing matrix of C rows by N + M columns of Q15 coefficients, reported by its dimensions.
+    - Families 0 and 1 also get a Channel Layout node.
   - Findings: an upper version nibble decoders do not know; 0 channels, more than two in family 0 or eight in family 1; channel counts other than (1 + n)² + 2j in families 2 and 3; 0 streams; more coupled streams than streams; more than 255 decoded channels; table entries beyond the decoded channels; a header too short for its table.
   - A reserved family is an info, since RFC 8486 says decoders should not decode it; its table is read in the format RFC 8486 recommends.
 - **Header pages** (RFC 7845 section 3): the identification header alone on its page, the comment header ending its page, both on pages of granule position 0. After the comment, any data is shown with whether its first byte's least significant bit marks binary data to keep or padding.
@@ -16,7 +18,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
   - Read (RFC 6716 sections 3.1 to 3.4): the TOC byte (configuration, so mode, bandwidth and frame size; stereo flag; frame count code), code 3's frame count byte with its VBR and padding flags, the padding length, the frame lengths, every frame and the padding. Packets that break R1 to R7, which decoders reject, are findings.
   - A CBR code 3 packet whose implicit frames exceed 1275 bytes breaks R2 (section 3.4). The padding length node holds the padding the length bytes code (255 adds 254 and continues), not the number of bytes they take.
   - In multistream files (families other than 0) every stream but the last uses the self-delimited framing of appendix B, which is read too. A stream's packet that does not fit, and streams of different durations (RFC 7845 section 3), are findings.
-  - Each stream of a packet keeps a 24-byte record and 2 bytes per frame. The streams after one whose framing broke are implied, not recorded, so a broken multistream packet costs one record.
+  - Each stream of a packet keeps a 24-byte record and 2 bytes per frame. The streams after one whose framing broke are implied, not recorded, so a broken multistream packet costs one record (51 bytes per packet of two bytes in the memory test, against 5 KB before).
 - **Durations:** a packet's samples at 48 kHz come from its TOC (and frame count byte), as `opus_packet_get_nb_samples` counts them; granule positions count them with the pre-skip included (section 4).
   - The first audio page's position may start the stream later (an info) but not earlier, except on the end-of-stream page (section 4.5); only that page may trim the end, by no more than the last packet (section 4.4).
   - The samples are the decoded samples less the pre-skip and the end trimming, which opusdec writes.
@@ -56,3 +58,8 @@ From mapping family 0 or 1, in the Vorbis channel order, with the speakers named
 ## Not yet covered
 
 - The SILK and CELT layers (planned: entropy pass).
+
+## Articles
+
+- **Articles:** `opus-modes`, `opus-toc`, `opus-pre-skip`, `opus-channel-mapping`.
+- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`.
