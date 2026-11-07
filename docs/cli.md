@@ -122,6 +122,12 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
 - **CSV:** the `Spectral Cutoff (Hz)` column, from the first audio stream's combined spectrum, empty where no cutoff is found, and the `Sample Peak (dBFS)` column, the highest over the channels of the first audio stream, with one decimal and empty for a stream whose samples are all 0, and `Maximum True Peak Level (dBTP)`, `Integrated Loudness (LUFS)` and `Loudness Range (LU)` of the first audio stream, empty where the stream has no figure; all are empty for every file of an analysis without `--measure`, and `Is Verified` is filled with `--measure` too. The numeric columns are written as they are, so a negative peak reads back as `-0.3`, not `'-0.3`.
 - **Exit codes:** unchanged; `--fail-on` sees only the host's `measure.*` findings (see below).
 
+### What the decoders are for
+
+- Encspect decodes audio only to analyze it: to compare the checksums a stream stores (`--verify`) and to measure the decoded audio (`--measure`, Decode Audio in the GUI).
+- It does not play audio, and it does not convert or export it.
+- Some formats Encspect decodes may be covered by patents or other rights in some countries. Users are responsible for complying with the laws where they live.
+
 ### `--measure-grids`
 
 As `--measure`, and writes the spectrogram and the waveform into the JSON, as base64 of the bytes (the text and CSV never hold them, so `--measure-grids` with either is wrong usage). The grids belong to the `spectrum` measurement: `--measure-grids` with a list of kinds that leaves `spectrum` out is wrong usage too.
