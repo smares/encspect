@@ -1,6 +1,6 @@
 # Encspect
 
-Audio file analyzer with a GUI and a CLI. Read `docs/PLAN.md` for goals, architecture, scope and rollout before making design decisions; this file only holds the rules that apply to every change.
+Audio file analyzer with a GUI and a CLI. Read `docs/PLAN.md` for goals, scope and rollout and `docs/architecture.md` for the architecture before making design decisions; this file only holds the rules that apply to every change.
 
 ## Stack
 
