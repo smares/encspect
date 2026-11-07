@@ -47,7 +47,7 @@ The tool tells you everything technically knowable about an audio file's structu
 - Bundling external decoders or native audio libraries.
   - The one exception is what the GUI framework itself needs: Skia and HarfBuzz, and the platform backends (ANGLE, `av_libglesv2`, on Windows; Avalonia.Native, `libAvaloniaNative`, on macOS); Linux needs none beyond Skia and HarfBuzz (see [gui.md](gui.md)).
 - Quality verdicts. The report says what the file shows, never whether it sounds good: no rating from an encoder's reputation or the bitrate, such as EncSpot's good, ok or bad.
-- For v1: scalefactor and Huffman-table level MP3 analysis. v1 stopped at headers, side information and metadata; the entropy pass is under [Later](#later).
+- For v1: scalefactor and Huffman-table level MP3 analysis. v1 stopped at headers, side information and metadata; the entropy pass comes with the lossy decoders under [Next](#next).
 
 ## Decisions so far
 
@@ -215,7 +215,7 @@ One line per format or feature; the details are on its page.
 
 - **MP4** (MP4, M4A, M4B, 3GP, QuickTime): every box, the sample tables and fragments, iTunes and QuickTime metadata, channel layouts, gapless data: [mp4.md](formats/mp4.md).
 - **AAC** in MP4, ADTS and ADIF, with every raw data block of AAC Main, LC, SSR and LTP, implicit SBR and PS, ELD and USAC configurations: [aac.md](formats/aac.md).
-- **Why the raw data blocks were read in phase 2:** HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the parser reads each block far enough to reach it, without dequantizing; the same pass gives AAC's coding statistics. For the other codecs that depth waits for the entropy pass.
+- **Why the raw data blocks were read in phase 2:** HE-AAC and HE-AAC v2 may be signaled only inside the frames, in a fill element after the coded spectra, so the parser reads each block far enough to reach it, without dequantizing; the same pass gives AAC's coding statistics. For the other codecs that depth comes with their decoders' entropy pass.
 
 #### Phase 2: Ogg, Speex, Vorbis and Opus
 
@@ -304,8 +304,10 @@ After Gate 3, in this order:
 
 ### Next
 
-1. **Lossy decoders** (MP3, AAC, Vorbis, Opus and the others), format by format, which the measurements of lossy streams wait for.
-   - The design is being drafted as `docs/design/lossy-decoders.md` (in design).
+1. **Lossy decoders, with the entropy pass,** one pull request per decoder; the measurements of lossy streams and gap wave 3 wait for them.
+   - Design: `docs/design/lossy-decoders.md`, signed off by the project lead on 2026-11-08.
+   - Order: groundwork (determinism, PCM comparison tools), then MPEG audio, Vorbis, Opus, AC-3, E-AC-3, Musepack, DTS core and Speex, whose specifications or permissively licensed code are free; then AAC and WMA on clean-room sources. Nothing is bought (the project lead, 2026-11-07).
+   - Each decoder brings its format's entropy pass: the parser reads the entropy-coded data in every analysis (Layer III scalefactors and Huffman data, Vorbis floors and residues, Opus SILK and CELT, and the like), so the figures that need it come with the decoder.
    - **A frame a decoder cannot decode is a gap, never concealed audio** (the project lead, 2026-11-01, #208). The decoder reports the frame (`decode.frame-invalid`) and outputs nothing for it; the measurements count its positions as lost samples.
    - The positions of a lost first or last unit count too: the host gives the measurer the span of the units the parser handed over. The stream's own lost samples, from the parser without decoding, are another figure at the coded stage ([samples-definition.md](design/samples-definition.md)).
    - Where an official decoder conceals the frame (FDK AAC fills it with noise substitution), its output covers positions Encspect's decoder leaves empty; the official-decoder cross-checks record such a difference as `explained`.
@@ -339,13 +341,6 @@ After Gate 3, in this order:
 
 The order is not fixed.
 
-- **An entropy pass,** format by format, MP3 first:
-  - MP3 Layer III scalefactors and Huffman spectral data, and MP2 samples;
-  - DTS core subframes and the core's optional information (DTS coding statistics);
-  - E-AC-3 adaptive hybrid transform, enhanced coupling and reduced-rate audio blocks;
-  - Musepack SV8 frames inside packets;
-  - Vorbis floors and residues, Opus SILK and CELT;
-  - AAC USAC, ER AAC and SBR envelope data.
 - **ALAC, TTA and WMA Lossless decoders:** they store no checksum over decoded audio, so phase 3 left them out (decoders.md, decision 5).
 - **The measurements' later steps** (step 6 of spectral-analysis.md).
 - **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the project lead, 2026-11-07).
