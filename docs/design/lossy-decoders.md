@@ -19,7 +19,8 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
   - the entropy pass each needs in its parser, and the gap wave 3 figures it gives;
   - sources and licenses, output and determinism, the verdict and the PCM cross-checks, gaps and priming, cost, and the order of the pull requests.
 - **Out:**
-  - the lossless decoders that wait under "Later" (ALAC, TTA, WMA Lossless) and DTS-HD's lossless extension (XLL);
+  - DTS-HD's lossless extension (XLL);
+  - the ALAC, TTA and WMA Lossless decoders, which the order below schedules (the project lead, 2026-11-08) but which decoders.md's lossless rules govern, not this design: their output is exact, so their check is a bit-exact comparison;
   - DTS extensions beyond the core, the MPEG-2 multichannel extension of Layer II, Dolby's object audio, AC-4 and MPEG-H;
   - parallel decoding of lossy frames (see [Parallel decoding](#parallel-decoding)).
 
@@ -61,6 +62,8 @@ Value is how many files a decoder makes measurable and how much the measurements
 | Step | Decoder | Value | Risk | Why here |
 | --- | --- | --- | --- | --- |
 | 0 | groundwork (no format) | | low | `DetMath` in `Core.Abstractions`, the determinism scan and its fixes, withheld output in the contract and the measurer, the PCM dump tool and comparison script |
+| L1 | ALAC (lossless) | medium: ALAC in MP4 and Matroska gets measurements | lowest: Apple's reference decoder (Apache 2.0), which the parser already follows | small and exact; checked bit for bit against Apple's decoder |
+| L2 | TTA (lossless) | low to medium | low: the format author's public description; the parser is clean-room, libtta (LGPL) stays a black box | small and exact; the author's reference codec runs in the cross-checks already |
 | 1 | MPEG audio (I, II, III) | highest: the most common lossy format | lowest: minimp3 (CC0) is a complete reference | sets the pattern every later decoder follows: walk, lending, output, cross-check |
 | 2 | Vorbis | high | low: a free specification and libvorbis (BSD) | the Ogg harness exists |
 | 3 | Opus | high | medium: large, but the reference is normative, and every packet's final range coder state must match exactly | the strongest check any lossy decoder can have |
@@ -71,7 +74,7 @@ Value is how many files a decoder makes measurable and how much the measurements
 | 8 | Speex | low | low: libspeex (BSD), small, integer | bit-exact against a fixed-point build |
 | 9 | AAC LC | very high | high: no free specification; a clean-room description of FFmpeg's decoder comes first (decision 1) | the first format on the clean-room path after the free ones |
 | 10 | HE-AAC (SBR, parametric stereo) | high | high: two large tools with QMF banks, also clean-room | builds on step 9 |
-| 11, 12 | WMA standard, Professional | medium | high: clean-room supplements of the reconstruction come first (decision 12) | Microsoft's decoder on the Windows runners is the reference |
+| 11, 12 | WMA standard, Professional, and WMA Lossless | medium | high: clean-room supplements of the reconstruction come first (decision 12) | Microsoft's decoder on the Windows runners is the reference; WMA Lossless shares the clean-room write-up and is checked bit for bit |
 | 13 | AAC Main, LTP and ER AAC | low | medium | rare object types |
 | 14 | USAC (xHE-AAC) | low today | highest: a second codec (arithmetic coding, LPD with ACELP and TCX, eSBR, MPEG Surround 2-1-2) | last but one |
 | 15 | WMA Voice | low | high: a speech codec with many tables, clean-room | last, and only if the lead wants it |
@@ -251,7 +254,7 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
 
 - **The scan.** `MeasurementDeterminismTests.BannedCalls` scans the nine lossy format assemblies whole, parsers and decoders together, since the walk's shared code may compute in floating point.
   - The parsers' lossless code in those assemblies (WMA Lossless's reader, DTS's XLL reading) falls under the rules too; it is integer code and needs no change beyond the inventory below.
-  - A future lossless decoder in those assemblies (WMA Lossless, DTS XLL, both waiting under "Later") goes into a namespace `<project>.Decoding.Lossless`, which the scan leaves out, so that it may use `Vector<T>` as the FLAC decoder does.
+  - A lossless decoder in those assemblies (WMA Lossless in steps 11 and 12, DTS XLL under "Later") goes into a namespace `<project>.Decoding.Lossless`, which the scan leaves out, so that it may use `Vector<T>` as the FLAC decoder does.
 - **The inventory at `origin/main` adb9673, fixed in the groundwork pull request with goldens unchanged:**
   - `Math.Pow`: `Aac/Sbr.cs` line 172 (SBR band edges, rounded to integers), `Vorbis/Setup.cs` lines 271 (`lookup1_values`) and 712 (`float32_unpack`), `Wma/Vlc.cs` line 152 (a codebook's Kraft sum).
   - `Math.Log2`: `Aac/Sbr.cs` lines 153, 231 and 248 (SBR band counts, rounded to integers) and `Ac3/FrameSyntax.cs` line 1019 (a field width).
