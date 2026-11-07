@@ -269,7 +269,7 @@ Done in this order before Gate 2:
 - **TTA,** verified by its CRC-32s without a decoder: [tta.md](formats/tta.md).
 - **ALAC** frame by frame in MP4 and Matroska, following Apple's Apache-licensed source: [alac.md](formats/alac.md).
 - **WMA Lossless** frame by frame, clean-room from [wma-lossless-format.md](design/wma-lossless-format.md): [asf-wma.md](formats/asf-wma.md).
-- **Decoders** for FLAC, WavPack, Monkey's Audio, and Dolby TrueHD and MLP, the codings that store a checksum over decoded audio; ALAC, TTA and WMA Lossless store none, so their decoders wait under [Later](#later) (decoders.md, decision 5).
+- **Decoders** for FLAC, WavPack, Monkey's Audio, and Dolby TrueHD and MLP, the codings that store a checksum over decoded audio; ALAC, TTA and WMA Lossless store none; their decoders are scheduled under [Next](#next) for the measurements (the project lead, 2026-11-08).
 
 #### Phase 3: Dolby TrueHD and MLP
 
@@ -306,7 +306,12 @@ After Gate 3, in this order:
 
 1. **Lossy decoders, with the entropy pass,** one pull request per decoder; the measurements of lossy streams and gap wave 3 wait for them.
    - Design: `docs/design/lossy-decoders.md`, signed off by the project lead on 2026-11-08.
-   - Order: groundwork (determinism, PCM comparison tools), then MPEG audio, Vorbis, Opus, AC-3, E-AC-3, Musepack, DTS core and Speex, whose specifications or permissively licensed code are free; then AAC and WMA on clean-room sources. Nothing is bought (the project lead, 2026-11-07).
+   - Order:
+     1. groundwork: determinism and the PCM comparison tools;
+     2. the ALAC and TTA decoders, small and exact, checked bit for bit (the project lead, 2026-11-08);
+     3. MPEG audio, Vorbis, Opus, AC-3, E-AC-3, Musepack, DTS core and Speex, whose specifications or permissively licensed code are free;
+     4. AAC and WMA, WMA Lossless included, on clean-room sources.
+   - Nothing is bought (the project lead, 2026-11-07).
    - Each decoder brings its format's entropy pass: the parser reads the entropy-coded data in every analysis (Layer III scalefactors and Huffman data, Vorbis floors and residues, Opus SILK and CELT, and the like), so the figures that need it come with the decoder.
    - **A frame a decoder cannot decode is a gap, never concealed audio** (the project lead, 2026-11-01, #208). The decoder reports the frame (`decode.frame-invalid`) and outputs nothing for it; the measurements count its positions as lost samples.
    - The positions of a lost first or last unit count too: the host gives the measurer the span of the units the parser handed over. The stream's own lost samples, from the parser without decoding, are another figure at the coded stage ([samples-definition.md](design/samples-definition.md)).
@@ -341,7 +346,6 @@ After Gate 3, in this order:
 
 The order is not fixed.
 
-- **ALAC, TTA and WMA Lossless decoders:** they store no checksum over decoded audio, so phase 3 left them out (decoders.md, decision 5).
 - **The measurements' later steps** (step 6 of spectral-analysis.md).
 - **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the project lead, 2026-11-07).
 - **Small separate items:**
