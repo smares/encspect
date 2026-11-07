@@ -7,7 +7,9 @@ Raw Dolby TrueHD files (`.thd`) and Meridian Lossless Packing files (`.mlp`): ac
 - **The format description:** [truehd-format.md](../design/truehd-format.md), written clean-room from FFmpeg 6.1.1's LGPL source by an agent whose text is the only description the implementer read; FFmpeg serves as a black-box cross-check.
 - **Public documents:**
   - the Matroska codec mapping (`A_TRUEHD` and `A_MLP` frames are access units, without CodecPrivate) and the MP4 registry entries `mlpa` and `dmlp`;
-  - the AES paper "MLP Lossless Compression" (Stuart, Craven, Gerzon, Law and Wilson, AES 9th Regional Convention, Tokyo, 1999). The plan listed it as read, but the clean-room record says it was not read for the format description (truehd-format.md, "Sources"), so nothing in the parser or this page rests on it. As cited, it describes the stream's CRC check information, its lossless self-check and the substreams, but no bit layout.
+  - the AES paper "MLP Lossless Compression" (Stuart, Craven, Gerzon, Law and Wilson, AES 9th Regional Convention, Tokyo, 1999).
+    - The plan listed it as read, but the clean-room record says it was not read for the format description (truehd-format.md, "Sources"), so nothing in the parser or this page rests on it.
+    - As cited, it describes the stream's CRC check information, its lossless self-check and the substreams, but no bit layout.
 - **Not read:** Dolby's "Dolby TrueHD high-level bitstream description" (2018) and "MLP (Dolby TrueHD) streams within the ISO Base Media File Format" (version 1.0, 2009), both on developer.dolby.com, which refused connections from the session that wrote the description (2026-10-24). A field is added to the scope only if one of them or FFmpeg's source states it.
 
 ## What is read

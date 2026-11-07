@@ -163,7 +163,10 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
   - A series exists where its tally node does: a file without joint stereo frames has no "Joint Stereo Modes".
 - the **numeric series** "Coded Bandwidth" (Hz, Layers I and II, `codedBandwidth`) and "Channel Bit Share" (percent, stereo, joint stereo and dual channel frames, `bitDistribution`), each per frame and per second ("Coded Bandwidth Over Time" is each second's highest, "Channel Bit Share Over Time" bits over bits of the frames that start in it), anchored to the statistics nodes of the same names. A frame without a value (a mono frame in a stream that changes mode, a frame whose bits are all 0, a Layer I or II frame whose allocation does not fit) has no point, so such a series has its own x values; a mono stream has no share.
 
-- **The tools' own labels** for these figures: mp3guessenc's "stereo mode frame count" is "Joint Stereo Modes" in Layer III, its "size distr" the frame sizes under each bitrate, its "Max reservoir" the largest main_data_begin; EncSpot's "Av. Reservoir" (which it truncates to whole bytes) and "Max. Reservoir" are the mean and largest main_data_begin, and its "Scalefac" the share of granules with scalefactor scaling.
+- **The tools' own labels** for these figures: mp3guessenc's "stereo mode frame count" is "Joint Stereo Modes" in Layer III, its "size distr" the frame sizes under each bitrate, its "Max reservoir" the largest main_data_begin;
+  - EncSpot's "Av.
+  - Reservoir" (which it truncates to whole bytes) and "Max.
+  - Reservoir" are the mean and largest main_data_begin, and its "Scalefac" the share of granules with scalefactor scaling.
 
 ### Counting and the VBR header's claims
 

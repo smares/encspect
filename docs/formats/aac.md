@@ -32,7 +32,8 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
   - EXT_SBR_DATA and EXT_SBR_DATA_CRC with sbr_header and, where an element's header has been read, sbr_data far enough to find the parametric stereo extension (EXT_ID_PS), with the frequency band tables derived from the header (4.6.18.3);
   - EXT_FILL_DATA (the fill nibble and the 0xA5 bytes checked), EXT_DATA_ELEMENT (ancillary data), EXT_DYNAMIC_RANGE (dynamic_range_info with its PCE tag, excluded channels, bands and reference level) and EXT_FILL's other bits;
   - a payload is read only within its fill element's count; one that needs more is a finding, and the next element is read where the count ends, as decoders do.
-- **Intensity stereo under ms_mask_present 2:** the references differ on whether every band's sign is inverted. ffmpeg and fdk-aac invert it, since that mask marks every band; faad2's invert_intensity inverts only under ms_mask_present 1. The report follows ffmpeg and fdk-aac for the bands it shows out of phase.
+- **Intensity stereo under ms_mask_present 2:** the references differ on whether every band's sign is inverted. ffmpeg and fdk-aac invert it, since that mask marks every band; faad2's invert_intensity inverts only under ms_mask_present 1.
+  - The report follows ffmpeg and fdk-aac for the bands it shows out of phase.
 - **ADTS:** sync on a chain of frames, resync after damage, every header field, and the CRC over the elements it covers.
   - A header counts as sync when two more frames with the same fixed header (but the private bit) follow at the offsets its length gives, or its frames end exactly at the end of the data. Then frames are followed by their lengths; a frame in which a new chain starts is cut short there as damaged, and anything else is a gap.
   - ADTS's layer bits are 00, which no MPEG audio header has, so neither format takes the other's headers, and ADTS-looking bytes inside an MP3 stay a gap.

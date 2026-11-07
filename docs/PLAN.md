@@ -118,11 +118,13 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 
 Nobody reads the code line by line, so correctness comes from automated checks that do not depend on the author's judgment. The weak spot to guard against is spec details written from memory.
 
-1. **Known-input fixtures:** hand-built ones (standard library only, regenerated and compared in CI) control every byte; encoder-written ones are committed, since their bytes depend on the tool version. Each has a manifest of the expected result.
+1. **Known-input fixtures:** hand-built ones (standard library only, regenerated and compared in CI) control every byte; encoder-written ones are committed, since their bytes depend on the tool version.
+   - Each has a manifest of the expected result.
 2. **Cross-checks against other tools:** disagreements fail the build until explained; every format is also compared with MediaInfo.
 3. **Official decoders:** where FFmpeg was the only reference, the format owner's decoder or reference implementation is the reference for sample counts, durations and the handling of damage, with FFmpeg as a second cross-check ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)).
 4. **Golden reports:** each fixture has a stored expected report; any output change shows up as a diff that has to be approved.
-5. **Corrupt-file tests and fuzzing:** truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool. The fuzzer fails on `parse.failed` and on children that could not be built, as on an escaping exception.
+5. **Corrupt-file tests and fuzzing:** truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool.
+   - The fuzzer fails on `parse.failed` and on children that could not be built, as on an escaping exception.
 6. **Spec references in the code:** each parsed field cites the spec section it implements.
 7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions; its findings are recorded in the pull request.
 
@@ -255,7 +257,8 @@ Done in this order before Gate 2:
 4. **DTS-HD:** the lossless extension's channel sets, `.dtshd` files and the DTS:X signal: [dts.md](formats/dts.md), [dtshd.md](formats/dtshd.md).
 5. **WMA Voice frames:** first built, removed on 2026-10-29 for its provenance, and back as a clean-room rewrite: [asf-wma.md](formats/asf-wma.md).
 6. **Matroska and WebM:** audio tracks routed to the codec parsers, video at container level: [matroska.md](formats/matroska.md).
-7. **DRM and protection reporting** in MP4, ASF and Matroska, without decrypting: [mp4.md](formats/mp4.md), [asf-wma.md](formats/asf-wma.md), [matroska.md](formats/matroska.md). Decrypting stays out of scope: no key is used, no license acquired.
+7. **DRM and protection reporting** in MP4, ASF and Matroska, without decrypting: [mp4.md](formats/mp4.md), [asf-wma.md](formats/asf-wma.md), [matroska.md](formats/matroska.md).
+   - Decrypting stays out of scope: no key is used, no license acquired.
 
 #### Phase 3: lossless formats and decoders
 
@@ -286,7 +289,8 @@ Done in this order before Gate 2:
 
 After Gate 3, in this order:
 
-1. **Cross-checks against the formats' official decoders,** rollout steps 1 to 6 of [official-decoder-crosschecks.md](design/official-decoder-crosschecks.md): Opus and Vorbis against Xiph's decoders, TTA against libtta-c, AAC against FDK AAC, Core Audio and Media Foundation, AC-3 and E-AC-3 against Core Audio. Built.
+1. **Cross-checks against the formats' official decoders,** rollout steps 1 to 6 of [official-decoder-crosschecks.md](design/official-decoder-crosschecks.md): Opus and Vorbis against Xiph's decoders, TTA against libtta-c, AAC against FDK AAC, Core Audio and Media Foundation, AC-3 and E-AC-3 against Core Audio.
+   - Built.
    - Windows has no decoder for AC-3 and E-AC-3 on any runner image, so step 7 does not apply.
    - DTS, DTS-HD, TrueHD and MLP have no freely available official decoder; FFmpeg stays their reference.
    - Each difference from FFmpeg that would change counts, findings or goldens goes to the project lead before the analyzer follows it.
@@ -300,7 +304,8 @@ After Gate 3, in this order:
 
 ### Next
 
-1. **Lossy decoders** (MP3, AAC, Vorbis, Opus and the others), format by format, which the measurements of lossy streams wait for. The design is being drafted as `docs/design/lossy-decoders.md` (in design).
+1. **Lossy decoders** (MP3, AAC, Vorbis, Opus and the others), format by format, which the measurements of lossy streams wait for.
+   - The design is being drafted as `docs/design/lossy-decoders.md` (in design).
    - **A frame a decoder cannot decode is a gap, never concealed audio** (the project lead, 2026-11-01, #208). The decoder reports the frame (`decode.frame-invalid`) and outputs nothing for it; the measurements count its positions as lost samples.
    - The positions of a lost first or last unit count too: the host gives the measurer the span of the units the parser handed over. The stream's own lost samples, from the parser without decoding, are another figure at the coded stage ([samples-definition.md](design/samples-definition.md)).
    - Where an official decoder conceals the frame (FDK AAC fills it with noise substitution), its output covers positions Encspect's decoder leaves empty; the official-decoder cross-checks record such a difference as `explained`.

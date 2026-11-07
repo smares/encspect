@@ -2,12 +2,12 @@
 
 The formats of phases 4 to 6, in the order of the [plan](../PLAN.md#format-rollout). None is read yet. Each gets its own page when it is built, and each is its own pull request with fixtures, cross-checks and a review; a container's routes to these codecs follow as in phase 3.
 
-The order follows how well a format is documented: the better its public specification, the sooner it comes, so the most exotic come last.
+The order follows how well a format is documented: the better documented, the sooner it comes, so the most exotic come last. Where a format has no reason of its own below, its place follows from that rule alone.
 
 ## Phase 4: header level only
 
 - **TAK and OptimFROG:** what their headers reveal.
-- **Why here and no deeper:** both are poorly documented, with no public specification of their coding.
+- **Why no deeper:** both are poorly documented.
 
 ## Phase 5: more formats
 
@@ -16,27 +16,24 @@ The order follows how well a format is documented: the better its public specifi
 - **What:** Apple's Core Audio Format, the container of ALAC, AAC and PCM on Apple systems (`.caf`).
 - **Specification:** Apple's public Core Audio Format specification.
 - **Scope:** its chunks, the packet table, and routes to the codec parsers that exist.
-- **Why first:** a public specification, and its codecs are read already; the ALAC fixtures from Apple's encoders include CAF files that wait for it.
+- **Why first:** Apple's specification is public, and the committed ALAC fixtures from Apple's encoders include CAF files that wait for a CAF parser.
 
 ### 2. DSF and DSDIFF
 
 - **What:** the DSD files of SACD rips and downloads (`.dsf`, `.dff`).
 - **Specifications:** Sony's DSF specification and Philips' DSDIFF specification.
 - **Scope:** headers and chunks; the DST-compressed form of DSDIFF named and measured.
-- **Why here:** public specifications of simple chunked files.
 
 ### 3. Sun AU, VOC, IRCAM and NIST SPHERE
 
 - **What:** `.au` and `.snd`, Creative's `.voc`, IRCAM's `.sf`, NIST's `.sph`.
 - **Scope:** small headers of their own and the encodings they name.
-- **Why here:** small, documented headers.
 
 ### 4. AC-4
 
 - **What:** raw AC-4, and MP4's `ac-4` sample entry with `dac4` in the MP4 routes.
 - **Specification:** ETSI TS 103 190-1 and -2, which are free.
 - **Scope:** the TOC, presentations and substreams.
-- **Why here:** free specifications, but a larger syntax than the formats before it.
 
 ### 5. AAC in LATM and LOAS
 
@@ -69,7 +66,7 @@ The order follows how well a format is documented: the better its public specifi
 
 - **What:** `.shn`.
 - **Specification:** Tony Robinson's technical report (CUED/F-INFENG/TR.156).
-- **Why late:** its reference code is not freely licensed, so it is not followed, and the report is the only source.
+- **Why late:** its reference code is not freely licensed, so it is not followed.
 
 ### 11. Formats whose only detailed public source is FFmpeg
 
