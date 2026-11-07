@@ -61,6 +61,12 @@ public sealed class WavPackCodecParser : ICodecParser
         private long _invalid;
         private long _lost;
         private bool _isPacketLost;
+        private bool _isPacketCut;
+        private StreamFigures? _figures;
+        private readonly UnitCategoryTally _stereo = new("Stereo Coding", State.StereoCodings, "stereo block", GraphConcept.StereoCoding, isVariable: true);
+        private readonly List<byte> _setStereo = [];
+        private bool _hasNewConfig;
+        private bool _hasChecksum;
         private long _extraBlocks;
         private long _md5Blocks;
         private long _start = -1;
@@ -85,6 +91,8 @@ public sealed class WavPackCodecParser : ICodecParser
             _bytes += packet.Length;
             _hasGap |= packet.FollowsGap;
             _isPacketLost = packet.IsCut;
+            _isPacketCut = packet.IsCut;
+            _setStereo.Clear();
             ReadOnlySpan<byte> data = packet.Span;
             Node? node = _listed < MaxListedPackets ? NewPacketNode(packet, index) : null;
             if (data.Length < 12)
@@ -96,6 +104,13 @@ public sealed class WavPackCodecParser : ICodecParser
 
             uint samples = BinaryPrimitives.ReadUInt32LittleEndian(data);
             node?.Add(Field(packet, 0, 4, "Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.PacketSamples));
+            if (packet.IsCut)
+            {
+                long cutBytes = packet.Length;
+                _findings.Add(Severity.Warning, "wavpack.matroska-packet-cut", () => node ?? context.Parent, _ =>
+                    $"The data ends inside the packet at 0x{packet.FileStart:X}, after {Counts.Of(cutBytes, "byte", "bytes")} of its {Counts.Of(samples, "sample", "samples")}.", "packet");
+            }
+
             var blocks = new List<ReducedBlock>();
             int position = 4;
             string? fault = null;
@@ -146,9 +161,13 @@ public sealed class WavPackCodecParser : ICodecParser
 
             if (fault is not null)
             {
-                string message = fault;
                 _isPacketLost = true;
                 _invalid++;
+            }
+
+            if (fault is not null && !packet.IsCut)
+            {
+                string message = fault;
                 _findings.Add(Severity.Warning, "wavpack.matroska-packet-invalid", () => node ?? context.Parent, _ => $"The packet at 0x{packet.FileStart:X} {message}; the blocks before it are read.", "packet");
             }
 
@@ -160,6 +179,14 @@ public sealed class WavPackCodecParser : ICodecParser
             _samples += samples;
             // A packet that is cut or holds a block that cannot be read is lost whole: it declares its samples, which the stream counts.
             _lost += _isPacketLost ? samples : 0;
+            if (_rate > 0)
+            {
+                bool isDsd = _hasFirst && _first.IsDsd;
+                _figures ??= new StreamFigures(_rate);
+                // The bytes of the packet stand for the block set's: the headers a Matroska muxer strips are not in the file.
+                _figures.Add(packet.FileStart, packet.Length * 8L, samples * (isDsd ? 8 : 1));
+                _stereo.AddAll(isDsd ? [] : System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_setStereo));
+            }
         }
 
         private Node? NewPacketNode(MappedBytes packet, int index)
@@ -226,8 +253,11 @@ public sealed class WavPackCodecParser : ICodecParser
                 _invalid++;
                 _isPacketLost = true;
                 string reason = ImplausibleReason(block.DataLength, rebuilt);
-                _findings.Add(Severity.Warning, "wavpack.matroska-block-invalid", () => packetNode ?? context.Parent,
-                    _ => $"The block at 0x{fileStart:X} has {reason}, so libwavpack's reader would not take its header for a block's.", "header");
+                if (!_isPacketCut)
+                {
+                    _findings.Add(Severity.Warning, "wavpack.matroska-block-invalid", () => packetNode ?? context.Parent,
+                        _ => $"The block at 0x{fileStart:X} has {reason}, so libwavpack's reader would not take its header for a block's.", "header");
+                }
             }
 
             if (packetNode is not null)
@@ -244,6 +274,11 @@ public sealed class WavPackCodecParser : ICodecParser
             if (isPlausible)
             {
                 CountSubBlocks(rebuilt);
+                _hasChecksum |= (header.Flags & BlockHeader.HasChecksumFlag) != 0;
+                if (!header.IsMono && _setStereo.Count < State.MaxSetBlocks)
+                {
+                    _setStereo.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
+                }
             }
 
             if (!isPlausible)
@@ -284,6 +319,8 @@ public sealed class WavPackCodecParser : ICodecParser
             while (BlockContents.TryRead(block, position, out SubBlockSpan sub))
             {
                 hasExtra |= sub.Function == SubBlockIds.WvxBitstream;
+                _hasNewConfig |= sub.Function == SubBlockIds.NewConfigBlock;
+                _hasChecksum |= sub.Function == SubBlockIds.BlockChecksum;
                 hasMd5 |= sub.Function is SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum && sub.DataLength == 16;
                 position = sub.Next;
             }
@@ -417,6 +454,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 new(name, _start, _end - _start, value) { Description = description, Topic = topic };
             statistics.Add(Stat("Packets", NodeValue.Integer(_packets, "packets", "packet"), Explain.StatPackets, Topics.Matroska));
             statistics.Add(Stat("Blocks", NodeValue.Integer(_blocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
+            statistics.Add(Stat("Audio Blocks", NodeValue.Integer(_audioBlocks, "blocks", "block"), Explain.StatAudioBlocks));
             statistics.Add(Stat("Samples", NodeValue.Integer(_samples, "samples", "sample"), Explain.StatSamples));
             if (_lost > 0)
             {
@@ -430,7 +468,26 @@ public sealed class WavPackCodecParser : ICodecParser
             statistics.Add(Stat("IsHybrid", NodeValue.Boolean(first.IsHybrid), Explain.StatIsHybrid, Topics.Hybrid));
             statistics.Add(Stat("IsFloatingPoint", NodeValue.Boolean(first.IsFloat), Explain.StatIsFloat, Topics.FloatAndLargeIntegers));
             statistics.Add(Stat("IsDsd", NodeValue.Boolean(first.IsDsd), Explain.StatIsDsd, Topics.Dsd));
+            Node? stereoNode = first.IsDsd ? null : _stereo.AddTo(statistics, (name, value, description, topic) => Stat(name, value ?? NodeValue.Text(string.Empty), description, topic),
+                Explain.StatStereoCoding, Topics.MidSideStereo, "Stereo Block", "Stereo Blocks");
+            Node? average = null;
+            if (_figures is not null)
+            {
+                int before = statistics.Children.Count;
+                _figures.AddTo(statistics, (name, value, description) => new Node(name, _start, _end - _start, value) { Description = description }, "Block Set", "block sets", true, out _);
+                average = statistics.Children.Skip(before).FirstOrDefault(c => c.Name == "Average Bitrate");
+            }
+
+            bool isFive = _hasNewConfig || _hasChecksum;
+            string encoderName = isFive ? "WavPack 5.0 or later" : "WavPack 4 stream, no WavPack 5 features";
+            Node encoder = Stat("Encoder", encoderName, Explain.Encoder, ClaimRoles.EncoderTopic);
+            encoder.Add(Stat("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow));
+            encoder.Add(Stat("Evidence", isFive
+                ? $"The blocks hold {(_hasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
+                : $"The stream version is 0x{_version:X3} and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well", Explain.Evidence));
+            context.Parent.Add(encoder);
             context.Parent.Add(statistics);
+            List<Series> series = _figures?.Series(average, context.CancellationToken) ?? [];
             int shifted = (first.BytesPerSample * 8) - first.LeftShift;
             context.AddStream(new StreamInfo
             {
@@ -443,7 +500,12 @@ public sealed class WavPackCodecParser : ICodecParser
                 Samples = _samples * (first.IsDsd ? 8 : 1),
                 LostSamples = _lost * (first.IsDsd ? 8 : 1),
                 Duration = duration,
-                AverageBitrate = duration > 0 ? _bytes * 8 / duration / 1000 : null,
+                AverageBitrate = _figures?.AverageBitrate,
+                IsVbr = _figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
+                Encoder = encoderName,
+                EncoderConfidence = isFive ? Confidence.Medium : Confidence.Low,
+                Series = series,
+                CategorySeries = stereoNode is not null && series.Count > 0 && _stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
                 Verification = verification,
             });
         }

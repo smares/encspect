@@ -177,7 +177,9 @@ internal sealed partial class FileReader
         string? problem = plan.Frames.Describe();
         // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
         bool needsCodecPrivate = codec is "vorbis" or "opus" or "flac";
-        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !needsCodecPrivate)
+        // The parsers of these codecs take frames put together from stripped or inflated bytes; the others place their nodes at contiguous file bytes.
+        bool takesTransformedFrames = needsCodecPrivate;
+        if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !takesTransformedFrames)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
@@ -208,7 +210,7 @@ internal sealed partial class FileReader
         MappedBytes? privateData = null;
         bool hasPrivate = track.CodecPrivateOffset >= 0 && track.CodecPrivateLength > 0;
 
-        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
+        // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_FLAC (the marker and metadata blocks), A_WAVPACK4 (the stream version), A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
         // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
         if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" or "flac" or "wavpack" || codecId == "A_AAC"))
@@ -413,7 +415,7 @@ internal sealed partial class FileReader
         }
 
         int position = 4;
-        while (position + 4 <= span.Length)
+        while (span.Length - position >= 4)
         {
             int length = (span[position + 1] << 16) | (span[position + 2] << 8) | span[position + 3];
             int size = (int)Math.Min(4L + length, span.Length - position);
@@ -426,8 +428,9 @@ internal sealed partial class FileReader
             position += size;
         }
 
-        why = "ends inside a block header";
-        return false;
+        // One to three bytes after a block that is not the last cannot hold a block header: the parser reports them as a block it cannot read.
+        headers.Add(data.Slice(position, span.Length - position));
+        return true;
     }
 
     // The three headers of A_VORBIS (draft-ietf-cellar-codec, section 3.4.41): the number of packets minus one, the Xiph-laced lengths of

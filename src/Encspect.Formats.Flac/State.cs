@@ -391,6 +391,11 @@ internal sealed class State
                 $"The frame at 0x{offset:X} cannot be read: {Describe(fault, channel)}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "fails", "fail")} the same way" : string.Empty)}.", fault.ToString());
         }
 
+        if (bytes.IsOpaque)
+        {
+            status |= EntryStatus.IsOpaque;
+        }
+
         if (bytes.FileRanges() is { Count: > 1 } ranges)
         {
             status |= EntryStatus.HasRanges;

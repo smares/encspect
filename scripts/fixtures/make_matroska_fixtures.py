@@ -980,7 +980,7 @@ def _():
 
 
 @fixture("wavpack-cut", "A file that ends inside the last block of an A_WAVPACK4 track (the two blocks of external-ffmpeg-wavpack with its two-byte CodecPrivate): the frame the file ends in is handed to the WavPack parser flagged as cut and counted as lost samples.",
-         findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "2 elements state a size that runs past the end of the file"), ("wavpack.matroska-block-invalid", "has a size that is odd")],
+         findings=[("matroska.element-truncated", "The Segment states"), ("matroska.element-truncated", "2 elements state a size that runs past the end of the file"), ("wavpack.matroska-packet-cut", "ends inside the packet")],
          valid=False, streams=[("WavPack lossless", 44100, 2)])
 def _():
     return cut_lossless("external-ffmpeg-wavpack", "A_WAVPACK4", 2, 44100.0, 2, True, 500)
@@ -1012,6 +1012,37 @@ def _():
          findings=[("matroska.codec-private-invalid", "does not start with the marker")], streams=[("FLAC", 44100, 1)], valid=False)
 def _():
     return flac_frames(4, b"OggS" + bytes(range(38)))
+
+
+def flac_private():
+    manifest = json.loads((OUT / "external-ffmpeg-flac.expected.json").read_text(encoding="utf-8"))
+    offset, length = manifest["tracks"][0]["private"]
+    return bytearray((OUT / "external-ffmpeg-flac.mka").read_bytes()[offset:offset + length])
+
+
+@fixture("flac-private-no-last-flag", "An A_FLAC track whose CodecPrivate holds the marker and a STREAMINFO block without the last-block flag, and no other block: the first frame ends the "
+         "metadata and the FLAC parser says so.",
+         findings=[("flac.metadata-no-last-block", "no metadata block has the last-block flag"), ("flac.total-samples-mismatch", "STREAMINFO says")], streams=[("FLAC", 44100, 1)], valid=False)
+def _():
+    private = flac_private()
+    private[4] &= 0x7F
+    return flac_frames(4, bytes(private))
+
+
+@fixture("flac-private-trailing-bytes", "An A_FLAC track whose CodecPrivate holds the marker, a STREAMINFO block without the last-block flag and two bytes after it, too few for a block "
+         "header: the bytes are handed over as a block the FLAC parser cannot read, and the frames are analyzed.",
+         findings=[("flac.metadata-truncated", "too short for a metadata block header"), ("flac.metadata-no-last-block", "no metadata block has the last-block flag"), ("flac.total-samples-mismatch", "STREAMINFO says")],
+         streams=[("FLAC", 44100, 1)], valid=False)
+def _():
+    private = flac_private()
+    private[4] &= 0x7F
+    return flac_frames(4, bytes(private) + b"\x01\x02")
+
+
+@fixture("flac-private-after-last", "An A_FLAC track whose CodecPrivate holds a STREAMINFO block with the last-block flag followed by a PADDING block: the bytes after the last block are "
+         "not read as metadata.", findings=[("flac.total-samples-mismatch", "STREAMINFO says")], streams=[("FLAC", 44100, 1)], valid=False)
+def _():
+    return flac_frames(4, bytes(flac_private()) + bytes([0x01, 0x00, 0x00, 0x04, 0, 0, 0, 0]))
 
 
 @fixture("truncated-header", "A file that ends inside an element header, in the middle of a Cluster.",

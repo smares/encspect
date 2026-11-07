@@ -63,6 +63,9 @@ internal enum EntryStatus : ushort
 
     // The CRC-8 of the header differs, but the rest of the frame reads and its CRC-16 holds.
     Crc8Fails = 128,
+
+    // A container changed the frame's bytes (inflated, or stripped bytes put back), so its fields have no positions in the file of their own.
+    IsOpaque = 256,
 }
 
 // A frame, or a stretch of bytes between frames that holds none, in 56 bytes. Offsets are where the frame starts in the file.
