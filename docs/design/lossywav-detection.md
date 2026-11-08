@@ -231,17 +231,17 @@ The bitrate of the 30 s "D'un vieux jardin" before and after lossyWAV at standar
     - **Not tested:** lowered minimum bits kept (`--dynamic` down to 1.0, `--static` down to 3), where spans just above the count could become thin and the pattern could vanish.
   - Trimmed and withheld positions (`trimmedSamples`, `withheldSamples` of PR #232) are not measured; `firstPosition` gives the anchor.
   - The distribution over spans needs no grid known in advance and one pass.
-- **Figures** (names in Title Case as the levels write them; settled in PR 2):
-  - **Low Bits Unused per Span:** for each count from 0 to the width, the number of spans, all channels together; silent spans apart, and thin spans counted.
+- **Figures** (names in Title Case as the levels write them; as built in PR 2, where "per" is not a short function word of the rule and the name uses "by"):
+  - **Low Bits Unused by Span:** for each count from 0 to the width, the number of spans, all channels together; silent spans apart, and thin spans counted.
   - **Spans Above the Stream's Low Bits Unused:** the spans whose count is above the stream's Low Bits Unused. It is 0 for 16-bit audio in 24 bits and for truncated audio, and 98.7% for "D'un vieux jardin" at standard.
   - **Changes of Low Bits Unused:** the spans, neither silent, short nor thin, whose count differs from the same channel's last such span.
   - **Grid of the Changes:** the largest power of two from 256 to 65,536 samples such that at least 95% of the changes fall within one span of one phase of it (`hits * 20 >= changes * 19`, in integers), given at least 20 changes; otherwise none. It is reported with the number of changes on it.
     - The phase is free, so a stream cut off the grid keeps it: 100 samples cut from the start still read 512.
     - **The smallest grid is 256 samples.** The 22.05 and 32 kHz blocks sit exactly at that edge. A lossyWAV block shorter than 256 (perhaps at 11.025 or 16 kHz, which were not run) would read no grid; the smallest grid is lowered only with fixtures that need it.
     - **Why 20 and 95%:** they are this design's conventions, which the article states. After the short and thin rules, every lossyWAV output tested with 20 changes or more has all of them on the grid (one exception, `--scale 0.5`, above), while edits that put two phases in one stream fall far below 95% (a join: no grid). 95% leaves one change in 20 for chance.
-  - **Channels With Equal Low Bits Unused:** the share of the times (span positions at which no channel's span is silent) at which all channels have the same count. It is not given for mono.
+  - **Channels with Equal Low Bits Unused:** the share of the times (span positions at which no channel's span is silent) at which all channels have the same count. It is not given for mono.
 - **Units:** counts are integers and the grid is in samples. The shares are printed by the writers from the counts (one decimal of a percent), as the other measurement figures are, with nothing computed in floating point.
-- **Checked against the prototype:** PR 2 compares the figures with [lossywav_figures.py](../../scripts/fixtures/lossywav_figures.py) on the PCM that `tests/Encspect.PcmDump` writes for the FLAC, WavPack and Monkey's Audio fixtures.
+- **Checked against the prototype:** [crosscheck_lossywav_figures.py](../../scripts/fixtures/crosscheck_lossywav_figures.py) compares the figures with [lossywav_figures.py](../../scripts/fixtures/lossywav_figures.py) on the PCM that `tests/Encspect.PcmDump` writes for the FLAC, WavPack and Monkey's Audio fixtures: 43 streams on 2026-11-08, with no difference.
 
 ### The FLAC and WavPack statistics
 
@@ -347,7 +347,8 @@ Measured with [lossywav_figures.py](../../scripts/fixtures/lossywav_figures.py) 
   - About 17 KB, within the per-stream estimate that the measurer checks before it allocates.
 - **Budget:**
   - charged in the measurers' own budget as part of the levels' work per sample;
-  - the cost is measured in PR 2 and the levels' 5 units per integer sample are raised if it shows, with `MeasurementWorkTests` holding the time per unit.
+  - the cost was measured in PR 2: the levels with the spans take 1.2 to 1.6 times the FLAC reference's time per unit on the work test's signals (at most 2 allowed), so the 5 units per integer sample stay, with `MeasurementWorkTests` holding the time per unit.
+  - **Memory as built:** 33 counters and 2,048 phase counters of 8 bytes (16.6 KB) and 516 bytes of codes for one piece's spans, beside 12 bytes a channel.
 - **The FLAC and WavPack statistics** are counters over units the parser reads already: a few per frame, no allocation per frame.
 
 ## Fixtures
@@ -392,7 +393,7 @@ Measured with [lossywav_figures.py](../../scripts/fixtures/lossywav_figures.py) 
   - `wav/lossywav-stdout.wav`: on main `wav.truncated` (warning, 68 bytes short); after PR 0 only `wav.riff-size-past-chunks` (warning, 68 bytes);
   - every WAV with the marker: on main `wav.fact-samples-mismatch`; after PR 0 none, and after PR 1 the claim;
   - no other finding on any fixture.
-- **Built and deterministic** (no lossyWAV): the false positives above, written by `lossywav_figures.py --variants` with a fixed seed, as short excerpts in `tests/fixtures/measurement` (PR 2). The table above was measured on the recordings; under decision 4, PR 2 writes the committed variants from the noise-floor fixtures instead and records their figures.
+- **Built and deterministic** (no lossyWAV): the false positives above, as short excerpts in `tests/fixtures/measurement` (PR 2, as built): `make_measurement_fixtures.py` writes 11 `synthetic-lowbits-*` files from the noise-floor fixtures and signal (decision 4) with the figures each is built to have, worked out by `lossywav_figures.py`; [development.md](../development.md#measurements) lists them. The table above was measured on the recordings.
 - **Goldens:** each fixture's report and its `.measure.json`, and a `DescriptionTests` and finding-coverage row for each new node and code, as for every fixture. PR 2 also changes the `.measure.json` of every integer stream (decision 10).
 - **Cross-check:**
   - no tool that was checked names lossyWAV: ffprobe 6.1.1 and MediaInfo 24.01 show nothing of the `fact` text in the WAV or the FLAC file. MediaInfo 26.01 of the runner is checked in PR 1 and mapped if it does;
