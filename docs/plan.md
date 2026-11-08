@@ -160,7 +160,10 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
 5. **A guess at the FLAC compression level** (the lead, 2026-11-08). The frames do not store the level, but each libFLAC level picks a typical block size, maximum predictor order and partition order.
    - Named as the encoder's settings with a confidence, as LAME's presets are, from reference files of each level, across libFLAC versions, and of FFmpeg's encoder, whose defaults differ.
    - Levels that share their settings are named together, never one of them by chance.
-6. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
+6. **PASC (the Digital Compact Cassette's coding) told apart from MPEG-1 Layer I** (the lead, 2026-11-08). PASC streams are Layer I bitstreams, so nothing in the syntax names them.
+   - First a research step: the traits a DCC recorder or Philips' encoder leaves (the fixed 384 kbps, the header bits it sets, its allocation habits), from sources that can be checked and from real DCC transfers, since the DCC standard (IEC 61119) is sold and is not bought.
+   - Then, only where files back them, an encoder claim with a confidence, as for other encoders; otherwise the research is recorded and the item goes under "Not planned".
+7. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
 
 ### 0.5: AAC and WMA
 
