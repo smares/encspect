@@ -1,0 +1,75 @@
+name: lossyWAV fixtures
+
+# Builds lossyWAV for POSIX (github.com/MoSal/lossywav-for-posix, a port of lossyWAV 1.4.2) at a pinned commit with its
+# own Makefile.unix, runs it at its quality presets and settings over the project's test signals and two free
+# recordings, codes its output again with flac, wavpack and Monkey's Audio's mac, and uploads the files with a manifest
+# of the settings and SHA-256 hashes (scripts/fixtures/make_lossywav_fixtures.py). lossyWAV is GPL and is used only as a
+# black-box tool here: its source is built, never read or ported, and it runs on this runner only. Nothing is released
+# and no build is uploaded: only the files, for seven days. The design they check is docs/design/lossywav-detection.md.
+on:
+  workflow_dispatch:
+  push:
+    branches: [design/lossywav-detection]
+    paths:
+      - .github/workflows/lossywav-fixtures.yml
+      - scripts/fixtures/make_lossywav_fixtures.py
+
+permissions:
+  contents: read
+
+env:
+  LOSSYWAV_COMMIT: c3a22be0e1d8d516e3aa1761b6822ec68c06f920
+
+jobs:
+  generate:
+    name: generate on ubuntu-26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install flac, wavpack and the compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flac wavpack g++ make cmake
+
+      - name: Build lossyWAV for POSIX
+        run: |
+          git clone --quiet https://github.com/MoSal/lossywav-for-posix "$RUNNER_TEMP/lossywav"
+          cd "$RUNNER_TEMP/lossywav"
+          git checkout --quiet "$LOSSYWAV_COMMIT"
+          test "$(git rev-parse HEAD)" = "$LOSSYWAV_COMMIT"
+          make -f Makefile.unix CXX=g++
+          g++ --version | head -n 1
+          ./lossywav --version || true
+          sha256sum lossywav
+
+      # Monkey's Audio's mac from the pinned SDK (scripts/fixtures/monkeys_audio_tool.py); the files are made without it
+      # when monkeysaudio.com cannot be reached.
+      - name: Build mac
+        id: mac
+        continue-on-error: true
+        run: |
+          path=$(python3 scripts/fixtures/monkeys_audio_tool.py "$RUNNER_TEMP/mac")
+          "$path" 2>&1 | head -n 3 || true
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      - name: Make the files
+        run: |
+          python3 scripts/fixtures/make_lossywav_fixtures.py lossywav-out \
+            --lossywav "$RUNNER_TEMP/lossywav/lossywav" ${{ steps.mac.outputs.path && format('--mac {0}', steps.mac.outputs.path) || '' }}
+
+      - name: Print the tool records
+        if: always()
+        continue-on-error: true
+        run: |
+          for f in lossywav-out/tools/*.txt; do echo "== $f"; head -n 80 "$f"; done
+          python3 -c "import json; m = json.load(open('lossywav-out/manifest.json')); print(json.dumps(m['tools'], indent=1)); print(sorted({(r['case'], r['exit']) for r in m['runs']}))"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-fixtures
+          path: lossywav-out
+          retention-days: 7
+          if-no-files-found: error
