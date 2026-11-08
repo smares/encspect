@@ -93,7 +93,8 @@ for p in sorted((W / 'probes').glob('check-*.txt')):
     if [norm(x) for x in la] != [norm(x) for x in lb]: diffs['check-text'].append((p.name, la, lb))
 # help text
 for p in sorted((W / 'tools').glob('help-*.txt')):
-    a = (L / 'tools' / p.name).read_text(errors='replace').replace('\r', ''); b = p.read_text(errors='replace').replace('\r', '')
+    # Line endings apart: Windows writes CR LF, and lossyWAV's own CR LF then reads as CR CR LF.
+    a = (L / 'tools' / p.name).read_bytes().replace(b'\r', b''); b = p.read_bytes().replace(b'\r', b'')
     if a != b: diffs['help'].append(p.name)
 print(dict(stats)); print({k: len(v) for k, v in diffs.items()})
 json.dump({k: v for k, v in diffs.items()}, open('compare-diffs.json', 'w'), indent=1, default=str)
