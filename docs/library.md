@@ -1,6 +1,6 @@
 # Using Encspect from other programs
 
-Encspect ships two programs, the command line tool `encspect` and the GUI `encspect-gui`. The analysis behind them (Core.Abstractions, the host and the format and tag parsers) is kept a library that any front end could use, as the [plan](PLAN.md) requires under "A library others could use", but it is not offered as a library yet. This page lists the ways another program can use the analysis, now and later.
+Encspect ships two programs, the command line tool `encspect` and the GUI `encspect-gui`. The analysis behind them (Core.Abstractions, the host and the format and tag parsers) is kept a library that any front end could use, as the [plan](plan.md) requires under "A library others could use", but it is not offered as a library yet. This page lists the ways another program can use the analysis, now and later.
 
 ## Today: the command line and its JSON
 
@@ -34,5 +34,5 @@ Not planned yet; the plan names it as the way to go when it is.
 
 ## What stays the same in every option
 
-- The rules of `CLAUDE.md` that keep the analysis a library already apply: no UI types, settings, caches or console output below the front ends, and the front ends reach the analysis only through the host's public API.
+- The rules of [`CLAUDE.md`](../CLAUDE.md) that keep the analysis a library already apply: no UI types, settings, caches or console output below the front ends, and the front ends reach the analysis only through the host's public API.
 - Encspect is MIT-licensed, and the shipped code carries only permissive licenses (see [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md)), so any of these options can be used from programs under any license.

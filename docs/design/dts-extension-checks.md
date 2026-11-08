@@ -42,7 +42,7 @@ Everything else in these files (the field reading, the trees, the findings, the 
 ### What the gate decides
 
 - No specification describes DTS:X. After the band data of a lossless frame, `ReadXllExtensionData` reads the 32-bit word at the end of the band data, rounded up to a multiple of 4 bytes from the XLL sync word, when that position is before the frame's end and 4 bytes are there. 0x02000850 is DTS:X; 0xF14000D0 and 0xF14000D1 are DTS:X IMAX. This part is unchanged.
-- The gate decides whether that word is read at all. The current behavior is to read it only where FFmpeg 6.1.1's DTS decoder reaches it: the decoder gives up on a lossless frame for a set of header values, some invalid and some it does not implement, before it looks at the word. These are behaviors observed of FFmpeg, recorded in the fixture manifests and in `docs/formats/dts.md` ("DTS:X").
+- The gate decides whether that word is read at all. The current behavior is to read it only where FFmpeg 6.1.1's DTS decoder reaches it: the decoder gives up on a lossless frame for a set of header values, some invalid and some it does not implement, before it looks at the word. These are behaviors observed of FFmpeg, recorded in the fixture manifests and in [`docs/formats/dts.md`](../formats/dts.md#dtsx) ("DTS:X").
 - Its observable effects are the asset's `XllExtension` (and from it the profile "DTS-HD Master Audio + DTS:X" or "+ DTS:X IMAX" and the statistics `HasDtsX` and `HasDtsXImax`) and the node after the band data: "Extension Data" with its "Sync Word" when the word is read and known, "Data After Band Data" otherwise. A refused frame with a word that is neither DTS:X nor IMAX therefore reports exactly what an accepted one does.
 - In the code, the gate is the `isWordRead` argument of `ReadXllExtensionData`: it is `allFacts && !refused`, where `allFacts` is the existing test that every channel set gave its facts (below) and `refused` is what this section describes. The stubs leave `_isXllRefused` false and `XllCommon.IsRefused` false.
 
@@ -99,7 +99,7 @@ No fixture reaches this case. The wording may change; the behavior is the curren
 
 ### FFmpeg as the black box
 
-The fixture manifests (`scripts/fixtures/dts_lossless_fixtures.py`, its `undecodable` cases) record, for each fixture listed in the tables, that ffmpeg's decoder refuses the frame and the message it logs, and that ffprobe names the DTS:X profiles for `xll-x`, `xll-x-imax`, `xll-x-imax-d1` and `dtshd-x`. `crosscheck_dts_fixtures.py` checks this with ffmpeg 8.0. The conditions without a fixture rest on the behavior recorded in `docs/formats/dts.md`. MediaInfo 24.01 reads the word after a set that FFmpeg refuses; the analyzer keeps to FFmpeg's behavior.
+The fixture manifests (`scripts/fixtures/dts_lossless_fixtures.py`, its `undecodable` cases) record, for each fixture listed in the tables, that ffmpeg's decoder refuses the frame and the message it logs, and that ffprobe names the DTS:X profiles for `xll-x`, `xll-x-imax`, `xll-x-imax-d1` and `dtshd-x`. `crosscheck_dts_fixtures.py` checks this with ffmpeg 8.0. The conditions without a fixture rest on the behavior recorded in [`docs/formats/dts.md`](../formats/dts.md). MediaInfo 24.01 reads the word after a set that FFmpeg refuses; the analyzer keeps to FFmpeg's behavior.
 
 ## C. `_set_header` in `scripts/fixtures/dts_model.py`
 
@@ -141,5 +141,5 @@ Then, with the total length in bytes (at most 1,024): the stated size is `size_o
 
 ## Implementer's sources
 
-- May read: this description; ETSI TS 102 114 V1.6.1 (`scripts/fixtures/dts_specs.py` fetches it); the rest of the repository, including `docs/formats/dts.md`, the tests, the fixture scripts, the fixtures and their golden reports; the output of ffprobe, ffmpeg, libdca and MediaInfo run as black boxes.
+- May read: this description; ETSI TS 102 114 V1.6.1 (`scripts/fixtures/dts_specs.py` fetches it); the rest of the repository, including [`docs/formats/dts.md`](../formats/dts.md), the tests, the fixture scripts, the fixtures and their golden reports; the output of ffprobe, ffmpeg, libdca and MediaInfo run as black boxes.
 - Must not read: FFmpeg's source (`libavcodec/dca_core.c`, `dca_xll.c`, `dca_exss.c` and the rest of its DTS decoder); the git history of the stubbed members (`FindExtension`, the refusal statements of `ReadXllFrame`, `ReadXllSetFields`, `ReadXllNavigation` and `ReadXll`, and `_set_header`, before the stub commit); the describer's scratch folder; the audit reports `scratchpad/reviews/license-audit-*.md`.

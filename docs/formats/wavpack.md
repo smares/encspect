@@ -22,6 +22,9 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
   - a block whose stated size does not end at a header or at the end of the data is taken to end at the next chained header inside it (`wavpack.block-size-mismatch`);
   - there is no limit of 1 MiB of skipped bytes, after which libwavpack gives up.
 - Once 4,096 blocks are detailed, runs of further blocks that add nothing become one node each.
+  - Past the detailed blocks an audio block keeps a 64-byte entry of its own; only blocks that are a 32-byte header and count no sample join runs of one record each.
+  - The sub-blocks listed and the bytes kept are capped per block and across all the detailed blocks (65,536 sub-blocks and 16 MiB).
+  - The memory tests hold a block to about 115 bytes, 4,096 blocks of 1,024 sub-blocks to 3 MB, 700 blocks of 64 KiB of optional sub-blocks to 18 MB, and a flood of empty blocks to one record; the complexity test holds repeated headers that end in no header to linear time.
 - What the detailed blocks list and keep is capped per block (1,024 sub-blocks, 64 KiB of data) and across all of them: 65,536 listed sub-blocks and 16 MiB of kept data in all. The sub-blocks past a cap are counted as "Further Sub-blocks", never listed without their data: a sub-block that does not fit what is left in its block or in all is counted with the rest of that block, and once the 16 MiB are spent, later blocks show only their header and the count. A crafted file therefore costs a bounded amount of memory, whatever the number of its blocks and sub-blocks.
 
 ## Reported
@@ -123,3 +126,8 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
 - The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
 - Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).
+
+## Articles
+
+- **Articles:** `wavpack-blocks`, `wavpack-sub-blocks`, `wavpack-hybrid-mode`, `wavpack-decorrelation`, `wavpack-dsd`, `wavpack-float-and-large-integers`, `wavpack-wrapper`.
+- **Shared with other formats:** `mid-side-stereo`, `crc`, `bitrate-modes`, `encoder-detection`.

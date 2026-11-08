@@ -178,7 +178,7 @@ Effect: no existing golden report, test or conformance figure changes; the fixtu
 - Golden reports and manifests of `tests/fixtures/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
 - The 35 ISO/IEC 13818-4 conformance streams: `python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer <encspect>` (downloads them; test08, test18, test19 and test20 use dynamic crosstalk, test09, test15 and test16 prediction, test04 and test13 phantom coding, test06 and test07 the second programme). For test18 the analyzer must verify 27 of 27 frames.
 - mctoolamed as a black box: the same script checks that it decodes every multichannel stream without a CRC error; it runs no Encspect code.
-- Record the tables' sources (13818-3 and the conformance check) in `docs/development.md`, as `CLAUDE.md` asks for format tables.
+- Record the tables' sources (13818-3 and the conformance check) in [`docs/development.md`](../development.md), as [`CLAUDE.md`](../../CLAUDE.md) asks for format tables.
 
 ## 2. Layer II allocation table
 
@@ -237,7 +237,7 @@ Every row comes from a committed fixture: an encode of the "music" signal of `ma
 - Already committed (`tests/fixtures/mpeg`): 3.90.1 standard, extreme (at 48 kHz), insane, `128` (ABR), r3mix and cd; 3.92 fast standard; 3.90.3 standard, extreme and insane; Windows 3.91 extreme.
 - To add, one per preset and build whose fields differ from the committed ones: with 3.90.1 fast extreme, studio, hifi, tape, radio, fm, mw-us and `cbr 128`; with Windows 3.91 fast extreme, r3mix and mw-us (its higher lowpasses). Add them to `make_external_mpeg_fixtures.py` with their manifests and goldens.
 - ABR and CBR alt-presets name a bitrate, so they get no row each. The rule stays: VBR method 2 (ABR) or 1 (CBR), Xing quality 58, noise shaping 2, joint stereo (stereo mode 3), ATH type 2 and a bitrate field between 1 and 254 give `--alt-preset <bitrate>` or `--alt-preset cbr <bitrate>`. The committed `128` encode and the new `cbr 128` encode back it.
-- The comment over the table names the fixtures each row comes from, and `docs/development.md` names the source of the table: these encodes, not getID3. getID3 stays a cross-check (`check_getid3` in `crosscheck_mpeg_fixtures.py`).
+- The comment over the table names the fixtures each row comes from, and [`docs/development.md`](../development.md) names the source of the table: these encodes, not getID3. getID3 stays a cross-check (`check_getid3` in `crosscheck_mpeg_fixtures.py`).
 - `vbr_tags.py` keeps the same table and rule for the cross-checks and golden additions.
 
 ### Checks

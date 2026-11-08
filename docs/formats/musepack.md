@@ -2,6 +2,13 @@
 
 Musepack SV8, SV7, and SV4 to SV6.
 
+- **Detection:** a stream starts after any ID3v2 tag with its magic number; APEv2 and ID3v1 tags after it are the host's. An ID3v2 tag that an ID3v2.4 SEEK frame finds inside the stream breaks it: the stream is read up to it, and the bytes after it are reported as not read.
+- **Sources:**
+  - the SV8 specification (Musepack's, which trac.musepack.net no longer serves; mutagen-specs keeps a copy, pinned at its commit);
+  - libmpcdec and libmpcenc of musepack_src r495 (Debian's orig tarball, pinned by SHA-256, the source of Ubuntu's musepack-tools) and mppenc 1.16's source;
+  - libmpcdec 1.2.6 for stream versions 4 to 6, with the Portable Musepack decoder (mpc.zip of 2004, pinned by SHA-256 and kept in the private repository), the C++ code libmpcdec 1.2.6 was ported to C from: the same reading in an earlier form, not a second one;
+  - ffmpeg 6.1's mpc and mpc8 demuxers.
+
 ## What is read
 
 - **SV8**, packet by packet:
@@ -33,6 +40,8 @@ Musepack SV8, SV7, and SV4 to SV6.
 - Every frame or audio packet that is followed costs one record (24 bytes for SV4 to SV7, 32 for SV8) and a point in the bitrate series, for at least 20 bits of the file (a frame's length field) or 3 bytes (a packet's key and size). The memory tests hold SV5 and SV7 to 90 bytes kept and 120 at the peak per frame, and the same per audio packet.
 - Units too short to hold what they must (the runs above) stop the walk after 4,096. Damaged audio packets count in all, not in a row, so good ones between them do not escape the stop. SV7 frames and one-frame audio packets (block power 0, where one byte can hold the frame) that interleave damaged ones still cost one record each, for their 20 bits or 3 bytes; that is the bound above.
 - Packets that are no audio cost nothing each past the detailed ones where they follow each other: the memory tests hold unknown, ReplayGain, encoder info, seek table offset, seek table and stream header packets in a row to about 1 byte per packet. Between audio packets each run of them is one 32-byte record; more than 4,096 runs of the kinds that belong before the audio stop the walk, while stream headers, chapters and seek tables between audio packets cost a record each, for at least 3 bytes of the file.
+- **Measured per frame:** an SV7 stream keeps 42 bytes per frame, with a peak of 59, and SV5 the same; the memory tests' bounds above are about twice that.
+- **Measured when the SV4 to SV8 readers were built:** a 227 MB SV7 file of 252,656 frames (110 minutes at --braindead) analyzes in 1.2 s with a peak of 58 MB for the CSV summary, and in 3.9 s with 193 MB for the full JSON report; a 169 MB SV8 file in 0.2 s with 42 MB.
 - The check of the seek table offsets against the tables is linear in their number (a hash set of the tables' offsets); the loops that read no input check for cancellation every 4,096 iterations.
 
 ## Reported
@@ -97,3 +106,8 @@ The encoder comes from the stream's version fields (below) and an ID3v2 TSSE fra
 - An SV7 version byte above 116 is named as libmpcdec names it, "stable 0.0.0" (its branch for the later versions, with the bits above the byte, all 0); no encoder writes such a byte, so the encoder is reported with low confidence.
 - A tag's claim agrees with the stream's own evidence where both name Musepack software (mpcenc, mppenc, mpc2sv8, mpcgain, "MP+" or Musepack); it does not tell versions apart, so "mppenc 1.15u" on an mppenc 1.16 stream counts as agreeing.
 - SV4 to SV6 headers have no encoder field.
+
+## Articles
+
+- **Articles:** `musepack-subband-coding`, `musepack-sv4-to-sv6`, `musepack-sv7-stream`, `musepack-sv8-packets`, `noise-substitution`.
+- **Shared with other formats:** `mid-side-stereo`, `intensity-stereo`, `replaygain`, `gapless-playback`, `encoder-detection`, `bitrate-modes`, `crc`, `ape-tag`.

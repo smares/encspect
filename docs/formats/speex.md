@@ -4,9 +4,17 @@ Speex in [Ogg](ogg.md).
 
 ## What is read
 
-- the header;
+- the header (speex_header.h), every field, with findings for:
+  - a size other than 80, an undefined mode, a frame size that is not the mode's;
+  - a bit-stream version other than 4 (speexdec refuses it), channels other than 1 or 2, a sample rate of 0 or less, frames per packet outside 1 to 10;
+  - a version ID other than 1 (a warning above 1, since speexdec refuses it), and reserved fields that are not 0;
+  - extra headers are shown;
 - the submodes of the frames in every packet: narrowband, wideband and ultra-wideband layers, and in-band requests;
-- the granule positions;
+- the granule positions:
+  - speexenc and ffmpeg write the samples coded up to a page's last packet less the encoder's lookahead (40, 143 and 349 samples in narrowband, wideband and ultra-wideband); the last page's may be smaller, where the input ended;
+  - the first position gives the delay (libspeex's lookahead is assumed where the last page holds the only one), every later one must agree with it, and the last gives the end trimming;
+  - the samples are the coded samples less both, which equals the last granule position, and a gap re-anchors;
+  - speexdec writes a different count where its trimming, which uses the decoder's lookahead, does not cancel out; the cross-check models it;
 - the samples of each packet, from the header's frames per packet and the frame size: an empty packet, a packet whose frames break the syntax and a packet the container cut count them and are counted again as Lost Samples; a packet with fewer frames than the header gives, and no fault, counts the frames it holds;
 - the sizes and bitrates cover the packets the container hands over whole; a cut packet counts in the samples only;
 - the comments, through the [Vorbis comment](../tags/vorbis-comments.md) parser.
@@ -21,7 +29,16 @@ Speex in [Ogg](ogg.md).
 
 ## Channel layout
 
-Mono or stereo.
+Mono or stereo: two channels are intensity-coded stereo, which decodes to left and right.
+
+## Memory
+
+- Speex packets are small (70 bytes at 28 kbps), so what is kept per packet matters as much as the audio.
+- A packet keeps an 8-byte record (its length and first frame), 4 bytes per frame and its two values of the per-packet bitrate series, whose x values are the packets' offsets, so the records keep no offset of their own: 30 bytes in all, plus its share of the 56-byte page records.
+- The packets' bytes and `MappedBytes` are not kept once the codec has read them.
+- Measured on a 196 MB file of 2.74 million packets: the report keeps 81 MB and the heap peaks at 91 MB; the process peaks at 285 MB, of which the collector's allocation budget is about 110 MB on the test machine (174 MB with `DOTNET_GCgen0size` at 16 MB); the CSV takes 3.5 s.
+- A 202 MB MP3 of 482,000 frames peaks at 247 MB on the same machine.
+- Storing the per-packet series as 32-bit values would save 8 more bytes per packet, but needs `Series` to accept them, a contract change.
 
 ## Encoder detection
 
@@ -35,3 +52,8 @@ Mono or stereo.
 - In-band requests are skipped by their sizes (the standard handlers' and the user handler's); what they ask is counted, not applied, except that the stereo parameters are counted.
 - Bits after the frames the header gives per packet: decoders never read them, so they are shown as ignored data and are no finding (only a complete extra frame is `speex.extra-frames`).
 - A wideband layer before a frame of a narrowband stream is skipped as libspeex 1.2.1 skips it (submodes 1 to 4); submode 0 and 5 to 7 make that decoder read the layer again and report a corrupt stream, which is `speex.frame-invalid`; only the layers it skips count for `speex.wideband-layer-in-narrowband`.
+
+## Articles
+
+- **Articles:** `speex-modes`.
+- **Shared with other formats:** `vorbis-comments`, `encoder-detection`, `bitrate-modes`, `granule-position`.

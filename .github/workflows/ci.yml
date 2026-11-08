@@ -123,6 +123,7 @@ jobs:
 
       - name: Test the change filter and the verdict
         run: |
+          python3 scripts/ci/test_check_docs.py
           python3 scripts/ci/test_changes.py
           python3 scripts/ci/test_check_results.py
           python3 scripts/ci/test_downloads.py

@@ -93,3 +93,8 @@ The header states a channel count and no speaker positions. The layout comes fro
 - TTA2, and a decrypted view of audio format 2.
 - Finding frames in a file whose seek table is damaged beyond its CRC-32 (the description says such a file can be decoded only in an "unseekable" mode; the analyzer follows the lengths).
 - Compression ratio per frame, which [coding-graphs.md](../design/coding-graphs.md) plans for TTA after the parser.
+
+## Articles
+
+- **Articles:** `tta-stream`, `tta-seek-table`, `tta-coding`, `tta-in-matroska`.
+- **Shared with other formats:** `crc`, `verification`, `bitrate-modes`.

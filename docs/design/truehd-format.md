@@ -2,7 +2,7 @@
 
 **Status:** written on 2026-10-24 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL TrueHD and MLP source (listed under [Sources](#sources)) and checked this text against real and FFmpeg-encoded files. It contains no code. Whoever implements the TrueHD parser and decoder must not read FFmpeg's TrueHD or MLP source; FFmpeg serves only as a black-box cross-check (decision 10 in [decoders.md](decoders.md#decisions)).
 
-This is the clean-room description that [decoders.md](decoders.md) rollout step 3 asks for. It describes the bitstream as FFmpeg reads it, states FFmpeg's checks as format rules, and marks what no source settles. The plan's scope is in [PLAN.md, "Phase 3: Dolby TrueHD and MLP"](../PLAN.md#phase-3-dolby-truehd-and-mlp).
+This is the clean-room description that [decoders.md](decoders.md) rollout step 3 asks for. It describes the bitstream as FFmpeg reads it, states FFmpeg's checks as format rules, and marks what no source settles. The scope is in [truehd.md](../formats/truehd.md); its place in the rollout is in [plan.md, "Phase 3: Dolby TrueHD and MLP"](../plan.md#phase-3-dolby-truehd-and-mlp).
 
 ## Sources
 

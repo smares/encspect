@@ -5,8 +5,21 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
 ## What is read
 
 - **Pages:** capture pattern, flags, granule position, serial and sequence numbers, the CRC-32 (checked) and the segment table. Each logical stream lists **Verified Page Checksums** (the pages whose CRC-32 equals the one computed) and, above 0, **Failed Page Checksums**; a page the data cuts short cannot be checked and is in neither.
+- **Page CRC:** polynomial 0x04C11DB7, initial value 0, unreflected, over the page with the CRC field zeroed. A page cannot exceed RFC 3533's 65,307 bytes, since its segment count and lacing values are bytes.
+- **Sync,** as for MPEG frames: at the start of the data and after damage, a page counts only when it passes its CRC and the next page or the end of the data follows it. Once in sync, the next page is read where the previous ends.
+  - A page whose CRC fails but whose length the next page confirms is shown as a damaged page; one that another page starts inside, or the data ends inside, as cut short; anything else up to the next chain is a gap.
+  - Sniffing needs the same chain, so "OggS" inside other data is not taken for Ogg. A chain that starts after up to 64 KiB of other data sniffs weaker (60) than MPEG audio (90).
+- **Declared end:** Ogg states no size, but each page states its own length, so the chain of pages from the start of the data ends where the next bytes are not a page that fits and the last page passes its CRC.
+  - A trailing tag signature before that end lies inside the last pages and is a near miss.
+  - ID3v2 before the Ogg data and APE and ID3v1 after it, which taggers write, are the file's tags.
+- **Two passes:** the scan keeps a 56-byte record and the segment table of each page and follows each stream's packets through their lacing values, reporting what breaks the specification, without building nodes.
+  - Then each stream's packets are read again page by page and handed on, so the packets a codec gets are the ones the scan counted.
+  - Page nodes are built in blocks of 1,024 when read.
+- **Window:** the scan reads through two windows of 256 KiB and replaces the one used least recently, so a search that probes ahead of its position does not read the window again for every candidate. A candidate page is checked against the page that must follow it before its CRC is computed.
 - **Logical streams:** each stream's packets are followed across pages, in multiplexed and chained files, with resync after damage.
+  - A beginning-of-stream page after other pages, or after every stream of the current link has ended, starts the next link of a chain; streams of one link are multiplexed.
 - **Codecs:** each stream's packets go to the codec parser its first packet names.
+  - The first packet is recognized for Speex, Vorbis, Opus, FLAC, Theora, Skeleton, CELT, Kate, Dirac, PCM and VP8 by their identification headers. A stream whose codec has no parser gets its node with the pages' figures and an info finding; an unknown first packet gets one too.
 - **Packets handed over:** the packets of a page that fails its CRC reach the codec parser as the page holds them, and so do the packets with bytes present on a truncated page, the one the data cuts flagged as cut (`MappedBytes.IsCut`); a packet left unfinished at the end of a stream is handed over cut. libogg drops these pages, so a decoder lacks their packets; the codec parsers count the packets' declared samples and record a cut packet as lost samples. The granule position of a truncated page is not used.
 - **Length:** a logical stream that its codec parser reports once also lists **Container Samples** (its last granule position less the stream's Start Offset) and **Container Duration** (that length at the stream's sampling rate); for Opus the position counts at 48 kHz and includes the pre-skip.
 - **Playback groups:** the streams of one link play at the same time, so they share a playback group and the summary counts the longest once; the links of a chain follow one another and add up.
@@ -22,7 +35,13 @@ What breaks RFC 3533, such as:
 - a gap in the page sequence;
 - granule positions that go back;
 - continuation flags that do not match;
-- a serial number used twice, in one link or in a later link of a chain (RFC 3533, section 4: unique "within the scope of the physical bitstream").
+- a serial number used twice, in one link or in a later link of a chain (RFC 3533, section 4: unique "within the scope of the physical bitstream"); two files joined end to end often break it;
+- a stream that ends without its end-of-stream page (at the end of the data, before the next link, or at a damaged end-of-stream page, which decoders drop), pages after the end of stream, and a stream that goes on after the next link's beginning-of-stream pages;
+- sequence repeats, a granule position on a page that completes no packet, or -1 on one that does;
+- a page that starts a fresh packet while one is unfinished (the packet is dropped, as the flag says; libogg joins them instead), and a continued-packet flag with nothing unfinished (the bytes are skipped, as libogg skips them);
+- a stream that ends inside a packet, and packets over 64 MiB, which are not read.
+
+Findings of one kind are reported once per stream, with a count.
 
 ## Reference for sample counts
 
@@ -48,3 +67,9 @@ What breaks RFC 3533, such as:
 - **Analyzed:** Speex, Vorbis and Opus.
 - **Streams past the limit** above, and the packets of any stream over 64 MiB, are not read.
 - Anything that needs decoding: no audio is rebuilt.
+
+## Articles
+
+- **Articles:** `ogg-pages`, `granule-position`.
+- **Shared with other formats:** `crc`.
+- The Ogg page CRC points to `ogg-pages`, since `crc` is about the MPEG frame CRC; `crc` links to `ogg-pages`.

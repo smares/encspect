@@ -7,7 +7,7 @@
   - a footer that does not claim to be missing;
   - items that end exactly at the footer;
   - text items in UTF-8.
-- An APE tag whose header puts `TAG` at 128 bytes before the end of the file wins over a supposed ID3v1 tag there. The [plan](../PLAN.md#tag-detection-and-false-positives) explains this collision.
+- An APE tag whose header puts `TAG` at 128 bytes before the end of the file wins over a supposed ID3v1 tag there. [How tags are found](README.md#the-ape-and-id3v1-collision) explains this collision.
 - Musepack SV8 chapters hold APEv2 items, which go to this parser.
 - Item limit, so that a tag of millions of items (11 bytes each at the least) cannot grow the report:
   - every item is checked;

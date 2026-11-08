@@ -10,7 +10,33 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
   - mid/side and intensity stereo, noise substitution, pulses, TNS, prediction and gain control;
   - the Huffman-coded spectral data;
   - fill elements with SBR headers, parametric stereo, dynamic range control, fill and ancillary data.
+- **AudioSpecificConfig in detail** (ISO/IEC 14496-3 1.6.2.1):
+  - the object type with its escape, the sampling frequency index or explicit rate, the channel configuration;
+  - GASpecificConfig, with a program config element (4.4.1.1) where the channel configuration is 0;
+  - ELDSpecificConfig with its low-delay SBR headers and extensions;
+  - of UsacConfig: its rate, coreSbrFrameLengthIndex, channel configuration, the elements with their core and SBR defaults, and the configuration extensions, with a channel pair element's Mps212Config, read as ffmpeg and fdk-aac read it;
+  - a fill or audio pre-roll element reads no configuration, as Table 17 says and ffmpeg and libxaac read it; a configuration length it declares anyway is a warning (fdk-aac skips the bytes).
+- **Explicit SBR and PS:**
+  - hierarchical (object type 5 or 29 first) and backward compatible (the sync extensions 0x2B7 and 0x548);
+  - with SBR the output rate is the extension rate and an access unit's samples double; with PS a mono core gives two channels;
+  - a configuration that signals SBR absent (ffmpeg writes 0x2B7 with the flag clear) is plain "AAC LC"; SBR data in such a stream is a warning;
+  - for the object types whose blocks are not read (scalable, TwinVQ), a GA core that signals nothing about SBR stays "AAC LC (no SBR signaled explicitly)", and an SBR stream over a mono core that signals nothing about PS "HE-AAC (no PS signaled explicitly)", each with an info finding.
+- **Each access unit** keeps a record of its offset, length and first syntax element (4.4.2.1) with its instance tag; for a fill or data stream element its count, extension type and any printable text in its payload; USAC's usacIndependencyFlag.
+  - The error resilient object types hold no element IDs, so nothing is kept for them.
+  - The nodes are built 1,024 access units at a time when read.
+- **Elements read in a raw data block** (4.4.2), at frame lengths of 1024 and 960:
+  - single channel, channel pair (common_window, ms_mask_present, ms_used per group and band), coupling channel (its targets, domain, gain element sign and scale, the gain element lists), LFE, data stream (byte alignment, the escape count, printable text), program config, fill (the count with its escape, and its extension payloads), and END with the byte alignment after it;
+  - individual_channel_stream: global_gain; ics_info (window sequence and shape, max_sfb, scale_factor_grouping, AAC Main's prediction data with the reset group and prediction_used per band, LTP data for each channel of a pair); section_data with codebook escapes; scale_factor_data through the scalefactor codebook, with intensity stereo positions and noise energies, the first a 9-bit value; pulse_data; tns_data, whose coefficient resolution is the window's; gain_control_data (SSR, whose location fields differ in width per window sequence);
+  - spectral_data through codebooks 1 to 11 with their sign bits and escapes of at most 8 leading ones. Codebooks 13 to 15 code no spectral data.
+- **Fill payloads:**
+  - EXT_SBR_DATA and EXT_SBR_DATA_CRC with sbr_header and, where an element's header has been read, sbr_data far enough to find the parametric stereo extension (EXT_ID_PS), with the frequency band tables derived from the header (4.6.18.3);
+  - EXT_FILL_DATA (the fill nibble and the 0xA5 bytes checked), EXT_DATA_ELEMENT (ancillary data), EXT_DYNAMIC_RANGE (dynamic_range_info with its PCE tag, excluded channels, bands and reference level) and EXT_FILL's other bits;
+  - a payload is read only within its fill element's count; one that needs more is a finding, and the next element is read where the count ends, as decoders do.
+- **Intensity stereo under ms_mask_present 2:** the references differ on whether every band's sign is inverted. ffmpeg and fdk-aac invert it, since that mask marks every band; faad2's invert_intensity inverts only under ms_mask_present 1.
+  - The report follows ffmpeg and fdk-aac for the bands it shows out of phase.
 - **ADTS:** sync on a chain of frames, resync after damage, every header field, and the CRC over the elements it covers.
+  - A header counts as sync when two more frames with the same fixed header (but the private bit) follow at the offsets its length gives, or its frames end exactly at the end of the data. Then frames are followed by their lengths; a frame in which a new chain starts is cut short there as damaged, and anything else is a gap.
+  - ADTS's layer bits are 00, which no MPEG audio header has, so neither format takes the other's headers, and ADTS-looking bytes inside an MP3 stay a gap.
 - **ADTS detection:** a chain at the start of the data (after zero bytes) of three frames is class 91. A chain further in is class 50 only with eight consistent frames or frames to the end of the data, since other formats' bytes (E-AC-3's frame headers) can chain three.
 - **ADIF:** the header, and its raw data blocks, which the parser delimits.
 - **Implicit signaling:** SBR and PS found only inside the blocks make the stream HE-AAC or HE-AAC v2, with a finding that says so. The rule for what counts:
@@ -24,8 +50,14 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
   - the stream becomes HE-AAC (and doubles its output rate and samples) only if such a payload is in at least two blocks, or in the only block there is, and in at least half of the blocks read to their end; with fewer, `aac.sbr-data-sparse` says so and the stream stays the core;
   - the same rule applies to the parametric stereo extension, which also needs a core of one channel: decoders apply parametric stereo to nothing else (fdk-aac, ffmpeg), so the PS ID in a stream of more channels, or object type 29 over a channel configuration above 1, is reported (`aac.ps-without-mono-core`) and not applied;
   - every committed HE-AAC fixture with implicit signaling has SBR in all of its blocks.
+  - the finding of an implicit HE-AAC stream says where decoders differ: its output rate and samples double, as fdk-aac ("assume dual rate SBR") and ffmpeg decode it, while faad2 doubles only a core rate of up to 24 kHz, which the finding says for a higher one; ffmpeg takes implicit SBR only where it starts with the stream, which the finding says where it starts later;
+  - SBR data before its first header is an info finding (`aac.sbr-before-header`), since a stream cut mid-way starts so.
+- **Storage:** a report keeps each block's bits without the Huffman-coded scalefactors and spectral data, the SBR data and long payloads (UnitStore), with the length of each part it leaves out, and rebuilds the block's nodes from that when they are read.
+  - On ffmpeg's frames at 96 kbit/s the report keeps 116 bytes per frame.
+  - A 195 MB M4A of 533,066 access units at 128 kbit/s analyzes in 4.3 seconds (1.3 seconds before the raw data blocks were read) with a peak of 221 MB (194 MB before).
+  - Its JSON report with every node is 13.4 GB; without the side information (`--hide side-info`) 2.1 GB.
 - **Limits:** the frame records of an ADTS file (frames and gaps of all its streams together) and the block records of an ADIF stream are capped at 2,097,152 each (about 13.5 hours of AAC LC at 44.1 kHz), since a frame or block can be a few bytes and each costs a record. Past the cap the frames that follow one another with the stream's header (ADTS), or the blocks that can be read to their end (ADIF), are only counted: they join the stream's frames, bytes, samples, duration, average, smallest and largest sizes and bitrate extremes, but get no node (`Counted Frames`, `Counted Blocks`, in records of at most 2 GiB), no raw data block is read, and the graphs and coding statistics cover the first 2,097,152. ADTS counting resyncs after a sync loss on the next chain of the same stream, as before the cap (the bytes between are a `Gap`, up to 4,096 times); it stops at another stream, and ADIF at the first block that cannot be read to its end, and the bytes left are not analyzed (`Unread Bytes`). The finding is `aac.frames-limit` or `aac.blocks-limit`. The graph of bitrate over time keeps at most 131,072 entries, merging neighbors where a stream is longer or its sample rate lower. An explicit sample rate below 1,000 Hz is reported (`aac.implausible-sample-rate`; 0 is `aac.reserved-sample-rate`).
-- **ADTS streams:** a change of the fixed header ends the stream and starts another, also where an earlier header returns; the stream rule is the same for MPEG audio, AC-3 and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync").
+- **ADTS streams:** a change of the fixed header ends the stream and starts another, also where an earlier header returns; the stream rule is the same for MPEG audio, AC-3 and DTS ([architecture](../architecture.md#stream-changes), "Stream changes").
   - `aac.stream-changed` is one Info finding with the number of changes.
   - A file has at most 64 streams. The frames from the change that would start stream 65 on are in no stream and are counted in one warning, `aac.streams-limited`; the frames counted only from their headers past the record cap (see Limits) are counted by the frames they hold. Their raw data blocks are not read, and no log of blocks is kept for their headers, so a file that changes its header at every frame keeps a few kilobytes per stream, 64 at most, not a log for each change.
 - **ADTS frames as packets (`aac-adts`):** the IEC 61937 bursts of AAC in a WAV file carry ADTS frames ([wav.md](wav.md)). The codec parser takes one frame per packet:
@@ -87,6 +119,13 @@ Cross-checks: `crosscheck_mp4_fixtures.py` holds the series of every golden repo
 
 The channel configuration, a program config element, or parametric stereo.
 
+- **Channel configurations 1 to 7 and 11 to 14** of Table 1.19 (amendment 4 of the 2009 edition adds 11 to 14) give their speakers in the order of their elements, as ffmpeg's decoder maps them.
+- **A program config element** gives its front, side, back and LFE lists in its own order:
+  - the front from the center outward: a single channel element first is the center, and two or more pairs start beside the center;
+  - the back from the sides to the center: a last single channel element is the back center, and two back pairs without side elements are the side and back pairs.
+- **USAC:** channelConfigurationIndex is ISO/IEC 23091-3's, and its output channel positions are mapped as MP4's chnl box maps them.
+- **Parametric stereo** gives left and right from a mono core.
+
 ## Encoder and writer detection
 
 The encoder and the writer are two fields of a stream, each with its own confidence and evidence (the "Encoder detection and confidence" and "Writer detection" topics of the GUI and `--explain` explain both); a writer that differs from the encoder is no conflict.
@@ -144,6 +183,7 @@ Encoder:
   - one loudness info configuration extension of 7 to 9 bytes with one loudnessInfo and one measurement, or none for 7 or more channels.
 - bs_interTes is not checked: exhale writes 0, but a build with `ENABLE_INTERTES` writes 1.
 - The layout carries no version. A tool atom that names exhale supplies it ("exhale 1.2.2"); one that names another encoder is an info finding.
+- **exhale's container traces are not used:** its MP4 writer leaves the handler name "crh", its bitrate mode in mdhd's quality field, and a version byte and its CRC-8 at the start of mdat. They are the container's and a remux drops them, while the UsacConfig layout is in the stream.
 - The rule rests on exhale 1.2.2's writer (`bitStreamWriter.cpp`, `createAudioConfig`, and `exhaleApp.cpp`) and on other encoders' files, none of which has the layout:
   - Fraunhofer's four demonstration files checked end the element list with a fill element, and the newer ones add a stream ID extension;
   - libxaac's encoder does both (checked by hand, not in CI);
@@ -207,7 +247,7 @@ From `afconvert` on macOS 15.7.9 (AudioToolbox framework bundle version 1.14, Au
     - `faac-2.1-he-51-adts.aac`: nothing, with no error (the Source Reader too), with a reviewed note;
     - `ffmpeg-main.aac` and `ffmpeg-ltp.aac`: nothing (Learn lists no Main or LTP profile).
     - The AAC-LD and AAC-ELD files (`apple-aacl-m4a-cbr-mono44.m4a`, `apple-aace-m4a-cbr-mono44.m4a`) give no media type (`explained`, Learn lists AAC-LC, HE-AAC and HE-AAC v2 only).
-    - Eleven of the 26 downloaded samples are xHE-AAC files with the same extra frame (see development.md).
+    - Eleven of the 26 downloaded samples are xHE-AAC files with the same extra frame (see [development.md](../development.md)).
   - **`adts` (hand-built):** the transform's total equals the analyzer's in 34 of 53.
     - Where the analyzer differs from FDK, the transform equals FDK in `damaged-length.aac` (28,672), `sbr-in-truncated-frame.aac` (2,048) and `streams-limited.aac` (194,502), where Core Audio's converter does not.
     - It outputs nothing for the files with coupling channel elements (`coupling.aac`, `sbr-after-coupling-element.aac`: Learn says such frames are skipped), for Main, LTP and SSR, and for the files of several raw data blocks per frame (`blocks-missing.aac` declares 4, the others up to 3; Learn allows one per ADTS frame); each names its limit and is `explained`.
@@ -234,3 +274,8 @@ From `afconvert` on macOS 15.7.9 (AudioToolbox framework bundle version 1.14, Au
 - LATM: its bufferFullness is not read, so the LATM streams report no "Buffer Fullness".
 - Coded bandwidth for xHE-AAC (USAC) and AAC-ELD, and their window sequences and stereo coding: not covered yet. Their raw data blocks are not read element by element, which needs the frame-level parsing that comes with the format's decoder.
 - USAC, ER AAC and the values of the SBR envelope and noise floor data. The data itself is read: every codeword is decoded to reach the PS ID and to check FAAC's layout, but only the header, the grid and the PS ID are shown (planned: entropy pass).
+
+## Articles
+
+- **Articles:** `aac-object-types`, `audio-specific-config`, `aac-raw-data-blocks`, `sbr`, `parametric-stereo`, `adts`, `usac`.
+- **Shared with other formats:** `channel-layouts`, `gapless-playback`, `encoder-detection`, `bitrate-modes`, `crc`.

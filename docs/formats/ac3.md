@@ -2,20 +2,39 @@
 
 Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 
+- **Parsers:** one format parser, "AC-3" (`src/Encspect.Formats.Ac3`), for raw files, and two codec parsers, "ac-3" and "e-ac-3", which MP4's `ac-3` and `ec-3` sample entries route their samples and their dac3 and dec3 boxes to.
+- **Sources:** ATSC A/52:2018 with Annex D (the alternate bit stream syntax) and Annex E (E-AC-3), ETSI TS 102 366 V1.4.1 Annex F (MP4) and Annex H (EMDF), and ETSI TS 103 420 V1.2.1 (object audio). `scripts/fixtures/ac3_specs.py` downloads all three, pinned by their SHA-256, since the repository may not hold them.
+
 ## What is read
 
 - **Frames:** sync on a chain of frames, with resync after damage.
+  - A frame starts with the sync word 0x0B77. A header counts as sync only when two more frames follow it at the lengths their headers give, or its frames end exactly at the end of the data.
+  - Then frames are followed by their lengths: a frame in which a new chain starts is cut short there, one the data ends inside is truncated, and anything else up to the next chain is a gap. Embedded tags split the data as they do for MPEG audio.
+  - An E-AC-3 frame needs 6 words at the least for the fields every frame has (Annex E 2.3.1.3 says the smallest frmsiz values cannot hold a frame); shorter ones are no sync.
+  - Bit stream IDs 0 to 8 are AC-3 (6 with Annex D's syntax), 11 to 16 E-AC-3. 9 and 10, the half- and quarter-rate AC-3 that ffmpeg and liba52 accept, are read up to the end of the bit stream information with an info finding, and so are E-AC-3's reduced sample rates (fscod 3).
 - **Detection:** a chain at the start of the data (after zero bytes) is class 92, one after junk class 50.
   - The sniff also reports where the chain starts and how many of its first 16 frames pass their CRCs (crc1 and crc2 in AC-3).
   - The host ranks by class, then the earlier start; chains of one class that overlap are ranked by their verified frames first. A file with junk in front stays AC-3 or E-AC-3 where ADTS-looking or MPEG-looking bytes inside its frames chain too: its own chain starts first. Where the start of the file is cut off, so that the look-alike in the partial first frame starts before the first whole frame, its frames' CRCs hold and the look-alike's do not exist, and the AC-3 chain wins (`junk-adts-in-frames-cut.eac3`). See "Format detection" in the plan.
 - **Samples:** a program frame counts the audio blocks of its header at 256 samples each, a cut frame included. Lost Samples counts the program frames that are cut (by the end of the data or by the next sync word) or whose syntax breaks so that the rest is not read (`ac3.block-invalid`, `ac3.block-overrun`, `ac3.header-overrun`), whole: 1,536 for six blocks. A frame that fails a CRC is counted and not lost, and so are frames the analyzer does not read (bsid 9 and 10, a reduced sample rate, the adaptive hybrid transform, enhanced coupling).
 - **CRCs:** crc1 and crc2, with "Failed Frame Checksums", the frames whose crc1 or crc2 fails (always listed, with no "Verified" companion: E-AC-3 frames have one CRC and AC-3 frames two).
 - **Bit stream information:** every field.
+  - AC-3's (A/52 5.3.2): bsid, bsmod, acmod, the mix levels, Dolby Surround mode, LFE, dialogue normalization, compression gain, language code, mixing level and room type, copyright, original, the time codes, additional information; Annex D's two extended information groups in their place.
+  - E-AC-3's (Annex E 2.3.1): stream type, substream ID, frame size, sample rate codes, number of blocks, channel map, the mixing metadata with its program scales, external program scales, mix definition and the blocks' pan and mix data, the informational metadata, convsync and blkid, additional information.
+  - audfrm (E-AC-3): exponent and snr offset strategies, the frame's exponent strategies (Table E2.10) or each block's, converter exponent strategies, AHT flags, transient pre-noise processing and spectral extension attenuation, and the block start information.
+  - Mixing data that runs past its mixdeflen ends where mixdeflen says, with a finding at the group.
 - **Audio blocks:** every block up to its mantissas. The parser steps over the mantissas by running the bit allocation itself; liba52 confirms where every block of the AC-3 fixtures ends, delta bit allocation sent in block 0 (and reused by the blocks after it) included (`derived-ffmpeg-stereo-192k-delta-block0`).
+  - Every block: block switching, dither, dynamic range gain, spectral extension with its band structure and coordinates (E-AC-3), coupling (strategy, channels in coupling, band structure, phase flags, coordinates), rematrixing with each band's left/right or sum/difference, exponent strategies, bandwidth, the exponents (the groups are checked, not kept), the bit allocation parameters, snr offsets, coupling leak, delta bit allocation, the skip field, and the mantissas as one field.
+  - The bit allocation is A/52 7.2 (masking curve, delta bit allocation, the bap tables), and the mantissas are counted by their grouping (7.3.5), without dequantizing or transforming.
+  - The checks of 7.10.2 are findings. A block that reuses what no earlier block of the frame set is read on with what it has (a warning); an undefined value, such as a bandwidth code above 60 or a reserved strategy, stops the reading of the frame's blocks there (also a warning).
+  - Checks 1 to 17 and 21 to 28 are made; 18 to 20 concern mantissa values, which are not read. An E-AC-3 block 0 that sends no bit allocation parameters where bamode is 1 breaks check 12 as an AC-3 block does.
+  - Fields that run past the frame's end are named by the part they are in: `ac3.block-overrun` for an audio block, `ac3.header-overrun` for the bit stream information or audfrm.
+  - Auxiliary data (auxdatal, auxdatae) is read from the frame's end, and the error check holds crc2 (and crcrsv).
+    - AC-3's crc1 covers the first 5/8 of the frame and crc2 the rest (7.10.1); E-AC-3's one CRC the whole frame after the sync word.
+    - A mismatch is a warning, and the frame is still read.
   - A field that the end of the file cuts is `ac3.frame-truncated` alone when it fits its frame (`truncated-in-skip`); `ac3.block-overrun` is for a field or an audio block that does not fit the frame.
 - **Streams and programs:** a program is an independent substream (AC-3 has one) with the dependent substreams after each of its frames; one stream is a run of a program's frames with one configuration.
   - A program frame is an independent frame with its dependent frames. It holds each dependent substream ID once (Annex E 2.3.1.2 allows at most 8); a dependent frame that repeats an ID ends the program frame, is left out of its figures and statistics (the Dependent Frames count too), and is counted in `ac3.dependent-excess`, as are the dependent frames after it up to the next independent frame.
-  - A configuration that changes ends the stream and starts another one (a run of one independent substream with one configuration is one stream, as in the other formats): `ac3.stream-changed` is one Info finding with a count, and a configuration that returns starts a stream of its own. The analyzer keeps at most 64 streams, counting those of all independent substreams together. A frame that would start another is in no stream, and so are the dependent frames after it and every later frame of its independent substream; an independent substream that already has its stream and does not change keeps it. All of these are counted in one warning, `ac3.streams-limited`. The rule is the same for MPEG audio, ADTS and DTS (the [plan](../PLAN.md), AC-3 and E-AC-3, "Framing and sync").
+  - A configuration that changes ends the stream and starts another one (a run of one independent substream with one configuration is one stream, as in the other formats): `ac3.stream-changed` is one Info finding with a count, and a configuration that returns starts a stream of its own. The analyzer keeps at most 64 streams, counting those of all independent substreams together. A frame that would start another is in no stream, and so are the dependent frames after it and every later frame of its independent substream; an independent substream that already has its stream and does not change keeps it. All of these are counted in one warning, `ac3.streams-limited`. The rule is the same for MPEG audio, ADTS and DTS ([architecture](../architecture.md#stream-changes), "Stream changes").
   - A program's statistics cover its own frames, from its first to its last in the first region it appears in (the whole region where the bytes are not contiguous).
   - The independent substreams of one raw file play at the same time, so their streams share one `playbackGroup` and a summary counts the longest once. Where a substream changes its configuration, no group is given: a group counts only its longest stream, so it cannot say that one substream's runs follow one another beside another substream; such a file stays ungrouped and the summary adds all its streams up (more than the playing time). In MP4 and Matroska the container replaces the number with its movie's or Segment's group when a track's streams all play together, so the substreams of a track add up no more than a raw file's.
 - **MP4:** the dac3 and dec3 boxes, compared with the frames. A sample that ends inside its frame is `ac3.frame-truncated`, counted once for the file.
@@ -23,6 +42,24 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
 - **Object audio (E-AC-3):** the additional bit stream information's extension flag and complexity index, the EMDF containers with their payloads, and the header of the joint object coding payload. See "Object audio" below.
 
 - **dmixmod 3:** A/52:2018 Annex D Table D2.2 reserves it (E-AC-3's mixing metadata has the same field and Annex E gives no table of its own), and the decoder should still reproduce audio. Dolby's own test files write it, and ffmpeg's `ac3defs.h` notes that encoders use it to indicate Dolby Pro Logic II. It is an info finding (`ac3.dmixmod-reserved`), not a warning. The other reserved values of the shared tables (the surround mix levels 0 to 2, dheadphonmod and roomtyp 3) stay warnings; no real file the project has uses them.
+
+- **Why the sniff counts CRCs:** other formats' header-like bytes inside AC-3 frames.
+  - FFmpeg's `csi_miami_stereo_128_spx.eac3` has 352 bytes of junk, then E-AC-3 whose frame headers hold bytes that read as an ADTS header, chaining three frames in several places. The AC-3 chain starts first, at the end of the junk, so it wins.
+  - With the start of that file cut off (`junk-adts-in-frames-cut.eac3`), the look-alike in the partial first frame starts before the first whole frame and the two chains overlap: the AC-3 chain wins because its frames pass their CRCs.
+  - `monsters_inc_2.0_192.ac3` with junk in front was taken for MPEG audio, because every 768-byte AC-3 frame holds a CRC-protected MPEG-2.5 Layer I header of 768 bytes; MPEG audio now ranks such a chain 30 when none of its CRCs holds.
+  - A side effect: junk, then a real ADTS stream of fewer than eight frames or with data after it, then appended AC-3 frames, is AC-3, the one chain that holds up.
+  - Junk passes a frame's CRC about once in 2^16 (E-AC-3) or 2^32 (AC-3), and a bit error or two in the first frames lowers the count only by those frames.
+- **Memory:** each frame keeps a 16-byte record (its offset, where its kept bits lie in a shared store, their count and the CRC verdicts) and the bits it read, with the exponent groups, skip fields, mantissas and auxiliary data replaced by their lengths.
+  - The nodes are built again from them 1,024 frames at a time when read.
+  - A mono 96 kbps stream keeps 85 bytes per frame (peak 89 to 102), and the smallest frames, 12-byte E-AC-3 frames that overrun, 46 (peak 80).
+  - On the 4-core test machine a 200 MB file of 3/2 + LFE at 448 kbps (111,616 frames) takes about 4 s and a peak of 191 MB as CSV with the published CLI, one of mono at 96 kbps (520,848 frames) about 4 s and 204 MB.
+  - 12 MB of 12-byte frames (a million) peaks at 284 MB: that machine's processor reports a 260 MB cache, from which .NET sizes the collector's first generation, so the peak follows what the analysis allocates and drops, about 1.5 KB per such frame. With `DOTNET_GCgen0size` at 16 MB it is 172 MB.
+- **Where the parser follows A/52 and ffmpeg 6.1 differs:**
+  - ffmpeg decodes independent substream 0 only.
+  - Where snroffststr is not 0, ffmpeg's E-AC-3 decoder reads a snroffste bit in block 0, which Table E1.4 leaves out there and takes as 1, and never reads it in blocks 1 to 5, where Table E1.4 has it; its encoder writes snroffststr 0 only.
+  - Where frmfgaincode is 1 and a block sends no fast gain codes, Table E1.4 resets them to 4; ffmpeg keeps the previous block's.
+  - ffmpeg counts the coupling channel's delta bit allocation bands from the coupling's first band (ac3.c, `ff_ac3_bit_alloc_calc_mask`), where A/52 7.2.2.6 and liba52 count from band 0; it rejects the derived AC-3 fixture's coupling segments.
+  - ffmpeg 6.1's muxer writes dec3 with five reserved bits before num_dep_sub where F.6 has three, so its MP4 E-AC-3 with dependent substreams would read as disagreeing; its encoder writes none, so no fixture shows it.
 
 ## What is graphed
 
@@ -70,6 +107,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
   - emdf_container_length counting the bytes after the length field (389 in a 393-byte skip field);
   - the payload list ending with a bare 5-bit ID 0;
   - codecdatae 0, protection lengths 2 and 1, JOC with the downmix configuration 3, the complexity index 16, and a program of dynamic objects with an LFE channel.
+  - On the first file the analyzer reports 5,669 containers, 15 objects and complexity index 16, in agreement with ffprobe and MediaInfo.
   - `joc-atmos` is laid out like them. The other placements (after the last block, in the auxiliary data field) follow H.1 and are hand-built; MediaInfo 24.01 and 26.01 parse a container before the auxiliary data field only.
 - **Interpretations:**
   - The syntax tables end the payloads at an ID of 0 without a configuration or size, although H.2.2.2.4 says an ID of 0 comes with zero fields; Dolby's file follows the tables.
@@ -95,3 +133,9 @@ No encoder is named from the frames, since no fixture confirms anything that ide
 - **The witnesses.** `ExtAudioFile` equals the converter in 65 of 68 files; it outputs nothing for a frame that is cut and the converter outputs more than the coded stage less the lost samples (`cut-frame.ac3`, `truncated.ac3`, `truncated-in-skip.eac3`: 7,392, 7,392 and 4,320 against 8,928, 8,928 and 5,856): the converter is `noted` with both figures and no cause, and the reader is `explained` (the analyzer less 288 equals the converter, and the reader's total is the coded stage less the lost samples and the same 288). ffmpeg 8.0.1 equals the analyzer in 65 of 68 and counts fewer in `cut-frame.ac3`, `sample-short.mp4` and `junk-around.ac3` (6,144 each). The statuses follow the cross-check rules of [samples-definition.md](../design/samples-definition.md); no `samples` changes.
 - **The edit list** of the two MP4 files with one (`external-ffmpeg-mp4-5.1-448k.mp4`, `external-ffmpeg-mp4-eac3-stereo-96k.mp4`: 23,712 against `samples` 24,576) has no reference: `ExtAudioFile` applies no edit list to AC-3 and E-AC-3 in MP4 (its packet table says 24,576 valid frames, no priming and no padding), so the trimmed stage is not compared.
 - The figures, the run and every difference are in `tests/fixtures/ac3/official-decoders.json`, which `Ac3OfficialDecodersTests` holds the analyzer to, together with the `ac3` findings (warnings and errors) at the listed byte ranges. Nothing is `pending`; the analyzer has not been changed.
+
+## Articles
+
+- **Articles:** `ac3-frames-and-bsi`, `ac3-audio-blocks`, `ac3-coupling`, `ac3-rematrixing`, `dialogue-normalization`, `eac3-substreams`, `eac3-spectral-extension`.
+- **Shared with other formats:** `channel-layouts`, `crc`, `encoder-detection`, `intensity-stereo`, `mid-side-stereo`.
+- `ac3-coupling` links to `intensity-stereo`, `ac3-rematrixing` to `mid-side-stereo`.

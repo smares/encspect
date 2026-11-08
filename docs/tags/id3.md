@@ -16,10 +16,13 @@
   - known flags;
   - an extended header laid out as its version defines it;
   - frames that fit the declared size, with padding only at the end;
-  - frames the specification allows once appearing only once;
-  - a byte order mark on every UTF-16 string.
-
-  The complete list is in the [plan](../PLAN.md#tag-detection-and-false-positives).
+  - frames of a kind the specification allows once appearing only once: text and URL frames other than the user-defined ones, WCOM and WOAR, a picture of type 1 or 2, and frames such as MCDI or PCNT;
+  - a byte order mark on every UTF-16 string;
+  - at least one frame;
+  - a data length indicator with every compressed ID3v2.4 frame.
+- A size that is not syncsafe in the tag header leaves the tag's extent unknown, so the candidate is rejected. A size that runs past the end of the file does not say where the tag ends either, so the tag ends where its frames and the zero padding after them stop, and what follows is left to the other parsers.
+- **Compressed frames** are decompressed (zlib, which .NET provides) up to the 1 MiB limit of other decoded data, and the declared size and the zlib checksum are checked.
+- **Data after the terminator** of an ID3v2.3 text is an info finding, since section 4.2 says to ignore it.
 - Two writer bugs are read, each with a finding:
   - **Plain frame sizes in ID3v2.4** (`id3v2.frame-size-not-syncsafe`). Some writers, old iTunes versions among them, kept the ID3v2.3 form of the size (section 3.3 of ID3v2.3, a plain 32-bit integer) instead of the syncsafe one (ID3v2.4 section 4).
     - A size with a byte of $80 or more cannot be syncsafe and is read as plain frame by frame. Below 128 bytes both readings agree.
