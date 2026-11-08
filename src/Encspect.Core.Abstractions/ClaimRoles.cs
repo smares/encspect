@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 namespace Encspect.Core;
 
 // What the format parsers share when they weigh claims by role: which role a text plays, which
-// software family a text names, and the Encoder and Writer nodes' name and confidence.
+// software family a text names, and the Encoder, Writer and Processor nodes' name and confidence.
 public static partial class ClaimRoles
 {
     // The text of ffmpeg's muxer ("Lavf60.16.100", a bare "Lavf" or "Lavf lame"), which libavformat writes into whichever tag its
@@ -39,17 +39,23 @@ public static partial class ClaimRoles
 
     public const string WriterTopic = "writer-detection";
 
+    // The article a Processor node names: lossyWAV is the one processor the analyzer names.
+    public const string ProcessorTopic = "lossywav";
+
     // The article an Encoder or Writer node names, or null for any other node.
     public static string? TopicOf(string nodeName) => nodeName switch
     {
         "Encoder" => EncoderTopic,
         "Writer" => WriterTopic,
+        "Processor" => ProcessorTopic,
         _ => null,
     };
 
     public static IEnumerable<EncoderClaim> Encoders(IEnumerable<EncoderClaim> claims) => claims.Where(c => c.Role == ClaimRole.Encoder);
 
     public static IEnumerable<EncoderClaim> Writers(IEnumerable<EncoderClaim> claims) => claims.Where(c => c.Role == ClaimRole.Writer);
+
+    public static IEnumerable<EncoderClaim> Processors(IEnumerable<EncoderClaim> claims) => claims.Where(c => c.Role == ClaimRole.Processor);
 
     public static IReadOnlyList<EncoderClaim> Encoders(IReadOnlyList<EncoderClaim> claims) => [.. claims.Where(c => c.Role == ClaimRole.Encoder)];
 

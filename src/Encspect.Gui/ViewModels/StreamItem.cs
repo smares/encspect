@@ -78,6 +78,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add("written by " + Format.Encoder(writer, Stream.WriterConfidence));
             }
 
+            if (Stream.Processor is { } processor)
+            {
+                parts.Add("processed by " + Format.Encoder(processor, Stream.ProcessorConfidence));
+            }
+
             return string.Join(" · ", parts);
         }
     }

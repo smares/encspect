@@ -51,6 +51,13 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public AnalysisContext Context { get; } = context;
 
+    // lossyWAV's text in the fact chunk of the wrapper's RIFF header (the first one found), and where its body lies in the file.
+    public FactText? FactText { get; set; }
+
+    public long FactTextAt { get; set; }
+
+    public int FactTextLength { get; set; }
+
     // The stream's node, which the decoding session names for findings about the whole stream; built before the blocks are read.
     public Node Stream { get; set; } = null!;
 

@@ -123,7 +123,27 @@
                   "name": "Text",
                   "value": "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard",
                   "offset": 44,
-                  "length": 60
+                  "length": 60,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "lossyWAV 1.4.2",
+                      "offset": 44,
+                      "length": 14
+                    },
+                    {
+                      "name": "Date and Time",
+                      "value": "08/11/2026 10:03:42",
+                      "offset": 61,
+                      "length": 19
+                    },
+                    {
+                      "name": "Settings",
+                      "value": "--quality standard",
+                      "offset": 82,
+                      "length": 18
+                    }
+                  ]
                 }
               ]
             },
@@ -435,6 +455,26 @@
                       "length": 88700
                     }
                   ]
+                },
+                {
+                  "name": "Processor",
+                  "value": "lossyWAV 1.4.2",
+                  "offset": 758,
+                  "length": 88700,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "High",
+                      "offset": 758,
+                      "length": 88700
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "fact chunk at 0x2C names \"lossyWAV 1.4.2\" with the settings \"--quality standard\"",
+                      "offset": 758,
+                      "length": 88700
+                    }
+                  ]
                 }
               ]
             }
@@ -466,6 +506,8 @@
         "isVbr": false,
         "writer": "Encspect",
         "writerConfidence": "Low",
+        "processor": "lossyWAV 1.4.2",
+        "processorConfidence": "High",
         "series": []
       }
     ],

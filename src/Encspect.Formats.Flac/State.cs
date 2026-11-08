@@ -66,6 +66,9 @@ internal sealed class State
 
     public Node? Md5Node { get; set; }
 
+    // Whether a "riff" application block held the data chunk's header: a fact chunk after it is not before the data.
+    public bool IsRiffDataSeen { get; set; }
+
     public IDecodeSession? Session { get; private set; }
 
     public int MetadataBlocks { get; set; }

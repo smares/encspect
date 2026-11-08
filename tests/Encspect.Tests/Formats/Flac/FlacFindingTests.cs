@@ -60,6 +60,7 @@ public class FlacFindingTests
 
     private static readonly Dictionary<string, Func<(byte[] File, Analyzer? Analyzer)>> Crafts = new()
     {
+        ["flac.riff-fact-text-unrecognized"] = () => (LossyWavFiles.WithoutTimeSeparator("flac/external-lossyflac-b512-foreign.flac"), null),
         // Without a tag parser the route has nobody to hand the Vorbis comment to.
         ["flac.comment-not-read"] = () => (FlacBuilder.Stream(3, null, FlacBuilder.Block(4, Comment("vendor"), isLast: true)), new Analyzer([new FlacParser()])),
         ["flac.encoder-other-format"] = () => (FlacBuilder.Stream(3, null, FlacBuilder.Block(4, Comment("reference libFLAC 1.4.3 20230623", "ENCODER=Lavc60.31.102 libmp3lame"), isLast: true)), null),

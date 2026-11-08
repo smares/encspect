@@ -15,6 +15,7 @@ internal static class Topics
     public const string Channels = "channel-layouts";
     public const string BitrateModes = "bitrate-modes";
     public const string WaveFormat = "waveformatex";
+    public const string RiffChunks = "riff-chunks";
     public const string WaveFormatExtensible = "wave-format-extensible";
 }
 
@@ -58,6 +59,9 @@ internal static class Explain
     public const string SeekTable = "The offset of the first byte of each frame, 4 bytes for each frame, counted from the start of the descriptor (MACLib.h, APEHeader.cpp).";
     public const string SeekEntry = "Where one frame starts, as an unsigned 32-bit offset. The SDK adds 2^32 whenever an offset is lower than the one before it, so that files over 4 GiB work (APEHeader.cpp, Convert32BitSeekTable).";
     public const string HeaderData = "The header of the WAV file that was compressed, which a decoder gives back before the samples. Files of other kinds (AIFF, CAF) keep their own header here; the analyzer reads only the fmt chunk of a RIFF, RF64, BW64 or Wave64 header.";
+    public const string WavFactChunk = "The fact chunk of the stored WAVE header. lossyWAV puts its own text here instead of a sample length.";
+    public const string WavChunkId = "The chunk's four-character ID.";
+    public const string WavChunkSize = "The size of the chunk's body, a 32-bit little-endian number as in a WAVE file.";
     public const string WavFormatTag = "The format tag of the fmt chunk in the stored WAV header, wFormatTag: 1 is PCM, 3 IEEE floating point, 0xFFFE the extensible format (mmreg.h). The analyzer reads the chunk only for its channels and channel mask.";
     public const string WavChannels = "The number of channels the stored fmt chunk states, nChannels of the WAVEFORMATEX. The header's own count decides how the frames are decoded.";
     public const string WavChannelMask = "Which speakers the channels feed: a bit for each speaker position, dwChannelMask of the WAVEFORMATEXTENSIBLE in the stored fmt chunk. The channels are in the order of the bits. The Monkey's Audio header states no positions itself.";

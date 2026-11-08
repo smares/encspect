@@ -57,9 +57,11 @@ Sources:
 
 A `fact` chunk before the data whose body starts with `lossyWAV ` holds text, not a sample length:
 
-- lossyWAV 1.4.2 writes its version, the date and time of the run and its settings there.
-- It is shown as a "Text" node. No sample length is read from it, so neither `wav.fact-samples-mismatch`, nor `wav.fact-missing`, nor Container Samples and Container Duration appear for it.
-- The analyzer does not name the program from it.
+- lossyWAV 1.4.2 writes its version, the date and time of the run and its settings there (`lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard`, then CR LF and two NUL bytes).
+- It is shown as a "Text" node with the three parts as children: "Version" (the text up to ` @ `), "Date and Time" (shown as written, not read as a date) and "Settings" (the text after the first `, `, as written). The shared reader is `FactText` in `Core.Abstractions`; the FLAC, WavPack and Monkey's Audio parsers use it for the same text.
+- No sample length is read from it, so neither `wav.fact-samples-mismatch`, nor `wav.fact-missing`, nor Container Samples and Container Duration appear for it.
+- A body that starts with `lossyWAV ` but has no ` @ ` or no `, ` after it is a "Text" node without parts and the information finding `wav.fact-text-unrecognized`; it makes no claim.
+- A recognized text makes a claim of the processor role: the stream's **Processor** is "lossyWAV 1.4.2" with high confidence and the settings as its evidence, beside the encoder and the writer. lossyWAV turned PCM into PCM, so it is neither; see [Encoder and writer](../architecture.md#encoder-and-writer) and the `lossywav` article. The test is as lenient as lossyWAV's own `--check`, which takes a `fact` chunk before the data that starts with `lossyWAV ` for its output. A `fact` chunk after the data makes no claim, and the correction file (`.lwcdf.wav`) carries the same text and so the same claim. The analyzer does not use file names.
 - `lossywav-stdout.wav` is the output of `lossyWAV --stdout`: it has no `fact` chunk but states a RIFF size that still counts it (`wav.riff-size-past-chunks`, 68 bytes). The other `lossywav-*` files in `tests/fixtures/wav` keep the chunk.
 
 A fact chunk's sample length is also reported as **Container Samples**, with **Container Duration** at the sample rate, beside the samples the data holds.
@@ -113,7 +115,7 @@ S/PDIF passthrough captured or rendered to a WAVE file (or a Wave64 file) writes
 - `wav.block-align-mismatch` and `wav.average-bytes-mismatch` compare the header's block alignment and average bytes per second with the values the channels, the rate and the width give.
 - `wav.float-bits` (floating point other than 32 or 64 bits), `wav.companded-bits` (A-law or mu-law other than 8 bits).
 - `wav.format-extra-size`, `wav.extensible-incomplete` (a cbSize under 22, or a fmt chunk of 16 or 17 bytes with no cbSize), `wav.extensible-container-bits` (a container size that is not a whole number of bytes, which WAVEFORMATEXTENSIBLE requires), `wav.valid-bits-exceed-container` and `wav.channel-mask-mismatch` (info: a mask that names a different number of speakers than the channels, which Microsoft's rules cover; see below).
-- `wav.fact-missing` (info: a format that is not PCM or floating point, or PCM in a `wavl` list, needs a `fact` chunk), `wav.fact-samples-mismatch` (the `fact` samples against the audio, silence of a `wavl` list included), `wav.partial-sample-frame` (a data size that is not a whole number of sample frames), `wav.no-data-chunk`, `wav.no-audio`.
+- `wav.fact-missing` (info: a format that is not PCM or floating point, or PCM in a `wavl` list, needs a `fact` chunk), `wav.fact-samples-mismatch` (the `fact` samples against the audio, silence of a `wavl` list included), `wav.fact-text-unrecognized` (info: a `fact` chunk before the data that starts with `lossyWAV ` but has not lossyWAV's form), `wav.partial-sample-frame` (a data size that is not a whole number of sample frames), `wav.no-data-chunk`, `wav.no-audio`.
 - `bext`: `wav.bext-reserved-not-zero` (info) checks the bytes reserved in the version: 254 in version 0 (the UMID and loudness area included), 190 in version 1 and 180 in version 2 (EBU Tech 3285, section 1.1).
 
 ## BW64 chunks: chna and the XML chunks
@@ -195,4 +197,4 @@ See "WAV and AIFF" in [development.md](../development.md).
 ## Articles
 
 - **Articles:** `riff-chunks`, `waveformatex`, `wave-format-extensible`, `pcm-samples`, `wave-compressed-formats`, `riff-info`, `wave-cue-points`, `bwf-broadcast-extension`, `rf64`, `bw64`, `wave64`, `iec-61937`, `id3v2-in-chunks`.
-- **Shared with other formats:** `channel-layouts`.
+- **Shared with other formats:** `channel-layouts`, `lossywav`.

@@ -1,0 +1,53 @@
+{
+ "file": "external-lossywav.ape",
+ "sha256": "46550298aa14add6599ad2a69cd23390a8ad1e53504bbb0d3bfe354420b9c7f2",
+ "size": 36740,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "marker",
+ "inputSha256": "1e0d4698f6c2dea77145498525992891effd2767003cc4caa0d0a0ee8503edc5",
+ "arguments": [
+  "-q",
+  "S"
+ ],
+ "kind": "mac-c2000",
+ "coding": [
+  "mac",
+  "-c2000"
+ ],
+ "codingTool": "mac, the console tool of the Monkey's Audio SDK 13.44, built from MAC_1344_SDK.zip",
+ "lossyWavCheck": {
+  "exit": 255,
+  "answer": "already processed",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard"
+  ]
+ },
+ "marker": "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard",
+ "figures": {
+  "lowBitsUnused": 0,
+  "spans": 1379,
+  "silentSpans": 7,
+  "thinSpans": 11,
+  "spansAboveLowBitsUnused": 458,
+  "changes": 2,
+  "grid": null,
+  "changesOnGrid": null,
+  "timesWithEqualCounts": 688,
+  "times": 688,
+  "distribution": {
+   "0": 921,
+   "8": 458
+  }
+ },
+ "passesGate": false,
+ "pcmFrom": "wav/lossywav-standard.wav"
+}

@@ -1,0 +1,121 @@
+{
+ "file": "external-lossyflac-6ch.flac",
+ "sha256": "0c8ad7ebb8ee0467914b4a5232a76b6025613bbee1505d412c2afb03ec4e6b8c",
+ "size": 672911,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "synthetic-48k-6ch-3s",
+ "inputSha256": "9c04980e2465a75872cb42bc2760d789aae509d8c9f57c4e103c7550e0ac4dbb",
+ "arguments": [
+  "-q",
+  "X"
+ ],
+ "kind": "flac-b512-foreign",
+ "coding": [
+  "flac",
+  "-s",
+  "-f",
+  "-5",
+  "-b",
+  "512",
+  "--keep-foreign-metadata"
+ ],
+ "codingTool": "flac 1.5.0 (the flac package of the CI runner, ubuntu-26.04)",
+ "lossyWavCheck": {
+  "exit": 255,
+  "answer": "already processed",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:45, --quality extraportable"
+  ]
+ },
+ "marker": "lossyWAV 1.4.2 @ 08/11/2026 10:03:45, --quality extraportable",
+ "figures": {
+  "lowBitsUnused": 0,
+  "spans": 27024,
+  "silentSpans": 0,
+  "thinSpans": 0,
+  "spansAboveLowBitsUnused": 19424,
+  "changes": 371,
+  "grid": 512,
+  "changesOnGrid": 371,
+  "timesWithEqualCounts": 2120,
+  "times": 4504,
+  "distribution": {
+   "0": 7600,
+   "1": 4784,
+   "2": 4704,
+   "3": 864,
+   "9": 48,
+   "10": 32,
+   "11": 16,
+   "16": 96,
+   "17": 8880
+  }
+ },
+ "passesGate": true,
+ "flacUnits": {
+  "rate": 48000,
+  "frameLength": 512,
+  "subframes": 1692,
+  "distribution": {
+   "0": 475,
+   "1": 299,
+   "2": 294,
+   "3": 54,
+   "9": 3,
+   "10": 2,
+   "11": 1,
+   "16": 6,
+   "17": 558
+  },
+  "changes": 371,
+  "changesOnGridFrames": 371,
+  "subframesAboveSmallest": 1217,
+  "claim": true
+ },
+ "flacUnitsFromCommittedBytes": {
+  "subframes": 1692,
+  "distribution": {
+   "0": 475,
+   "1": 299,
+   "2": 294,
+   "3": 54,
+   "9": 3,
+   "10": 2,
+   "11": 1,
+   "16": 6,
+   "17": 558
+  },
+  "changes": 371
+ },
+ "figuresFromCommittedBytes": {
+  "spans": 27024,
+  "silentSpans": 0,
+  "thinSpans": 0,
+  "changes": 371,
+  "grid": 512,
+  "changesOnGrid": 371,
+  "timesWithEqualCounts": 2120,
+  "times": 4504,
+  "lowBitsUnused": 0,
+  "distribution": {
+   "0": 7600,
+   "1": 4784,
+   "2": 4704,
+   "3": 864,
+   "9": 48,
+   "10": 32,
+   "11": 16,
+   "16": 96,
+   "17": 8880
+  }
+ }
+}

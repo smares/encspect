@@ -1,0 +1,108 @@
+{
+ "file": "external-lossyflac-floor-88k.flac",
+ "sha256": "8d693d79fe391db4e5125ab8c8e2384b1fbcfa4c88e02baa0db33630f67ce104",
+ "size": 136549,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "floor-88k",
+ "inputSha256": "78ef942ac15eab17cc27ea91fddf2d4eebc880b691d26b1d2cd1aa21e8131b7f",
+ "arguments": [
+  "-q",
+  "S"
+ ],
+ "kind": "flac-bgrid",
+ "coding": [
+  "flac",
+  "-s",
+  "-f",
+  "-5",
+  "-b",
+  "1024"
+ ],
+ "codingTool": "flac 1.5.0 (the flac package of the CI runner, ubuntu-26.04)",
+ "lossyWavCheck": {
+  "exit": 0,
+  "answer": "not marked",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:46, --quality standard"
+  ]
+ },
+ "marker": null,
+ "figures": {
+  "lowBitsUnused": 1,
+  "spans": 5522,
+  "silentSpans": 0,
+  "thinSpans": 0,
+  "spansAboveLowBitsUnused": 5226,
+  "changes": 69,
+  "grid": 1024,
+  "changesOnGrid": 69,
+  "timesWithEqualCounts": 864,
+  "times": 2761,
+  "distribution": {
+   "1": 296,
+   "2": 1025,
+   "3": 2496,
+   "4": 1705
+  }
+ },
+ "passesGate": true,
+ "lengthsTried": [
+  {
+   "seconds": 1,
+   "exit": 0,
+   "changes": 69,
+   "grid": 1024
+  }
+ ],
+ "flacUnits": {
+  "rate": 88200,
+  "frameLength": 1024,
+  "subframes": 174,
+  "distribution": {
+   "1": 10,
+   "2": 32,
+   "3": 78,
+   "4": 54
+  },
+  "changes": 69,
+  "changesOnGridFrames": 69,
+  "subframesAboveSmallest": 164,
+  "claim": true
+ },
+ "flacUnitsFromCommittedBytes": {
+  "subframes": 174,
+  "distribution": {
+   "1": 10,
+   "2": 32,
+   "3": 78,
+   "4": 54
+  },
+  "changes": 69
+ },
+ "figuresFromCommittedBytes": {
+  "spans": 5522,
+  "silentSpans": 0,
+  "thinSpans": 0,
+  "changes": 69,
+  "grid": 1024,
+  "changesOnGrid": 69,
+  "timesWithEqualCounts": 864,
+  "times": 2761,
+  "lowBitsUnused": 1,
+  "distribution": {
+   "1": 296,
+   "2": 1025,
+   "3": 2496,
+   "4": 1705
+  }
+ }
+}

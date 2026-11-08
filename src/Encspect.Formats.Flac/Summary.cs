@@ -60,9 +60,15 @@ internal static partial class Summary
             s.AddLeading(writer);
         }
 
+        Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
+        if (processor is not null)
+        {
+            s.AddLeading(processor);
+        }
+
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
         StreamVerification verification = Verify(s);
-        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, verification);
+        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, processor, verification);
         if (info is not null)
         {
             s.Context.AddStream(info);
@@ -207,7 +213,7 @@ internal static partial class Summary
             (claim, text, name) => s.Findings.Add(Severity.Info, "flac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
             format: new WriterDetection.StreamFormat(KnownWriters.Flac, "FLAC", (claim, message, node) => s.Findings.Add(Severity.Info, "flac.writer-other-format", node, _ => message)));
 
-    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer, StreamVerification verification)
+    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer, Node? processor, StreamVerification verification)
     {
         if (s.Info is null && s.Frames == 0)
         {
@@ -352,6 +358,8 @@ internal static partial class Summary
             EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
+            Processor = ClaimRoles.Resolved(processor).Name,
+            ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
             Series = series,
             CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],

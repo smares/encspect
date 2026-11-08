@@ -497,8 +497,8 @@ public partial class WriterRoleTests
         var csv = new StringWriter();
         ReportCsvWriter.Write([report], csv);
         string[] lines = csv.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.Contains(",Encoder,Encoder Confidence,Writer,Writer Confidence,Tags,", lines[0], StringComparison.Ordinal);
-        Assert.Contains(",FAAC 1.30,High,FAAC 1.30,Low,", lines[1], StringComparison.Ordinal);
+        Assert.Contains(",Encoder,Encoder Confidence,Writer,Writer Confidence,Processor,Processor Confidence,Tags,", lines[0], StringComparison.Ordinal);
+        Assert.Contains(",FAAC 1.30,High,FAAC 1.30,Low,,,", lines[1], StringComparison.Ordinal);
 
         var json = new MemoryStream();
         ReportJsonWriter.Write([report], json);
@@ -515,7 +515,7 @@ public partial class WriterRoleTests
         Report report = Analyze("oggenc.ogg", Fixture("ogg/external-oggenc-q5.ogg"));
         var csv = new StringWriter();
         ReportCsvWriter.Write([report], csv);
-        Assert.Contains(",libvorbis 1.3.7,High,,,Vorbis Comment,", csv.ToString(), StringComparison.Ordinal);
+        Assert.Contains(",libvorbis 1.3.7,High,,,,,Vorbis Comment,", csv.ToString(), StringComparison.Ordinal);
 
         var json = new MemoryStream();
         ReportJsonWriter.Write([report], json);

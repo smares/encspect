@@ -60,7 +60,7 @@ internal static partial class Nodes
                 Riff(kept, sb.DataLength, at, data);
                 break;
             case SubBlockIds.RiffTrailer:
-                Chunks(kept, sb.DataLength, at, data, 0);
+                Chunks(kept, sb.DataLength, at, data, 0, isHeader: false);
                 break;
             case SubBlockIds.AltHeader or SubBlockIds.AltTrailer:
                 AlternateWrapper(kept, sb.DataLength, at, data);
@@ -428,10 +428,10 @@ internal static partial class Nodes
         riff.Add(Field(at + 4, 4, "Size", NodeValue.Integer(BinaryPrimitives.ReadUInt32LittleEndian(kept[4..]), "bytes", "byte"), Explain.ChunkSize, Topics.Wrapper));
         riff.Add(Field(at + 8, 4, "Form Type", Printable(kept[8..12]), Explain.FormType, Topics.Wrapper));
         data.Add(riff);
-        Chunks(kept, length, at, data, 12);
+        Chunks(kept, length, at, data, 12, isHeader: true);
     }
 
-    private static void Chunks(ReadOnlySpan<byte> kept, int length, long at, Node data, int start)
+    private static void Chunks(ReadOnlySpan<byte> kept, int length, long at, Node data, int start, bool isHeader)
     {
         int position = start;
         int listed = 0;
@@ -449,6 +449,12 @@ internal static partial class Nodes
             if (isFormat && size >= 16 && bodyLength >= 16 && position + 8 + 16 <= kept.Length)
             {
                 WaveFormat(kept[(position + 8)..], (int)Math.Min(size, bodyLength), at + position + 8, chunk);
+            }
+
+            int held = (int)Math.Max(0, Math.Min(size, kept.Length - position - 8L));
+            if (isHeader && id == "fact" && FactText.Read(kept.Slice(position + 8, held)) is { } text)
+            {
+                chunk.Add(text.ToNode(at + position + 8, held));
             }
 
             data.Add(chunk);

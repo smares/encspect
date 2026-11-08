@@ -4,6 +4,10 @@ namespace Encspect.Formats.Wav;
 internal static class Topics
 {
     public const string RiffChunks = "riff-chunks";
+
+    // The article the nodes of the fact text and the processor name (FactText.ToNode, ProcessorDetection).
+    public const string LossyWav = Core.ClaimRoles.ProcessorTopic;
+
     public const string WaveFormat = "waveformatex";
     public const string Extensible = "wave-format-extensible";
     public const string ChannelLayouts = "channel-layouts";

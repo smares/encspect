@@ -58,7 +58,7 @@ internal static class Metadata
 
                 break;
             case BlockTypes.Application:
-                Application(node, map, body, declared);
+                Application(s, node, map, body, declared);
                 break;
             case BlockTypes.SeekTable:
                 SeekTable(s, node, map, body, declared, isPartial);
@@ -169,7 +169,7 @@ internal static class Metadata
         }
     }
 
-    private static void Application(Node node, FieldMap map, ReadOnlySpan<byte> body, int declared)
+    private static void Application(State s, Node node, FieldMap map, ReadOnlySpan<byte> body, int declared)
     {
         if (body.Length < 4)
         {
@@ -180,7 +180,48 @@ internal static class Metadata
         bool isText = body[..4].ToArray().All(b => b is >= 0x20 and < 0x7F);
         string id = isText ? Encoding.ASCII.GetString(body[..4]) : "0x" + Convert.ToHexString(body[..4]);
         node.Add(map.Bytes("Application ID", 4, 4, id, Explain.ApplicationId, Topics.MetadataBlocks));
-        node.Add(map.Bytes("Application Data", 8, body.Length - 4, NodeValue.Integer(declared - 4, "bytes"), Explain.ApplicationData, Topics.MetadataBlocks));
+        Node data = node.Add(map.Bytes("Application Data", 8, body.Length - 4, NodeValue.Integer(declared - 4, "bytes"), Explain.ApplicationData, Topics.MetadataBlocks));
+        if (isText && id == "riff" && body.Length >= 12)
+        {
+            RiffChunk(s, data, map, body);
+        }
+    }
+
+    // The chunk of a WAVE file that flac's foreign metadata kept: its ID, its size and its body (the committed fixtures show the layout).
+    private static void RiffChunk(State s, Node data, FieldMap map, ReadOnlySpan<byte> body)
+    {
+        ReadOnlySpan<byte> chunkId = body.Slice(4, 4);
+        uint size = BinaryPrimitives.ReadUInt32LittleEndian(body[8..]);
+        bool isPrintable = chunkId.IndexOfAnyExceptInRange((byte)0x20, (byte)0x7E) < 0;
+        data.Add(map.Bytes("Chunk ID", 8, 4, isPrintable ? Encoding.ASCII.GetString(chunkId) : "0x" + Convert.ToHexString(chunkId), Explain.RiffChunkId));
+        data.Add(map.Bytes("Chunk Size", 12, 4, NodeValue.Integer(size, "bytes"), Explain.RiffChunkSize));
+        if (chunkId.SequenceEqual("data"u8))
+        {
+            s.IsRiffDataSeen = true;
+            return;
+        }
+
+        int held = (int)Math.Min(size, body.Length - 12);
+        if (!chunkId.SequenceEqual("fact"u8) || s.IsRiffDataSeen || !FactText.StartsLikeText(body.Slice(12, held)))
+        {
+            return;
+        }
+
+        Node place = map.Bytes("Text", 16, held, null, FactText.TextDescription);
+        if (place.Ranges is not null || FactText.Read(body.Slice(12, held)) is not { } text)
+        {
+            return;
+        }
+
+        Node node = data.Add(text.ToNode(place.Offset, held));
+        if (text.ToClaim(node, "fact chunk in a riff application block") is { } claim)
+        {
+            s.Context.AddEncoderClaim(claim);
+        }
+        else
+        {
+            s.Findings.Add(Severity.Info, "flac.riff-fact-text-unrecognized", node, _ => FactText.UnrecognizedFinding);
+        }
     }
 
     private static void SeekTable(State s, Node node, FieldMap map, ReadOnlySpan<byte> body, int declared, bool isPartial)

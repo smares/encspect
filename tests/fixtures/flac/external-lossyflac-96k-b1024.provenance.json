@@ -1,0 +1,112 @@
+{
+ "file": "external-lossyflac-96k-b1024.flac",
+ "sha256": "9e4a4e85c72efd7cfe240ef9ca1e3f5eab443105e52e9cbe50b129a39c3767d7",
+ "size": 353912,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "synthetic-96k-3s",
+ "inputSha256": "4ee298f7d95f2f967577b715c2bef64a4ef0f663bd870cbeab7effc21830e4d9",
+ "arguments": [
+  "-q",
+  "P"
+ ],
+ "kind": "flac-bgrid",
+ "coding": [
+  "flac",
+  "-s",
+  "-f",
+  "-5",
+  "-b",
+  "1024"
+ ],
+ "codingTool": "flac 1.5.0 (the flac package of the CI runner, ubuntu-26.04)",
+ "lossyWavCheck": {
+  "exit": 0,
+  "answer": "not marked",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:44, --quality portable"
+  ]
+ },
+ "marker": null,
+ "figures": {
+  "lowBitsUnused": 0,
+  "spans": 18008,
+  "silentSpans": 0,
+  "thinSpans": 8,
+  "spansAboveLowBitsUnused": 8952,
+  "changes": 86,
+  "grid": 1024,
+  "changesOnGrid": 86,
+  "timesWithEqualCounts": 7532,
+  "times": 9004,
+  "distribution": {
+   "0": 9056,
+   "1": 2432,
+   "2": 480,
+   "8": 32,
+   "9": 32,
+   "15": 64,
+   "16": 5912
+  }
+ },
+ "passesGate": true,
+ "flacUnits": {
+  "rate": 96000,
+  "frameLength": 1024,
+  "subframes": 564,
+  "distribution": {
+   "0": 283,
+   "1": 76,
+   "2": 15,
+   "8": 1,
+   "9": 1,
+   "15": 2,
+   "16": 186
+  },
+  "changes": 86,
+  "changesOnGridFrames": 86,
+  "subframesAboveSmallest": 281,
+  "claim": false
+ },
+ "flacUnitsFromCommittedBytes": {
+  "subframes": 564,
+  "distribution": {
+   "0": 283,
+   "1": 76,
+   "2": 15,
+   "8": 1,
+   "9": 1,
+   "15": 2,
+   "16": 186
+  },
+  "changes": 86
+ },
+ "figuresFromCommittedBytes": {
+  "spans": 18008,
+  "silentSpans": 0,
+  "thinSpans": 8,
+  "changes": 86,
+  "grid": 1024,
+  "changesOnGrid": 86,
+  "timesWithEqualCounts": 7532,
+  "times": 9004,
+  "lowBitsUnused": 0,
+  "distribution": {
+   "0": 9056,
+   "1": 2432,
+   "2": 480,
+   "8": 32,
+   "9": 32,
+   "15": 64,
+   "16": 5912
+  }
+ }
+}

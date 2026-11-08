@@ -354,6 +354,11 @@ internal static class Reader
                 break;
             }
 
+            if (function == SubBlockIds.RiffHeader && s.FactText is null)
+            {
+                FactTextOf(s, entry, index, data, offset + position + headerLength);
+            }
+
             SubBlockChecks(s, entry, offset, header, index, function, id, data, found, ref result, block, position, headerLength);
             if (IsWrapper(function))
             {
@@ -390,6 +395,26 @@ internal static class Reader
 
         result |= Checks(s, entry, offset, header, block, detail, found, status | result);
         return result | found.Status;
+    }
+
+    // lossyWAV's text in a fact chunk before the data in the RIFF header the wrapper kept (the first such chunk counts).
+    private static void FactTextOf(State s, int entry, int index, ReadOnlySpan<byte> data, long at)
+    {
+        if (data.Length < 12 || !(data[..4].SequenceEqual("RIFF"u8) || data[..4].SequenceEqual("RF64"u8) || data[..4].SequenceEqual("BW64"u8))
+            || !FactText.Find(data, 12, out int bodyAt, out int bodyLength) || FactText.Read(data.Slice(bodyAt, bodyLength)) is not { } text)
+        {
+            return;
+        }
+
+        s.FactText = text;
+        s.FactTextAt = at + bodyAt;
+        s.FactTextLength = bodyLength;
+        if (!text.IsRecognized)
+        {
+            long textAt = s.FactTextAt;
+            s.Findings.Add(Severity.Info, "wavpack.wrapper-fact-text-unrecognized", () => Nodes.FindAt(Nodes.SubBlock(s.Records, entry, index), "Text", textAt),
+                _ => FactText.UnrecognizedFinding);
+        }
     }
 
     private static bool IsWrapper(int function) =>
