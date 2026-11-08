@@ -1,0 +1,53 @@
+{
+ "length": 88736,
+ "container": {
+  "id": "RIFF",
+  "size": 88796,
+  "end": 88736
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 88736,
+   "size": 88692,
+   "length": 88692
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 22173,
+  "duration": 0.5027891156462585,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "pcm": {
+   "samples": 22173,
+   "md5": "3d95b7a41d30b3921179b31435f87342",
+   "bits": 16,
+   "format": "integer"
+  }
+ },
+ "findings": [
+  {
+   "code": "wav.riff-size-past-chunks"
+  }
+ ],
+ "tool": "lossyWAV 1.4.2 (POSIX port)",
+ "arguments": [
+  "-q",
+  "S"
+ ]
+}

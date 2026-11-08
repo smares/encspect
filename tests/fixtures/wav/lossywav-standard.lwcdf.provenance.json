@@ -1,0 +1,25 @@
+{
+ "file": "lossywav-standard.lwcdf.wav",
+ "sha256": "d99d736527815927fd9ad556148daf9710d6f6cadd9ae669404ac9171119f5ed",
+ "size": 88804,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "marker",
+ "inputSha256": "1e0d4698f6c2dea77145498525992891effd2767003cc4caa0d0a0ee8503edc5",
+ "arguments": [
+  "-q",
+  "S",
+  "--correction"
+ ],
+ "kind": "lwcdf",
+ "lossyWavCheck": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard"
+  ]
+ }
+}
