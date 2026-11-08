@@ -9,8 +9,7 @@ Encspect ships two programs, the command line tool `encspect` and the GUI `encsp
 - **What follows:**
   - nothing that belongs to one front end goes below it: no UI types, dialogs, settings, caches or console output in the host, Core.Abstractions or a parser;
   - front ends reach the analysis only through the host's public API (`Analyzer`, `Report`, the writers, the topic library), and add nothing to it that another front end could not use.
-- **Not planned yet:** offering the library. It would take NuGet packages, a deliberately public API under semantic versioning with an API-compatibility check in CI, and a contract declared stable once the milestones stop extending it (the options below).
-- **The contract** was settled at Gate 1 ([history.md](history.md#gates-in-detail)); the result model still grows with the formats, so it is not declared stable yet.
+- **Not planned yet:** offering the library. The ways to offer it, and what each would take, are below.
 
 ## Today: the command line and its JSON
 
@@ -25,7 +24,7 @@ A .NET library is shipped as NuGet packages: DLLs of platform-independent code, 
 
 - **A deliberate public API.** Today much of the code is public because the front ends and tests use it; the API would be trimmed to what is promised: `Analyzer`, `Report`, the node tree and stream model, the writers and the topic library.
 - **Semantic versioning,** with an API-compatibility check in CI so that a release cannot break callers by accident.
-- **A stable contract.** The result model still grows with each milestone (category series, decoding verification, the work budget), so packages are best published once the milestones stop extending it.
+- **A stable contract.** The core model was settled at Gate 1 ([history.md](history.md#gates-in-detail)), but the result model still grows with each milestone (category series, decoding verification, the work budget). So it is not declared stable yet, and packages are best published once the milestones stop extending it.
 - **Packages per part:** the core abstractions, the host, and the format and tag parsers, either as one package or one per format. One package is simpler; per-format packages let a caller take only what it needs.
 
 Not planned yet; this is the way to go when it is.

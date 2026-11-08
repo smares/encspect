@@ -64,37 +64,37 @@ Which container hands which codec to its codec parser, and which codecs are deco
 
 ## Depth by format
 
-How far into each coding Encspect sees today, on the depth levels of the [plan](../plan.md#goals-and-non-goals); a milestone in brackets is where the missing level is planned. Each format's page has the detail.
+How far into each coding Encspect sees today, on the depth levels of the [plan](../plan.md#breadth-and-depth); a milestone in parentheses is where the missing level is planned. Each format's page has the detail.
 
-- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read in full at its own level, and each raw stream format by its frames, so the table leaves that level out.
+- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read at its own level, and each raw stream format by its frames, so the table leaves that level out. The exceptions are the contents of ASF script commands and markers, and WavPack 1 to 3, which is not read at all (both 0.4).
 - **Codec syntax:** the headers and frame-level fields of every coding are read, so the table leaves that level out too; WMA Voice is read down to the sizes that end a frame and the fields that name it.
 - **Entropy-coded data:** whether the parser or the decoder walks the coded values (Huffman, Golomb, range or run-level codes).
 - **Decoded audio:** verified means a decoder checks a checksum stored over the decoded audio; measured means `--measure` gets the spectrum, levels and loudness.
-- **Interpretation:** every format reports its statistics and names the encoder and writer where its evidence allows; the column names the coding graphs (category series) it adds.
+- **Interpretation:** every format reports its statistics and bitrate series, and names the encoder and writer where its evidence allows. The last column names, by series name, the graphs of coding choices it adds: category and flag series, and the numeric "Coded Bandwidth" and "Channel Bit Share".
 
-| Coding | Entropy-coded data | Decoded audio | Coding graphs |
+| Coding | Entropy-coded data | Decoded audio | Graphs of coding choices |
 |---|---|---|---|
-| MPEG audio | Layers I and II up to the samples; Layer III scalefactors and Huffman data not read (0.3) | no (0.3) | stereo coding, block sizes, coded bandwidth (Layers I and II), channel bit share |
-| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | block usage, stereo coding, coded bandwidth |
-| AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform, enhanced coupling and the reduced rates not read (0.3) | no (0.3) | yes ([ac3.md](ac3.md#what-is-graphed)) |
-| DTS | core subframes not read (0.4); the extensions' data not read | no (core: 0.4) | stereo coding of the core |
-| Vorbis | floors and residues not read (0.3) | no (0.3) | block sizes |
-| Opus | SILK and CELT not read (0.3) | no (0.3) | none (0.3) |
+| MPEG audio | Layers I and II up to the samples; Layer III scalefactors and Huffman data not read (0.3) | no (0.3) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Block Usage, Block Sizes, Coded Bandwidth (Layers I and II), Channel Bit Share |
+| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Stereo Coding, Coded Bandwidth |
+| AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform and enhanced coupling not read (0.3); the audio blocks at the reduced rates not read (not planned) | no (0.3) | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
+| DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
+| Vorbis | floors and residues not read (0.3) | no (0.3) | Block Sizes |
+| Opus | SILK and CELT not read (0.3) | no (0.3) | Coded Bandwidth, from the TOC bytes (CELT's graphs: 0.3; the other TOC graphs: 0.4) |
 | Speex | the coded frame data not read (0.4) | no (0.4) | none |
-| Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | stereo coding |
-| WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | stereo coding |
-| WMA Professional | walked to the end of every frame | no (0.5) | none |
-| WMA Voice | the sizes that end a frame | no (0.5) | none |
-| WMA Lossless | walked to the end of every frame | no (0.5) | stereo coding |
-| FLAC | walked by the parser | verified and measured | stereo coding |
-| WavPack | walked by the decoder | verified and measured | stereo coding |
+| Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | Stereo Coding (SV4 to SV7) |
+| WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding |
+| WMA Professional | walked to the end of every frame | no (0.5) | Stereo Coding |
+| WMA Voice | the sizes that end a frame | no (0.5, if the lead wants it) | none |
+| WMA Lossless | walked to the end of every frame | no (0.5) | Stereo Coding |
+| FLAC | walked by the parser | verified and measured | Stereo Coding |
+| WavPack | walked by the decoder | verified and measured | Stereo Coding |
 | Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
 | TTA | not walked; the frames' CRC-32s are checked over the coded bytes | no (0.2) | none |
-| ALAC | walked by the parser | no (0.2) | element and pair coding |
-| Dolby TrueHD, MLP | walked by the parser | verified and measured | none (stereo coding: 0.4) |
+| ALAC | walked by the parser | no (0.2) | Element Coding, Stereo Coding |
+| Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
 
-- **Coding graphs** for the formats whose data the parsers already read come in 0.4; those that need the entropy pass come with each format's decoder ([coding-graphs.md](../design/coding-graphs.md#the-survey)).
+- **Graphs of coding choices** for the formats whose data the parsers already read come in 0.4; those that need the entropy pass come with each format's decoder ([coding-graphs.md](../design/coding-graphs.md#the-survey)).
 
 ## Common to every format
 

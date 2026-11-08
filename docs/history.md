@@ -36,7 +36,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
 - **Gate 1** (October 2026): six independent reviews found 56 problems and the fuzzer 2 more, all fixed (#26 to #31, and three host defects with the contract).
   - Areas: ID3v2; the other tags and tag detection; MPEG framing and Layers I and II; Layer III and ancillary data; VBR headers, encoder detection and statistics; the contract, host and CLI.
   - The contract review's 12 gaps closed in four steps (#32 to #35): exception boundary, cancellation and parser contexts; typed data with node kinds, streams, series and linked findings; routes from containers to codec and tag parsers; compact MPEG frame records.
-  - The core model was settled here. It still grows with the formats, so the contract is not declared stable ([library.md](library.md#a-library-others-could-use)).
+  - The core model was settled here; why it is not declared stable yet is in [library.md](library.md#later-nuget-packages-for-net).
 - **Gate 2** (2026-10-18, fa4e0c5): ten independent reviews, each followed by a review of its fixes and a verification.
   - Areas: ASF and WMA; WavPack; AAC; Ogg, Speex, Vorbis and Opus; AC-3 and E-AC-3; Musepack; MP4; DTS; Matroska and WebM; the host, contract and front ends.
   - Every finding was fixed in #98 to #110, one pull request per area. Also fixed: the shared record containers, QuickTime user data as tags, one stream-change rule for the raw stream formats with the APE item budget, and the host's contract and naming.
@@ -131,7 +131,8 @@ After Gate 3, in this order:
 ## Dropped plans
 
 - **Phase 6, the sequenced formats** (MIDI, tracker modules and chiptunes), dropped by the project lead on 2026-11-08: a different domain from bitstream and encoder analysis.
-  - The plan as it stood: analyzed at the structure level and never rendered, with node kinds for patterns, instruments and samples where the existing kinds did not fit.
+  - The plan as it stood: these files hold instructions for making sound, not coded audio, so they were to be analyzed at the structure level and never rendered. The result model would have gained node kinds for their patterns, instruments and samples where the existing kinds did not fit.
   - MIDI: Standard MIDI Files (`.mid`, formats 0 to 2) and RMID, from the MIDI 1.0 specification: header, tracks and events, tempo and time-signature maps, programs, text and lyric events, the duration from the tempo map, and the extensions (General MIDI, GS, XG) the SysEx messages name.
-  - Tracker modules: MOD, S3M, XM, IT and OpenMPT's MPTM, then MO3 and UMX, from the formats' own documentation, with libopenmpt (BSD) followed with its notice where the documentation stops. Scope: header, order list, patterns, instruments and samples, the song length from a walk of the order list, and the tracker that wrote the file.
+  - Tracker modules: MOD, S3M, XM, IT and OpenMPT's MPTM, then MO3 and UMX, from the formats' own documentation, with libopenmpt (BSD) followed with its notice where the documentation stops, as for MO3.
+  - Their scope: the header, order list, patterns, instruments and samples (bit depth, loops, compression); the song length from a walk of the order list with its jumps and loops; and which tracker wrote the file, from the version fields and the habits OpenMPT documents.
   - Chiptunes: SID (PSID and RSID), NSF, SPC, VGM and GBS, headers and metadata only; the music is code for an emulated chip.

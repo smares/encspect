@@ -27,7 +27,7 @@ flowchart TD
   - Parsers reach them only through the host, so no parser depends on one; `DecodingBoundaryTests` checks this in the compiled assemblies.
   - The contract is [decoders.md](design/decoders.md).
 - **Measurements** of the decoded audio are host code that reads the decoders' PCM and adds figures to the stream: [spectral-analysis.md](design/spectral-analysis.md).
-- **The library:** the core, the host and the parsers are a front-end-agnostic library; the decision and what follows from it are in [library.md, "A library others could use"](library.md#a-library-others-could-use). The abstractions are no published API yet, so they still change as the formats need.
+- **The library:** the core, the host and the parsers are a front-end-agnostic library; the decision, what follows from it and why its API is not published yet are in [library.md, "A library others could use"](library.md#a-library-others-could-use).
 - **Two front ends, one model:** the CLI and the GUI are thin views over the same result model, so neither can show something the other cannot ([cli.md](cli.md), [gui.md](gui.md)).
 
 ## Result model
@@ -158,8 +158,8 @@ flowchart TD
   - A writer of another name, such as ffmpeg's or GPAC's, lends none.
   - A writer claim never creates an encoder or raises its confidence.
 - **Evidence from behavior:**
-  - an encoder's habits name it only with low or medium confidence;
-  - only where encodes of known signals with that encoder show them every time and the other encoders available for testing do not, over at least 20 frames or payloads;
+  - a file without tags can be misidentified, so every encoder result carries a confidence, and an encoder's habits name it only with low or medium confidence;
+  - only where encodes of known signals with that encoder show them every time and the other encoders available for testing do not, over at least 20 frames or payloads, which leaves out encoders that no longer run;
   - container traces name an encoder only where its stream holds nothing to name it by (Apple's AAC encoder). Where the stream itself has a layout (exhale's UsacConfig), the container's traces are not used, since a remux drops them.
 - **Output:** the CLI writes `Writer` and `Writer Confidence` next to the encoder's columns, and `writer`, `writerConfidence` next to `encoder` in JSON; the GUI has a "Written by" column and names the writer after the encoder in a stream's line. The articles are `encoder-detection` and `writer-detection`.
 
@@ -328,7 +328,6 @@ Nobody reads the code line by line, so correctness comes from automated checks t
 6. **Spec references in the code:** each parsed field cites the spec section it implements.
 7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions; its findings are recorded in the pull request.
 
-- **Heuristic encoder detection:** a file without tags can be misidentified, so every encoder result carries a confidence. Encoder habits are trusted only where encodes with that encoder confirm them, which leaves out encoders that no longer run ("Evidence from behavior" under [Encoder and writer](#encoder-and-writer)).
 - The per-format fixtures, tools and their pinned versions are in [development.md, "Fixtures and cross-checks"](development.md#fixtures-and-cross-checks).
 - Nothing merges with a red pipeline. Work is pushed to its own branch, never to main directly.
 

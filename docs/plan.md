@@ -54,7 +54,7 @@ The work grows along two axes (the project lead, 2026-11-08).
   3. entropy-coded data: the Huffman, Golomb, range or run-level coded values (the entropy pass);
   4. decoded audio: verification of the checksums over it, and the measurements;
   5. interpretation: statistics, coding graphs and encoder detection.
-- v1 stopped at level 2 for MPEG audio; the entropy pass of each lossy format comes with its decoder.
+- v1 stopped at level 2 for MPEG audio. AAC's and WMA's parsers walk their entropy-coded data already; for the other lossy formats the entropy pass comes with the decoder.
 
 ## Decisions
 
@@ -75,7 +75,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Releases | 0.1.0 as a GitHub pre-release after Gate 2 | Replaced the earlier rule of no public version until development ends | 2026-10-17 |
 | Decoding | Optional, per format, inside the format's project ([decoders.md](design/decoders.md)) | For checksum verification and for the measurements of the decoded audio ([spectral-analysis.md](design/spectral-analysis.md)). Decoders vary in sources and upkeep and some formats may never have one, so the measurements stay optional per format; formats without a decoder still get the full structure report | 2026-10-22 |
 | No FFmpeg fallback | No `ffmpeg` fallback for decoding; FFmpeg stays a cross-check tool (decision 9 of [decoders.md](design/decoders.md)) | Keeps the no-bundled-decoders rule | 2026-10-22 |
-| Gaps, not concealment | A frame a decoder cannot decode is a gap, never concealed audio (#208) | Concealed audio would be measured as if the file held it | 2026-11-01 |
+| Gaps, not concealment | A frame a decoder cannot decode is a gap, never concealed audio (#208) | The lead's rule, recorded with the official-decoder cross-checks ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)) | 2026-11-01 |
 | Nothing is bought | No paid specification, such as ISO/IEC 14496-3 | The formats with a free specification or permissively licensed code come first; AAC and WMA follow on clean-room or free sources ([lossy-decoders.md](design/lossy-decoders.md)) | 2026-11-07 |
 | Routes | Containers route only the codec and container combinations that writers in the wild produce | Routing what nobody writes costs code and fixtures for no file; see below | 2026-11-07 |
 | Lossy decoders | The design of [lossy-decoders.md](design/lossy-decoders.md), every recommendation as listed | Each decoder brings its format's entropy pass, so the figures that need it come with the decoder | 2026-11-08 |
@@ -102,8 +102,9 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 The project lead, 2026-11-08:
 
 - One main item is in progress at a time, plus small fixes.
-- A new idea goes into a later milestone, not into the current one.
+- A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Every parked item has a milestone, or sits under [Not planned](#not-planned) with the trigger that would bring it back.
+- A pause the lead asks for keeps the item's place and priority, and the item resumes first.
 
 ## Milestones
 
@@ -115,7 +116,7 @@ Each milestone is something a user can do that they could not do before. Its ite
 
 ### 0.2: Lossless complete
 
-Every lossless format Encspect reads is decoded and measured, files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
+Every lossless format with a decoder design is decoded and measured, except WMA Lossless (0.5) and DTS-HD's lossless extension (a follow-up after 0.5). Files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
 
 1. **The lossy groundwork** (#232, in flight): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
 2. **lossyWAV and lossyFLAC detection,** with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).
@@ -127,6 +128,7 @@ Every lossless format Encspect reads is decoded and measured, files that lossyWA
    - **Limits:** silence and audio truncated on purpose also have zeroed bits, and processing after lossyWAV (gain, dither, resampling) removes the pattern. Another tool that zeroes bits per block the same way looks the same.
 3. **The ALAC and TTA decoders,** small and exact, checked bit for bit (the lead, 2026-11-08); steps L1 and L2 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order).
 4. **TAK and OptimFROG at header level** ([planned.md](formats/planned.md#in-02-header-level-only)). Both are poorly documented, so they get only what their headers reveal.
+5. **Two level figures** from step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout), which need no lossy decoder: a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00, so only its negative runs count today).
 
 ### 0.3: Lossy formats measured
 
@@ -135,15 +137,14 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 1. **The decoders,** one pull request each, in the order of [lossy-decoders.md](design/lossy-decoders.md#order): MPEG audio (Layers I, II and III), Vorbis, Opus, AC-3, E-AC-3.
    - **Definition of done** of each: the decoder, its format's entropy-pass figures, its coding graphs and its gap wave 3 items ([lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)). Coding graphs and gap wave 3 are no separate threads.
    - **The patent question** (decision 17 of [lossy-decoders.md](design/lossy-decoders.md#decisions)) is decided before E-AC-3 starts.
-2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), each its own change once the decoders above give lossy streams to measure:
-   - mid/side spectra and spectral holes, the lossy coders' finer marks, which need fixtures that show each mark;
-   - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters;
-   - for the levels, a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00).
-   - The step's other two items have places of their own: the TTA decoder is in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
+2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), each its own change after the decoders above:
+   - mid/side spectra and spectral holes, the lossy coders' finer marks, which need lossy streams and fixtures that show each mark;
+   - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
+   - The step's other items have places of their own: the two level figures and the TTA decoder are in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
 
 ### 0.4: Free decoders and routes complete
 
-Every format with a free source is decoded, and every codec reaches its parser in the containers that known writers fill.
+Every coding with a free source is decoded, the DTS extensions aside, and every codec reaches its parser in the containers that known writers fill.
 
 1. **The Musepack, DTS core and Speex decoders,** with the same definition of done as in 0.3.
 2. **The routes that known writers produce,** each its own pull request after the codec parsers it routes to:
@@ -160,10 +161,15 @@ Every format with a free source is decoded, and every codec reaches its parser i
 
 The most common formats without a free specification are decoded, on clean-room sources ([lossy-decoders.md](design/lossy-decoders.md#the-clean-room)).
 
-1. **AAC:** LC and HE-AAC (SBR and parametric stereo), then Main, LTP, ER AAC and USAC.
-2. **WMA:** standard, Professional, Lossless and Voice, each after its clean-room supplement.
-- **The patent decision** comes before HE-AAC, USAC and WMA Professional.
-- **The scope** is confirmed when 0.4 is done.
+The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order), with the definition of done of 0.3:
+
+1. **AAC LC,** after its clean-room description.
+2. **HE-AAC** (SBR and parametric stereo).
+3. **WMA standard, Professional and Lossless,** each after its clean-room supplement, with Microsoft's decoder as the reference.
+4. **AAC Main, LTP and ER AAC.**
+5. **USAC** (xHE-AAC).
+6. **WMA Voice,** only if the lead wants it (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
+   - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
 
 ### After 0.5
 
@@ -181,15 +187,24 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 10. Shorten
 11. The formats whose only detailed public source is FFmpeg, clean-room: OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser
 
+- **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
+
 ## Not planned
 
-Each item says what would bring it back, where anything would.
+Parked items carry the trigger that would bring them back. The formats at the end were never planned and carry the reason they stay out.
 
-- **Parallel decoding** ([parallel-decoding.md](design/parallel-decoding.md), approved 2026-10-26 and deferred the same day): not planned unless decoding speed becomes a problem, such as a decoder that misses its speed target ([lossy-decoders.md, "Speed targets"](design/lossy-decoders.md#speed-targets)). The measurer on its own thread comes with it.
-- **The detection pre-check** ([detection-precheck.md](design/detection-precheck.md)): recorded, not to be built (the lead, 2026-10-26).
+- **Parallel decoding** ([parallel-decoding.md](design/parallel-decoding.md), approved 2026-10-26 and deferred the same day): deferred in favor of new formats and deeper analysis. Not planned unless decoding speed becomes a problem: a decoder that still misses its speed target after its speed pass ([lossy-decoders.md, "Speed targets"](design/lossy-decoders.md#speed-targets)), or analysis times users report; the measurer on its own thread comes with it.
+- **The detection pre-check** ([detection-precheck.md](design/detection-precheck.md)): recorded, not to be built (the lead, 2026-10-26). The design stays as a record for when detection becomes a bottleneck.
 - **Offering the library** as packages: not planned yet; it waits for a contract the milestones no longer extend ([library.md](library.md)).
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the lead on 2026-11-08, as a different domain from bitstream and encoder analysis ([history.md](history.md#dropped-plans)).
-- **Decoders beyond the lossy design's scope:** the DTS extensions (XLL among them), the MPEG-2 multichannel extension of Layer II, Dolby's object audio, AC-4 and MPEG-H ([lossy-decoders.md, "Scope"](design/lossy-decoders.md#scope)). They come back only with a free source for their reconstruction, in a milestone after 0.5.
+- **What the lossy decoders leave out,** by the signed-off design ([lossy-decoders.md, "Scope" and "What each decoder covers"](design/lossy-decoders.md#what-each-decoder-covers)), each with the condition the design states:
+  - the MPEG-2 multichannel extension of Layer II: only its MPEG-1 compatible base channels are decoded, since ISO/IEC 13818-3 is not at hand;
+  - E-AC-3 at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10: A/52 does not specify their bit allocation, and no free source for it is known;
+  - AAC SSR gain control, which FDK AAC refuses; MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization, and every other decoder-side gain but Opus's output gain (decision 9);
+  - Opus packet loss concealment and forward error correction, which the gap rule excludes;
+  - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
+  - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
+  - Dolby's object audio, and AC-4 and MPEG-H: the design does not cover their decoders, which wait for a design of their own.
 - Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification.
 - The ancient lossless compressors and obsolete vocoders.
 - Each of the many ADPCM and PCM variants as a format of its own: WAV and the containers name their codings.

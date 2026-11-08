@@ -1022,7 +1022,8 @@ public sealed class Analyzer
 
     // ID3v1 belongs in the last 128 bytes; other orders occur in the wild, so they are findings,
     // not rejections. Lyrics3 extended fields must agree with the ID3v1 tag after them. A tag that
-    // gets a warning here is at most medium, like one whose parser reported it (plan, rule 2).
+    // gets a warning here is at most medium, like one whose parser reported it (architecture.md,
+    // "Tag detection and false positives", rule 2).
     private static List<Finding> CheckTrailingLayout(List<Claim> trailing)
     {
         var findings = new List<Finding>();
@@ -1154,7 +1155,7 @@ public sealed class Analyzer
     private static bool Contains(Node node, Node target) => node == target || node.Children.Any(c => Contains(c, target));
 
     // Full confidence needs everything to check out, so a tag with a warning or error is at most
-    // medium, whatever its parser says (plan, rule 2).
+    // medium, whatever its parser says (architecture.md, "Tag detection and false positives", rule 2).
     internal static Confidence Effective(TagProbe probe) =>
         probe.Confidence == Confidence.High && probe.Findings.Any(f => f.Severity >= Severity.Warning) ? Confidence.Medium : probe.Confidence;
 

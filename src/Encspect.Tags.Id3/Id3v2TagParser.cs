@@ -265,7 +265,8 @@ public sealed class Id3v2TagParser : ITagParser
 
         // A size that runs past the end of the file does not say where the tag ends, so it ends
         // where its frames and zero padding stop: what follows them is left to the other parsers
-        // rather than claimed as unparsed tag bytes or padding (plan, rule 2).
+        // rather than claimed as unparsed tag bytes or padding (architecture.md, "Tag detection and false
+        // positives", rule 2).
         Node? unparsed = truncated ? state.Unparsed : null;
         if ((unparsed?.Offset ?? (truncated ? state.PaddingEnd : null)) is { } stop)
         {

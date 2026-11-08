@@ -589,7 +589,7 @@ What the recommendations change outside the decoders, so that none of it arrives
 - **[`CLAUDE.md`](../../CLAUDE.md),** in the groundwork pull request:
   - Layout, `src/Encspect.Core.Abstractions`, at the end of its sentence: "…, the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), and the deterministic math (`DetMath`) that measurements and lossy decoders share."
   - Architecture rules, a new item after the measurement determinism item: "Lossy decoders, and the parser code they share that computes in floating point, are deterministic under the same rules as measurement code (no fused multiply-add, no platform math library but `DetMath`, no `*Native` or `*Estimate` API, no `TensorPrimitives` and no BCL sum, dot product, maximum or average over floating-point spans, only element-wise `Vector128`, sums and transforms in an order that depends only on their length, each float kernel `[MethodImpl(MethodImplOptions.AggressiveOptimization)]`, no `ArrayPool<T>.Shared`), with two rules of their own: a decoder clamps every gain and scale exponent to the range its specification allows instead of counting NaN, and flushes recursive states below 1e-30 at the start of each of its units and after a gap. A lossless decoder in the same project lives in `<project>.Decoding.Lossless`, outside these rules. `DecoderDeterminismTests` pins hashes of the lossy decoders' PCM, and `MeasurementDeterminismTests` scans their assemblies."
-  - The plan's gap rule ("Decisions" in [plan.md](../plan.md#decisions), once "Later") gains the withheld output with the lead's decision; [CLAUDE.md](../../CLAUDE.md) holds no item on gaps today.
+  - The plan's gap rule ("Decisions" in [plan.md](../plan.md#decisions), once under "Next") gains the withheld output with the lead's decision; [CLAUDE.md](../../CLAUDE.md) holds no item on gaps today.
   - Under decision 2(b) only, the item "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores." ends instead "…, and, for lossless codings, declare every checksum a stream stores."
 - **[decoders.md](decoders.md),** under decision 2(c) only: decision 4 and `StreamVerification.IsVerified` gain "a lossy stream is verified only by checksums over decoded audio".
 - **[spectral-analysis.md](spectral-analysis.md),** under decision 8(a): the trimmed range and "Trimmed Samples".
@@ -629,7 +629,7 @@ Each step brings:
 - its `DecoderWorkTests` cases: its worst cases (Layer III short blocks with intensity stereo at the smallest frames, Vorbis 8,192-sample blocks in 255 channels, Opus 120 ms hybrid and multistream packets) and a silent stream;
 - `MemoryTests` and fuzz coverage, and its format doc's "Decoding" section.
 
-A milestone review follows steps 1 and 3: the pattern, then the hardest exact check.
+An independent review of the step follows steps 1 and 3: the pattern, then the hardest exact check.
 
 ## Decisions
 

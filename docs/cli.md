@@ -6,7 +6,7 @@ encspect [options] [--] <file-or-folder>...
 
 The output is a text tree by default; `encspect --help` lists the options.
 
-- **One model, two front ends:** the CLI and the GUI are thin views over the same result model, so neither can show something the other cannot ([architecture.md](architecture.md#overview)).
+- **One model, two front ends:** the rule that both are views over the same report is in [architecture.md, "Overview"](architecture.md#overview).
 - **What it does:** one file, several files or a folder tree; text, JSON or CSV; exit codes by finding severity; sections to show or hide; descriptions and background articles (`--explain`, `--learn`).
 
 ## Inputs
