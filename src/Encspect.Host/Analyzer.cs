@@ -21,7 +21,7 @@ public sealed class Analyzer
     }
 
     // Tag parsers are probed in the given order at every anchor, and the first one that
-    // validates owns the bytes; see DefaultParsers for the order the plan requires. Codec
+    // validates owns the bytes; see DefaultParsers for the tie order of docs/architecture.md, "Tag detection and false positives". Codec
     // parsers serve the containers' routes (ParseContext.ParseStream and ParsePackets) by their
     // IDs, and tag parsers the ParseTag route by their names.
     public Analyzer(IEnumerable<ITagParser> tagParsers, IEnumerable<IFormatParser> formatParsers, IEnumerable<ICodecParser> codecParsers)
