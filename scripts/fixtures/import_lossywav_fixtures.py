@@ -119,19 +119,32 @@ def coding_of(record, data):
 
 
 def marker_text(data):
-    """The text of lossyWAV's fact chunk if the committed file holds one before its audio, found in the first bytes of the file the coder kept
-    the WAV header in (the foreign metadata blocks of FLAC, the wrapper of WavPack, the header data of Monkey's Audio)."""
-    start = data.find(b"fact")
-    # lossyWAV's rule takes a fact chunk before the data: a data chunk header ahead of the text ("data" after the "riff" ID of a FLAC block, or by
-    # itself in a wrapper or header data) puts the text after the audio.
-    ahead = data.find(b"data", 0, 4096)
-    while 0 <= start < 4096:
-        if 0 <= ahead < start:
+    """The text of lossyWAV's fact chunk if the committed file holds one before its audio, by lossyWAV's rule, found by walking the chunks the coder
+    kept: the "riff" APPLICATION blocks of FLAC's foreign metadata, or the chunks after the WAVE form type in the wrapper of WavPack and the header
+    data of Monkey's Audio. A data chunk ahead of the text puts it after the audio."""
+    chunks = []
+    if data[:4] == b"fLaC":
+        position = 4
+        while position + 4 <= len(data):
+            header = data[position]
+            size = int.from_bytes(data[position + 1:position + 4], "big")
+            body = data[position + 4:position + 4 + size]
+            if header & 0x7F == 2 and body[:4] == b"riff":
+                chunks.append((body[4:8], int.from_bytes(body[8:12], "little"), body[12:]))
+            position += 4 + size
+            if header & 0x80:
+                break
+    else:
+        position = data.find(b"WAVE", 0, 4096) + 4
+        while 4 <= position < min(len(data), 4096) and position + 8 <= len(data):
+            size = int.from_bytes(data[position + 4:position + 8], "little")
+            chunks.append((data[position:position + 4], size, data[position + 8:position + 8 + size]))
+            position += 8 + size + (size & 1)
+    for chunk_id, size, body in chunks:
+        if chunk_id == b"data":
             return None
-        if data[start + 8:start + 17] == b"lossyWAV ":
-            size = int.from_bytes(data[start + 4:start + 8], "little")
-            return data[start + 8:start + 8 + size].rstrip(b"\r\n\0").decode("latin-1")
-        start = data.find(b"fact", start + 1)
+        if chunk_id == b"fact" and body.startswith(b"lossyWAV "):
+            return body[:size].rstrip(b"\r\n\0").decode("latin-1")
     return None
 
 
