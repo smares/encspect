@@ -369,6 +369,28 @@ class RepositoryTests(unittest.TestCase):
     def run_check(self, *files):
         return golden_additions.run(self.dir, "main", "HEAD", list(files))
 
+    def measurement(self, levels):
+        return {"measurements": {"status": "complete", "levels": levels}, "findings": []}
+
+    def test_a_measurement_golden_may_gain_only_the_keys_its_change_file_lists(self):
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement({"bitDepth": {"lowBitsUnused": 0}}))
+        self.git("add", "-A")
+        self.git("commit", "-qm", "measurement base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr2")
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement({"bitDepth": {"lowBitsUnused": 0}, "lowBitsPerSpan": {"spans": 3}}))
+        change = {"goldens": ["tests/fixtures/measurement/"], "added": [{"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"}]}
+        self.write("tests/fixtures/measurement/golden-changes.json", change)
+        self.commit()
+        self.git("branch", "-f", "pr", "HEAD")
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 0)
+
+        # Another field that differs is not covered.
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement({"bitDepth": {"lowBitsUnused": 1}, "lowBitsPerSpan": {"spans": 3}}))
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
+
     def test_without_a_change_file_the_check_is_not_asked_for(self):
         self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99)])])
         self.commit()

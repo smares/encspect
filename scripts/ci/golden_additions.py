@@ -4,7 +4,7 @@
 
     golden_additions.py [--repo DIR] [--base REV] [--head REV] [change-file ...]
 
-It compares each changed golden (tests/**/*.report.json) at the merge base of --base and --head with its version at
+It compares each changed golden (tests/**/*.report.json, and the measurement goldens *.measure.json, below) at the merge base of --base and --head with its version at
 --head, as parsed JSON trees and never as bytes. A golden is the JSON array of reports the writer writes (one report
 for a file): the old and new arrays must have the same length and are compared pairwise. The change file removes from the new tree what it lists as added,
 reverses what it lists as renamed or moved, ignores the fields it lists as changed, maps the paths of findings and
@@ -37,6 +37,10 @@ every child of that name. A change file:
                   {"scope": "finding", "code": "wma.voice-unfinished"}],                                                  # a finding only the old report has
       "bitrate": [{"goldens": ["tests/fixtures/mp4/some.report.json"], "reason": "why the average bitrate differs"}]  # goldens whose averageBitrate may differ without lost samples
     }
+
+A measurement golden (tests/fixtures/measurement/*.measure.json, the JSON object {"measurements": ..., "findings": ...} that MeasurementFixtureTests writes) is
+compared the same way, with one kind of entry: {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"} under "added" takes the key out of the object
+at the path under "measurements"; the rest must equal the old golden.
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
 where the old report has a node of the old name under the parent; where it has none, the node of the new name is an addition and the
@@ -323,7 +327,7 @@ def reports(golden):
 def validate(change):
     """Readable errors for the entries of a change file that cannot work: a key an entry needs is missing, or the entry has the wrong shape."""
     needs = {
-        "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name")},
+        "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name"), "measurement": ("path", "key")},
         "removed": {"finding": ("code",), "node": ("parent", "name")},
     }
     for key, scopes in needs.items():
@@ -414,6 +418,24 @@ def check_golden(old, new, change):
     return problems
 
 
+def check_measurement_golden(old, new, change):
+    """The problems of one measurement golden: what the change adds (keys under "measurements") taken out of the new golden, the rest must equal the old."""
+    try:
+        validate(change)
+    except ChangeError as error:
+        return [str(error)]
+    expected = copy.deepcopy(new)
+    for entry in change.get("added", []):
+        if entry.get("scope") != "measurement":
+            continue
+        where = expected.get("measurements")
+        for step in entry["path"]:
+            where = where.get(step) if isinstance(where, dict) else None
+        if isinstance(where, dict):
+            where.pop(entry["key"], None)
+    return differences(old, expected)
+
+
 def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
@@ -456,7 +478,7 @@ def run(repo, base, head, change_files):
     checked = 0
     for line in status:
         code, _, path = line.partition("\t")
-        if not path.endswith(".report.json"):
+        if not path.endswith((".report.json", ".measure.json")):
             continue
         if code[0] == "A":
             continue
@@ -469,12 +491,13 @@ def run(repo, base, head, change_files):
             continue
         old = json.loads(git(repo, "show", f"{merge_base}:{path}"))
         new = json.loads(git(repo, "show", f"{head}:{path}"))
-        found = [check_golden(old, new, scoped(changes[owner], path)) for owner in owners]
+        check = check_measurement_golden if path.endswith(".measure.json") else check_golden
+        found = [check(old, new, scoped(changes[owner], path)) for owner in owners]
         if all(found):
             problems += [f"{path}: {d}" for d in found[0]]
         checked += 1
     for name, change in changes.items():
-        if not any(covers(change, line.partition("\t")[2]) for line in status if line.partition("\t")[2].endswith(".report.json")):
+        if not any(covers(change, line.partition("\t")[2]) for line in status if line.partition("\t")[2].endswith((".report.json", ".measure.json"))):
             problems.append(f"{name}: covers no changed golden")
     for problem in problems:
         print(problem)
