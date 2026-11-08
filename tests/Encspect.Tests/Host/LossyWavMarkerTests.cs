@@ -71,7 +71,7 @@ public class LossyWavMarkerTests
         Assert.Contains("with the settings \"--quality standard\"", evidence.Value?.ToString(), StringComparison.Ordinal);
 
         Node text = Walk(report.Root).Single(n => n.Name == "Text");
-        Assert.Equal(text.Offset, evidence.Offset);
+        Assert.Contains($"at 0x{text.Offset:X}", evidence.Value?.ToString(), StringComparison.Ordinal);
         Assert.Equal(["Version", "Date and Time", "Settings"], text.Children.Select(c => c.Name));
         Assert.Equal("--quality standard", text.Children[2].Value?.ToString());
     }

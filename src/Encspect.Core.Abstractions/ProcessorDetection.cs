@@ -12,8 +12,8 @@ public static class ProcessorDetection
 
     public const string EvidenceDescription = "What points to the processor, at the bytes that hold it.";
 
-    // The Processor node, made through cover (which gives each node the extent the parser's other detail nodes have), or null where no claim names a
-    // processor. Each Evidence node covers the bytes of its claim's node.
+    // The Processor node, made through cover (which gives each node the extent the parser's other detail nodes have, so the Processor node holds its Evidence), or null where no
+    // claim names a processor. The evidence text gives the offset of the bytes that hold the claim.
     public static Node? Detect(IEnumerable<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover)
     {
         ArgumentNullException.ThrowIfNull(claims);
@@ -37,7 +37,7 @@ public static class ProcessorDetection
         processor.Add(cover("Confidence", winner.Confidence.ToString(), ConfidenceDescription));
         foreach (EncoderClaim claim in candidates.Where(c => string.Equals(c.Text.Trim(), name, StringComparison.Ordinal)))
         {
-            processor.Add(new Node("Evidence", claim.Source.Offset, claim.Source.Length, Evidence(claim)) { Description = EvidenceDescription, Ranges = claim.Source.Ranges });
+            processor.Add(cover("Evidence", Evidence(claim), EvidenceDescription));
         }
 
         return processor;
