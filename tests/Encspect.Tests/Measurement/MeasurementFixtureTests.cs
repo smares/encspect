@@ -336,6 +336,11 @@ public class MeasurementFixtureTests
 
         LevelFigures levels = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Levels!;
         AssertBuilt(built.GetProperty("stream"), levels.Stream, name + " stream");
+        if (built.TryGetProperty("spans", out JsonElement spans))
+        {
+            AssertSpans(spans, levels.Spans!, name);
+        }
+
         if (built.TryGetProperty("channels", out JsonElement channels))
         {
             int index = 0;
@@ -344,6 +349,22 @@ public class MeasurementFixtureTests
                 AssertBuilt(channel, levels.Channels[index], $"{name} channel {index++}");
             }
         }
+    }
+
+    // The low bits unused per span the fixture was built to have, worked out by the prototype scripts/fixtures/lossywav_figures.py (another implementation).
+    private static void AssertSpans(JsonElement built, LowBitsSpanFigures actual, string name)
+    {
+        long[] distribution = [.. built.GetProperty("distribution").EnumerateArray().Select(e => e.GetInt64())];
+        Assert.True(distribution.AsSpan().SequenceEqual(actual.Distribution.ToArray()), $"{name}: distribution {string.Join(' ', actual.Distribution)}, built {string.Join(' ', distribution)}");
+        Assert.Equal(
+            [built.GetProperty("spans").GetInt64(), built.GetProperty("silent_spans").GetInt64(), built.GetProperty("thin_spans").GetInt64(), built.GetProperty("spans_above_low_bits_unused").GetInt64()],
+            [actual.Spans, actual.SilentSpans, actual.ThinSpans, actual.SpansAboveLowBitsUnused]);
+        Assert.Equal(
+            [built.GetProperty("changes").GetInt64(), built.GetProperty("grid").GetInt64(), built.GetProperty("changes_on_grid").GetInt64()],
+            [actual.Changes, actual.Grid, actual.ChangesOnGrid]);
+        Assert.Equal(
+            [built.GetProperty("times").GetInt64(), built.GetProperty("times_with_equal_counts").GetInt64()],
+            [actual.Times, actual.TimesWithEqualCounts]);
     }
 
     private static void AssertBuilt(JsonElement built, ChannelLevels actual, string where)

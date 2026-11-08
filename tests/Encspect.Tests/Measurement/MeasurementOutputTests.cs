@@ -165,7 +165,7 @@ public class MeasurementOutputTests
         string[] header = measured.Split("\r\n")[0].Split(',');
         string[] row = measured.Split("\r\n")[1].Split(',');
         int peak = Array.IndexOf(header, "Sample Peak (dBFS)");
-        Assert.Equal(new[] { "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples" }, header[peak..]);
+        Assert.Equal(new[] { "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples", "Changes of Low Bits Unused", "Grid of the Changes (samples)" }, header[peak..]);
         Assert.Equal("-8.7", row[peak]);
         Assert.False(double.IsNaN(double.Parse(row[peak], System.Globalization.CultureInfo.InvariantCulture)));
 

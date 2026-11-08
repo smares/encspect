@@ -1,7 +1,7 @@
 ---
 id: wasted-bits
 title: Wasted bits
-related: flac-subframes, bit-depth-usage
+related: flac-subframes, bit-depth-usage, low-bits-per-span
 references: RFC 9639 (FLAC), section 9.2
 ---
 
@@ -13,4 +13,4 @@ references: RFC 9639 (FLAC), section 9.2
 
 **What you see.** Wasted Bits in each subframe, and in the statistics how many subframes use them. A file whose subframes all report the same number of wasted bits has less real depth than its header says.
 
-**Measured too.** When the audio is decoded and measured, [Low Bits Unused](bit-depth-usage) counts the same thing over every sample of the stream instead of per subframe.
+**Measured too.** When the audio is decoded and measured, [Low Bits Unused](bit-depth-usage) counts the same thing over every sample of the stream instead of per subframe. The same count is taken for each span of 32 samples in [low bits unused per span](low-bits-per-span).

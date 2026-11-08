@@ -134,7 +134,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     }
 
     // The levels alone, with the Int128 accumulators: one and two channels at 16, 24 and 32 bits, noise, a full-scale square wave (every piece
-    // scans for runs) and zeros (every piece is silent). The weight of 5 units (the design's estimate was 4) is held to the reference by this test.
+    // scans for runs) and zeros (every piece is silent). The weight of 5 units (the design's estimate was 4) is held to the reference by this test, with the low bits unused per span (the Zeroed signal) in it.
     public static TheoryData<int, int, Signal> LevelsCases()
     {
         var data = new TheoryData<int, int, Signal>();
@@ -148,6 +148,10 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 
         data.Add(16, 2, Signal.Square);
         data.Add(24, 2, Signal.Zeros);
+
+        // The low bits unused per span on audio where every span has a count and most blocks change it (the closing of a span is the costly part).
+        data.Add(24, 2, Signal.Zeroed);
+        data.Add(16, 1, Signal.Zeroed);
         return data;
     }
 
@@ -263,6 +267,9 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Zeros,
         Impulse,
         Square,
+
+        // Noise whose lowest 3 to 8 bits are zeroed in each block of 512 samples (lossyWAV-like): every span has a count and many change it.
+        Zeroed,
     }
 
     private const int Length = 1 << 21;
@@ -276,6 +283,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
             {
                 Signal.Noise => MeasurementSignals.ToIntegers(MeasurementSignals.Noise(Length, (uint)(c + 1)), bits),
                 Signal.Zeros => new int[Length],
+                Signal.Zeroed => MeasurementSpanTests.Zeroed(1, Length, 512, 1 << (bits - 3), (uint)(c + 1))[0],
                 Signal.Square => [.. Enumerable.Range(0, Length).Select(i => (i / 200) % 2 == 0 ? (1 << (bits - 1)) - 1 : -(1 << (bits - 1)))],
                 _ => Impulse(Length),
             };

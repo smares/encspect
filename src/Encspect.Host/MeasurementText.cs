@@ -26,6 +26,11 @@ public enum MeasurementFigure
     HasOnly16BitValues,
     HasOnly24BitValues,
     LowBitsUnused,
+    LowBitsUnusedBySpan,
+    SpansAboveLowBitsUnused,
+    ChangesOfLowBitsUnused,
+    GridOfTheChanges,
+    ChannelsWithEqualLowBitsUnused,
 }
 
 public sealed record MeasurementLine(MeasurementFigure Figure, string Name, string Text, string Description, string? Topic);
@@ -62,6 +67,18 @@ public static class MeasurementText
     public const string ZeroSamplesDescription = "All the sample frames in which every channel is exactly 0, wherever they are: the digital silence, and also the zeros of quiet audio and of a sine's zero crossings. It is a count of samples, not a stretch of silence.";
 
     public const string LowBitsUnusedDescription = "The low bits that are 0 in every sample of the stream, found from the OR of all samples, and the largest sample magnitude reached. It is a figure of the samples, not of the file's header.";
+
+    public const string LowBitsUnusedBySpanDescription = "How many spans of 32 consecutive samples of one channel have each count of low bits that are 0 in all their samples, all channels together. A span whose samples are all 0 has no count and is listed apart; a thin span, whose largest sample needs fewer than 4 bits above the zeroed ones, is counted here and listed apart.";
+
+    public const string SpansAboveLowBitsUnusedDescription = "The spans whose count of unused low bits is above the stream's Low Bits Unused, as a share of the spans that have a count. It is 0 where every span has the same count, as in audio truncated to fewer bits or scaled by a power of two.";
+
+    public const string ChangesOfLowBitsUnusedDescription = "The spans, neither silent, short (fewer than 32 samples) nor thin, whose count differs from the count of the same channel's previous such span. A gap in the decoded positions ends the comparison.";
+
+    public const string GridOfTheChangesDescription = "The largest power of two from 256 to 65,536 samples such that at least 95% of the changes fall within one span of one phase of it, given at least 20 changes; none otherwise. The phase is free, so a stream cut off its grid keeps it. The 20 changes, the 95% and the range are conventions of this analysis.";
+
+    public const string ChannelsWithEqualLowBitsUnusedDescription = "The share of the times at which no channel's span is silent and every channel has the same count of unused low bits. It is given for streams of several channels.";
+
+    public const string LowBitsPerSpanTopic = Topics.LowBitsPerSpan;
 
     public const string HasOnly16BitValuesDescription = "Whether every float sample is a whole multiple of 2^-15 within [-1, 1), the grid of 16-bit integer audio. It is a figure of the samples, not of the file's header.";
 
@@ -234,6 +251,64 @@ public static class MeasurementText
         }
 
         lines.Add(new MeasurementLine(MeasurementFigure.LowBitsUnused, "Low Bits Unused", bits, LowBitsUnusedDescription, BitDepthUsageTopic));
+        if (levels.Spans is { } spans)
+        {
+            AddSpans(lines, spans, channels.Count);
+        }
+    }
+
+    private static void AddSpans(List<MeasurementLine> lines, LowBitsSpanFigures spans, int channels)
+    {
+        var parts = new List<string>();
+        for (int count = 0; count < spans.Distribution.Count; count++)
+        {
+            if (spans.Distribution[count] != 0)
+            {
+                parts.Add($"{count} {(count == 1 ? "bit" : "bits")} in {Plural(spans.Distribution[count], "span", "spans")}");
+            }
+        }
+
+        string distribution = parts.Count == 0 ? "every span is silent" : string.Join(", ", parts);
+        if (spans.SilentSpans > 0 && parts.Count > 0)
+        {
+            distribution += $"; {Plural(spans.SilentSpans, "silent span", "silent spans")}";
+        }
+
+        if (spans.ThinSpans > 0)
+        {
+            distribution += $"; {Plural(spans.ThinSpans, "thin span", "thin spans")}";
+        }
+
+        lines.Add(new MeasurementLine(MeasurementFigure.LowBitsUnusedBySpan, "Low Bits Unused by Span", distribution, LowBitsUnusedBySpanDescription, LowBitsPerSpanTopic));
+        if (spans.Spans == 0)
+        {
+            return;
+        }
+
+        lines.Add(new MeasurementLine(MeasurementFigure.SpansAboveLowBitsUnused, "Spans Above the Stream's Low Bits Unused", $"{Share(spans.SpansAboveLowBitsUnused, spans.Spans)} ({Grouped(spans.SpansAboveLowBitsUnused)} of {Plural(spans.Spans, "span", "spans")})", SpansAboveLowBitsUnusedDescription, LowBitsPerSpanTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.ChangesOfLowBitsUnused, "Changes of Low Bits Unused", Plural(spans.Changes, "change", "changes"), ChangesOfLowBitsUnusedDescription, LowBitsPerSpanTopic));
+        string grid = spans.Grid != 0
+            ? $"{Plural(spans.Grid, "sample", "samples")} ({Grouped(spans.ChangesOnGrid)} of {Plural(spans.Changes, "change", "changes")} on it)"
+            : spans.Changes < LowBitsSpanFigures.MinimumChangesForGrid
+                ? $"none (fewer than {LowBitsSpanFigures.MinimumChangesForGrid} changes)"
+                : "none (no grid from 256 to 65,536 samples holds 95% of the changes)";
+        lines.Add(new MeasurementLine(MeasurementFigure.GridOfTheChanges, "Grid of the Changes", grid, GridOfTheChangesDescription, LowBitsPerSpanTopic));
+        if (channels > 1)
+        {
+            string equal = spans.Times == 0
+                ? "none (every time has a silent span)"
+                : $"{Share(spans.TimesWithEqualCounts, spans.Times)} ({Grouped(spans.TimesWithEqualCounts)} of {Plural(spans.Times, "time", "times")})";
+            lines.Add(new MeasurementLine(MeasurementFigure.ChannelsWithEqualLowBitsUnused, "Channels with Equal Low Bits Unused", equal, ChannelsWithEqualLowBitsUnusedDescription, LowBitsPerSpanTopic));
+        }
+    }
+
+    // A share in tenths of a percent, rounded to the nearest with halves up, from integers.
+    public static long ShareTenths(long part, long whole) => whole <= 0 ? 0 : (long)(((UInt128)(ulong)part * 2000 + (ulong)whole) / ((UInt128)(ulong)whole * 2));
+
+    public static string Share(long part, long whole)
+    {
+        long tenths = ShareTenths(part, whole);
+        return $"{(tenths / 10).ToString(CultureInfo.InvariantCulture)}.{(tenths % 10).ToString(CultureInfo.InvariantCulture)}%";
     }
 
     // The channels' names: their speakers where the stream states distinct ones, otherwise "channel 1", "channel 2".
