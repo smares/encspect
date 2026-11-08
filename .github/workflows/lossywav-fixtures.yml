@@ -1,0 +1,128 @@
+name: lossyWAV fixtures
+
+# Builds lossyWAV for POSIX (scripts/fixtures/lossywav_tool.py: github.com/MoSal/lossywav-for-posix, a port of lossyWAV 1.4.2)
+# at a pinned commit with its own Makefile.unix, runs it at its quality presets and settings over the project's test signals and two free
+# recordings, codes its output again with flac, wavpack and Monkey's Audio's mac, and uploads the files with a manifest
+# of the settings and SHA-256 hashes (scripts/fixtures/make_lossywav_fixtures.py). lossyWAV is GPL and is used only as a
+# black-box tool here: its source is built, never read or ported, and it runs on this runner only. Nothing is released
+# and no build is uploaded: only the files, for 90 days, among them the fixtures to commit at their committed length
+# (lossywav-out/fixtures). flac, wavpack and g++ are the runner image's packages, unpinned; their versions are recorded
+# in the manifest, which is enough for files committed once. The design they check is docs/design/lossywav-detection.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: generate on ubuntu-26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install flac, wavpack and the compilers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flac wavpack g++ make cmake
+
+      - name: Build lossyWAV for POSIX
+        id: lossywav
+        run: |
+          path=$(python3 scripts/fixtures/lossywav_tool.py "$RUNNER_TEMP/lossywav")
+          g++ --version | head -n 1
+          "$path" --version || true
+          sha256sum "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      # Monkey's Audio's mac from the pinned SDK (scripts/fixtures/monkeys_audio_tool.py); the files are made without it
+      # when monkeysaudio.com cannot be reached.
+      - name: Build mac
+        id: mac
+        continue-on-error: true
+        run: |
+          path=$(python3 scripts/fixtures/monkeys_audio_tool.py "$RUNNER_TEMP/mac")
+          "$path" 2>&1 | head -n 3 || true
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      - name: Make the files
+        run: |
+          python3 scripts/fixtures/make_lossywav_fixtures.py lossywav-out \
+            --lossywav "${{ steps.lossywav.outputs.path }}" ${{ steps.mac.outputs.path && format('--mac {0}', steps.mac.outputs.path) || '' }}
+
+      - name: Print the tool records
+        if: always()
+        continue-on-error: true
+        run: |
+          for f in lossywav-out/tools/*.txt; do echo "== $f"; head -n 80 "$f"; done
+          python3 -c "import json; m = json.load(open('lossywav-out/manifest.json')); print(json.dumps(m['tools'], indent=1)); print(sorted({(r['case'], r['exit']) for r in m['runs']})); [print(f['path'], f.get('size'), f.get('figures', {}).get('changes'), f.get('figures', {}).get('grid')) for f in m['fixtures']]"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-fixtures
+          path: lossywav-out
+          retention-days: 90
+          if-no-files-found: error
+
+      # The inputs, byte for byte, for the Windows job.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lossywav-inputs
+          path: |
+            lossywav-out/source
+            lossywav-out/fixture-source
+          retention-days: 7
+          if-no-files-found: error
+
+      # The files to commit and the manifest alone, small enough to download for a check.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-fixtures-to-commit
+          path: |
+            lossywav-out/fixtures
+            lossywav-out/manifest.json
+          retention-days: 90
+          if-no-files-found: error
+
+  # The official Windows build of lossyWAV 1.4.2 on the Linux job's inputs: lossyWAV alone, every case, probe and fixture
+  # input, no codings. Its manifest is compared with the Linux one (the samples and the fact text). The build comes from the
+  # private repository, pinned by SHA-256 in scripts/fixtures/lossywav_tool.py (WINDOWS); the job runs only when started by
+  # hand, since a push cannot know whether the lead has uploaded it yet.
+  windows:
+    name: official build on windows-2025
+    needs: [generate]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: lossywav-inputs
+          path: lossywav-inputs
+
+      - name: Fetch the pinned build
+        id: lossywav
+        shell: bash
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: |
+          path=$(python scripts/fixtures/lossywav_tool.py --windows "$RUNNER_TEMP/lossywav-windows")
+          sha256sum "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      - name: Run lossyWAV
+        shell: bash
+        run: python scripts/fixtures/make_lossywav_fixtures.py lossywav-windows-out --lossywav "${{ steps.lossywav.outputs.path }}" --inputs lossywav-inputs
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-windows
+          path: lossywav-windows-out
+          retention-days: 90
+          if-no-files-found: error
