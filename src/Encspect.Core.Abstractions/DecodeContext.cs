@@ -10,9 +10,10 @@ public sealed class DecodeContext
     private readonly Func<PcmFormat, IPcmSink> _declareOutput;
     private readonly Action<long> _addWork;
     private readonly LentBuffersProvider? _lent;
+    private readonly Action<long, long, WithholdReason>? _withhold;
 
     public DecodeContext(DecodeSetup setup, CancellationToken cancellationToken, Action<Severity, string, string, Node?, int> addFinding,
-        Func<PcmFormat, IPcmSink> declareOutput, Action<long> addWork, LentBuffersProvider? lent = null)
+        Func<PcmFormat, IPcmSink> declareOutput, Action<long> addWork, LentBuffersProvider? lent = null, Action<long, long, WithholdReason>? withhold = null)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(addFinding);
@@ -25,6 +26,7 @@ public sealed class DecodeContext
         _declareOutput = declareOutput;
         _addWork = addWork;
         _lent = lent;
+        _withhold = withhold;
     }
 
     public DecodeSetup Setup { get; }
@@ -50,6 +52,27 @@ public sealed class DecodeContext
     // The buffers the session lent the parser for the frame being decoded, where its CodedFrame.IsWalked: the warm-up
     // samples and residuals its walk stored. Empty otherwise.
     public SampleBuffers LentBuffers => _lent is null ? default : _lent();
+
+    // Reports output the decoder holds back: the samples per channel from firstSample (the stream's positions, as PcmBlock.Position)
+    // that belong to units it read and decoded, but whose output depends on state a lost unit took with it (docs/design/lossy-decoders.md,
+    // "Withheld output"). The measurements count those positions as withheld samples, with the reason, and only the rest of a jump between
+    // blocks as lost. Spans come in stream order, each before the Write of the first block past it (or before the stream ends, where no
+    // block follows); a span that overlaps the previous one counts once. A sink sees only the jump in positions. Zero samples is no span.
+    // Throws ArgumentOutOfRangeException for a negative position or count or an undefined reason, which reaches the host as decode.failed.
+    public void Withhold(long firstSample, long samples, WithholdReason reason)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(firstSample);
+        ArgumentOutOfRangeException.ThrowIfNegative(samples);
+        if (!Enum.IsDefined(reason))
+        {
+            throw new ArgumentOutOfRangeException(nameof(reason));
+        }
+
+        if (samples > 0)
+        {
+            _withhold?.Invoke(firstSample, samples, reason);
+        }
+    }
 
     // Findings on the parser's nodes or on equal ones, which a decoder builds with its parser's node factories; null
     // points to the stream. Findings of one kind (one code) are reported once per stream with a count, pointing to the

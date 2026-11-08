@@ -134,8 +134,10 @@ public class DecoderFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
-    // The verification of the stream and the findings the decoder and the decode route add.
-    internal static string Golden(Report report)
+    // The verification of the stream and the findings the decoder and the decode route add. pcmSha256 is the hash of the PCM a lossy decoder
+    // delivered (PcmHashSink), written only for lossy fixtures: the analyzer's own output pinned for determinism, not a claim of correctness
+    // (docs/design/lossy-decoders.md, decision 14).
+    internal static string Golden(Report report, string? pcmSha256 = null)
     {
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
@@ -168,6 +170,11 @@ public class DecoderFixtureTests
 
                 writer.WriteEndArray();
                 writer.WriteEndObject();
+            }
+
+            if (pcmSha256 is not null)
+            {
+                writer.WriteString("pcmSha256", pcmSha256);
             }
 
             writer.WriteStartArray("findings");
