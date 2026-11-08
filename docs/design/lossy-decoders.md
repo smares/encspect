@@ -464,7 +464,7 @@ Positions stay untrimmed ([decoders.md](decoders.md)). What each format puts bef
   - (b) keep [spectral-analysis.md](spectral-analysis.md)'s rule: measure as decoded, untrimmed;
   - (c) also apply the container's and the encoder's figures (LAME tag, iTunSMPB, edit lists).
 - **Decided on 2026-11-08: (a).** The measured samples then equal the stream's `samples` where nothing is lost or withheld, and Opus's pre-skip, which holds the decoder's convergence, does not reach the levels and the true peak.
-- (a) changes [spectral-analysis.md](spectral-analysis.md)'s rule ("TrueHD: ... the samples to drop at the start are measured too") and with it TrueHD's `.measure.json` goldens (see [Consequences and churn](#consequences-and-churn)).
+- (a) changes [spectral-analysis.md](spectral-analysis.md)'s rule ("TrueHD: ... the samples to drop at the start are measured too"). TrueHD's goldens do not change: its decoder writes only the samples an end of stream marker leaves (`StreamDecoder.cs`, `_output`), so it has no trimmed range (see [As built in the groundwork](#as-built-in-the-groundwork)).
 - The sink's PCM stays untrimmed either way, and the cross-checks compare at the coded stage.
 
 ## Cost
@@ -560,12 +560,12 @@ What the recommendations change outside the decoders, so that none of it arrives
 - **Goldens:**
   - decision 2(a): the streams of codings that define a checksum (MPEG audio, ADTS, AC-3, E-AC-3, DTS, Musepack SV8) gain a `verification` block in their `.report.json`, and the text report a "Verified" line: about 540 goldens, counted from the codecs the committed goldens name (492 in `mpeg`, `aac`, `adts`, `ac3` and `dts`, 47 Musepack SV8, and the AC-3 and E-AC-3 tracks of `mp4` and `matroska`). AC-3 and E-AC-3 streams read "yes (lossy stream; …)", the others "unknown" or that they store no checksum;
   - decision 14: `.decode.json` goldens of lossy fixtures gain `pcmSha256`, a field no `.decode.json` has today (771 files hold none);
-  - decision 8(a): TrueHD's `.measure.json` goldens change where an end of stream marker drops samples, and every measured stream with a syntax trim gains `trimmedSamples`;
+  - decision 8(a): every measured stream with a syntax trim gains `trimmedSamples`; TrueHD's goldens do not change (the decoder never writes the samples a marker drops);
   - decision 4: `.measure.json` goldens with gaps gain `withheldSamples`;
   - decision 7(a) only: MPEG goldens with `mpeg.main-data-before-stream` gain Lost Samples (5 committed fixtures);
   - the groundwork's determinism fixes change none.
 - **Report fields:**
-  - `measurements.withheldSamples` and `withheldReasons`, and `trimmedSamples` with decision 8(a): new JSON fields, additive, so `schemaVersion` stays 1; the text line and the CSV columns gain them where they are above 0, as `lostSamples` does;
+  - `measurements.withheldSamples` and `withheldReasons`, and `trimmedSamples` with decision 8(a): new JSON fields, additive, so `schemaVersion` stays 1; the text line gains them where they are above 0; the CSV has no measurement counts of lost samples (its `Lost Samples` is the parser's figure), so it gains none;
   - `IsLossy` true on every decoded lossy stream writes `"isLossy": true` in JSON (`ReportJsonWriter`) and "(lossy stream)" in the Measured line (`MeasurementText`) of every measured lossy stream, not only in a verification;
   - the CSV's `Is Verified` (filled with `--verify` only) becomes true for verified AC-3 files under decision 2(a).
 - **GUI:**
@@ -595,6 +595,18 @@ What the recommendations change outside the decoders, so that none of it arrives
 - **[spectral-analysis.md](spectral-analysis.md),** under decision 8(a): the trimmed range and "Trimmed Samples".
 - **`IFrameDecoder.Decode`'s comment:** "the samples per channel by which the stream's decoded output advanced" becomes "the samples per channel it wrote, which is the advance unless it withheld output (`DecodeContext.Withhold`)". The signature does not change.
 - No change to `IDecoder`, the signatures of `IFrameDecoder`, `CodedFrame`, `DecodeSetup`, `SampleBuffers`, `PcmBlock` or the router.
+
+### As built in the groundwork
+
+What the groundwork pull request did differently from the text above, or added to it:
+
+- **`IDecodeSession.Trim(firstPosition, endPosition)`** is a new member of the parser's side of the contract (the design named none). The measurer needs the trimmed range before the blocks it applies to arrive, and the parsers know it (Opus's pre-skip from the header, the end from the last granule position) while the session's `DecodeSetup` is built when the stream starts. The range is in absolute positions at the coded stage; the leading trim holds until the measuring has begun, the trailing one for blocks written after the call. Lost and withheld samples stay counted at the coded stage, trimmed range or not. No parser calls it yet.
+- **TrueHD:** nothing to change. The decoder writes `Samples - DroppedSamples` of each unit and the parser's positions advance by the same, so the "samples to drop" are never in the PCM. The design's remark that TrueHD's goldens change was wrong; no committed golden changed.
+- **The records:** `StreamMeasurements.WithheldSamples` (with `LeadingWithheldSamples` and `TrailingWithheldSamples`, carved out of the leading and trailing lost samples, and `WithheldByReason` as a value type so that records compare by value), `LeadingTrimmedSamples` and `TrailingTrimmedSamples`. `SkippedSamples` (lost and withheld together) and its leading, trailing and inner parts are what the GUI places frames and columns by. A jump that is withheld whole still counts as a gap.
+- **Pending spans** are kept between two blocks (at most 1,024, contiguous spans of one reason merged); past that a span is counted as withheld at once, as if it lay in a jump.
+- **`DetMath.Log2`** was added for the SBR band counts, which the inventory listed as `Math.Log2`.
+- **The Vorbis project** gained `InternalsVisibleTo` for the tests, like the other format projects.
+- **Not done:** no `.decode.json` golden has `pcmSha256` yet, since no lossy decoder exists; `PcmHashSink` and the golden writer are ready for the first.
 
 ## Rollout
 
@@ -653,7 +665,7 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
    - Considered: no smoothing.
 7. **Layer III frames whose main data are not available** (split tracks, damage): the decoder withholds them, reason "main data not available"; the parser is unchanged. The MPEG pull request counts the affected files.
    - Considered: the parser counting them as lost.
-8. **Trims in the measurements:** the measurer measures the range the stream's syntax trims to and counts the rest as "Trimmed Samples"; TrueHD's `.measure.json` goldens change.
+8. **Trims in the measurements:** the measurer measures the range the stream's syntax trims to and counts the rest as "Trimmed Samples".
    - Considered: measuring untrimmed, as before.
    - Considered: also applying container and encoder trims.
 9. **Decoder-side gains:** none but Opus's output gain.
