@@ -437,7 +437,8 @@ def git(repo, *args, check=True):
 
 def run(repo, base, head, change_files):
     merge_base = git(repo, "merge-base", base, head).strip()
-    status = git(repo, "diff", "--name-status", "--no-renames", merge_base, head).splitlines()
+    # A file moved without a change of a byte (-M100%) is neither deleted nor added: a golden keeps its content, and a change file of an earlier pull request is not asked for again.
+    status = [line for line in git(repo, "diff", "--name-status", "-M100%", merge_base, head).splitlines() if not line.startswith("R")]
     changes = {}
     if change_files:
         for name in change_files:

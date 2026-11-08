@@ -38,7 +38,7 @@ public partial class FindingCoverageTests
         var emitted = sources.SelectMany(path => WavPackCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
         Assert.True(emitted.Count > 25, $"Found only {emitted.Count} codes.");
 
-        var asserted = WavPackTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "WavPackFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        var asserted = WavPackTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/WavPack/WavPackFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack"), "*.expected.json"))
         {
             foreach (Match m in WavPackManifestCode().Matches(File.ReadAllText(path)))
@@ -48,7 +48,7 @@ public partial class FindingCoverageTests
         }
 
         // MemoryTests.Bounded asserts the code it is given is present.
-        foreach (string line in File.ReadAllLines(Path.Combine(root, "tests", "Encspect.Tests", "MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
+        foreach (string line in File.ReadAllLines(Path.Combine(root, "tests", "Encspect.Tests", "Host/MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
         {
             foreach (Match m in WavPackBoundedCode().Matches(line))
             {
@@ -73,7 +73,7 @@ public partial class FindingCoverageTests
         var emitted = sources.SelectMany(path => MonkeysAudioCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
         Assert.True(emitted.Count > 25, $"Found only {emitted.Count} codes.");
 
-        var asserted = MonkeysAudioCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "MonkeysAudioFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        var asserted = MonkeysAudioCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/MonkeysAudio/MonkeysAudioFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "monkeys-audio"), "*.json"))
         {
             foreach (Match m in MonkeysAudioCode().Matches(File.ReadAllText(path)))
@@ -99,7 +99,7 @@ public partial class FindingCoverageTests
         var emitted = sources.SelectMany(path => TrueHdCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
         Assert.True(emitted.Count > 20, $"Found only {emitted.Count} codes.");
 
-        var asserted = TrueHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "TrueHdFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        var asserted = TrueHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/TrueHd/TrueHdFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "truehd"), "*.json"))
         {
             foreach (Match m in TrueHdCode().Matches(File.ReadAllText(path)))
@@ -128,7 +128,7 @@ public partial class FindingCoverageTests
         var emitted = sources.SelectMany(path => FlacCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
         Assert.True(emitted.Count > 40, $"Found only {emitted.Count} codes.");
 
-        var asserted = FlacCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "FlacFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        var asserted = FlacCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/Flac/FlacFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "flac"), "*.json"))
         {
             foreach (Match m in FlacCode().Matches(File.ReadAllText(path)))
@@ -149,10 +149,10 @@ public partial class FindingCoverageTests
 
     // Every code the WAV and AIFF parsers emit is listed by a fixture's manifest or raised by a crafted file of the fixture tests.
     [Fact]
-    public void EveryWavCodeIsAsserted() => CheckCodes("Encspect.Formats.Wav", "wav", WavCode(), "ChunkCraftedTests.cs");
+    public void EveryWavCodeIsAsserted() => CheckCodes("Encspect.Formats.Wav", "wav", WavCode(), "Formats/Wav/ChunkCraftedTests.cs");
 
     [Fact]
-    public void EveryAiffCodeIsAsserted() => CheckCodes("Encspect.Formats.Aiff", "aiff", AiffCode(), "ChunkCraftedTests.cs");
+    public void EveryAiffCodeIsAsserted() => CheckCodes("Encspect.Formats.Aiff", "aiff", AiffCode(), "Formats/Wav/ChunkCraftedTests.cs");
 
     private static void CheckCodes(string project, string fixtures, Regex code, string crafted)
     {
@@ -189,7 +189,7 @@ public partial class FindingCoverageTests
         Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
 
         var asserted = new HashSet<string>();
-        foreach (string file in new[] { "AlacCodecParserTests.cs", "MemoryTests.cs" })
+        foreach (string file in new[] { "Formats/Alac/AlacCodecParserTests.cs", "Host/MemoryTests.cs" })
         {
             asserted.UnionWith(AlacCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
         }
@@ -217,7 +217,7 @@ public partial class FindingCoverageTests
         Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
 
         var asserted = new HashSet<string>();
-        foreach (string file in new[] { "TtaFindingTests.cs", "TtaCodecParserTests.cs" })
+        foreach (string file in new[] { "Formats/Tta/TtaFindingTests.cs", "Formats/Tta/TtaCodecParserTests.cs" })
         {
             asserted.UnionWith(TtaCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
         }
@@ -244,7 +244,7 @@ public partial class FindingCoverageTests
         var emitted = sources.SelectMany(path => MatroskaCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
         Assert.True(emitted.Count > 40, $"Found only {emitted.Count} codes.");
 
-        var asserted = MatroskaTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "MatroskaFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        var asserted = MatroskaTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/Matroska/MatroskaFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "matroska"), "*.expected.json"))
         {
             foreach (Match m in MatroskaCode().Matches(File.ReadAllText(path)))
@@ -306,7 +306,7 @@ public partial class FindingCoverageTests
             }
         }
 
-        foreach (Match m in DtsHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "DtsHdTests.cs"))))
+        foreach (Match m in DtsHdCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/DtsHd/DtsHdTests.cs"))))
         {
             asserted.Add(m.Groups[1].Value);
         }
@@ -332,11 +332,11 @@ public partial class FindingCoverageTests
         // input each, the finding asserted present), or a finding a fixture's manifest lists (compared exactly), or one
         // of the codes named below, whose own test asserts it. A test that only asserts a code is absent does not count.
         string tests = Path.Combine(root, "tests", "Encspect.Tests");
-        string text = string.Concat(new[] { "AsfFindingTests.cs", "WmaFindingTests.cs" }.Select(name => File.ReadAllText(Path.Combine(tests, name))));
+        string text = string.Concat(new[] { "Formats/Asf/AsfFindingTests.cs", "Formats/Wma/WmaFindingTests.cs" }.Select(name => File.ReadAllText(Path.Combine(tests, name))));
         var asserted = Table().Matches(text).Select(m => m.Groups[1].Value).ToHashSet();
 
         // MemoryTests.Bounded asserts the code it is given is present, except where told not to expect it.
-        foreach (string line in File.ReadAllLines(Path.Combine(tests, "MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
+        foreach (string line in File.ReadAllLines(Path.Combine(tests, "Host/MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
         {
             foreach (Match m in BoundedCode().Matches(line))
             {
