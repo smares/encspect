@@ -11,10 +11,10 @@ it still serves the commit.
 
 The official Windows build of lossyWAV 1.4.2 (WINDOWS) is pinned by its SHA-256 and run by the workflow's Windows job on the
 same inputs (decision 9 of the design). It is attached to the Hydrogenaudio forum, which scripts cannot reach, so the lead
-downloads it by hand and puts it where CI can fetch it; until its SHA-256 and addresses are set, the job is skipped.
+downloaded it by hand into the private repository (downloads.private, with ENCSPECT_PRIVATE_TOKEN). The zip holds
+bin/32-Bit/lossyWAV.exe, bin/64-Bit/lossyWAV.exe, fftw.txt and gpl.txt; the job runs the 64-bit exe.
 
 Usage: python3 scripts/fixtures/lossywav_tool.py [directory]    builds lossywav in the directory and prints its path.
-       python3 scripts/fixtures/lossywav_tool.py --windows-pinned   prints true when the Windows build is pinned, else false.
        python3 scripts/fixtures/lossywav_tool.py --windows DIR      fetches the Windows build into DIR and prints the exe's path.
 """
 
@@ -32,37 +32,29 @@ REPOSITORY = "https://github.com/MoSal/lossywav-for-posix.git"
 COMMIT = "c3a22be0e1d8d516e3aa1761b6822ec68c06f920"
 NAME = f"lossywav-for-posix-{COMMIT[:12]}"
 
-# The official Windows build: the archive as the lead downloaded it, its SHA-256 and the addresses CI fetches it from.
-# The empty SHA-256 is the placeholder that keeps the Windows job skipped.
-WINDOWS = {"archive": "lossyWAV_1.4.2.zip", "sha256": "", "addresses": []}
-
-
-def windows_pinned():
-    return len(WINDOWS["sha256"]) == 64 and bool(WINDOWS["addresses"])
+# The official Windows build (955,107 bytes), in the private repository, and the exe of it the job runs.
+WINDOWS = {
+    "archive": "lossyWAV_v1.4.2.zip",
+    "sha256": "d5c1a9e17c9569b8fd30c28254c4ff7a7a7213783c7a55f448003cd3e720ffb1",
+    "addresses": [downloads.private("lossywav/lossyWAV_v1.4.2.zip")],
+    "exe": "bin/64-Bit/lossyWAV.exe",
+}
 
 
 def sources():
-    """For check_sources.py: the Windows build, once it is pinned."""
-    if windows_pinned():
-        yield WINDOWS["archive"], WINDOWS["sha256"], WINDOWS["addresses"]
+    """For check_sources.py: the Windows build (checked when ENCSPECT_PRIVATE_TOKEN is set)."""
+    yield WINDOWS["archive"], WINDOWS["sha256"], WINDOWS["addresses"]
 
 
 def fetch_windows(directory):
-    """The path of lossyWAV.exe, from the pinned archive (a zip, or the exe itself) fetched into directory."""
-    if not windows_pinned():
-        raise SystemExit("The Windows build of lossyWAV is not pinned yet (lossywav_tool.WINDOWS).")
+    """The path of the 64-bit lossyWAV.exe, from the pinned zip fetched into directory and checked by its SHA-256."""
     directory = pathlib.Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     archive = directory / WINDOWS["archive"]
     downloads.fetch(WINDOWS["addresses"], WINDOWS["sha256"], archive)
-    if archive.suffix.lower() == ".exe":
-        return archive
     with zipfile.ZipFile(archive) as files:
-        files.extractall(directory / "build")
-    found = sorted(p for p in (directory / "build").rglob("*") if p.name.lower() == "lossywav.exe")
-    if not found:
-        raise SystemExit(f"{archive} holds no lossyWAV.exe.")
-    return found[0]
+        files.extract(WINDOWS["exe"], directory / "build")
+    return directory / "build" / WINDOWS["exe"]
 
 
 def commit_problems(only=None):
@@ -99,9 +91,7 @@ def build(directory=None):
 
 def main():
     args = sys.argv[1:]
-    if args == ["--windows-pinned"]:
-        print("true" if windows_pinned() else "false")
-    elif args[:1] == ["--windows"] and len(args) == 2:
+    if args[:1] == ["--windows"] and len(args) == 2:
         print(fetch_windows(args[1]))
     else:
         print(build(args[0] if args else None))

@@ -94,25 +94,14 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-  # Whether the official Windows build is pinned (scripts/fixtures/lossywav_tool.py, WINDOWS): the lead supplies it by hand,
-  # and until its SHA-256 is set the Windows job is skipped.
-  pin:
-    name: Windows build pinned
-    runs-on: ubuntu-26.04
-    timeout-minutes: 5
-    outputs:
-      pinned: ${{ steps.pin.outputs.pinned }}
-    steps:
-      - uses: actions/checkout@v5
-      - id: pin
-        run: echo "pinned=$(python3 scripts/fixtures/lossywav_tool.py --windows-pinned)" >> "$GITHUB_OUTPUT"
-
   # The official Windows build of lossyWAV 1.4.2 on the Linux job's inputs: lossyWAV alone, every case, probe and fixture
-  # input, no codings. Its manifest is compared with the Linux one (the samples and the fact text).
+  # input, no codings. Its manifest is compared with the Linux one (the samples and the fact text). The build comes from the
+  # private repository, pinned by SHA-256 in scripts/fixtures/lossywav_tool.py (WINDOWS); the job runs only when started by
+  # hand, since a push cannot know whether the lead has uploaded it yet.
   windows:
     name: official build on windows-2025
-    needs: [generate, pin]
-    if: needs.pin.outputs.pinned == 'true'
+    needs: [generate]
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-2025
     timeout-minutes: 60
     steps:
@@ -126,6 +115,8 @@ jobs:
       - name: Fetch the pinned build
         id: lossywav
         shell: bash
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: |
           path=$(python scripts/fixtures/lossywav_tool.py --windows "$RUNNER_TEMP/lossywav-windows")
           sha256sum "$path"
