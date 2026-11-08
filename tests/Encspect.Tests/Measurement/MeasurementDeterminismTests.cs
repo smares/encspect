@@ -317,7 +317,7 @@ public class MeasurementDeterminismTests
     internal static bool IsBanned(string parent, string name) =>
         (DefinesArithmetic(parent) && BannedMath.Contains(name))
         || (DefinesArithmetic(parent) && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal)))
-        || (IsPlatformIntrinsic(parent) && (name.Contains("MultiplyAdd", StringComparison.Ordinal) || name.Contains("MultiplySubtract", StringComparison.Ordinal) || name.Contains("FusedMultiply", StringComparison.Ordinal) || name.Contains("Reciprocal", StringComparison.Ordinal)))
+        || (IsPlatformIntrinsic(parent) && (name.Contains("MultiplyAdd", StringComparison.Ordinal) || name.Contains("MultiplySubtract", StringComparison.Ordinal) || name.Contains("FusedMultiply", StringComparison.Ordinal) || name.Contains("Reciprocal", StringComparison.Ordinal) || name.StartsWith("HorizontalAdd", StringComparison.Ordinal) || name.StartsWith("HorizontalSubtract", StringComparison.Ordinal) || name.StartsWith("AddPairwise", StringComparison.Ordinal) || name.StartsWith("AddAcross", StringComparison.Ordinal) || name.StartsWith("DotProduct", StringComparison.Ordinal)))
         || (parent is "System.Numerics.Vector2" or "System.Numerics.Vector3" or "System.Numerics.Vector4" && name is "Length" or "LengthSquared" or "Distance" or "DistanceSquared")
         || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
         || ((parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal) || parent.StartsWith("System.Numerics.", StringComparison.Ordinal)) && name is "Sum" or "Dot")
@@ -387,6 +387,13 @@ public class MeasurementDeterminismTests
     private static string TypeName(MetadataReader md, TypeReferenceHandle handle)
     {
         TypeReference type = md.GetTypeReference(handle);
+
+        // A nested type (AdvSimd.Arm64, Sse41.X64) is its outer type's name and a plus sign before its own.
+        if (type.ResolutionScope.Kind == HandleKind.TypeReference)
+        {
+            return TypeName(md, (TypeReferenceHandle)type.ResolutionScope) + "+" + md.GetString(type.Name);
+        }
+
         return md.GetString(type.Namespace) + "." + md.GetString(type.Name);
     }
 
@@ -534,7 +541,7 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse41.DotProduct", "Sse3.HorizontalAdd", "Avx.HorizontalAdd", "Arm64.AddPairwise", "Arm64.AddAcross", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
@@ -594,6 +601,8 @@ internal static class BannedSamples
         sum += (wide + wide)[0];
         var f = System.Runtime.Intrinsics.Vector128.Create((float)x);
         sum += System.Runtime.Intrinsics.X86.Fma.MultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplyAddScalar(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplySubtract(f, f, f)[0];
+        sum += System.Runtime.Intrinsics.X86.Sse41.DotProduct(f, f, 0xFF)[0] + System.Runtime.Intrinsics.X86.Sse3.HorizontalAdd(f, f)[0] + System.Runtime.Intrinsics.X86.Avx.HorizontalAdd(System.Runtime.Intrinsics.Vector256.Create(f, f), System.Runtime.Intrinsics.Vector256.Create(f, f))[0];
+        sum += System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.AddPairwise(f, f)[0] + System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.AddAcross(System.Runtime.Intrinsics.Vector128.Create((byte)1))[0];
         sum += System.Runtime.Intrinsics.X86.Sse.Reciprocal(f)[0] + System.Runtime.Intrinsics.X86.Sse.ReciprocalSqrt(f)[0];
         sum += System.Runtime.Intrinsics.Arm.AdvSimd.FusedMultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.Arm.AdvSimd.ReciprocalEstimate(f)[0];
         sum += new System.Numerics.Vector3((float)x).Length() + System.Numerics.Vector2.Distance(new System.Numerics.Vector2(1), new System.Numerics.Vector2(2));

@@ -95,6 +95,8 @@ internal sealed class StreamMeasurer
     private readonly List<Span> _leading = [];
     private long _overflow;
     private long _leadingOverflow;
+    private readonly long[] _overflowBy = new long[WithholdReasons.Count];
+    private readonly long[] _leadingOverflowBy = new long[WithholdReasons.Count];
     private bool _hasCodedRange;
     private long _codedStart;
     private long _codedEnd;
@@ -319,6 +321,7 @@ internal sealed class StreamMeasurer
             {
                 _withheld[(int)reason] += end - first;
                 _overflow += end - first;
+                _overflowBy[(int)reason] += end - first;
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -416,6 +419,8 @@ internal sealed class StreamMeasurer
             _leading.AddRange(_pending);
             _pending.Clear();
             (_leadingOverflow, _overflow) = (_overflow, 0);
+            Array.Copy(_overflowBy, _leadingOverflowBy, _overflowBy.Length);
+            Array.Clear(_overflowBy);
         }
 
         if (block.Position < _received)
@@ -539,6 +544,7 @@ internal sealed class StreamMeasurer
         long withheld = Overlap(_pending, from, to, _withheld);
         _lost += Math.Max(0, to - from - withheld - _overflow);
         _overflow = 0;
+        Array.Clear(_overflowBy);
         _gaps++;
         Prune(_pending, to);
     }
@@ -1007,6 +1013,15 @@ internal sealed class StreamMeasurer
             trailing = Math.Max(0, _codedEnd - _received);
             leadingWithheld = leading > 0 ? Math.Min(leading, Overlap(_leading, _codedStart, _firstReceived, withheld) + _leadingOverflow) : 0;
             trailingWithheld = trailing > 0 ? Overlap(_pending, _received, _codedEnd, withheld) : 0;
+        }
+
+        if (leading == 0)
+        {
+            // Spans withheld before the first block that overflowed the list lie in positions no figure counts without a leading region.
+            for (int i = 0; i < withheld.Length; i++)
+            {
+                withheld[i] -= _leadingOverflowBy[i];
+            }
         }
 
         long trailingLost = Math.Max(0, trailing - trailingWithheld - _overflow);

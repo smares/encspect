@@ -117,11 +117,11 @@ internal static class Program
         }
     }
 
-    private static void Dump(string folder, string path, int input)
+    private static void Dump(string folder, string path, int ordinal)
     {
-        // Two inputs of the same name in different folders must not overwrite each other: the output names carry the input's number.
+        // Two inputs of the same name in different folders must not overwrite each other: the output names carry the input's number (ordinal).
         string name = Path.GetFileName(path);
-        string stem = $"{input:D4}-{name}";
+        string stem = $"{ordinal:D4}-{name}";
         var sinks = new List<DumpSink>();
         try
         {

@@ -17,10 +17,11 @@ Bounds, per channel:
                                2 LSB and the RMS at most 1 LSB (--max-lsb, --rms-lsb override).
 
 Frames that use random noise (AAC noise substitution, AC-3 dither, WMA noise coding) cannot match sample by sample. --bands EDGES (hertz, comma separated, the
-edges of the scalefactor or exponent bands) compares the energy of each band, averaged over every frame of --band-frame samples (Hann window), within --band-tolerance
+edges of the scalefactor or exponent bands) compares the energy of each band, averaged over windows of frames of --band-frame samples (Hann window), within --band-tolerance
 dB (0.5), for the bands whose energy on both sides is above --band-floor-db; use it with --no-sample-bounds to leave the sample bounds out. Two independent noise fills
 of equal energy differ in a single frame by several dB, so only the mean over many frames can show 0.5 dB: a band whose estimate has a standard deviation above a
-third of the tolerance (4.34 * sqrt(2) * 1.5 / sqrt(frames * bins) dB) is reported as inconclusive and not compared (--band-sigmas).
+third of the tolerance (4.34 * sqrt(2) * 1.5 / sqrt(frames * bins) dB) is reported as inconclusive and not compared (--band-sigmas); the window is the fewest frames that makes it conclusive,
+so that frames that are off are not diluted by the rest of the stream, and the worst window counts. A channel with no band compared fails.
 
 Exit status: 0 where every bound holds, 1 where one fails, 2 for a usage error or input the script cannot read. --json prints the result as JSON.
 """
@@ -252,50 +253,64 @@ def band_sigma_db(frames, bins):
     return math.inf if n == 0 else 4.343 * math.sqrt(2) * 1.5 / math.sqrt(n)
 
 
-def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, tolerance, floor, sigmas):
-    """Compares the energy of each band averaged over all the frames of the kept stretches (a frame never spans a jump).
+def window_frames(bins, tolerance, sigmas):
+    """The fewest frames whose mean band energy has a spread that fits `sigmas` times in the tolerance, for a band of `bins` bins."""
+    needed = (sigmas * 4.343 * math.sqrt(2) * 1.5 / tolerance) ** 2
+    return max(1, math.ceil(needed / max(1, bins)))
+
+
+def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, tolerance, floor, sigmas, window=None):
+    """Compares the energy of each band over windows of frames; a frame never spans a jump.
 
     Two decoders that fill a band with independent noise (AAC noise substitution, AC-3 dither, WMA noise coding) agree on the band's energy only on
-    average, not frame by frame; the figure compared is the mean over every frame. A band whose 'sigmas' times the spread of that mean exceeds the
-    tolerance cannot show a difference of the tolerance and is counted as inconclusive, not as compared."""
+    average, not frame by frame, so the figure compared is the mean over a window of frames: the shortest window whose spread fits `sigmas` times in
+    the tolerance (or `window` frames), so that a stretch of frames that is off is not diluted by the rest of a long stream. The frames are split
+    into as many windows of that length or more as fit, and the worst window counts. A band with fewer frames than one window cannot show a
+    difference of the tolerance and is inconclusive, not compared."""
     bits = FORMATS[fmt][1]
     scale = 1.0 if bits is None else float(1 << (bits - 1))
     result = []
     for a_channel, r_channel in zip(analyzer, reference):
-        total_a = total_r = None
-        count = 0
+        rows_a, rows_r, bins = [], [], []
         offset = 0
         for first, end in merge_adjacent(positions):
             n = end - first
-            frames_a, bins = band_powers(a_channel[offset:offset + n], rate, frame, edges)
-            frames_r, _ = band_powers([r / scale for r in r_channel[offset:offset + n]], rate, frame, edges)
+            fa, bins = band_powers(a_channel[offset:offset + n], rate, frame, edges)
+            fr, _ = band_powers([r / scale for r in r_channel[offset:offset + n]], rate, frame, edges)
             offset += n
-            if total_a is None:
-                total_a = [0.0] * len(bins)
-                total_r = [0.0] * len(bins)
-            for row_a, row_r in zip(frames_a, frames_r):
-                total_a = [t + v for t, v in zip(total_a, row_a)]
-                total_r = [t + v for t, v in zip(total_r, row_r)]
-                count += 1
+            rows_a += fa
+            rows_r += fr
+        count = len(rows_a)
         bands = []
         compared = outside = inconclusive = 0
         largest = 0.0
-        for i in range(len(total_a or [])):
-            ea, er = db(total_a[i] / count), db(total_r[i] / count)
-            sigma = band_sigma_db(count, bins[i])
-            entry = {"band": i, "frames": count, "analyzerDb": round(ea, 3), "referenceDb": round(er, 3), "sigmaDb": round(sigma, 3)}
-            if ea < floor or er < floor:
-                entry["status"] = "below the floor"
-            elif sigmas * sigma > tolerance:
+        for i, nbins in enumerate(bins):
+            size = window if window else window_frames(nbins, tolerance, sigmas)
+            windows = count // size
+            sigma = band_sigma_db(min(count, size), nbins)
+            entry = {"band": i, "frames": count, "windowFrames": size, "windows": windows, "sigmaDb": round(sigma, 3)}
+            if windows == 0:
                 entry["status"] = "inconclusive"
                 inconclusive += 1
             else:
-                d = abs(ea - er)
-                entry["status"] = "outside" if d > tolerance else "ok"
-                entry["differenceDb"] = round(d, 3)
-                compared += 1
-                largest = max(largest, d)
-                outside += d > tolerance
+                worst = 0.0
+                low = False
+                for w in range(windows):
+                    lo, hi = w * count // windows, (w + 1) * count // windows
+                    ea = db(sum(r[i] for r in rows_a[lo:hi]) / (hi - lo))
+                    er = db(sum(r[i] for r in rows_r[lo:hi]) / (hi - lo))
+                    if ea < floor or er < floor:
+                        low = True
+                        continue
+                    worst = max(worst, abs(ea - er))
+                if low and worst == 0.0:
+                    entry["status"] = "below the floor"
+                else:
+                    entry["status"] = "outside" if worst > tolerance else "ok"
+                    entry["differenceDb"] = round(worst, 3)
+                    compared += 1
+                    largest = max(largest, worst)
+                    outside += worst > tolerance
             bands.append(entry)
         result.append({"bandsCompared": compared, "bandsOutside": outside, "bandsInconclusive": inconclusive, "largestDifferenceDb": round(largest, 3), "bands": bands})
     return result
@@ -360,9 +375,9 @@ def run(args):
             del figure["passes"]
     if args.bands:
         edges = [float(x) for x in args.bands.split(",")]
-        bands = compare_bands(a_samples, r_samples, args.reference_format, positions, entry["sampleRate"], args.band_frame, edges, args.band_tolerance, args.band_floor_db, args.band_sigmas)
+        bands = compare_bands(a_samples, r_samples, args.reference_format, positions, entry["sampleRate"], args.band_frame, edges, args.band_tolerance, args.band_floor_db, args.band_sigmas, args.band_window)
         result["bands"] = {"toleranceDb": args.band_tolerance, "floorDb": args.band_floor_db, "channels": bands}
-        ok &= all(b["bandsOutside"] == 0 for b in bands)
+        ok &= all(b["bandsOutside"] == 0 and b["bandsCompared"] > 0 for b in bands)
     result["passes"] = ok
     return result, ok
 
@@ -400,6 +415,7 @@ def main(argv=None):
     parser.add_argument("--band-frame", type=int, default=1024, help="samples per frame of the band comparison, a power of two (default 1024)")
     parser.add_argument("--band-tolerance", type=float, default=BAND_TOLERANCE_DB)
     parser.add_argument("--band-floor-db", type=float, default=BAND_FLOOR_DB)
+    parser.add_argument("--band-window", type=int, help="frames in a window of the band comparison (default: the fewest whose spread fits --band-sigmas in the tolerance)")
     parser.add_argument("--band-sigmas", type=float, default=3.0, help="a band is compared only if this many standard deviations of its estimate fit in the tolerance (default 3)")
     parser.add_argument("--no-sample-bounds", action="store_true", help="compare the bands only")
     parser.add_argument("--json", action="store_true")

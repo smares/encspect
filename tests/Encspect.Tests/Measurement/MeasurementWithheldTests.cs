@@ -163,6 +163,30 @@ public class MeasurementWithheldTests
         Assert.Equal(199990L, m.SkippedSamples);
     }
 
+    [Fact]
+    public void OverflowedSpansBeforeTheFirstBlockWithoutACodedRangeCountNowhere()
+    {
+        StreamMeasurer measurer = Measurer();
+        for (int i = 0; i < 2000; i++)
+        {
+            measurer.Withhold(i * 20, 10, WithholdReason.AfterGap);
+        }
+
+        Write(measurer, 100000, 10);
+        Write(measurer, 200000, 10);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((0L, 0L, 99990L), (m.WithheldSamples, m.LeadingWithheldSamples, m.LostSamples));
+    }
+
+    [Fact]
+    public void ABadTrimIsAParserBugAlsoWhereNothingIsDecoded()
+    {
+        var parser = new TrimmingParser { First = 400, End = 100 };
+        Report report = new Analyzer([], [parser], [], []).Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions());
+        Assert.Contains(report.Findings, f => f.Code == "parse.failed");
+    }
+
     // Through the decode route.
 
     private sealed class WithholdingDecoder : IDecoder

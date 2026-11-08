@@ -22,7 +22,7 @@ public interface IDecodeSession
     // firstPosition and from endPosition on are Trimmed Samples, which the measurements count apart from lost and withheld samples and
     // leave out of their figures (docs/design/lossy-decoders.md, decision 8). The sink's PCM stays untrimmed. A parser calls it before the
     // Decode of the first frame that the leading trim reaches and of the first that the trailing trim reaches; a trim stated later only
-    // affects blocks written after it. Not calling it trims nothing. Ignored where nothing is decoded.
+    // affects blocks written after it. Not calling it trims nothing. Once a block past the end has been written the end can only stay or shrink. Throws ArgumentOutOfRangeException for a negative firstPosition or an endPosition before it, whether or not anything is decoded; that is a parser bug (parse.failed).
     void Trim(long firstPosition, long endPosition);
 
     // Ends the session, once. stored lists every checksum the stream stores, of either kind, with Stored set, and for

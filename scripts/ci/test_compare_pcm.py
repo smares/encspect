@@ -202,6 +202,30 @@ class BandTests(unittest.TestCase):
         self.assertGreaterEqual(bands["bandsInconclusive"], 1)
         self.assertEqual(bands["bands"][0]["status"], "inconclusive")
 
+    def test_one_frame_far_off_in_a_long_stream_is_not_diluted(self):
+        frames = 300
+        samples = noise(frames * 256, 20)
+        case = Case(self, [samples], [[0, len(samples)]])
+        reference = list(samples)
+        for i in range(150 * 256, 151 * 256):
+            reference[i] *= 10 ** 0.5
+        case.write_reference([reference])
+        code, result, _ = case.run("--bands", "0,12000", "--band-frame", "256", "--no-sample-bounds")
+        self.assertEqual(code, 1, result)
+        self.assertGreater(result["bands"]["channels"][0]["largestDifferenceDb"], 0.5)
+
+        case.write_reference([samples])
+        self.assertEqual(case.run("--bands", "0,12000", "--band-frame", "256", "--no-sample-bounds")[0], 0)
+
+    def test_a_run_where_every_band_is_inconclusive_fails(self):
+        samples = noise(4 * 256, 21)
+        case = Case(self, [samples], [[0, len(samples)]])
+        case.write_reference([[v * 2 for v in samples]])
+        code, result, _ = case.run("--bands", "0,12000", "--band-frame", "256", "--no-sample-bounds")
+        self.assertEqual(code, 1)
+        self.assertEqual(result["bands"]["channels"][0]["bandsCompared"], 0)
+        self.assertFalse(result["passes"])
+
     def test_a_tone_lands_in_the_band_that_holds_it(self):
         tone = [0.5 * math.sin(2 * math.pi * 5000 * i / 48000) for i in range(1024)]
         rows, _ = compare.band_powers(tone, 48000, 1024, [0, 3000, 8000, 24000])

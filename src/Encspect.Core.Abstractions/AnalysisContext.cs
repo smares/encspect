@@ -173,6 +173,8 @@ public abstract class AnalysisContext
 
         public void Trim(long firstPosition, long endPosition)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(firstPosition);
+            ArgumentOutOfRangeException.ThrowIfLessThan(endPosition, firstPosition);
         }
 
         public StreamVerification Finish(IReadOnlyList<ChecksumTally> stored)
