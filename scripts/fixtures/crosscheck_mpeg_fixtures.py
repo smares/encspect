@@ -1084,8 +1084,8 @@ def fixture_frames(manifest):
 # ID3v2 tag or in the last 1024 (GetLabels); without a label it names, EncSpot guesses from the habits of
 # the encoders of 2002 over the frames it reads (mp3data_string::guessenc); the analyzer names an
 # encoder only from a tag, a signature or habits that encodes with that encoder show every time
-# (docs/plan.md), so these stay differences. Hand-built frames come from no encoder, so EncSpot's
-# guess about them is not compared.
+# (docs/architecture.md, "Encoder and writer"), so these stay differences. Hand-built frames come from no
+# encoder, so EncSpot's guess about them is not compared.
 BLADE_AS_GOGO = ("Gogo (before 3.0)", "short blocks without scfsi or scalefactor scaling in plain stereo or mono at one bitrate name BladeEnc "
                  "in EncSpot only where the mean main_data_begin (its Av. Reservoir) is below 40 bytes and a frame is padded; these BladeEnc "
                  "encodes use the bit reservoir more (47 to 63 bytes)")

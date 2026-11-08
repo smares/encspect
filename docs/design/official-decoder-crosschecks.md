@@ -684,7 +684,7 @@ The project lead accepted every recommendation below on 2026-11-01.
    - fix the documentation and the comment with the result, in the same pull request;
    - if the probe shows the parser's handling is wrong (for example that the iTunSMPB-total finding compares at the wrong rate), the fix changes findings or goldens and goes to the lead as a `pending` item under this design's own rule.
    - Recommendation: both, as stated: text with the result, analyzer changes as pending items.
-3. **The plan's wording.** [`plan.md`](../plan.md#phase-3-continued), "Phase 3, continued", says "Dolby's decoders in Windows' Media Foundation and in macOS's Core Audio". Microsoft's own page calls its decoder Microsoft's implementation of Dolby Digital technology, and whose code Apple runs is not documented. Proposed wording: "the AC-3 and E-AC-3 decoders in Windows' Media Foundation (where a runner image has one) and in macOS's Core Audio", with "Docs say only what exists". Options: change it with this design, or after the probe. Recommendation: after the probe, with its inventory. (This design does not edit the plan.)
+3. **The plan's wording.** [`plan.md`](../plan.md), "Phase 3, continued" (now in [history.md](../history.md#phase-3-continued)), says "Dolby's decoders in Windows' Media Foundation and in macOS's Core Audio". Microsoft's own page calls its decoder Microsoft's implementation of Dolby Digital technology, and whose code Apple runs is not documented. Proposed wording: "the AC-3 and E-AC-3 decoders in Windows' Media Foundation (where a runner image has one) and in macOS's Core Audio", with "Docs say only what exists". Options: change it with this design, or after the probe. Recommendation: after the probe, with its inventory. (This design does not edit the plan.)
 4. **libvorbis's own granule handling.** The direct path switches it off (decision 2). Options: leave it off, or add a third run with the packets' real granule positions as a further witness at the trimmed stage. Recommendation: add the run; it costs one more child per Vorbis file.
 5. **Stale entries.** A stale `official-decoders.json` entry fails the test (as proposed), so every regenerated fixture needs a macOS and Windows run before its pull request passes. Alternative: a status `stale` that is listed in the test's output and does not fail. Recommendation: the non-failing status, with a list in the pull request description.
 6. **The statuses `noted` and `build-dependent`** are added in this design (`stale` with question 5). Options: keep them, or fold `noted` into `explained`. Recommendation: keep them.
@@ -731,12 +731,12 @@ The project lead accepted every recommendation below on 2026-11-01.
 
 ## Out of scope
 
-- Comparing decoded PCM: the analyzer has no lossy decoder yet; that waits for the lossy decoders under "Later" in the plan.
+- Comparing decoded PCM: the analyzer has no lossy decoder yet; that waits for the lossy decoders of 0.3 to 0.5 in the [plan](../plan.md#milestones).
 - Opus and Vorbis in Matroska and WebM, AAC and AC-3 in Matroska, and TTA in Matroska (`matroska/external-ffmpeg-tta.mka` and `external-mkvmerge-tta.mka`): neither Xiph's tools, libtta's program nor Core Audio read Matroska, and extracting the packets would add another tool's handling of the trimming fields.
 - Opus and other codecs in MP4 outside the AAC and AC-3 paths (`ffmpeg-cenc-opus.mp4` is encrypted anyway), and AAC in CAF (the analyzer has no CAF parser yet).
 - MP3 and MP2, which have more references than FFmpeg already (mpg123, madplay, minimp3); Speex, whose Xiph decoder `speexdec` is in the Ogg cross-check already; WMA, which has its check; the lossless formats, whose reference tools are their checks already.
 - The MPEG reference software of ISO/IEC 14496-5 for AAC: its license and build were not examined; a later step may add it.
-- AC-4, MPEG-H and the other formats of phase 5.
+- AC-4, MPEG-H and the other formats planned after 0.5.
 - Decrypting protected tracks whose key is not known: they have no reference. A test password the project knows (TTA's "secret") is not such a case.
 - Any change to the analyzer, until the project lead decides a difference.
 

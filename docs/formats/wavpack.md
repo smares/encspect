@@ -124,8 +124,8 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - WavPack hybrid correction data in Matroska (BlockAdditions, BlockAddIDType 1) is not read; the stream is reported from its main blocks.
 - WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
-- The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned: later, a separate item).
-- Finding the `.wvc` that belongs to a `.wv` (planned: later, needs host access to a companion file).
+- The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned in 0.4, a separate item).
+- Finding the `.wvc` that belongs to a `.wv` (planned in 0.4, needs host access to a companion file).
 
 ## Articles
 

@@ -12,7 +12,7 @@ public class DtsTests
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", name));
 
-    // Every other fixture sniffs 0, so DTS never competes for them (plan, "Format rollout"); the DTS fixtures are taken as DTS, or as MP4 when
+    // Every other fixture sniffs 0, so DTS never competes for them (architecture.md, "Format detection"); the DTS fixtures are taken as DTS, or as MP4 when
     // an MP4 file holds them, which DtsFixtureTests checks with each manifest's format.
     [Fact]
     public void NoOtherFormatsFileSniffsAsDts()

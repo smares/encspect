@@ -240,10 +240,10 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ## Not yet covered
 
-- Decoding WMA Lossless (phase 3, with the checksum-verifying decoders).
+- Decoding WMA Lossless (planned in 0.5, with the other WMA decoders).
 - The audio of any codec (no decoder is built).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
-- The contents of script commands and markers beyond their fields (planned: later, a separate item).
+- The contents of script commands and markers beyond their fields (planned in 0.4, a separate item).
 
 ## Articles
 
