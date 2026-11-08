@@ -120,7 +120,7 @@ Status: draft for the project lead. The lead resumed it on 2026-11-08 from the p
   - the changes of the count fall on that grid: 100% in the recordings and 96 to 100% in the synthetic signals;
   - the few changes off the grid are at the quiet ends of the tremolo, where a block of 32 samples has more zero bits by chance.
 - **Per channel:**
-  - at the default, the channels of a block often differ: the counts agree at 48 to 52% of the times in the recordings;
+  - at the default, the channels of a block often differ: the counts agree at 47 to 52% of the times in the recordings wherever most blocks have zeroed bits ("D'un vieux jardin" at every preset, the Goldberg variation at portable and extraportable);
   - with `--linkchannels` or `--midside` they agree at 100%, which the help text describes ("single bits-to-remove value for all channels").
 - **How many bits, by preset,** over every 32-sample block of both channels:
 
