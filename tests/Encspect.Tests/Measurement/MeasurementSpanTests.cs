@@ -70,7 +70,7 @@ public class MeasurementSpanTests
 
     // The definitions, written plainly: spans cut at the multiples of 32 of the stream's positions inside each segment, a count and a magnitude per span,
     // the rules for silent, short and thin spans, the changes, the grid and the times.
-    private sealed record Model(long[] Distribution, long Silent, long Thin, long Short, long Changes, int Grid, long OnGrid, long Times, long Equal);
+    private sealed record Model(long[] Distribution, long Silent, long Thin, long Short, long Changes, long Moments, int Grid, long OnGrid, long Times, long Equal);
 
     private static Model Measure(int bits, params Segment[] segments)
     {
@@ -78,6 +78,7 @@ public class MeasurementSpanTests
         long[] distribution = new long[33];
         long silent = 0, thin = 0, shortSpans = 0, changes = 0, times = 0, equal = 0;
         long[] phase = new long[2048];
+        long moments = 0;
         foreach (Segment segment in segments)
         {
             int length = segment.Channels[0].Length;
@@ -87,6 +88,7 @@ public class MeasurementSpanTests
                 long from = Math.Max(segment.Position, index << 5);
                 long to = Math.Min(segment.Position + length, (index + 1) << 5);
                 var counts = new List<int>();
+                bool moved = false;
                 for (int c = 0; c < channels; c++)
                 {
                     int or = 0;
@@ -119,11 +121,17 @@ public class MeasurementSpanTests
                         if (last[c] >= 0 && last[c] != count)
                         {
                             changes++;
-                            phase[(int)(index % 2048)]++;
+                            moved = true;
                         }
 
                         last[c] = count;
                     }
+                }
+
+                if (moved)
+                {
+                    moments++;
+                    phase[(int)(index % 2048)]++;
                 }
 
                 if (channels > 1 && !counts.Contains(-1))
@@ -134,13 +142,13 @@ public class MeasurementSpanTests
             }
         }
 
-        (int grid, long onGrid) = GridOf(phase, changes);
-        return new Model(distribution, silent, thin, shortSpans, changes, grid, onGrid, times, equal);
+        (int grid, long onGrid) = GridOf(phase, moments);
+        return new Model(distribution, silent, thin, shortSpans, changes, moments, grid, onGrid, times, equal);
     }
 
-    private static (int, long) GridOf(long[] phase, long changes)
+    private static (int, long) GridOf(long[] phase, long moments)
     {
-        if (changes < 20)
+        if (moments < 20)
         {
             return (0, 0);
         }
@@ -156,7 +164,7 @@ public class MeasurementSpanTests
 
             int m = Array.IndexOf(folded, folded.Max());
             long hits = folded[m] + folded[(m + n - 1) % n] + folded[(m + 1) % n];
-            if (hits * 20 >= changes * 19)
+            if (hits * 20 >= moments * 19)
             {
                 return (length, hits);
             }
@@ -171,7 +179,7 @@ public class MeasurementSpanTests
         Assert.Equal(model.Distribution.Sum(), spans.Distribution.Sum());
         Assert.Equal(model.Distribution.Sum(), spans.Spans);
         Assert.Equal((model.Silent, model.Thin, model.Short, model.Changes), (spans.SilentSpans, spans.ThinSpans, spans.ShortSpans, spans.Changes));
-        Assert.Equal((model.Grid, model.OnGrid), (spans.Grid, spans.ChangesOnGrid));
+        Assert.Equal((model.Moments, model.Grid, model.OnGrid), (spans.ChangeMoments, spans.Grid, spans.MomentsOnGrid));
         Assert.Equal((model.Times, model.Equal), (spans.Times, spans.TimesWithEqualCounts));
     }
 
@@ -217,7 +225,7 @@ public class MeasurementSpanTests
         LowBitsSpanFigures spans = Spans(24, 4096, Zeroed(2, 200_000, 512, 60_000, 11));
 
         Assert.Equal(512, spans.Grid);
-        Assert.Equal(spans.Changes, spans.ChangesOnGrid);
+        Assert.Equal(spans.ChangeMoments, spans.MomentsOnGrid);
         Assert.True(spans.Changes > 500);
         Assert.True(spans.SpansAboveLowBitsUnused > 0);
         Assert.InRange(spans.TimesWithEqualCounts * 100 / spans.Times, 5, 60);
@@ -382,6 +390,92 @@ public class MeasurementSpanTests
         // From a position inside a span, the first span is short and the rest are on the grid of 32.
         LowBitsSpanFigures offset = Spans(24, 4096, data, 8005);
         Assert.Equal(2, offset.ShortSpans);
+    }
+
+    private static void AssertSame(LowBitsSpanFigures expected, LowBitsSpanFigures actual)
+    {
+        Assert.Equal(expected.Distribution, actual.Distribution);
+        Assert.Equal(
+            [expected.Spans, expected.SilentSpans, expected.ThinSpans, expected.ShortSpans, expected.SpansAboveLowBitsUnused, expected.Changes, expected.ChangeMoments, expected.Grid, expected.MomentsOnGrid, expected.Times, expected.TimesWithEqualCounts],
+            [actual.Spans, actual.SilentSpans, actual.ThinSpans, actual.ShortSpans, actual.SpansAboveLowBitsUnused, actual.Changes, actual.ChangeMoments, actual.Grid, actual.MomentsOnGrid, actual.Times, actual.TimesWithEqualCounts]);
+    }
+
+    private static StreamMeasurer Measurer(int channels) => new(new PcmFormat(44100, channels, 24, SampleFormat.Integer), LevelsOnly, CancellationToken.None, _ => true);
+
+    private static void Feed(StreamMeasurer measurer, int[][] data, long position)
+    {
+        int channels = data.Length;
+        for (int start = 0; start < data[0].Length; start += 4096)
+        {
+            int n = Math.Min(4096, data[0].Length - start);
+            int[] planar = new int[channels * n];
+            for (int c = 0; c < channels; c++)
+            {
+                data[c].AsSpan(start, n).CopyTo(planar.AsSpan(c * n, n));
+            }
+
+            measurer.Write(new PcmBlock(position + start, n, channels, n, planar));
+        }
+    }
+
+    // The stream's own trim (IDecodeSession.Trim): the samples before the start are not measured, and the spans stand where they would if the stream began there.
+    [Fact]
+    public void ATrimmedStartMeasuresLikeAStreamThatBeginsThere()
+    {
+        int[][] data = Zeroed(2, 30_000, 512, 60_000, 21);
+        StreamMeasurer trimmed = Measurer(2);
+        trimmed.Trim(1005, long.MaxValue);
+        Feed(trimmed, data, 0);
+
+        AssertSame(Spans(24, 4096, [.. data.Select(c => c[1005..])], 1005), trimmed.Result(MeasurementStatus.Complete, null).Levels!.Spans!);
+    }
+
+    // Withheld output (a decoder holds it back) is a jump in the positions: the open span ends short and no change is counted across it.
+    [Fact]
+    public void WithheldOutputIsAJumpThatEndsTheOpenSpan()
+    {
+        int[][] data = Zeroed(2, 40_000, 512, 60_000, 22);
+        StreamMeasurer withheld = Measurer(2);
+        Feed(withheld, [.. data.Select(c => c[..20_010])], 0);
+        withheld.Withhold(20_010, 1000, WithholdReason.AfterGap);
+        Feed(withheld, [.. data.Select(c => c[21_010..])], 21_010);
+
+        LowBitsSpanFigures expected = Run(24, 4096, new Segment(0, [.. data.Select(c => c[..20_010])]), new Segment(21_010, [.. data.Select(c => c[21_010..])])).Levels!.Spans!;
+        AssertSame(expected, withheld.Result(MeasurementStatus.Complete, null).Levels!.Spans!);
+        Assert.True(expected.ShortSpans >= 2);
+    }
+
+    // One switch of bit usage at one time is one moment, however many channels change at it: no grid in any channel count.
+    [Theory]
+    [InlineData(2)]
+    [InlineData(20)]
+    [InlineData(24)]
+    [InlineData(32)]
+    public void OneSwitchInManyChannelsIsOneMomentAndNoGrid(int channels)
+    {
+        var data = new int[channels][];
+        for (int c = 0; c < channels; c++)
+        {
+            double[] noise = MeasurementSignals.Noise(120_000, (uint)(100 + c));
+            data[c] = [.. noise.Select((v, i) => i < 60_000 ? (int)(v * 4_000_000) & ~0xFF : (int)(v * 4_000_000))];
+        }
+
+        LowBitsSpanFigures spans = Spans(24, 4096, data);
+
+        Assert.Equal(channels, spans.Changes);
+        Assert.Equal(1, spans.ChangeMoments);
+        Assert.Equal(0, spans.Grid);
+        AssertEqual(Measure(24, new Segment(0, data)), spans);
+    }
+
+    // Bits above the declared width are no sample bits: a 16-bit stream of values that are multiples of 2^20 has only silent spans.
+    [Fact]
+    public void BitsBeyondTheDeclaredWidthAreNotCounted()
+    {
+        LevelFigures levels = Run(16, 4096, new Segment(0, [[.. Enumerable.Repeat(1 << 20, 64)]])).Levels!;
+
+        Assert.Equal(0, levels.Spans!.Spans);
+        Assert.Equal(2, levels.Spans.SilentSpans);
     }
 
     [Fact]

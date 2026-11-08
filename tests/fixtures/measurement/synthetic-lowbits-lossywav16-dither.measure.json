@@ -17,8 +17,8 @@
       "rows": {
         "unit": "dB",
         "valuesPerUnit": 10,
-        "combined": "sha256:a2356e861d3e76f521564659e33b984c18a892a4f42f935fb48aedf343a1d7e5",
-        "perChannel": ["sha256:d18ccf1d303b7d22dedc81a77ac1a0300a957e224c55b22edffac5c18b294c52", "sha256:1083831015565ca0b2a6aad1b7473c00577cf28fec5152a956c28f35e249982f"]
+        "combined": "sha256:ef9f5e46900001fc6a0b868b8a0bcbbc5fd14afa88b77bc17589b7538cb0fe4f",
+        "perChannel": ["sha256:09949e8dc8c116a0b2e69e6f9f22fe904656c2816885a4bfadf7fc96a3fcbcf9", "sha256:c12b14c7c5c1c49eeb842ebc914c35661840f9bcf3f7bcabec434989f671dbb9"]
       },
       "cutoff": {
         "isFound": false,
@@ -27,7 +27,7 @@
           "unit": "Hz"
         },
         "step": {
-          "value": 8.8,
+          "value": 8.9,
           "unit": "dB"
         },
         "framesShowing": 20,
@@ -41,7 +41,7 @@
             "unit": "Hz"
           },
           "step": {
-            "value": 5.1,
+            "value": 5.2,
             "unit": "dB"
           },
           "framesShowing": 20,
@@ -76,14 +76,14 @@
         "perChannel": [-39.2, -39.2]
       },
       "dcOffset": {
-        "value": -0.000029,
+        "value": -0.00001,
         "unit": "%",
-        "perChannel": [0.000005, -0.000029]
+        "perChannel": [-0.000004, -0.00001]
       },
       "dcOffsetLevel": {
-        "value": -130.7,
+        "value": -140,
         "unit": "dBFS",
-        "perChannel": [-146.8, -130.7]
+        "perChannel": [-147.5, -140]
       },
       "clipping": {
         "minimumRunLength": 3,
@@ -118,21 +118,21 @@
         ]
       },
       "zeroSamples": {
-        "value": 54,
+        "value": 57,
         "unit": "samples",
-        "perChannel": [451, 447]
+        "perChannel": [465, 483]
       },
       "bitDepth": {
         "lowBitsUnused": 0,
-        "highestMagnitude": 1037,
+        "highestMagnitude": 1038,
         "perChannel": [
           {
             "lowBitsUnused": 0,
-            "highestMagnitude": 1037
+            "highestMagnitude": 1038
           },
           {
             "lowBitsUnused": 0,
-            "highestMagnitude": 1037
+            "highestMagnitude": 1038
           }
         ]
       },
@@ -140,7 +140,7 @@
         "spanLength": 32,
         "spans": 2758,
         "silentSpans": 0,
-        "thinSpans": 141,
+        "thinSpans": 140,
         "shortSpans": 2,
         "distribution": [
           {
@@ -155,12 +155,13 @@
           "percent": 0
         },
         "changes": {
-          "count": 0
+          "count": 0,
+          "moments": 0
         },
         "grid": {
           "samples": null,
-          "changesOnGrid": 0,
-          "changes": 0
+          "momentsOnGrid": 0,
+          "moments": 0
         },
         "channelsWithEqualLowBitsUnused": {
           "count": 1379,
@@ -210,14 +211,14 @@
       "unit": "dB",
       "valueOffset": 200,
       "noData": 0,
-      "power": "sha256:7371818a9a7c47f6004966a6cee7da495faccb837210b80e8968c70df461af8f"
+      "power": "sha256:8c301267a89a38bb081e159ab4766a6944886977b1a380b917a6ff0a2ca31015"
     },
     "waveform": {
       "columns": 22,
       "channels": 2,
       "unit": "16-bit sample codes",
-      "minimum": "sha256:c250acf02ca81c5430c3b90087ee353b819aa1782ed665ceb80598b40d0f1efb",
-      "maximum": "sha256:c79299419bed7bf0cff5771fa8d2d1d5a820d8b5171d3ac5a47c2b594c68e4ab"
+      "minimum": "sha256:a2d2759c5476ced6558d2a4dfcc1f1c409bd40d10689a6bda354c29ab48f491e",
+      "maximum": "sha256:7a90a97b169c20a5d2d409e401556683ce755775405df23f6ac985a76bf0a8a4"
     }
   },
   "findings": []

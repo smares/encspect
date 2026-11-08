@@ -1107,6 +1107,7 @@ public static class ReportJsonWriter
         }
 
         writer.WriteNumber("count", spans.Changes);
+        writer.WriteNumber("moments", spans.ChangeMoments);
         writer.WriteEndObject();
         writer.WriteStartObject("grid");
         if (explain)
@@ -1123,8 +1124,8 @@ public static class ReportJsonWriter
             writer.WriteNull("samples");
         }
 
-        writer.WriteNumber("changesOnGrid", spans.ChangesOnGrid);
-        writer.WriteNumber("changes", spans.Changes);
+        writer.WriteNumber("momentsOnGrid", spans.MomentsOnGrid);
+        writer.WriteNumber("moments", spans.ChangeMoments);
         writer.WriteEndObject();
         if (channels > 1)
         {

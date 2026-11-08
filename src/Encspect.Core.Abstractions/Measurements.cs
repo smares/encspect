@@ -195,10 +195,13 @@ public sealed record LowBitsSpanFigures
     // The spans, neither silent, short nor thin, whose count differs from the same channel's last such span.
     public long Changes { get; init; }
 
-    // The grid of the changes in samples (a power of two from MinimumGrid to MaximumGrid), or 0 where none, with the changes within one span of one phase of it.
+    // The span positions (moments) at which some channel's count changes, however many channels change there.
+    public long ChangeMoments { get; init; }
+
+    // The grid of the changes in samples (a power of two from MinimumGrid to MaximumGrid), or 0 where none, with the moments within one span of the phase with the most moments.
     public int Grid { get; init; }
 
-    public long ChangesOnGrid { get; init; }
+    public long MomentsOnGrid { get; init; }
 
     // For a stream of several channels: the times (span positions at which no channel's span is silent) and those at which all channels have the same count.
     public long Times { get; init; }
@@ -210,7 +213,7 @@ public sealed record LowBitsSpanFigures
     // A span is thin when its magnitude is fewer than this many bits above its count.
     public const int ThinMargin = 4;
 
-    public const int MinimumChangesForGrid = 20;
+    public const int MinimumMomentsForGrid = 20;
 
     public const int MinimumGrid = 256;
 

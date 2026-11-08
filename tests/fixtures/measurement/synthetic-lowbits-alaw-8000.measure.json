@@ -1,0 +1,176 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 2000,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 8000,
+    "channels": 1,
+    "channelsMeasured": 1,
+    "channelLayout": ["front center"],
+    "spectrum": {
+      "fftSize": 1024,
+      "frames": 2,
+      "rowCount": 512,
+      "binsPerRow": 1,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:17de45b8b7e21dc0d629eafde0a0d34cc0a7b294d574ea9194a12249145d11ef",
+        "perChannel": ["sha256:17de45b8b7e21dc0d629eafde0a0d34cc0a7b294d574ea9194a12249145d11ef"]
+      },
+      "cutoff": {
+        "isFound": false,
+        "stepFrequency": {
+          "value": 3953,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 7.4,
+          "unit": "dB"
+        },
+        "framesShowing": 2,
+        "framesWithSignal": 2
+      },
+      "channelCutoffs": [
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 3953,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 7.4,
+            "unit": "dB"
+          },
+          "framesShowing": 2,
+          "framesWithSignal": 2
+        }
+      ]
+    },
+    "levels": {
+      "format": "integer",
+      "bitsPerSample": 16,
+      "samplePeak": {
+        "value": -8,
+        "unit": "dBFS"
+      },
+      "rms": {
+        "value": -11,
+        "unit": "dBFS"
+      },
+      "dcOffset": {
+        "value": -0.000122,
+        "unit": "%"
+      },
+      "dcOffsetLevel": {
+        "value": -118.3,
+        "unit": "dBFS"
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0
+      },
+      "digitalSilence": {
+        "atStart": 0,
+        "atEnd": 0
+      },
+      "zeroSamples": {
+        "value": 0,
+        "unit": "samples"
+      },
+      "bitDepth": {
+        "lowBitsUnused": 3,
+        "highestMagnitude": 13056
+      },
+      "lowBitsPerSpan": {
+        "spanLength": 32,
+        "spans": 63,
+        "silentSpans": 0,
+        "thinSpans": 0,
+        "shortSpans": 1,
+        "distribution": [
+          {
+            "lowBitsUnused": 3,
+            "spans": 37
+          },
+          {
+            "lowBitsUnused": 4,
+            "spans": 25
+          },
+          {
+            "lowBitsUnused": 6,
+            "spans": 1
+          }
+        ],
+        "spansAboveLowBitsUnused": {
+          "count": 26,
+          "of": 63,
+          "unit": "spans",
+          "percent": 41.3
+        },
+        "changes": {
+          "count": 40,
+          "moments": 40
+        },
+        "grid": {
+          "samples": null,
+          "momentsOnGrid": 0,
+          "moments": 40
+        }
+      }
+    },
+    "loudness": {
+      "channelWeights": [1],
+      "integratedLoudness": {
+        "absence": "tooShort",
+        "unit": "LUFS"
+      },
+      "loudnessRange": {
+        "absence": "tooShort",
+        "unit": "LU"
+      },
+      "maximumMomentaryLoudness": {
+        "absence": "tooShort",
+        "unit": "LUFS"
+      },
+      "maximumShortTermLoudness": {
+        "absence": "tooShort",
+        "unit": "LUFS"
+      },
+      "gatingBlocks": {
+        "total": 0,
+        "aboveAbsoluteGate": 0,
+        "aboveRelativeGate": 0
+      }
+    },
+    "truePeak": {
+      "oversampling": 4,
+      "maximumTruePeakLevel": {
+        "value": -7.9,
+        "unit": "dBTP"
+      }
+    },
+    "spectrogram": {
+      "columns": 4,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 512,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:9b2fd7a0f1959fda7a6bc3f1dc79a9abb645a0f48162533dc4110f44183a2da1"
+    },
+    "waveform": {
+      "columns": 4,
+      "channels": 1,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:832f88c8fd4a4af2d7dacb9e22bfb8fc3837687bae3ae807d18857ee584317f2",
+      "maximum": "sha256:1c44e12b5e923e5317a8c1ba95eb43c809022e935b391c04c15e8a1ca289c8ae"
+    }
+  },
+  "findings": []
+}

@@ -74,7 +74,7 @@ public static class MeasurementText
 
     public const string ChangesOfLowBitsUnusedDescription = "The spans, neither silent, short (fewer than 32 samples) nor thin, whose count differs from the count of the same channel's previous such span. A gap in the decoded positions ends the comparison.";
 
-    public const string GridOfTheChangesDescription = "The largest power of two from 256 to 65,536 samples such that at least 95% of the changes fall within one span of one phase of it, given at least 20 changes; none otherwise. The phase is free, so a stream cut off its grid keeps it. The 20 changes, the 95% and the range are conventions of this analysis.";
+    public const string GridOfTheChangesDescription = "The largest power of two from 256 to 65,536 samples such that at least 95% of the moments (the span positions at which some channel's count changes) fall within one span of the phase with the most moments, given at least 20 moments; none otherwise. The phase is free, so a stream cut off its grid keeps it. The 20 moments, the 95% and the range are conventions of this analysis.";
 
     public const string ChannelsWithEqualLowBitsUnusedDescription = "The share of the times at which no channel's span is silent and every channel has the same count of unused low bits. It is given for streams of several channels.";
 
@@ -286,12 +286,12 @@ public static class MeasurementText
         }
 
         lines.Add(new MeasurementLine(MeasurementFigure.SpansAboveLowBitsUnused, "Spans Above the Stream's Low Bits Unused", $"{Share(spans.SpansAboveLowBitsUnused, spans.Spans)} ({Grouped(spans.SpansAboveLowBitsUnused)} of {Plural(spans.Spans, "span", "spans")})", SpansAboveLowBitsUnusedDescription, LowBitsPerSpanTopic));
-        lines.Add(new MeasurementLine(MeasurementFigure.ChangesOfLowBitsUnused, "Changes of Low Bits Unused", Plural(spans.Changes, "change", "changes"), ChangesOfLowBitsUnusedDescription, LowBitsPerSpanTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.ChangesOfLowBitsUnused, "Changes of Low Bits Unused", $"{Plural(spans.Changes, "change", "changes")} (at {Plural(spans.ChangeMoments, "moment", "moments")})", ChangesOfLowBitsUnusedDescription, LowBitsPerSpanTopic));
         string grid = spans.Grid != 0
-            ? $"{Plural(spans.Grid, "sample", "samples")} ({Grouped(spans.ChangesOnGrid)} of {Plural(spans.Changes, "change", "changes")} on it)"
-            : spans.Changes < LowBitsSpanFigures.MinimumChangesForGrid
-                ? $"none (fewer than {LowBitsSpanFigures.MinimumChangesForGrid} changes)"
-                : "none (no grid from 256 to 65,536 samples holds 95% of the changes)";
+            ? $"{Plural(spans.Grid, "sample", "samples")} ({Grouped(spans.MomentsOnGrid)} of {Plural(spans.ChangeMoments, "moment", "moments")} on it)"
+            : spans.ChangeMoments < LowBitsSpanFigures.MinimumMomentsForGrid
+                ? $"none (fewer than {LowBitsSpanFigures.MinimumMomentsForGrid} moments with a change)"
+                : "none (no grid from 256 to 65,536 samples holds 95% of the moments with a change)";
         lines.Add(new MeasurementLine(MeasurementFigure.GridOfTheChanges, "Grid of the Changes", grid, GridOfTheChangesDescription, LowBitsPerSpanTopic));
         if (channels > 1)
         {

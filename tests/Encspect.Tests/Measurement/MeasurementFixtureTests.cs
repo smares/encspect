@@ -357,11 +357,11 @@ public class MeasurementFixtureTests
         long[] distribution = [.. built.GetProperty("distribution").EnumerateArray().Select(e => e.GetInt64())];
         Assert.True(distribution.AsSpan().SequenceEqual(actual.Distribution.ToArray()), $"{name}: distribution {string.Join(' ', actual.Distribution)}, built {string.Join(' ', distribution)}");
         Assert.Equal(
-            [built.GetProperty("spans").GetInt64(), built.GetProperty("silent_spans").GetInt64(), built.GetProperty("thin_spans").GetInt64(), built.GetProperty("spans_above_low_bits_unused").GetInt64()],
-            [actual.Spans, actual.SilentSpans, actual.ThinSpans, actual.SpansAboveLowBitsUnused]);
+            [built.GetProperty("spans").GetInt64(), built.GetProperty("silent_spans").GetInt64(), built.GetProperty("thin_spans").GetInt64(), built.GetProperty("short_spans").GetInt64(), built.GetProperty("spans_above_low_bits_unused").GetInt64()],
+            [actual.Spans, actual.SilentSpans, actual.ThinSpans, actual.ShortSpans, actual.SpansAboveLowBitsUnused]);
         Assert.Equal(
-            [built.GetProperty("changes").GetInt64(), built.GetProperty("grid").GetInt64(), built.GetProperty("changes_on_grid").GetInt64()],
-            [actual.Changes, actual.Grid, actual.ChangesOnGrid]);
+            [built.GetProperty("changes").GetInt64(), built.GetProperty("change_moments").GetInt64(), built.GetProperty("grid").GetInt64(), built.GetProperty("moments_on_grid").GetInt64()],
+            [actual.Changes, actual.ChangeMoments, actual.Grid, actual.MomentsOnGrid]);
         Assert.Equal(
             [built.GetProperty("times").GetInt64(), built.GetProperty("times_with_equal_counts").GetInt64()],
             [actual.Times, actual.TimesWithEqualCounts]);

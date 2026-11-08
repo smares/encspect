@@ -1,5 +1,6 @@
 {
   "goldens": ["tests/fixtures/measurement/"],
+  "reason": "lossyWAV PR 2 adds levels.lowBitsPerSpan to every integer stream; its grid counts moments (span positions with a change), by the lead's amendment of decision 6 of 2026-11-08, so the moments and moments on grid are part of the new object.",
   "added": [
     {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"}
   ]

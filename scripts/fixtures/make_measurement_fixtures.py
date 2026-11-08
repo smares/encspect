@@ -433,9 +433,9 @@ def spans_built(channels, rate, bits):
     r = lf.figures_of(lf.pcm_of(channels, rate, bits))
     distribution = [r["distribution"].get(z, 0) for z in range(max(r["distribution"]) + 1)] if r["distribution"] else []
     return {"stream": {"low_bits_unused": r["lowBitsUnused"]}, "spans": {
-        "spans": r["spans"], "silent_spans": r["silentSpans"], "thin_spans": r["thinSpans"], "distribution": distribution,
-        "spans_above_low_bits_unused": r["spansAboveLowBitsUnused"], "changes": r["changes"], "grid": r["grid"] or 0,
-        "changes_on_grid": r["changesOnGrid"] or 0, "times": r["times"], "times_with_equal_counts": r["timesWithEqualCounts"]}}
+        "spans": r["spans"], "silent_spans": r["silentSpans"], "thin_spans": r["thinSpans"], "short_spans": r["shortSpans"], "distribution": distribution,
+        "spans_above_low_bits_unused": r["spansAboveLowBitsUnused"], "changes": r["changes"], "change_moments": r["changeMoments"], "grid": r["grid"] or 0,
+        "moments_on_grid": r["momentsOnGrid"] or 0, "times": r["times"] or 0, "times_with_equal_counts": r["timesWithEqualCounts"] or 0}}
 
 
 def add_lowbits():
@@ -479,9 +479,25 @@ def add_lowbits():
             for i in range(start, min(2 * rate, start + 4096)):
                 blocks[c][i] = (blocks[c][i] >> k) << k
     build("other-4096", "A noise-floor signal of 2 s in 24 bits with a count of 6 to 12 low bits zeroed per block of 4,096 samples and channel, as another tool might: its grid is 4,096.", blocks, 24)
+    alaw_file = (ROOT / "tests" / "fixtures" / "wav" / "external-alaw-mono-8000.wav").read_bytes()
+    at = alaw_file.index(b"data")
+    codes = alaw_file[at + 8:at + 8 + int.from_bytes(alaw_file[at + 4:at + 8], "little")]
+
+    def expand(a):
+        # G.711 A-law to 16-bit linear.
+        a ^= 0x55
+        t = (a & 0xF) << 4
+        seg = (a & 0x70) >> 4
+        t = t + 8 if seg == 0 else (t + 0x108) << (seg - 1) if seg > 1 else t + 0x108
+        return t if a & 0x80 else -t
+
+    add("lowbits-alaw-8000", "The A-law fixture wav/external-alaw-mono-8000.wav expanded to 16 bits: A-law's step grows with the level, so the count follows the level of each span (40 changes) and has no grid.",
+        [[expand(c) for c in codes]], 8000, 16, dict(unspecified, levels=spans_built([[expand(c) for c in codes]], 8000, 16)))
     gain = 0.9440608762859234
     build("lossywav-gain", "The output of lossyWAV after a gain of -0.5 dB, rounded: the pattern is gone.", [[math.floor(v * gain + 0.5) for v in c] for c in lossy], 24)
-    build("lossywav16-dither", "16-bit audio (the lossyWAV run of the 16-bit noise-floor fixture) with TPDF dither of one least significant bit.",
+    build("lossywav-dither", "The output of lossyWAV (the 24-bit noise-floor fixture) with TPDF dither of one least significant bit: the zeroed bits are gone.",
+          [[v + tpdf(2) for v in c] for c in lossy], 24)
+    build("lossywav16-dither", "16-bit audio with TPDF dither of one least significant bit (the lossyWAV run of the 16-bit noise-floor fixture removed no bit, so this is dither on 16-bit audio).",
           [[v + tpdf(2) for v in c] for c in lossy16], 16)
     join = 22016 + 100
     build("lossywav-joined", "Two outputs of lossyWAV joined with the second shifted by 100 samples against the grid of the first: two phases, so no grid, while the changes stay.",

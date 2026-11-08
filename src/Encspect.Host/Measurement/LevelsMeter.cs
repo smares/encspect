@@ -41,9 +41,11 @@ internal sealed class LevelsMeter
     private const int PhaseCount = LowBitsSpanFigures.MaximumGrid / SpanLength;
     private const byte SilentCode = 255;
     private const byte DisagreeCode = 254;
-    private readonly long[] _distribution = new long[33];
-    private readonly long[] _phase = new long[PhaseCount];
-    private byte[] _codes = new byte[(MaxPiece / SpanLength) + 4];
+    private readonly long[] _distribution;
+    private readonly long[] _phase;
+    private byte[] _codes;
+    private byte[] _moved;
+    private readonly int _mask;
     private long _spanIndex;
     private int _need = SpanLength;
     private int _have;
@@ -51,6 +53,7 @@ internal sealed class LevelsMeter
     private long _thinSpans;
     private long _shortSpans;
     private long _changes;
+    private long _moments;
     private long _times;
     private long _equalTimes;
 
@@ -65,6 +68,13 @@ internal sealed class LevelsMeter
         _format = format;
         _isFloat = format != SampleFormat.Integer;
         _bits = Math.Clamp(bitsPerSample, 1, 32);
+        _mask = _bits >= 32 ? -1 : (1 << _bits) - 1;
+
+        // The state of the spans is allocated for integers only, which is what EstimateBytes counts.
+        _distribution = _isFloat ? [] : new long[33];
+        _phase = _isFloat ? [] : new long[PhaseCount];
+        _codes = _isFloat ? [] : new byte[(MaxPiece / SpanLength) + 4];
+        _moved = _isFloat ? [] : new byte[(MaxPiece / SpanLength) + 4];
         _high = _bits >= 32 ? int.MaxValue : (1 << (_bits - 1)) - 1;
         _low = _bits >= 32 ? int.MinValue : -(1 << (_bits - 1));
 
@@ -80,7 +90,7 @@ internal sealed class LevelsMeter
         if (format == SampleFormat.Integer)
         {
             // The distribution and the phase counters of the spans, and the codes of one piece's spans for the channels' agreement.
-            bytes += (8L * (33 + PhaseCount)) + (MaxPiece / SpanLength) + 4;
+            bytes += (8L * (33 + PhaseCount)) + (2L * ((MaxPiece / SpanLength) + 4));
         }
 
         if (channels > 1)
@@ -237,6 +247,7 @@ internal sealed class LevelsMeter
         }
 
         int closed = 0;
+        long firstIndex = _spanIndex;
         if (length >= _need)
         {
             int rest = length - _need;
@@ -254,6 +265,17 @@ internal sealed class LevelsMeter
         if (_channels.Length > 1)
         {
             Agree(closed);
+        }
+
+        // A moment: a span position at which some channel's count changed, however many channels did.
+        for (int i = 0; i < closed; i++)
+        {
+            if (_moved[i] != 0)
+            {
+                _moments++;
+                _phase[(int)((firstIndex + i) & (PhaseCount - 1))]++;
+                _moved[i] = 0;
+            }
         }
     }
 
@@ -297,6 +319,7 @@ internal sealed class LevelsMeter
         if (_codes.Length < (samples.Length / SpanLength) + 4)
         {
             _codes = new byte[(samples.Length / SpanLength) + 4];
+            _moved = new byte[(samples.Length / SpanLength) + 4];
         }
 
         int or = state.SpanOr;
@@ -339,6 +362,8 @@ internal sealed class LevelsMeter
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void CloseSpan(int channel, ChannelState state, long index, int have, int or, int magnitude, int slot)
     {
+        // Bits beyond the declared width (a decoder that does not clamp) are not samples' bits.
+        or &= _mask;
         byte code;
         if (or == 0)
         {
@@ -361,7 +386,7 @@ internal sealed class LevelsMeter
                 if (state.LastCount >= 0 && state.LastCount != count)
                 {
                     _changes++;
-                    _phase[(int)(index & (PhaseCount - 1))]++;
+                    _moved[slot] = 1;
                 }
 
                 state.LastCount = count;
@@ -659,7 +684,7 @@ internal sealed class LevelsMeter
             }
         }
 
-        (int grid, long onGrid) = FindGrid(_phase, _changes);
+        (int grid, long onGrid) = FindGrid(_phase, _moments);
         return new LowBitsSpanFigures
         {
             Spans = spans,
@@ -669,20 +694,21 @@ internal sealed class LevelsMeter
             Distribution = [.. _distribution.Take(highest + 1)],
             SpansAboveLowBitsUnused = above,
             Changes = _changes,
+            ChangeMoments = _moments,
             Grid = grid,
-            ChangesOnGrid = onGrid,
+            MomentsOnGrid = onGrid,
             Times = _times,
             TimesWithEqualCounts = _equalTimes,
         };
     }
 
-    // The largest power of two from MinimumGrid to MaximumGrid samples at one phase of which, within one span either side, at least 95% of the changes
-    // fall (hits * 20 >= changes * 19), given MinimumChangesForGrid changes; (0, 0) where none does. The phase counters are indexed by the span's
+    // The largest power of two from MinimumGrid to MaximumGrid samples at the phase with the most moments, within one span either side of which at least 95% of the moments
+    // fall (hits * 20 >= moments * 19), given MinimumMomentsForGrid moments (span positions at which some channel's count changes); (0, 0) where none does. The phase counters are indexed by the span's
     // position modulo MaximumGrid, so a grid of n spans folds them n at a time.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    internal static (int Grid, long Hits) FindGrid(ReadOnlySpan<long> phase, long changes)
+    internal static (int Grid, long Hits) FindGrid(ReadOnlySpan<long> phase, long moments)
     {
-        if (changes < LowBitsSpanFigures.MinimumChangesForGrid)
+        if (moments < LowBitsSpanFigures.MinimumMomentsForGrid)
         {
             return (0, 0);
         }
@@ -703,7 +729,7 @@ internal sealed class LevelsMeter
             }
 
             long hits = bestSum + Folded(phase, n, (best + n - 1) % n) + Folded(phase, n, (best + 1) % n);
-            if (hits * 20 >= changes * 19)
+            if (hits * 20 >= moments * 19)
             {
                 return (length, hits);
             }
