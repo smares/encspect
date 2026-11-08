@@ -536,7 +536,7 @@ def run_tta(args):
 # ---- the AAC run -----------------------------------------------------------------------------------------------------
 
 AAC_EXTENSIONS = probe.AAC_EXTENSIONS | {".adts", ".mov"}
-AAC_FOLDERS = ("aac", "adts", "apple", "mp4")
+AAC_FOLDERS = ("aac", "aac/adts", "aac/apple", "mp4")
 NEEDS_MORE_BITS = "0x1002"
 
 

@@ -6,7 +6,7 @@ internal static class Fixtures
 
     public static string Mpeg(string name) => Path.Combine(Directory, "mpeg", name);
 
-    public static string Stats(string name) => Path.Combine(Directory, "stats", name);
+    public static string Stats(string name) => Path.Combine(Directory, "mpeg", "stats", name);
 
     public static string Aac(string name) => Path.Combine(Directory, "aac", name);
 

@@ -35,7 +35,7 @@ FIXTURE_SCRIPTS = "scripts/fixtures"
 AREAS = {
     "mpeg-crosscheck": {
         "projects": ["Encspect.Formats.Mpeg", "Encspect.Tags.Id3", "Encspect.Tags.Ape", "Encspect.Tags.Lyrics3"],
-        "fixtures": ["mpeg", "layer2", "layer3", "vbr", "stats", "tags", "collisions"],
+        "fixtures": ["mpeg", "tags"],
         "scripts": ["crosscheck_mpeg_fixtures.py", "conformance_mpeg_audio.py", "check_mp3pro_samples.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/*.php", "scripts/fixtures/make_*mpeg*", "scripts/fixtures/make_layer*",
                   "scripts/fixtures/make_vbr*", "scripts/fixtures/make_stats*", "scripts/fixtures/make_*tag*", "scripts/fixtures/stream_stats.py",
@@ -43,7 +43,7 @@ AREAS = {
     },
     "mp4-crosscheck": {
         "projects": ["Encspect.Formats.Mp4", "Encspect.Formats.Aac"],
-        "fixtures": ["mp4", "adts", "aac", "apple", "alac"],
+        "fixtures": ["mp4", "aac", "alac"],
         "scripts": ["crosscheck_mp4_fixtures.py", "check_usac_samples.py", "check_sbr_samples.py", "check_aac_tables.py", "dashif_systems.py", "gpac_tool.py"],
         "globs": ["scripts/fixtures/make_mp4*", "scripts/fixtures/aac_*", "scripts/fixtures/make_*aac*", "scripts/fixtures/make_*protection*",
                   "tests/conformance/usac-samples.json", "tests/conformance/sbr-samples.json"],

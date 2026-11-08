@@ -175,7 +175,7 @@ Effect: no existing golden report, test or conformance figure changes; the fixtu
 
 ### Checks
 
-- Golden reports and manifests of `tests/fixtures/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
+- Golden reports and manifests of `tests/fixtures/mpeg/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
 - The 35 ISO/IEC 13818-4 conformance streams: `python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer <encspect>` (downloads them; test08, test18, test19 and test20 use dynamic crosstalk, test09, test15 and test16 prediction, test04 and test13 phantom coding, test06 and test07 the second programme). For test18 the analyzer must verify 27 of 27 frames.
 - mctoolamed as a black box: the same script checks that it decodes every multichannel stream without a CRC error; it runs no Encspect code.
 - Record the tables' sources (13818-3 and the conformance check) in [`docs/development.md`](../development.md), as [`CLAUDE.md`](../../CLAUDE.md) asks for format tables.
@@ -204,7 +204,7 @@ This lookup gives the same table as the removed code for every sampling frequenc
 
 ### Checks
 
-- `tests/fixtures/layer2/table-b2a` to `table-b2d`, `table-mpeg2-*`, `free-format-*` and every other Layer II golden (the "Bit Allocation" node's value names the table), through `MpegFixtureTests` and the golden comparison.
+- `tests/fixtures/mpeg/layer2/table-b2a` to `table-b2d`, `table-mpeg2-*`, `free-format-*` and every other Layer II golden (the "Bit Allocation" node's value names the table), through `MpegFixtureTests` and the golden comparison.
 - `scripts/fixtures/stream_stats.py` uses the writer's `table_for` for the statistics fixtures; `python3 scripts/fixtures/make_layer2_fixtures.py` must regenerate the committed fixtures byte for byte.
 - `crosscheck_mpeg_fixtures.py` (ffprobe, madplay, mpg123 and mp3guessenc decode the fixtures).
 
@@ -296,7 +296,7 @@ Run `python3 scripts/fixtures/crosscheck_mpeg_fixtures.py` (needs mpg123, ffprob
 
 These failed while the members were stubbed and pass with the rewrite:
 
-- Every Layer II fixture and golden: `tests/fixtures/layer2`, the Layer II files in `tests/fixtures/stats` and `mpeg`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
+- Every Layer II fixture and golden: `tests/fixtures/mpeg/layer2`, the Layer II files in `tests/fixtures/mpeg/stats` and `mpeg`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
 - The 11 goldens with "Settings Match".
 - `make_layer2_fixtures.py`, `stream_stats.py` and `conformance_mpeg_audio.py --analyzer` (35 streams, no problem). `crosscheck_mpeg_fixtures.py` needs tools that CI installs.
 
