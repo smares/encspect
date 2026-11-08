@@ -9,7 +9,7 @@ Encspect ships two programs, the command line tool `encspect` and the GUI `encsp
 - **What follows:**
   - nothing that belongs to one front end goes below it: no UI types, dialogs, settings, caches or console output in the host, Core.Abstractions or a parser;
   - front ends reach the analysis only through the host's public API (`Analyzer`, `Report`, the writers, the topic library), and add nothing to it that another front end could not use.
-- **Not planned yet:** offering the library. It would take NuGet packages, a deliberately public API under semantic versioning with an API-compatibility check in CI, and a contract declared stable once the milestones stop extending it. The options are below.
+- **Not planned yet:** offering the library. It would take NuGet packages, a deliberately public API under semantic versioning with an API-compatibility check in CI, and a contract declared stable once the milestones stop extending it (the options below).
 - **The contract** was settled at Gate 1 ([history.md](history.md#gates-in-detail)); the result model still grows with the formats, so it is not declared stable yet.
 
 ## Today: the command line and its JSON
