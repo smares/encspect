@@ -304,9 +304,19 @@ public static class MeasurementText
             ? Counts.Of(m.Channels, "channel", "channels")
             : $"{Counts.Of(m.Channels, "channel", "channels")} ({m.ChannelsMeasured} measured)";
         string text = $"{duration}{(isLossy ? " (lossy stream)" : string.Empty)} of {channels}";
-        if (m.Gaps > 0)
+        if (m.Gaps > 0 && (m.LostSamples > 0 || m.WithheldSamples == 0))
         {
             text += $"; {Counts.Of(m.Gaps, "gap", "gaps")} skipped {Counts.Of(m.LostSamples, "sample", "samples")}";
+        }
+
+        if (m.WithheldSamples > 0)
+        {
+            text += $"; {Counts.Of(m.WithheldSamples, "sample", "samples")} withheld ({WithheldReasonsText(m)})";
+        }
+
+        if (m.TrimmedSamples > 0)
+        {
+            text += $"; {Counts.Of(m.TrimmedSamples, "sample", "samples")} trimmed";
         }
 
         return m.Status switch
@@ -316,6 +326,21 @@ public static class MeasurementText
             MeasurementStatus.FormatChanged => text + "; measuring stopped where the format of the decoded blocks changed",
             _ => text,
         };
+    }
+
+    // The reasons of the withheld samples: the one reason alone, or each with its count.
+    private static string WithheldReasonsText(StreamMeasurements m)
+    {
+        var parts = new List<string>();
+        for (int i = 0; i < WithholdReasons.Count; i++)
+        {
+            if (m.WithheldByReason[(WithholdReason)i] > 0)
+            {
+                parts.Add(string.Create(CultureInfo.InvariantCulture, $"{m.WithheldByReason[(WithholdReason)i]} {WithholdReasons.Text((WithholdReason)i)}"));
+            }
+        }
+
+        return parts.Count == 1 ? parts[0][(parts[0].IndexOf(' ') + 1)..] : string.Join(", ", parts);
     }
 
     public static string Cutoff(SpectralCutoff cutoff)

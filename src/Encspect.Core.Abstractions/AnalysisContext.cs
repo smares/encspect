@@ -171,6 +171,10 @@ public abstract class AnalysisContext
 
         public bool Decode(in CodedFrame frame) => false;
 
+        public void Trim(long firstPosition, long endPosition)
+        {
+        }
+
         public StreamVerification Finish(IReadOnlyList<ChecksumTally> stored)
         {
             ArgumentNullException.ThrowIfNull(stored);

@@ -83,6 +83,17 @@ internal sealed class StreamMeasurer
     private long _samples;
     private long _lost;
     private int _gaps;
+    private bool _hasReceived;
+    private long _received;
+    private long _firstReceived;
+    private long _trimStart;
+    private long _trimEnd = long.MaxValue;
+    private long _trimmedLeading;
+    private long _trimmedTrailing;
+    private readonly long[] _withheld = new long[WithholdReasons.Count];
+    private readonly List<Span> _pending = [];
+    private readonly List<Span> _leading = [];
+    private long _overflow;
     private bool _hasCodedRange;
     private long _codedStart;
     private long _codedEnd;
@@ -268,6 +279,93 @@ internal sealed class StreamMeasurer
 
     public bool IsStarted => _hasStarted;
 
+    // The most spans of withheld output kept between two blocks; contiguous spans of one reason merge, so only a decoder that
+    // alternates reasons or leaves gaps between its spans reaches it. Past it a span is counted at once, as if it lay in a jump.
+    public const int MaxPendingSpans = 1024;
+
+    private readonly record struct Span(long First, long End, WithholdReason Reason);
+
+    // The sink's side: never throws. The positions [firstSample, firstSample + samples) are output the decoder holds back; the part of them
+    // that lies in a jump between blocks, before the first block or after the last within the coded range is counted as withheld, with the
+    // reason, and the rest of the jump as lost.
+    public void Withhold(long firstSample, long samples, WithholdReason reason)
+    {
+        if (_isStopped || samples <= 0 || firstSample < 0 || !Enum.IsDefined(reason))
+        {
+            return;
+        }
+
+        try
+        {
+            long end = firstSample > long.MaxValue - samples ? long.MaxValue : firstSample + samples;
+            List<Span> spans = _pending;
+            long floor = spans.Count > 0 ? spans[^1].End : long.MinValue;
+            long first = Math.Max(firstSample, floor);
+            if (first >= end)
+            {
+                return;
+            }
+
+            if (spans.Count > 0 && spans[^1] is { } last && last.End == first && (last.Reason == reason || spans.Count >= MaxPendingSpans))
+            {
+                spans[^1] = last with { End = end };
+            }
+            else if (spans.Count < MaxPendingSpans)
+            {
+                spans.Add(new Span(first, end, reason));
+            }
+            else
+            {
+                _withheld[(int)reason] += end - first;
+                _overflow += end - first;
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Failure = ex;
+            _isStopped = true;
+        }
+    }
+
+    // The sink's side: the range the stream's syntax trims to (IDecodeSession.Trim). The part of a block before the start, once the
+    // measuring has not begun, and from the end on is not measured; the leading trim only holds before the first measured sample.
+    public void Trim(long firstPosition, long endPosition)
+    {
+        (_trimStart, _trimEnd) = (firstPosition, endPosition);
+    }
+
+    // Takes the pending spans' overlap with [from, to) into the totals and returns it; the spans stay.
+    private long Overlap(List<Span> spans, long from, long to, long[] byReason)
+    {
+        long total = 0;
+        foreach (Span span in spans)
+        {
+            long a = Math.Max(span.First, from);
+            long b = Math.Min(span.End, to);
+            if (b > a)
+            {
+                byReason[(int)span.Reason] += b - a;
+                total += b - a;
+            }
+        }
+
+        return total;
+    }
+
+    private static void Prune(List<Span> spans, long position)
+    {
+        int keep = 0;
+        while (keep < spans.Count && spans[keep].End <= position)
+        {
+            keep++;
+        }
+
+        if (keep > 0)
+        {
+            spans.RemoveRange(0, keep);
+        }
+    }
+
     // The sink's side: never throws.
     public void Write(PcmBlock block)
     {
@@ -305,19 +403,17 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_hasStarted)
+        if (!_hasReceived)
         {
-            _hasStarted = true;
-            _firstPosition = block.Position;
+            _hasReceived = true;
+            _received = _firstReceived = block.Position;
 
-            // The grids count hops from the first one the stream touches, so a stream that starts late has no empty columns before it.
-            _origin = _hop > 0 ? block.Position / _hop * _hop : block.Position;
-            _next = block.Position;
-            _bufferStart = block.Position;
-            _loudness?.Start(block.Position);
+            // Spans withheld before the first block lie in the stream's leading positions.
+            _leading.AddRange(_pending);
+            _pending.Clear();
         }
 
-        if (block.Position < _next)
+        if (block.Position < _received)
         {
             HasPositionJumped = true;
             StopPosition = block.Position;
@@ -325,19 +421,64 @@ internal sealed class StreamMeasurer
             return;
         }
 
+        // The part of the block the stream's syntax trims: its start while the measuring has not begun, and its end past the trimmed range.
+        long blockEnd = block.Position + block.Length;
+        int lead = _hasStarted ? 0 : (int)Math.Clamp(_trimStart - block.Position, 0, block.Length);
+        int trail = (int)Math.Clamp(blockEnd - Math.Max(_trimEnd, block.Position + lead), 0, block.Length - lead);
+        int keep = block.Length - lead - trail;
+
+        bool isJump = block.Position > _received;
+        if (isJump)
+        {
+            RecordJump(_received, block.Position);
+        }
+
+        if (keep == 0 && block.Length > 0)
+        {
+            _trimmedLeading += lead;
+            _trimmedTrailing += trail;
+            _received = blockEnd;
+            return;
+        }
+
+        if (!_hasStarted)
+        {
+            long startAt = block.Position + lead;
+            _hasStarted = true;
+            _firstPosition = startAt;
+
+            // The grids count hops from the first one the stream touches, so a stream that starts late has no empty columns before it.
+            _origin = _hop > 0 ? startAt / _hop * _hop : startAt;
+            _next = startAt;
+            _bufferStart = startAt;
+            _loudness?.Start(startAt);
+        }
+        else if (isJump)
+        {
+            _next = block.Position;
+            _fill = 0;
+            _bufferStart = block.Position;
+            _levels?.Gap();
+            _loudness?.Start(block.Position);
+            _truePeak?.Gap();
+        }
+
+        _trimmedLeading += lead;
+        _trimmedTrailing += trail;
+        _received = blockEnd;
         if (block.Length == 0)
         {
             return;
         }
 
-        if (!_charge((long)block.Length * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)]))))
+        if (!_charge((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)]))))
         {
             IsLimited = true;
             _isStopped = true;
             return;
         }
 
-        if (_loudness is { HasAllocated: false } && block.Length > 0 && !_isLoudnessCharged)
+        if (_loudness is { HasAllocated: false } && !_isLoudnessCharged)
         {
             // The histograms are made when the first 400 ms are in; the work of making them is charged with the stream's first samples.
             _isLoudnessCharged = true;
@@ -349,30 +490,20 @@ internal sealed class StreamMeasurer
             }
         }
 
-        if (block.Position > _next)
-        {
-            _lost += block.Position - _next;
-            _gaps++;
-            _next = block.Position;
-            _fill = 0;
-            _bufferStart = block.Position;
-            _levels?.Gap();
-            _loudness?.Start(block.Position);
-            _truePeak?.Gap();
-        }
-
+        int from = lead;
+        int to = lead + keep;
         if (!_isMeasuringSpectrum)
         {
-            for (int done = 0; done < block.Length;)
+            for (int done = from; done < to;)
             {
-                if (done > 0 && _token.IsCancellationRequested)
+                if (done > from && _token.IsCancellationRequested)
                 {
                     IsCanceled = true;
                     _isStopped = true;
                     return;
                 }
 
-                int count = Math.Min(LevelsMeter.MaxPiece, block.Length - done);
+                int count = Math.Min(LevelsMeter.MaxPiece, to - done);
                 AddPiece(block, done, count);
                 _samples += count;
                 _next += count;
@@ -382,19 +513,29 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        for (int done = 0; done < block.Length;)
+        for (int done = from; done < to;)
         {
-            if (done > 0 && _token.IsCancellationRequested)
+            if (done > from && _token.IsCancellationRequested)
             {
                 IsCanceled = true;
                 _isStopped = true;
                 return;
             }
 
-            int count = Math.Min(CheckEvery, block.Length - done);
+            int count = Math.Min(CheckEvery, to - done);
             Append(block, done, count);
             done += count;
         }
+    }
+
+    // A jump from the received position to the next block's: the pending spans of withheld output are withheld, the rest is lost.
+    private void RecordJump(long from, long to)
+    {
+        long withheld = Overlap(_pending, from, to, _withheld);
+        _lost += Math.Max(0, to - from - withheld - _overflow);
+        _overflow = 0;
+        _gaps++;
+        Prune(_pending, to);
     }
 
     // Takes count samples of the block from index start, in pieces that end at a hop boundary or when the frame is full.
@@ -852,21 +993,33 @@ internal sealed class StreamMeasurer
         // stopped has unmeasured samples, which are not lost ones.
         long leading = 0;
         long trailing = 0;
+        long leadingWithheld = 0;
+        long trailingWithheld = 0;
+        long[] withheld = [.. _withheld];
         if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)
         {
-            leading = Math.Max(0, _firstPosition - _codedStart);
-            trailing = Math.Max(0, _codedEnd - _next);
+            leading = Math.Max(0, _firstReceived - _codedStart);
+            trailing = Math.Max(0, _codedEnd - _received);
+            leadingWithheld = leading > 0 ? Overlap(_leading, _codedStart, _firstReceived, withheld) : 0;
+            trailingWithheld = trailing > 0 ? Overlap(_pending, _received, _codedEnd, withheld) : 0;
         }
 
+        long trailingLost = Math.Max(0, trailing - trailingWithheld - _overflow);
         var record = new StreamMeasurements
         {
             Status = status,
             Reason = reason,
             Samples = _samples,
             FirstPosition = _firstPosition,
-            LostSamples = _lost + leading + trailing,
-            LeadingLostSamples = leading,
-            TrailingLostSamples = trailing,
+            LostSamples = _lost + (leading - leadingWithheld) + trailingLost,
+            LeadingLostSamples = leading - leadingWithheld,
+            TrailingLostSamples = trailingLost,
+            WithheldSamples = withheld.Sum(),
+            LeadingWithheldSamples = leadingWithheld,
+            TrailingWithheldSamples = trailingWithheld,
+            WithheldByReason = WithheldCounts.From(withheld),
+            LeadingTrimmedSamples = _trimmedLeading,
+            TrailingTrimmedSamples = _trimmedTrailing,
             Gaps = _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0),
             SampleRate = _format.SampleRate,
             ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,

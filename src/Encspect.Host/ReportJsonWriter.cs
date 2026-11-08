@@ -698,6 +698,36 @@ public static class ReportJsonWriter
             writer.WriteNumber("trailingLostSamples", m.TrailingLostSamples);
         }
 
+        if (m.WithheldSamples > 0)
+        {
+            writer.WriteNumber("withheldSamples", m.WithheldSamples);
+            if (m.LeadingWithheldSamples > 0)
+            {
+                writer.WriteNumber("leadingWithheldSamples", m.LeadingWithheldSamples);
+            }
+
+            if (m.TrailingWithheldSamples > 0)
+            {
+                writer.WriteNumber("trailingWithheldSamples", m.TrailingWithheldSamples);
+            }
+
+            writer.WriteStartObject("withheldReasons");
+            for (int i = 0; i < WithholdReasons.Count; i++)
+            {
+                if (m.WithheldByReason[(WithholdReason)i] > 0)
+                {
+                    writer.WriteNumber(WithholdReasons.Key((WithholdReason)i), m.WithheldByReason[(WithholdReason)i]);
+                }
+            }
+
+            writer.WriteEndObject();
+        }
+
+        if (m.TrimmedSamples > 0)
+        {
+            writer.WriteNumber("trimmedSamples", m.TrimmedSamples);
+        }
+
         writer.WriteNumber("gaps", m.Gaps);
         writer.WriteNumber("sampleRate", m.SampleRate);
         writer.WriteNumber("channels", m.Channels);

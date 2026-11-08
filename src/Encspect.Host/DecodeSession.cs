@@ -38,6 +38,10 @@ internal sealed class DecodeSession : IDecodeSession
     private long _work;
     private StreamVerification? _verification;
     private string? _notPossible;
+    private bool _hasTrim;
+    private long _trimFirst;
+    private long _trimEnd;
+    private List<(long First, long Samples, WithholdReason Reason)>? _earlyWithheld;
 
     private sealed class Pending(Severity severity, string code, string message, Node? node, int count)
     {
@@ -72,7 +76,7 @@ internal sealed class DecodeSession : IDecodeSession
     {
         try
         {
-            _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder));
+            _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder, WithholdFromDecoder));
             _status = DecodeStatus.Decoded;
         }
         catch (InvalidDataException ex)
@@ -520,6 +524,33 @@ internal sealed class DecodeSession : IDecodeSession
         _run!.AddWork(units);
     }
 
+    // Spans withheld before the decoder declared its output (a first unit withheld whole) wait for the sink, which forwards them to the measurer.
+    private void WithholdFromDecoder(long first, long samples, WithholdReason reason)
+    {
+        if (_sink is null)
+        {
+            if ((_earlyWithheld?.Count ?? 0) < StreamMeasurer.MaxPendingSpans)
+            {
+                (_earlyWithheld ??= []).Add((first, samples, reason));
+            }
+        }
+        else
+        {
+            _sink.Measurer?.Withhold(first, samples, reason);
+        }
+    }
+
+    public void Trim(long firstPosition, long endPosition)
+    {
+        if (!IsDecoding || endPosition < firstPosition || firstPosition < 0)
+        {
+            return;
+        }
+
+        (_hasTrim, _trimFirst, _trimEnd) = (true, firstPosition, endPosition);
+        _sink?.Measurer?.Trim(firstPosition, endPosition);
+    }
+
     private void AddFromDecoder(Severity severity, string code, string message, Node? node, int count) => Add(severity, code, message, node, count);
 
     private IPcmSink DeclareOutput(PcmFormat format)
@@ -529,7 +560,22 @@ internal sealed class DecodeSession : IDecodeSession
             throw new InvalidOperationException("DeclareOutput is called once per stream.");
         }
 
-        return _sink = _run!.OpenSink(new DecodedStream(_codecId, _setup.Stream, format));
+        _sink = _run!.OpenSink(new DecodedStream(_codecId, _setup.Stream, format));
+        if (_sink.Measurer is { } measurer)
+        {
+            if (_hasTrim)
+            {
+                measurer.Trim(_trimFirst, _trimEnd);
+            }
+
+            foreach ((long first, long samples, WithholdReason reason) in _earlyWithheld ?? [])
+            {
+                measurer.Withhold(first, samples, reason);
+            }
+        }
+
+        _earlyWithheld = null;
+        return _sink;
     }
 
     private static Node FrameNode(in CodedFrame frame)
