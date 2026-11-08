@@ -61,6 +61,12 @@ public class LossyWavMarkerTests
             Assert.Equal(Confidence.High, stream.ProcessorConfidence);
             Assert.DoesNotContain(report.Findings, f => f.Code.EndsWith("fact-text-unrecognized", StringComparison.Ordinal));
         }
+        else if (document.RootElement.TryGetProperty("flacUnits", out JsonElement units) && units.TryGetProperty("claim", out JsonElement claim) && claim.GetBoolean())
+        {
+            // No marker, but the counts of wasted bits show the pattern (LossyWavBehaviorTests).
+            Assert.Equal("lossyWAV", stream.Processor);
+            Assert.Equal(Confidence.Low, stream.ProcessorConfidence);
+        }
         else
         {
             Assert.Null(stream.Processor);

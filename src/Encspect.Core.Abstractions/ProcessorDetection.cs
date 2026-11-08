@@ -2,13 +2,13 @@ namespace Encspect.Core;
 
 // The processor of a stream: software that changed the audio between its source and the encoder (lossyWAV turns PCM into PCM), resolved from the
 // claims of the processor role and independent of the encoder and the writer. The strongest claim names it; claims that name the same software add
-// evidence, and a claim that names other software adds none.
+// evidence, and a claim that names other software adds none. A claim from behavior names the software without its version, so it adds evidence to a claim that names it with one.
 public static class ProcessorDetection
 {
     public const string ProcessorDescription =
         "Which software changed the audio before it was encoded, as the analyzer concludes from the evidence below. It is neither the encoder nor the writer of the file.";
 
-    public const string ConfidenceDescription = "How sure the naming is: high for text that the software itself writes into the file, which its own check takes for its output.";
+    public const string ConfidenceDescription = "How sure the naming is: high for text that the software itself writes into the file, which its own check takes for its output; low for a pattern in the coded counts that its output shows, which other software could also make.";
 
     public const string EvidenceDescription = "What points to the processor, at the bytes that hold it.";
 
@@ -35,7 +35,7 @@ public static class ProcessorDetection
         string name = winner.Text.Trim();
         Node processor = cover("Processor", name, ProcessorDescription);
         processor.Add(cover("Confidence", winner.Confidence.ToString(), ConfidenceDescription));
-        foreach (EncoderClaim claim in candidates.Where(c => string.Equals(c.Text.Trim(), name, StringComparison.Ordinal)))
+        foreach (EncoderClaim claim in candidates.Where(c => Names(c, name)))
         {
             processor.Add(cover("Evidence", Evidence(claim), EvidenceDescription));
         }
@@ -43,7 +43,23 @@ public static class ProcessorDetection
         return processor;
     }
 
-    private static string Evidence(EncoderClaim claim) => claim.Settings is { Length: > 0 } settings
+    // The claim of the processor role that a pattern in the coded syntax makes (lossyWAV's counts of wasted bits): low confidence, the evidence as the
+    // description. units is the plural of the unit the counts are of ("subframes", "blocks"); source is the node the claim points to.
+    public static EncoderClaim BehaviorClaim(LossyWavPattern pattern, Node source, string units)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        return new EncoderClaim("lossyWAV", source, pattern.Evidence(units), ClaimRole.Processor) { Confidence = Confidence.Low, IsBehavior = true };
+    }
+
+    // Whether the claim names the software name does: the same text, or a claim from behavior, which cannot know a version, for the software
+    // whose name the winner starts with ("lossyWAV" for "lossyWAV 1.4.2").
+    private static bool Names(EncoderClaim claim, string name)
+    {
+        string text = claim.Text.Trim();
+        return string.Equals(text, name, StringComparison.Ordinal) || (claim.IsBehavior && name.StartsWith(text + " ", StringComparison.Ordinal));
+    }
+
+    private static string Evidence(EncoderClaim claim) => claim.IsBehavior ? claim.Description : claim.Settings is { Length: > 0 } settings
         ? $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{claim.Text.Trim()}\" with the settings \"{settings}\""
         : $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{claim.Text.Trim()}\"";
 }

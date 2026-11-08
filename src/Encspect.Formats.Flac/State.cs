@@ -116,6 +116,9 @@ internal sealed class State
 
     public long WastedSubframes { get; private set; }
 
+    // The wasted bits of every subframe as coded (a side channel as the side channel it is), the changes between a channel's consecutive frames and where they fall.
+    public WastedBitsTally Wasted { get; } = new();
+
     public long Subframes { get; private set; }
 
     public long LpcOrderTotal { get; private set; }
@@ -376,7 +379,7 @@ internal sealed class State
         int detail = -1;
         if (isWalked)
         {
-            Count(facts[..header.Channels]);
+            Count(facts[..header.Channels], Samples - header.BlockSize);
             ReportResidualLimits(facts[..header.Channels], offset, index);
             if (index < MaxDetailedFrames && Records.Details.Count < MaxDetailedFrames)
             {
@@ -516,10 +519,12 @@ internal sealed class State
         }
     }
 
-    private void Count(ReadOnlySpan<SubframeFacts> facts)
+    private void Count(ReadOnlySpan<SubframeFacts> facts, long position)
     {
+        int channel = 0;
         foreach (ref readonly SubframeFacts f in facts)
         {
+            Wasted.Add(channel++, position, f.WastedBits);
             Subframes++;
             SubframeTypes[(int)f.Type]++;
             if (f.WastedBits > 0)

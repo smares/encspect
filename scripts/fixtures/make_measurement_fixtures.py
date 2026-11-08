@@ -493,6 +493,12 @@ def add_lowbits():
 
     add("lowbits-alaw-8000", "The A-law fixture wav/external-alaw-mono-8000.wav expanded to 16 bits: A-law's step grows with the level, so the count follows the level of each span (40 changes) and has no grid.",
         [[expand(c) for c in codes]], 8000, 16, dict(unspecified, levels=spans_built([[expand(c) for c in codes]], 8000, 16)))
+    # The negative set of the behavior claim (design: False positives): the same audio repeated to one second, labeled 44.1 kHz and coded in frames of 512
+    # samples with the wasted bits each subframe states, as lossyFLAC codes lossyWAV's output. The count follows A-law's level, not a block grid: the frames' counts
+    # change at most 3 times, and the FLAC parser must not claim lossyWAV.
+    tiled = [[expand(codes[i % len(codes)]) for i in range(rate)]]
+    add("lowbits-alaw-b512-44100", "The A-law fixture expanded to 16 bits, repeated to one second, labeled 44.1 kHz and coded in frames of 512 samples with wasted bits: the counts follow the level, not a block grid, so the behavior claim must not name lossyWAV.",
+        tiled, rate, 16, dict(unspecified, levels=spans_built(tiled, rate, 16)), block=512, wasted=True)
     gain = 0.9440608762859234
     build("lossywav-gain", "The output of lossyWAV after a gain of -0.5 dB, rounded: the pattern is gone.", [[math.floor(v * gain + 0.5) for v in c] for c in lossy], 24)
     build("lossywav-dither", "The output of lossyWAV (the 24-bit noise-floor fixture) with TPDF dither of one least significant bit: the zeroed bits are gone.",

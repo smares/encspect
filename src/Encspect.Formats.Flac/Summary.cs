@@ -60,6 +60,11 @@ internal static partial class Summary
             s.AddLeading(writer);
         }
 
+        if (s.Wasted.Pattern(s.Info is { SampleRate: > 0 } streamInfo ? streamInfo.SampleRate : s.FirstRate) is { } pattern)
+        {
+            s.Context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, "subframes"));
+        }
+
         Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
         if (processor is not null)
         {
@@ -289,6 +294,7 @@ internal static partial class Summary
             }
 
             statistics.Add(cover("Subframes With Wasted Bits", Share(s.WastedSubframes, s.Subframes), Explain.StatWasted, Topics.WastedBits));
+            s.Wasted.AddTo(statistics, cover, Wording, Topics.WastedBits);
             if (s.ResidualSubframes > 0)
             {
                 Node orders = Cover3("Partition Orders", NodeValue.Integer(s.ResidualSubframes, "residuals", "residual"), Explain.StatPartitionOrders);
@@ -365,6 +371,8 @@ internal static partial class Summary
             CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
         };
     }
+
+    private static readonly WastedBitsWording Wording = new("subframe", "subframes", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges);
 
     private const string ClaimsTopicChannels = "channel-layouts";
 

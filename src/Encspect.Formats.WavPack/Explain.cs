@@ -17,6 +17,7 @@ internal static class Topics
     public const string Matroska = "wavpack-in-matroska";
     public const string AudioChecksums = "wavpack-audio-checksums";
     public const string EntropyCoding = "wavpack-entropy-coding";
+    public const string WastedBits = "wasted-bits";
 }
 
 // What each WavPack node is, in the words the report shows next to it. Constants only: the blocks
@@ -302,6 +303,9 @@ internal static class Explain
     public const string StereoCodingSeries = "The coding of each stereo block of each set of blocks, as the tally of Stereo Coding counts them; a set of mono blocks has none.";
     public const string StatLeftRight = "The stereo blocks coded as left and right.";
     public const string StatMidSide = "The stereo blocks coded as mid and side instead of left and right.";
+    public const string StatWastedBits = "The number of blocks with each count of zero bits (the count FLAC calls wasted bits: the low bits that are zero in every sample of the unit), and the changes: the blocks whose count differs from the count of the block at the same place in the previous block set. A block's count is for all its channels, the smallest of theirs.";
+    public const string StatWastedBitsCount = "How many blocks state this count of zero bits, and their share of all audio blocks.";
+    public const string StatWastedBitsChanges = "The blocks whose count of zero bits differs from the count of the block at the same place in the previous block set.";
     public const string StatChecksums = "The blocks whose checksum sub-block equals the checksum worked out over the block's bytes.";
     public const string StatChecksumsFailed = "The blocks whose checksum differs from the one worked out, or that say they have one and hold none.";
     public const string StatMd5 = "The MD5 digest of the source audio that the first MD5 sub-block or alternate MD5 sub-block stores. The analyzer compares it with the decoded audio when asked to verify the audio, not in a default analysis, and not for a hybrid file without its correction file.";
