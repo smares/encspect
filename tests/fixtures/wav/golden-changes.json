@@ -1,584 +1,70 @@
 {
   "goldens": [
-    "tests/fixtures/wav/"
+    "tests/fixtures/wav/lossywav-standard.report.json",
+    "tests/fixtures/wav/lossywav-standard.lwcdf.report.json",
+    "tests/fixtures/wav/lossywav-standard-chunks.report.json"
   ],
   "added": [
     {
       "scope": "node",
       "parent": [
         "RIFF",
-        "Data Chunk",
-        "Statistics"
+        "Fact Chunk",
+        "Text"
       ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/wav/built-alaw-16-bits.report.json",
-        "tests/fixtures/wav/built-alaw-all-codes.report.json",
-        "tests/fixtures/wav/built-extensible-float.report.json",
-        "tests/fixtures/wav/built-extensible-samples-per-block.report.json",
-        "tests/fixtures/wav/built-extensible-unknown-sub-format.report.json",
-        "tests/fixtures/wav/built-fact-mismatch.report.json",
-        "tests/fixtures/wav/built-fact-pcm.report.json",
-        "tests/fixtures/wav/built-float-16-bits.report.json",
-        "tests/fixtures/wav/built-format-14-bytes-alaw.report.json",
-        "tests/fixtures/wav/built-format-extra-size.report.json",
-        "tests/fixtures/wav/built-gsm-610.report.json",
-        "tests/fixtures/wav/built-ima-adpcm.report.json",
-        "tests/fixtures/wav/built-ms-adpcm.report.json",
-        "tests/fixtures/wav/built-mulaw-all-codes.report.json",
-        "tests/fixtures/wav/built-unlisted-format-tag.report.json",
-        "tests/fixtures/wav/external-adpcm-ima.report.json",
-        "tests/fixtures/wav/external-adpcm-ms.report.json",
-        "tests/fixtures/wav/external-alaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-gsm-ms.report.json",
-        "tests/fixtures/wav/external-mulaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-pcm-f32-stereo-44100.report.json",
-        "tests/fixtures/wav/external-pcm-f64-mono-48000.report.json"
-      ]
+      "name": "Version"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Fact Chunk",
+        "Text"
+      ],
+      "name": "Date and Time"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Fact Chunk",
+        "Text"
+      ],
+      "name": "Settings"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "RIFF",
+        "Data Chunk"
+      ],
+      "name": "Processor"
     },
     {
       "scope": "node",
       "parent": [
         "RIFF",
         "Data Chunk",
-        "Statistics"
+        "Processor"
       ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/wav/built-alaw-16-bits.report.json",
-        "tests/fixtures/wav/built-alaw-all-codes.report.json",
-        "tests/fixtures/wav/built-extensible-float.report.json",
-        "tests/fixtures/wav/built-extensible-samples-per-block.report.json",
-        "tests/fixtures/wav/built-extensible-unknown-sub-format.report.json",
-        "tests/fixtures/wav/built-fact-mismatch.report.json",
-        "tests/fixtures/wav/built-fact-pcm.report.json",
-        "tests/fixtures/wav/built-float-16-bits.report.json",
-        "tests/fixtures/wav/built-format-14-bytes-alaw.report.json",
-        "tests/fixtures/wav/built-format-extra-size.report.json",
-        "tests/fixtures/wav/built-gsm-610.report.json",
-        "tests/fixtures/wav/built-ima-adpcm.report.json",
-        "tests/fixtures/wav/built-ms-adpcm.report.json",
-        "tests/fixtures/wav/built-mulaw-all-codes.report.json",
-        "tests/fixtures/wav/built-unlisted-format-tag.report.json",
-        "tests/fixtures/wav/external-adpcm-ima.report.json",
-        "tests/fixtures/wav/external-adpcm-ms.report.json",
-        "tests/fixtures/wav/external-alaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-gsm-ms.report.json",
-        "tests/fixtures/wav/external-mulaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-pcm-f32-stereo-44100.report.json",
-        "tests/fixtures/wav/external-pcm-f64-mono-48000.report.json"
-      ]
+      "name": "Confidence"
     },
     {
       "scope": "node",
       "parent": [
         "RIFF",
         "Data Chunk",
-        "DTS",
-        "Statistics"
+        "Processor"
       ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
-        "tests/fixtures/wav/external-dts-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
-      ]
+      "name": "Evidence"
     },
     {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "DTS",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
-        "tests/fixtures/wav/external-dts-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
-      ]
+      "scope": "stream",
+      "key": "processor"
     },
     {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "DTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "416 to 447 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "DTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "384 to 415 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0092.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0240.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0241.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-leading-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-gap.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-silence-between.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-three-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-missing.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-spacing.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-data-after-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-error-flag.report.json",
-        "tests/fixtures/wav/built-iec61937-length-invalid.report.json",
-        "tests/fixtures/wav/built-iec61937-length-zero.report.json",
-        "tests/fixtures/wav/built-iec61937-other-bitstream.report.json",
-        "tests/fixtures/wav/built-iec61937-rate-mismatch.report.json",
-        "tests/fixtures/wav/built-iec61937-type-changed.report.json",
-        "tests/fixtures/wav/external-ac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json",
-        "tests/fixtures/wav/external-iec61937-ac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0092.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0240.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0241.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-leading-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-gap.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-silence-between.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-three-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-missing.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-spacing.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-data-after-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-error-flag.report.json",
-        "tests/fixtures/wav/built-iec61937-length-invalid.report.json",
-        "tests/fixtures/wav/built-iec61937-length-zero.report.json",
-        "tests/fixtures/wav/built-iec61937-other-bitstream.report.json",
-        "tests/fixtures/wav/built-iec61937-rate-mismatch.report.json",
-        "tests/fixtures/wav/built-iec61937-type-changed.report.json",
-        "tests/fixtures/wav/external-ac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json",
-        "tests/fixtures/wav/external-iec61937-ac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "192 to 223 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0092.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0240.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0241.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-leading-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-pause-gap.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-silence-between.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3-three-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-ac3.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-missing.report.json",
-        "tests/fixtures/wav/built-iec61937-burst-spacing.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json",
-        "tests/fixtures/wav/built-iec61937-data-after-bursts.report.json",
-        "tests/fixtures/wav/built-iec61937-error-flag.report.json",
-        "tests/fixtures/wav/built-iec61937-length-invalid.report.json",
-        "tests/fixtures/wav/built-iec61937-length-zero.report.json",
-        "tests/fixtures/wav/built-iec61937-other-bitstream.report.json",
-        "tests/fixtures/wav/built-iec61937-rate-mismatch.report.json",
-        "tests/fixtures/wav/built-iec61937-type-changed.report.json",
-        "tests/fixtures/wav/external-ac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-ac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "E-AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-digital-plus.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3-at-the-content-rate.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3.report.json",
-        "tests/fixtures/wav/external-eac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-eac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "E-AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-digital-plus.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3-at-the-content-rate.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3.report.json",
-        "tests/fixtures/wav/external-eac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-eac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "E-AC-3",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "192 to 223 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-dolby-digital-plus.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3-at-the-content-rate.report.json",
-        "tests/fixtures/wav/built-iec61937-eac3.report.json",
-        "tests/fixtures/wav/external-eac3-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-eac3-stereo-192k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "DTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "768 to 799 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
-        "tests/fixtures/wav/external-dts-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-ac3.report.json",
-        "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
-        "tests/fixtures/wav/external-w64-ac3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "AC-3",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-ac3.report.json",
-        "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
-        "tests/fixtures/wav/external-w64-ac3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "192 to 223 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-ac3.report.json",
-        "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
-        "tests/fixtures/wav/external-w64-ac3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "DTS",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "DTS",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "DTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "416 to 447 kbps",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "Statistics"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-fact-ima-adpcm.report.json",
-        "tests/fixtures/wav/built-w64-fact-mismatch.report.json",
-        "tests/fixtures/wav/built-w64-float.report.json",
-        "tests/fixtures/wav/external-w64-adpcm-ima.report.json",
-        "tests/fixtures/wav/external-w64-alaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-w64-pcm-f32-stereo-48000.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "Statistics"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-fact-ima-adpcm.report.json",
-        "tests/fixtures/wav/built-w64-fact-mismatch.report.json",
-        "tests/fixtures/wav/built-w64-float.report.json",
-        "tests/fixtures/wav/external-w64-adpcm-ima.report.json",
-        "tests/fixtures/wav/external-w64-alaw-mono-8000.report.json",
-        "tests/fixtures/wav/external-w64-pcm-f32-stereo-48000.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "List Chunk",
-        "Data Chunk",
-        "Statistics"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/wav/built-wavl-list.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "List Chunk",
-        "Data Chunk",
-        "Statistics"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/wav/built-wavl-list.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "416 to 447 kbps",
-      "goldens": [
-        "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "AC-3",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "448 to 479 kbps",
-      "goldens": [
-        "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "name": "Average Reservoir Fill",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
+      "scope": "stream",
+      "key": "processorConfidence"
     }
   ]
 }
