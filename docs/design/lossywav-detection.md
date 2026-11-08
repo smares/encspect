@@ -59,13 +59,21 @@ One noun for each unit, used for nothing else here:
   - what was read: in the design's first session, three trees were cloned into the session's scratchpad to read their READMEs: `MoSal/lossywav-for-posix` at the pinned commit (its two READMEs, the main one and `README.lossyWAV.md`), `corrideat/lossywav` (an older C++ port) and a `lossywav/v1.4.2` tree (its README). No source file of any of them was opened, nothing was built from them, and the clones were deleted on 2026-11-08;
   - the help text (`-L`) was read from the CI runs' records (`tools/help-*.txt` in the artifact), not from a local run;
   - the files are downloaded as an artifact and read as data.
-- **Only one port, one version:** every observation here is of lossyWAV 1.4.2 as the POSIX port builds it. The official Windows build of 1.4.2, which foobar2000 users run, and older versions were not examined.
+- **Two builds of one version, which agree:** the observations here are of lossyWAV 1.4.2 as the POSIX port builds it, and the official Windows build of 1.4.2, which foobar2000 users run, gives the same results on the same inputs (below, run 42470575652). Older versions were not examined.
+  - **The comparison** ([compare_lossywav_builds.py](../../scripts/fixtures/compare_lossywav_builds.py)), as data, of the Linux job's output with the Windows job's (the 64-bit `lossyWAV.exe`, SHA-256 `2022215759a1e48c43989a56f47011cdb1194c6a4926dea7f5033cbfa0d90334`), on inputs identical byte for byte (21 inputs):
+    - **samples:** the `data` chunk of every output is identical, in all 121 runs (123 files, correction files among them) and in the 19 fixture runs; so are the 48 WAVs both jobs kept, compared byte for byte;
+    - **zeroed bits and grid:** being the same samples, the same per span and channel; the prototype's figures (distribution, Low Bits Unused, changes, grid, changes on it, thin spans, times with equal counts) were computed on both sides for the 12 kept outputs and the 19 fixture outputs, and are equal;
+    - **`fact` text:** identical apart from the time, the date in the same `DD/MM/YYYY` form, in all 123 files;
+    - **RIFF sizes and chunks:** the same file sizes, RIFF sizes and chunk order in every output; the `--stdout` and STDIN outputs are identical byte for byte, the RIFF overshoot of 68 bytes included; `--stdinname piped` writes `pilossy.ped` on both;
+    - **`--check` and the refusal of its own output:** the same answers on the 8 probes. The exit code for "already processed" is −1 on both, which POSIX reports as 255 and Windows as 4294967295;
+    - **8 kHz:** both crash at standard and portable (signal 11 on Linux, 0xC0000005, an access violation, on Windows);
+    - **help text:** the same, apart from line endings.
   - The help text's `--linkchannels` ("revert to original single bits-to-remove value for all channels") implies that older versions linked the channels.
-  - The date was seen only as `DD/MM/YYYY`; another build or locale may write it otherwise.
-  - The articles and format docs therefore say "lossyWAV 1.4.2 (POSIX port)", and the text parse does not depend on the date's form (decision 9).
+  - The date was seen only as `DD/MM/YYYY`, on two runners; another locale or version may write it otherwise.
+  - The articles and format docs therefore say "lossyWAV 1.4.2", and the text parse does not depend on the date's form.
   - The official Windows build is attached to the Hydrogenaudio forum, which a Cloudflare challenge keeps from scripts. The Internet Archive item `lossyWAV_beta_1.4.3p` is a third-party upload of a beta with an expiry-date patch, and was not used.
-  - **The Windows job (decision 9):** the lead downloaded the official build by hand into the private repository (`lossywav/lossyWAV_v1.4.2.zip`, 955,107 bytes, SHA-256 `d5c1a9e17c9569b8fd30c28254c4ff7a7a7213783c7a55f448003cd3e720ffb1`; it holds `bin/32-Bit/lossyWAV.exe`, `bin/64-Bit/lossyWAV.exe`, `fftw.txt` and `gpl.txt`). `lossywav_tool.py` pins it (`WINDOWS`), fetches it through `downloads.private` with `ENCSPECT_PRIVATE_TOKEN`, and `check_sources.py` watches it. The workflow's `windows` job (windows-2025) runs only when the workflow is started by hand: it takes the Linux job's inputs byte for byte (the `lossywav-inputs` artifact) and runs the 64-bit exe through `make_lossywav_fixtures.py --inputs`: every case, probe and fixture input through lossyWAV alone, no codings. Its manifest gives each output's SHA-256, the SHA-256 of its `data` chunk and its `fact` text, to compare with the Linux run's. Until the file is in the private repository, the job fails at its fetch; nothing else waits on it.
-  - PR 1's `lossywav` article and PR 3's claim from behavior wait for that comparison; what it finds (the same samples or not, the text's form) goes into this design first.
+  - **The Windows job (decision 9), run on 2026-11-08 (run 42470575652, commit 4bb86de):** the lead downloaded the official build by hand into the private repository (`lossywav/lossyWAV_v1.4.2.zip`, 955,107 bytes, SHA-256 `d5c1a9e17c9569b8fd30c28254c4ff7a7a7213783c7a55f448003cd3e720ffb1`; it holds `bin/32-Bit/lossyWAV.exe`, `bin/64-Bit/lossyWAV.exe`, `fftw.txt` and `gpl.txt`). `lossywav_tool.py` pins it (`WINDOWS`), fetches it through `downloads.private` with `ENCSPECT_PRIVATE_TOKEN`, and `check_sources.py` watches it. The workflow's `windows` job (windows-2025) runs only when the workflow is started by hand: it takes the Linux job's inputs byte for byte (the `lossywav-inputs` artifact) and runs the 64-bit exe through `make_lossywav_fixtures.py --inputs`: every case, probe and fixture input through lossyWAV alone, no codings. Its manifest gives each output's SHA-256, the SHA-256 of its `data` chunk and its `fact` text, to compare with the Linux run's. Until the file is in the private repository, the job fails at its fetch; nothing else waits on it.
+  - Its result is the comparison above: the builds agree, so PR 1's `lossywav` article and PR 3's claim from behavior no longer wait on it.
 - **Runs:**
   - runs 42463604298 (commit 61cad4c), 42464513495 (dd28265), 42467248396 (7924841), 42468751181 (c33b9ac) and 42469204989 (55ba334), the run of record, 10 to 25 minutes each; wherever two runs were compared (the flac codings of the kept cases, 48 of 48 between the third run and the run of record), the samples were the same;
   - the run of record's artifacts hold every case of the earlier runs (`lossywav-fixtures`, 13613590629, 1.27 GB) and the files to commit with the manifest (`lossywav-fixtures-to-commit`, 13613675366), kept until 2027-02-06;
@@ -100,7 +108,7 @@ One noun for each unit, used for nothing else here:
   - The correction file (`.lwcdf.wav`) carries the same text.
 - **Other chunks:** a `LIST` and a `bext` chunk of the input are kept, after the `fact` chunk.
 - **Not reproducible byte for byte:** the time of the run is in the text. The samples are: the same input and settings gave the same samples in all runs, and the `flac` codings without the chunk are identical.
-- **lossyWAV's own check,** `--check` (exit code 255 for "already processed" on this build; the help text says 16):
+- **lossyWAV's own check,** `--check` (exit code −1 for "already processed" on both builds, reported as 255 on Linux and 4294967295 on Windows; the help text says 16):
 
   | Input | `--check` |
   |---|---|
@@ -138,7 +146,7 @@ One noun for each unit, used for nothing else here:
 
   | Rate | lossyWAV block | Changes on its grid |
   |---|---|---|
-  | 8 kHz | none: lossyWAV crashed (signal 11) at standard and portable after "Too much WAV information before 'data' chunk!" | |
+  | 8 kHz | none: lossyWAV crashed at standard and portable on both builds (signal 11; 0xC0000005 on Windows) after "Too much WAV information before 'data' chunk!" | |
   | 22.05 kHz | 256 | 14 at standard (under the gate), 195 at portable, all on it |
   | 32 kHz | 256 | 33 and 534, all on it |
   | 44.1 and 48 kHz | 512 | all, in every output with 20 changes or more (below) |
@@ -389,13 +397,13 @@ Measured with [lossywav_figures.py](../../scripts/fixtures/lossywav_figures.py) 
 - **Cross-check:**
   - no tool that was checked names lossyWAV: ffprobe 6.1.1 and MediaInfo 24.01 show nothing of the `fact` text in the WAV or the FLAC file. MediaInfo 26.01 of the runner is checked in PR 1 and mapped if it does;
   - lossyWAV's own `--check` is the cross-check of the marker: the manifest holds its answer for the WAV each fixture was made from. The importer compares it with Encspect's high-confidence claim only for the files that keep the chunk: the WAVs but `lossywav-stdout.wav`, `-b512-foreign.flac`, the six-channel FLAC, the `.wv` files and the `.ape`. The other FLAC files hold no marker;
-  - the Windows job's manifest, once run, is compared with the Linux one (the samples' `data` hashes and the `fact` text) before PR 1's article and PR 3's claim (decision 9).
+  - the Windows job's manifest was compared with the Linux one ([The build](#the-build)): the official Windows build and the POSIX port agree on every case.
 - **Sources:** the two recordings, the lossyWAV commit and the Windows build are registered in `check_sources.py` (the scheduled sources check). The recordings are inputs only; [development.md](../development.md) names them as inputs of the fixture workflow, with their licenses as stated above.
 
 ## Docs
 
 - **Articles:**
-  - `lossywav` (new): what lossyWAV is, the `fact` chunk and where it survives, the RIFF size of `--stdout`, the block grid by rate and the per-channel counts, the presets and the minimum bits kept, the correction file, the limits above, and that the analyzer names lossyWAV only from the marker (high) or from FLAC and WavPack units (low). It is worded as observed behavior of lossyWAV 1.4.2 (POSIX port) in Encspect's test files, and states only what the committed fixtures back (the rule for encoder observations in [CLAUDE.md](../../CLAUDE.md)): the block length at the rates of the noise-floor fixtures, the per-channel counts, the marker and where it survives. The preset table, the recordings' figures and the rates without a fixture stay in this design;
+  - `lossywav` (new): what lossyWAV is, the `fact` chunk and where it survives, the RIFF size of `--stdout`, the block grid by rate and the per-channel counts, the presets and the minimum bits kept, the correction file, the limits above, and that the analyzer names lossyWAV only from the marker (high) or from FLAC and WavPack units (low). It is worded as observed behavior of lossyWAV 1.4.2 in Encspect's test files (the POSIX port and the official Windows build, which agree), and states only what the committed fixtures back (the rule for encoder observations in [CLAUDE.md](../../CLAUDE.md)): the block length at the rates of the noise-floor fixtures, the per-channel counts, the marker and where it survives. The preset table, the recordings' figures and the rates without a fixture stay in this design;
   - `low-bits-per-span` (new): the measurement's figures, the span, the silent, short and thin spans, and the thresholds;
   - `bit-depth-usage`, `wasted-bits` and `wavpack-wrapper`: links and one sentence each.
 - **Format docs:**
@@ -437,6 +445,7 @@ Decided by the project lead on 2026-11-08, after the independent review and its 
 7. **The workflow** moves to a `fixtures/lossywav` branch with `workflow_dispatch` only, as the Apple and WMA fixture workflows are; the push trigger on this design's branch goes in PR 0.
 8. **The RIFF size of `--stdout`:** the warning `wav.riff-size-past-chunks`, with the message of [From the marker](#from-the-marker), and the same rule in Wave64.
 9. **The official Windows build:** the lead downloads lossyWAV 1.4.2 for Windows by hand, and the workflow's Windows job runs it on the Linux job's inputs ([The build](#the-build)). Only PR 1's `lossywav` article and PR 3's claim from behavior wait for it; PR 0 and PR 2 do not.
+   - **Result (2026-11-08, run 42470575652):** the two builds agree on the samples, the zeroed bits and grid, the `fact` text apart from its time, the RIFF sizes (`--stdout` included), `--check`'s answers and the prototype's figures, in every case compared; the only differences are how each system reports the same exit codes and the help text's line endings. Nothing waits on it any more.
 10. **The measurement goldens:** the figures in every integer stream's levels, and all 76 changed `.measure.json` goldens in PR 2, reviewed by their diff.
 11. **Order:** PR 0 (the WAV fix and the RIFF size) ships first, on its own.
 12. **Finding codes:** `wav.fact-text-unrecognized`, `flac.riff-fact-text-unrecognized`, `wavpack.wrapper-fact-text-unrecognized` and `monkeys-audio.header-fact-text-unrecognized` (info), each with its finding-coverage row; a recognized lossyWAV text gets a description, not a finding.
