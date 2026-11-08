@@ -1,6 +1,6 @@
 # Lossy decoders: what decoding the lossy formats adds to the contract
 
-Status: approved by the project lead on 2026-11-08, with every recommendation of [Decisions](#decisions) as listed (Opus's units per byte: 8,192), after an independent review (22 findings), a review of its fixes and the lead's rule of 2026-11-07 that nothing is bought and that the formats with a free specification or permissively licensed code come first. Nothing of it is built. Where the text sets out options, the one recorded under [Decisions](#decisions) is the design; the others stay as the record of what was weighed. It designs the "Later" item of the [plan](../PLAN.md) on lossy decoders, which the measurements of decoded audio ([spectral-analysis.md](spectral-analysis.md)) and gap wave 3 wait for. Claims that no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**.
+Status: approved by the project lead on 2026-11-08, with every recommendation of [Decisions](#decisions) as listed (Opus's units per byte: 8,192), after an independent review (22 findings), a review of its fixes and the lead's rule of 2026-11-07 that nothing is bought and that the formats with a free specification or permissively licensed code come first. Nothing of it is built. Where the text sets out options, the one recorded under [Decisions](#decisions) is the design; the others stay as the record of what was weighed. It designs the "Later" item of the [plan](../plan.md) on lossy decoders, which the measurements of decoded audio ([spectral-analysis.md](spectral-analysis.md)) and gap wave 3 wait for. Claims that no source read for this design confirms are marked **unverified**; figures worked out rather than measured are marked **estimate**.
 
 - The decoder contract of [decoders.md](decoders.md) applies as it is: `IDecoder`, `IFrameDecoder`, the session the parser feeds while it reads, `CodedFrame`, the work budget, the exception boundary and the PCM sink. This text adds only what lossy decoding brings.
 - Three parts of the contract change, each for a stated reason: `DetMath` moves from the host to `Core.Abstractions`; the determinism rules gain a clause for decoders; and `DecodeContext` gains a way to report withheld output (see [Contract changes](#contract-changes)).
@@ -197,8 +197,8 @@ The session lends the parser its sample buffers ([decoders.md](decoders.md#the-s
 | "Coded Bandwidth" | MPEG Layer III | the end of the count1 region per granule ([mpeg-audio.md](../formats/mpeg-audio.md#not-yet-covered), "Not yet covered") |
 | "Coded Bandwidth" | Vorbis | the highest residue partition coded and the floor's used range per channel ([vorbis.md](../formats/vorbis.md)) |
 | "Coded Bandwidth" | DTS core | the subframes' bit allocation ([dts.md](../formats/dts.md)) |
-| "Block Switching" | DTS core (TMODE), Opus CELT (the transient flag) | the subframe side information; CELT's range-coded bits ([coding-graphs.md](coding-graphs.md), "later") |
-| "Stereo Coding" | Opus CELT (intensity, dual stereo, mid/side of a band) | the range-coded bits ([coding-graphs.md](coding-graphs.md), "later") |
+| "Block Switching" | DTS core (TMODE), Opus CELT (the transient flag) | the subframe side information; CELT's range-coded bits ([coding-graphs.md](coding-graphs.md#the-survey), "later") |
+| "Stereo Coding" | Opus CELT (intensity, dual stereo, mid/side of a band) | the range-coded bits ([coding-graphs.md](coding-graphs.md#the-survey), "later") |
 | "Coded Bandwidth" | xHE-AAC (USAC), AAC-ELD | their raw data blocks, steps 13 and 14 ([aac.md](../formats/aac.md)) |
 | "Stereo Coding" | TrueHD | the matrix parameters of the substream blocks ([truehd.md](../formats/truehd.md)) |
 
@@ -415,7 +415,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 - The parser knows it: it places every granule's main data, and warns today where they begin before the stream (`mpeg.main-data-before-stream`, in 5 committed fixtures).
 - **Intact files have it too:** tracks split without re-encoding from a continuous MP3 (mp3DirectCut, mp3splt, CUE splits, stream captures) start with a frame whose main data lie in the previous track. The count over the downloaded samples and a set of split tracks is done in the MPEG pull request, before the lead's final word.
 - **Options (decision 7):**
-  - (a) the parser counts such a frame as lost and hands it unreadable, [samples-definition.md](samples-definition.md)'s "state was lost" case. Intact split tracks would then report Lost Samples.
+  - (a) the parser counts such a frame as lost and hands it unreadable, [samples-definition.md](samples-definition.md#words)'s "state was lost" case. Intact split tracks would then report Lost Samples.
   - (b) the decoder withholds the frame's output with the reason "main data not available", and the parser stays as it is.
 - **Decided on 2026-11-08: (b).** Nothing is damaged in a split track, so "lost" would misname it. Withheld samples say exactly what happened.
 - Junk between two frames does not close the reservoir ([mpeg-audio.md](../formats/mpeg-audio.md)), so a frame after junk decodes where its main data lie in the frames before.
@@ -697,7 +697,7 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
 ## Sources read
 
 - **The repository** at `origin/main` adb9673:
-  - [`CLAUDE.md`](../../CLAUDE.md); [`docs/PLAN.md`](../PLAN.md#later) ("Later", "Phase 3, continued");
+  - [`CLAUDE.md`](../../CLAUDE.md); [`docs/plan.md`](../plan.md#later) ("Later", "Phase 3, continued");
   - [`docs/design/decoders.md`](decoders.md), [`spectral-analysis.md`](spectral-analysis.md), [`samples-definition.md`](samples-definition.md), [`official-decoder-crosschecks.md`](official-decoder-crosschecks.md), [`parallel-decoding.md`](parallel-decoding.md), [`coding-graphs.md`](coding-graphs.md) (the concept table), [`mpeg-clean-room-rules.md`](mpeg-clean-room-rules.md) (its source statement), and the status and scope lines of [`wma-standard-format.md`](wma-standard-format.md), [`wma-pro-format.md`](wma-pro-format.md) and [`wma-voice-format.md`](wma-voice-format.md);
   - the format docs' "not covered" lines and what they read; [`docs/gui.md`](../gui.md) (the captions and the waveform); [`development.md`](../development.md#analysis-speed-of-the-lossy-formats) ("Analysis speed of the lossy formats", "Where the format tables come from", the conformance downloads);
   - [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md) and [`third_party/README.md`](../../third_party/README.md); `tests/conformance/mpeg2-audio.json`;

@@ -1,6 +1,6 @@
 # Planned formats
 
-The formats of phases 4 to 6, in the order of the [plan](../PLAN.md#format-rollout). None is read yet. Each gets its own page when it is built, and each is its own pull request with fixtures, cross-checks and a review; a container's routes to these codecs follow as in phase 3.
+The formats of phases 4 to 6, in the order of the [plan](../plan.md#format-rollout). None is read yet. Each gets its own page when it is built, and each is its own pull request with fixtures, cross-checks and a review; a container's routes to these codecs follow as in phase 3.
 
 The order follows how well a format is documented: the better documented, the sooner it comes, so the most exotic come last. Where a format has no reason of its own below, its place follows from that rule alone.
 

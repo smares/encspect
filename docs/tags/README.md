@@ -11,7 +11,7 @@ Tag parsers are separate from the format parsers. The host finds the tags of a f
 
 ## How tags are found
 
-Tags are found by position and structure, never by a signature alone, because short signatures collide with each other and with audio data. The rules and the fixtures that prove them are below; the decision behind them is in the plan, [Tag detection and false positives](../PLAN.md#tag-detection-and-false-positives).
+Tags are found by position and structure, never by a signature alone, because short signatures collide with each other and with audio data. The rules and the fixtures that prove them are below; the decision behind them is in the plan, [Tag detection and false positives](../plan.md#tag-detection-and-false-positives).
 
 - **Positions:** each tag type is looked for only where its specification allows it:
   - ID3v1 at exactly 128 bytes before the end of the file;

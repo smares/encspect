@@ -6,7 +6,7 @@ Renamed with step 4 of [the measurements](spectral-analysis.md): the GUI command
 
 ## Scope
 
-What phase 3 brings, from the rollout table of the [plan](../PLAN.md):
+What phase 3 brings, from the rollout table of the [plan](../plan.md):
 
 - FLAC, WAV and AIFF;
 - ALAC in MP4 and WMA Lossless in ASF;

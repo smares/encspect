@@ -239,7 +239,7 @@ One input per rejection:
 
 **May read:**
 
-- this document, [`CLAUDE.md`](../../CLAUDE.md), [`docs/PLAN.md`](../PLAN.md) and the rest of `docs/`;
+- this document, [`CLAUDE.md`](../../CLAUDE.md), [`docs/plan.md`](../plan.md) and the rest of `docs/`;
 - ISO/IEC 14496-3, especially 4.4.2 (`sbr_header`, `sbr_grid`) and 4.6.18.3, where available;
 - the rest of the repository, including the callers (`BlockReader.Elements.cs`, `CodingStatistics.cs`), the rest of `Sbr.cs`, `HuffmanData.SbrOffset`, `aac_tables.py`, the fixtures and goldens;
 - the outputs of the black-box checks (faad2's trace, ffprobe, the conformance streams), never their source.

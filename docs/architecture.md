@@ -1,6 +1,6 @@
 # Architecture
 
-How Encspect is built: the parts, the result model, the contracts between parsers and the host, and how the host picks a format. The plan ([PLAN.md](PLAN.md)) holds the goals, the decisions and the order of work; the rules every change follows are in [CLAUDE.md](../CLAUDE.md).
+How Encspect is built: the parts, the result model, the contracts between parsers and the host, and how the host picks a format. The plan ([plan.md](plan.md)) holds the goals, the decisions and the order of work; the rules every change follows are in [CLAUDE.md](../CLAUDE.md).
 
 ## Overview
 

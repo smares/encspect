@@ -1,6 +1,6 @@
 # Using Encspect from other programs
 
-Encspect ships two programs, the command line tool `encspect` and the GUI `encspect-gui`. The analysis behind them (Core.Abstractions, the host and the format and tag parsers) is kept a library that any front end could use, as the [plan](PLAN.md) requires under "A library others could use", but it is not offered as a library yet. This page lists the ways another program can use the analysis, now and later.
+Encspect ships two programs, the command line tool `encspect` and the GUI `encspect-gui`. The analysis behind them (Core.Abstractions, the host and the format and tag parsers) is kept a library that any front end could use, as the [plan](plan.md) requires under "A library others could use", but it is not offered as a library yet. This page lists the ways another program can use the analysis, now and later.
 
 ## Today: the command line and its JSON
 
