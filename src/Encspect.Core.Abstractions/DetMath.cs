@@ -1,12 +1,12 @@
 using System.Runtime.CompilerServices;
 
-namespace Encspect.Host.Measurement;
+namespace Encspect.Core;
 
 // The math the measurements use instead of the platform's library, whose results may differ in the last bit between C libraries
 // (docs/design/spectral-analysis.md, "Determinism"): polynomials evaluated with + and * only, and the exponent bits of a double.
 // Math.Sqrt, Math.Floor and Math.Abs are correctly rounded or exact everywhere and stay allowed; nothing here fuses a multiply and
 // an add (the JIT contracts none on its own) and nothing calls Math.Sin, Cos, Tan, Log, Exp or Pow.
-internal static class DetMath
+public static class DetMath
 {
     public const double Pi = 3.141592653589793;
 
@@ -215,6 +215,9 @@ internal static class DetMath
     public static double Log10(double x) => Ln(x) * Log10E;
 
     // 10 log10 x of a power.
+    // log2 x for x > 0, as Ln x / ln 2.
+    public static double Log2(double x) => Ln(x) * InverseLn2;
+
     public static double Decibels(double power) => 10.0 * Log10(power);
 
     // e^x for x between about -745 and 709: x = k ln 2 + r, the series on |r| <= ln 2 / 2 and a scaling by 2^k.

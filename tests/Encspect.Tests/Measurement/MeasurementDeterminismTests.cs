@@ -316,11 +316,66 @@ public class MeasurementDeterminismTests
         || ((parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal) || parent.StartsWith("System.Numerics.", StringComparison.Ordinal)) && name is "Sum" or "Dot")
         || parent == "System.Numerics.Complex"
         || parent is "System.Numerics.Vector`1" or "System.Numerics.Vector"
-        || (parent == "System.Linq.Enumerable" && BannedLinq.Contains(name))
         || (parent == "System.MemoryExtensions" && name is "Sum" or "Max" or "Min")
         || (parent == "System.Buffers.ArrayPool`1" && name == "get_Shared");
 
+    // The reductions of System.Linq.Enumerable. Whether one is banned depends on its signature: a sum, maximum, minimum or fold over integers is exact in
+    // any order and stays allowed; one whose result, parameters or type arguments hold float, double or Half is a floating-point reduction.
     private static readonly HashSet<string> BannedLinq = ["Sum", "Average", "Max", "Min", "Aggregate", "MaxBy", "MinBy"];
+
+    private static readonly System.Text.RegularExpressions.Regex FloatingType = new(@"\b(Double|Single)\b|System\.Half\b", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    internal static bool IsBannedReduction(string parent, string name, Func<IEnumerable<string>> types) =>
+        parent == "System.Linq.Enumerable" && BannedLinq.Contains(name) && types().Any(t => FloatingType.IsMatch(t));
+
+    // Renders a signature's types in full (System.Func`2<Int32,Double>) so that a floating-point type anywhere in it shows.
+    private sealed class FullNameProvider(MetadataReader md) : System.Reflection.Metadata.ISignatureTypeProvider<string, object?>
+    {
+        public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
+
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) =>
+            reader.GetString(reader.GetTypeDefinition(handle).Namespace) + "." + reader.GetString(reader.GetTypeDefinition(handle).Name);
+
+        public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => TypeName(md, handle);
+
+        public string GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) =>
+            reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+
+        public string GetSZArrayType(string elementType) => elementType + "[]";
+
+        public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[,]";
+
+        public string GetByReferenceType(string elementType) => elementType;
+
+        public string GetPointerType(string elementType) => elementType;
+
+        public string GetPinnedType(string elementType) => elementType;
+
+        public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired) => unmodifiedType;
+
+        public string GetFunctionPointerType(MethodSignature<string> signature) => string.Empty;
+
+        public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) => genericType + "<" + string.Join(",", typeArguments) + ">";
+
+        public string GetGenericMethodParameter(object? genericContext, int index) => "!!" + index;
+
+        public string GetGenericTypeParameter(object? genericContext, int index) => "!" + index;
+    }
+
+    // The types an Enumerable call involves: the return type and parameters of the method it names, and the type arguments of its instantiation.
+    private static IEnumerable<string> ReductionTypes(MetadataReader md, MemberReference member, MethodSpecificationHandle? instantiation)
+    {
+        var provider = new FullNameProvider(md);
+        MethodSignature<string> signature = member.DecodeMethodSignature(provider, null);
+        var types = new List<string> { signature.ReturnType };
+        types.AddRange(signature.ParameterTypes);
+        if (instantiation is { } spec)
+        {
+            types.AddRange(md.GetMethodSpecification(spec).DecodeSignature(provider, null));
+        }
+
+        return types;
+    }
 
     private static string TypeName(MetadataReader md, TypeReferenceHandle handle)
     {
@@ -392,7 +447,8 @@ public class MeasurementDeterminismTests
                 byte[] il = pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!;
                 foreach (EntityHandle token in BoundaryScanner.TokensIn(il, md.GetString(method.Name)))
                 {
-                    EntityHandle target = token.Kind == HandleKind.MethodSpecification ? md.GetMethodSpecification((MethodSpecificationHandle)token).Method : token;
+                    MethodSpecificationHandle? instantiation = token.Kind == HandleKind.MethodSpecification ? (MethodSpecificationHandle)token : null;
+                    EntityHandle target = instantiation is { } spec ? md.GetMethodSpecification(spec).Method : token;
                     if (target.Kind != HandleKind.MemberReference)
                     {
                         continue;
@@ -406,7 +462,7 @@ public class MeasurementDeterminismTests
                         HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(new NameProvider(md), null),
                         _ => string.Empty,
                     };
-                    bool banned = IsBanned(parent, name);
+                    bool banned = IsBanned(parent, name) || IsBannedReduction(parent, name, () => ReductionTypes(md, member, instantiation));
                     if (banned)
                     {
                         found.Add($"{owner}::{md.GetString(method.Name)} calls {parent}.{name}");
@@ -427,6 +483,43 @@ public class MeasurementDeterminismTests
 
         // The scan reads something: the measurement namespace has methods that call Math.Sqrt-like members and the like.
         Assert.Contains(typeof(FftPlan).Assembly.GetTypes(), t => t.Namespace == "Encspect.Host.Measurement");
+
+        // DetMath lives in the core, where the decoders reach it too.
+        Assert.Empty(BannedCalls(typeof(DetMath).Assembly, owner => owner == "Encspect.Core.DetMath"));
+    }
+
+    // The nine lossy format assemblies, whole: a decoder and the parser code it shares compute under the same rules as the measurements
+    // (docs/design/lossy-decoders.md, "Decoders fall under the determinism rules"). A lossless decoder in one of them lives in
+    // <project>.Decoding.Lossless, which the scan leaves out so that it may use Vector<T>.
+    internal static readonly string[] LossyAssemblies =
+    [
+        "Encspect.Formats.Mpeg", "Encspect.Formats.Vorbis", "Encspect.Formats.Opus", "Encspect.Formats.Ac3", "Encspect.Formats.Musepack",
+        "Encspect.Formats.Dts", "Encspect.Formats.Speex", "Encspect.Formats.Aac", "Encspect.Formats.Wma",
+    ];
+
+    internal static bool IsLossy(string owner) => !owner.Contains(".Decoding.Lossless.", StringComparison.Ordinal);
+
+    [Fact]
+    public void TheLossyFormatAssembliesCallNoLibraryMathNoFusedOrNativeOrEstimateOperationAndNoFloatingPointReduction()
+    {
+        var found = new List<string>();
+        foreach (string name in LossyAssemblies)
+        {
+            Assembly assembly = Assembly.Load(name);
+            Assert.NotEmpty(assembly.GetTypes());
+            found.AddRange(BannedCalls(assembly, IsLossy).Select(f => $"{name}: {f}"));
+        }
+
+        Assert.True(found.Count == 0, string.Join('\n', found));
+    }
+
+    [Fact]
+    public void TheScanLeavesOutTheLosslessDecodersOfALossyProject()
+    {
+        Assert.True(IsLossy("Encspect.Formats.Wma.Decoding.Foo"));
+        Assert.True(IsLossy("Encspect.Formats.Wma.Parser"));
+        Assert.False(IsLossy("Encspect.Formats.Wma.Decoding.Lossless.Foo"));
+        Assert.False(IsLossy("Encspect.Formats.Dts.Decoding.Lossless.Xll"));
     }
 
     [Fact]
@@ -438,6 +531,15 @@ public class MeasurementDeterminismTests
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
+
+        // The reductions are told apart by their signatures: each overload kind over floating-point values is found, integers are not.
+        IReadOnlyList<string> reductions = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner is "Encspect.Tests.Measurement.BannedReductions" or "Encspect.Tests.Measurement.AllowedReductions");
+        foreach (string method in new[] { "SumOfDoubles", "SumOfFloats", "SumBySelectorToDouble", "MaxOfDoubles", "MaxBySelectorToDouble", "MinOfHalves", "AverageOfIntegers", "AggregateOfDoubles", "MaxByDoubleKey", "MinOfFloatsBySelector" })
+        {
+            Assert.Contains(reductions, f => f.Contains($"BannedReductions::{method} calls System.Linq.Enumerable.", StringComparison.Ordinal));
+        }
+
+        Assert.DoesNotContain(reductions, f => f.Contains("AllowedReductions::", StringComparison.Ordinal));
 
         // The rule bans by name, so a self-test of the allowed side too: a plain Complex-free sum of element-wise members stays clean.
         Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Max"));
@@ -484,4 +586,44 @@ internal static class BannedSamples
         sum += Math.Sqrt(x) + Math.Floor(x) + Math.Min(x, sum);
         return sum;
     }
+}
+
+// Reductions the scan must find, one method each so that the negative control names the overload it covers; never run.
+internal static class BannedReductions
+{
+    public static double SumOfDoubles(double[] values) => values.Sum();
+
+    public static float SumOfFloats(float[] values) => values.Sum();
+
+    public static double SumBySelectorToDouble(int[] values) => values.Sum(v => v * 0.5);
+
+    public static double MaxOfDoubles(List<double> values) => values.Max();
+
+    public static double MaxBySelectorToDouble(int[] values) => values.Max(v => v * 0.5);
+
+    public static Half MinOfHalves(Half[] values) => values.Min();
+
+    public static double AverageOfIntegers(int[] values) => values.Average();
+
+    public static double AggregateOfDoubles(int[] values) => values.Aggregate(0.0, (sum, v) => sum + v);
+
+    public static int MaxByDoubleKey(int[] values) => values.MaxBy(v => v * 0.5);
+
+    public static float MinOfFloatsBySelector(int[] values) => values.Min(v => (float)v);
+}
+
+// Reductions over integers, which are exact in any order and stay allowed; never run.
+internal static class AllowedReductions
+{
+    public static int Sum(int[] values) => values.Sum();
+
+    public static long SumBySelector(int[] values) => values.Sum(v => (long)v);
+
+    public static long Max(List<long> values) => values.Max();
+
+    public static int MinBySelector(string[] values) => values.Min(v => v.Length);
+
+    public static int Aggregate(int[] values) => values.Aggregate(0, (sum, v) => sum + v);
+
+    public static string MaxByKey(string[] values) => values.MaxBy(v => v.Length)!;
 }

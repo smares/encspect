@@ -268,15 +268,20 @@ internal sealed class SetupDecoder
             return 0;
         }
 
-        long r = (long)Math.Floor(Math.Pow(entries, 1.0 / dimensions));
-        while (r > 0 && Power(r, dimensions) > entries)
+        // 2^k <= entries < 2^(k + 1) with k = floor(log2 entries / dimensions) brackets the root: (2^k)^dimensions <= entries < (2^(k + 1))^dimensions.
+        long r = 1L << (System.Numerics.BitOperations.Log2((ulong)entries) / dimensions);
+        long high = r << 1;
+        while (high - r > 1)
         {
-            r--;
-        }
-
-        while (Power(r + 1, dimensions) <= entries)
-        {
-            r++;
+            long middle = r + ((high - r) / 2);
+            if (Power(middle, dimensions) <= entries)
+            {
+                r = middle;
+            }
+            else
+            {
+                high = middle;
+            }
         }
 
         return r;
@@ -709,7 +714,7 @@ internal sealed class SetupDecoder
         }
 
         int exponent = (int)((raw & 0x7FE00000) >> 21);
-        double value = mantissa * Math.Pow(2, exponent - 788);
+        double value = mantissa * DetMath.PowerOfTwo(exponent - 788);
         Node node = Node.FromBits(name, _packet, start, _bits.Position, NodeValue.Decimal(value, 6), description: description, order: BitOrder.LeastSignificantFirst);
         Place(node);
         _lastNode = node;

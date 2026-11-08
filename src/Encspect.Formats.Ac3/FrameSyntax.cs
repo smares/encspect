@@ -41,6 +41,9 @@ internal enum Issue : byte
 // state of the frame being read.
 internal sealed partial class FrameSyntax
 {
+    // ceil(log2(n)) for n >= 1, in integers.
+    internal static int CeilingLog2(int n) => n <= 1 ? 0 : System.Numerics.BitOperations.Log2((uint)(n - 1)) + 1;
+
     private const int Cpl = 5;
     private const int Lfe = 6;
     private const int Channels = 7;
@@ -1016,7 +1019,7 @@ internal sealed partial class FrameSyntax
         if (_blocks > 1 && Flag("HasBlockStartInfo", Explain.Blkstrtinfoe))
         {
             // Annex E 2.3.2.27: (numblks - 1) * (4 + ceiling(log2(words_per_frame))) bits.
-            int bits = (_blocks - 1) * (4 + (int)Math.Ceiling(Math.Log2(_frameWords)));
+            int bits = (_blocks - 1) * (4 + CeilingLog2(_frameWords));
             int start = _b.Position;
             _b.Skip(bits);
             _t?.Field("Block Start Info", start, _b.Position, NodeValue.Integer(bits, "bits"), Explain.Blkstrtinfo);

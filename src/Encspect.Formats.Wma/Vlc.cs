@@ -1,3 +1,5 @@
+using Encspect.Core;
+
 namespace Encspect.Formats.Wma;
 
 // A variable-length code: the codes of a table, read bit by bit most significant first. A lookup table
@@ -149,7 +151,7 @@ internal sealed class Vlc
         {
             if (length > 0)
             {
-                sum += Math.Pow(2, -length);
+                sum += DetMath.PowerOfTwo(-length);
             }
         }
 

@@ -65,6 +65,47 @@ public class AacSbrFrequencyTablesTests
         Assert.Equal(message, error);
     }
 
+    // Every sample rate with a table row and every header the syntax can state (4, 4, 2, 1, 3 and 2 bits): what Derive gives, hashed. The
+    // band edges and counts rounded to integers come from DetMath's logarithm and power, not the platform's, and this pin holds the results
+    // of the platform library they replaced (Linux, glibc, .NET 10), so a tie that rounds the other way shows here before any golden.
+    [Fact]
+    public void DerivedTablesOfEveryRateAndHeaderAreTheOnesTheLibraryMathGave()
+    {
+        using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        Span<byte> record = stackalloc byte[24];
+        foreach (int rate in new[] { 16000, 22050, 24000, 32000, 44100, 48000, 64000, 88200, 96000, 128000, 176400, 192000 })
+        {
+            for (int start = 0; start < 16; start++)
+            {
+                for (int stop = 0; stop < 16; stop++)
+                {
+                    for (int scale = 0; scale < 4; scale++)
+                    {
+                        for (int alter = 0; alter < 2; alter++)
+                        {
+                            for (int xover = 0; xover < 8; xover++)
+                            {
+                                for (int noise = 0; noise < 4; noise++)
+                                {
+                                    var (bands, error) = Sbr.Derive(Header(start, stop, scale, alter, xover, noise), rate);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record, bands is null ? -1 : bands.Value.Kx);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[4..], bands?.K2 ?? error!.Length);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[8..], bands?.High ?? 0);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[12..], bands?.Low ?? 0);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[16..], bands?.Noise ?? 0);
+                                    hash.AppendData(record[..20]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        string result = Convert.ToHexStringLower(hash.GetHashAndReset());
+        Assert.True(result == "0796c8c0681aaead6b45d866f7f423ddfc332c43a4a2fe6c1c4e85051185164f", result);
+    }
+
     private static string? ReadGrid(string bitText) => Read(bitText, 0).Error;
 
     private static (int PsAt, string? Error, bool Plain) Read(string bitText, int ampRes)
