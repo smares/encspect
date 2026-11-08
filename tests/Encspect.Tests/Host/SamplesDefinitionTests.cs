@@ -331,8 +331,9 @@ public class SamplesDefinitionTests
         string[] lines = csv.ToString().Split("\r\n");
         string[] header = lines[0].Split(',');
         string[] row = lines[1].Split(',');
-        Assert.Equal("Lost Samples", header[^3]);
-        Assert.Equal((1152 + 300).ToString(CultureInfo.InvariantCulture), row[^3]);
+        int lost = Array.IndexOf(header, "Samples") + 1;
+        Assert.Equal("Lost Samples", header[lost]);
+        Assert.Equal((1152 + 300).ToString(CultureInfo.InvariantCulture), row[lost]);
 
         var none = new StringWriter();
         ReportCsvWriter.Write([new Report("x", new Node("File", 0, 1), [])], none);

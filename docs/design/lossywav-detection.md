@@ -231,8 +231,8 @@ The bitrate of the 30 s "D'un vieux jardin" before and after lossyWAV at standar
     - **Not tested:** lowered minimum bits kept (`--dynamic` down to 1.0, `--static` down to 3), where spans just above the count could become thin and the pattern could vanish.
   - Trimmed and withheld positions (`trimmedSamples`, `withheldSamples` of PR #232) are not measured; `firstPosition` gives the anchor.
   - The distribution over spans needs no grid known in advance and one pass.
-- **Figures** (names in Title Case as the levels write them; as built in PR 2, where "per" is not a short function word of the rule and the name uses "by"):
-  - **Low Bits Unused by Span:** for each count from 0 to the width, the number of spans, all channels together; silent spans apart, and thin spans counted.
+- **Figures** (names in Title Case as the levels write them; as built in PR 2):
+  - **Low Bits Unused per Span:** for each count from 0 to the width, the number of spans, all channels together; silent spans apart, and thin spans counted.
   - **Spans Above the Stream's Low Bits Unused:** the spans whose count is above the stream's Low Bits Unused. It is 0 for 16-bit audio in 24 bits and for truncated audio, and 98.7% for "D'un vieux jardin" at standard.
   - **Changes of Low Bits Unused:** the spans, neither silent, short nor thin, whose count differs from the same channel's last such span.
   - **Grid of the Changes:** the largest power of two from 256 to 65,536 samples such that at least 95% of the changes fall within one span of one phase of it (`hits * 20 >= changes * 19`, in integers), given at least 20 changes; otherwise none. It is reported with the number of changes on it.

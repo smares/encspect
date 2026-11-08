@@ -285,7 +285,7 @@ public class VerificationOutputTests
         ReportCsvWriter.Write([report], writer, isVerifying);
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         string[] header = lines[0].Split(',');
-        Assert.Equal("Is Verified", header[Array.IndexOf(header, "Is Protected") + 1]);
+        Assert.Equal("Is Verified", header[Array.IndexOf(header, "DRM Systems") + 1]);
         return [header[Array.IndexOf(header, "Is Verified")], lines[1].Split(',')[Array.IndexOf(header, "Is Verified")]];
     }
 

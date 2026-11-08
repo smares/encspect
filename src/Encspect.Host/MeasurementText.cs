@@ -279,7 +279,7 @@ public static class MeasurementText
             distribution += $"; {Plural(spans.ThinSpans, "thin span", "thin spans")}";
         }
 
-        lines.Add(new MeasurementLine(MeasurementFigure.LowBitsUnusedBySpan, "Low Bits Unused by Span", distribution, LowBitsUnusedBySpanDescription, LowBitsPerSpanTopic));
+        lines.Add(new MeasurementLine(MeasurementFigure.LowBitsUnusedBySpan, "Low Bits Unused per Span", distribution, LowBitsUnusedBySpanDescription, LowBitsPerSpanTopic));
         if (spans.Spans == 0)
         {
             return;
