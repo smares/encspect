@@ -14,7 +14,10 @@ public sealed class FactText
     public const int MaxLength = 1024;
 
     // The most chunks a header is walked through for its fact chunk.
-    private const int MaxChunks = 64;
+    private const int MaxChunks = 32;
+
+    // A longer version is not the text of any lossyWAV version known.
+    private const int MaxVersionLength = 64;
 
     private const string VersionSeparator = " @ ";
 
@@ -82,11 +85,16 @@ public sealed class FactText
         var chars = new char[end];
         for (int i = 0; i < end; i++)
         {
-            chars[i] = body[i] is < 0x20 or 0x7F ? '�' : (char)body[i];
+            chars[i] = body[i] is < 0x20 or (>= 0x7F and < 0xA0) ? '�' : (char)body[i];
         }
 
         string text = new(chars);
         int at = text.IndexOf(VersionSeparator, StringComparison.Ordinal);
+        if (at > MaxVersionLength)
+        {
+            at = -1;
+        }
+
         int comma = at < 0 ? -1 : text.IndexOf(SettingsSeparator, at + VersionSeparator.Length, StringComparison.Ordinal);
         if (at < 0 || comma < 0)
         {

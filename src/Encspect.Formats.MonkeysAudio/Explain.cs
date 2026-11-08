@@ -15,6 +15,7 @@ internal static class Topics
     public const string Channels = "channel-layouts";
     public const string BitrateModes = "bitrate-modes";
     public const string WaveFormat = "waveformatex";
+    public const string RiffChunks = "riff-chunks";
     public const string WaveFormatExtensible = "wave-format-extensible";
 }
 

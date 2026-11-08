@@ -5,7 +5,8 @@ using Encspect.Core;
 namespace Encspect.Tests;
 
 // The marker lossyWAV leaves (the text of a fact chunk before the data) and the claim of the processor role it makes, in the four formats that keep it.
-// The committed files come with a provenance record that holds lossyWAV's own answer: --check takes a file for its output by this chunk alone.
+// The committed files come with a provenance record: lossyWAV's own answer (--check) for the WAV each was made from, and the answer derived for the committed
+// file by lossyWAV's rule (a fact chunk before the data that starts with lossyWAV), which the importer takes from its bytes.
 public class LossyWavMarkerTests
 {
     private static readonly string[] Folders = ["wav", "flac", "wavpack", "monkeys-audio"];
@@ -41,6 +42,15 @@ public class LossyWavMarkerTests
         string provenance = Path.Combine(Fixtures.FixtureDirectory, name[..name.LastIndexOf('.')] + ".provenance.json");
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(provenance));
         bool isMarked = document.RootElement.GetProperty("lossyWavCheck").GetProperty("exit").GetInt32() == 255;
+
+        // lossyWAV's real answer is for the WAV the fixture was made from, which every fixture's lossyWAV run marked; for the WAV that was checked itself
+        // it is the answer for the file.
+        int real = document.RootElement.GetProperty("lossyWavCheckOfLossyFile").GetProperty("exit").GetInt32();
+        Assert.Equal(255, real);
+        if (document.RootElement.GetProperty("kind").GetString() == "lossy")
+        {
+            Assert.Equal(real == 255, isMarked);
+        }
 
         Report report = Analyze(name);
         StreamInfo stream = Assert.Single(report.Streams);

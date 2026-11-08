@@ -836,9 +836,9 @@ internal static class Reader
             }
 
             long chunkAt = s.HeaderDataAt + bodyAt - 8;
-            var chunk = new Node("fact Chunk", chunkAt, 8 + bodyLength) { Description = Explain.WavFactChunk, Topic = Topics.WaveFormat };
-            chunk.Add("ID", chunkAt, 4, "fact", Explain.WavChunkId, Topics.WaveFormat);
-            chunk.Add("Size", chunkAt + 4, 4, NodeValue.Integer(BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(bodyAt - 4)), "bytes", "byte"), Explain.WavChunkSize, Topics.WaveFormat);
+            var chunk = new Node("Fact Chunk", chunkAt, 8 + bodyLength) { Description = Explain.WavFactChunk, Topic = Topics.RiffChunks };
+            chunk.Add("Chunk ID", chunkAt, 4, "fact", Explain.WavChunkId, Topics.RiffChunks);
+            chunk.Add("Chunk Size", chunkAt + 4, 4, NodeValue.Integer(BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(bodyAt - 4)), "bytes", "byte"), Explain.WavChunkSize, Topics.RiffChunks);
             Node node = chunk.Add(text.ToNode(chunkAt + 8, bodyLength));
             data.Add(chunk);
             if (text.ToClaim(node, "fact chunk in the WAV header data") is { } claim)

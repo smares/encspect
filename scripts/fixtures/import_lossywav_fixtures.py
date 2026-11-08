@@ -18,8 +18,11 @@ The manifest's `arguments` leave out `--stdout` for the stdout file (it is a sec
 with lossyWAV; `--check` looks at nothing else): exit 255 and "already processed" if there is one, exit 0 and "not marked" if not. A file already there is left alone unless it has the same bytes or --force is given.
 
 The sets are the WAV files (PR 0 of docs/design/lossywav-detection.md) and the FLAC, WavPack and Monkey's Audio files (PR 1, which reads their
-marker). For a FLAC file the importer also reads the wasted bits of every subframe from the committed bytes and holds them to the workflow's
-`flacUnits` (the distribution, the changes and how many fall on a frame boundary): that recomputation is the reference for the article's statements.
+marker). For a FLAC file the importer decodes the committed bytes with flac_model.py and recomputes the figures of the workflow's `figures` (the
+spans of 32 samples: the distribution of their counts of zero low bits, the changes, the grid, the changes on it, and the times the channels agree), and the
+wasted bits of every subframe against `flacUnits`; a difference stops the import. That recomputation is the reference for the article's statements. The
+`figures` of a WavPack or Monkey's Audio file are the workflow's record: the file is checked to decode to the samples of the FLAC file made from the same
+input (same input and lossyWAV arguments), whose figures are recomputed.
 """
 
 import hashlib
@@ -48,7 +51,7 @@ IMPORTED = {
 }
 
 
-# Path under tests/fixtures -> (coding, the file the PCM of a Monkey's Audio file is taken from).
+# Path under tests/fixtures -> the WAV file the PCM of a Monkey's Audio file is taken from (None for the others).
 CODED = {
     "monkeys-audio/external-lossywav.ape": "wav/lossywav-standard.wav",
     "flac/external-lossyflac-b512.flac": None,
@@ -88,6 +91,9 @@ TOOLS = {
     "mac": "mac, the console tool of the Monkey's Audio SDK 13.44, built from MAC_1344_SDK.zip",
 }
 
+# (input SHA-256, lossyWAV arguments) -> MD5 of the decoded samples of the FLAC file made from that output, whose figures are recomputed.
+FIGURES = {}
+
 
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
@@ -116,7 +122,12 @@ def marker_text(data):
     """The text of lossyWAV's fact chunk if the committed file holds one before its audio, found in the first bytes of the file the coder kept
     the WAV header in (the foreign metadata blocks of FLAC, the wrapper of WavPack, the header data of Monkey's Audio)."""
     start = data.find(b"fact")
+    # lossyWAV's rule takes a fact chunk before the data: a data chunk header ahead of the text ("data" after the "riff" ID of a FLAC block, or by
+    # itself in a wrapper or header data) puts the text after the audio.
+    ahead = data.find(b"data", 0, 4096)
     while 0 <= start < 4096:
+        if 0 <= ahead < start:
+            return None
         if data[start + 8:start + 17] == b"lossyWAV ":
             size = int.from_bytes(data[start + 4:start + 8], "little")
             return data[start + 8:start + 8 + size].rstrip(b"\r\n\0").decode("latin-1")
@@ -128,10 +139,78 @@ def own_check_coded(data):
     return {"exit": 255, "answer": "already processed", "basis": "derived from the file's bytes by lossyWAV's rule"} if marker_text(data) is not None else {"exit": 0, "answer": "not marked", "basis": "derived from the file's bytes by lossyWAV's rule"}
 
 
+def span_figures(stream):
+    """The figures of docs/design/lossywav-detection.md, "The measurement", over the decoded samples of a FLAC stream (flac_model.py): spans of 32
+    samples per channel; the count is the zero low bits all samples share, the magnitude the bits beside the sign; a silent span has no count; a
+    thin span has a magnitude fewer than 4 bits above its count; a short span (the last) is counted in the distribution only; the changes are of the
+    spans that are none of these, against the channel's last such span; the grid is the largest power of two from 256 to 65,536 samples with 95% of at least 20
+    changes within one span of one phase."""
+    channels = None
+    for f in stream.frames:
+        if "channels" not in f:
+            continue
+        if channels is None:
+            channels = [[] for _ in f["channels"]]
+        for series, ch in zip(channels, f["channels"]):
+            series.extend(ch)
+    width = stream.info["bits"]
+    spans = silent = thin = 0
+    distribution = {}
+    changes = []
+    counts = []
+    for series in channels:
+        last = None
+        row = []
+        for start in range(0, len(series), 32):
+            block = series[start:start + 32]
+            spans += 1
+            ored = 0
+            magnitude = 0
+            for v in block:
+                ored |= v
+                magnitude = max(magnitude, v.bit_length() if v >= 0 else (-v - 1).bit_length())
+            if ored == 0:
+                silent += 1
+                row.append(None)
+                continue
+            count = min((ored & -ored).bit_length() - 1, width)
+            distribution[count] = distribution.get(count, 0) + 1
+            row.append(count)
+            if len(block) < 32:
+                continue
+            if magnitude - count < 4:
+                thin += 1
+                continue
+            if last is not None and last != count:
+                changes.append(start)
+            last = count
+        counts.append(row)
+    times = equal = 0
+    for column in zip(*counts):
+        if None in column:
+            continue
+        times += 1
+        equal += len(set(column)) == 1
+    grid = on_grid = None
+    if len(changes) >= 20:
+        for g in (65536 >> k for k in range(9)):
+            best = max(sum(min((c - p) % g, (p - c) % g) < 32 for c in changes) for p in {c % g for c in changes})
+            if best * 20 >= len(changes) * 19:
+                grid, on_grid = g, best
+                break
+    low = min(distribution) if distribution else 0
+    return {"spans": spans, "silentSpans": silent, "thinSpans": thin, "changes": len(changes), "grid": grid, "changesOnGrid": on_grid,
+            "timesWithEqualCounts": equal, "times": times, "lowBitsUnused": low, "distribution": {str(k): v for k, v in sorted(distribution.items())}}
+
+
 def flac_units(data):
-    """The wasted bits of every subframe, read from the committed bytes by flac_model.py: the units, their distribution, the changes between the
-    frames of a channel and how many of them fall on a multiple of the frame length (the grid, when the frames are the lossyWAV block)."""
+    """The wasted bits of every subframe, read from the committed bytes by flac_model.py: the units, their distribution and the changes between the
+    frames of a channel."""
     stream = flac_model.Stream(data, 0, len(data))
+    return units_of(stream)
+
+
+def units_of(stream):
     frames = [f for f in stream.frames if "subframes" in f]
     channels = max(len(f["subframes"]) for f in frames)
     distribution = {}
@@ -191,10 +270,20 @@ def import_coded(artifact, records):
                 if units[key] != recorded[key]:
                     raise SystemExit(f"{relative}: the wasted bits of the committed bytes ({key}: {units[key]}) differ from the workflow's ({recorded[key]})")
             provenance["flacUnitsFromCommittedBytes"] = units
+            stream = flac_model.Stream(data, 0, len(data))
+            figures = span_figures(stream)
+            for key, value in figures.items():
+                if value != record["figures"].get(key):
+                    raise SystemExit(f"{relative}: the {key} of the committed bytes ({value}) differs from the workflow's ({record['figures'].get(key)})")
+            provenance["figuresFromCommittedBytes"] = figures
+            FIGURES[(record["inputSha256"], tuple(record["arguments"]))] = expected_md5 = flac_model.decode_md5(stream)["decoded_pcm_md5"]
             expected = flac_model.manifest(data, 0, len(data), {"regions": [{"name": "FLAC", "offset": 0, "length": len(data)}], "encoder": encoder, "crosscheck": {"flac_test": True}})
         elif relative.endswith(".wv"):
             expected = wavpack_model.manifest(data, 0, len(data), {"regions": [{"name": "WavPack", "offset": 0, "length": len(data)}], "encoder": {**encoder, "file": "main file"}, "findings": []})
             expected["crosscheck"] = {"valid": True, "decode": {"opens": True, "samples": expected["stream_infos"][0]["samples"], "errors": 0}}
+            same = FIGURES.get((record["inputSha256"], tuple(record["arguments"])))
+            if same is None or expected.get("decoded_pcm_md5") != same:
+                raise SystemExit(f"{relative}: does not decode to the samples of the FLAC file made from the same lossyWAV output ({same} against {expected.get('decoded_pcm_md5')})")
         else:
             wav = (OUT / pcm_from).read_bytes()
             chunk = next(c for c in m.read(wav)["chunks"] if c["id"] == "data")

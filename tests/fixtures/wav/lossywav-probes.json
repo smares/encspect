@@ -1,0 +1,132 @@
+{
+ "about": "Answers of lossyWAV 1.4.2 to its own check (--check; exit 255 is the POSIX report of -1, 'already processed'), and of other runs, recorded by the lossywav fixtures workflow, run 42469204989 (artifact lossywav-fixtures-to-commit, manifest.json, 'probes'), so that the article's statements about the check do not rest on an artifact that expires. Each input is a WAV made from the music-44k-16-st signal; the hashes name the files probed.",
+ "tool": {
+  "build": "lossyWAV for POSIX, port of 1.4.2, https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+  "sha256": "ea4fffbb4bf2143493518acd8dc62c2350afa03e5de3a3951d80a1f5e19e5a3f"
+ },
+ "checks": [
+  {
+   "input": "source",
+   "describes": "the input WAV",
+   "sha256": "0aed6decd504e0fd75ce52458b44cb53e6e157c30d44c28d041a5a65edd55744",
+   "exit": 0,
+   "answer": "not marked"
+  },
+  {
+   "input": "lossy",
+   "describes": "lossyWAV's output",
+   "sha256": "a01becd2747558b624e0c934c00a88e81a7b1490e6f48753d1edae2b73cb9792",
+   "exit": 255,
+   "answer": "already processed"
+  },
+  {
+   "input": "lossy-no-fact",
+   "describes": "the output with its fact chunk removed",
+   "sha256": "db26050df0dda1d6ec40a3c6029caad156c40aa505d275330dc48de732724c9b",
+   "exit": 0,
+   "answer": "not marked"
+  },
+  {
+   "input": "lossy-fact-4-bytes",
+   "describes": "the output with a fact chunk of a 4-byte sample length in place of the text",
+   "sha256": "0ba4d5e4791e145407b2a54a7f0c3d86cbade423d4ad24023770c99a3bf4130c",
+   "exit": 0,
+   "answer": "not marked"
+  },
+  {
+   "input": "lossy-fact-other-version",
+   "describes": "the text with the version 9.9.9",
+   "sha256": "c2be359cbc09819261e46ab1162c3e6e61c2190ee97646757032f6ea640e884d",
+   "exit": 255,
+   "answer": "already processed"
+  },
+  {
+   "input": "lossy-fact-other-name",
+   "describes": "the text with LOSSYwav",
+   "sha256": "4b3ddf018d08aad036612127679d9ceae9b5c1e2e7a1b2b6513c3be9071ed517",
+   "exit": 0,
+   "answer": "not marked"
+  },
+  {
+   "input": "lossy-fact-after-data",
+   "describes": "the output with the fact chunk after the data",
+   "sha256": "8be5480d0cffa2d47aed09ee92603d8fea351c2b252c67d1a856586a30187594",
+   "exit": 0,
+   "answer": "not marked"
+  },
+  {
+   "input": "source-with-lossy-fact",
+   "describes": "the input with the output's fact chunk added",
+   "sha256": "27842e4e175269810cf655e7bdceb2a791231691cb1d0898f6bca1b4c7abf2e2",
+   "exit": 255,
+   "answer": "already processed"
+  }
+ ],
+ "otherRuns": [
+  {
+   "probe": "reprocess",
+   "exit": 255,
+   "files": []
+  },
+  {
+   "probe": "stdout",
+   "exit": 0,
+   "sha256": "5fadb5efe27d552e018c9d82cf4980192b8891401f3238759a728dd08cd1ad64",
+   "size": 1764536,
+   "riffSize": 1764596,
+   "chunks": [
+    [
+     "fmt ",
+     16
+    ],
+    [
+     "data",
+     1764492
+    ]
+   ]
+  },
+  {
+   "probe": "stdin-stdout",
+   "exit": 0,
+   "sha256": "5fadb5efe27d552e018c9d82cf4980192b8891401f3238759a728dd08cd1ad64",
+   "size": 1764536,
+   "riffSize": 1764596,
+   "chunks": [
+    [
+     "fmt ",
+     16
+    ],
+    [
+     "data",
+     1764492
+    ]
+   ]
+  },
+  {
+   "probe": "stdin-file",
+   "exit": 0,
+   "files": [
+    "pilossy.ped"
+   ]
+  }
+ ],
+ "windowsBuild": {
+  "run": 42470575652,
+  "commit": "4bb86de",
+  "about": "The official lossyWAV 1.4.2 for Windows (64-bit lossyWAV.exe) run on the same inputs, byte for byte, as the POSIX port (21 inputs, 121 runs, 19 fixture runs); compared with scripts/fixtures/compare_lossywav_builds.py.",
+  "zip": {
+   "file": "lossyWAV_v1.4.2.zip",
+   "size": 955107,
+   "sha256": "d5c1a9e17c9569b8fd30c28254c4ff7a7a7213783c7a55f448003cd3e720ffb1"
+  },
+  "exe64Sha256": "2022215759a1e48c43989a56f47011cdb1194c6a4926dea7f5033cbfa0d90334",
+  "agree": [
+   "the data chunk of every output",
+   "the zeroed bits per span and channel",
+   "the fact text apart from its time",
+   "RIFF sizes and chunk order, --stdout included",
+   "the answers of --check on the 8 probes",
+   "8 kHz input crashes both at standard and portable"
+  ]
+ }
+}
