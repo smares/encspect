@@ -9,7 +9,7 @@ name: Cross-checks by the formats' official decoders
 #
 #   linux     libopus and libvorbis through ogg_decode.c and through oggdec and opusdec, over every Opus and Vorbis fixture and its variants (rollout step 2);
 #             libtta-c's `tta -d` over every TTA fixture and its variants (rollout step 3);
-#             Fraunhofer's FDK AAC 2.0.2 through fdk_decode.c over every AAC fixture of tests/fixtures/{aac,adts,apple,mp4}, its variants and the downloaded
+#             Fraunhofer's FDK AAC 2.0.2 through fdk_decode.c over every AAC fixture of tests/fixtures/{aac,aac/adts,aac/apple,mp4}, its variants and the downloaded
 #             samples (rollout step 4)
 #   macos     Core Audio (AudioToolbox) through macos/audiotoolbox_probe.c: ExtAudioFile on the file and AudioConverter fed the units, over every AAC, AC-3 and E-AC-3 fixture,
 #             the variants of a fixed list of undamaged files and the downloaded samples (rollout step 5)
@@ -485,7 +485,7 @@ jobs:
         run: |
           mkdir -p units inventory-out
           python --version | tee inventory-out/python-version.txt
-          python -I scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac tests/fixtures/adts tests/fixtures/apple tests/fixtures/mp4 tests/fixtures/ac3
+          python -I scripts/fixtures/unit_list.py --tsv-dir units tests/fixtures/aac tests/fixtures/aac/adts tests/fixtures/aac/apple tests/fixtures/mp4 tests/fixtures/ac3
           ls units | wc -l
 
       - name: Decode with the Source Reader and the AAC decoder transform
@@ -495,9 +495,11 @@ jobs:
         timeout-minutes: 40
         run: |
           mkdir -p decode-out
-          for folder in aac adts apple mp4 ac3; do
+          # name:folder, the name being the artifact's folder
+          for entry in aac:aac adts:aac/adts apple:aac/apple mp4:mp4 ac3:ac3; do
+            folder=${entry%%:*}
             mkdir -p "decode-out/$folder"
-            ./probe-bin/wma-decode-probe.exe --format aac --units units --out "decode-out/$folder" --timeout 30 "tests/fixtures/$folder" 2>&1 | tee -a decode-out/log.txt | tail -3
+            ./probe-bin/wma-decode-probe.exe --format aac --units units --out "decode-out/$folder" --timeout 30 "tests/fixtures/${entry#*:}" 2>&1 | tee -a decode-out/log.txt | tail -3
           done
 
       - uses: actions/upload-artifact@v7

@@ -1063,7 +1063,7 @@ def _():
 # --- Legacy AAC IDs, CRC-32 cut by its parent, empty elements, live files with tags, damaged encodings ---------------------
 
 
-ADTS = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "adts"
+ADTS = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "aac" / "adts"
 
 
 def adts_frames(name):

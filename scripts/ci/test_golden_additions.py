@@ -407,6 +407,16 @@ class RepositoryTests(unittest.TestCase):
         self.commit()
         self.assertEqual(self.run_check(), 0)
 
+    def test_goldens_and_change_files_moved_unchanged_are_neither_deleted_nor_added(self):
+        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/"], "added": []})
+        self.commit()
+        self.git("checkout", "-qb", "move")
+        pathlib.Path(self.dir, "tests/fixtures/mpeg/deeper").mkdir()
+        self.git("mv", "tests/fixtures/mpeg/a.report.json", "tests/fixtures/mpeg/deeper/a.report.json")
+        self.git("mv", "tests/fixtures/mpeg/golden-changes.json", "tests/fixtures/mpeg/deeper/golden-changes.json")
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "pr", "HEAD", []), 0)
+
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
         real[0]["streams"][0].pop("categorySeries", None)
