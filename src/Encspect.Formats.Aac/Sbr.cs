@@ -150,7 +150,7 @@ internal static class Sbr
 
         int high = bandCount - header.XoverBand;
         int low = (high + 1) / 2;
-        int noise = Math.Max(1, Nearest(header.NoiseBands * Math.Log2((double)end / kx)));
+        int noise = Math.Max(1, Nearest(header.NoiseBands * DetMath.Log2((double)end / kx)));
         if (noise > 5)
         {
             return (null, string.Create(CultureInfo.InvariantCulture, $"the header gives {noise} noise floor bands, more than 5"));
@@ -169,7 +169,7 @@ internal static class Sbr
         double ratio = (double)b / a;
         for (int j = 1; j <= n; j++)
         {
-            int boundary = j == n ? b : Nearest(a * Math.Pow(ratio, (double)j / n));
+            int boundary = j == n ? b : Nearest(a * DetMath.Pow(ratio, (double)j / n));
             widths[j - 1] = boundary - previous;
             previous = boundary;
         }
@@ -228,7 +228,7 @@ internal static class Sbr
         int bandsPerOctave = scale == 1 ? 12 : scale == 2 ? 10 : 8;
         bool twoRegions = (double)k2 / k0 > 2.2449;
         int k1 = twoRegions ? 2 * k0 : k2;
-        int firstCount = 2 * Nearest(bandsPerOctave / 2.0 * Math.Log2((double)k1 / k0));
+        int firstCount = 2 * Nearest(bandsPerOctave / 2.0 * DetMath.Log2((double)k1 / k0));
         if (firstCount <= 0)
         {
             return ([], "the SBR master frequency table's first region is empty");
@@ -245,7 +245,7 @@ internal static class Sbr
         if (twoRegions)
         {
             double warp = warped ? 1.3 : 1.0;
-            int secondCount = 2 * Nearest(bandsPerOctave / 2.0 * Math.Log2((double)k2 / k1) / warp);
+            int secondCount = 2 * Nearest(bandsPerOctave / 2.0 * DetMath.Log2((double)k2 / k1) / warp);
             if (secondCount <= 0)
             {
                 return ([], "the SBR master frequency table's second region is empty");

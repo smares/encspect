@@ -136,6 +136,7 @@ jobs:
           python3 scripts/ci/test_sources_plan.py
           python3 scripts/ci/test_alac_model.py
           python3 scripts/ci/test_official_decoders.py
+          python3 scripts/ci/test_compare_pcm.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -439,7 +440,7 @@ jobs:
           status=0
           for knob in DOTNET_EnableAVX512 DOTNET_EnableAVX2 DOTNET_EnableHWIntrinsic; do
             env "$knob=0" dotnet test tests/Encspect.Tests --no-build --configuration Release \
-              --filter "(FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.NnVectorsTests|FullyQualifiedName~Encspect.Tests.OldVectorsTests|FullyQualifiedName~Encspect.Tests.Measurement.)&Category!=Nightly" \
+              --filter "(FullyQualifiedName~Encspect.Tests.DecoderFixtureTests|FullyQualifiedName~Encspect.Tests.MonkeysAudioDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.WavPackDecoderFixtureTests|FullyQualifiedName~Encspect.Tests.NnVectorsTests|FullyQualifiedName~Encspect.Tests.OldVectorsTests|FullyQualifiedName~Encspect.Tests.DecoderDeterminismTests|FullyQualifiedName~Encspect.Tests.Measurement.)&Category!=Nightly" \
               --logger "trx;LogFileName=${{ matrix.shard }}-$knob.trx" --results-directory "${{ runner.temp }}/trx" || status=1
           done
           exit $status

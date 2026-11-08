@@ -246,7 +246,7 @@ def is_docs(path):
 
 
 SOURCE_PROJECTS = {project for spec in AREAS.values() for project in spec["projects"]} | {"Encspect.Gui"}
-TEST_FOLDERS = {"Encspect.Tests", "Encspect.Gui.Tests", "Encspect.Fuzz", "fixtures", "conformance"}
+TEST_FOLDERS = {"Encspect.Tests", "Encspect.Gui.Tests", "Encspect.Fuzz", "Encspect.PcmDump", "fixtures", "conformance"}
 PARSER_PREFIXES = ("src/Encspect.Formats.", "src/Encspect.Tags.")
 
 # What the fixtures job's scripts read outside scripts/ and tests/: check_aac_tables.py compares the Huffman
@@ -275,7 +275,7 @@ def unknown_path(path):
 
 def known_elsewhere(path):
     """Paths no cross-check reads and that are not shared either."""
-    return (matches(path, ["src/Encspect.Gui/**", "tests/Encspect.Gui.Tests/**", "tests/Encspect.Tests/**", "tests/Encspect.Fuzz/**"])
+    return (matches(path, ["src/Encspect.Gui/**", "tests/Encspect.Gui.Tests/**", "tests/Encspect.Tests/**", "tests/Encspect.Fuzz/**", "tests/Encspect.PcmDump/**"])
             or is_docs(path) or matches(path, FIXTURE_ONLY) or path == "scripts/ci_report.py")
 
 
