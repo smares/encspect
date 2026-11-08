@@ -7,6 +7,7 @@ The order follows how well a format is documented: the better documented, the so
 ## In 0.2: header level only
 
 - **TAK and OptimFROG:** what their headers reveal.
+- **Encoder settings:** where a header stores them (OptimFROG's mode and speedup, TAK's preset), they are read and named, once a verifiable source and files the encoders write confirm the fields.
 - **Why no deeper:** both are poorly documented.
 
 ## After 0.5: more formats
