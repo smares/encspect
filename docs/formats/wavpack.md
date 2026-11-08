@@ -36,6 +36,13 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - the bitrate per block and per second, as series, with the smallest and largest block, a distribution and the bitrate mode: variable or constant for two sets or more, unknown for a single set, which shows no variation (`IsVbr` is false then);
 - the bits per sample as the sample size less the left shift; a shift that leaves no bits is a finding and the bit depth is then not reported.
 
+## Wasted Bits
+
+- **What it counts:** the number of audio blocks with each count of Zero Bits (the INT32_INFO sub-block; 0 where a block has none), and **Changes**: the blocks whose count differs from the count of the block at the same place in the previous block set. It is FLAC's **Wasted Bits** statistic under the same name, with blocks in place of subframes. The count of a block holds for all its channels (the smallest of theirs), so a stereo file has one count where FLAC has two.
+- **When it shows:** only in a stream where some block has Zero Bits. DSD blocks and correction files (blocks without a main bitstream) are not counted.
+- **Left Shift** is a different field of the block header and is not counted; it stayed 0 in the lossyWAV fixtures.
+- **The claim from behavior** (lossyWAV, low confidence) follows the same rule as FLAC's ([flac.md](flac.md#encoder-detection)): the block starts must lie on multiples of a length that divides lossyWAV's block, which `--merge-blocks` writes (blocks of whole multiples of 512 samples). WavPack's default blocks (11,025 samples at 44.1 kHz) divide no lossyWAV block, so their counts are shown and make no claim. The fixtures that carry the marker get the figures as a second piece of evidence: `external-lossywav-merge-blocks.wv` has 36 changes, all on the 512 grid; `external-lossywav-synthetic-merge-blocks.wv`, whose tones keep every bit, has 30 changes and 54.1% of its blocks above the smallest, so the rule's share (more than half) passes narrowly.
+
 ## Hybrid mode and correction files
 
 - A hybrid `.wv` is lossy by itself. A `.wvc` file holds the correction that makes it lossless: its blocks are read the same way and the stream is reported as correction data.

@@ -7,184 +7,182 @@
       "scope": "node",
       "parent": [
         "WavPack",
-        "Statistics",
-        "Stereo Coding"
+        "Processor"
       ],
-      "name": "Mid/side stereo",
+      "name": "Evidence",
+      "last": 1,
       "goldens": [
-        "tests/fixtures/wavpack/built-ape-and-id3v1.report.json",
-        "tests/fixtures/wavpack/built-ape-encoder-claim.report.json",
-        "tests/fixtures/wavpack/built-ape-encoder-wavpack.report.json",
-        "tests/fixtures/wavpack/built-audio-bit-flipped.report.json",
-        "tests/fixtures/wavpack/built-audio-without-bitstream.report.json",
-        "tests/fixtures/wavpack/built-bad-checksum.report.json",
-        "tests/fixtures/wavpack/built-bad-signature.report.json",
-        "tests/fixtures/wavpack/built-bitstream-cut.report.json",
-        "tests/fixtures/wavpack/built-block-crc-changed.report.json",
-        "tests/fixtures/wavpack/built-block-index-40-bit.report.json",
-        "tests/fixtures/wavpack/built-block-index-gap.report.json",
-        "tests/fixtures/wavpack/built-block-index-overlap.report.json",
-        "tests/fixtures/wavpack/built-block-removed-md5.report.json",
-        "tests/fixtures/wavpack/built-block-repeated-md5.report.json",
-        "tests/fixtures/wavpack/built-block-size-too-large.report.json",
-        "tests/fixtures/wavpack/built-block-size-too-small.report.json",
-        "tests/fixtures/wavpack/built-block-trailing-byte.report.json",
-        "tests/fixtures/wavpack/built-blocks-swapped-md5.report.json",
-        "tests/fixtures/wavpack/built-channel-identities.report.json",
-        "tests/fixtures/wavpack/built-channel-info-after-bad-block.report.json",
-        "tests/fixtures/wavpack/built-channel-info-after-first-block.report.json",
-        "tests/fixtures/wavpack/built-channel-info-four.report.json",
-        "tests/fixtures/wavpack/built-channel-info-ignored.report.json",
-        "tests/fixtures/wavpack/built-channel-info-no-count.report.json",
-        "tests/fixtures/wavpack/built-channel-info-zero.report.json",
-        "tests/fixtures/wavpack/built-channels-change.report.json",
-        "tests/fixtures/wavpack/built-checksum-missing.report.json",
-        "tests/fixtures/wavpack/built-cut-after-block.report.json",
-        "tests/fixtures/wavpack/built-decorr-terms-invalid.report.json",
-        "tests/fixtures/wavpack/built-dummy-and-large-subblocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics"
+      ],
+      "name": "Wasted Bits",
+      "goldens": [
         "tests/fixtures/wavpack/built-extra-bitstream-missing.report.json",
         "tests/fixtures/wavpack/built-extra-crc-changed.report.json",
-        "tests/fixtures/wavpack/built-garbage-between-blocks.report.json",
-        "tests/fixtures/wavpack/built-garbage-prefix.report.json",
-        "tests/fixtures/wavpack/built-id3v1.report.json",
-        "tests/fixtures/wavpack/built-inner-block-index-md5.report.json",
-        "tests/fixtures/wavpack/built-leading-block-without-set-md5.report.json",
-        "tests/fixtures/wavpack/built-leading-id3v2.report.json",
-        "tests/fixtures/wavpack/built-md5-digest-changed.report.json",
-        "tests/fixtures/wavpack/built-md5-file-cut.report.json",
-        "tests/fixtures/wavpack/built-md5-layout-differs.report.json",
-        "tests/fixtures/wavpack/built-missing-first-block.report.json",
-        "tests/fixtures/wavpack/built-reorder-too-long.report.json",
-        "tests/fixtures/wavpack/built-reserved-flag.report.json",
-        "tests/fixtures/wavpack/built-sample-rate-missing.report.json",
-        "tests/fixtures/wavpack/built-sample-rate-zero-custom.report.json",
-        "tests/fixtures/wavpack/built-sample-rate-zero.report.json",
-        "tests/fixtures/wavpack/built-seek-tag-between-blocks.report.json",
-        "tests/fixtures/wavpack/built-set-channels-missing.report.json",
-        "tests/fixtures/wavpack/built-set-without-final-limit.report.json",
-        "tests/fixtures/wavpack/built-set-without-final.report.json",
-        "tests/fixtures/wavpack/built-set-without-initial.report.json",
-        "tests/fixtures/wavpack/built-shift-too-large.report.json",
-        "tests/fixtures/wavpack/built-stereo-mute-limit.report.json",
-        "tests/fixtures/wavpack/built-subblock-overrun.report.json",
-        "tests/fixtures/wavpack/built-subblock-sizes-mixed.report.json",
-        "tests/fixtures/wavpack/built-tag-inside-block.report.json",
-        "tests/fixtures/wavpack/built-total-samples-40-bit.report.json",
-        "tests/fixtures/wavpack/built-total-samples-mismatch.report.json",
-        "tests/fixtures/wavpack/built-total-samples-unknown.report.json",
-        "tests/fixtures/wavpack/built-trailing-garbage.report.json",
-        "tests/fixtures/wavpack/built-truncated-header.report.json",
-        "tests/fixtures/wavpack/built-truncated-last-block.report.json",
-        "tests/fixtures/wavpack/built-unknown-subblocks.report.json",
-        "tests/fixtures/wavpack/built-version-unsupported.report.json",
-        "tests/fixtures/wavpack/built-weights-without-terms.report.json",
-        "tests/fixtures/wavpack/external-apev2-tag.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-16-stereo.report.json",
         "tests/fixtures/wavpack/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-51-16.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-apev2-tag.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-float-stereo.report.json",
-        "tests/fixtures/wavpack/external-from-aiff-md5.report.json",
-        "tests/fixtures/wavpack/external-from-aiff.report.json",
-        "tests/fixtures/wavpack/external-from-caf-51-md5.report.json",
-        "tests/fixtures/wavpack/external-from-caf-51.report.json",
-        "tests/fixtures/wavpack/external-hybrid-24-b8-correction-wvc.report.json",
         "tests/fixtures/wavpack/external-hybrid-24-b8-correction.report.json",
-        "tests/fixtures/wavpack/external-hybrid-32-b12-correction-wvc.report.json",
         "tests/fixtures/wavpack/external-hybrid-32-b12-correction.report.json",
         "tests/fixtures/wavpack/external-hybrid-32-b12.report.json",
-        "tests/fixtures/wavpack/external-hybrid-51-b3-correction-wvc.report.json",
-        "tests/fixtures/wavpack/external-hybrid-51-b3-correction.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b2.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b22.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-correction-md5.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-correction-wvc.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-correction.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-flat-noise.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-maximum-wvc.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-maximum.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-md5.report.json",
-        "tests/fixtures/wavpack/external-hybrid-clip-16.report.json",
-        "tests/fixtures/wavpack/external-hybrid-clip-24.report.json",
-        "tests/fixtures/wavpack/external-hybrid-float-b8-correction-wvc.report.json",
-        "tests/fixtures/wavpack/external-hybrid-float-b8-correction.report.json",
-        "tests/fixtures/wavpack/external-hybrid-kbps-b256.report.json",
-        "tests/fixtures/wavpack/external-hybrid-lossy-b4.report.json",
-        "tests/fixtures/wavpack/external-joint-stereo-on.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-blocks.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-chunks.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-md5-small-blocks.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-md5.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-no-wrapper.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo-small-blocks.report.json",
-        "tests/fixtures/wavpack/external-lossless-16-stereo.report.json",
         "tests/fixtures/wavpack/external-lossless-24-stereo-md5.report.json",
         "tests/fixtures/wavpack/external-lossless-24-stereo.report.json",
         "tests/fixtures/wavpack/external-lossless-32-stereo-md5.report.json",
         "tests/fixtures/wavpack/external-lossless-32-stereo.report.json",
-        "tests/fixtures/wavpack/external-lossless-4ch-two-unassigned.report.json",
-        "tests/fixtures/wavpack/external-lossless-51-16-md5.report.json",
-        "tests/fixtures/wavpack/external-lossless-51-16.report.json",
-        "tests/fixtures/wavpack/external-lossless-71-16.report.json",
-        "tests/fixtures/wavpack/external-lossless-8-stereo-md5.report.json",
-        "tests/fixtures/wavpack/external-lossless-8-stereo.report.json",
-        "tests/fixtures/wavpack/external-lossless-float-stereo-md5.report.json",
-        "tests/fixtures/wavpack/external-lossless-float-stereo.report.json",
-        "tests/fixtures/wavpack/external-mode-extra-6.report.json",
-        "tests/fixtures/wavpack/external-mode-fast.report.json",
-        "tests/fixtures/wavpack/external-mode-high.report.json",
-        "tests/fixtures/wavpack/external-mode-very-high.report.json",
-        "tests/fixtures/wavpack/external-rate-12345.report.json"
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav.report.json"
       ]
-    },
-    {
-      "scope": "stream",
-      "key": "categorySeries"
     },
     {
       "scope": "node",
       "parent": [
         "WavPack",
         "Statistics",
-        "Stereo Coding"
+        "Wasted Bits"
       ],
-      "name": "Left/right stereo",
+      "name": "0 Bits",
       "goldens": [
-        "tests/fixtures/wavpack/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-51-16.report.json",
-        "tests/fixtures/wavpack/external-ffmpeg-apev2-tag.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-left-right-wvc.report.json",
-        "tests/fixtures/wavpack/external-hybrid-b4-left-right.report.json",
-        "tests/fixtures/wavpack/external-hybrid-false-stereo-b2.report.json",
-        "tests/fixtures/wavpack/external-hybrid-false-stereo-b4.report.json",
-        "tests/fixtures/wavpack/external-joint-stereo-off.report.json",
-        "tests/fixtures/wavpack/external-mode-extra-1.report.json",
-        "tests/fixtures/wavpack/external-mode-extra-3.report.json",
-        "tests/fixtures/wavpack/external-mode-extra-6.report.json"
+        "tests/fixtures/wavpack/built-extra-bitstream-missing.report.json",
+        "tests/fixtures/wavpack/built-extra-crc-changed.report.json",
+        "tests/fixtures/wavpack/external-hybrid-24-b8-correction.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12-correction.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json"
       ]
-    }
-  ],
-  "renamed": [
+    },
     {
+      "scope": "node",
       "parent": [
         "WavPack",
-        "Statistics"
+        "Statistics",
+        "Wasted Bits"
       ],
-      "from": "Mid/Side Blocks",
-      "to": "Stereo Coding"
-    }
-  ],
-  "changed": [
+      "name": "1 Bit",
+      "goldens": [
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json"
+      ]
+    },
     {
-      "path": [
+      "scope": "node",
+      "parent": [
         "WavPack",
         "Statistics",
-        "Stereo Coding"
+        "Wasted Bits"
       ],
-      "fields": [
-        "unit",
-        "value"
+      "name": "16 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/built-extra-bitstream-missing.report.json",
+        "tests/fixtures/wavpack/built-extra-crc-changed.report.json",
+        "tests/fixtures/wavpack/external-ffmpeg-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12-correction.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "4 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "6 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "7 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "8 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/external-ffmpeg-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-hybrid-24-b8-correction.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "9 Bits",
+      "goldens": [
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "Changes",
+      "goldens": [
+        "tests/fixtures/wavpack/built-extra-bitstream-missing.report.json",
+        "tests/fixtures/wavpack/built-extra-crc-changed.report.json",
+        "tests/fixtures/wavpack/external-ffmpeg-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-hybrid-24-b8-correction.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12-correction.report.json",
+        "tests/fixtures/wavpack/external-hybrid-32-b12.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-24-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo-md5.report.json",
+        "tests/fixtures/wavpack/external-lossless-32-stereo.report.json",
+        "tests/fixtures/wavpack/external-lossywav-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.report.json",
+        "tests/fixtures/wavpack/external-lossywav.report.json"
       ]
     }
-  ]
+  ],
+  "changed": []
 }

@@ -27,6 +27,9 @@ public class LossyWavBehaviorTests
 
     private static IEnumerable<Node> Walk(Node node) => new[] { node }.Concat(node.Children.SelectMany(Walk));
 
+    // The statistic is the Wasted Bits node of the Statistics node; the field of each subframe in the frames has the same name.
+    private static Node? Statistic(Report report) => Walk(report.Root).Where(n => n.Name == "Statistics").SelectMany(n => n.Children).SingleOrDefault(n => n.Name == "Wasted Bits");
+
     private const string Pattern = "changes of the wasted bits between consecutive";
 
     [Theory]
@@ -49,7 +52,7 @@ public class LossyWavBehaviorTests
         Assert.Equal(claim ? 1 : 0, evidence.Length);
 
         // The statistic equals the importer's count from the committed bytes: the distribution, and the changes.
-        Node? wasted = nodes.SingleOrDefault(n => n.Name == "Wasted Bits");
+        Node? wasted = Statistic(report);
         var distribution = units.GetProperty("distribution").EnumerateObject().ToDictionary(p => int.Parse(p.Name, System.Globalization.CultureInfo.InvariantCulture), p => p.Value.GetInt64());
         if (distribution.Keys.All(bits => bits == 0))
         {
@@ -80,7 +83,7 @@ public class LossyWavBehaviorTests
     {
         Report report = Analyze(name);
         Node[] nodes = Walk(report.Root).ToArray();
-        Node wasted = nodes.Single(n => n.Name == "Wasted Bits");
+        Node wasted = Statistic(report)!;
         Assert.Equal(changes, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
         Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks of a channel, 100.0% of them at one phase of a grid of 512 samples", StringComparison.Ordinal));
         Assert.Equal("lossyWAV 1.4.2", Assert.Single(report.Streams).Processor);
@@ -100,17 +103,11 @@ public class LossyWavBehaviorTests
     [InlineData("flac/external-16-wasted-bits.flac")]
     [InlineData("flac/external-16-stereo-l5.flac")]
     [InlineData("flac/external-24-stereo.flac")]
-    [InlineData("flac/external-48000-stereo.flac")]
+    [InlineData("flac/external-96000-stereo.flac")]
     [InlineData("measurement/synthetic-lowbits-alaw-b512-44100.flac")]
     [InlineData("measurement/synthetic-lowbits-pad-16-in-24.flac")]
     public void FilesThatAreNotLossyWavsAreNotClaimed(string name)
     {
-        string path = Path.Combine(Fixtures.FixtureDirectory, name);
-        if (!File.Exists(path))
-        {
-            return;
-        }
-
         Report report = Analyze(name);
         Assert.Null(Assert.Single(report.Streams).Processor);
         Assert.DoesNotContain(Walk(report.Root), n => n.Name == "Processor");
@@ -120,8 +117,9 @@ public class LossyWavBehaviorTests
     public void ALawExpandedTo16BitsAndCodedInFramesOf512ChangesItsWastedBitsAtMostThreeTimes()
     {
         Report report = Analyze("measurement/synthetic-lowbits-alaw-b512-44100.flac");
-        Node? changes = Walk(report.Root).SingleOrDefault(n => n.Name == "Changes" && n.Description?.Contains("wasted bits", StringComparison.Ordinal) == true);
-        Assert.True(changes is null || changes.Value!.AsInteger()!.Value <= 3);
+        Node? changes = Statistic(report)?.Children.Single(n => n.Name == "Changes");
+        Assert.NotNull(changes);
+        Assert.True(changes.Value!.AsInteger()!.Value <= 3);
         Assert.Null(Assert.Single(report.Streams).Processor);
     }
 }

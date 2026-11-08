@@ -83,7 +83,10 @@ public class LossyWavMarkerTests
         Node processor = Walk(report.Root).Single(n => n.Name == "Processor");
         Assert.Equal("lossyWAV 1.4.2", processor.Value?.ToString());
         Assert.Equal("High", processor.Children.Single(c => c.Name == "Confidence").Value?.ToString());
-        Node evidence = processor.Children.Single(c => c.Name == "Evidence");
+        // The marker's evidence comes first; the counts of wasted bits add their own (LossyWavBehaviorTests).
+        Node[] evidences = processor.Children.Where(c => c.Name == "Evidence").ToArray();
+        Assert.Equal(2, evidences.Length);
+        Node evidence = evidences[0];
         Assert.Contains("with the settings \"--quality standard\"", evidence.Value?.ToString(), StringComparison.Ordinal);
 
         Node text = Walk(report.Root).Single(n => n.Name == "Text");
@@ -124,7 +127,7 @@ public class LossyWavMarkerTests
     [Fact]
     public void AFileWithoutTheMarkerHasNoProcessorFields()
     {
-        Report report = Analyze("flac/external-lossyflac-b512.flac");
+        Report report = Analyze("flac/external-lossyflac-b4096.flac");
         var json = new MemoryStream();
         ReportJsonWriter.Write([report], json);
         using JsonDocument document = JsonDocument.Parse(json.ToArray());
@@ -151,8 +154,13 @@ public class LossyWavMarkerTests
         Finding finding = Assert.Single(report.Findings, f => f.Code == code);
         Assert.Equal(Severity.Info, finding.Severity);
         Assert.NotNull(finding.Path);
-        Assert.Null(Assert.Single(report.Streams).Processor);
-        Assert.DoesNotContain(Walk(report.Root), n => n.Name == "Processor");
+
+        // The text names no version, so it makes no claim; the FLAC file's counts of wasted bits still name lossyWAV, at low confidence and without a version.
+        StreamInfo stream = Assert.Single(report.Streams);
+        bool isFlac = fixture.StartsWith("flac/", StringComparison.Ordinal);
+        Assert.Equal(isFlac ? "lossyWAV" : null, stream.Processor);
+        Assert.Equal(isFlac ? Confidence.Low : null, stream.ProcessorConfidence);
+        Assert.Equal(isFlac, Walk(report.Root).Any(n => n.Name == "Processor"));
         Node text = Walk(report.Root).Single(n => n.Name == "Text");
         Assert.StartsWith("lossyWAV 1.4.2", text.Value?.ToString(), StringComparison.Ordinal);
         Assert.Empty(text.Children);

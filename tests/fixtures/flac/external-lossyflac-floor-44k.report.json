@@ -381,6 +381,26 @@
               ]
             },
             {
+              "name": "Processor",
+              "value": "lossyWAV",
+              "offset": 0,
+              "length": 73854,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 73854
+                },
+                {
+                  "name": "Evidence",
+                  "value": "66 changes of the wasted bits between consecutive subframes of a channel, 100.0% of them at one phase of a grid of 512 samples, and 98.9% of the subframes above the stream's smallest count",
+                  "offset": 0,
+                  "length": 73854
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -552,6 +572,58 @@
                   "value": "172 subframes (98.9%)",
                   "offset": 0,
                   "length": 73854
+                },
+                {
+                  "name": "Wasted Bits",
+                  "value": 174,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 73854,
+                  "children": [
+                    {
+                      "name": "0 Bits",
+                      "value": "2 subframes (1.1%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "1 Bit",
+                      "value": "1 subframe (0.6%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "2 Bits",
+                      "value": "14 subframes (8.0%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "3 Bits",
+                      "value": "57 subframes (32.8%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "4 Bits",
+                      "value": "86 subframes (49.4%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "5 Bits",
+                      "value": "14 subframes (8.0%)",
+                      "offset": 0,
+                      "length": 73854
+                    },
+                    {
+                      "name": "Changes",
+                      "value": 66,
+                      "unit": "changes",
+                      "offset": 0,
+                      "length": 73854
+                    }
+                  ]
                 },
                 {
                   "name": "Partition Orders",
@@ -34603,6 +34675,8 @@
         },
         "encoder": "libFLAC 1.5.0 (20250211)",
         "encoderConfidence": "High",
+        "processor": "lossyWAV",
+        "processorConfidence": "Low",
         "series": [
           {
             "name": "Bitrate",

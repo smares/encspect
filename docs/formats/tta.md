@@ -87,6 +87,13 @@ The header states a channel count and no speaker positions. The layout comes fro
 - The analyzer has not been changed to the reference. `built-channels-zero.tta`, a header with 0 channels and 100,000 samples, has no reference: `tta -d` exits 0 and writes no data, which gives no count (`noted`). No `pending` item is left in the committed file. The project lead decided on 2026-11-01 that fewer data bytes than the header declares is a stop with no reference, and, in the first TTA check, that the analyzer keeps counting whole frames for a file cut in its last frame (`keep`). The samples definition supersedes the `keep`: a cut frame counts the samples its header declares and is lost, so `samples` equals the header's count that `tta -d` writes.
 - The run is 41340327636 (commit fec9cf3); the first version of the run (41334418322, repeated as 41336001984, and 41338214809) gave the same figures except for the stops added after review.
 
+## lossyWAV output
+
+- **What was checked:** TTA's syntax has no count of low bits that are zero. Encspect's test files of the two 24-bit stereo noise-floor signals (`external-lossyflac-b512.flac` and `external-lossyflac-floor-44k.flac`, whose samples are lossyWAV 1.4.2's output at the standard preset), coded with libtta-c 2.3's `tta` (`scripts/fixtures/check_lossywav_coders.py`):
+  - the signal before lossyWAV: 148,475 and 104,736 bytes; lossyWAV's output: 148,563 and 104,894 bytes. The zeroed bits bought nothing.
+- **What Encspect reports:** the same as for any TTA file. TTA has no decoder yet, so the levels and the low bits per span are not measured for it (`decode.no-decoder`); once it decodes, those figures come from the samples and read as the WAV file's do.
+- **No claim:** the file holds no marker and no coded count, so nothing in it names lossyWAV.
+
 ## Not covered
 
 - The coded samples: no decoding, no waveform, spectrogram or lowpass for TTA, and no check of the audio beyond the frames' CRC-32s.

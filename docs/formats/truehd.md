@@ -108,6 +108,15 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 - Substreams: `truehd.substream-parity-mismatch`, `truehd.substream-crc-mismatch`, `truehd.substream-end-invalid`, `truehd.substream-without-restart-header`, `truehd.restart-header-invalid`, `truehd.restart-header-crc-mismatch`, `truehd.parameters-invalid`, `truehd.block-invalid`, `truehd.block-size-check`, `truehd.parameters-change-within-unit`, `truehd.channel-assignment`.
 - Decoding: `truehd.lossless-check-failed` and the host's `decode.*` findings.
 
+## lossyWAV output
+
+- **What was checked:** TrueHD has a count of shifted bits that looks like wasted bits: the output shift of each channel in the restart header (the "Output Shifts" node, and "Largest Output Shift" in the statistics), apart from the quantizer step sizes and each block's LSB count. The two 24-bit stereo noise-floor files (see [tta.md](tta.md#lossywav-output)) coded with FFmpeg's experimental `truehd` encoder, the only TrueHD encoder at hand (`scripts/fixtures/check_lossywav_coders.py`, `-c:a truehd -strict -2`):
+  - the signal before lossyWAV: 170,392 and 126,636 bytes, output shifts 0 in all 70 restart headers; lossyWAV's output: 83,016 and 88,736 bytes;
+  - lossyWAV's output at −70 dBFS (Low Bits Unused 4, counts of 4 to 9 per span): output shifts 7 and 7 in 27 of 32 restart headers, 6 and 7 or 6 and 6 in the others; at −100 dBFS (Low Bits Unused 0): shifts of 0 to 4, in 12 of 32 headers "3, 4";
+  - the decoder's levels read the same pattern as the WAV file's: 68 and 66 changes on a grid of 512.
+- **What it means for this encoder:** the output shift follows the zeroed bits of lossyWAV's output, which this encoder exploits (the files are about half the size or less), but it is stated in the restart headers, which come about every 1,400 samples here (32 in 44,223 samples), not once per 512 samples. The shifts therefore do not change on lossyWAV's grid, and the parser has no per-unit count that matches the FLAC and WavPack statistic. The observation is of one experimental encoder and two inputs; other TrueHD encoders were not tried.
+- **No claim:** the restart headers' shifts are not read as lossyWAV's pattern. The measurement (`--measure`) is the figure that shows it.
+
 ## Not covered
 
 - Stereo coding (how the matrix channels combine, as the "Stereo Coding" series of MPEG audio, AAC and ALAC report channel pairs): not covered yet. It needs the matrix and channel data of the substream blocks, the frame-level parsing that comes with the format's decoder.
