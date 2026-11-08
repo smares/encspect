@@ -6,6 +6,22 @@ namespace Encspect.Tests.Measurement;
 public class MeasurementKernelTests
 {
     [Fact]
+    public void Log2IsExactOnEveryPowerOfTwoAndCloseToTheLibraryElsewhere()
+    {
+        for (int k = -1074; k <= 1023; k++)
+        {
+            Assert.Equal(k, DetMath.Log2(Math.ScaleB(1.0, k)));
+        }
+
+        var random = new Random(5);
+        for (int i = 0; i < 20000; i++)
+        {
+            double x = Math.Exp((random.NextDouble() * 200) - 100);
+            Assert.True(Math.Abs(DetMath.Log2(x) - Math.Log2(x)) <= 1e-14 * Math.Max(1, Math.Abs(Math.Log2(x))), $"{x}");
+        }
+    }
+
+    [Fact]
     public void TheSineAndCosineTableMatchesTheLibraryAndIsExactlySymmetric()
     {
         foreach (int n in new[] { 1024, 4096, 32768 })

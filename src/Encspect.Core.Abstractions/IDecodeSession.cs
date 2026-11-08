@@ -17,6 +17,14 @@ public interface IDecodeSession
     // front end's stop, a sink's exception or a decoder failure ended the session.
     bool Decode(in CodedFrame frame);
 
+    // States the range of positions the stream's own syntax trims to (Opus's pre-skip and end trimming, Vorbis's and Speex's granule
+    // positions, Musepack's header, WMA Professional's frames), at the coded stage as CodedFrame.FirstSample: the positions before
+    // firstPosition and from endPosition on are Trimmed Samples, which the measurements count apart from lost and withheld samples and
+    // leave out of their figures (docs/design/lossy-decoders.md, decision 8). The sink's PCM stays untrimmed. A parser calls it before the
+    // Decode of the first frame that the leading trim reaches and of the first that the trailing trim reaches; a trim stated later only
+    // affects blocks written after it. Not calling it trims nothing. Once a block past the end has been written the end can only stay or shrink. Throws ArgumentOutOfRangeException for a negative firstPosition or an endPosition before it, whether or not anything is decoded; that is a parser bug (parse.failed).
+    void Trim(long firstPosition, long endPosition);
+
     // Ends the session, once. stored lists every checksum the stream stores, of either kind, with Stored set, and for
     // those over coded data what the parser compared. The host fills in the decoder's results for those over decoded
     // audio and returns the verification the parser puts on its StreamInfo. Further calls return the same verification.

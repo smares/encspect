@@ -31,6 +31,36 @@ public sealed record StreamMeasurements
     // InnerLostSamples) that the grids and graphs cover.
     public long InnerLostSamples => LostSamples - LeadingLostSamples - TrailingLostSamples;
 
+    // The positions of units the decoder read and decoded but whose output it held back (DecodeContext.Withhold), apart from lost samples:
+    // a gap's positions are withheld where the decoder reported them and lost for the rest. WithheldByReason holds the samples for each
+    // WithholdReason; it sums to WithheldSamples. The leading and trailing parts are counted as the lost ones are.
+    public long WithheldSamples { get; init; }
+
+    public long LeadingWithheldSamples { get; init; }
+
+    public long TrailingWithheldSamples { get; init; }
+
+    public WithheldCounts WithheldByReason { get; init; }
+
+    public long InnerWithheldSamples => WithheldSamples - LeadingWithheldSamples - TrailingWithheldSamples;
+
+    // The samples the decoder wrote that the stream's own syntax trims away (IDecodeSession.Trim) and that were left out of every figure: the positions
+    // before the trimmed range's start and from its end on. Lost and withheld samples are counted at the coded stage, trimmed range or not.
+    public long LeadingTrimmedSamples { get; init; }
+
+    public long TrailingTrimmedSamples { get; init; }
+
+    public long TrimmedSamples => LeadingTrimmedSamples + TrailingTrimmedSamples;
+
+    // Lost and withheld samples together: the positions of the span the measured blocks cover that hold no measured sample.
+    public long SkippedSamples => LostSamples + WithheldSamples;
+
+    public long LeadingSkippedSamples => LeadingLostSamples + LeadingWithheldSamples;
+
+    public long TrailingSkippedSamples => TrailingLostSamples + TrailingWithheldSamples;
+
+    public long InnerSkippedSamples => InnerLostSamples + InnerWithheldSamples;
+
     public int Gaps { get; init; }
 
     public int SampleRate { get; init; }
