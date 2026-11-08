@@ -20,7 +20,8 @@ Frames that use random noise (AAC noise substitution, AC-3 dither, WMA noise cod
 edges of the scalefactor or exponent bands) compares the energy of each band, averaged over windows of frames of --band-frame samples (Hann window), within --band-tolerance
 dB (0.5), for the bands whose energy on both sides is above --band-floor-db; use it with --no-sample-bounds to leave the sample bounds out. Two independent noise fills
 of equal energy differ in a single frame by several dB, so only the mean over many frames can show 0.5 dB: a band whose estimate has a standard deviation above a
-third of the tolerance (4.34 * sqrt(2) * 1.5 / sqrt(frames * bins) dB) is reported as inconclusive and not compared (--band-sigmas); the window is the fewest frames that makes it conclusive,
+third of the tolerance (4.34 * sqrt(2) * 1.5 / sqrt(frames * bins) dB) is reported as inconclusive and not compared (--band-sigmas); the window is the fewest frames that makes it conclusive (z of at least --band-sigmas, more with many windows so that equal noise
+fails with a probability of 0.001 a band),
 so that frames that are off are not diluted by the rest of the stream, and the worst window counts. A channel with no band compared fails.
 
 Exit status: 0 where every bound holds, 1 where one fails, 2 for a usage error or input the script cannot read. --json prints the result as JSON.
@@ -253,9 +254,20 @@ def band_sigma_db(frames, bins):
     return math.inf if n == 0 else 4.343 * math.sqrt(2) * 1.5 / math.sqrt(n)
 
 
-def window_frames(bins, tolerance, sigmas):
-    """The fewest frames whose mean band energy has a spread that fits `sigmas` times in the tolerance, for a band of `bins` bins."""
-    needed = (sigmas * 4.343 * math.sqrt(2) * 1.5 / tolerance) ** 2
+FALSE_FAILURE = 1e-3
+
+
+def window_frames(bins, tolerance, sigmas, count=None):
+    """The fewest frames whose mean band energy has a spread that fits z times in the tolerance, for a band of `bins` bins.
+
+    The worst of all the windows counts, so z grows with their number: z = max(sigmas, sqrt(2 ln(windows / FALSE_FAILURE))) is the normal quantile
+    (Bonferroni) at which equal noise fails the band with a probability of FALSE_FAILURE. The windows are counted for the window of `sigmas`, which
+    is the most there can be, so z is never too small."""
+    z = sigmas
+    if count:
+        windows = max(1, count // window_frames(bins, tolerance, sigmas))
+        z = max(sigmas, math.sqrt(2 * math.log(windows / FALSE_FAILURE)))
+    needed = (z * 4.343 * math.sqrt(2) * 1.5 / tolerance) ** 2
     return max(1, math.ceil(needed / max(1, bins)))
 
 
@@ -263,8 +275,8 @@ def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, toler
     """Compares the energy of each band over windows of frames; a frame never spans a jump.
 
     Two decoders that fill a band with independent noise (AAC noise substitution, AC-3 dither, WMA noise coding) agree on the band's energy only on
-    average, not frame by frame, so the figure compared is the mean over a window of frames: the shortest window whose spread fits `sigmas` times in
-    the tolerance (or `window` frames), so that a stretch of frames that is off is not diluted by the rest of a long stream. The frames are split
+    average, not frame by frame, so the figure compared is the mean over a window of frames: the shortest window whose spread fits z times in
+    the tolerance (z grows with the number of windows, see window_frames) (or `window` frames), so that a stretch of frames that is off is not diluted by the rest of a long stream. The frames are split
     into as many windows of that length or more as fit, and the worst window counts. A band with fewer frames than one window cannot show a
     difference of the tolerance and is inconclusive, not compared."""
     bits = FORMATS[fmt][1]
@@ -285,7 +297,7 @@ def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, toler
         compared = outside = inconclusive = 0
         largest = 0.0
         for i, nbins in enumerate(bins):
-            size = window if window else window_frames(nbins, tolerance, sigmas)
+            size = window if window else window_frames(nbins, tolerance, sigmas, count)
             windows = count // size
             sigma = band_sigma_db(min(count, size), nbins)
             entry = {"band": i, "frames": count, "windowFrames": size, "windows": windows, "sigmaDb": round(sigma, 3)}

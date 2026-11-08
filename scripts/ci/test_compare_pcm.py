@@ -163,7 +163,7 @@ class FixedReferenceTests(unittest.TestCase):
 
 
 class BandTests(unittest.TestCase):
-    EDGES = "0,3000,8000,16000,24000"
+    EDGES = "0,8000,16000,24000"
 
     def test_two_independent_noise_fills_of_equal_energy_agree_and_one_dB_more_does_not(self):
         frames = 64
@@ -173,14 +173,14 @@ class BandTests(unittest.TestCase):
         code, result, _ = case.run("--bands", self.EDGES, "--no-sample-bounds")
         self.assertEqual(code, 0, result)
         bands = result["bands"]["channels"][0]
-        self.assertEqual((bands["bandsOutside"], bands["bandsCompared"]), (0, 4))
+        self.assertEqual((bands["bandsOutside"], bands["bandsCompared"]), (0, 3))
         self.assertLess(bands["largestDifferenceDb"], 0.5)
 
         louder = 10 ** (1 / 20)
         case.write_reference([[v * louder for v in noise(frames * 1024, 11)]])
         code, result, _ = case.run("--bands", self.EDGES, "--no-sample-bounds")
         self.assertEqual(code, 1)
-        self.assertEqual(result["bands"]["channels"][0]["bandsOutside"], 4)
+        self.assertEqual(result["bands"]["channels"][0]["bandsOutside"], 3)
 
     def test_the_stated_spread_covers_the_real_spread_of_independent_noise(self):
         # Differences of the mean band energy of two independent fills, over many trials: their standard deviation stays under the stated sigma.
@@ -202,12 +202,12 @@ class BandTests(unittest.TestCase):
         self.assertGreaterEqual(bands["bandsInconclusive"], 1)
         self.assertEqual(bands["bands"][0]["status"], "inconclusive")
 
-    def test_one_frame_far_off_in_a_long_stream_is_not_diluted(self):
+    def test_a_few_frames_far_off_in_a_long_stream_are_not_diluted(self):
         frames = 300
         samples = noise(frames * 256, 20)
         case = Case(self, [samples], [[0, len(samples)]])
         reference = list(samples)
-        for i in range(150 * 256, 151 * 256):
+        for i in range(150 * 256, 153 * 256):
             reference[i] *= 10 ** 0.5
         case.write_reference([reference])
         code, result, _ = case.run("--bands", "0,12000", "--band-frame", "256", "--no-sample-bounds")
@@ -216,6 +216,17 @@ class BandTests(unittest.TestCase):
 
         case.write_reference([samples])
         self.assertEqual(case.run("--bands", "0,12000", "--band-frame", "256", "--no-sample-bounds")[0], 0)
+
+    def test_equal_noise_in_a_long_stream_never_fails_over_many_seeds(self):
+        failures = []
+        for seed in range(40):
+            first = noise(400 * 128, 1000 + seed)
+            case = Case(self, [first], [[0, len(first)]])
+            case.write_reference([noise(400 * 128, 2000 + seed)])
+            code, result, _ = case.run("--bands", "0,6000,12000,24000", "--band-frame", "128", "--no-sample-bounds")
+            if code != 0:
+                failures.append((seed, result["bands"]["channels"][0]["largestDifferenceDb"]))
+        self.assertEqual(failures, [])
 
     def test_a_run_where_every_band_is_inconclusive_fails(self):
         samples = noise(4 * 256, 21)
@@ -240,7 +251,7 @@ class BandTests(unittest.TestCase):
         reference[0:1024] = analyzer[:1024]
         reference[4096:5120] = analyzer[1024:]
         case.write_reference([reference])
-        code, result, _ = case.run("--bands", "0,6000,24000", "--no-sample-bounds", "--band-sigmas", "0")
+        code, result, _ = case.run("--bands", "0,6000,24000", "--no-sample-bounds", "--band-window", "1")
         self.assertEqual(code, 0, result)
         self.assertEqual(result["bands"]["channels"][0]["bands"][0]["frames"], 2)
 
