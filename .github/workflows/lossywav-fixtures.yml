@@ -72,3 +72,14 @@ jobs:
           path: lossywav-out
           retention-days: 90
           if-no-files-found: error
+
+      # The files to commit and the manifest alone, small enough to download for a check.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-fixtures-to-commit
+          path: |
+            lossywav-out/fixtures
+            lossywav-out/manifest.json
+          retention-days: 90
+          if-no-files-found: error

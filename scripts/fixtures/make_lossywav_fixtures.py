@@ -31,6 +31,7 @@ the flac-b512-foreign coding holds the samples and chunks of the others), OUT/co
 import argparse
 import hashlib
 import json
+import math
 import pathlib
 import shutil
 import subprocess
@@ -363,8 +364,42 @@ def output_record(probe, result, path):
             "stderr": result.stderr.decode("utf-8", "replace")[-1500:]}
 
 
+def floor_signal(rate, channels, bits, count, tone_db, floor_db):
+    """The tones of flac_signal.py's music signal at tone_db for the whole length, over a noise floor of its own in each
+    channel: TPDF noise from a fixed linear congruential generator per channel, peaking at floor_db (dBFS). The floor is
+    what lets lossyWAV remove bits from the tones, as a recording's noise does; one generator per channel, so the channels'
+    counts may differ."""
+    scale = 1 << (bits - 1)
+    gain = 10 ** (tone_db / 20)
+    peak = max(1, int(scale * 10 ** (floor_db / 20)))
+    states = [987654321 + 7919 * c for c in range(channels)]
+    frames = []
+    for i in range(count):
+        t = i / rate
+        envelope = 0.5 + 0.5 * math.sin(2 * math.pi * 3 * t)
+        frame = []
+        for c in range(channels):
+            tone = envelope * (math.sin(2 * math.pi * 300 * t) + 0.3 * math.sin(2 * math.pi * (1100 + 300 * c) * t + 0.3)) / 1.3
+            states[c] = (states[c] * 1103515245 + 12345) & 0x7FFFFFFF
+            a = (states[c] >> 8) % (peak + 1)
+            states[c] = (states[c] * 1103515245 + 12345) & 0x7FFFFFFF
+            b = (states[c] >> 8) % (peak + 1)
+            frame.append(max(-scale, min(scale - 1, int(round(tone * gain * scale)) + a - b)))
+        frames.append(frame)
+    return frames
+
+
+# (rate, channels, bits, tone level, floor level) of the noise-floor signals; all are 24-bit stereo but the 16-bit one.
+FLOORS = {
+    "floor-22k": (22050, 2, 24, -20, -100), "floor-32k": (32000, 2, 24, -20, -100), "floor-44k": (44100, 2, 24, -20, -100),
+    "floor-88k": (88200, 2, 24, -20, -100), "floor-176k": (176400, 2, 24, -20, -100), "floor-192k": (192000, 2, 24, -20, -100),
+    "floor-44k-16bit": (44100, 2, 16, -30, -90),
+}
+
 # The fixtures to commit, made at their committed length. Inputs: (name, source, seconds, frames added), where source is
-# a signal of SIGNALS (made again at the length) or a recording of MUSIC (its first seconds, from the same start).
+# a signal of SIGNALS (made again at the length), a recording of MUSIC (its first seconds, from the same start) or a
+# noise-floor signal of FLOORS. A list of lengths is tried in order, and the first whose lossyWAV output passes the gate
+# (40 changes and a grid) is kept; the manifest records every length tried.
 FIXTURE_INPUTS = {
     "marker": ("music-44k-16-st", 0.5, 123),
     "marker-chunks": ("music-44k-16-st", 0.5, 123),
@@ -374,14 +409,15 @@ FIXTURE_INPUTS = {
     "synthetic-48k-3s": ("music-48k-24-st", 3, 123),
     "synthetic-96k-3s": ("music-96k-24-st", 3, 123),
     "synthetic-48k-6ch-3s": ("music-48k-24-6ch", 3, 123),
+    **{name: (name, [1, 2, 3, 5], 123) for name in FLOORS},
 }
 
 # (path in the repository, input, lossyWAV arguments, what is committed: "lossy", "lwcdf", "stdout" or a coding of CODERS,
 # whether the file must show the pattern: at least twice the 20 changes the grid needs).
 FIXTURES = [
-    ("tests/fixtures/wav/lossywav-standard.wav", "marker", ["-q", "S"], "lossy", False),
-    ("tests/fixtures/wav/lossywav-correction.lossy.wav", "marker", ["-q", "S", "--correction"], "lossy", False),
-    ("tests/fixtures/wav/lossywav-correction.lwcdf.wav", "marker", ["-q", "S", "--correction"], "lwcdf", False),
+    # The output and its correction file from one run: a run without --correction writes the same output.
+    ("tests/fixtures/wav/lossywav-standard.wav", "marker", ["-q", "S", "--correction"], "lossy", False),
+    ("tests/fixtures/wav/lossywav-standard.lwcdf.wav", "marker", ["-q", "S", "--correction"], "lwcdf", False),
     ("tests/fixtures/wav/lossywav-standard-chunks.wav", "marker-chunks", ["-q", "S"], "lossy", False),
     ("tests/fixtures/wav/lossywav-stdout.wav", "marker", ["-q", "S"], "stdout", False),
     ("tests/fixtures/monkeys-audio/external-lossywav.ape", "marker", ["-q", "S"], "mac-c2000", False),
@@ -398,14 +434,21 @@ FIXTURES = [
     ("tests/fixtures/wavpack/external-lossywav.wv", "jardin-3s", ["-q", "S"], "wavpack", True),
     ("tests/fixtures/wavpack/external-lossywav-merge-blocks.wv", "jardin-3s", ["-q", "S"], "wavpack-b512-merge", True),
     ("tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.wv", "synthetic-48k-3s", ["-q", "P"], "wavpack-b512-merge", True),
+    # The noise-floor signals: one per rate the behavior claim applies at, in frames of lossyWAV's block, and the
+    # 16-bit one, for decision 4 b.
+    *[(f"tests/fixtures/flac/external-lossyflac-{name}.flac", name, ["-q", "S"], "flac-bgrid", True) for name in FLOORS],
 ]
 
 
-def fixture_input(name, inputs, folder):
-    source, seconds, extra = FIXTURE_INPUTS[name]
-    path = folder / f"{name}.wav"
+def fixture_input(name, inputs, folder, seconds=None):
+    source, length, extra = FIXTURE_INPUTS[name]
+    seconds = length if seconds is None else seconds
+    path = folder / (f"{name}.wav" if not isinstance(length, list) else f"{name}-{seconds}s.wav")
     signal = next((s for s in SIGNALS if s[0] == source), None)
-    if signal is not None:
+    if source in FLOORS:
+        rate, channels, bits, tone_db, floor_db = FLOORS[source]
+        lossywav_figures.write_wav(path, floor_signal(rate, channels, bits, int(rate * seconds) + extra, tone_db, floor_db), channels, rate, bits)
+    elif signal is not None:
         _, kind, rate, channels, bits, shift = signal
         path.write_bytes(flac_signal.wav(kind, rate, channels, int(rate * seconds) + extra, bits, shift=shift))
     else:
@@ -420,6 +463,29 @@ def fixture_input(name, inputs, folder):
     return path
 
 
+def passes_gate(figures):
+    return figures["changes"] >= 2 * lossywav_figures.MIN_CHANGES and figures["grid"] is not None
+
+
+def lossy_run(lossywav, name, arguments, inputs, folder, out):
+    """(exit code, files written, input path, lengths tried) of lossyWAV on the fixture input; for a list of lengths, the
+    first that passes the gate, else the longest."""
+    lengths = FIXTURE_INPUTS[name][1]
+    tried = []
+    for seconds in (lengths if isinstance(lengths, list) else [None]):
+        source = fixture_input(name, inputs, folder, seconds)
+        case = f"fixture-{source.stem}-{'-'.join(a.strip('-') for a in arguments)}"
+        code, written = run_lossywav(lossywav, case, arguments, source.stem, source, out)
+        lossy = next((p for p in written if p.name.endswith(".lossy.wav")), None)
+        if seconds is None:
+            return code, written, source, tried
+        figures = lossywav_figures.figures(lossy) if lossy else None
+        tried.append({"seconds": seconds, "exit": code, "changes": figures and figures["changes"], "grid": figures and figures["grid"]})
+        if figures and passes_gate(figures):
+            break
+    return code, written, source, tried
+
+
 def make_fixtures(lossywav, mac, out, inputs, manifest):
     """Writes OUT/fixtures/<path> for every fixture lossyWAV and the coders could make, and records each in the manifest."""
     folder = out / "fixture-source"
@@ -427,16 +493,13 @@ def make_fixtures(lossywav, mac, out, inputs, manifest):
     made, record = {}, []
     for path, name, arguments, kind, behavior in FIXTURES:
         entry = {"path": path, "input": name, "arguments": arguments, "kind": kind}
-        source = folder / f"{name}.wav"
-        if not source.exists():
-            fixture_input(name, inputs, folder)
-        entry["inputSha256"] = sha256(source)
         key = (name, tuple(arguments))
         if key not in made:
-            case = f"fixture-{name}-{'-'.join(a.strip('-') for a in arguments)}"
-            code, written = run_lossywav(lossywav, case, arguments, name, source, out)
-            made[key] = (code, written)
-        code, written = made[key]
+            made[key] = lossy_run(lossywav, name, arguments, inputs, folder, out)
+        code, written, source, tried = made[key]
+        entry["inputSha256"] = sha256(source)
+        if tried:
+            entry["lengthsTried"] = tried
         lossy = next((p for p in written if p.name.endswith(".lossy.wav")), None)
         target = out / "fixtures" / path
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -463,9 +526,10 @@ def make_fixtures(lossywav, mac, out, inputs, manifest):
             entry.update(sha256=sha256(target), size=target.stat().st_size)
         if lossy:
             figures = lossywav_figures.figures(lossy)
-            entry["figures"] = {k: figures[k] for k in ("lowBitsUnused", "spans", "silentSpans", "quietSpans", "spansAboveLowBitsUnused",
-                                                        "changes", "grid", "changesOnGrid", "timesWithEqualCounts", "times")}
-            entry["passesGate"] = figures["changes"] >= 2 * lossywav_figures.MIN_CHANGES and figures["grid"] is not None
+            entry["figures"] = {k: figures[k] for k in ("lowBitsUnused", "spans", "silentSpans", "thinSpans", "spansAboveLowBitsUnused",
+                                                        "changes", "grid", "changesOnGrid", "timesWithEqualCounts", "times",
+                                                        "distribution")}
+            entry["passesGate"] = passes_gate(figures)
             entry["mustShowPattern"] = behavior
             check = run([lossywav, lossy.name, "--check"], cwd=lossy.parent)
             entry["lossyWavCheck"] = {"exit": check[0], "stderr": check[2].strip().splitlines()[-1:] if check[2].strip() else []}

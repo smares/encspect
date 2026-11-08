@@ -4,14 +4,16 @@ variants the design measured. Standard library only; it reads files as data and 
 
 The measurement's figures, per stream, over integer PCM in a WAV file (8, 16, 24 and 32 bits, any rate and channel count):
 - spans of 32 samples per channel, anchored at the stream's position 0; a span's count is the number of low bits that
-  are zero in all its samples (the trailing zeros of their OR within the declared width), and its magnitude the bits of
-  its largest sample without the sign;
-- a span whose samples are all 0 is silent; one whose magnitude is fewer than QUIET bits above its count is quiet, and
-  one of fewer than 32 samples (the last of the stream) is short; the silent spans are counted apart, and none of the
-  three takes part in the changes;
+  are zero in all its samples (the trailing zeros of their OR within the declared width), and its magnitude the largest
+  bit length of its samples beside the sign (of v for v >= 0, of -v - 1 for v < 0: the bits a two's-complement sample
+  needs besides its sign bit);
+- a span whose samples are all 0 is silent; one whose magnitude is fewer than THIN bits above its count is thin (few
+  significant bits above the zeroed ones: small samples, but also a constant power of two or full-scale negative
+  samples); one of fewer than 32 samples (the last of the stream) is short; the silent spans are counted apart, and
+  none of the three takes part in the changes;
 - Low Bits Unused: the smallest count over the stream (the levels' existing figure);
 - the distribution of the counts over the spans that are not silent, all channels together;
-- the changes: the spans, neither silent, quiet nor short, whose count differs from the same channel's last such span;
+- the changes: the spans, neither silent, thin nor short, whose count differs from the same channel's last such span;
 - the grid of the changes: the largest power of two from 256 to 65,536 samples such that at least 95% of the changes
   fall within one span of one phase of it (hits * 20 >= changes * 19, in integers), given at least 20 changes;
 - the times (span positions at which no channel is silent) at which all channels have the same count.
@@ -19,7 +21,7 @@ The measurement's figures, per stream, over integer PCM in a WAV file (8, 16, 24
 The coded counterpart, over a FLAC file's subframes as `flac -a` lists them (--flac): the wasted bits of each subframe,
 the changes between consecutive frames of each channel, and the behavior rule of the design.
 
-Usage: lossywav_figures.py [--quiet K] FILE.wav [...]       one JSON line of figures per file
+Usage: lossywav_figures.py [--thin K] FILE.wav [...]       one JSON line of figures per file
        lossywav_figures.py --flac FILE.flac [...]            one JSON line of wasted-bit figures per file (needs flac)
        lossywav_figures.py --variants OUT SRC16.wav SRC24.wav LOSSY24.wav LOSSY16.wav LOSSY24B.wav
                                                             writes the false-positive variants into OUT
@@ -37,7 +39,7 @@ SPAN = 32
 BINS = 2048
 MIN_CHANGES = 20
 MIN_GRID = 256
-QUIET = 4
+THIN = 4
 
 
 def read_wav(path):
@@ -102,13 +104,13 @@ def grid_of(phase, changes, unit=SPAN, bins=BINS, smallest=MIN_GRID):
     return None, None
 
 
-def figures(path, quiet=QUIET):
+def figures(path, thin=THIN):
     wav = read_wav(path)
     channels, bits = wav["channels"], wav["bits"]
     cells = spans(wav)
     histogram = [0] * (bits + 1)
     phase = [0] * BINS
-    changes = quiet_spans = silent = 0
+    changes = thin_spans = silent = 0
     smallest = None
     for channel in range(channels):
         last = None
@@ -119,8 +121,8 @@ def figures(path, quiet=QUIET):
             count, magnitude, short = cell
             histogram[count] += 1
             smallest = count if smallest is None else min(smallest, count)
-            if magnitude - count < quiet:
-                quiet_spans += 1
+            if magnitude - count < thin:
+                thin_spans += 1
                 continue
             if short:
                 continue
@@ -137,7 +139,7 @@ def figures(path, quiet=QUIET):
     grid, on_grid = grid_of(phase, changes)
     total = sum(histogram)
     return {"file": str(path), "rate": wav["rate"], "bits": bits, "channels": channels, "chunks": wav["chunks"],
-            "frames": wav["frames"], "lowBitsUnused": smallest, "spans": total, "silentSpans": silent, "quietSpans": quiet_spans,
+            "frames": wav["frames"], "lowBitsUnused": smallest, "spans": total, "silentSpans": silent, "thinSpans": thin_spans,
             "distribution": {z: n for z, n in enumerate(histogram) if n},
             "spansAboveLowBitsUnused": sum(histogram[smallest + 1:]) if smallest is not None else 0,
             "changes": changes, "grid": grid, "changesOnGrid": on_grid,
@@ -187,9 +189,10 @@ def flac_units(path):
     units = sum(histogram.values())
     on_phase = max(phase.values()) if phase else 0
     # The rule: a tested rate, fixed frames whose length divides the grid, at least 20 changes, 95% of them on frames at one
-    # phase of the grid, and at least one subframe in four above the stream's smallest count.
+    # phase of the grid, and more than half of the subframes above the stream's smallest count. With frames as long as the
+    # block the phase test always passes, and the rule rests on the other two.
     claim = (grid is not None and len(sizes - {size}) <= 1 and grid % size == 0 and changes >= MIN_CHANGES
-             and on_phase * 20 >= changes * 19 and above * 4 >= units)
+             and on_phase * 20 >= changes * 19 and above * 2 > units)
     return {"file": str(path), "rate": rate, "frameLength": size, "subframes": units, "distribution": dict(sorted(histogram.items())),
             "changes": changes, "changesOnGridFrames": on_phase, "subframesAboveSmallest": above, "claim": claim}
 
@@ -277,11 +280,11 @@ def main():
         for path in args[1:]:
             print(json.dumps(flac_units(path)))
         return
-    quiet = QUIET
-    if args[:1] == ["--quiet"]:
-        quiet, args = int(args[1]), args[2:]
+    thin = THIN
+    if args[:1] == ["--thin"]:
+        thin, args = int(args[1]), args[2:]
     for path in args:
-        print(json.dumps(figures(path, quiet)))
+        print(json.dumps(figures(path, thin)))
 
 
 if __name__ == "__main__":
