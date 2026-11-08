@@ -136,6 +136,7 @@ jobs:
           python3 scripts/ci/test_sources_plan.py
           python3 scripts/ci/test_alac_model.py
           python3 scripts/ci/test_official_decoders.py
+          python3 scripts/ci/test_compare_pcm.py
 
   build-test:
     name: build and test (${{ matrix.os }})
