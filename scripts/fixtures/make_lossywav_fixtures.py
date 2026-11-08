@@ -22,7 +22,11 @@ so each committed file is the bytes lossyWAV and the coder wrote, and the manife
 Every run of lossyWAV is a case: a name, the arguments and the inputs. A case that lossyWAV refuses is recorded with its
 exit code and output, not dropped; the help texts are recorded first, so the next run can name the settings exactly.
 
-Usage: make_lossywav_fixtures.py OUT --lossywav PATH [--mac PATH]
+With --inputs, the script runs lossyWAV only (the Windows job: the official build on the Linux job's inputs, byte for
+byte): every case and probe on DIR/source and every fixture's arguments on DIR/fixture-source, with no codings; the
+manifest holds each output's SHA-256, the SHA-256 of its data chunk and its fact text, to compare with the Linux run's.
+
+Usage: make_lossywav_fixtures.py OUT --lossywav PATH [--mac PATH] [--inputs DIR]
 Writes OUT/fixtures/<path in the repository> (the files to commit), OUT/source (inputs), OUT/lossy/<case>/ (what lossyWAV wrote, its WAV output only for the cases of KEEP_WAV:
 the flac-b512-foreign coding holds the samples and chunks of the others), OUT/coded/<case>/ (the codings), OUT/tools
 (versions and help texts) and OUT/manifest.json (every file with its SHA-256, input, arguments and exit codes).
@@ -393,7 +397,10 @@ def floor_signal(rate, channels, bits, count, tone_db, floor_db):
 FLOORS = {
     "floor-22k": (22050, 2, 24, -20, -100), "floor-32k": (32000, 2, 24, -20, -100), "floor-44k": (44100, 2, 24, -20, -100),
     "floor-88k": (88200, 2, 24, -20, -100), "floor-176k": (176400, 2, 24, -20, -100), "floor-192k": (192000, 2, 24, -20, -100),
-    "floor-44k-16bit": (44100, 2, 16, -30, -90),
+    # A higher floor in 24 bits, for a floor of zeroed bits in every span, and 16 bits with a floor of a few LSB (-90 dBFS,
+    # about 1 LSB, gave lossyWAV nothing to remove at standard).
+    "floor-44k-high": (44100, 2, 24, -20, -70),
+    "floor-44k-16bit": (44100, 2, 16, -30, -78), "floor-44k-16bit-quiet": (44100, 2, 16, -30, -84),
 }
 
 # The fixtures to commit, made at their committed length. Inputs: (name, source, seconds, frames added), where source is
@@ -409,7 +416,7 @@ FIXTURE_INPUTS = {
     "synthetic-48k-3s": ("music-48k-24-st", 3, 123),
     "synthetic-96k-3s": ("music-96k-24-st", 3, 123),
     "synthetic-48k-6ch-3s": ("music-48k-24-6ch", 3, 123),
-    **{name: (name, [1, 2, 3, 5], 123) for name in FLOORS},
+    **{name: (name, [1, 2, 3, 5] if "16bit" not in name else [2, 3, 5], 123) for name in FLOORS},
 }
 
 # (path in the repository, input, lossyWAV arguments, what is committed: "lossy", "lwcdf", "stdout" or a coding of CODERS,
@@ -540,16 +547,71 @@ def make_fixtures(lossywav, mac, out, inputs, manifest):
     return [e["path"] for e in record if e.get("mustShowPattern") and not e.get("passesGate")]
 
 
+def wav_record(path, out):
+    """A file lossyWAV wrote: its path, SHA-256 and size, and for a RIFF file the SHA-256 of its data chunk and its fact text."""
+    data = path.read_bytes()
+    entry = {"path": str(path.relative_to(out)), "sha256": sha256(path), "size": len(data)}
+    if data[:4] == b"RIFF":
+        chunks = dict(riff_chunks(data))
+        if b"data" in chunks:
+            entry["dataSha256"] = hashlib.sha256(chunks[b"data"]).hexdigest()
+        if b"fact" in chunks:
+            entry["fact"] = chunks[b"fact"].decode("latin-1")
+    return entry
+
+
+def lossy_only(lossywav, out, folder):
+    """The Windows job: lossyWAV alone on the inputs the Linux job wrote (folder holds its source and fixture-source)."""
+    manifest = {"tools": {"lossywav": {"path": str(lossywav), "sha256": sha256(lossywav)}}, "inputs": {}, "runs": [], "fixtureRuns": []}
+    tools = out / "tools"
+    tools.mkdir(parents=True, exist_ok=True)
+    for arguments in HELP_ARGUMENTS:
+        code, stdout, stderr = run([lossywav, *arguments], timeout=60)
+        label = "-".join(a.strip("-") for a in arguments) or "none"
+        (tools / f"help-{label}.txt").write_text(f"$ lossywav {' '.join(arguments)}\nexit {code}\n--- stdout\n{stdout}\n--- stderr\n{stderr}\n")
+    inputs = {p.stem: {"path": p} for p in sorted((folder / "source").glob("*.wav"))}
+    for name, entry in inputs.items():
+        manifest["inputs"][name] = {"sha256": sha256(entry["path"])}
+    for case, arguments, names in cases():
+        for name in names:
+            if name not in inputs:
+                continue
+            code, written = run_lossywav(lossywav, case, arguments, name, inputs[name]["path"], out)
+            manifest["runs"].append({"case": case, "arguments": arguments, "input": name, "exit": code, "files": [wav_record(p, out) for p in written]})
+            for path in written:
+                if case not in KEEP_WAV:
+                    path.unlink()
+    probes(lossywav, out, inputs, manifest)
+    arguments_of = {}
+    for _, name, arguments, _, _ in FIXTURES:
+        arguments_of.setdefault(name, [])
+        if arguments not in arguments_of[name]:
+            arguments_of[name].append(arguments)
+    for source in sorted((folder / "fixture-source").glob("*.wav")):
+        name = next((n for n in sorted(arguments_of, key=len, reverse=True) if source.stem == n or source.stem.startswith(f"{n}-")), None)
+        for arguments in arguments_of.get(name, []):
+            case = f"fixture-{source.stem}-{'-'.join(a.strip('-') for a in arguments)}"
+            code, written = run_lossywav(lossywav, case, arguments, source.stem, source, out)
+            manifest["fixtureRuns"].append({"input": source.stem, "inputSha256": sha256(source), "arguments": arguments, "exit": code,
+                                            "files": [wav_record(p, out) for p in written]})
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")
+    print(f"{len(manifest['runs'])} runs, {sum(r['exit'] != 0 for r in manifest['runs'])} refused; {len(manifest['fixtureRuns'])} fixture runs")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("out")
     parser.add_argument("--lossywav", required=True)
     parser.add_argument("--mac")
+    parser.add_argument("--inputs")
     options = parser.parse_args()
     out = pathlib.Path(options.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     lossywav = pathlib.Path(options.lossywav).resolve()
     mac = pathlib.Path(options.mac).resolve() if options.mac else None
+    if options.inputs:
+        lossy_only(lossywav, out, pathlib.Path(options.inputs).resolve())
+        return
 
     manifest = {"tools": tool_records(out, lossywav, mac), "inputs": {}, "runs": [], "codings": []}
     with tempfile.TemporaryDirectory() as work:
@@ -563,8 +625,7 @@ def main():
         for name in names:
             code, written = run_lossywav(lossywav, case, arguments, name, inputs[name]["path"], out)
             refused += code != 0
-            manifest["runs"].append({"case": case, "arguments": arguments, "input": name, "exit": code,
-                                     "files": [{"path": str(p.relative_to(out)), "sha256": sha256(p), "size": p.stat().st_size} for p in written]})
+            manifest["runs"].append({"case": case, "arguments": arguments, "input": name, "exit": code, "files": [wav_record(p, out) for p in written]})
             for path in written:
                 if path.suffix == ".wav" and ".lwcdf" not in path.name:
                     keep = case in KEEP_WAV

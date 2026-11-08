@@ -9,17 +9,60 @@ it still serves the commit.
   not built or run outside CI (docs/design/lossywav-detection.md, "The build").
 - Needs git, make and g++.
 
+The official Windows build of lossyWAV 1.4.2 (WINDOWS) is pinned by its SHA-256 and run by the workflow's Windows job on the
+same inputs (decision 9 of the design). It is attached to the Hydrogenaudio forum, which scripts cannot reach, so the lead
+downloads it by hand and puts it where CI can fetch it; until its SHA-256 and addresses are set, the job is skipped.
+
 Usage: python3 scripts/fixtures/lossywav_tool.py [directory]    builds lossywav in the directory and prints its path.
+       python3 scripts/fixtures/lossywav_tool.py --windows-pinned   prints true when the Windows build is pinned, else false.
+       python3 scripts/fixtures/lossywav_tool.py --windows DIR      fetches the Windows build into DIR and prints the exe's path.
 """
 
 import pathlib
 import subprocess
 import sys
 import tempfile
+import zipfile
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+import downloads  # noqa: E402
 
 REPOSITORY = "https://github.com/MoSal/lossywav-for-posix.git"
 COMMIT = "c3a22be0e1d8d516e3aa1761b6822ec68c06f920"
 NAME = f"lossywav-for-posix-{COMMIT[:12]}"
+
+# The official Windows build: the archive as the lead downloaded it, its SHA-256 and the addresses CI fetches it from.
+# The empty SHA-256 is the placeholder that keeps the Windows job skipped.
+WINDOWS = {"archive": "lossyWAV_1.4.2.zip", "sha256": "", "addresses": []}
+
+
+def windows_pinned():
+    return len(WINDOWS["sha256"]) == 64 and bool(WINDOWS["addresses"])
+
+
+def sources():
+    """For check_sources.py: the Windows build, once it is pinned."""
+    if windows_pinned():
+        yield WINDOWS["archive"], WINDOWS["sha256"], WINDOWS["addresses"]
+
+
+def fetch_windows(directory):
+    """The path of lossyWAV.exe, from the pinned archive (a zip, or the exe itself) fetched into directory."""
+    if not windows_pinned():
+        raise SystemExit("The Windows build of lossyWAV is not pinned yet (lossywav_tool.WINDOWS).")
+    directory = pathlib.Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    archive = directory / WINDOWS["archive"]
+    downloads.fetch(WINDOWS["addresses"], WINDOWS["sha256"], archive)
+    if archive.suffix.lower() == ".exe":
+        return archive
+    with zipfile.ZipFile(archive) as files:
+        files.extractall(directory / "build")
+    found = sorted(p for p in (directory / "build").rglob("*") if p.name.lower() == "lossywav.exe")
+    if not found:
+        raise SystemExit(f"{archive} holds no lossyWAV.exe.")
+    return found[0]
 
 
 def commit_problems(only=None):
@@ -55,7 +98,13 @@ def build(directory=None):
 
 
 def main():
-    print(build(sys.argv[1] if len(sys.argv) > 1 else None))
+    args = sys.argv[1:]
+    if args == ["--windows-pinned"]:
+        print("true" if windows_pinned() else "false")
+    elif args[:1] == ["--windows"] and len(args) == 2:
+        print(fetch_windows(args[1]))
+    else:
+        print(build(args[0] if args else None))
 
 
 if __name__ == "__main__":

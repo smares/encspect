@@ -106,6 +106,7 @@ def sources():
     yield from monkeys_audio_tool.sources()
     yield from libtta_tool.sources()
     yield from make_lossywav_fixtures.sources()
+    yield from lossywav_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses

@@ -73,6 +73,16 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      # The inputs, byte for byte, for the Windows job.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lossywav-inputs
+          path: |
+            lossywav-out/source
+            lossywav-out/fixture-source
+          retention-days: 7
+          if-no-files-found: error
+
       # The files to commit and the manifest alone, small enough to download for a check.
       - uses: actions/upload-artifact@v7
         if: always()
@@ -81,5 +91,54 @@ jobs:
           path: |
             lossywav-out/fixtures
             lossywav-out/manifest.json
+          retention-days: 90
+          if-no-files-found: error
+
+  # Whether the official Windows build is pinned (scripts/fixtures/lossywav_tool.py, WINDOWS): the lead supplies it by hand,
+  # and until its SHA-256 is set the Windows job is skipped.
+  pin:
+    name: Windows build pinned
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      pinned: ${{ steps.pin.outputs.pinned }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: pin
+        run: echo "pinned=$(python3 scripts/fixtures/lossywav_tool.py --windows-pinned)" >> "$GITHUB_OUTPUT"
+
+  # The official Windows build of lossyWAV 1.4.2 on the Linux job's inputs: lossyWAV alone, every case, probe and fixture
+  # input, no codings. Its manifest is compared with the Linux one (the samples and the fact text).
+  windows:
+    name: official build on windows-2025
+    needs: [generate, pin]
+    if: needs.pin.outputs.pinned == 'true'
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: lossywav-inputs
+          path: lossywav-inputs
+
+      - name: Fetch the pinned build
+        id: lossywav
+        shell: bash
+        run: |
+          path=$(python scripts/fixtures/lossywav_tool.py --windows "$RUNNER_TEMP/lossywav-windows")
+          sha256sum "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      - name: Run lossyWAV
+        shell: bash
+        run: python scripts/fixtures/make_lossywav_fixtures.py lossywav-windows-out --lossywav "${{ steps.lossywav.outputs.path }}" --inputs lossywav-inputs
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lossywav-windows
+          path: lossywav-windows-out
           retention-days: 90
           if-no-files-found: error
