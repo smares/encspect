@@ -37,7 +37,7 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth), the loudness (integrated, range, maxima; ITU-R BS.1770 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Phases 2 and 3, the lossy and the lossless formats with the lossless decoders, are done, and so are the measurements and the cross-checks against the formats' official decoders. Next: decoders for the lossy formats ([plan](docs/plan.md#next)).
+Phases 2 and 3, the lossy and the lossless formats with the lossless decoders, are done, and so are the measurements and the cross-checks against the formats' official decoders. Next: 0.2, lossless complete, then the lossy decoders ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 
@@ -49,7 +49,8 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 - [Architecture](docs/architecture.md): the parts, the result model, routes and format detection
 - [Development](docs/development.md): building, tests, fixtures and cross-checks
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
-- [Plan](docs/plan.md): goals, decisions, what is built and what comes next
+- [Plan](docs/plan.md): goals, decisions, the milestones and what is not planned
+- [History](docs/history.md): the phases and gates passed, and what each built
 - [Release notes](docs/releases/0.1.0.md)
 
 ## Quick start

@@ -15,7 +15,7 @@ Status: approved by the project lead on 2026-10-26 with every recommendation of 
   - a PCM route for WAV, Wave64 and AIFF, which had no decoder (built in step 3);
   - the CLI and GUI behavior, fixtures, cross-checks and the rollout.
 - **Out, and why:**
-  - decoders for lossy codings (MP3, AAC, Vorbis, Opus and the others): the plan keeps them under "Later". This design only makes sure they plug in without a contract change (see [Lossy formats later](#lossy-formats-later));
+  - decoders for lossy codings (MP3, AAC, Vorbis, Opus and the others): the plan kept them under "Later"; since 2026-11-08 they are milestones 0.3 to 0.5 of the [plan](../plan.md#milestones). This design only makes sure they plug in without a contract change (see [Lossy formats later](#lossy-formats-later));
   - the TTA, ALAC and WMA Lossless decoders, which decision 5 of [decoders.md](decoders.md) moved to "Later";
   - DSD (WavPack DSD now, DSF and DSDIFF later): measuring it needs a DSD-to-PCM conversion, which is a decoder's job, not a measurement's;
   - playback, and any quality verdict (the plan's non-goals).
@@ -128,7 +128,7 @@ public sealed record PcmCoding
 
 - TTA has no decoder ([decoders.md](decoders.md), decision 5). Measuring it needs one, built clean-room as [decoders.md](decoders.md)'s decision 10 requires: libtta-c and FFmpeg's `tta.c` are LGPL. One agent reads them and writes a format description without code, as [`truehd-format.md`](truehd-format.md) was; another agent who has not read them implements from that description, with libtta-c and FFmpeg as black-box cross-checks of the decoded PCM's MD5.
 - TTA stores only CRC-32s over coded data, so the decoder adds no verification; its correctness rests on the fixtures' decoded MD5 from libtta-c and FFmpeg.
-- **Recommendation:** leave TTA out of this design's steps; its decoder is a change of its own under "Later", and its streams are measured once it lands, with no further work here (decision 12).
+- **Recommendation:** leave TTA out of this design's steps; its decoder is a change of its own (under "Later" then, in 0.2 since 2026-11-08), and its streams are measured once it lands, with no further work here (decision 12).
 
 ### Channels, rates, widths and DSD
 

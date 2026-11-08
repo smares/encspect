@@ -153,7 +153,7 @@ Each license was read from its own text on 2026-11-07, as noted. This is a readi
 | Musepack | SV7 and SV4 to SV6 frames: used, mid/side and noise-filled subbands; SV8 packets | scalefactors and samples; the frames inside SV8 audio packets |
 | WMA | standard and Professional frames to the end of their coefficients; Voice frames down to the sizes that decide where a frame ends | the values; Voice's LSPs, pitch, gains and codebook indexes |
 
-The plan's "Later" lists this work as "an entropy pass, format by format, MP3 first". This design makes it the first half of each decoder:
+The plan's "Later" listed this work as "an entropy pass, format by format, MP3 first". This design makes it the first half of each decoder:
 
 - **Parser code:** the missing syntax goes into the format project outside its `Decoding` namespace, one function per structure with an optional destination. That is the pattern of FLAC's `SubframeSyntax.Read` ([decoders.md](decoders.md#who-owns-the-bits), "Who owns the bits"): given no destination it walks and returns the facts the report shows; given buffers, it also stores the values.
 - **In every analysis (decision 10):** the wave 3 figures come from the walk, and they belong in the default report and its goldens, which decoding never changes.
@@ -589,7 +589,7 @@ What the recommendations change outside the decoders, so that none of it arrives
 - **[`CLAUDE.md`](../../CLAUDE.md),** in the groundwork pull request:
   - Layout, `src/Encspect.Core.Abstractions`, at the end of its sentence: "…, the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), and the deterministic math (`DetMath`) that measurements and lossy decoders share."
   - Architecture rules, a new item after the measurement determinism item: "Lossy decoders, and the parser code they share that computes in floating point, are deterministic under the same rules as measurement code (no fused multiply-add, no platform math library but `DetMath`, no `*Native` or `*Estimate` API, no `TensorPrimitives` and no BCL sum, dot product, maximum or average over floating-point spans, only element-wise `Vector128`, sums and transforms in an order that depends only on their length, each float kernel `[MethodImpl(MethodImplOptions.AggressiveOptimization)]`, no `ArrayPool<T>.Shared`), with two rules of their own: a decoder clamps every gain and scale exponent to the range its specification allows instead of counting NaN, and flushes recursive states below 1e-30 at the start of each of its units and after a gap. A lossless decoder in the same project lives in `<project>.Decoding.Lossless`, outside these rules. `DecoderDeterminismTests` pins hashes of the lossy decoders' PCM, and `MeasurementDeterminismTests` scans their assemblies."
-  - The plan's "Later" item on lossy decoders, which holds the lead's gap rule, gains the withheld output with the lead's decision; [CLAUDE.md](../../CLAUDE.md) holds no item on gaps today.
+  - The plan's gap rule ("Decisions" in [plan.md](../plan.md#decisions), once "Later") gains the withheld output with the lead's decision; [CLAUDE.md](../../CLAUDE.md) holds no item on gaps today.
   - Under decision 2(b) only, the item "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores." ends instead "…, and, for lossless codings, declare every checksum a stream stores."
 - **[decoders.md](decoders.md),** under decision 2(c) only: decision 4 and `StreamVerification.IsVerified` gain "a lossy stream is verified only by checksums over decoded audio".
 - **[spectral-analysis.md](spectral-analysis.md),** under decision 8(a): the trimmed range and "Trimmed Samples".
@@ -697,7 +697,7 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
 ## Sources read
 
 - **The repository** at `origin/main` adb9673:
-  - [`CLAUDE.md`](../../CLAUDE.md); [`docs/plan.md`](../plan.md#later) ("Later", "Phase 3, continued");
+  - [`CLAUDE.md`](../../CLAUDE.md); [`docs/plan.md`](../plan.md) ("Later", "Phase 3, continued", as they stood on 2026-11-08; the latter is now in [history.md](../history.md#phase-3-continued));
   - [`docs/design/decoders.md`](decoders.md), [`spectral-analysis.md`](spectral-analysis.md), [`samples-definition.md`](samples-definition.md), [`official-decoder-crosschecks.md`](official-decoder-crosschecks.md), [`parallel-decoding.md`](parallel-decoding.md), [`coding-graphs.md`](coding-graphs.md) (the concept table), [`mpeg-clean-room-rules.md`](mpeg-clean-room-rules.md) (its source statement), and the status and scope lines of [`wma-standard-format.md`](wma-standard-format.md), [`wma-pro-format.md`](wma-pro-format.md) and [`wma-voice-format.md`](wma-voice-format.md);
   - the format docs' "not covered" lines and what they read; [`docs/gui.md`](../gui.md) (the captions and the waveform); [`development.md`](../development.md#analysis-speed-of-the-lossy-formats) ("Analysis speed of the lossy formats", "Where the format tables come from", the conformance downloads);
   - [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md) and [`third_party/README.md`](../../third_party/README.md); `tests/conformance/mpeg2-audio.json`;

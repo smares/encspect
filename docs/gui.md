@@ -4,6 +4,11 @@
 dotnet run -c Release --project src/Encspect.Gui [-- <file-or-folder>...]
 ```
 
+- **One model, two front ends:** the GUI and the CLI are thin views over the same result model, so neither can show something the other cannot ([architecture.md](architecture.md#overview)).
+- **What it has:** an Explorer-like main window with a folder tree, a file list of per-file summaries and a summary cache; one reusable detail window with the structure tree, hex view, bits, findings, explanations, graphs and the Audio panels of the measurements; export as text or JSON.
+- **Graphs:** the GUI draws its own graphs, from the streams' series alone, without a charting library ("Graphs" below).
+- **Native where it matters:** the operating system's file dialogs, the macOS menu bar, platform shortcuts, light and dark mode and the accent color following the system ("Look and platform" below).
+
 ## Main window
 
 The main window lists a folder's files on the right, with these columns:

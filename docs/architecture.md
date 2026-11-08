@@ -27,7 +27,8 @@ flowchart TD
   - Parsers reach them only through the host, so no parser depends on one; `DecodingBoundaryTests` checks this in the compiled assemblies.
   - The contract is [decoders.md](design/decoders.md).
 - **Measurements** of the decoded audio are host code that reads the decoders' PCM and adds figures to the stream: [spectral-analysis.md](design/spectral-analysis.md).
-- **The library:** the core, the host and the parsers are a front-end-agnostic library ([library.md](library.md)). The abstractions are no published API yet, so they still change as the formats need.
+- **The library:** the core, the host and the parsers are a front-end-agnostic library; the decision and what follows from it are in [library.md, "A library others could use"](library.md#a-library-others-could-use). The abstractions are no published API yet, so they still change as the formats need.
+- **Two front ends, one model:** the CLI and the GUI are thin views over the same result model, so neither can show something the other cannot ([cli.md](cli.md), [gui.md](gui.md)).
 
 ## Result model
 
@@ -235,6 +236,8 @@ Parsers never reference each other; they reach other parsers only through routes
 
 Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and the host picks the format from the evidence of all of them, never from the order of the parser list.
 
+- **Why:** short signatures and frame headers occur inside other formats' data. A chain of consistent frames, the earlier start and passing checksums decide instead.
+
 ### What a sniff reports
 
 - `Class`: from 0 (not this format) to 100 (certain), by the kind of structure found: a signature, a chain at the start of the data, a chain further in. The table below lists them.
@@ -298,6 +301,36 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 - **The record:** `Report.Detection` has `IsForced`, the format that ran with its own evidence (none if it does not match), and `Detected`, what detection would have chosen. An info finding `format.forced` says so on the root, also for a file that is empty or holds only tags.
 - **No exceptions:** parsers meet any input with findings, so a wrong format gives findings (leading junk, lost sync, `parse.invalid`) and never `parse.failed`; `FormatDetectionTests` forces every format on every fixture to check it.
 - **Front ends:** the CLI's `--as`, the detail window's "Analyze as…". A forced analysis is never cached: the summary cache is filled by the file list only, which never forces.
+
+## Tag detection and false positives
+
+- **Decision:** tags are found by position, structural validation and byte ownership, never by a signature alone.
+- **Why:** short signatures collide with each other and with audio data. `APETAGEX` holds `TAG` at offset 3, so a 131-byte APE tag at the end of a file puts a false ID3v1 signature at EOF-128.
+- **What follows:**
+  - each tag type is looked for only where its specification allows;
+  - structural validation decides confidence, not existence: a tag that breaks its specification is reported with findings, not dropped;
+  - when candidates compete for the same bytes, the strongest evidence wins, and the order APE, Lyrics3, ID3v2, ID3v1 only breaks ties;
+  - a container that states its size owns the trailing candidates that start before its end (see "Declared end" under [Parser contract](#parser-contract));
+  - a frame header only counts as MPEG sync when a chain of consistent frames follows it.
+- **The rules and the fixtures that prove them:** [tags/README.md, "How tags are found"](tags/README.md#how-tags-are-found).
+
+## Verification
+
+Nobody reads the code line by line, so correctness comes from automated checks that do not depend on the author's judgment. The weak spot to guard against is spec details written from memory; known-input fixtures and tool cross-checks are the safety net.
+
+1. **Known-input fixtures:** hand-built ones (standard library only, regenerated and compared in CI) control every byte; encoder-written ones are committed, since their bytes depend on the tool version.
+   - Each has a manifest of the expected result.
+2. **Cross-checks against other tools:** disagreements fail the build until explained; every format is also compared with MediaInfo.
+3. **Official decoders:** where FFmpeg was the only reference, the format owner's decoder or reference implementation is the reference for sample counts, durations and the handling of damage, with FFmpeg as a second cross-check ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)).
+4. **Golden reports:** each fixture has a stored expected report; any output change shows up as a diff that has to be approved.
+5. **Corrupt-file tests and fuzzing:** truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool.
+   - The fuzzer fails on `parse.failed` and on children that could not be built, as on an escaping exception.
+6. **Spec references in the code:** each parsed field cites the spec section it implements.
+7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions; its findings are recorded in the pull request.
+
+- **Heuristic encoder detection:** a file without tags can be misidentified, so every encoder result carries a confidence. Encoder habits are trusted only where encodes with that encoder confirm them, which leaves out encoders that no longer run ("Evidence from behavior" under [Encoder and writer](#encoder-and-writer)).
+- The per-format fixtures, tools and their pinned versions are in [development.md, "Fixtures and cross-checks"](development.md#fixtures-and-cross-checks).
+- Nothing merges with a red pipeline. Work is pushed to its own branch, never to main directly.
 
 ## Large inputs
 

@@ -49,7 +49,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Opus | planned (FFmpeg) | routed | routed | not planned | not planned | no | no |
 | Speex | not planned | not planned | routed | not planned | not planned | no | no |
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
-| ALAC | routed | routed | not planned | not planned | not planned | no (CAF is phase 5) | no |
+| ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | no |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | no |
 | Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
@@ -61,6 +61,40 @@ Which container hands which codec to its codec parser, and which codecs are deco
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
 - **`A_MS/ACM`** in older Matroska files holds a WAVEFORMATEX; routing it by its format tag, which reaches every codec parser the format tag names, comes once a real file from a muxer that writes it is committed as a fixture.
 - **Decoded** means a decoder verifies the stream's checksums and feeds the measurements, wherever a route reaches the codec.
+
+## Depth by format
+
+How far into each coding Encspect sees today, on the depth levels of the [plan](../plan.md#goals-and-non-goals); a milestone in brackets is where the missing level is planned. Each format's page has the detail.
+
+- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read in full at its own level, and each raw stream format by its frames, so the table leaves that level out.
+- **Codec syntax:** the headers and frame-level fields of every coding are read, so the table leaves that level out too; WMA Voice is read down to the sizes that end a frame and the fields that name it.
+- **Entropy-coded data:** whether the parser or the decoder walks the coded values (Huffman, Golomb, range or run-level codes).
+- **Decoded audio:** verified means a decoder checks a checksum stored over the decoded audio; measured means `--measure` gets the spectrum, levels and loudness.
+- **Interpretation:** every format reports its statistics and names the encoder and writer where its evidence allows; the column names the coding graphs (category series) it adds.
+
+| Coding | Entropy-coded data | Decoded audio | Coding graphs |
+|---|---|---|---|
+| MPEG audio | Layers I and II up to the samples; Layer III scalefactors and Huffman data not read (0.3) | no (0.3) | stereo coding, block sizes, coded bandwidth (Layers I and II), channel bit share |
+| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | block usage, stereo coding, coded bandwidth |
+| AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform, enhanced coupling and the reduced rates not read (0.3) | no (0.3) | yes ([ac3.md](ac3.md#what-is-graphed)) |
+| DTS | core subframes not read (0.4); the extensions' data not read | no (core: 0.4) | stereo coding of the core |
+| Vorbis | floors and residues not read (0.3) | no (0.3) | block sizes |
+| Opus | SILK and CELT not read (0.3) | no (0.3) | none (0.3) |
+| Speex | the coded frame data not read (0.4) | no (0.4) | none |
+| Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | stereo coding |
+| WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | stereo coding |
+| WMA Professional | walked to the end of every frame | no (0.5) | none |
+| WMA Voice | the sizes that end a frame | no (0.5) | none |
+| WMA Lossless | walked to the end of every frame | no (0.5) | stereo coding |
+| FLAC | walked by the parser | verified and measured | stereo coding |
+| WavPack | walked by the decoder | verified and measured | stereo coding |
+| Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
+| TTA | not walked; the frames' CRC-32s are checked over the coded bytes | no (0.2) | none |
+| ALAC | walked by the parser | no (0.2) | element and pair coding |
+| Dolby TrueHD, MLP | walked by the parser | verified and measured | none (stereo coding: 0.4) |
+| PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
+
+- **Coding graphs** for the formats whose data the parsers already read come in 0.4; those that need the entropy pass come with each format's decoder ([coding-graphs.md](../design/coding-graphs.md#the-survey)).
 
 ## Common to every format
 
