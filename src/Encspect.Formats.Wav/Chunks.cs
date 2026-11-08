@@ -113,8 +113,23 @@ internal static class Chunks
     // The cue point names kept to find a name twice and a label that names no cue point; past them those two checks are not made.
     public const int MaxCueNames = 65_536;
 
+    // lossyWAV writes its version, the time of the run and its settings as the body of a fact chunk before the data; its own check takes the chunk
+    // for lossyWAV's by this prefix alone.
+    private static readonly byte[] LossyWavPrefix = "lossyWAV "u8.ToArray();
+
     public static void Fact(State s, Fields f, Node chunk, long length)
     {
+        long start = f.Position;
+        bool isLossyWav = s.FirstDataNode is null && length >= LossyWavPrefix.Length && f.Reader.MatchesAt(start, LossyWavPrefix);
+        f.Reader.Position = start;
+        if (isLossyWav)
+        {
+            s.IsFactText = true;
+            string text = f.Text("Text", length, Explain.FactText);
+            chunk.Children[^1].Value = text.TrimEnd('\r', '\n');
+            return;
+        }
+
         uint samples = f.Dword("Sample Length", Explain.FactSamples, v => NodeValue.Integer(v, "samples"), Topics.WaveCompressed);
         ulong value = samples;
         if (s.IsRf64 && samples == uint.MaxValue && s.Ds64 is { } ds64)

@@ -73,6 +73,15 @@ public class WavAiffDamageTests
     }
 
     [Fact]
+    public void LossyWavTextInTheFactChunkOfANonPcmFileIsNoMissingFactChunk()
+    {
+        byte[] text = [.. "lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard\r\n"u8, 0, 0];
+        Report report = Analyze(Riff(Fmt(tag: 6, channels: 1, rate: 8000, bits: 8), Chunk("fact", text), Chunk("data", Pcm())));
+        Assert.Null(Find(report, "wav.fact-missing"));
+        Assert.Null(Find(report, "wav.fact-samples-mismatch"));
+    }
+
+    [Fact]
     public void ASizeOfZeroInAnRf64FileNamesWhatIsWrong()
     {
         Finding finding = Find(Analyze(Riff("RF64", 0, Ds64(0, 0), Fmt(), Chunk("data", Pcm()))), "wav.riff-size-placeholder")!;

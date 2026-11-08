@@ -41,6 +41,7 @@ internal static class Wave64Walker
                 long from = position;
                 s.Findings.Add(Severity.Warning, "wav.node-limit", rest, _ =>
                     $"The tree holds {Walker.MaxNodes} nodes, the most the report builds; the chunks from 0x{from:X} on are not read.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -48,6 +49,7 @@ internal static class Wave64Walker
             {
                 Node more = parent.Add(new Node("Further Chunks", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.FurtherChunks, Topic = Topics.Wave64 });
                 s.Findings.Add(Severity.Info, "wav.chunk-limit", more, _ => $"The chunks from 0x{more.Offset:X} on are not read: the report lists at most {Walker.MaxListed} chunks at one level.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -59,6 +61,7 @@ internal static class Wave64Walker
                 long at = position;
                 s.Findings.Add(Severity.Warning, "wav.w64-chunk-size-invalid", unread, _ =>
                     $"The chunk at 0x{at:X} states {Counts.Of(stated, "byte", "bytes")}, but a size counts the 24 bytes of the chunk's own header, so none is under 24; the remaining {Counts.Of(end - at, "byte", "bytes")} are not read.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -140,6 +143,7 @@ internal static class Wave64Walker
             if (padPresent < padLength)
             {
                 Node at = chunk;
+                s.IsWalkCut = true;
                 long missing = padLength - padPresent;
                 s.Findings.Add(Severity.Warning, "wav.pad-byte-missing", at, _ =>
                     $"The chunk is followed by {Counts.Of(missing, "byte", "bytes")} too few of the padding that takes it to a multiple of 8 bytes.");
@@ -147,6 +151,7 @@ internal static class Wave64Walker
 
             if (isPastEnd)
             {
+                s.IsWalkCut = true;
                 return end;
             }
 

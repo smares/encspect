@@ -60,7 +60,7 @@ internal static class DataChunks
         }
 
         int coding = format.CodingTag;
-        if (s.FactNode is null && ((!FormatTags.IsPcm(coding) && !FormatTags.IsFloat(coding)) || s.WavlList is not null))
+        if (s.FactNode is null && !s.IsFactText && ((!FormatTags.IsPcm(coding) && !FormatTags.IsFloat(coding)) || s.WavlList is not null))
         {
             // RIFF 1.0, "FACT Chunk": required if the waveform data is in a wavl list and for all compressed audio formats.
             s.Findings.Add(Severity.Info, "wav.fact-missing", s.FormatChunkNode ?? s.Container, _ => "The data is in a wavl list or the format is neither PCM nor floating point, and the specification requires a fact chunk with the number of samples for such files; the file has none.");

@@ -1,0 +1,30 @@
+{
+ "file": "lossywav-stdout.wav",
+ "sha256": "257a93e5d86d7939c56f788c70f4b4a0c965a0c53617679f4d4d2e0b247562e4",
+ "size": 88736,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "marker",
+ "inputSha256": "1e0d4698f6c2dea77145498525992891effd2767003cc4caa0d0a0ee8503edc5",
+ "arguments": [
+  "-q",
+  "S",
+  "--stdout"
+ ],
+ "kind": "stdout",
+ "lossyWavCheck": {
+  "exit": 0,
+  "answer": "not marked",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard"
+  ]
+ }
+}

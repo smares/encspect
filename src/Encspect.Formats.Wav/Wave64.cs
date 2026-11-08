@@ -108,6 +108,12 @@ public sealed class Wave64Parser : IFormatParser
             state.Findings.Add(Severity.Warning, "wav.trailing-bytes", extra, _ => $"The riff chunk holds {Counts.Of(left, "byte", "bytes")} after its last chunk, too few for another.");
         }
 
+        if (!isPlaceholder && declared > reader.End && stop >= end && !state.IsWalkCut && declared - reader.End >= Wave64.ChunkHeaderLength)
+        {
+            long past = declared - reader.End;
+            state.Findings.Recode("wav.truncated", "wav.riff-size-past-chunks", _ => WavParser.RiffSizePastChunks("riff chunk", past));
+        }
+
         DataChunks.Finish(state);
 
         if (!isPlaceholder && end < reader.End)
