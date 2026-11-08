@@ -51,6 +51,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - FFmpeg's native encoder: an `ENCODER` comment of the form `Lavc<version> flac` is the encoder, with medium confidence, since the comment is a tag any tool may write.
 - An ID3v2 or APEv2 claim of the encoder or writer weighs in as in the other formats (`flac.writer-claim-differs`, `flac.writer-other-format`, `flac.encoder-other-format`).
 - The compression level is not detected: the frames do not say which level wrote them. The statistics (block size, predictor orders, partition orders, the share of stereo assignments) show what the encoder chose.
+- A guess at the level from those statistics is planned for 0.4 ([plan.md](../plan.md#04-free-decoders-and-routes-complete)).
 
 ## Ogg FLAC
 
