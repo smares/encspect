@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Downloads the specifications the Matroska parser, its descriptions and its articles are written from,
-pinned by their SHA-256, into a directory outside the repository, which may not hold them:
+pinned by their SHA-256, into .cache/matroska-specs (git-ignored; the repository does not hold them):
 
 - RFC 9559, Matroska Media Container Format Specifications (October 2024): the element definitions
   (section 5), the block structure and lacing (section 10), timestamps (section 11), content encodings
@@ -18,6 +18,8 @@ pinned by their SHA-256, into a directory outside the repository, which may not 
 
     python3 scripts/fixtures/matroska_specs.py [directory]
 
+The default directory is .cache/matroska-specs under the repository root, whatever the current directory.
+
 The section numbers in the Matroska parser's descriptions and articles are the RFCs'. The element table in
 src/Encspect.Formats.Matroska/Elements.cs is generated from RFC 9559 and RFC 8794 by matroska_tables.py, which
 checks it. The WebM Container Guidelines (https://www.webmproject.org/docs/container/) are a web page and cannot
@@ -28,6 +30,8 @@ import pathlib
 import sys
 
 import downloads
+
+DEFAULT_DIRECTORY = pathlib.Path(__file__).resolve().parents[2] / ".cache" / "matroska-specs"
 
 SPECS = [
     ("rfc9559.txt", "f251c1e9b6879bb308000fbd9b2359de9472160c56d121b9345b6433afb00cb7",
@@ -51,7 +55,7 @@ def fetch(directory):
 
 
 def main():
-    directory = fetch(sys.argv[1] if len(sys.argv) > 1 else "matroska-specs")
+    directory = fetch(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_DIRECTORY)
     for name, digest, _ in SPECS:
         print(f"{directory / name}: SHA-256 {digest}")
     return 0

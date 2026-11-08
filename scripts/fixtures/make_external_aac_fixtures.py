@@ -361,9 +361,9 @@ def check_hand_built_crcs(checker, library):
     expected = {"crc-mono.aac": [], "crc-mono-damaged.aac": [5], "crc-blocks.aac": [], "crc-blocks-damaged.aac": [10], "crc-stereo.aac": [],
                 "crc-stereo-damaged.aac": [3], "crc-short-element.aac": []}
     for name, errors in expected.items():
-        found = fdk_tool.crc_errors(checker, library, ROOT / "adts" / name)
+        found = fdk_tool.crc_errors(checker, library, ROOT / "aac" / "adts" / name)
         if found != errors:
-            sys.exit(f"fdk-aac rejects access units {found} of adts/{name} for their CRC, expected {errors}")
+            sys.exit(f"fdk-aac rejects access units {found} of aac/adts/{name} for their CRC, expected {errors}")
     print("fdk-aac's decoder confirms the hand-built ADTS CRCs.")
 
 

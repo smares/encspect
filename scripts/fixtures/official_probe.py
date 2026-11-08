@@ -299,7 +299,7 @@ def run_linux(args):
     futures = []
 
     # AAC with FDK: every committed AAC file by every version (open question 6), the unit list made once per file.
-    aac = [p for folder in ("aac", "adts", "apple", "mp4") for p in files(folder, AAC_EXTENSIONS | {".adts"})]
+    aac = [p for folder in ("aac", "aac/adts", "aac/apple", "mp4") for p in files(folder, AAC_EXTENSIONS | {".adts"})]
     lists = {}
     for p in aac + files("ac3", AC3_EXTENSIONS):
         lists[p] = unit_list(p, tmp)
@@ -323,13 +323,13 @@ def run_linux(args):
             futures.append(pool.submit(fdk_case, "fdk-units", version, path, "units", 1))
     default = "v2.0.2" if "v2.0.2" in fdk else sorted(fdk)[0]
     # Concealment methods 0 and 2 on a few files, 1 is in fdk-units (open question 7).
-    for name in ("adts/crc-stereo-damaged.aac", "adts/truncated.aac", "adts/crc-blocks-damaged.aac", "aac/exhale.m4a", "mp4/eld.m4a", "aac/fdkaac-he.m4a", "aac/fdkaac-lc.m4a"):
+    for name in ("aac/adts/crc-stereo-damaged.aac", "aac/adts/truncated.aac", "aac/adts/crc-blocks-damaged.aac", "aac/exhale.m4a", "mp4/eld.m4a", "aac/fdkaac-he.m4a", "aac/fdkaac-lc.m4a"):
         p = FIXTURES / name
         if p in lists and lists[p][1]["codec"] == "aac":
             for method in (0, 2):
                 futures.append(pool.submit(fdk_case, "fdk-conceal", default, p, "units", method))
     # The decoder's own byte counters against the unit list (open question 5).
-    for name in ("adts/junk-around.aac", "adts/truncated.aac", "adts/damaged-header.aac", "adts/crc-stereo-damaged.aac", "adts/cbr.aac"):
+    for name in ("aac/adts/junk-around.aac", "aac/adts/truncated.aac", "aac/adts/damaged-header.aac", "aac/adts/crc-stereo-damaged.aac", "aac/adts/cbr.aac"):
         p = FIXTURES / name
         if p in lists:
             futures.append(pool.submit(fdk_case, "fdk-bulk", default, p, "bulk", 1))
@@ -426,7 +426,7 @@ def run_macos(args):
     inventory = run_child("inventory", [probe, "inventory"])
     (pathlib.Path(args.out) / "inventory.json").write_text(json.dumps(inventory) + "\n", encoding="utf-8")
 
-    corpus = [p for folder in ("aac", "adts", "apple", "mp4") for p in files(folder, AAC_EXTENSIONS | {".adts"})] + files("ac3", AC3_EXTENSIONS)
+    corpus = [p for folder in ("aac", "aac/adts", "aac/apple", "mp4") for p in files(folder, AAC_EXTENSIONS | {".adts"})] + files("ac3", AC3_EXTENSIONS)
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)
 
     def case(path):

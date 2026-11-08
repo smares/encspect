@@ -25,7 +25,6 @@ internal sealed partial class FileReader
             ChildEnd(header, Schema.Find(Schema.Cluster), limit, "Segment");
         }
 
-        CheckHeaderForm(header, Schema.Find(Schema.Cluster), end);
         var cluster = new ClusterRecord { Offset = header.Offset, HeaderLength = (byte)header.Length, IsSizeUnknown = unknown, FirstItem = records.Items.Count };
         Item? crc = null;
         bool afterCrc = false;
@@ -153,6 +152,8 @@ internal sealed partial class FileReader
             position = childEnd;
         }
 
+        // After the loop: a Cluster of unknown size ends where its last child does, and the finding points at the Cluster's node.
+        CheckHeaderForm(header, Schema.Find(Schema.Cluster), end);
         cluster.DataLength = end - dataStart;
         cluster.ItemCount = records.Items.Count - cluster.FirstItem;
         records.Clusters.Add(cluster);
