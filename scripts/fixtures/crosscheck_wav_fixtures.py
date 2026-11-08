@@ -210,7 +210,7 @@ def differs(name, field, found, expected, problems, detail=None):
 
 def find(manifest):
     stem = manifest.name[:-len(".expected.json")]
-    return next(p for p in manifest.parent.glob(stem + ".*") if not p.name.endswith(".json"))
+    return next(p for p in manifest.parent.glob(stem + ".*") if not p.name.endswith(".json") and p.name[:-len(p.suffix)] == stem)
 
 
 def ffprobe_codec_ok(stream, codec):

@@ -1,0 +1,29 @@
+{
+ "file": "lossywav-standard-chunks.wav",
+ "sha256": "fdff7b31601049f53ba412673691a9891a7bd05089a347ae80fc5b43a4d032b4",
+ "size": 89458,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "marker-chunks",
+ "inputSha256": "bbced527210e3472558863ba5753310873d872395aaeb2dde6a83ac7dc343552",
+ "arguments": [
+  "-q",
+  "S"
+ ],
+ "kind": "lossy",
+ "lossyWavCheck": {
+  "exit": 255,
+  "answer": "already processed",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard"
+  ]
+ }
+}

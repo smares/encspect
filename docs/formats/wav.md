@@ -50,9 +50,17 @@ Sources:
 - The three sizes are the least a `ds64` chunk gives (24 bytes); a chunk without the table length after them (under 28 bytes) is `wav.ds64-too-short` and lists no chunk, and one that holds fewer than the three sizes is `wav.chunk-too-short` and gives none, so the sizes it should have resolved are `wav.chunk-size-unresolved`.
 - `DeclaredEnd` is the RIFF chunk's own end (for RF64 from `ds64`). It is what lets the host tell a tag after the chunk from a tag inside it; a size that is 0, `0xFFFFFFFF` or under 4 states no end.
 - Bytes inside the RIFF chunk after its last chunk, too few for another, are `wav.trailing-bytes`; any bytes after the end the RIFF chunk states are `wav.data-after-riff` (whether they look like a chunk is not checked). A chunk cut by the end of the file is `wav.chunk-past-end` and the file `wav.truncated`.
+- A RIFF size past the end of the file, when every chunk in the file is whole and the last, with its padding, ends exactly at the end of the file, is `wav.riff-size-past-chunks` (warning) in place of `wav.truncated`: the file may have lost chunks after its last (a file cut at a chunk boundary meets the same condition), or the size counts chunks that were never written. The size must count at least 8 bytes (24 in Wave64) past the file, as no chunk fits in fewer; fewer is a cut, `wav.truncated`. The message gives how many bytes the size counts beyond the file. Wave64 raises it for its riff chunk the same way.
 - A pad byte that is missing where the next chunk starts right after an odd chunk is `wav.pad-byte-missing`; the parser follows the layout that gives a valid chunk ID next. A nonzero pad byte is `wav.pad-byte-not-zero`.
 
 ## Reported
+
+A `fact` chunk before the data whose body starts with `lossyWAV ` holds text, not a sample length:
+
+- lossyWAV 1.4.2 writes its version, the date and time of the run and its settings there.
+- It is shown as a "Text" node. No sample length is read from it, so neither `wav.fact-samples-mismatch`, nor `wav.fact-missing`, nor Container Samples and Container Duration appear for it.
+- The analyzer does not name the program from it.
+- `lossywav-stdout.wav` is the output of `lossyWAV --stdout`: it has no `fact` chunk but states a RIFF size that still counts it (`wav.riff-size-past-chunks`, 68 bytes). The other `lossywav-*` files in `tests/fixtures/wav` keep the chunk.
 
 A fact chunk's sample length is also reported as **Container Samples**, with **Container Duration** at the sample rate, beside the samples the data holds.
 
@@ -175,9 +183,9 @@ What it rests on:
 
 What is read:
 
-- The riff chunk: its GUID, its size (the whole file, 40 bytes at least) and the form GUID. The GUID of a chunk is shown with the characters it stands for. `DeclaredEnd` is the riff chunk's size; a size under 40 holds no file and is reported as `wav.riff-size-placeholder` together with the values that mean "unknown" (0 and all ones), a code the WAV parser raises for a RIFF size that is none too, a size past the file `wav.truncated`, bytes after the end `wav.data-after-riff` (a tag the host finds there is the host's).
+- The riff chunk: its GUID, its size (the whole file, 40 bytes at least) and the form GUID. The GUID of a chunk is shown with the characters it stands for. `DeclaredEnd` is the riff chunk's size; a size under 40 holds no file and is reported as `wav.riff-size-placeholder` together with the values that mean "unknown" (0 and all ones), a code the WAV parser raises for a RIFF size that is none too, a size past the file `wav.truncated` (`wav.riff-size-past-chunks` when the chunks in the file are all whole), bytes after the end `wav.data-after-riff` (a tag the host finds there is the host's).
 - Every chunk is a node: its GUID, its size (counting the 24 bytes of its header), the data and the padding. `fmt `, `fact` and `data` are read as in a WAVE file, with the same findings (the fmt, fact and data checks, `wav.partial-sample-frame` and the rest), the same routes (MPEG audio, AC-3, E-AC-3 and DTS by format tag or sub-format, and DTS in PCM samples) and the same stream; a `junk` chunk is filler; a `LIST` chunk, a chunk with a four-character GUID and any other GUID are named and sized.
-- The findings of the structure: `wav.w64-chunk-size-invalid` (a size under 24, so the rest of the file is not read), `wav.chunk-past-end`, `wav.pad-byte-missing` (the padding after a chunk is cut short by the end of the file), `wav.pad-byte-not-zero`, `wav.trailing-bytes`, `wav.chunk-limit` and `wav.node-limit`, with the same budgets as WAV (2,048 chunks at one level, 250,000 nodes).
+- The findings of the structure: `wav.w64-chunk-size-invalid` (a size under 24, so the rest of the file is not read), `wav.chunk-past-end`, `wav.riff-size-past-chunks`, `wav.pad-byte-missing` (the padding after a chunk is cut short by the end of the file), `wav.pad-byte-not-zero`, `wav.trailing-bytes`, `wav.chunk-limit` and `wav.node-limit`, with the same budgets as WAV (2,048 chunks at one level, 250,000 nodes).
 - Not covered: the contents of `LIST`, markers and other chunks of Sony's editor, and the `ds64` chunk of RF64 and BW64, which a Wave64 file has no use for.
 
 ## Tests and fixtures

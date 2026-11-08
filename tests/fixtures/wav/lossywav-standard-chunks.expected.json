@@ -1,0 +1,87 @@
+{
+ "length": 89458,
+ "container": {
+  "id": "RIFF",
+  "size": 89450,
+  "end": 89458
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "fact",
+   "offset": 36,
+   "end": 104,
+   "size": 60,
+   "length": 60
+  },
+  {
+   "id": "LIST",
+   "offset": 104,
+   "end": 148,
+   "size": 36,
+   "length": 36,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "INAM",
+     "offset": 116,
+     "end": 130,
+     "size": 6,
+     "length": 6
+    },
+    {
+     "id": "ISFT",
+     "offset": 130,
+     "end": 148,
+     "size": 9,
+     "length": 9
+    }
+   ]
+  },
+  {
+   "id": "bext",
+   "offset": 148,
+   "end": 758,
+   "size": 602,
+   "length": 602
+  },
+  {
+   "id": "data",
+   "offset": 758,
+   "end": 89458,
+   "size": 88692,
+   "length": 88692
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 22173,
+  "duration": 0.5027891156462585,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 1411.2,
+  "pcm": {
+   "samples": 22173,
+   "md5": "3d95b7a41d30b3921179b31435f87342",
+   "bits": 16,
+   "format": "integer"
+  }
+ },
+ "findings": [],
+ "tool": "lossyWAV 1.4.2 (POSIX port)",
+ "arguments": [
+  "-q",
+  "S"
+ ]
+}
