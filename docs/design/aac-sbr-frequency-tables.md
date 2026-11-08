@@ -135,7 +135,7 @@ Every rounded value is far enough from a half that double precision gives the re
 
 - Over every input (the twelve rates and all 65,536 header combinations), the closest any value that NINT rounds comes to a half is 1.1 · 10⁻⁵ for a band count (B / 2 · log2(k2 / k1) / w = 3.50001 for k1 = 20, k2 = 44, B = 8, w = 1.3, which must give N1 = 8), 4.3 · 10⁻⁵ for N_Q, and 1.7 · 10⁻⁴ for a boundary p(j).
 - So the direction of halves does not matter, and neither does the form of evaluation: dividing by the warp or multiplying by its inverse, a power per boundary or a running product, a base-2 logarithm or a natural one divided by ln 2. Double precision, and single precision in three such forms, each gave the replaced code's results on every input.
-- Double precision is the safer choice. `Derive` is parser code, not a measurement, so the determinism rules for measurement kernels in `CLAUDE.md` do not apply. Its results are integers, so the reports do not depend on the platform's math library.
+- Double precision is the safer choice. `Derive` is parser code, not a measurement, so the determinism rules for measurement kernels in [`CLAUDE.md`](../../CLAUDE.md) do not apply. Its results are integers, so the reports do not depend on the platform's math library.
 - The replaced code's comment said that it evaluates in single precision as one decoder does. That is no requirement: no result depends on it.
 
 ## Rejections
@@ -239,7 +239,7 @@ One input per rejection:
 
 **May read:**
 
-- this document, `CLAUDE.md`, `docs/PLAN.md` and the rest of `docs/`;
+- this document, [`CLAUDE.md`](../../CLAUDE.md), [`docs/PLAN.md`](../PLAN.md) and the rest of `docs/`;
 - ISO/IEC 14496-3, especially 4.4.2 (`sbr_header`, `sbr_grid`) and 4.6.18.3, where available;
 - the rest of the repository, including the callers (`BlockReader.Elements.cs`, `CodingStatistics.cs`), the rest of `Sbr.cs`, `HuffmanData.SbrOffset`, `aac_tables.py`, the fixtures and goldens;
 - the outputs of the black-box checks (faad2's trace, ffprobe, the conformance streams), never their source.

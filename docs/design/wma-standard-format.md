@@ -2,7 +2,7 @@
 
 **Status:** written on 2026-10-29 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL decoder of Windows Media Audio versions 1 and 2 (listed under [Sources](#sources)) and Encspect's current reader of the format, and checked this text against the committed fixtures. It contains no code. Whoever implements the replacement of `src/Encspect.Formats.Wma/Standard*.cs` must not read FFmpeg's `wmadec.c`, `wma.c` or `wma.h`, nor any other FFmpeg source or copy, nor the files [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check.
 
-This is the clean-room description that the architecture rules of `CLAUDE.md` ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out.
+This is the clean-room description that the architecture rules of [`CLAUDE.md`](../../CLAUDE.md) ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out.
 
 ## Sources
 
@@ -509,8 +509,8 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 | ["Invalid Frames"] | frames that failed, where any |
 | "Frame Length" | F |
 | "Samples", "Coded Samples", "Duration" | see [Samples and duration](#samples-and-duration); "Coded Samples" only where "Samples" follows Microsoft's decoder |
-| ["Container Duration"] | where the container states a length above 0: seconds, 3 decimals; see asf-wma.md |
-| ["Container Samples"] | where the container states a length; see asf-wma.md |
+| ["Container Duration"] | where the container states a length above 0: seconds, 3 decimals; see [asf-wma.md](../formats/asf-wma.md) |
+| ["Container Samples"] | where the container states a length; see [asf-wma.md](../formats/asf-wma.md) |
 | "Block Alignment" | A |
 | ["Average Bitrate"] | 8 × A × (superframes not short) / duration / 1000, where the duration is above 0 |
 | ["Smallest Frame", "Largest Frame"] | the bits of the shortest and longest valid frame / 8, in bytes |
@@ -650,20 +650,20 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 - FFmpeg source of any version, anywhere on the machine: the 6.1.1 archive and every other copy or checkout of it, including `libavcodec`, `libavformat` and `libavutil`.
 - These scratch folders and everything in them: `wmadesc-standard`, `wmadesc-standard-review`, `wma-audit-ffmpeg`, `wmadesc-pro`, `wmadesc-voice`, `wmal-*`, `ff801*`, and `audit-*`.
 - Any review under `reviews/` named `wma-*.md`.
-- FFmpeg is run only as a black box, as `docs/development.md` describes the cross-checks.
+- FFmpeg is run only as a black box, as [`docs/development.md`](../development.md) describes the cross-checks.
 
 **Safe:**
 
 | File | Why |
 | --- | --- |
-| `docs/design/wma-standard-format.md` | this description |
-| `docs/formats/asf-wma.md`, `docs/PLAN.md`, `docs/development.md`, `docs/design/decoders.md` | prose; asf-wma.md names a few FFmpeg identifiers in describing behavior and contains no code |
+| [`docs/design/wma-standard-format.md`](wma-standard-format.md) | this description |
+| [`docs/formats/asf-wma.md`](../formats/asf-wma.md), [`docs/PLAN.md`](../PLAN.md), [`docs/development.md`](../development.md), [`docs/design/decoders.md`](decoders.md) | prose; [asf-wma.md](../formats/asf-wma.md) names a few FFmpeg identifiers in describing behavior and contains no code |
 | `tests/fixtures/asf/*.report.json`, `*.expected.json`, `*.provenance.json` and the fixtures | outputs and data |
 | `src/Encspect.Formats.Wma/Tables.cs` | format tables generated from FFmpeg's data files, no code |
 | `src/Encspect.Formats.Wma/Bits.cs`, `Vlc.cs` | a generic bit reader and prefix-code reader; their comments name an FFmpeg type and function for what they mirror |
 | `src/Encspect.Formats.Wma/PartsMap.cs`, `FindingCollector.cs`, `WmaEncoder.cs`, `Topics.cs` | Encspect's own mapping of bits to the file, findings, encoder detection and topic IDs, shared with the other WMA parsers |
 | `src/Encspect.Formats.Wma/WmaHeaderOnly.cs` | the header-only streams of the Lossless and Voice parsers; no bitstream syntax |
-| `src/Encspect.Host/Topics/wma-standard.md`, `wma-superframes.md`, `wma-bit-reservoir.md`, `wma-frames-and-blocks.md`, `noise-substitution.md`, `mid-side-stereo.md`, `bit-reservoir.md` | prose articles |
+| [`src/Encspect.Host/Topics/wma-standard.md`](../../src/Encspect.Host/Topics/wma-standard.md), [`wma-superframes.md`](../../src/Encspect.Host/Topics/wma-superframes.md), [`wma-bit-reservoir.md`](../../src/Encspect.Host/Topics/wma-bit-reservoir.md), [`wma-frames-and-blocks.md`](../../src/Encspect.Host/Topics/wma-frames-and-blocks.md), [`noise-substitution.md`](../../src/Encspect.Host/Topics/noise-substitution.md), [`mid-side-stereo.md`](../../src/Encspect.Host/Topics/mid-side-stereo.md), [`bit-reservoir.md`](../../src/Encspect.Host/Topics/bit-reservoir.md) | prose articles |
 | `tests/Encspect.Tests/WmaVoiceTests.cs`, `VoiceFixtureTests.cs`, `VoiceBuilder.cs` | Voice tests and packet builder: safe to read, nothing in them derives from FFmpeg's code (comments name FFmpeg's behavior and file names only); the Voice implementation adapts them to its members |
 | `tests/Encspect.Tests/WmaFixtureTests.cs`, `WmaCorruptionTests.cs`, `WmaBitsPeekTests.cs`, `VlcTests.cs`, `AsfBuilder.cs`, `AsfFixtureTests.cs`, `AsfFindingTests.cs`, `MemoryTests.cs`, `ComplexityTests.cs`, `LongInputs.cs`, `ParallelAnalysisTests.cs`, `ProtectionTests.cs`, `WriterRoleTests.cs`, `DescriptionTests.cs`, `FindingCoverageTests.cs` | tests of outputs, of the generic readers and of the container; no bitstream syntax |
 | `scripts/fixtures/make_asf_fixtures.py`, `asf_model.py`, `make_external_asf_fixtures.py`, `import_windows_wma_fixtures.py`, `wma_signals.py`, `crosscheck_asf_fixtures.py`, `asf_specs.py`, `scripts/fixtures/windows/*`, `.github/workflows/wma-fixtures.yml` | the container, the signals, the encoder and tool runs; the hand-built WMA media objects are constant bytes |

@@ -10,7 +10,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 
 - Nothing is bought: no ISO/IEC 14496-3 and no other paid specification.
 - The formats whose specification or permissively licensed reference code is freely available come first: MPEG audio (minimp3), Vorbis, Opus (RFC 6716), Speex, Musepack (libmpcdec's BSD files), AC-3 and E-AC-3 (ATSC A/52, ETSI TS 102 366) and DTS core (ETSI TS 102 114).
-- AAC and WMA follow, on free sources only: the clean-room path from FFmpeg that CLAUDE.md describes, or a free specification where one exists and its license allows it.
+- AAC and WMA follow, on free sources only: the clean-room path from FFmpeg that [CLAUDE.md](../../CLAUDE.md) describes, or a free specification where one exists and its license allows it.
 
 ## Scope
 
@@ -20,7 +20,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
   - sources and licenses, output and determinism, the verdict and the PCM cross-checks, gaps and priming, cost, and the order of the pull requests.
 - **Out:**
   - DTS-HD's lossless extension (XLL);
-  - the ALAC, TTA and WMA Lossless decoders, which the order below schedules (the project lead, 2026-11-08) but which decoders.md's lossless rules govern, not this design: their output is exact, so their check is a bit-exact comparison;
+  - the ALAC, TTA and WMA Lossless decoders, which the order below schedules (the project lead, 2026-11-08) but which [decoders.md](decoders.md)'s lossless rules govern, not this design: their output is exact, so their check is a bit-exact comparison;
   - DTS extensions beyond the core, the MPEG-2 multichannel extension of Layer II, Dolby's object audio, AC-4 and MPEG-H;
   - parallel decoding of lossy frames (see [Parallel decoding](#parallel-decoding)).
 
@@ -28,12 +28,12 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 
 - **One decoder per coding, one pull request each,** in the order of [Order](#order): a groundwork pull request; then MPEG audio, Vorbis, Opus, AC-3, E-AC-3, Musepack, DTS core and Speex; then AAC and WMA, each after the clean-room description it needs.
 - **Sources:** free specifications (A/52, ETSI TS 102 366 and 102 114, the Vorbis I specification, RFC 6716 with RFC 8251) and permissive reference code (minimp3, libvorbis, libopus, libspeex, libmpcdec), each license read for this design. AAC has no free specification, and WMA has none at all.
-- **The entropy pass joins the parsers:** each lossy parser walks its entropy-coded data in every analysis, with code that takes an optional destination ("The second entropy pass" in decoders.md).
+- **The entropy pass joins the parsers:** each lossy parser walks its entropy-coded data in every analysis, with code that takes an optional destination ("The second entropy pass" in [decoders.md](decoders.md)).
   - The walk gives the wave 3 figures.
   - With decoding on, it also fills the session's lent buffers, so the decoder reads no coded bit itself.
 - **Output:** planar `Float32` blocks, full scale ±1.0, unclipped and undithered, at the stream's output rate, with untrimmed positions. The integer Speex decoder writes 16-bit `Integer` blocks.
 - **Determinism:** the decoders, and the parser code they share that computes in floating point, follow the measurement rules, with a clause of their own for NaN and flushing. A hash of each decoder's raw output, pinned per fixture, holds it.
-- **The verdict:** CLAUDE.md asks every parser to declare every checksum its stream stores; how the coded checksums of lossy streams (AC-3's CRC1 and CRC2 among them) count toward a verdict is decision 2.
+- **The verdict:** [CLAUDE.md](../../CLAUDE.md) asks every parser to declare every checksum its stream stores; how the coded checksums of lossy streams (AC-3's CRC1 and CRC2 among them) count toward a verdict is decision 2.
   - Correctness of the decoded audio comes from conformance streams and test vectors, and from PCM cross-checks within a tolerance with a stated basis.
 - **Gaps:** a unit that cannot be decoded outputs nothing; the decoder resets, and also withholds the output after it that depends on the lost state.
   - Withheld positions are a figure of their own, apart from lost samples (decision 4).
@@ -53,7 +53,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 | `dts` | the core, at the core rate, in all four bitstream forms | every extension (XCh, XXCH, X96, XBR, LBR, XLL): follow-ups |
 | `speex` | narrowband, wideband and ultra-wideband, in-band stereo | nothing |
 | `aac` and `aac-adts` | step 1: AAC LC; step 2: SBR (HE-AAC) and parametric stereo (HE-AAC v2); step 3: AAC Main, LTP, ER AAC LC, LD and ELD (with low-delay SBR); step 4: USAC (xHE-AAC) | SSR gain control (FDK refuses it); MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization (decision 9) |
-| `wma`, `wma-pro`, `wma-voice` | versions 1 and 2, Professional, Voice | what the parsers leave open: version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above (asf-wma.md: the description leaves their band lists open); Professional frames that span three packets or exceed the 32,768 bytes a decoder buffers, and the default channel transform matrices, which the parser does not read (asf-wma.md); music superframes inside Voice. Each supplement (decision 12) states whether it closes these |
+| `wma`, `wma-pro`, `wma-voice` | versions 1 and 2, Professional, Voice | what the parsers leave open: version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above ([asf-wma.md](../formats/asf-wma.md): the description leaves their band lists open); Professional frames that span three packets or exceed the 32,768 bytes a decoder buffers, and the default channel transform matrices, which the parser does not read ([asf-wma.md](../formats/asf-wma.md)); music superframes inside Voice. Each supplement (decision 12) states whether it closes these |
 
 ### Order
 
@@ -93,7 +93,7 @@ Each license was read from its own text on 2026-11-07, as noted. This is a readi
 | AC-3, E-AC-3 | ATSC A/52:2018 and ETSI TS 102 366, both free | none needed; liba52 (GPL-2+, Ubuntu's copyright file) is not read | | the specifications alone |
 | Musepack | none for the decoding (musepack.net specifies the SV8 container) | libmpcdec r495 (SV7, SV8) and 1.2.6 (SV4 to SV7), the archives the project pins | 1.2.6: every file BSD-3-Clause. r495: `libmpcdec/*` BSD-3-Clause (`COPYING`, each file's header), **but** `include/mpc/minimax.h`, `mpcmath.h`, `datatypes.h` and `common/fastmath.c` are LGPL 2.1 | follow `libmpcdec/*`; the LGPL files are neither read further nor ported. `mpc_decoder.c` and `mpc_demux.c` include `minimax.h`, which holds only minimum, maximum and clip macros, so nothing of it is needed |
 | DTS core | ETSI TS 102 114 V1.6.1, free: the core's syntax and decoding in pseudo-code, with Huffman, VQ and 512-tap QMF tables in Annex D | none needed; libdca (GPL-2+ with LGPL parts) and FFmpeg (LGPL) are not read | | the specification alone |
-| Speex | none normative; the Speex manual describes the codec | libspeex 1.2.1, already pinned by `speex_tool.py` and listed in `THIRD-PARTY-NOTICES.md` | BSD-3-Clause (`COPYING`); only `src/getopt*`, part of the command-line tool, is LGPL | follow libspeex's fixed-point decoder (decision 11) |
+| Speex | none normative; the Speex manual describes the codec | libspeex 1.2.1, already pinned by `speex_tool.py` and listed in [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md) | BSD-3-Clause (`COPYING`); only `src/getopt*`, part of the command-line tool, is LGPL | follow libspeex's fixed-point decoder (decision 11) |
 | AAC | ISO/IEC 14496-3 and 23003-3: not free, not bought (the lead) | the PacketVideo decoder in AOSP (below), Apache 2.0 with ISO's conditions; faad2 GPL-2+, FFmpeg LGPL; FDK AAC under Fraunhofer's own license; 3GPP TS 26.410's code with no license grant (below) | as below | decision 1 |
 | WMA | none published | none: FFmpeg's decoders are the only detailed source (LGPL) | | clean-room, decision 12 |
 
@@ -127,19 +127,19 @@ Each license was read from its own text on 2026-11-07, as noted. This is a readi
 
 ### Notices
 
-- CLAUDE.md asks for a notice where code follows a BSD, MIT or Apache implementation closely. Each decoder that follows one carries a short notice in the derived files and a row in `THIRD-PARTY-NOTICES.md` and `scripts/release/licenses`:
+- [CLAUDE.md](../../CLAUDE.md) asks for a notice where code follows a BSD, MIT or Apache implementation closely. Each decoder that follows one carries a short notice in the derived files and a row in [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md) and `scripts/release/licenses`:
   - libvorbis (BSD-3-Clause);
   - the RFC 6716 code (Simplified BSD) and libopus (BSD-3-Clause);
   - libspeex and libmpcdec: their existing rows, extended to the decoders;
   - minimp3, which as CC0 asks for nothing, gets a row and file notices all the same, so the source is on record (the CC0 "magma" colormap has one).
-- Code written from a specification (A/52, TS 102 366, TS 102 114, the Vorbis I specification) carries no notice. Its tables are specification data, and `development.md` names each table's source and check, as CLAUDE.md asks.
+- Code written from a specification (A/52, TS 102 366, TS 102 114, the Vorbis I specification) carries no notice. Its tables are specification data, and [`development.md`](../development.md) names each table's source and check, as [CLAUDE.md](../../CLAUDE.md) asks.
 - If the lead takes option (b) of decision 1, the AAC files that follow the PacketVideo decoder carry the Apache notice and, where they follow one of the 107 files, the ISO disclaimer.
 
 ## The parser and decoder split
 
 ### The entropy pass joins the parsers
 
-CLAUDE.md: "A decoder reads the coded syntax with its parser's code and adds only reconstruction". Today the lossy parsers stop before most of their entropy-coded data:
+[CLAUDE.md](../../CLAUDE.md): "A decoder reads the coded syntax with its parser's code and adds only reconstruction". Today the lossy parsers stop before most of their entropy-coded data:
 
 | Parser | Reads today | Stops before |
 | --- | --- | --- |
@@ -155,26 +155,26 @@ CLAUDE.md: "A decoder reads the coded syntax with its parser's code and adds onl
 
 The plan's "Later" lists this work as "an entropy pass, format by format, MP3 first". This design makes it the first half of each decoder:
 
-- **Parser code:** the missing syntax goes into the format project outside its `Decoding` namespace, one function per structure with an optional destination. That is the pattern of FLAC's `SubframeSyntax.Read` (decoders.md, "Who owns the bits"): given no destination it walks and returns the facts the report shows; given buffers, it also stores the values.
+- **Parser code:** the missing syntax goes into the format project outside its `Decoding` namespace, one function per structure with an optional destination. That is the pattern of FLAC's `SubframeSyntax.Read` ([decoders.md](decoders.md#who-owns-the-bits), "Who owns the bits"): given no destination it walks and returns the facts the report shows; given buffers, it also stores the values.
 - **In every analysis (decision 10):** the wave 3 figures come from the walk, and they belong in the default report and its goldens, which decoding never changes.
   - The walk finds damage the side information cannot show, such as a Huffman region that ends before or after its stated length. That becomes the parser's findings, and `CodedFrame.IsUnreadable` where the unit cannot be read.
-  - The rules of "After the milestone review" in decoders.md hold: the walk counts against the parse budget, and its loops stop at the end of the data.
+  - The rules of "After the milestone review" in [decoders.md](decoders.md) hold: the walk counts against the parse budget, and its loops stop at the end of the data.
 - **Node building stays apart from the walk.** The walk returns facts and stores values; the parser builds nodes from the facts as it does now, lazily where the format builds them lazily (AC-3's records, the blocked children).
-- **Cost of the structure pass:** at most 1.5 times today's structure-analysis time on the benchmark files of 300 s (development.md, "Analysis speed of the lossy formats"), **estimate**, measured in each pull request.
+- **Cost of the structure pass:** at most 1.5 times today's structure-analysis time on the benchmark files of 300 s ([development.md](../development.md#analysis-speed-of-the-lossy-formats), "Analysis speed of the lossy formats"), **estimate**, measured in each pull request.
 - **Two pull requests per format** where the walk changes many goldens: the walk first, so that the decoder's pull request changes only `.decode.json` and `.measure.json` goldens. The lead's "one pull request per decoder" holds for the decoders.
 
 ### Lending for lossy frames
 
-The session lends the parser its sample buffers (decoders.md, "The second entropy pass"). For lossy codings they hold quantized values, which `SampleBuffers` serves without a change:
+The session lends the parser its sample buffers ([decoders.md](decoders.md#the-second-entropy-pass), "The second entropy pass"). For lossy codings they hold quantized values, which `SampleBuffers` serves without a change:
 
 - **Integers only:** every walk above produces integers. They are quantized spectral values, scalefactor and exponent indexes, Vorbis floor values and residue codebook entry numbers, CELT's energy indexes and pulse vectors, and SILK's and Speex's parameter indexes and excitation.
 - **The layout is the format's own,** documented on the syntax type that the parser and the decoder share in one project. For Layer III it is, per granule and channel, 576 values, then the scalefactors.
 - **Frames are always walked when decoding.** A lossy decoder decodes only frames with `CodedFrame.IsWalked` and has no reader of its own for the entropy-coded data.
   - The 2^24-sample lending ceiling is never reached: AAC's largest frame is 1,024 values in 48 channels, Vorbis's 4,096 in 255.
   - A frame the session lends nothing for is `decode.frame-too-large`.
-- **Side information** beyond the lent values (an MPEG header and side information, an AAC element's window and band layout) is read again from the frame's bytes with the parser's code. That is a few dozen bytes per frame, read twice by one piece of code, as decoders.md accepts for a configuration.
+- **Side information** beyond the lent values (an MPEG header and side information, an AAC element's window and band layout) is read again from the frame's bytes with the parser's code. That is a few dozen bytes per frame, read twice by one piece of code, as [decoders.md](decoders.md) accepts for a configuration.
 - **Layer III main data** lies partly in earlier frames' bytes. The parser's walk, which knows the placement, decodes them into the lent planes, so `CodedFrame.Bytes` stays the frame's own bytes and the decoder keeps no reservoir.
-- **Why lend rather than read twice:** the rule of decoders.md (lend where a second read costs a quarter of the decoding or more) was measured for FLAC. For lossy codings the transform dominates, so a second read may cost less (**estimate**).
+- **Why lend rather than read twice:** the rule of [decoders.md](decoders.md) (lend where a second read costs a quarter of the decoding or more) was measured for FLAC. For lossy codings the transform dominates, so a second read may cost less (**estimate**).
   - Lending is chosen anyway: the walk runs in every analysis, lending saves the read whatever its share, and one path is simpler to test than two.
   - The MPEG pull request measures the share once, for the record.
 
@@ -194,18 +194,18 @@ The session lends the parser its sample buffers (decoders.md, "The second entrop
 
 | Figure | Formats | From |
 | --- | --- | --- |
-| "Coded Bandwidth" | MPEG Layer III | the end of the count1 region per granule (mpeg-audio.md, "Not yet covered") |
-| "Coded Bandwidth" | Vorbis | the highest residue partition coded and the floor's used range per channel (vorbis.md) |
-| "Coded Bandwidth" | DTS core | the subframes' bit allocation (dts.md) |
-| "Block Switching" | DTS core (TMODE), Opus CELT (the transient flag) | the subframe side information; CELT's range-coded bits (coding-graphs.md, "later") |
-| "Stereo Coding" | Opus CELT (intensity, dual stereo, mid/side of a band) | the range-coded bits (coding-graphs.md, "later") |
-| "Coded Bandwidth" | xHE-AAC (USAC), AAC-ELD | their raw data blocks, steps 13 and 14 (aac.md) |
-| "Stereo Coding" | TrueHD | the matrix parameters of the substream blocks (truehd.md) |
+| "Coded Bandwidth" | MPEG Layer III | the end of the count1 region per granule ([mpeg-audio.md](../formats/mpeg-audio.md#not-yet-covered), "Not yet covered") |
+| "Coded Bandwidth" | Vorbis | the highest residue partition coded and the floor's used range per channel ([vorbis.md](../formats/vorbis.md)) |
+| "Coded Bandwidth" | DTS core | the subframes' bit allocation ([dts.md](../formats/dts.md)) |
+| "Block Switching" | DTS core (TMODE), Opus CELT (the transient flag) | the subframe side information; CELT's range-coded bits ([coding-graphs.md](coding-graphs.md), "later") |
+| "Stereo Coding" | Opus CELT (intensity, dual stereo, mid/side of a band) | the range-coded bits ([coding-graphs.md](coding-graphs.md), "later") |
+| "Coded Bandwidth" | xHE-AAC (USAC), AAC-ELD | their raw data blocks, steps 13 and 14 ([aac.md](../formats/aac.md)) |
+| "Stereo Coding" | TrueHD | the matrix parameters of the substream blocks ([truehd.md](../formats/truehd.md)) |
 
-- **DTS's stereo coding** is not in the table: dts.md already reports the core's "Stereo Coding" from the header flags.
+- **DTS's stereo coding** is not in the table: [dts.md](../formats/dts.md) already reports the core's "Stereo Coding" from the header flags.
   - What it leaves open is the stereo coding of the extensions' channels, which comes with the extension decoders this design leaves out.
 - **TrueHD's stereo coding** does not wait for a lossy decoder. Its decoder exists and reads the matrix parameters with the parser's code, so the figure needs only a tally in the parser.
-- Each figure keeps the name, unit and axis of the series it joins (CLAUDE.md), and each format's doc moves the line from "not covered yet" to what is read.
+- Each figure keeps the name, unit and axis of the series it joins ([CLAUDE.md](../../CLAUDE.md)), and each format's doc moves the line from "not covered yet" to what is read.
 
 ## Output and determinism
 
@@ -219,18 +219,18 @@ The session lends the parser its sample buffers (decoders.md, "The second entrop
 - **Channel changes inside a stream:** the decoder outputs the stream's channel count. A mono frame goes to both channels and a stereo frame in a mono stream is averaged, as RFC 6716 section 2.1.2 describes for Opus.
   - Opus's units may differ from the stream's channel count by design.
   - MPEG streams split only on version, layer, sample rate and free format (`MpegAudioParser.Streams.cs`), so a joined recording can mix channel modes. Decision 13 applies the Opus rule there.
-- **Positions:** untrimmed, at the coded stage, as decoders.md fixes it. The first unit's output starts at position 0, priming included (decision 8 settles what the measurer does with trims).
+- **Positions:** untrimmed, at the coded stage, as [decoders.md](decoders.md) fixes it. The first unit's output starts at position 0, priming included (decision 8 settles what the measurer does with trims).
 - **Format changes:** the parsers end a stream where its configuration changes, so each stream has its own session. A change inside a stream that the parser does not split, beyond the channel rule above, is `decode.frame-invalid` for the unit.
 
 ### Decoders fall under the determinism rules
 
-The `--measure` goldens compare figures byte for byte on all six CI platforms and against the NativeAOT build. The figures come from the decoder's PCM, so a decoder whose last bit differs between platforms moves a quantized figure sooner or later, as spectral-analysis.md measured for the FFT. The lossless decoders are integer code and exact; the lossy ones compute in floating point. So:
+The `--measure` goldens compare figures byte for byte on all six CI platforms and against the NativeAOT build. The figures come from the decoder's PCM, so a decoder whose last bit differs between platforms moves a quantized figure sooner or later, as [spectral-analysis.md](spectral-analysis.md) measured for the FFT. The lossless decoders are integer code and exact; the lossy ones compute in floating point. So:
 
 - **The measurement rules apply** to every lossy decoder and to the parser code it shares that computes in floating point:
   - no fused multiply-add, no `*Native` or `*Estimate` API, no `TensorPrimitives`, no BCL reduction over floating-point spans;
   - no platform math library: cosine tables, windows (sine, Kaiser-Bessel derived, Vorbis's), powers (x^(4/3), 2^(x/4)), Opus's and Speex's exponentials and logarithms and the SBR band edges come from `DetMath` or from tables in the source;
   - `Vector128` element-wise only: a polyphase window or a filter computes several output samples in its lanes, each lane's sum in the scalar order;
-  - every sum, butterfly and filter in an order that depends only on the transform's size, with one scalar reference per kernel and a vector path bit-identical to it (tested with `DOTNET_EnableHWIntrinsic=0`, "Vector paths of the decoders" in development.md);
+  - every sum, butterfly and filter in an order that depends only on the transform's size, with one scalar reference per kernel and a vector path bit-identical to it (tested with `DOTNET_EnableHWIntrinsic=0`, "Vector paths of the decoders" in [development.md](../development.md));
   - each float kernel marked `[MethodImpl(MethodImplOptions.AggressiveOptimization)]`, and no `ArrayPool<T>.Shared`.
 - **Two rules differ, so the decoder clause is written out on its own** (see [Contract changes](#contract-changes)):
   - **NaN and huge values:** the measurer counts non-finite input and replaces it with 0. A decoder instead clamps every gain and scale exponent to the range its specification allows before using it (the walk reports a value outside it).
@@ -264,7 +264,7 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
   - `lookup1_values` and the AC-3 width: integer loops, or `BitOperations.Log2`, which the scan allows;
   - the SBR band edges and counts: `DetMath.Pow` and `DetMath.Ln`, held by an exhaustive test over every rate and header that compares them with the current results. Where the two differ at a tie, the integer the specification intends decides, and the goldens show it;
   - the integer LINQ calls (all 36 are over integers): the scan today reads only the parent's type of a call (`BannedCalls` decodes the TypeSpecification, `MeasurementDeterminismTests.cs` line 405), never the member's signature or its generic instantiation, so it cannot tell a sum of integers from a sum of doubles. Two ways, chosen in the groundwork pull request:
-    - **new work in the scan (the design's choice):** decode the MemberReference's signature and the MethodSpecification's instantiation with the existing type provider, and ban an `Enumerable` reduction whose result is `float`, `double` or `Half` (for the selector overloads that is the `Func`'s result type), with negative controls for both overload kinds. CLAUDE.md bans reductions "over floating-point spans" only, and parsers keep using integer LINQ;
+    - **new work in the scan (the design's choice):** decode the MemberReference's signature and the MethodSpecification's instantiation with the existing type provider, and ban an `Enumerable` reduction whose result is `float`, `double` or `Half` (for the selector overloads that is the `Func`'s result type), with negative controls for both overload kinds. [CLAUDE.md](../../CLAUDE.md) bans reductions "over floating-point spans" only, and parsers keep using integer LINQ;
     - **or rewrite** the 36 calls as loops, which keeps the scan as it is at the cost of churn in nine parsers.
 - **`DetMath` moves to `Core.Abstractions`** (namespace `Encspect.Core`, public), since decoders and parsers may reference nothing else. The measurements use it from there, and its hash tests move with it.
 - **`DecoderDeterminismTests`:** the raw float output of each lossy decoder on its fixtures hashes to the value its `.decode.json` golden holds, on every platform; `scripts/check_aot.sh` with `--measure` covers NativeAOT.
@@ -274,22 +274,22 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
 
 ### Coded checksums and the verdict
 
-- CLAUDE.md: parsers "declare every checksum a stream stores". No lossy parser starts a decode session today, so none declares one. Once each starts a session for its decoder, each must declare its codec's checksums:
+- [CLAUDE.md](../../CLAUDE.md): parsers "declare every checksum a stream stores". No lossy parser starts a decode session today, so none declares one. Once each starts a session for its decoder, each must declare its codec's checksums:
   - MPEG audio: the CRC-16 (header and side information, or Layer I and II allocations and scfsi), which covers no audio sample;
-  - AC-3: CRC1 and CRC2, which together cover the whole syncframe; E-AC-3: one CRC, over the frame (ac3.md);
-  - ADTS: the CRC over the header and the elements it covers, not the whole block (aac.md);
-  - DTS: the core's HCRC and AHCRC, which TS 102 114 says shall not be applied (dts.md), so never compared;
+  - AC-3: CRC1 and CRC2, which together cover the whole syncframe; E-AC-3: one CRC, over the frame ([ac3.md](../formats/ac3.md));
+  - ADTS: the CRC over the header and the elements it covers, not the whole block ([aac.md](../formats/aac.md));
+  - DTS: the core's HCRC and AHCRC, which TS 102 114 says shall not be applied ([dts.md](../formats/dts.md)), so never compared;
   - Musepack SV8: the stream header's CRC-32 (header only);
   - Vorbis, Opus, Speex, WMA: none of their own. Ogg's page CRCs and Matroska's CRC-32 elements are the container's and stay out of a codec's verification.
-- Decision 4 of decoders.md makes a stream verified where at least one compared checksum covers all of its audio, "coded or decoded"; a TTA stream "is verified without decoding". Its line 732 deferred giving the lossy formats' CRCs a verification. Declaring them now settles that, so decision 2 sets out the options:
+- Decision 4 of [decoders.md](decoders.md) makes a stream verified where at least one compared checksum covers all of its audio, "coded or decoded"; a TTA stream "is verified without decoding". Its line 732 deferred giving the lossy formats' CRCs a verification. Declaring them now settles that, so decision 2 sets out the options:
   - **(a) Declare the coded checksums with their coverage, as for TTA.** No rule changes.
     - AC-3 and E-AC-3 streams whose CRCs all hold, with no gap, become "Verified: yes (lossy stream; CRC1 1,000 of 1,000, CRC2 1,000 of 1,000)" in every analysis.
     - MPEG and ADTS streams that store CRCs read "unknown", with their CRC-16 tallies, since those cover no audio or not all of it; those without one (most MP3 files lack the protection bit) read that the stream stores no checksum.
     - Codings that define no checksum of their own (Vorbis, Opus, Speex, WMA, and raw AAC in MP4 and ADIF) get no verification block at all, as WAV streams have none today.
-  - **(b) Exempt lossy codings from the declare rule.** Nothing changes in any report. CLAUDE.md's item becomes "Parsers of lossless codings declare every checksum a stream stores"; a lossy parser keeps reporting its CRCs as statistics and findings, as now.
+  - **(b) Exempt lossy codings from the declare rule.** Nothing changes in any report. [CLAUDE.md](../../CLAUDE.md)'s item becomes "Parsers of lossless codings declare every checksum a stream stores"; a lossy parser keeps reporting its CRCs as statistics and findings, as now.
   - **(c) Declare them, but keep coded checksums of lossy streams out of the verdict.** The tallies are listed, and `IsVerified` is never true for a lossy stream from coded checksums alone.
-    - WavPack hybrid streams stay verified, since their CRCs are over decoded audio; decoders.md's decision 4 and `StreamVerification.IsVerified` gain that clause.
-- **Decided on 2026-11-08: (a).** It needs no exception to CLAUDE.md or decoders.md.
+    - WavPack hybrid streams stay verified, since their CRCs are over decoded audio; [decoders.md](decoders.md)'s decision 4 and `StreamVerification.IsVerified` gain that clause.
+- **Decided on 2026-11-08: (a).** It needs no exception to [CLAUDE.md](../../CLAUDE.md) or [decoders.md](decoders.md).
   - The verdict is true as worded: the coded data that AC-3's CRCs cover are intact, and "lossy stream" says what was verified. Its churn is under [Consequences and churn](#consequences-and-churn).
 
 ### What `--verify` means for a lossy stream
@@ -384,7 +384,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 - The decoder decodes the unit whole, writes the unit's output from the first position past the span (`PcmBlock.Position` = the unit's `FirstSample` plus the withheld part), and reports the withheld part with `Withhold`.
 - `IFrameDecoder.Decode` returns the samples it wrote: 0 for a unit withheld whole, the rest for a unit withheld in part. `DecodedSamples` therefore counts samples written.
 - The work of the whole unit is charged, so the floor of the charge (`ForSample` times the samples returned) always holds.
-- samples-definition.md's invariant, `DecodedSamples ≤ coded stage − LostSamples`, still holds. Its equality case gains "and nothing was withheld".
+- [samples-definition.md](samples-definition.md)'s invariant, `DecodedSamples ≤ coded stage − LostSamples`, still holds. Its equality case gains "and nothing was withheld".
 
 **What each decoder withholds after a gap:**
 
@@ -415,10 +415,10 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 - The parser knows it: it places every granule's main data, and warns today where they begin before the stream (`mpeg.main-data-before-stream`, in 5 committed fixtures).
 - **Intact files have it too:** tracks split without re-encoding from a continuous MP3 (mp3DirectCut, mp3splt, CUE splits, stream captures) start with a frame whose main data lie in the previous track. The count over the downloaded samples and a set of split tracks is done in the MPEG pull request, before the lead's final word.
 - **Options (decision 7):**
-  - (a) the parser counts such a frame as lost and hands it unreadable, samples-definition.md's "state was lost" case. Intact split tracks would then report Lost Samples.
+  - (a) the parser counts such a frame as lost and hands it unreadable, [samples-definition.md](samples-definition.md)'s "state was lost" case. Intact split tracks would then report Lost Samples.
   - (b) the decoder withholds the frame's output with the reason "main data not available", and the parser stays as it is.
 - **Decided on 2026-11-08: (b).** Nothing is damaged in a split track, so "lost" would misname it. Withheld samples say exactly what happened.
-- Junk between two frames does not close the reservoir (mpeg-audio.md), so a frame after junk decodes where its main data lie in the frames before.
+- Junk between two frames does not close the reservoir ([mpeg-audio.md](../formats/mpeg-audio.md)), so a frame after junk decodes where its main data lie in the frames before.
 
 ### Opus frames of 0 bytes (DTX or lost)
 
@@ -446,7 +446,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 
 ### Priming, delay and trims
 
-Positions stay untrimmed (decoders.md). What each format puts before and after the audio, and who states it:
+Positions stay untrimmed ([decoders.md](decoders.md)). What each format puts before and after the audio, and who states it:
 
 | Format | What the decoder outputs first | Stated by the stream's syntax | Stated by a container or encoder |
 | --- | --- | --- | --- |
@@ -455,23 +455,23 @@ Positions stay untrimmed (decoders.md). What each format puts before and after t
 | AC-3, E-AC-3, DTS | the encoder's delay | nothing | MP4 edit lists |
 | Vorbis | nothing for the first packet; the rest by overlap | start and end trimming from granule positions | |
 | Opus | everything | pre-skip and end trimming (RFC 7845, 4.2 and 4.4) | |
-| Speex | the encoder's lookahead (40, 143, 349 samples) | granule positions (speex.md) | |
+| Speex | the encoder's lookahead (40, 143, 349 samples) | granule positions ([speex.md](../formats/speex.md)) | |
 | Musepack | 481 samples of delay (`MPC_DECODER_SYNTH_DELAY`) | the header's sample count and the last frame's end; SV8's beginning silence (`beg_silence`, `mpc_demux.c`) | |
 | WMA | half a frame of overlap | the frames' trims (Professional, Lossless); Microsoft's rule for standard | ASF's preroll |
 
 - **Options (decision 8):**
   - (a) the measurer measures the range the stream's own syntax trims to, the cases [samples-definition.md](samples-definition.md) puts in `samples` (Opus, Vorbis, Speex, Musepack, WMA Professional and Lossless, TrueHD's end of stream marker). It counts the rest as "Trimmed Samples", a figure apart from lost and withheld samples;
-  - (b) keep spectral-analysis.md's rule: measure as decoded, untrimmed;
+  - (b) keep [spectral-analysis.md](spectral-analysis.md)'s rule: measure as decoded, untrimmed;
   - (c) also apply the container's and the encoder's figures (LAME tag, iTunSMPB, edit lists).
 - **Decided on 2026-11-08: (a).** The measured samples then equal the stream's `samples` where nothing is lost or withheld, and Opus's pre-skip, which holds the decoder's convergence, does not reach the levels and the true peak.
-- (a) changes spectral-analysis.md's rule ("TrueHD: ... the samples to drop at the start are measured too") and with it TrueHD's `.measure.json` goldens (see [Consequences and churn](#consequences-and-churn)).
+- (a) changes [spectral-analysis.md](spectral-analysis.md)'s rule ("TrueHD: ... the samples to drop at the start are measured too") and with it TrueHD's `.measure.json` goldens (see [Consequences and churn](#consequences-and-churn)).
 - The sink's PCM stays untrimmed either way, and the cross-checks compare at the coded stage.
 
 ## Cost
 
 ### Work units per format
 
-The unit of decoders.md applies unchanged: one predictor or filter tap on one sample of one channel, about 0.6 ns. Every decoder charges `DecodeWork.ForSample(4)` (22) per output sample of each channel, nothing per coded byte (its frames are walked), and its stages before it runs them. The drafted weights are all **estimates**; each pull request measures and fixes its own, and `DecoderWorkTests` holds it to at most twice the FLAC reference's time per unit:
+The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filter tap on one sample of one channel, about 0.6 ns. Every decoder charges `DecodeWork.ForSample(4)` (22) per output sample of each channel, nothing per coded byte (its frames are walked), and its stages before it runs them. The drafted weights are all **estimates**; each pull request measures and fixes its own, and `DecoderWorkTests` holds it to at most twice the FLAC reference's time per unit:
 
 | Stage | Units | Formats |
 | --- | --- | --- |
@@ -511,14 +511,14 @@ The unit of decoders.md applies unchanged: one predictor or filter tap on one sa
 | WMA Voice | 4 kbps at 16 kHz | about 2,400 | 4,096 |
 
 - **Silence is covered by the floor, not by the allowance,** for Vorbis and Opus, whose silent packets would need far more than any allowance worth declaring: 2^35 units cover about 4.5 hours of silent Vorbis stereo at 44.1 kHz (24 units a sample) and about 3.3 hours of silent Opus stereo at 48 kHz (30 units a sample), and a file's coded audio adds its own allowance on top.
-  - Longer silence in a small file stops with `decode.limit`, as decoders.md says of digital silence in any coding.
+  - Longer silence in a small file stops with `decode.limit`, as [decoders.md](decoders.md) says of digital silence in any coding.
   - A crafted file of 100 MB stops after about 2 minutes at 2,048 units a byte and about 8 minutes at 8,192, as Monkey's Audio's does; Opus at 16,384 would double that (decision 18).
 - **The floor alone** covers anything under 16 MiB at 2,048 units a byte and under 4 MiB at 8,192. Opus frames of 0 bytes are not decoded (decision 5), so DTX costs nothing.
 - **Free-format MPEG** frames can be smaller than any listed bitrate; the MPEG pull request checks the free-format fixtures against the 2,048.
 
 ### Memory per stream
 
-Nothing grows with the stream (decoders.md, "Memory"). A session holds one frame's lent and output buffers and the state that crosses units:
+Nothing grows with the stream ([decoders.md](decoders.md#memory), "Memory"). A session holds one frame's lent and output buffers and the state that crosses units:
 
 | Decoder | Largest state, **estimate** | Ceiling |
 | --- | --- | --- |
@@ -545,10 +545,10 @@ A frame past a ceiling is `decode.frame-too-large`, and `MemoryTests` gets a lon
 
 ### Speed targets
 
-- **The reference time:** each decoder's pull request times the fastest reference for its format on the benchmark files of 300 s (development.md, "Analysis speed of the lossy formats"): minimp3's tool, FFmpeg, `oggdec`, `opusdec`, `mpcdec`, `speexdec`, FDK through its harness. Each reference's own start is taken out: its time on a file of 1 s is subtracted.
+- **The reference time:** each decoder's pull request times the fastest reference for its format on the benchmark files of 300 s ([development.md](../development.md#analysis-speed-of-the-lossy-formats), "Analysis speed of the lossy formats"): minimp3's tool, FFmpeg, `oggdec`, `opusdec`, `mpcdec`, `speexdec`, FDK through its harness. Each reference's own start is taken out: its time on a file of 1 s is subtracted.
   - For scale: FFmpeg's MP3 decoder takes 0.56 s for the 300 s MP3 of 4.8 MB, start included.
 - **The analyzer's time:** the analysis with decoding to a sink that keeps nothing, minus the analysis without decoding, so its start and the structure pass are out too.
-- **The target:** that time at most 2.5 times the reference's, in the JIT and the NativeAOT build, the middle of the 1.7 to 3.2 times the lossless decoders reached after two speed passes (decoders.md).
+- **The target:** that time at most 2.5 times the reference's, in the JIT and the NativeAOT build, the middle of the 1.7 to 3.2 times the lossless decoders reached after two speed passes ([decoders.md](decoders.md)).
   - A decoder above it gets a speed pass before the next one starts.
 - **In absolute terms:** an hour of stereo MP3 at 44.1 kHz is about 2 × 10^10 units at the drafted weights, about 12 s at 0.6 ns a unit (**estimate**); the MPEG pull request measures it.
   - The budget counts units, not time, so those units fit under its floor of 2^35 at any speed; a decoder at the work tests' factor of 2 is slower (about 24 s), never cut.
@@ -569,16 +569,16 @@ What the recommendations change outside the decoders, so that none of it arrives
   - `IsLossy` true on every decoded lossy stream writes `"isLossy": true` in JSON (`ReportJsonWriter`) and "(lossy stream)" in the Measured line (`MeasurementText`) of every measured lossy stream, not only in a verification;
   - the CSV's `Is Verified` (filled with `--verify` only) becomes true for verified AC-3 files under decision 2(a).
 - **GUI:**
-  - the caption "The audio of this … stream is not decoded here" (gui.md) no longer appears for lossy streams that have a decoder, and "Decode Audio" becomes enabled for them;
-  - the waveform draws 16-bit sample codes (gui.md), so unclipped overs beyond full scale are drawn at the lane's edge. The levels count them, and the hover text says so;
+  - the caption "The audio of this … stream is not decoded here" ([gui.md](../gui.md)) no longer appears for lossy streams that have a decoder, and "Decode Audio" becomes enabled for them;
+  - the waveform draws 16-bit sample codes ([gui.md](../gui.md)), so unclipped overs beyond full scale are drawn at the lane's edge. The levels count them, and the hover text says so;
   - the caption for withheld output, next to the one for frames not decoded;
   - the stream line shows the verdict of decision 2(a);
   - measuring a folder of lossy files takes the decoders' time.
 - **CLI and CI:**
-  - `docs/cli.md`: what `--verify` and `--measure` do for lossy streams, and the verdict;
+  - [`docs/cli.md`](../cli.md): what `--verify` and `--measure` do for lossy streams, and the verdict;
   - `scripts/check_aot.sh` with `--measure` and CI's measurement jobs run longer by each decoder's time on the fixtures;
   - each format's cross-check job gains the PCM comparison and its downloads.
-- **Docs:** each format's "Decoding" section; `docs/development.md` for the cross-checks, the tolerance and the downloads; the articles (below).
+- **Docs:** each format's "Decoding" section; [`docs/development.md`](../development.md) for the cross-checks, the tolerance and the downloads; the articles (below).
 - **Articles:** `lossy-decoding` (what Encspect's decoding of a lossy stream is, that it is not bit-exact with other decoders and within what it agrees, withheld output, priming); `withheld-samples`; the verification article gains the lossy stream's coded checksums; format articles for the new walks (Layer III Huffman regions, Vorbis floors and residues, CELT, SILK, DTS subframes).
 
 ## Contract changes
@@ -586,13 +586,13 @@ What the recommendations change outside the decoders, so that none of it arrives
 - **`DetMath`** moves to `Core.Abstractions`, public, with its tests. `Encspect.Host.Measurement` uses it from there.
 - **`DecodeContext.Withhold(long firstSample, long samples, WithholdReason reason)`** and the enum `WithholdReason` (`AfterGap`, `EmptyFrame`, `MainDataUnavailable`, `ModeTransition`), passed by the host to the measurer. A front end's sink sees only the position jump, as now.
 - **The determinism scan** covers the nine lossy format assemblies but their `Decoding.Lossless` namespaces, tells integer from floating-point `Enumerable` reductions by their signatures (new work, above), and the inventory above is fixed.
-- **`CLAUDE.md`,** in the groundwork pull request:
+- **[`CLAUDE.md`](../../CLAUDE.md),** in the groundwork pull request:
   - Layout, `src/Encspect.Core.Abstractions`, at the end of its sentence: "…, the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), and the deterministic math (`DetMath`) that measurements and lossy decoders share."
   - Architecture rules, a new item after the measurement determinism item: "Lossy decoders, and the parser code they share that computes in floating point, are deterministic under the same rules as measurement code (no fused multiply-add, no platform math library but `DetMath`, no `*Native` or `*Estimate` API, no `TensorPrimitives` and no BCL sum, dot product, maximum or average over floating-point spans, only element-wise `Vector128`, sums and transforms in an order that depends only on their length, each float kernel `[MethodImpl(MethodImplOptions.AggressiveOptimization)]`, no `ArrayPool<T>.Shared`), with two rules of their own: a decoder clamps every gain and scale exponent to the range its specification allows instead of counting NaN, and flushes recursive states below 1e-30 at the start of each of its units and after a gap. A lossless decoder in the same project lives in `<project>.Decoding.Lossless`, outside these rules. `DecoderDeterminismTests` pins hashes of the lossy decoders' PCM, and `MeasurementDeterminismTests` scans their assemblies."
-  - The plan's "Later" item on lossy decoders, which holds the lead's gap rule, gains the withheld output with the lead's decision; CLAUDE.md holds no item on gaps today.
+  - The plan's "Later" item on lossy decoders, which holds the lead's gap rule, gains the withheld output with the lead's decision; [CLAUDE.md](../../CLAUDE.md) holds no item on gaps today.
   - Under decision 2(b) only, the item "Parsers reach decoding only through `StartDecoding` on their context, and declare every checksum a stream stores." ends instead "…, and, for lossless codings, declare every checksum a stream stores."
-- **decoders.md,** under decision 2(c) only: decision 4 and `StreamVerification.IsVerified` gain "a lossy stream is verified only by checksums over decoded audio".
-- **spectral-analysis.md,** under decision 8(a): the trimmed range and "Trimmed Samples".
+- **[decoders.md](decoders.md),** under decision 2(c) only: decision 4 and `StreamVerification.IsVerified` gain "a lossy stream is verified only by checksums over decoded audio".
+- **[spectral-analysis.md](spectral-analysis.md),** under decision 8(a): the trimmed range and "Trimmed Samples".
 - **`IFrameDecoder.Decode`'s comment:** "the samples per channel by which the stream's decoded output advanced" becomes "the samples per channel it wrote, which is the advance unless it withheld output (`DecodeContext.Withhold`)". The signature does not change.
 - No change to `IDecoder`, the signatures of `IFrameDecoder`, `CodedFrame`, `DecodeSetup`, `SampleBuffers`, `PcmBlock` or the router.
 
@@ -604,7 +604,7 @@ The steps follow [Order](#order); each is one pull request for the decoder, with
    - the contract changes above, and the determinism fixes with goldens unchanged;
    - `DecoderDeterminismTests` with a scripted float decoder;
    - `tests/Encspect.PcmDump` and `scripts/fixtures/compare_pcm.py`, with both bounds and the band-energy comparison;
-   - withheld and trimmed samples in the measurer and the writers; the `lossy-decoding` and `withheld-samples` articles; CLAUDE.md's lines.
+   - withheld and trimmed samples in the measurer and the writers; the `lossy-decoding` and `withheld-samples` articles; [CLAUDE.md](../../CLAUDE.md)'s lines.
 1. **MPEG audio:**
    - the parser: the Layer III walk and the Layer I and II samples, Coded Bandwidth for Layer III, the checksum declarations of decision 2;
    - the decoder, following minimp3;
@@ -639,8 +639,8 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
    - Considered: following the PacketVideo decoder closely, under Apache 2.0 and, for 107 of its files, ISO/IEC SC 29's disclaimer, which licenses only "products claiming conformance".
    - Considered: 3GPP TS 26.410's code, which grants no license; TS 26.401 and 26.402 defer to ISO/IEC 14496-3.
 2. **The verdict for lossy streams:** the parsers declare their codings' coded checksums with their coverage. AC-3 and E-AC-3 read "verified (lossy stream)" in every analysis, MPEG and ADTS streams with CRCs "unknown" and those without one that they store none; codings without checksums (Vorbis, Opus, Speex, WMA, raw AAC) get no verification.
-   - Considered: exempting lossy codings from CLAUDE.md's declare rule.
-   - Considered: declaring them but keeping coded checksums of lossy streams out of the verdict, through a decoders.md change.
+   - Considered: exempting lossy codings from [CLAUDE.md](../../CLAUDE.md)'s declare rule.
+   - Considered: declaring them but keeping coded checksums of lossy streams out of the verdict, through a [decoders.md](decoders.md) change.
 3. **`--verify` for lossy streams:** decodes nothing, since no checksum covers the decoded audio; `--measure` decodes.
    - Considered: decoding under `--verify` to report units that do not decode.
 4. **Output after a gap:** the decoder resets and withholds the output that depends on the lost state, reported as "Withheld Samples" apart from lost samples, partial units by position (`DecodeContext.Withhold`).
@@ -672,10 +672,10 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
     - Considered: no pin, with determinism held only by the `.measure.json` goldens.
 15. **Musepack SV7 after a gap:** 32 frames withheld, libmpcdec's seek window.
     - Considered: withholding until every active band was coded absolutely.
-16. **Determinism:** the measurement rules with the decoder clause, `DetMath` in `Core.Abstractions`, the scan over the lossy assemblies but their `Decoding.Lossless` namespaces. The two CLAUDE.md edits are applied by the main session.
+16. **Determinism:** the measurement rules with the decoder clause, `DetMath` in `Core.Abstractions`, the scan over the lossy assemblies but their `Decoding.Lossless` namespaces. The two [CLAUDE.md](../../CLAUDE.md) edits are applied by the main session.
     - Considered: tolerance in the `.measure.json` goldens of lossy streams.
 17. **Patents** (the lead's answer): no format waits for advice.
-    - A short note in `README.md` and [cli.md](../cli.md) says that the decoders exist for analysis only (no playback or conversion) and that users are responsible for complying with the laws where they live.
+    - A short note in [`README.md`](../../README.md) and [cli.md](../cli.md) says that the decoders exist for analysis only (no playback or conversion) and that users are responsible for complying with the laws where they live.
     - Before the HE-AAC, USAC, E-AC-3 and WMA Professional decoders are built, the lead decides whether they ship as source only or stay out of the release binaries.
 18. **Opus's units per byte:** 8,192, from its coded audio at the lowest bitrates, with silence covered by the floor (about 3.3 hours of stereo) and a crafted 100 MB file stopping after about 8 minutes, as for Monkey's Audio.
     - Considered: 16,384, which doubles that worst case and still does not cover silence.
@@ -697,10 +697,10 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
 ## Sources read
 
 - **The repository** at `origin/main` adb9673:
-  - `CLAUDE.md`; `docs/PLAN.md` ("Later", "Phase 3, continued");
-  - `docs/design/decoders.md`, `spectral-analysis.md`, `samples-definition.md`, `official-decoder-crosschecks.md`, `parallel-decoding.md`, `coding-graphs.md` (the concept table), `mpeg-clean-room-rules.md` (its source statement), and the status and scope lines of `wma-standard-format.md`, `wma-pro-format.md` and `wma-voice-format.md`;
-  - the format docs' "not covered" lines and what they read; `docs/gui.md` (the captions and the waveform); `development.md` ("Analysis speed of the lossy formats", "Where the format tables come from", the conformance downloads);
-  - `THIRD-PARTY-NOTICES.md` and `third_party/README.md`; `tests/conformance/mpeg2-audio.json`;
+  - [`CLAUDE.md`](../../CLAUDE.md); [`docs/PLAN.md`](../PLAN.md#later) ("Later", "Phase 3, continued");
+  - [`docs/design/decoders.md`](decoders.md), [`spectral-analysis.md`](spectral-analysis.md), [`samples-definition.md`](samples-definition.md), [`official-decoder-crosschecks.md`](official-decoder-crosschecks.md), [`parallel-decoding.md`](parallel-decoding.md), [`coding-graphs.md`](coding-graphs.md) (the concept table), [`mpeg-clean-room-rules.md`](mpeg-clean-room-rules.md) (its source statement), and the status and scope lines of [`wma-standard-format.md`](wma-standard-format.md), [`wma-pro-format.md`](wma-pro-format.md) and [`wma-voice-format.md`](wma-voice-format.md);
+  - the format docs' "not covered" lines and what they read; [`docs/gui.md`](../gui.md) (the captions and the waveform); [`development.md`](../development.md#analysis-speed-of-the-lossy-formats) ("Analysis speed of the lossy formats", "Where the format tables come from", the conformance downloads);
+  - [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md) and [`third_party/README.md`](../../third_party/README.md); `tests/conformance/mpeg2-audio.json`;
   - the shapes of the lossy parsers (the banned calls listed, `MpegAudioParser.Streams.cs`, `Ac3Analysis.cs`, `Sv7Parser.cs`, `OldStreamParser.cs`, the codec IDs), `MappedBytes`, `DetMath` and `MeasurementDeterminismTests`.
 - **Licenses and reference code:**
   - `third_party/minimp3/LICENSE` and `minimp3.h`;

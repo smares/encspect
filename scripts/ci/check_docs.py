@@ -3,6 +3,8 @@
 
 - every relative link in README.md, CLAUDE.md and docs/**/*.md points at a file or folder of the committed tree
   (read with git ls-tree, so the job's sparse checkout does not matter);
+- no reference to a Markdown file of the tree is left as plain text or in backticks: it is a link (a file name pattern such
+  as docs/formats/<name>.md, and anything in a code block, is not a reference);
 - every page in docs/formats and docs/tags is linked from its folder's README.md.
 
 Anchors (#section) are not followed.
@@ -17,6 +19,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LINK = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 FENCE = re.compile(r"^\s*```")
+MD_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)")
+MD_REF = re.compile(r"(?<![\w./-])([\w./-]+\.md)\b(?![\w/-])")
 
 
 def tracked():
@@ -45,6 +49,35 @@ def links(path):
             yield number, target
 
 
+def resolve_reference(token, page, known):
+    """The tracked Markdown file a plain-text name refers to, or None: relative to the repository root, to the page's
+    folder, or else by file name when exactly one tracked file has it."""
+    if known is None or "<" in token or "*" in token:
+        return None
+    folder = page.parent.relative_to(ROOT).as_posix()
+    for candidate in (token, posixpath.join(folder, token)):
+        candidate = posixpath.normpath(candidate)
+        if candidate in known:
+            return candidate
+    if "/" not in token:
+        matches = [f for f in known if f.endswith(".md") and posixpath.basename(f) == token]
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
+def unlinked_references(page, known):
+    in_fence = False
+    for number, line in enumerate(page.read_text(encoding="utf-8").splitlines(), 1):
+        if FENCE.match(line):
+            in_fence = not in_fence
+        if in_fence:
+            continue
+        for token in MD_REF.findall(MD_LINK.sub("", line)):
+            if resolve_reference(token, page, known):
+                yield number, token
+
+
 def main():
     problems = []
     known = tracked()
@@ -58,6 +91,9 @@ def main():
             exists = resolved in known if known is not None else (page.parent / path).exists()
             if path and not exists:
                 problems.append(f"{page.relative_to(ROOT)}:{number}: the link {target} points at nothing")
+    for page in pages:
+        for number, token in unlinked_references(page, known):
+            problems.append(f"{page.relative_to(ROOT)}:{number}: {token} names a Markdown file of the tree without linking it")
     for folder in ("formats", "tags"):
         index = ROOT / "docs" / folder / "README.md"
         text = index.read_text(encoding="utf-8")

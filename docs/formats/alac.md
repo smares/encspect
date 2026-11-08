@@ -2,7 +2,7 @@
 
 The frames of an Apple Lossless track that a container stores: MP4 and M4A (`alac` sample entries) and Matroska (`A_ALAC`), through the "alac" codec parser (`src/Encspect.Formats.Alac`). ALAC has no file format of its own for the analyzer to open: CAF files, which Apple's tools write, wait for a CAF parser. There is no decoder: the frames are walked, not decoded, and the format stores no checksum over its samples ([decoders.md](../design/decoders.md), decision 5).
 
-Sources: Apple's ALAC reference implementation (https://github.com/macosforge/alac, commit `c38887c5c5e64a4b31108733bd79ca9b2496d987`, Apache License 2.0) and its `ALACMagicCookieDescription.txt`. The walk follows `ALACDecoder.cpp` and `ag_dec.c` and carries Apple's notice (`THIRD-PARTY-NOTICES.md`). FFmpeg 6.1.1 and 8.0.1, MediaInfo 26.01 and Apple's `afconvert` are black boxes: they write and read the test files, and FFmpeg's `alac.c` was not read ([decoders.md](../design/decoders.md), decision 10).
+Sources: Apple's ALAC reference implementation (https://github.com/macosforge/alac, commit `c38887c5c5e64a4b31108733bd79ca9b2496d987`, Apache License 2.0) and its `ALACMagicCookieDescription.txt`. The walk follows `ALACDecoder.cpp` and `ag_dec.c` and carries Apple's notice ([`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md)). FFmpeg 6.1.1 and 8.0.1, MediaInfo 26.01 and Apple's `afconvert` are black boxes: they write and read the test files, and FFmpeg's `alac.c` was not read ([decoders.md](../design/decoders.md), decision 10).
 
 ## What is read
 

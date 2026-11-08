@@ -19,15 +19,15 @@ What the lead asked for, in their words:
 What the plan and the earlier designs settle, and this design keeps:
 
 - Both front ends are thin views over the same result model, "so neither can show something the other cannot" (plan, "CLI and GUI"). The map is another form of series the reports already hold; it adds no figure of its own.
-- Front ends read kinds and streams, never node names (`CLAUDE.md`).
-- The Graphs tab's list, view switcher, palette, hover, click, keyboard and automation behavior ([gui.md](../gui.md), "Graphs" and "Category series"; [coding-graphs.md](coding-graphs.md)).
+- Front ends read kinds and streams, never node names ([`CLAUDE.md`](../../CLAUDE.md)).
+- The Graphs tab's list, view switcher, palette, hover, click, keyboard and automation behavior ([gui.md](../gui.md#graphs), "Graphs" and "Category series"; [coding-graphs.md](coding-graphs.md)).
 - Step 4 of the [measurements rollout](spectral-analysis.md#rollout) adds the entries "Waveform", "Spectrogram" and "Spectrum" under a heading "Audio" in the same tab ([spectral-analysis.md](spectral-analysis.md#gui)).
 
 Not in scope: new series, and any parser or result-model change other than the optional declared range of [Numeric shading](#declared-ranges-the-second-amendment) (one property of `Series`, one JSON field, and the MPEG series that opt in); the CLI gains no option (the map is a picture of series the JSON already writes).
 
-Sources read for the second amendment: `StreamInfo.cs` (`Series`), the series output of `ReportJsonWriter.cs`, `MpegHeader.cs` (the bitrate tables), `MpegAudioParser.Streams.cs` (the "Bitrate" series and how streams are split) and `MpegAudioParser.Coding.cs` ("Channel Bit Share"), `docs/cli.md`, and the fixture folders, counted by script.
+Sources read for the second amendment: `StreamInfo.cs` (`Series`), the series output of `ReportJsonWriter.cs`, `MpegHeader.cs` (the bitrate tables), `MpegAudioParser.Streams.cs` (the "Bitrate" series and how streams are split) and `MpegAudioParser.Coding.cs` ("Channel Bit Share"), [`docs/cli.md`](../cli.md), and the fixture folders, counted by script.
 
-Sources read: `CLAUDE.md`, `docs/PLAN.md`, `docs/gui.md`, the two designs above; `Graph.cs`, `GraphsViewModel.cs`, `CategoryGraphs.cs`, `DetailViewModel.cs`, `FrameLocator.cs`, `GraphView.cs`, `GraphView.Categories.cs`, `CategoryColors.cs`, `Palette.cs`, `Styles.axaml` and `DetailWindow.axaml` of the GUI; `StreamInfo.cs`, `CategorySeries.cs` and `Finding.cs` of `Core.Abstractions`; every parser's construction of `Series` and `CategorySeriesBuilder`; the finding collectors of the parsers; `GraphViewTests` and `CategoryViewTests`; the `dataviz` skill's color formula.
+Sources read: [`CLAUDE.md`](../../CLAUDE.md), [`docs/PLAN.md`](../PLAN.md), [`docs/gui.md`](../gui.md), the two designs above; `Graph.cs`, `GraphsViewModel.cs`, `CategoryGraphs.cs`, `DetailViewModel.cs`, `FrameLocator.cs`, `GraphView.cs`, `GraphView.Categories.cs`, `CategoryColors.cs`, `Palette.cs`, `Styles.axaml` and `DetailWindow.axaml` of the GUI; `StreamInfo.cs`, `CategorySeries.cs` and `Finding.cs` of `Core.Abstractions`; every parser's construction of `Series` and `CategorySeriesBuilder`; the finding collectors of the parsers; `GraphViewTests` and `CategoryViewTests`; the `dataviz` skill's color formula.
 
 ## The design in short
 
@@ -97,7 +97,7 @@ Options:
 
 Recommended: **10 by 10 device-independent pixels with a 2-pixel gap** (a pitch of 12), and no zoom in this build.
 
-- 10 pixels holds a 2 × 2 split square of 4-pixel cells with a 1-pixel inner gap, and still shows about 4,000 squares in a pane of 1,000 by 600. A 2-pixel gap in the surface color is the strip's separator between stacked segments (gui.md, "Palette"), and keeps neighbors of close shades apart.
+- 10 pixels holds a 2 × 2 split square of 4-pixel cells with a 1-pixel inner gap, and still shows about 4,000 squares in a pane of 1,000 by 600. A 2-pixel gap in the surface color is the strip's separator between stacked segments ([gui.md](../gui.md), "Palette"), and keeps neighbors of close shades apart.
 - Avalonia lays out in device-independent pixels, so a square is 20 physical pixels at 200%. At 125% or 150% the pitch is rounded to whole physical pixels so that every square has the same size and sharp edges (**unverified** how Avalonia 12 snaps rectangles drawn in `Render`; the implementation rounds by `RenderScaling` itself).
 - Zoom is a follow-up the lead can ask for. The overview of a long file is what "Per Frame" and "Over Time" already give.
 
@@ -124,7 +124,7 @@ A unit can hold several values: Layer III's granules × channels (4, 2 or 1), AC
 
 - **Split squares:** one cell per value inside the square.
 - **One value at a time:** a choice of lane, as the strip's rows, with the other values hidden.
-- **A share mix:** the square stacked by the shares of its values, as the strip's single row draws a variable layout (gui.md, "Frames").
+- **A share mix:** the square stacked by the shares of its values, as the strip's single row draws a variable layout ([gui.md](../gui.md), "Frames").
 
 Recommended: **split squares for a fixed layout of 2 to 4 values, a share mix otherwise.**
 
@@ -146,7 +146,7 @@ Chosen: **one color per value up to 16 distinct values, else 8 classes of equal 
 
 - **Reason (the lead's):** a frame has one bitrate, so grouping bitrates in ranges (32 to 64 as one class) hides steps the file really has. Each step (32, 48, 64, ...) gets its own color.
 - **Up to 16 distinct values:** one color per value. An MPEG VBR stream's header bitrates (`MpegAudioParser.Streams.cs`, 14 indexes) get one color per step, and a CBR stream gets one even color.
-  - Up to 8 distinct values: one step each on a single-hue ramp of the first hue. The design proposed `CategoryColors.Ramp`, the ramp ordered category series use (gui.md, "Palette"), whose 8 steps are 1.71 to 10.1 : 1 against the white surface (computed for this design from the code's formula). That lowest step fails the validator's 2:1 floor and its neighbors are 0.053 to 0.059 apart against 0.06, so the build gives the map single-hue steps of its own for each mode (see [As built](#as-built)).
+  - Up to 8 distinct values: one step each on a single-hue ramp of the first hue. The design proposed `CategoryColors.Ramp`, the ramp ordered category series use ([gui.md](../gui.md), "Palette"), whose 8 steps are 1.71 to 10.1 : 1 against the white surface (computed for this design from the code's formula). That lowest step fails the validator's 2:1 floor and its neighbors are 0.053 to 0.059 apart against 0.06, so the build gives the map single-hue steps of its own for each mode (see [As built](#as-built)).
   - 9 to 16 distinct values: a multi-hue sequential ramp, so that 14 to 16 neighboring steps stay distinguishable. Neighboring steps of one hue would differ too little in contrast.
   - The multi-hue ramp's exact colors are chosen in the build, for each mode, and checked with the `dataviz` skill's validator in light and dark mode; higher values keep more contrast against the surface (decision 7). Their figures are in [gui.md](../gui.md#frame-map).
   - The mockup used ColorBrewer's YlGnBu as a stand-in. That is an observation about the mockup, not a choice.
@@ -178,8 +178,8 @@ Decided by the project lead on 2026-10-27, after the first build was designed. T
 - The name follows the lead's "declared ranges". `Range` is avoided because it is `System.Range`; the property says what the parser does (declares), and a front end reads it as a fact the parser states, not a judgment about the audio.
 - **The JSON** gets one optional member on a numeric series, written after `quantity` and only when set:
   - `"declaredRange": { "steps": [32, 40, 48, ...] }` or `"declaredRange": { "minimum": 0, "maximum": 100 }`. The numbers are in the series' `unit`, written as the `x` and `values` are.
-  - A field is added and none changes meaning, so `schemaVersion` stays 1 (`docs/cli.md`, "Schema version").
-  - With `--explain` there is no separate text: the series' own `description` says what the range is. The field is documented in the JSON section of `docs/cli.md`, and `Series.DeclaredRange` has a comment in the style of its neighbors.
+  - A field is added and none changes meaning, so `schemaVersion` stays 1 ([`docs/cli.md`](../cli.md), "Schema version").
+  - With `--explain` there is no separate text: the series' own `description` says what the range is. The field is documented in the JSON section of [`docs/cli.md`](../cli.md), and `Series.DeclaredRange` has a comment in the style of its neighbors.
 - **The text tree does not print it:** it prints a series' values only, and a declared range is a hint for a front end's shading, not a figure of the file.
 
 #### What the map does with it
@@ -221,14 +221,14 @@ The channel bit share's diverging scale centered on 50 % stays a [follow-up](#fo
 
 - **Goldens:** every JSON report of an MPEG stream with a bitrate table gains the field: on 1 series for mono, 3 for two channels, and 0 for free-format mono. By a script over `tests/fixtures`: 478 JSON files hold a stream with an MPEG audio codec, of which 299 are `.report.json` goldens and 179 are `.expected.json`; the 300 reports with an MPEG "Bitrate" series are the ones that could change, and 294 do. The other 6 are free-format streams with no channel bit share (`stats/free-format-statistics`, `layer3/free-format-no-main-data`, `mpeg/{mpeg1,mpeg2,mpeg25}-layer3-free-format` and `mpeg/free-format-length-change`). The `.expected.json` files hold no series and do not change. These include a few non-MPEG containers that carry MPEG (WAV 12, MP4 2, Ogg 2, AAC and ADTS 2 each). **294 goldens change**, each by added lines only, so the diff is checked by script (a golden's lines minus the added `declaredRange` lines equal the old golden). Inline JSON in `CategorySeriesWriterTests` and `MemoryTests` is checked the same way.
 - **Size:** an MPEG report grows by about 100 bytes per stream (14 numbers and the member names), not per frame.
-- **Docs:** `docs/cli.md` (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), `docs/formats/mpeg-audio.md` (which series declare what), `docs/gui.md` ("Frame Map": the key and the clamp).
-- **Compatibility:** a reader that ignores unknown members sees no change; one that rejects them already fails on every earlier field addition (cli.md, "Schema version").
+- **Docs:** [`docs/cli.md`](../cli.md) (the JSON section: the field, its two forms, and that `schemaVersion` stays 1), [`docs/formats/mpeg-audio.md`](../formats/mpeg-audio.md) (which series declare what), [`docs/gui.md`](../gui.md#frame-map) ("Frame Map": the key and the clamp).
+- **Compatibility:** a reader that ignores unknown members sees no change; one that rejects them already fails on every earlier field addition ([cli.md](../cli.md), "Schema version").
 
 ## Categories
 
 - **The strip's colors, not the stack's:** each category in its own color from `CategoryColors.For`, the six fixed hues with the muted first step, the ramp for an ordered series, flat gray "Other" past the sixth, the hatched gray of a reserved category, and every second category hatched under the high contrast preference. A category thus has the same color in the strip, the summary tables and the map.
-- **No new colors:** the palette, its surfaces and the validator's figures in gui.md stay as recorded. The rings and marks below use the text color, the surface, the accent and the findings list's severity brushes, none of which is a series color.
-- **Legend and text:** the legend lists the categories that occur in the order of the categories, with their counts, as the strip's does; names and shares are always in text, which is what the accepted tritan figure and contrast warnings rely on (gui.md, "The validator").
+- **No new colors:** the palette, its surfaces and the validator's figures in [gui.md](../gui.md) stay as recorded. The rings and marks below use the text color, the surface, the accent and the findings list's severity brushes, none of which is a series color.
+- **Legend and text:** the legend lists the categories that occur in the order of the categories, with their counts, as the strip's does; names and shares are always in text, which is what the accepted tritan figure and contrast warnings rely on ([gui.md](../gui.md), "The validator").
 - A value without a category stays empty, as in the strip ("no category" in the hover); a unit past the caps, whose values are counted without a code, says so in the hover.
 
 ## Findings overlay
@@ -302,16 +302,16 @@ A throwaway Avalonia 12.1.4 control in the scratchpad, on the headless platform 
 
 ## Rollout
 
-0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, `docs/cli.md` and `docs/formats/mpeg-audio.md`, and the roughly 300 re-blessed goldens.
+0. **Recommended: a small preceding pull request for the declared range,** which can merge before step 4 because nothing in it touches the GUI: `ValueRange` and `Series.DeclaredRange`, the JSON writer, the MPEG opt-in, the model, writer and MPEG tests, [`docs/cli.md`](../cli.md) and [`docs/formats/mpeg-audio.md`](../formats/mpeg-audio.md), and the roughly 300 re-blessed goldens.
    - Reason: the Frame Map pull request should be reviewed for its drawing, not buried under 300 golden files; the preceding one is reviewed for the model and the writer, and its golden diff is checked by script as added lines only.
    - It is also the part with a public contract (the JSON), so it gets its own review and its own green pipeline, and the map then builds on a merged model.
    - If the lead prefers one pull request, the work is the same and goes in the Frame Map pull request after step 4.
-1. **One pull request after step 4 of the measurements merges:** `GraphForm.Map`, `FrameMapGraph`, the map's drawing in `GraphView` (a partial file of its own, as the category views are), the mark lane, the tests above (the map and clamp tests of the declared range, if step 0 was separate); `docs/gui.md` ("Graphs": the form, and a "Frame Map" section); `docs/PLAN.md` (the GUI list's graphs). An independent review on Opus with high effort follows, as after each milestone.
-2. **Follow-ups the lead picks,** each a pull request of its format with its fixtures, goldens and cross-checks, as coding-graphs.md's waves are: the map shows each new series on the day it merges.
+1. **One pull request after step 4 of the measurements merges:** `GraphForm.Map`, `FrameMapGraph`, the map's drawing in `GraphView` (a partial file of its own, as the category views are), the mark lane, the tests above (the map and clamp tests of the declared range, if step 0 was separate); [`docs/gui.md`](../gui.md#graphs) ("Graphs": the form, and a "Frame Map" section); [`docs/PLAN.md`](../PLAN.md) (the GUI list's graphs). An independent review on Opus with high effort follows, as after each milestone.
+2. **Follow-ups the lead picks,** each a pull request of its format with its fixtures, goldens and cross-checks, as [coding-graphs.md](coding-graphs.md)'s waves are: the map shows each new series on the day it merges.
 
 ## Follow-ups: per-unit series worth adding
 
-None of these is part of this design's build. "Cheap" means the parser keeps the field in its records today, checked in the code where marked; "new" means it reads or keeps something it does not now. Each series is anchored to a node and held equal to a tally as coding-graphs.md requires, so each also reaches the JSON and the text tree.
+None of these is part of this design's build. "Cheap" means the parser keeps the field in its records today, checked in the code where marked; "new" means it reads or keeps something it does not now. Each series is anchored to a node and held equal to a tally as [coding-graphs.md](coding-graphs.md) requires, so each also reaches the JSON and the text tree.
 
 Already approved in [coding-graphs.md](coding-graphs.md) (waves 1 and 2, not built), which the map shows as they come:
 
@@ -334,7 +334,7 @@ New candidates, for the lead to pick:
 | **part2_3_length** (bits per granule and channel) | MPEG Layer III | the side information in the shared store, at known bit positions | cheap to derive, as "Block Usage" is | Where the encoder spends bits, per granule; a numeric series of 4 values per unit, which needs numeric series with several values per unit: a model change. |
 | **SCFSI** (category per channel) | MPEG-1 Layer III | the side information, as above | cheap to derive | Whether an encoder reuses scalefactors; some encoders never set it (**unverified**, needs fixtures). |
 | **Packets per page, packets that span pages** | Ogg (Vorbis, Opus, Speex, FLAC) | the page and packet layout the Ogg parser reads; a packet's `Ranges` | **new** for the Ogg parser, which reports no series; whose series it would be (the container's or the codec's) is a design question of its own | How a muxer pages the stream; the stream's start and end pages. |
-| **Per-unit levels** (peak, clipping, loudness) | formats with a decoder | the measurements | **new, and against a rule:** `CLAUDE.md` bounds a measurer's memory per stream whatever the stream's length, and the measurements keep grids of at most 1,024 columns | Only a change of that rule makes them per unit; the waveform grid of step 4 already shows them over time. |
+| **Per-unit levels** (peak, clipping, loudness) | formats with a decoder | the measurements | **new, and against a rule:** [`CLAUDE.md`](../../CLAUDE.md) bounds a measurer's memory per stream whatever the stream's length, and the measurements keep grids of at most 1,024 columns | Only a change of that rule makes them per unit; the waveform grid of step 4 already shows them over time. |
 
 ## Alternatives considered and rejected
 
@@ -389,7 +389,7 @@ Rollout step 1, built on `feature/frame-map` from main at 854146d, then changed 
 - **Lane marks** are placed by the row's top over the larger of the content height and the pane's height, so a file that fits on screen is marked where its rows are; a click on the lane inverts the same scale.
 - **Scrolling to a selection:** a frame off screen altogether is centered; one partly on screen (a click on a half-visible square) scrolls the least that shows it whole. A resize keeps the top row's first frame at the top and a selected frame that was on screen on screen; a scroll by the wheel, the scrollbar or the lane updates the hover under a pointer that did not move.
 - **Severity filters** reach the map through `GraphsViewModel.ShownSeverities` (set by `DetailViewModel` with the Findings tab's three flags) and `GraphView.ShownSeverities`; rings, marks, the legend entry, the help text and the hover all follow them.
-- **Findings** are resolved in `GraphsViewModel.MapFindings(report)` by walking each finding's path from the root to the first node of kind `Frame`; `GraphsViewModel.For(stream, findings)` hands them to every map of the report, which looks the offsets up among its squares. A finding on a frame the series leaves out (a truncated Monkey's Audio frame, a mid-stream Xing frame) therefore has no ring: that is the lookup rule above, and gui.md says so.
+- **Findings** are resolved in `GraphsViewModel.MapFindings(report)` by walking each finding's path from the root to the first node of kind `Frame`; `GraphsViewModel.For(stream, findings)` hands them to every map of the report, which looks the offsets up among its squares. A finding on a frame the series leaves out (a truncated Monkey's Audio frame, a mid-stream Xing frame) therefore has no ring: that is the lookup rule above, and [gui.md](../gui.md) says so.
 - **The key's click** on a swatch, on a legend entry and on "Finding (first case)" reuse `GraphView.CategoryClicked` and `GraphsViewModel.ActivateCategory` (the entry is a class for a numeric map, a category for a category map and `FrameMapGraph.FindingEntry` for the findings, which steps through the ringed frames in file order among the shown severities).
 - **"No value"** names the same thing in both kinds of map: the squares drawn empty, with their count. In a category map that is a square with no unit, a unit with no values, or one whose values have no category (counted once by `FrameMapGraph.EmptyCount`, a pass over the units that keeps nothing); the hover keeps the design's distinction, "no value" for a square without a unit and "no category" for a value without one. A unit of several values of which some have a category is drawn with the others left empty and is not counted.
 - **One name for a declared range:** the key's entry for squares whose value the range clamped or moved is "Outside the declared range", as the hover says "the declared range"; the help text names the ends as the design does ("32 to 320 kbps", the unit once).

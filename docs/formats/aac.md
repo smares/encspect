@@ -247,7 +247,7 @@ From `afconvert` on macOS 15.7.9 (AudioToolbox framework bundle version 1.14, Au
     - `faac-2.1-he-51-adts.aac`: nothing, with no error (the Source Reader too), with a reviewed note;
     - `ffmpeg-main.aac` and `ffmpeg-ltp.aac`: nothing (Learn lists no Main or LTP profile).
     - The AAC-LD and AAC-ELD files (`apple-aacl-m4a-cbr-mono44.m4a`, `apple-aace-m4a-cbr-mono44.m4a`) give no media type (`explained`, Learn lists AAC-LC, HE-AAC and HE-AAC v2 only).
-    - Eleven of the 26 downloaded samples are xHE-AAC files with the same extra frame (see development.md).
+    - Eleven of the 26 downloaded samples are xHE-AAC files with the same extra frame (see [development.md](../development.md)).
   - **`adts` (hand-built):** the transform's total equals the analyzer's in 34 of 53.
     - Where the analyzer differs from FDK, the transform equals FDK in `damaged-length.aac` (28,672), `sbr-in-truncated-frame.aac` (2,048) and `streams-limited.aac` (194,502), where Core Audio's converter does not.
     - It outputs nothing for the files with coupling channel elements (`coupling.aac`, `sbr-after-coupling-element.aac`: Learn says such frames are skipped), for Main, LTP and SSR, and for the files of several raw data blocks per frame (`blocks-missing.aac` declares 4, the others up to 3; Learn allows one per ADTS frame); each names its limit and is `explained`.

@@ -76,12 +76,12 @@ In the other 73 ID3v2.4 tags, every frame is below 128 bytes, so either decision
 - Never throw. On damaged input, answer syncsafe and let the frame parser report the damage.
 - The work is at most one pass over the frame headers per reading tried, so a tag of 256 MB of tiny frames stays within `ComplexityTests`' bounds.
 - Reads go through the `ByteReader`, which checks cancellation. It throws `EndOfStreamException` for a position outside its range, so the rule stays inside the tag body.
-- The parser instance holds no state between calls (CLAUDE.md).
+- The parser instance holds no state between calls ([CLAUDE.md](../../CLAUDE.md)).
 
 **Documentation:**
 
-- Describe the rule in `docs/tags/id3.md`.
-- Restore the plain-size clause of the ID3v2 bullet in `docs/PLAN.md` (the ID3v2 bullet under "v1 vertical slice: MP3") in the rule's own terms. It now points to this file. (Since the plan's restructuring of 2026-11-07, the rule is in [id3.md](../tags/id3.md).)
+- Describe the rule in [`docs/tags/id3.md`](../tags/id3.md).
+- Restore the plain-size clause of the ID3v2 bullet in [`docs/PLAN.md`](../PLAN.md) (the ID3v2 bullet under "v1 vertical slice: MP3") in the rule's own terms. It now points to this file. (Since the plan's restructuring of 2026-11-07, the rule is in [id3.md](../tags/id3.md).)
 
 One rule that meets these requirements is the one the license audit proposed: choose the plain reading only when its frame chain ends exactly at the padding or the end of the tag, with valid IDs, and the syncsafe chain does not. A model of that rule, written for this description, gives the required outcome on all 77 tags. The implementer may choose it or another one.
 
@@ -176,6 +176,6 @@ One rule that meets these requirements is the one the license audit proposed: ch
 **Must not read:**
 
 - mutagen's source code (any version; its `_tags.py` and `_frames.py` above all) and other GPL or LGPL ID3v2 readers;
-- the git history of the stubbed members (`HasPlainFrameSizes`, `FollowsDirectly`, `FrameIds` in `Id3v2TagParser.cs`) and of the `docs/PLAN.md` line this rewrite replaced;
+- the git history of the stubbed members (`HasPlainFrameSizes`, `FollowsDirectly`, `FrameIds` in `Id3v2TagParser.cs`) and of the [`docs/PLAN.md`](../PLAN.md) line this rewrite replaced;
 - the describer's scratch folder;
 - the license audit reports (`scratchpad/reviews/license-audit-*.md`).

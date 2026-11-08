@@ -251,9 +251,9 @@ One line per format or feature; the details are on its page.
 
 Done in this order before Gate 2:
 
-1. **FAAC 1.31 to 2.2 detection:** [aac.md](formats/aac.md), "Encoder and writer detection".
-2. **Apple's AAC encoder fixtures** from macOS runners, and the rules that name Apple's encoder and writer: [aac.md](formats/aac.md), "What Apple's encoder writes".
-3. **Dolby Atmos detection in E-AC-3:** [ac3.md](formats/ac3.md), "Object audio".
+1. **FAAC 1.31 to 2.2 detection:** [aac.md](formats/aac.md#encoder-and-writer-detection), "Encoder and writer detection".
+2. **Apple's AAC encoder fixtures** from macOS runners, and the rules that name Apple's encoder and writer: [aac.md](formats/aac.md#what-apples-encoder-writes), "What Apple's encoder writes".
+3. **Dolby Atmos detection in E-AC-3:** [ac3.md](formats/ac3.md#object-audio), "Object audio".
 4. **DTS-HD:** the lossless extension's channel sets, `.dtshd` files and the DTS:X signal: [dts.md](formats/dts.md), [dtshd.md](formats/dtshd.md).
 5. **WMA Voice frames:** first built, removed on 2026-10-29 for its provenance, and back as a clean-room rewrite: [asf-wma.md](formats/asf-wma.md).
 6. **Matroska and WebM:** audio tracks routed to the codec parsers, video at container level: [matroska.md](formats/matroska.md).
@@ -275,7 +275,7 @@ Done in this order before Gate 2:
 
 - **TrueHD and MLP,** raw `.thd` and `.mlp` files and the codec parser, with the decoder that checks the lossless checks: [truehd.md](formats/truehd.md).
 - **Clean room:** FFmpeg's LGPL source is the only detailed one, so one agent wrote the code-free description [truehd-format.md](design/truehd-format.md), and an agent that had not read FFmpeg implemented from it, with FFmpeg as a black-box cross-check.
-- **Scope set by what can be checked:** a field is added only where FFmpeg's source or one of Dolby's public documents states it; Dolby's documents had not been read when the description was written ([truehd-format.md](design/truehd-format.md), "Sources").
+- **Scope set by what can be checked:** a field is added only where FFmpeg's source or one of Dolby's public documents states it; Dolby's documents had not been read when the description was written ([truehd-format.md](design/truehd-format.md#sources), "Sources").
 - **Containers:** Matroska routes `A_TRUEHD` and `A_MLP` (#229); MP4's `mlpa` is planned (FFmpeg writes it).
 
 #### Measurements and the GUI's graphs

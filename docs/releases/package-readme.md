@@ -5,7 +5,7 @@ An audio file analyzer. This folder holds:
 - `encspect`: the command line tool (`encspect.exe` on Windows). `encspect --help` lists the options, `encspect --version` the version.
 - `encspect-gui`: the GUI (`encspect-gui.exe` on Windows). It opens files and folders named on its command line, or from its File menu.
 - `LICENSE`: the MIT License of Encspect.
-- `THIRD-PARTY-NOTICES.md`: the licenses of the libraries inside the two programs.
+- [`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md): the licenses of the libraries inside the two programs.
 
 `encspect` is a native executable and `encspect-gui` is a single file that carries the .NET runtime; neither needs .NET installed. On x64, `encspect` needs a processor with SSSE3, SSE4.1, SSE4.2 and POPCNT (x86-64-v2: Intel Core since Nehalem, 2008, AMD since Bulldozer, 2011, and Jaguar, 2013; not AMD Phenom II, Athlon II or Bobcat, or Intel Atom before Silvermont) and does not start without them.
 
