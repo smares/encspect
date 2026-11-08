@@ -39,7 +39,7 @@ public class CorruptMpegFileTests
 // The fixtures in tests/fixtures/mpeg/layer2 and mpeg/layer3.
 public class CorruptLayerFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/layer", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/layer2/", StringComparison.Ordinal) || n.StartsWith("mpeg/layer3/", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
