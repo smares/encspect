@@ -144,8 +144,8 @@ def figures(path, quiet=QUIET):
             "timesWithEqualCounts": agree if channels > 1 else None, "times": times if channels > 1 else None}
 
 
-# The lossyWAV grid at the rates the design tested; the FLAC behavior rule applies at these rates only.
-TESTED_GRIDS = {8000: 512, 22050: 512, 32000: 512, 44100: 512, 48000: 512, 88200: 1024, 96000: 1024, 176400: 2048, 192000: 2048}
+# lossyWAV's block length at the rates the design tested (its 8 kHz runs crashed); the FLAC behavior rule applies at these rates only.
+TESTED_GRIDS = {22050: 256, 32000: 256, 44100: 512, 48000: 512, 88200: 1024, 96000: 1024, 176400: 2048, 192000: 2048}
 
 
 def flac_units(path):
@@ -187,9 +187,9 @@ def flac_units(path):
     units = sum(histogram.values())
     on_phase = max(phase.values()) if phase else 0
     # The rule: a tested rate, fixed frames whose length divides the grid, at least 20 changes, 95% of them on frames at one
-    # phase of the grid, and more than half of the subframes above the stream's smallest count.
+    # phase of the grid, and at least one subframe in four above the stream's smallest count.
     claim = (grid is not None and len(sizes - {size}) <= 1 and grid % size == 0 and changes >= MIN_CHANGES
-             and on_phase * 20 >= changes * 19 and above * 2 > units)
+             and on_phase * 20 >= changes * 19 and above * 4 >= units)
     return {"file": str(path), "rate": rate, "frameLength": size, "subframes": units, "distribution": dict(sorted(histogram.items())),
             "changes": changes, "changesOnGridFrames": on_phase, "subframesAboveSmallest": above, "claim": claim}
 

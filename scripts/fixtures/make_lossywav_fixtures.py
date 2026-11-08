@@ -221,8 +221,9 @@ def run_lossywav(lossywav, case, arguments, name, source, out):
 
 
 def grid_length(rate):
-    """lossyWAV's block length as the files of the first runs show it: 512 samples up to 48 kHz, 1,024 up to 96 kHz, 2,048 above."""
-    return 512 if rate <= 48000 else 1024 if rate <= 96000 else 2048
+    """lossyWAV's block length as the runs show it: 256 samples at 22.05 and 32 kHz, 512 at 44.1 and 48 kHz, 1,024 at 88.2 and
+    96 kHz, 2,048 at 176.4 and 192 kHz (lossywav_figures.TESTED_GRIDS)."""
+    return lossywav_figures.TESTED_GRIDS.get(rate, 512 if rate <= 48000 else 1024 if rate <= 96000 else 2048)
 
 
 CODERS = {
