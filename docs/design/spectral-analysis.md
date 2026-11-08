@@ -76,7 +76,7 @@ Status: approved by the project lead on 2026-10-26 with every recommendation of 
 
 - **FLAC** (native and in Ogg), **WavPack** (PCM and floats, lossless and hybrid), **Monkey's Audio** (integers and floats), **TrueHD and MLP**: every stream whose decoder calls `DeclareOutput` is measured.
 - **WavPack hybrid without its correction file:** the decoded audio is the lossy stream, as for verification (`DecodeSetup.IsLossy`). The measurements are of that lossy audio; the text and the GUI say "(lossy stream)" after the measured duration, as the verification line does.
-- **TrueHD:** the decoder outputs the highest presentation it decodes (substreams 0 to 2); a Dolby Atmos substream is not decoded. Positions are untrimmed ([decoders.md](decoders.md#the-pcm-path), "The PCM path"), so the samples to drop at the start are measured too, which the article on measurements says.
+- **TrueHD:** the decoder outputs the highest presentation it decodes (substreams 0 to 2); a Dolby Atmos substream is not decoded. Positions are untrimmed ([decoders.md](decoders.md#the-pcm-path), "The PCM path"); the decoder writes no sample that an end of stream marker drops, so there is nothing to trim. Where a stream's own syntax states a trimmed range (Opus, Vorbis, Speex, Musepack, WMA), the measurer measures that range and counts the rest as trimmed samples ([lossy-decoders.md](lossy-decoders.md), decision 8).
 
 ### WAV, Wave64 and AIFF: a PCM decoder
 

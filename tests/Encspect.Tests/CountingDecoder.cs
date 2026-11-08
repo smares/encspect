@@ -27,7 +27,8 @@ internal sealed class CountingDecoder(IDecoder real) : IDecoder
                 Units += units;
                 context.AddWork(units);
             },
-            () => context.LentBuffers);
+            () => context.LentBuffers,
+            context.Withhold);
         return real.Open(counting);
     }
 }

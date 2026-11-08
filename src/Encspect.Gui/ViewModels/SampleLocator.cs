@@ -62,16 +62,16 @@ public sealed class SampleLocator
 
         Series? frames = stream.Series.FirstOrDefault(s => s.Axis == SeriesAxis.FrameOffset && s.X.Length > 0);
         ReadOnlyMemory<double> offsets = frames?.X ?? default;
-        long end = measured is null ? stream.Samples : measured.FirstPosition + measured.Samples + measured.LostSamples - measured.LeadingLostSamples;
-        long total = stream.Samples > 0 ? stream.Samples : measured is null ? 0 : measured.Samples + measured.LostSamples;
-        long origin = total <= 0 ? 0 : stream.Samples > 0 && end >= total ? end - total : measured is null ? 0 : measured.FirstPosition - measured.LeadingLostSamples;
+        long end = measured is null ? stream.Samples : measured.FirstPosition + measured.Samples + measured.SkippedSamples - measured.LeadingSkippedSamples;
+        long total = stream.Samples > 0 ? stream.Samples : measured is null ? 0 : measured.Samples + measured.SkippedSamples;
+        long origin = total <= 0 ? 0 : stream.Samples > 0 && end >= total ? end - total : measured is null ? 0 : measured.FirstPosition - measured.LeadingSkippedSamples;
 
         // A lost last unit that the units cover but the stream's sample count does not (a count from a header that the blocks outrun, or the
         // trimmed samples of a stream whose last unit is lost, as TrueHD's end of stream marker trims) would put the origin late by the surplus: the units'
         // span is then the one the frames cover.
-        if (measured is { TrailingLostSamples: > 0 } && stream.Samples > 0)
+        if (measured is { TrailingSkippedSamples: > 0 } && stream.Samples > 0)
         {
-            long start = measured.FirstPosition - measured.LeadingLostSamples;
+            long start = measured.FirstPosition - measured.LeadingSkippedSamples;
             if (end - start > total)
             {
                 (total, origin) = (end - start, start);

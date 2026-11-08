@@ -309,22 +309,91 @@ public class MeasurementDeterminismTests
         || parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal)
         || (parent.StartsWith("System.Numerics.", StringComparison.Ordinal) && !parent.StartsWith("System.Numerics.BitOperations", StringComparison.Ordinal));
 
+    // The x86 and Arm intrinsic classes name their fused operations MultiplyAdd*, MultiplySubtract* and FusedMultiply* and their approximations
+    // Reciprocal* (rcpps and rsqrtps differ between Intel and AMD).
+    private static bool IsPlatformIntrinsic(string parent) =>
+        parent.StartsWith("System.Runtime.Intrinsics.X86.", StringComparison.Ordinal) || parent.StartsWith("System.Runtime.Intrinsics.Arm.", StringComparison.Ordinal);
+
     internal static bool IsBanned(string parent, string name) =>
         (DefinesArithmetic(parent) && BannedMath.Contains(name))
         || (DefinesArithmetic(parent) && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal)))
+        || (IsPlatformIntrinsic(parent) && (name.Contains("MultiplyAdd", StringComparison.Ordinal) || name.Contains("MultiplySubtract", StringComparison.Ordinal) || name.Contains("FusedMultiply", StringComparison.Ordinal) || name.Contains("Reciprocal", StringComparison.Ordinal) || name.StartsWith("HorizontalAdd", StringComparison.Ordinal) || name.StartsWith("HorizontalSubtract", StringComparison.Ordinal) || name.StartsWith("AddPairwise", StringComparison.Ordinal) || name.StartsWith("AddAcross", StringComparison.Ordinal) || name.StartsWith("DotProduct", StringComparison.Ordinal)))
+        || (parent is "System.Numerics.Vector2" or "System.Numerics.Vector3" or "System.Numerics.Vector4" && name is "Length" or "LengthSquared" or "Distance" or "DistanceSquared")
         || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
         || ((parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal) || parent.StartsWith("System.Numerics.", StringComparison.Ordinal)) && name is "Sum" or "Dot")
         || parent == "System.Numerics.Complex"
         || parent is "System.Numerics.Vector`1" or "System.Numerics.Vector"
-        || (parent == "System.Linq.Enumerable" && BannedLinq.Contains(name))
         || (parent == "System.MemoryExtensions" && name is "Sum" or "Max" or "Min")
         || (parent == "System.Buffers.ArrayPool`1" && name == "get_Shared");
 
+    // The reductions of System.Linq.Enumerable. Whether one is banned depends on its signature: a sum, maximum, minimum or fold over integers is exact in
+    // any order and stays allowed; one whose result, parameters or type arguments hold float, double or Half is a floating-point reduction.
     private static readonly HashSet<string> BannedLinq = ["Sum", "Average", "Max", "Min", "Aggregate", "MaxBy", "MinBy"];
+
+    private static readonly System.Text.RegularExpressions.Regex FloatingType = new(@"\b(Double|Single)\b|System\.Half\b", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    internal static bool IsBannedReduction(string parent, string name, Func<IEnumerable<string>> types) =>
+        parent == "System.Linq.Enumerable" && BannedLinq.Contains(name) && types().Any(t => FloatingType.IsMatch(t));
+
+    // Renders a signature's types in full (System.Func`2<Int32,Double>) so that a floating-point type anywhere in it shows.
+    private sealed class FullNameProvider(MetadataReader md) : System.Reflection.Metadata.ISignatureTypeProvider<string, object?>
+    {
+        public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
+
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) =>
+            reader.GetString(reader.GetTypeDefinition(handle).Namespace) + "." + reader.GetString(reader.GetTypeDefinition(handle).Name);
+
+        public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => TypeName(md, handle);
+
+        public string GetTypeFromSpecification(MetadataReader reader, object? genericContext, TypeSpecificationHandle handle, byte rawTypeKind) =>
+            reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
+
+        public string GetSZArrayType(string elementType) => elementType + "[]";
+
+        public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[,]";
+
+        public string GetByReferenceType(string elementType) => elementType;
+
+        public string GetPointerType(string elementType) => elementType;
+
+        public string GetPinnedType(string elementType) => elementType;
+
+        public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired) => unmodifiedType;
+
+        public string GetFunctionPointerType(MethodSignature<string> signature) => string.Empty;
+
+        public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) => genericType + "<" + string.Join(",", typeArguments) + ">";
+
+        public string GetGenericMethodParameter(object? genericContext, int index) => "!!" + index;
+
+        public string GetGenericTypeParameter(object? genericContext, int index) => "!" + index;
+    }
+
+    // The types an Enumerable call involves: the return type and parameters of the method it names, and the type arguments of its instantiation.
+    private static IEnumerable<string> ReductionTypes(MetadataReader md, MemberReference member, MethodSpecificationHandle? instantiation)
+    {
+        var provider = new FullNameProvider(md);
+        MethodSignature<string> signature = member.DecodeMethodSignature(provider, null);
+        var types = new List<string> { signature.ReturnType };
+        types.AddRange(signature.ParameterTypes);
+        if (instantiation is { } spec)
+        {
+            types.AddRange(md.GetMethodSpecification(spec).DecodeSignature(provider, null));
+        }
+
+        return types;
+    }
 
     private static string TypeName(MetadataReader md, TypeReferenceHandle handle)
     {
         TypeReference type = md.GetTypeReference(handle);
+
+        // A nested type (AdvSimd.Arm64, Sse41.X64) is its outer type's name and a plus sign before its own.
+        if (type.ResolutionScope.Kind == HandleKind.TypeReference)
+        {
+            return TypeName(md, (TypeReferenceHandle)type.ResolutionScope) + "+" + md.GetString(type.Name);
+        }
+
         return md.GetString(type.Namespace) + "." + md.GetString(type.Name);
     }
 
@@ -392,7 +461,8 @@ public class MeasurementDeterminismTests
                 byte[] il = pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!;
                 foreach (EntityHandle token in BoundaryScanner.TokensIn(il, md.GetString(method.Name)))
                 {
-                    EntityHandle target = token.Kind == HandleKind.MethodSpecification ? md.GetMethodSpecification((MethodSpecificationHandle)token).Method : token;
+                    MethodSpecificationHandle? instantiation = token.Kind == HandleKind.MethodSpecification ? (MethodSpecificationHandle)token : null;
+                    EntityHandle target = instantiation is { } spec ? md.GetMethodSpecification(spec).Method : token;
                     if (target.Kind != HandleKind.MemberReference)
                     {
                         continue;
@@ -406,7 +476,7 @@ public class MeasurementDeterminismTests
                         HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(new NameProvider(md), null),
                         _ => string.Empty,
                     };
-                    bool banned = IsBanned(parent, name);
+                    bool banned = IsBanned(parent, name) || IsBannedReduction(parent, name, () => ReductionTypes(md, member, instantiation));
                     if (banned)
                     {
                         found.Add($"{owner}::{md.GetString(method.Name)} calls {parent}.{name}");
@@ -427,6 +497,43 @@ public class MeasurementDeterminismTests
 
         // The scan reads something: the measurement namespace has methods that call Math.Sqrt-like members and the like.
         Assert.Contains(typeof(FftPlan).Assembly.GetTypes(), t => t.Namespace == "Encspect.Host.Measurement");
+
+        // DetMath lives in the core, where the decoders reach it too.
+        Assert.Empty(BannedCalls(typeof(DetMath).Assembly, owner => owner == "Encspect.Core.DetMath"));
+    }
+
+    // The nine lossy format assemblies, whole: a decoder and the parser code it shares compute under the same rules as the measurements
+    // (docs/design/lossy-decoders.md, "Decoders fall under the determinism rules"). A lossless decoder in one of them lives in
+    // <project>.Decoding.Lossless, which the scan leaves out so that it may use Vector<T>.
+    internal static readonly string[] LossyAssemblies =
+    [
+        "Encspect.Formats.Mpeg", "Encspect.Formats.Vorbis", "Encspect.Formats.Opus", "Encspect.Formats.Ac3", "Encspect.Formats.Musepack",
+        "Encspect.Formats.Dts", "Encspect.Formats.Speex", "Encspect.Formats.Aac", "Encspect.Formats.Wma",
+    ];
+
+    internal static bool IsLossy(string owner) => !owner.Contains(".Decoding.Lossless.", StringComparison.Ordinal);
+
+    [Fact]
+    public void TheLossyFormatAssembliesCallNoLibraryMathNoFusedOrNativeOrEstimateOperationAndNoFloatingPointReduction()
+    {
+        var found = new List<string>();
+        foreach (string name in LossyAssemblies)
+        {
+            Assembly assembly = Assembly.Load(name);
+            Assert.NotEmpty(assembly.GetTypes());
+            found.AddRange(BannedCalls(assembly, IsLossy).Select(f => $"{name}: {f}"));
+        }
+
+        Assert.True(found.Count == 0, string.Join('\n', found));
+    }
+
+    [Fact]
+    public void TheScanLeavesOutTheLosslessDecodersOfALossyProject()
+    {
+        Assert.True(IsLossy("Encspect.Formats.Wma.Decoding.Foo"));
+        Assert.True(IsLossy("Encspect.Formats.Wma.Parser"));
+        Assert.False(IsLossy("Encspect.Formats.Wma.Decoding.Lossless.Foo"));
+        Assert.False(IsLossy("Encspect.Formats.Dts.Decoding.Lossless.Xll"));
     }
 
     [Fact]
@@ -434,15 +541,26 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse41.DotProduct", "Sse3.HorizontalAdd", "Avx.HorizontalAdd", "Arm64.AddPairwise", "Arm64.AddAcross", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
+
+        // The reductions are told apart by their signatures: each overload kind over floating-point values is found, integers are not.
+        IReadOnlyList<string> reductions = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner is "Encspect.Tests.Measurement.BannedReductions" or "Encspect.Tests.Measurement.AllowedReductions");
+        foreach (string method in new[] { "SumOfDoubles", "SumOfFloats", "SumBySelectorToDouble", "MaxOfDoubles", "MaxBySelectorToDouble", "MinOfHalves", "AverageOfIntegers", "AggregateOfDoubles", "MaxByDoubleKey", "MinOfFloatsBySelector" })
+        {
+            Assert.Contains(reductions, f => f.Contains($"BannedReductions::{method} calls System.Linq.Enumerable.", StringComparison.Ordinal));
+        }
+
+        Assert.DoesNotContain(reductions, f => f.Contains("AllowedReductions::", StringComparison.Ordinal));
 
         // The rule bans by name, so a self-test of the allowed side too: a plain Complex-free sum of element-wise members stays clean.
         Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Max"));
         Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Add"));
         Assert.False(IsBanned("System.Math", "Sqrt"));
+        Assert.False(IsBanned("System.Runtime.Intrinsics.X86.Sse", "Add"));
+        Assert.False(IsBanned("System.Numerics.Vector3", "Add"));
         Assert.False(IsBanned("System.Double", "IsNaN"));
         Assert.True(IsBanned("System.Double", "Cbrt"));
         Assert.True(IsBanned("System.Numerics.ITrigonometricFunctions`1", "Sin"));
@@ -481,7 +599,54 @@ internal static class BannedSamples
         sum += rented.Length;
         var wide = new System.Numerics.Vector<double>(x);
         sum += (wide + wide)[0];
+        var f = System.Runtime.Intrinsics.Vector128.Create((float)x);
+        sum += System.Runtime.Intrinsics.X86.Fma.MultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplyAddScalar(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplySubtract(f, f, f)[0];
+        sum += System.Runtime.Intrinsics.X86.Sse41.DotProduct(f, f, 0xFF)[0] + System.Runtime.Intrinsics.X86.Sse3.HorizontalAdd(f, f)[0] + System.Runtime.Intrinsics.X86.Avx.HorizontalAdd(System.Runtime.Intrinsics.Vector256.Create(f, f), System.Runtime.Intrinsics.Vector256.Create(f, f))[0];
+        sum += System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.AddPairwise(f, f)[0] + System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.AddAcross(System.Runtime.Intrinsics.Vector128.Create((byte)1))[0];
+        sum += System.Runtime.Intrinsics.X86.Sse.Reciprocal(f)[0] + System.Runtime.Intrinsics.X86.Sse.ReciprocalSqrt(f)[0];
+        sum += System.Runtime.Intrinsics.Arm.AdvSimd.FusedMultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.Arm.AdvSimd.ReciprocalEstimate(f)[0];
+        sum += new System.Numerics.Vector3((float)x).Length() + System.Numerics.Vector2.Distance(new System.Numerics.Vector2(1), new System.Numerics.Vector2(2));
         sum += Math.Sqrt(x) + Math.Floor(x) + Math.Min(x, sum);
         return sum;
     }
+}
+
+// Reductions the scan must find, one method each so that the negative control names the overload it covers; never run.
+internal static class BannedReductions
+{
+    public static double SumOfDoubles(double[] values) => values.Sum();
+
+    public static float SumOfFloats(float[] values) => values.Sum();
+
+    public static double SumBySelectorToDouble(int[] values) => values.Sum(v => v * 0.5);
+
+    public static double MaxOfDoubles(List<double> values) => values.Max();
+
+    public static double MaxBySelectorToDouble(int[] values) => values.Max(v => v * 0.5);
+
+    public static Half MinOfHalves(Half[] values) => values.Min();
+
+    public static double AverageOfIntegers(int[] values) => values.Average();
+
+    public static double AggregateOfDoubles(int[] values) => values.Aggregate(0.0, (sum, v) => sum + v);
+
+    public static int MaxByDoubleKey(int[] values) => values.MaxBy(v => v * 0.5);
+
+    public static float MinOfFloatsBySelector(int[] values) => values.Min(v => (float)v);
+}
+
+// Reductions over integers, which are exact in any order and stay allowed; never run.
+internal static class AllowedReductions
+{
+    public static int Sum(int[] values) => values.Sum();
+
+    public static long SumBySelector(int[] values) => values.Sum(v => (long)v);
+
+    public static long Max(List<long> values) => values.Max();
+
+    public static int MinBySelector(string[] values) => values.Min(v => v.Length);
+
+    public static int Aggregate(int[] values) => values.Aggregate(0, (sum, v) => sum + v);
+
+    public static string MaxByKey(string[] values) => values.MaxBy(v => v.Length)!;
 }

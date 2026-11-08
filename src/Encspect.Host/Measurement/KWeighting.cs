@@ -3,6 +3,8 @@
 // Copyright (c) 2011 Jan Kokemuller and is released under the MIT license; its notice is in THIRD-PARTY-NOTICES.md. Calls of the
 // platform's tan and pow are replaced by DetMath's, so that the coefficients are the same on every platform.
 
+using Encspect.Core;
+
 namespace Encspect.Host.Measurement;
 
 // The K-weighting of ITU-R BS.1770-5 Annex 1: a high-shelf pre-filter (Table 1) and a highpass (Table 2), two second-order sections.

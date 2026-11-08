@@ -1,12 +1,12 @@
 using System.Runtime.CompilerServices;
 
-namespace Encspect.Host.Measurement;
+namespace Encspect.Core;
 
 // The math the measurements use instead of the platform's library, whose results may differ in the last bit between C libraries
 // (docs/design/spectral-analysis.md, "Determinism"): polynomials evaluated with + and * only, and the exponent bits of a double.
 // Math.Sqrt, Math.Floor and Math.Abs are correctly rounded or exact everywhere and stay allowed; nothing here fuses a multiply and
 // an add (the JIT contracts none on its own) and nothing calls Math.Sin, Cos, Tan, Log, Exp or Pow.
-internal static class DetMath
+public static class DetMath
 {
     public const double Pi = 3.141592653589793;
 
@@ -175,6 +175,13 @@ internal static class DetMath
     // ln m = 2 atanh((m - 1) / (m + 1)) as a series.
     public static double Ln(double x)
     {
+        int exponent = Split(x, out double m);
+        return (exponent * Ln2High) + ((exponent * Ln2Low) + LnMantissa(m));
+    }
+
+    // x = m * 2^exponent with m in [1 / sqrt 2, sqrt 2), from the bits.
+    private static int Split(double x, out double m)
+    {
         long bits = BitConverter.DoubleToInt64Bits(x);
         int exponent = (int)((bits >> 52) & 0x7FF);
         if (exponent == 0)
@@ -185,13 +192,18 @@ internal static class DetMath
         }
 
         exponent -= 1023;
-        double m = BitConverter.Int64BitsToDouble((bits & 0x000FFFFFFFFFFFFFL) | 0x3FF0000000000000L);
+        m = BitConverter.Int64BitsToDouble((bits & 0x000FFFFFFFFFFFFFL) | 0x3FF0000000000000L);
         if (m > Sqrt2)
         {
             m *= 0.5;
             exponent++;
         }
 
+        return exponent;
+    }
+
+    private static double LnMantissa(double m)
+    {
         double s = (m - 1.0) / (m + 1.0);
         double s2 = s * s;
 
@@ -208,8 +220,14 @@ internal static class DetMath
         sum = (sum * s2) + (1.0 / 5.0);
         sum = (sum * s2) + (1.0 / 3.0);
         sum = (sum * s2) + 1.0;
-        double lnMantissa = 2.0 * s * sum;
-        return (exponent * Ln2High) + ((exponent * Ln2Low) + lnMantissa);
+        return 2.0 * s * sum;
+    }
+
+    // log2 x for a positive finite x: the exponent from the bits plus the logarithm of the mantissa, so that a power of two is exact.
+    public static double Log2(double x)
+    {
+        int exponent = Split(x, out double m);
+        return exponent + (LnMantissa(m) * InverseLn2);
     }
 
     public static double Log10(double x) => Ln(x) * Log10E;
