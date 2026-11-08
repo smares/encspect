@@ -620,11 +620,11 @@ What the table means for the plan's list:
 - ALAC and WMA Lossless store no checksum, and TTA's checksums all cover coded data, which its parser compares.
 - The decoders that compare something are FLAC, Monkey's Audio, WavPack, and TrueHD and MLP. Decision 5 sets the scope from this.
 - What deferring the other three costs:
-  - Their waveform, spectrogram and lowpass panels say "no decoder" until "Later" (plan, GUI: they "appear only for formats that have a decoder"). Lowpass detection of lossless files made from lossy sources is a prime use for ALAC.
+  - Their waveform, spectrogram and lowpass panels say "no decoder" until their decoders come (0.2 for ALAC and TTA, 0.5 for WMA Lossless; the plan's GUI section then said they "appear only for formats that have a decoder"). Lowpass detection of lossless files made from lossy sources is a prime use for ALAC.
   - The contract is not tried on WMA Lossless frames that cross packets, the hardest data flow of the seven, beyond the walk-through on paper above.
   - It saves less than it seems: the parsers' entropy walk (ALAC's elements, WMA Lossless's frames) is built in Gate 3 anyway, so deferring moves only the reconstruction.
   - Nothing in the contract stands in the way of adding them later.
-- WavPack hybrid files with an MD5 stay unverified whatever the scope: their MD5 is of the lossless audio, and finding the `.wvc` of a `.wv` is under "Later" in the plan (host access to a companion file). Without an MD5, a hybrid file is verified as its lossy stream by its header CRCs (see the WavPack flow above).
+- WavPack hybrid files with an MD5 stay unverified whatever the scope: their MD5 is of the lossless audio, and finding the `.wvc` of a `.wv` is in 0.4 of the [plan](../plan.md#04-free-decoders-and-routes-complete) (host access to a companion file). Without an MD5, a hybrid file is verified as its lossy stream by its header CRCs (see the WavPack flow above).
 
 ### The verification record
 

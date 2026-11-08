@@ -458,6 +458,12 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 
 ## CI
 
+- **Decision:** GitHub Actions is the single source of truth for "does it build and pass on every platform", so the work can be verified without anyone's computer being on.
+- **The repository** is public, which keeps hosted-runner minutes free.
+- **The matrix:** Windows, macOS and Linux, on x64 and ARM64 where a hosted runner exists. Pull requests run the jobs their change needs on four platforms; a push to main and the nightly run run everything on all six.
+- **No moving labels:** every Linux job runs on `ubuntu-26.04`, and the cross-checks fail when a tool's version differs from the one their script expects.
+- **Cloud sessions** install the .NET SDK through a SessionStart hook, so the fast checks run locally before pushing; CI covers the platforms a session cannot run.
+
 `.github/workflows/ci.yml` is one workflow for pull requests, pushes to main, the nightly schedule and manual runs.
 
 - The final job, `all checks passed` (job ID `all-checks`), succeeds only when every other job succeeded or was skipped on purpose (see the path filter below). The repository ruleset requires that one check and no other, so it never lists job names.
@@ -565,7 +571,7 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 
 ## Releases
 
-`.github/workflows/release.yml` makes a release; CI itself uploads no build. The first release, 0.1.0, was decided by the project lead on 2026-10-17 (see rollout step 8 in the [plan](plan.md)).
+`.github/workflows/release.yml` makes a release; CI itself uploads no build. The first release, 0.1.0, was decided by the project lead on 2026-10-17 ([history.md](history.md#phases-and-gates)); each later release is tagged when its milestone passes its gate ([plan.md](plan.md#milestones)).
 
 To release:
 
@@ -633,6 +639,8 @@ Every format has three kinds of fixture:
 - **Hand-built fixtures**, written by a script that CI reruns to check they are reproducible.
 - **Encoder-written fixtures**, written by real encoders. A manifest that lists the encoder a stream must be named by lists its writer too (`writer`; the MPEG manifests' `detected_writer`, present only where a writer is named, which `make_external_mpeg_fixtures.py --writers-only` recomputes in CI), since the two are resolved apart. `--manifests-only` recomputes their manifests from the committed files without the encoders.
 - **A cross-check script**, which confirms the manifests with other tools in its own CI job.
+
+- **Shared misreadings:** where a model written for this project and the one reference tool agree (faad2's trace for AAC, mctoolamed for MPEG-2 multichannel), a misreading both share would pass. Second opinions and real files narrow it; the details are in each format's page and in the sections below.
 
 | Format | Fixtures | Scripts | Checked against |
 |---|---|---|---|
@@ -1549,6 +1557,8 @@ The models that compute the expected values are:
 - `matroska_model.py` for Matroska and WebM (an independent writer, which builds the elements and their CRCs, and reader, which works out the manifest from the bytes alone)
 
 ## Conformance streams and downloads
+
+The checks rely on old tools and on files the repository may not hold. Vendored sources, pinned downloads with fallback addresses, a last copy in the private repository and a weekly download check guard them.
 
 - **MPEG-2 conformance:** `conformance_mpeg_audio.py` checks `tests/conformance/mpeg2-audio.json` against the ISO/IEC 13818-4 audio conformance streams. It downloads them, since they may not be redistributed.
 - **E-AC-3 object audio:** `check_eac3_samples.py` checks `tests/conformance/eac3-samples.json` against three of Dolby's JOC test files (DD+ Online Delivery Kit v1.4.1, copyrighted and for testing playback products, so downloaded and never committed) and three files from the FFmpeg sample archive (two with the adaptive hybrid transform, one E-AC-3 file with 352 bytes of junk in front whose frames' header bytes read as ADTS headers), with ffprobe, MediaInfo and the analyzer.

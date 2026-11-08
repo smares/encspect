@@ -339,7 +339,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     // The program's speakers: the independent substream's channels in coded order, then each
     // location a dependent substream adds; a location the independent substream has is a
-    // replacement and adds nothing. With a rear pair, the surround pair is the side pair (plan,
+    // replacement and adds nothing. With a rear pair, the surround pair is the side pair (architecture.md,
     // "Streams and series"). Lts/Rts are the top back pair and the surround direct pair the side
     // pair, as ffmpeg maps them (libavcodec/ac3tab.c, ff_eac3_custom_channel_map_locations).
     private static IReadOnlyList<Speaker> Speakers(List<Token> independent, List<Token> dependents)

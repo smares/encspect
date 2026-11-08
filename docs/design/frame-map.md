@@ -18,7 +18,7 @@ What the lead asked for, in their words:
 
 What the plan and the earlier designs settle, and this design keeps:
 
-- Both front ends are thin views over the same result model, "so neither can show something the other cannot" (plan, "CLI and GUI"). The map is another form of series the reports already hold; it adds no figure of its own.
+- Both front ends are thin views over the same result model, "so neither can show something the other cannot" ([gui.md](../gui.md), once the plan's "CLI and GUI"). The map is another form of series the reports already hold; it adds no figure of its own.
 - Front ends read kinds and streams, never node names ([`CLAUDE.md`](../../CLAUDE.md)).
 - The Graphs tab's list, view switcher, palette, hover, click, keyboard and automation behavior ([gui.md](../gui.md#graphs), "Graphs" and "Category series"; [coding-graphs.md](coding-graphs.md)).
 - Step 4 of the [measurements rollout](spectral-analysis.md#rollout) adds the entries "Waveform", "Spectrogram" and "Spectrum" under a heading "Audio" in the same tab ([spectral-analysis.md](spectral-analysis.md#gui)).

@@ -1,15 +1,17 @@
 # Planned formats
 
-The formats of phases 4 to 6, in the order of the [plan](../plan.md#format-rollout). None is read yet. Each gets its own page when it is built, and each is its own pull request with fixtures, cross-checks and a review; a container's routes to these codecs follow as in phase 3.
+The formats not read yet, in the order of the [plan's milestones](../plan.md#milestones). Each gets its own page when it is built, and each is its own pull request with fixtures, cross-checks and a review; a container's routes to these codecs follow as they did for the lossless formats.
 
 The order follows how well a format is documented: the better documented, the sooner it comes, so the most exotic come last. Where a format has no reason of its own below, its place follows from that rule alone.
 
-## Phase 4: header level only
+## In 0.2: header level only
 
 - **TAK and OptimFROG:** what their headers reveal.
 - **Why no deeper:** both are poorly documented.
 
-## Phase 5: more formats
+## After 0.5: more formats
+
+Later milestones, in this order.
 
 ### 1. CAF
 
@@ -81,26 +83,7 @@ The order follows how well a format is documented: the better documented, the so
 - **How:** each is built clean-room, as TrueHD was: a format description written from FFmpeg first, then an implementation by an agent that has not read FFmpeg's code.
 - **Why last:** FFmpeg's LGPL code is the only detailed source, so each needs the clean-room split.
 
-## Phase 6: sequenced formats
+## Not planned
 
-These files hold instructions for making sound, not coded audio, so they are analyzed at the structure level and never rendered. The result model gains node kinds for their patterns, instruments and samples where the existing kinds do not fit.
-
-### 1. MIDI
-
-- **What:** Standard MIDI Files (`.mid`, formats 0 to 2) and RMID.
-- **Specification:** the MIDI 1.0 specification.
-- **Scope:** the header, tracks and events, tempo and time-signature maps, programs, text and lyric events, the duration worked out from the tempo map, and which extensions (General MIDI, GS, XG) the SysEx messages name.
-
-### 2. Tracker modules
-
-- **What:** MOD, S3M, XM, IT and OpenMPT's MPTM, then MO3 and UMX.
-- **Sources:** the formats' own documentation; libopenmpt (BSD) may be followed with its notice where the documentation stops, as for MO3.
-- **Scope:**
-  - the header, order list, patterns, instruments and samples (bit depth, loops, compression);
-  - the song length from a walk of the order list with its jumps and loops;
-  - which tracker wrote the file, from the version fields and the habits OpenMPT documents.
-
-### 3. Chiptunes
-
-- **What:** SID (PSID and RSID), NSF, SPC, VGM and GBS.
-- **Scope:** the headers and metadata; the music itself is code for an emulated chip and is not read.
+- **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the project lead on 2026-11-08, as a different domain from bitstream and encoder analysis. The scope they had is recorded in [history.md](../history.md#dropped-plans).
+- The other formats that are not planned are listed in the [plan](../plan.md#not-planned).
