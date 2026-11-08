@@ -12,8 +12,11 @@ Inputs, all 44.1 kHz unless named otherwise:
   in 8, 16, 24 and 32 bits, mono, stereo and six channels, at 8, 22.05, 32, 44.1, 48, 88.2, 96, 176.4 and 192 kHz,
   with a length that is not a multiple of any block size;
 - the same music signal at 24 bits with its low 8 bits zero (16-bit audio in a 24-bit file);
-- 30 s of two recordings from the Internet Archive, pinned by SHA-256: Kimiko Ishizaka's Goldberg Variations,
-  Variation 4 (Musopen, public domain mark, 16 bits) and Anonymous420's "D'un vieux jardin" (CC0, 24 bits).
+- 30 s of two recordings from the Internet Archive, pinned by SHA-256, for the design's observations only: none of their
+  output is committed (decision 4). Goldberg Variations, Variation 4, played by Kimiko Ishizaka (16 bits; the item states
+  the Public Domain Mark) and "D'un vieux jardin", a remix by anonymous420 (24 bits; the item states CC0, asserted by its
+  uploader);
+- noise-floor signals (FLOORS): the tones of the music signal over a TPDF noise floor of their own in each channel.
 
 The fixtures the design commits (FIXTURES) are made at their committed length: lossyWAV runs on inputs of that length,
 so each committed file is the bytes lossyWAV and the coder wrote, and the manifest holds its SHA-256, its figures
@@ -410,9 +413,6 @@ FLOORS = {
 FIXTURE_INPUTS = {
     "marker": ("music-44k-16-st", 0.5, 123),
     "marker-chunks": ("music-44k-16-st", 0.5, 123),
-    "jardin-3s": ("vieux-jardin-24bit", 3, 0),
-    "goldberg-5s": ("goldberg-var4-16bit", 5, 0),
-    "goldberg-3s": ("goldberg-var4-16bit", 3, 0),
     "synthetic-48k-3s": ("music-48k-24-st", 3, 123),
     "synthetic-96k-3s": ("music-96k-24-st", 3, 123),
     "synthetic-48k-6ch-3s": ("music-48k-24-6ch", 3, 123),
@@ -428,22 +428,21 @@ FIXTURES = [
     ("tests/fixtures/wav/lossywav-standard-chunks.wav", "marker-chunks", ["-q", "S"], "lossy", False),
     ("tests/fixtures/wav/lossywav-stdout.wav", "marker", ["-q", "S"], "stdout", False),
     ("tests/fixtures/monkeys-audio/external-lossywav.ape", "marker", ["-q", "S"], "mac-c2000", False),
-    ("tests/fixtures/flac/external-lossyflac-b512.flac", "jardin-3s", ["-q", "S"], "flac-b512", True),
-    ("tests/fixtures/flac/external-lossyflac-b512-foreign.flac", "jardin-3s", ["-q", "S"], "flac-b512-foreign", True),
-    ("tests/fixtures/flac/external-lossyflac-b4096.flac", "jardin-3s", ["-q", "S"], "flac-b4096", True),
-    ("tests/fixtures/flac/external-lossyflac-goldberg-standard.flac", "goldberg-5s", ["-q", "S"], "flac-b512", True),
-    ("tests/fixtures/flac/external-lossyflac-goldberg-portable.flac", "goldberg-3s", ["-q", "P"], "flac-b512", True),
+    # The recordings are not committed (decision 4); the 24-bit noise-floor signal at -70 dBFS takes their place.
+    ("tests/fixtures/flac/external-lossyflac-b512.flac", "floor-44k-high", ["-q", "S"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-b512-foreign.flac", "floor-44k-high", ["-q", "S"], "flac-b512-foreign", True),
+    ("tests/fixtures/flac/external-lossyflac-b4096.flac", "floor-44k-high", ["-q", "S"], "flac-b4096", True),
     ("tests/fixtures/flac/external-lossyflac-synthetic-b512.flac", "synthetic-48k-3s", ["-q", "P"], "flac-b512", True),
     ("tests/fixtures/flac/external-lossyflac-synthetic-b4096.flac", "synthetic-48k-3s", ["-q", "P"], "flac-b4096", True),
     ("tests/fixtures/flac/external-lossyflac-96k-b1024.flac", "synthetic-96k-3s", ["-q", "P"], "flac-bgrid", True),
     ("tests/fixtures/flac/external-lossyflac-96k-b512.flac", "synthetic-96k-3s", ["-q", "P"], "flac-b512", True),
     ("tests/fixtures/flac/external-lossyflac-6ch.flac", "synthetic-48k-6ch-3s", ["-q", "X"], "flac-b512-foreign", True),
-    ("tests/fixtures/wavpack/external-lossywav.wv", "jardin-3s", ["-q", "S"], "wavpack", True),
-    ("tests/fixtures/wavpack/external-lossywav-merge-blocks.wv", "jardin-3s", ["-q", "S"], "wavpack-b512-merge", True),
+    ("tests/fixtures/wavpack/external-lossywav.wv", "floor-44k-high", ["-q", "S"], "wavpack", True),
+    ("tests/fixtures/wavpack/external-lossywav-merge-blocks.wv", "floor-44k-high", ["-q", "S"], "wavpack-b512-merge", True),
     ("tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.wv", "synthetic-48k-3s", ["-q", "P"], "wavpack-b512-merge", True),
     # The noise-floor signals: one per rate the behavior claim applies at, in frames of lossyWAV's block, and the
     # 16-bit one, for decision 4 b.
-    *[(f"tests/fixtures/flac/external-lossyflac-{name}.flac", name, ["-q", "S"], "flac-bgrid", True) for name in FLOORS],
+    *[(f"tests/fixtures/flac/external-lossyflac-{name}.flac", name, ["-q", "S"], "flac-bgrid", True) for name in FLOORS if name != "floor-44k-high"],
 ]
 
 
