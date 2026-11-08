@@ -64,6 +64,9 @@ SIGNALS = [
     ("music-44k-24in16-st", "music", 44100, 2, 24, 8),
     ("music-48k-24-st", "music", 48000, 2, 24, 0),
     ("music-96k-24-st", "music", 96000, 2, 24, 0),
+    ("music-192k-24-st", "music", 192000, 2, 24, 0),
+    ("music-44k-8-st", "music", 44100, 2, 8, 0),
+    ("music-44k-32-st", "music", 44100, 2, 32, 0),
 ]
 
 PRESETS = [("insane", "I"), ("extreme", "E"), ("high", "H"), ("standard", "S"), ("economic", "C"),
@@ -121,11 +124,49 @@ def make_sources(out, work):
         if code != 0:
             raise SystemExit(f"flac could not decode {flac}: {error}")
         inputs[name] = {"path": path, "origin": f"{addresses[0]} (SHA-256 {digest}), {MUSIC_SECONDS} s from {start} s"}
+    # The stereo music signal with a LIST INFO chunk and a bext chunk before its data, to see which chunks lossyWAV keeps.
+    path = source / "music-44k-16-st-chunks.wav"
+    path.write_bytes(with_chunks(inputs["music-44k-16-st"]["path"].read_bytes(), [list_info(), bext()], before=b"data"))
+    inputs["music-44k-16-st-chunks"] = {"path": path, "origin": "music-44k-16-st with a LIST INFO and a bext chunk before data"}
     return inputs
 
 
+def riff_chunks(data):
+    """(ID, body) of the chunks of a RIFF WAVE file, in order."""
+    chunks, position = [], 12
+    while position + 8 <= len(data):
+        size = int.from_bytes(data[position + 4:position + 8], "little")
+        chunks.append((data[position:position + 4], data[position + 8:position + 8 + size]))
+        position += 8 + size + (size & 1)
+    return chunks
+
+
+def riff(chunks):
+    body = b"".join(cid + len(c).to_bytes(4, "little") + c + (b"\0" if len(c) & 1 else b"") for cid, c in chunks)
+    return b"RIFF" + (4 + len(body)).to_bytes(4, "little") + b"WAVE" + body
+
+
+def with_chunks(data, extra, before):
+    out = []
+    for cid, body in riff_chunks(data):
+        if cid == before:
+            out += extra
+        out.append((cid, body))
+    return riff(out)
+
+
+def list_info():
+    return (b"LIST", b"INFOINAM" + (6).to_bytes(4, "little") + b"Title\0" + b"ISFT" + (9).to_bytes(4, "little") + b"Encspect\0\0")
+
+
+def bext():
+    return (b"bext", b"description".ljust(256, b"\0") + b"Encspect".ljust(32, b"\0") + bytes(32) + b"2026-11-08" + b"00:00:00"
+            + bytes(8) + (1).to_bytes(2, "little") + bytes(64) + bytes(10) + bytes(180))
+
+
 # The variants of channels and rates run at two presets only.
-VARIANTS = ["music-44k-16-mono", "music-44k-16-6ch", "music-48k-24-st", "music-96k-24-st"]
+VARIANTS = ["music-44k-16-mono", "music-44k-16-6ch", "music-48k-24-st", "music-96k-24-st", "music-192k-24-st", "music-44k-8-st",
+            "music-44k-32-st", "music-44k-16-st-chunks"]
 VARIANT_PRESETS = ["standard", "portable"]
 
 
@@ -203,6 +244,51 @@ def tool_records(out, lossywav, mac):
     return info
 
 
+def probes(lossywav, out, inputs, manifest):
+    """Black-box questions to lossyWAV itself: whether its --check finds its output with the fact chunk changed or removed,
+    what it does with its own output as input, and what --stdout writes."""
+    folder = out / "probes"
+    folder.mkdir(exist_ok=True)
+    lossy = out / "lossy" / "preset-standard" / "music-44k-16-st.lossy.wav"
+    if not lossy.exists():
+        return
+    data = lossy.read_bytes()
+    chunks = riff_chunks(data)
+    variants = {
+        "source": inputs["music-44k-16-st"]["path"].read_bytes(),
+        "lossy": data,
+        "lossy-no-fact": riff([(i, b) for i, b in chunks if i != b"fact"]),
+        "lossy-fact-4-bytes": riff([(i, (44100 * 10 + 123).to_bytes(4, "little") if i == b"fact" else b) for i, b in chunks]),
+        "lossy-fact-other-version": riff([(i, b.replace(b"lossyWAV 1.4.2", b"lossyWAV 9.9.9") if i == b"fact" else b) for i, b in chunks]),
+        "lossy-fact-other-name": riff([(i, b.replace(b"lossyWAV", b"LOSSYwav") if i == b"fact" else b) for i, b in chunks]),
+        "lossy-fact-after-data": riff([c for c in chunks if c[0] != b"fact"] + [c for c in chunks if c[0] == b"fact"]),
+        "source-with-lossy-fact": riff([c for c in riff_chunks(inputs["music-44k-16-st"]["path"].read_bytes()) if c[0] == b"fmt "]
+                                       + [c for c in chunks if c[0] == b"fact"]
+                                       + [c for c in riff_chunks(inputs["music-44k-16-st"]["path"].read_bytes()) if c[0] == b"data"]),
+    }
+    record = []
+    for name, content in variants.items():
+        path = folder / f"{name}.wav"
+        path.write_bytes(content)
+        code, stdout, stderr = run([lossywav, path.name, "--check"], cwd=folder)
+        (folder / f"check-{name}.txt").write_text(f"exit {code}\n--- stdout\n{stdout}\n--- stderr\n{stderr}\n")
+        record.append({"probe": "check", "input": name, "sha256": sha256(path), "exit": code})
+    # Its own output as input.
+    code, written = run_lossywav(lossywav, "probe-reprocess", ["-q", "S"], "music-44k-16-st.lossy", lossy, out)
+    record.append({"probe": "reprocess", "exit": code, "files": [str(p.relative_to(out)) for p in written]})
+    # --stdout, as the lossyFLAC pipelines use it.
+    with tempfile.TemporaryDirectory() as work:
+        copy = pathlib.Path(work) / "music-44k-16-st.wav"
+        shutil.copyfile(inputs["music-44k-16-st"]["path"], copy)
+        result = subprocess.run([str(lossywav), copy.name, "-q", "S", "--stdout"], cwd=work, capture_output=True, timeout=900)
+        path = folder / "stdout-music-44k-16-st.wav"
+        path.write_bytes(result.stdout)
+        record.append({"probe": "stdout", "exit": result.returncode, "sha256": sha256(path), "size": len(result.stdout),
+                       "chunks": [i.decode("latin-1") for i, _ in riff_chunks(result.stdout)] if result.stdout[:4] == b"RIFF" else None,
+                       "stderr": result.stderr.decode("utf-8", "replace")[-1500:]})
+    manifest["probes"] = record
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("out")
@@ -236,6 +322,7 @@ def main():
                         # flac-b512-foreign holds the same samples and chunks; the WAV is dropped to keep the artifact small.
                         path.unlink()
 
+    probes(lossywav, out, inputs, manifest)
     for entry in manifest["codings"]:
         for key in ("input", "path"):
             if key in entry:
