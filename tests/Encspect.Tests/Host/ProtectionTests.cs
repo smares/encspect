@@ -52,9 +52,9 @@ public class ProtectionTests
         ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("mp4/cenc-aac.m4a"), Fixtures.AnalyzeMpeg("mp4/itunes-purchase-clear.m4a"), Fixtures.AnalyzeMpeg("mp4/moov-missing.m4a")], writer);
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.EndsWith(",Is Protected,Is Verified,Protection Scheme,DRM Systems,Spectral Cutoff (Hz),Sample Peak (dBFS),Maximum True Peak Level (dBTP),Integrated Loudness (LUFS),Loudness Range (LU),Lost Samples", lines[0], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,true,,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef,,,,,,0", lines[1], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,false,,,,,,,,,0", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",Is Protected,Protection Scheme,DRM Systems,Is Verified,Spectral Cutoff (Hz),Sample Peak (dBFS),Changes of Low Bits Unused,Grid of the Changes (samples),Maximum True Peak Level (dBTP),Integrated Loudness (LUFS),Loudness Range (LU)", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,true,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef,,,,,,,,", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,false,,,,,,,,,,", lines[2], StringComparison.Ordinal);
 
         // A file without a stream says nothing about protection.
         Assert.EndsWith(",,,,,,,,,,,,", lines[3], StringComparison.Ordinal);

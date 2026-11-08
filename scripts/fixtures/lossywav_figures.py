@@ -14,8 +14,10 @@ The measurement's figures, per stream, over integer PCM in a WAV file (8, 16, 24
 - Low Bits Unused: the smallest count over the stream (the levels' existing figure);
 - the distribution of the counts over the spans that are not silent, all channels together;
 - the changes: the spans, neither silent, thin nor short, whose count differs from the same channel's last such span;
-- the grid of the changes: the largest power of two from 256 to 65,536 samples such that at least 95% of the changes
-  fall within one span of one phase of it (hits * 20 >= changes * 19, in integers), given at least 20 changes;
+- the moments: the span positions at which some channel's count changes (a change in every channel at one position is one moment);
+- the grid of the changes: the largest power of two from 256 to 65,536 samples such that at least 95% of the moments
+  fall within one span of the phase with the most moments (hits * 20 >= moments * 19, in integers), given at least 20 moments
+  (the lead's amendment of decision 6, 2026-11-08: one switch of bit usage in 20 or more channels is one moment);
 - the times (span positions at which no channel is silent) at which all channels have the same count.
 
 The coded counterpart, over a FLAC file's subframes as `flac -a` lists them (--flac): the wasted bits of each subframe,
@@ -89,7 +91,7 @@ def spans(wav):
 
 
 def grid_of(phase, changes, unit=SPAN, bins=BINS, smallest=MIN_GRID):
-    """The largest power-of-two grid, in samples, at one phase of which at least 95% of the changes fall within one unit."""
+    """The largest power-of-two grid, in samples, at the phase with the most moments, within one unit of which at least 95% of the moments fall."""
     if changes < MIN_CHANGES:
         return None, None
     length = bins * unit
@@ -105,12 +107,23 @@ def grid_of(phase, changes, unit=SPAN, bins=BINS, smallest=MIN_GRID):
 
 
 def figures(path, thin=THIN):
-    wav = read_wav(path)
+    return figures_of(read_wav(path), path, thin)
+
+
+def pcm_of(channels, rate, bits):
+    """The samples of lists of integers (one list a channel) as the dictionary figures_of reads, as read_wav returns it."""
+    frames = len(channels[0])
+    values = [channels[c][i] for i in range(frames) for c in range(len(channels))]
+    return {"rate": rate, "channels": len(channels), "bits": bits, "frames": frames, "values": values, "chunks": []}
+
+
+def figures_of(wav, path="", thin=THIN):
     channels, bits = wav["channels"], wav["bits"]
     cells = spans(wav)
     histogram = [0] * (bits + 1)
     phase = [0] * BINS
-    changes = thin_spans = silent = 0
+    moved = set()
+    changes = thin_spans = silent = short_spans = 0
     smallest = None
     for channel in range(channels):
         last = None
@@ -120,6 +133,7 @@ def figures(path, thin=THIN):
                 continue
             count, magnitude, short = cell
             histogram[count] += 1
+            short_spans += short
             smallest = count if smallest is None else min(smallest, count)
             if magnitude - count < thin:
                 thin_spans += 1
@@ -128,7 +142,7 @@ def figures(path, thin=THIN):
                 continue
             if last is not None and last != count:
                 changes += 1
-                phase[index % BINS] += 1
+                moved.add(index)
             last = count
     agree = times = 0
     if channels > 1:
@@ -136,13 +150,16 @@ def figures(path, thin=THIN):
             if None not in row:
                 times += 1
                 agree += len({c for c, _, _ in row}) == 1
-    grid, on_grid = grid_of(phase, changes)
+    for index in moved:
+        phase[index % BINS] += 1
+    grid, on_grid = grid_of(phase, len(moved))
     total = sum(histogram)
     return {"file": str(path), "rate": wav["rate"], "bits": bits, "channels": channels, "chunks": wav["chunks"],
-            "frames": wav["frames"], "lowBitsUnused": smallest, "spans": total, "silentSpans": silent, "thinSpans": thin_spans,
+            "frames": wav["frames"], "lowBitsUnused": smallest, "spans": total, "silentSpans": silent, "thinSpans": thin_spans, "shortSpans": short_spans,
             "distribution": {z: n for z, n in enumerate(histogram) if n},
             "spansAboveLowBitsUnused": sum(histogram[smallest + 1:]) if smallest is not None else 0,
-            "changes": changes, "grid": grid, "changesOnGrid": on_grid,
+            "changes": changes, "changeMoments": len(moved), "grid": grid, "momentsOnGrid": on_grid, "changesOnGrid": on_grid,  # the old name of momentsOnGrid, kept for the importer and the manifests
+           
             "timesWithEqualCounts": agree if channels > 1 else None, "times": times if channels > 1 else None}
 
 

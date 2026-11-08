@@ -15,7 +15,7 @@ internal sealed class StreamMeasurer
 
     private const int CheckEvery = 1 << 16;
 
-    // The work per sample of a measured channel for the levels, in the decoders' unit: 5 for integers (2 to 3 ns; the FLAC reference runs at 0.38 ns a unit on Windows ARM, where 32-bit stereo takes 3.06 ns), 14 for floats, which are converted
+    // The work per sample of a measured channel for the levels, in the decoders' unit: 5 for integers, with the low bits unused per span (2 to 3 ns; the FLAC reference runs at 0.38 ns a unit on Windows ARM, where 32-bit stereo takes 3.06 ns), 14 for floats, which are converted
     // safely first and checked for the bit-depth grids (7.5 to 10.6 ns a sample measured for doubles of any magnitude, a ratio of 1.0 to 1.3 to the reference).
     private const int IntegerLevelsWeight = 5;
 
@@ -462,13 +462,14 @@ internal sealed class StreamMeasurer
             _next = startAt;
             _bufferStart = startAt;
             _loudness?.Start(startAt);
+            _levels?.Start(startAt);
         }
         else if (isJump)
         {
             _next = block.Position;
             _fill = 0;
             _bufferStart = block.Position;
-            _levels?.Gap();
+            _levels?.Gap(block.Position);
             _loudness?.Start(block.Position);
             _truePeak?.Gap();
         }
@@ -980,7 +981,7 @@ internal sealed class StreamMeasurer
             bytes += 64L * (1 + spectrum.ChannelCutoffs.Count);
         }
 
-        bytes += record.Levels is { } levels ? 256L * (levels.Channels.Count + 1) : 0;
+        bytes += record.Levels is { } levels ? (256L * (levels.Channels.Count + 1)) + (levels.Spans is { } spans ? 256L + (8L * spans.Distribution.Count) : 0) : 0;
         bytes += record.Loudness is { } loudness ? 256L + (24L * (loudness.ShortTerm?.Values.Length ?? 0)) + (4L * loudness.ChannelWeights.Count) : 0;
         bytes += record.TruePeak is { } truePeak ? 128L + (4L * truePeak.ChannelTenths.Count) : 0;
         bytes += record.Spectrogram?.Power.Length ?? 0;

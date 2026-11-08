@@ -135,6 +135,44 @@
             "highestMagnitude": 400
           }
         ]
+      },
+      "lowBitsPerSpan": {
+        "spanLength": 32,
+        "spans": 512,
+        "silentSpans": 0,
+        "thinSpans": 0,
+        "shortSpans": 0,
+        "distribution": [
+          {
+            "lowBitsUnused": 3,
+            "spans": 256
+          },
+          {
+            "lowBitsUnused": 4,
+            "spans": 256
+          }
+        ],
+        "spansAboveLowBitsUnused": {
+          "count": 256,
+          "of": 512,
+          "unit": "spans",
+          "percent": 50
+        },
+        "changes": {
+          "count": 0,
+          "moments": 0
+        },
+        "grid": {
+          "samples": null,
+          "momentsOnGrid": 0,
+          "moments": 0
+        },
+        "channelsWithEqualLowBitsUnused": {
+          "count": 0,
+          "of": 256,
+          "unit": "times",
+          "percent": 0
+        }
       }
     },
     "loudness": {

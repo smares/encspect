@@ -10,6 +10,11 @@ namespace Encspect.Host.Measurement;
 // so the fold comes every few samples, and 24-bit samples every 2^18). Floats are summed in double in a fixed order, after the stream
 // measurer has replaced non-finite samples and clamped huge ones. A run, a silent stretch and a leading stretch end at a gap. The figures depend only
 // on the samples and their positions, never on how a decoder cuts blocks.
+//
+// Integers also get the low bits unused per span (docs/design/lossywav-detection.md, "The measurement"): spans of 32 samples of a channel on the grid
+// of 32 stream positions, each with its count of low bits that are 0 in all its samples and its magnitude, kept as integers. A silent span has no
+// count; a short one (cut by a gap, withheld positions or the end of the stream, or starting late) and a thin one (fewer than ThinMargin bits of
+// magnitude above its count) are in the distribution but take no part in the changes of a channel's count.
 internal sealed class LevelsMeter
 {
     // The most samples of a channel given to AddIntegers or AddDoubles at once; the scratch arrays are this long.
@@ -30,6 +35,28 @@ internal sealed class LevelsMeter
     private int[] _any = [];
     private int[] _flags = [];
 
+    // The spans. The position of the current span (its index, the samples still to come before its end, the samples it holds) is the same for every
+    // channel, because every channel is given the same pieces in turn, so it moves in EndPiece; each channel keeps its own ORs.
+    private const int SpanLength = LowBitsSpanFigures.SpanLength;
+    private const int PhaseCount = LowBitsSpanFigures.MaximumGrid / SpanLength;
+    private const byte SilentCode = 255;
+    private const byte DisagreeCode = 254;
+    private readonly long[] _distribution;
+    private readonly long[] _phase;
+    private byte[] _codes;
+    private byte[] _moved;
+    private readonly int _mask;
+    private long _spanIndex;
+    private int _need = SpanLength;
+    private int _have;
+    private long _silentSpans;
+    private long _thinSpans;
+    private long _shortSpans;
+    private long _changes;
+    private long _moments;
+    private long _times;
+    private long _equalTimes;
+
     public LevelsMeter(int channels, SampleFormat format, int bitsPerSample)
     {
         _channels = new ChannelState[channels];
@@ -41,6 +68,13 @@ internal sealed class LevelsMeter
         _format = format;
         _isFloat = format != SampleFormat.Integer;
         _bits = Math.Clamp(bitsPerSample, 1, 32);
+        _mask = _bits >= 32 ? -1 : (1 << _bits) - 1;
+
+        // The state of the spans is allocated for integers only, which is what EstimateBytes counts.
+        _distribution = _isFloat ? [] : new long[33];
+        _phase = _isFloat ? [] : new long[PhaseCount];
+        _codes = _isFloat ? [] : new byte[(MaxPiece / SpanLength) + 4];
+        _moved = _isFloat ? [] : new byte[(MaxPiece / SpanLength) + 4];
         _high = _bits >= 32 ? int.MaxValue : (1 << (_bits - 1)) - 1;
         _low = _bits >= 32 ? int.MinValue : -(1 << (_bits - 1));
 
@@ -53,6 +87,12 @@ internal sealed class LevelsMeter
     public static long EstimateBytes(int channels, SampleFormat format, bool isMeasuringSpectrum)
     {
         long bytes = 256L * channels;
+        if (format == SampleFormat.Integer)
+        {
+            // The distribution and the phase counters of the spans, and the codes of one piece's spans for the channels' agreement.
+            bytes += (8L * (33 + PhaseCount)) + (2L * ((MaxPiece / SpanLength) + 4));
+        }
+
         if (channels > 1)
         {
             bytes += 4L * MaxPiece;
@@ -97,6 +137,7 @@ internal sealed class LevelsMeter
         }
 
         state.Silence.Add(samples);
+        AddSpans(channel, state, samples);
         Combine(channel, samples);
     }
 
@@ -192,25 +233,212 @@ internal sealed class LevelsMeter
         Combine(channel, flags);
     }
 
-    // Called after every measured channel has had the same samples added: the sample frames in which all of them are 0.
+    // Called after every measured channel has had the same samples added: the sample frames in which all of them are 0, and where the spans stand.
     public void EndPiece(int length)
     {
         if (_channels.Length > 1)
         {
             _joint.Add(_any.AsSpan(0, length));
         }
+
+        if (_isFloat)
+        {
+            return;
+        }
+
+        int closed = 0;
+        long firstIndex = _spanIndex;
+        if (length >= _need)
+        {
+            int rest = length - _need;
+            closed = 1 + (rest / SpanLength);
+            _spanIndex += closed;
+            _need = SpanLength - (rest % SpanLength);
+            _have = rest % SpanLength;
+        }
+        else
+        {
+            _need -= length;
+            _have += length;
+        }
+
+        if (_channels.Length > 1)
+        {
+            Agree(closed);
+        }
+
+        // A moment: a span position at which some channel's count changed, however many channels did.
+        for (int i = 0; i < closed; i++)
+        {
+            if (_moved[i] != 0)
+            {
+                _moments++;
+                _phase[(int)((firstIndex + i) & (PhaseCount - 1))]++;
+                _moved[i] = 0;
+            }
+        }
     }
 
-    // A gap in the positions: no run and no silent stretch goes across it.
-    public void Gap()
+    // The first measured position of the stream: the span that holds it starts at the multiple of 32 below it.
+    public void Start(long position) => Restart(position);
+
+    // A gap in the positions: no run and no silent stretch goes across it, and the open span ends there (short). The samples that follow start at position.
+    public void Gap(long position)
     {
         foreach (ChannelState state in _channels)
         {
             state.EndRun();
             state.Silence.Gap();
+            state.LastCount = -1;
         }
 
         _joint.Gap();
+        if (!_isFloat)
+        {
+            CloseOpenSpans();
+            Restart(position);
+        }
+    }
+
+    private void Restart(long position)
+    {
+        _spanIndex = position >> 5;
+        _have = 0;
+        _need = SpanLength - (int)(position & (SpanLength - 1));
+        foreach (ChannelState state in _channels)
+        {
+            state.SpanOr = 0;
+            state.SpanMagnitude = 0;
+        }
+    }
+
+    // The spans are cut at the same samples in every channel; the channel's ORs are read for the samples of one span at a time.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void AddSpans(int channel, ChannelState state, ReadOnlySpan<int> samples)
+    {
+        if (_codes.Length < (samples.Length / SpanLength) + 4)
+        {
+            _codes = new byte[(samples.Length / SpanLength) + 4];
+            _moved = new byte[(samples.Length / SpanLength) + 4];
+        }
+
+        int or = state.SpanOr;
+        int magnitude = state.SpanMagnitude;
+        int need = _need;
+        int have = _have;
+        long index = _spanIndex;
+        int slot = 0;
+        for (int at = 0; at < samples.Length;)
+        {
+            int take = Math.Min(need, samples.Length - at);
+            int o = or;
+            int m = magnitude;
+            foreach (int v in samples.Slice(at, take))
+            {
+                o |= v;
+                m |= v ^ (v >> 31);
+            }
+
+            or = o;
+            magnitude = m;
+            at += take;
+            need -= take;
+            have += take;
+            if (need == 0)
+            {
+                CloseSpan(channel, state, index, have, or, magnitude, slot++);
+                index++;
+                need = SpanLength;
+                have = 0;
+                or = 0;
+                magnitude = 0;
+            }
+        }
+
+        state.SpanOr = or;
+        state.SpanMagnitude = magnitude;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void CloseSpan(int channel, ChannelState state, long index, int have, int or, int magnitude, int slot)
+    {
+        // Bits beyond the declared width (a decoder that does not clamp) are not samples' bits.
+        or &= _mask;
+        byte code;
+        if (or == 0)
+        {
+            _silentSpans++;
+            code = SilentCode;
+        }
+        else
+        {
+            int count = BitOperations.TrailingZeroCount(or);
+            code = (byte)count;
+            _distribution[count]++;
+            bool isShort = have < SpanLength;
+            _shortSpans += isShort ? 1 : 0;
+            if ((32 - BitOperations.LeadingZeroCount((uint)magnitude)) - count < LowBitsSpanFigures.ThinMargin)
+            {
+                _thinSpans++;
+            }
+            else if (!isShort)
+            {
+                if (state.LastCount >= 0 && state.LastCount != count)
+                {
+                    _changes++;
+                    _moved[slot] = 1;
+                }
+
+                state.LastCount = count;
+            }
+        }
+
+        if (_channels.Length > 1)
+        {
+            // Silent beats disagreeing beats the first channel's count: the code of a time is its count only while every channel's count is the same.
+            byte first = _codes[slot];
+            _codes[slot] = channel == 0 ? code : first == SilentCode || code == SilentCode ? SilentCode : first != code ? DisagreeCode : first;
+        }
+    }
+
+    // The times whose spans have all been closed: those with no silent span, and among them those where the channels agree.
+    private void Agree(int closed)
+    {
+        for (int i = 0; i < closed; i++)
+        {
+            byte code = _codes[i];
+            if (code != SilentCode)
+            {
+                _times++;
+                _equalTimes += code != DisagreeCode ? 1 : 0;
+            }
+        }
+    }
+
+    // The open span ends short (at a gap or at the end of the stream), in every channel.
+    private void CloseOpenSpans()
+    {
+        if (_have == 0)
+        {
+            return;
+        }
+
+        for (int c = 0; c < _channels.Length; c++)
+        {
+            ChannelState state = _channels[c];
+            CloseSpan(c, state, _spanIndex, _have, state.SpanOr, state.SpanMagnitude, 0);
+            state.SpanOr = 0;
+            state.SpanMagnitude = 0;
+        }
+
+        if (_channels.Length > 1)
+        {
+            Agree(1);
+        }
+
+        _spanIndex++;
+        _have = 0;
+        _need = SpanLength;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -428,7 +656,97 @@ internal sealed class LevelsMeter
             HasOnly16BitValues = only16,
             HasOnly24BitValues = only24,
         };
-        return new LevelFigures { Format = _format, BitsPerSample = _isFloat ? 0 : _bits, Stream = stream, Channels = channels };
+        return new LevelFigures { Format = _format, BitsPerSample = _isFloat ? 0 : _bits, Stream = stream, Channels = channels, Spans = _isFloat ? null : BuildSpans(orBits) };
+    }
+
+    private LowBitsSpanFigures? BuildSpans(int orBits)
+    {
+        CloseOpenSpans();
+        long spans = 0;
+        int highest = -1;
+        for (int i = 0; i < _distribution.Length; i++)
+        {
+            spans += _distribution[i];
+            highest = _distribution[i] != 0 ? i : highest;
+        }
+
+        if (spans + _silentSpans == 0)
+        {
+            return null;
+        }
+
+        long above = 0;
+        if (orBits != 0)
+        {
+            for (int i = BitOperations.TrailingZeroCount(orBits) + 1; i < _distribution.Length; i++)
+            {
+                above += _distribution[i];
+            }
+        }
+
+        (int grid, long onGrid) = FindGrid(_phase, _moments);
+        return new LowBitsSpanFigures
+        {
+            Spans = spans,
+            SilentSpans = _silentSpans,
+            ThinSpans = _thinSpans,
+            ShortSpans = _shortSpans,
+            Distribution = [.. _distribution.Take(highest + 1)],
+            SpansAboveLowBitsUnused = above,
+            Changes = _changes,
+            ChangeMoments = _moments,
+            Grid = grid,
+            MomentsOnGrid = onGrid,
+            Times = _times,
+            TimesWithEqualCounts = _equalTimes,
+        };
+    }
+
+    // The largest power of two from MinimumGrid to MaximumGrid samples at the phase with the most moments, within one span either side of which at least 95% of the moments
+    // fall (hits * 20 >= moments * 19), given MinimumMomentsForGrid moments (span positions at which some channel's count changes); (0, 0) where none does. The phase counters are indexed by the span's
+    // position modulo MaximumGrid, so a grid of n spans folds them n at a time.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    internal static (int Grid, long Hits) FindGrid(ReadOnlySpan<long> phase, long moments)
+    {
+        if (moments < LowBitsSpanFigures.MinimumMomentsForGrid)
+        {
+            return (0, 0);
+        }
+
+        for (int length = LowBitsSpanFigures.MaximumGrid; length >= LowBitsSpanFigures.MinimumGrid; length >>= 1)
+        {
+            int n = length / SpanLength;
+            int best = 0;
+            long bestSum = -1;
+            for (int k = 0; k < n; k++)
+            {
+                long sum = Folded(phase, n, k);
+                if (sum > bestSum)
+                {
+                    bestSum = sum;
+                    best = k;
+                }
+            }
+
+            long hits = bestSum + Folded(phase, n, (best + n - 1) % n) + Folded(phase, n, (best + 1) % n);
+            if (hits * 20 >= moments * 19)
+            {
+                return (length, hits);
+            }
+        }
+
+        return (0, 0);
+    }
+
+    private static long Folded(ReadOnlySpan<long> phase, int n, int k)
+    {
+        long sum = 0;
+        for (int i = k; i < phase.Length; i += n)
+        {
+            sum += phase[i];
+        }
+
+        return sum;
     }
 
     // The mean of a is farther from 0 than b's (the channels have the same number of samples, so the sums compare): from the sums, not from the
@@ -544,6 +862,12 @@ internal sealed class LevelsMeter
         public long Clipped;
         public long Longest;
         public SilenceState Silence;
+
+        // The span in progress: the OR of its samples and of their magnitudes (v for v >= 0, -v - 1 for v < 0), and the count of the last span that
+        // takes part in the changes (-1 before the first and after a gap).
+        public int SpanOr;
+        public int SpanMagnitude;
+        public int LastCount = -1;
 
         public void AddRuns(long runs, long clipped, long longest)
         {

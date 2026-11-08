@@ -34,6 +34,8 @@ import struct
 
 import aiff_model as aiff
 import flac_model as m
+import lossywav_figures as lf
+import make_lossywav_fixtures as ml
 import measurement_model as mm
 import wav_model as wav
 
@@ -329,6 +331,7 @@ def build():
         {"cutoff_hz": None, "unspecified": True, "jump": 1 << 40}, numbers=[0, 1, 1 << 28, (1 << 28) + 1])
 
     add_levels()
+    add_lowbits()
     add_loudness()
 
 
@@ -411,6 +414,104 @@ def add_levels():
     wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
     add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",
         [wide], rate, 32, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "clipping_runs": 64, "clipped_samples": 4096, "longest_clipping_run": 96, "highest_magnitude": 2147483648}}), verbatim=True)
+
+
+def decoded_flac(relative):
+    """The samples of a committed FLAC fixture (path under tests/fixtures), one list a channel."""
+    stream = m.Stream((ROOT / "tests" / "fixtures" / relative).read_bytes())
+    channels = [[] for _ in range(stream.info["channels"])]
+    for frame in stream.frames:
+        if "channels" in frame:
+            for c, samples in enumerate(frame["channels"]):
+                channels[c].extend(samples)
+    return channels
+
+
+def spans_built(channels, rate, bits):
+    """What the low bits unused per span of the channels are, worked out by the prototype of the design (lossywav_figures.py, a separate
+    implementation from the analyzer's): the stream's Low Bits Unused and the span figures."""
+    r = lf.figures_of(lf.pcm_of(channels, rate, bits))
+    distribution = [r["distribution"].get(z, 0) for z in range(max(r["distribution"]) + 1)] if r["distribution"] else []
+    return {"stream": {"low_bits_unused": r["lowBitsUnused"]}, "spans": {
+        "spans": r["spans"], "silent_spans": r["silentSpans"], "thin_spans": r["thinSpans"], "short_spans": r["shortSpans"], "distribution": distribution,
+        "spans_above_low_bits_unused": r["spansAboveLowBitsUnused"], "changes": r["changes"], "change_moments": r["changeMoments"], "grid": r["grid"] or 0,
+        "moments_on_grid": r["momentsOnGrid"] or 0, "times": r["times"] or 0, "times_with_equal_counts": r["timesWithEqualCounts"] or 0}}
+
+
+def add_lowbits():
+    """The fixtures of the low bits unused per span (docs/design/lossywav-detection.md, "False positives"), built from files of the repository
+    without running lossyWAV: the samples of its committed output (the noise-floor fixtures in tests/fixtures/flac) with the edits the design
+    lists, and audio that was truncated or scaled by other means. The figures each is built to have (construction.levels) come from the
+    prototype lossywav_figures.py, a separate implementation from the analyzer's, which MeasurementFixtureTests holds the analyzer to."""
+    rate = 44100
+    unspecified = {"cutoff_hz": None, "unspecified": True}
+    lossy = decoded_flac("flac/external-lossyflac-floor-44k.flac")
+    other = decoded_flac("flac/external-lossyflac-b512.flac")
+    lossy16 = [c[:rate] for c in decoded_flac("flac/external-lossyflac-floor-44k-16bit.flac")]
+    rng = Lcg(2024)
+
+    def source(count):
+        return [list(c) for c in zip(*ml.floor_signal(rate, 2, 24, count, -20, -100))]
+
+    def tpdf(span):
+        return int(rng.uniform() * span) - int(rng.uniform() * span)
+
+    def build(name, description, channels, bits):
+        add("lowbits-" + name, description, channels, rate, bits, dict(unspecified, levels=spans_built(channels, rate, bits)))
+
+    build("lossywav-cut-100", "The output of lossyWAV (standard, a noise floor at -100 dBFS, 24 bits, the fixture external-lossyflac-floor-44k) without its first 100 samples: the block grid of 512 stays.",
+          [c[100:] for c in lossy], 24)
+    build("pad-16-in-24", "16-bit audio (the 16-bit noise-floor fixture, whose lossyWAV run removed no bits) shifted left by 8 in 24 bits: one count, no change.",
+          [[v << 8 for v in c] for c in lossy16], 24)
+    unprocessed = source(rate)
+    build("truncated-14", "A noise-floor signal in 24 bits truncated to 14 bits: one count, no change.", [[(v >> 10) << 10 for v in c] for c in unprocessed], 24)
+    dithered = [[((v + tpdf(1024) + 512) >> 10) << 10 for v in c] for c in unprocessed]
+    build("truncated-14-dither", "The same signal with TPDF dither of one least significant bit of 14 bits before the truncation.", dithered, 24)
+    half = rate // 2
+    build("mixed-16-24", "The same signal in 24 bits: the first half truncated to 16 bits, the second half whole.",
+          [[((v >> 8) << 8) if i < half else v for i, v in enumerate(c)] for c in unprocessed], 24)
+    long = source(5 * rate)
+    blocks = [list(c) for c in long]
+    for start in range(0, 5 * rate, 4096):
+        for c in range(2):
+            peak = max(1, max(abs(v) for v in blocks[c][start:start + 4096]))
+            k = max(6, min(12, peak.bit_length() - 11))
+            for i in range(start, min(5 * rate, start + 4096)):
+                blocks[c][i] = (blocks[c][i] >> k) << k
+    build("other-4096", "A noise-floor signal of 5 s in 24 bits with a count of 6 to 12 low bits zeroed per block of 4,096 samples and channel, as another tool might: its grid is 4,096.", blocks, 24)
+    alaw_file = (ROOT / "tests" / "fixtures" / "wav" / "external-alaw-mono-8000.wav").read_bytes()
+    at = alaw_file.index(b"data")
+    codes = alaw_file[at + 8:at + 8 + int.from_bytes(alaw_file[at + 4:at + 8], "little")]
+
+    def expand(a):
+        # G.711 A-law to 16-bit linear.
+        a ^= 0x55
+        t = (a & 0xF) << 4
+        seg = (a & 0x70) >> 4
+        t = t + 8 if seg == 0 else (t + 0x108) << (seg - 1) if seg > 1 else t + 0x108
+        return t if a & 0x80 else -t
+
+    add("lowbits-alaw-8000", "The A-law fixture wav/external-alaw-mono-8000.wav expanded to 16 bits: A-law's step grows with the level, so the count follows the level of each span (40 changes) and has no grid.",
+        [[expand(c) for c in codes]], 8000, 16, dict(unspecified, levels=spans_built([[expand(c) for c in codes]], 8000, 16)))
+    gain = 0.9440608762859234
+    build("lossywav-gain", "The output of lossyWAV after a gain of -0.5 dB, rounded: the pattern is gone.", [[math.floor(v * gain + 0.5) for v in c] for c in lossy], 24)
+    build("lossywav-dither", "The output of lossyWAV (the 24-bit noise-floor fixture) with TPDF dither of one least significant bit: the zeroed bits are gone.",
+          [[v + tpdf(2) for v in c] for c in lossy], 24)
+    build("lossywav16-dither", "16-bit audio with TPDF dither of one least significant bit (the lossyWAV run of the 16-bit noise-floor fixture removed no bit, so this is dither on 16-bit audio).",
+          [[v + tpdf(2) for v in c] for c in lossy16], 16)
+    join = 22016 + 100
+    build("lossywav-joined", "Two outputs of lossyWAV joined with the second shifted by 100 samples against the grid of the first: two phases, so no grid, while the changes stay.",
+          [a[:join] + b[22016:] for a, b in zip(lossy, other)], 24)
+
+    def faded(channels, start, length):
+        return [list(c) for c in zip(*lf.faded(list(map(list, zip(*channels))), start, length))]
+
+    build("lossywav-fade-end", "The output of lossyWAV faded to digital silence over its last 0.2 s: the unfaded part keeps its grid.",
+          faded(lossy, len(lossy[0]) - rate // 5, rate // 5), 24)
+    part = [c[:rate // 2] for c in lossy]
+    again = faded(part, rate // 4, rate // 4)
+    build("lossywav-fade-silence", "The first half second of lossyWAV's output faded out over a quarter second, a quarter second of digital silence, and the same half second again.",
+          [a + [0] * (rate // 4) + b for a, b in zip(again, part)], 24)
 
 
 def tone(rate, seconds, dbfs, hertz=1000.0, phase_degrees=0.0, count=None):

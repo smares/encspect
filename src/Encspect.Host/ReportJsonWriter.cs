@@ -1063,6 +1063,98 @@ public static class ReportJsonWriter
                 w.WriteBoolean("hasOnly24BitValues", c.HasOnly24BitValues);
             }
         }, null);
+        if (levels.Spans is { } spans)
+        {
+            WriteSpans(writer, spans, levels.Channels.Count, explain);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    // The low bits unused per span: counts of spans, changes and times, and the shares the text prints, in tenths of a percent made from the counts.
+    private static void WriteSpans(Utf8JsonWriter writer, LowBitsSpanFigures spans, int channels, bool explain)
+    {
+        writer.WriteStartObject("lowBitsPerSpan");
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.LowBitsUnusedBySpanDescription);
+            writer.WriteString("topic", MeasurementText.LowBitsPerSpanTopic);
+        }
+
+        writer.WriteNumber("spanLength", LowBitsSpanFigures.SpanLength);
+        writer.WriteNumber("spans", spans.Spans);
+        writer.WriteNumber("silentSpans", spans.SilentSpans);
+        writer.WriteNumber("thinSpans", spans.ThinSpans);
+        writer.WriteNumber("shortSpans", spans.ShortSpans);
+        writer.WriteStartArray("distribution");
+        for (int count = 0; count < spans.Distribution.Count; count++)
+        {
+            if (spans.Distribution[count] != 0)
+            {
+                writer.WriteStartObject();
+                writer.WriteNumber("lowBitsUnused", count);
+                writer.WriteNumber("spans", spans.Distribution[count]);
+                writer.WriteEndObject();
+            }
+        }
+
+        writer.WriteEndArray();
+        WriteShare(writer, "spansAboveLowBitsUnused", spans.SpansAboveLowBitsUnused, spans.Spans, "spans", explain ? MeasurementText.SpansAboveLowBitsUnusedDescription : null);
+        writer.WriteStartObject("changes");
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.ChangesOfLowBitsUnusedDescription);
+        }
+
+        writer.WriteNumber("count", spans.Changes);
+        writer.WriteNumber("moments", spans.ChangeMoments);
+        writer.WriteEndObject();
+        writer.WriteStartObject("grid");
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.GridOfTheChangesDescription);
+        }
+
+        if (spans.Grid != 0)
+        {
+            writer.WriteNumber("samples", spans.Grid);
+        }
+        else
+        {
+            writer.WriteNull("samples");
+        }
+
+        writer.WriteNumber("momentsOnGrid", spans.MomentsOnGrid);
+        writer.WriteNumber("moments", spans.ChangeMoments);
+        writer.WriteEndObject();
+        if (channels > 1)
+        {
+            WriteShare(writer, "channelsWithEqualLowBitsUnused", spans.TimesWithEqualCounts, spans.Times, "times", explain ? MeasurementText.ChannelsWithEqualLowBitsUnusedDescription : null);
+        }
+
+        writer.WriteEndObject();
+    }
+
+    private static void WriteShare(Utf8JsonWriter writer, string name, long part, long whole, string unit, string? description)
+    {
+        writer.WriteStartObject(name);
+        if (description is not null)
+        {
+            writer.WriteString("description", description);
+        }
+
+        writer.WriteNumber("count", part);
+        writer.WriteNumber("of", whole);
+        writer.WriteString("unit", unit);
+        if (whole > 0)
+        {
+            writer.WriteNumber("percent", MeasurementText.ShareTenths(part, whole) / 10m);
+        }
+        else
+        {
+            writer.WriteNull("percent");
+        }
+
         writer.WriteEndObject();
     }
 

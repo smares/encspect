@@ -93,6 +93,46 @@ public class MeasurementDeterminismTests
         Assert.True(LevelsHash == all, $"LevelsHash = {all} (16 bits {integers16[..8]}, 24 bits {integers24[..8]}, floats {float32[..8]})");
     }
 
+    // The low bits unused per span of two lossyWAV-like streams (24 bits, three channels with a silent stretch and a gap; 16 bits with its blocks off the
+    // grid of 32 by a late start): the counts, the changes, the grid and the times are integers and hash to a constant on every platform, JIT and
+    // NativeAOT, with the vector paths on or off.
+    [Fact]
+    public void TheLowBitsPerSpanOfSyntheticStreamsHashToAConstant()
+    {
+        var text = new System.Text.StringBuilder();
+        foreach ((int bits, int channels, long start, long gapAt) in new[] { (24, 3, 0L, 70_001L), (16, 2, 13L, 0L) })
+        {
+            var measurer = new StreamMeasurer(new PcmFormat(44100, channels, bits, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+            int[][] data = MeasurementSpanTests.Zeroed(channels, 120_000, 512, bits == 24 ? 50_000 : 4000, (uint)bits);
+            Array.Clear(data[0], 30_000, 5000);
+            for (int c = 0; c < channels; c++)
+            {
+                Array.Clear(data[c], 90_000, 3000);
+            }
+
+            foreach ((int from, int to, long position) in gapAt == 0 ? new[] { (0, 120_000, start) } : new[] { (0, 70_000, start), (70_000, 120_000, gapAt + 70_000) })
+            {
+                for (int at = from; at < to; at += 9999)
+                {
+                    int n = Math.Min(9999, to - at);
+                    int[] planar = new int[channels * n];
+                    for (int c = 0; c < channels; c++)
+                    {
+                        data[c].AsSpan(at, n).CopyTo(planar.AsSpan(c * n, n));
+                    }
+
+                    measurer.Write(new PcmBlock(position + (at - from), n, channels, n, planar));
+                }
+            }
+
+            LowBitsSpanFigures spans = measurer.Result(MeasurementStatus.Complete, null).Levels!.Spans!;
+            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{spans.Spans},{spans.SilentSpans},{spans.ThinSpans},{spans.ShortSpans},{string.Join(' ', spans.Distribution)},{spans.SpansAboveLowBitsUnused},{spans.Changes},{spans.ChangeMoments},{spans.Grid},{spans.MomentsOnGrid},{spans.Times},{spans.TimesWithEqualCounts};");
+        }
+
+        string hash = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));
+        Assert.True(LowBitsPerSpanHash == hash, $"LowBitsPerSpanHash = {hash} ({text})");
+    }
+
     // The K-weighting coefficients of every rate the tests use (the derived ones come from DetMath's tangent and power).
     [Fact]
     public void TheDerivedKWeightingCoefficientsHashToAConstant()
@@ -574,6 +614,7 @@ public class MeasurementDeterminismTests
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
     private const string LevelsHash = "f92d52741857da7606e0932e860091e47898d604dbfb1bbd97ffde473c022fbc";
+    private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
     private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
     private const string LoudnessHash = "436f003bd4cbd71d3728431622583423b26e3917f29dd4544a7be3bf929f9b12";
     private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|f82afd7a3245c2a833c86bd213284821b58ad0b680534ee7175b6cc3ac0c7eb7";

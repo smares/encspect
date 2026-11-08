@@ -1,7 +1,7 @@
 ---
 id: bit-depth-usage
 title: Bit-depth usage
-related: levels, wasted-bits, pcm-samples, digital-silence
+related: levels, wasted-bits, low-bits-per-span, pcm-samples, digital-silence
 references: Encspect design, docs/design/spectral-analysis.md (Levels); RFC 9639 (FLAC), section 9.2
 ---
 
@@ -14,3 +14,5 @@ For floating-point samples, which have no integer bits, two figures say whether 
 **What you see.** In Encspect's test files, 16-bit noise stored as 24-bit samples shifted left by 8 bits reads 8 of 24 low bits unused, and a second channel shifted by 12 reads 12.
 
 **Coded counterpart.** FLAC stores a count of wasted bits for each subframe ([wasted bits](wasted-bits)); this figure is counted over the decoded samples of the whole stream and does not depend on how a file was coded.
+
+**Per span.** The same count is also taken for each span of 32 samples, which shows where in the stream the unused bits change ([low bits unused per span](low-bits-per-span)).

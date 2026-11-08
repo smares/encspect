@@ -165,6 +165,59 @@ public sealed record LevelFigures
 
     // The measured channels, in the stream's order.
     public required IReadOnlyList<ChannelLevels> Channels { get; init; }
+
+    // Integers only (null for floats, and where no span was measured): the low bits unused over spans of 32 samples.
+    public LowBitsSpanFigures? Spans { get; init; }
+}
+
+// The low bits that are 0 in every sample of a span of 32 consecutive samples of one channel (the low-bits-per-span topic), counted over the
+// stream's spans, all channels together. Spans lie on the grid of 32 stream positions; one that is cut short by a gap, by withheld output or by
+// the end of the stream, or that starts late, has fewer samples. All figures are integers: counts of spans, changes, times and samples.
+public sealed record LowBitsSpanFigures
+{
+    // The spans that were measured, silent ones (every sample 0, which have no count) apart.
+    public long Spans { get; init; }
+
+    public long SilentSpans { get; init; }
+
+    // Spans whose largest sample needs fewer than ThinMargin bits above the zeroed ones: counted in the distribution and apart, and not in the changes.
+    public long ThinSpans { get; init; }
+
+    // Spans of fewer than 32 samples: counted in the distribution, not in the changes.
+    public long ShortSpans { get; init; }
+
+    // The number of spans (silent ones excluded) for each count of low bits unused, from 0 up to the highest count that occurs.
+    public required IReadOnlyList<long> Distribution { get; init; }
+
+    // The spans whose count is above the stream's Low Bits Unused.
+    public long SpansAboveLowBitsUnused { get; init; }
+
+    // The spans, neither silent, short nor thin, whose count differs from the same channel's last such span.
+    public long Changes { get; init; }
+
+    // The span positions (moments) at which some channel's count changes, however many channels change there.
+    public long ChangeMoments { get; init; }
+
+    // The grid of the changes in samples (a power of two from MinimumGrid to MaximumGrid), or 0 where none, with the moments within one span of the phase with the most moments.
+    public int Grid { get; init; }
+
+    public long MomentsOnGrid { get; init; }
+
+    // For a stream of several channels: the times (span positions at which no channel's span is silent) and those at which all channels have the same count.
+    public long Times { get; init; }
+
+    public long TimesWithEqualCounts { get; init; }
+
+    public const int SpanLength = 32;
+
+    // A span is thin when its magnitude is fewer than this many bits above its count.
+    public const int ThinMargin = 4;
+
+    public const int MinimumMomentsForGrid = 20;
+
+    public const int MinimumGrid = 256;
+
+    public const int MaximumGrid = 65536;
 }
 
 // The levels of one channel, or of the stream.

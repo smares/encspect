@@ -17,7 +17,7 @@ public sealed class CapitalizationTests
 {
     private static readonly HashSet<string> FunctionWords = new(StringComparer.Ordinal)
     {
-        "a", "an", "the", "and", "or", "of", "in", "on", "for", "to", "as", "by", "at", "with", "from",
+        "a", "an", "the", "and", "or", "of", "in", "on", "for", "to", "as", "by", "at", "with", "from", "per",
     };
 
     // Words that keep their own spelling where a spec or product name starts with a lowercase letter.
