@@ -50,6 +50,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - libFLAC: the Vorbis comment vendor string `reference libFLAC <version> <date>` is the encoder, with high confidence. A vendor string of that form with a version the analyzer cannot parse is "libFLAC" alone.
 - FFmpeg's native encoder: an `ENCODER` comment of the form `Lavc<version> flac` is the encoder, with medium confidence, since the comment is a tag any tool may write.
 - An ID3v2 or APEv2 claim of the encoder or writer weighs in as in the other formats (`flac.writer-claim-differs`, `flac.writer-other-format`, `flac.encoder-other-format`).
+- lossyWAV (a **processor**, not an encoder or a writer): `flac --keep-foreign-metadata` keeps the chunks of a WAVE file in APPLICATION blocks with the ID `riff`, one block for each chunk, holding the chunk's ID, its size and its body. When the `fact` chunk before the data holds lossyWAV's text, the block shows the chunk's ID and size and the "Text" node with its version, date and time and settings, and the stream's Processor is "lossyWAV 1.4.2" with high confidence and the settings as evidence. The shared reader is `FactText`. A text that starts with `lossyWAV ` but has not the form is `flac.riff-fact-text-unrecognized` (info) and makes no claim. Without `--keep-foreign-metadata` flac keeps no chunk, so lossyFLAC made that way carries no marker; a missing marker says nothing. See the `lossywav` article.
 - The compression level is not detected: the frames do not say which level wrote them. The statistics (block size, predictor orders, partition orders, the share of stereo assignments) show what the encoder chose.
 - A guess at the level from those statistics is planned for 0.4 ([plan.md](../plan.md#04-free-decoders-and-routes-complete)).
 
@@ -104,12 +105,12 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - Metadata: `flac.streaminfo-invalid`, `flac.streaminfo-length`, `flac.streaminfo-misplaced`, `flac.metadata-forbidden-type`, `flac.metadata-no-last-block`, `flac.metadata-truncated`, `flac.metadata-block-repeated`, `flac.metadata-blocks-not-listed`, `flac.padding-not-zero`, `flac.seek-table-length`, `flac.seek-table-unordered`, `flac.seek-table-placeholder`, `flac.cuesheet-invalid`, `flac.cuesheet-lead-out-medium`, `flac.cuesheet-reserved`, `flac.picture-invalid`, `flac.comment-not-read`, `flac.comment-trailing-bytes`.
 - Frames: `flac.header-crc-mismatch`, `flac.crc16-mismatch`, `flac.frame-cut`, `flac.subframe-invalid`, `flac.padding-bits-set`, `flac.partition-order-too-high`, `flac.residual-out-of-range`, `flac.frame-differs-from-streaminfo`, `flac.block-size-out-of-range`, `flac.frame-size-out-of-range`.
 - Decoding: `flac.md5-mismatch`, `decode.frame-too-large` (a guard: a frame the specification allows cannot reach it).
-- Encoder: `flac.encoder-other-format`, `flac.writer-claim-differs`, `flac.writer-other-format`.
+- Encoder: `flac.encoder-other-format`, `flac.writer-claim-differs`, `flac.writer-other-format`, `flac.riff-fact-text-unrecognized`.
 - Ogg: `flac.ogg-version`, `flac.ogg-header-count`, `flac.ogg-header-invalid`, `flac.ogg-packet-invalid`, `flac.ogg-packet-trailing`, `flac.ogg-granule-mismatch`.
 
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
 - FLAC in MP4: the container does not route the codec yet (`mp4.codec-not-analyzed`), so such a stream gets no FLAC analysis. `flac.payload-not-analyzed` is the codec parser's answer to a container that hands it a whole payload, which no container does today.
-- The contents of PICTURE data and the audio of an APPLICATION block.
+- The contents of PICTURE data and the audio of an APPLICATION block. The `riff` blocks are read for their chunk ID and size, and for the `fact` text; the other chunks' bodies are not read.
 - Subset conformance (the limits of the FLAC subset) is not judged.

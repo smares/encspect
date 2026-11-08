@@ -31,9 +31,15 @@ internal static class Summary
             s.AddLeading(writer);
         }
 
+        Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => new Node(name, stream.Offset, stream.End - stream.Offset, value) { Description = description, Topic = ClaimRoles.TopicOf(name) });
+        if (processor is not null)
+        {
+            s.AddLeading(processor);
+        }
+
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
         StreamVerification verification = Verify(s, h);
-        StreamInfo? info = Statistics(s, h, encoder, writer, verification);
+        StreamInfo? info = Statistics(s, h, encoder, writer, processor, verification);
         if (info is not null)
         {
             s.Context.AddStream(info);
@@ -94,7 +100,7 @@ internal static class Summary
         WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
             (claim, text, name) => s.Findings.Add(Severity.Info, "monkeys-audio.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
 
-    private static StreamInfo? Statistics(State s, ApeHeader h, Node? encoder, Node? writer, StreamVerification verification)
+    private static StreamInfo? Statistics(State s, ApeHeader h, Node? encoder, Node? writer, Node? processor, StreamVerification verification)
     {
         Node stream = s.Stream;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, stream.Offset, stream.Length, value) { Description = description, Topic = topic };
@@ -181,6 +187,8 @@ internal static class Summary
             EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence ?? (h.ProgramVersion != 0 ? Confidence.High : Confidence.Medium),
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
+            Processor = ClaimRoles.Resolved(processor).Name,
+            ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
             Series = figures.Series(anchor, s.Context.CancellationToken),
         };

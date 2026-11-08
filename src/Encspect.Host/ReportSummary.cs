@@ -4,7 +4,7 @@ namespace Encspect.Host;
 
 // One line about a file, for batch output and file lists, read from the streams the format parser
 // reports and the tags' node kinds, never from node names. Codec, sample rate, channel mode,
-// channel layout and encoder are the first audio stream's that has one, and empty where there is none; the writer is the first stream's that has one, since it is a fact about
+// channel layout and encoder are the first audio stream's that has one, and empty where there is none; the writer and the processor are the first stream's that has one, since each is a fact about
 // the file; the duration and samples add up over the audio streams, except that the streams of one playback group (StreamInfo.PlaybackGroup), which play at the same
 // time, count their longest once, and the average bitrate is weighted by their durations. Object audio is whether any stream has it, with the
 // most JOC objects one reconstructs. Protection is whether any stream is protected, with the schemes
@@ -39,6 +39,11 @@ public sealed record ReportSummary(
     // a verification and each is true, null otherwise (including a file without audio streams). Verification is a
     // property of the analysis, not of the file: the CSV writes it only for an analysis that asked for decoding.
     public bool? IsVerified { get; init; }
+
+    // The software that changed the audio before it was encoded (lossyWAV), with the confidence in it: the first stream's that has one.
+    public string? Processor { get; init; }
+
+    public Confidence? ProcessorConfidence { get; init; }
 
     // The lost samples of the streams Samples adds up (StreamInfo.LostSamples), counted the same way: the longest stream of a playback group once.
     public long LostSamples { get; init; }
@@ -79,6 +84,7 @@ public sealed record ReportSummary(
         StreamInfo? first = audio.Count > 0 ? audio[0] : null;
         StreamInfo? encoded = audio.FirstOrDefault(s => s.Encoder is not null);
         StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
+        StreamInfo? processed = streams.FirstOrDefault(s => s.Processor is not null);
         List<StreamInfo> timed = audio.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
         List<StreamInfo> counted = [.. audio.Where(s => s.PlaybackGroup is null),
@@ -117,6 +123,8 @@ public sealed record ReportSummary(
             [.. streams.SelectMany(s => s.Protection?.Systems ?? []).Distinct()])
         {
             IsVerified = verified,
+            Processor = processed?.Processor,
+            ProcessorConfidence = processed?.ProcessorConfidence,
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,

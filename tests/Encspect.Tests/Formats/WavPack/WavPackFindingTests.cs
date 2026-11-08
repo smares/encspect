@@ -11,6 +11,7 @@ public class WavPackFindingTests
 {
     private static readonly Dictionary<string, Func<byte[]>> Crafts = new()
     {
+        ["wavpack.wrapper-fact-text-unrecognized"] = () => LossyWavFiles.WithoutTimeSeparator("wavpack/external-lossywav.wv"),
         ["wavpack.subblock-size"] = () =>
         {
             List<byte[]> blocks = WavPackBuilder.Blocks("external-lossless-16-stereo.wv");

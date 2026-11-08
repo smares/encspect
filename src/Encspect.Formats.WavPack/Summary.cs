@@ -35,9 +35,20 @@ internal static partial class Summary
             s.Leading.Add(writer);
         }
 
+        if (s.FactText?.ToClaim(new Node("Text", s.FactTextAt, s.FactTextLength), "fact chunk in the wrapper") is { } processorClaim)
+        {
+            context.AddEncoderClaim(processorClaim);
+        }
+
+        Node? processor = s.Blocks > 0 ? ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name))) : null;
+        if (processor is not null)
+        {
+            s.Leading.Add(processor);
+        }
+
         ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
 
-        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer);
+        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, processor);
         if (info is not null)
         {
             context.AddStream(info);
@@ -204,7 +215,7 @@ internal static partial class Summary
         return 0;
     }
 
-    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer)
+    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer, Node? processor)
     {
         if (s.Blocks == 0)
         {
@@ -360,6 +371,8 @@ internal static partial class Summary
             EncoderConfidence = HasVersionFiveFeatures(s) ? Confidence.Medium : Confidence.Low,
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
+            Processor = ClaimRoles.Resolved(processor).Name,
+            ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Series = series,
             CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
             Verification = s.Feed.Finish(s, isCorrection),

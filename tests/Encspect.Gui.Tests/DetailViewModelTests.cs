@@ -325,4 +325,17 @@ public class DetailViewModelTests
 
         Assert.EndsWith(" · written by fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", model.StreamsText, StringComparison.Ordinal);
     }
+
+    // The processor comes last in the stream's line.
+    [Fact]
+    public void A_stream_line_names_the_processor_after_the_writer()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "flac", "external-lossyflac-b512-foreign.flac"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.EndsWith(" · processed by lossyWAV 1.4.2 (high)", model.StreamsText, StringComparison.Ordinal);
+    }
 }

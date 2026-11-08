@@ -809,6 +809,11 @@ internal static class Reader
             WavHeader.AddNodes(s, wav, data, h.Channels);
         }
 
+        if (!h.CreatesWavHeader && container is not null)
+        {
+            AddFactChunk(s, reader, data, length);
+        }
+
         if (h.CreatesWavHeader)
         {
             s.Findings.Add(Severity.Info, "monkeys-audio.wav-header-unused", data, _ =>
@@ -816,6 +821,38 @@ internal static class Reader
         }
 
         s.AddLeading(data);
+    }
+
+    // The fact chunk before the data in a RIFF, RF64 or BW64 header, when it holds lossyWAV's text.
+    private static void AddFactChunk(State s, ByteReader reader, Node data, long length)
+    {
+        try
+        {
+            byte[] bytes = reader.ReadBytesAt(s.HeaderDataAt, (int)Math.Min(length, 1 << 16));
+            if (bytes.Length < 12 || !(bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) || bytes.AsSpan(0, 4).SequenceEqual("RF64"u8) || bytes.AsSpan(0, 4).SequenceEqual("BW64"u8))
+                || !FactText.Find(bytes, 12, out int bodyAt, out int bodyLength) || FactText.Read(bytes.AsSpan(bodyAt, bodyLength)) is not { } text)
+            {
+                return;
+            }
+
+            long chunkAt = s.HeaderDataAt + bodyAt - 8;
+            var chunk = new Node("fact Chunk", chunkAt, 8 + bodyLength) { Description = Explain.WavFactChunk, Topic = Topics.WaveFormat };
+            chunk.Add("ID", chunkAt, 4, "fact", Explain.WavChunkId, Topics.WaveFormat);
+            chunk.Add("Size", chunkAt + 4, 4, NodeValue.Integer(BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(bodyAt - 4)), "bytes", "byte"), Explain.WavChunkSize, Topics.WaveFormat);
+            Node node = chunk.Add(text.ToNode(chunkAt + 8, bodyLength));
+            data.Add(chunk);
+            if (text.ToClaim(node, "fact chunk in the WAV header data") is { } claim)
+            {
+                s.Context.AddEncoderClaim(claim);
+            }
+            else
+            {
+                s.Findings.Add(Severity.Info, "monkeys-audio.header-fact-text-unrecognized", node, _ => FactText.UnrecognizedFinding);
+            }
+        }
+        catch (EndOfStreamException)
+        {
+        }
     }
 
     private static void StreamFindings(State s, ApeHeader h)

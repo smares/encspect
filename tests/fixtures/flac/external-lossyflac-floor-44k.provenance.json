@@ -1,0 +1,97 @@
+{
+ "file": "external-lossyflac-floor-44k.flac",
+ "sha256": "60285b4f1e2b30e30ee0de471fb033412097f5100d08768899b9291c4438498f",
+ "size": 73854,
+ "tool": "lossyWAV 1.4.2, POSIX port https://github.com/MoSal/lossywav-for-posix.git c3a22be0e1d8d516e3aa1761b6822ec68c06f920",
+ "workflow": {
+  "run": 42469204989,
+  "commit": "55ba334",
+  "artifact": "lossywav-fixtures-to-commit (13613675366)"
+ },
+ "input": "floor-44k",
+ "inputSha256": "20d0ed19cfd0a01955e95baafd505e809f8a819498fb492c16e5d94bc63b9370",
+ "arguments": [
+  "-q",
+  "S"
+ ],
+ "kind": "flac-bgrid",
+ "coding": [
+  "flac",
+  "-s",
+  "-f",
+  "-5",
+  "-b",
+  "512"
+ ],
+ "codingTool": "flac 1.5.0 (the flac package of the CI runner, ubuntu-26.04)",
+ "lossyWavCheck": {
+  "exit": 0,
+  "answer": "not marked",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
+  "exit": 255,
+  "stderr": [
+   "lossyWAV 1.4.2 @ 08/11/2026 10:03:46, --quality standard"
+  ]
+ },
+ "marker": null,
+ "figures": {
+  "lowBitsUnused": 0,
+  "spans": 2764,
+  "silentSpans": 0,
+  "thinSpans": 0,
+  "spansAboveLowBitsUnused": 2732,
+  "changes": 66,
+  "grid": 512,
+  "changesOnGrid": 66,
+  "timesWithEqualCounts": 624,
+  "times": 1382,
+  "distribution": {
+   "0": 32,
+   "1": 16,
+   "2": 224,
+   "3": 912,
+   "4": 1366,
+   "5": 214
+  }
+ },
+ "passesGate": true,
+ "lengthsTried": [
+  {
+   "seconds": 1,
+   "exit": 0,
+   "changes": 66,
+   "grid": 512
+  }
+ ],
+ "flacUnits": {
+  "rate": 44100,
+  "frameLength": 512,
+  "subframes": 174,
+  "distribution": {
+   "0": 2,
+   "1": 1,
+   "2": 14,
+   "3": 57,
+   "4": 86,
+   "5": 14
+  },
+  "changes": 66,
+  "changesOnGridFrames": 66,
+  "subframesAboveSmallest": 172,
+  "claim": true
+ },
+ "flacUnitsFromCommittedBytes": {
+  "subframes": 174,
+  "distribution": {
+   "0": 2,
+   "1": 1,
+   "2": 14,
+   "3": 57,
+   "4": 86,
+   "5": 14
+  },
+  "changes": 66
+ }
+}

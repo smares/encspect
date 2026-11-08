@@ -364,6 +364,16 @@ public static class ReportJsonWriter
             writer.WriteString("writerConfidence", writerConfidence.ToString());
         }
 
+        if (stream.Processor is not null)
+        {
+            writer.WriteString("processor", stream.Processor);
+        }
+
+        if (stream.ProcessorConfidence is { } processorConfidence)
+        {
+            writer.WriteString("processorConfidence", processorConfidence.ToString());
+        }
+
         writer.WriteStartArray("series");
         foreach (Series series in stream.Series)
         {

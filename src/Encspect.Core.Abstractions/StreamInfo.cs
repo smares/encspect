@@ -114,6 +114,12 @@ public sealed record StreamInfo
 
     public Confidence? WriterConfidence { get; init; }
 
+    // The software that changed the audio before it was encoded (lossyWAV, which turns PCM into PCM), from a mark it left in the file, and how
+    // sure the analysis is; null where nothing names one. It is resolved apart from the encoder and the writer.
+    public string? Processor { get; init; }
+
+    public Confidence? ProcessorConfidence { get; init; }
+
     public IReadOnlyList<Series> Series { get; init; } = [];
 
     // Categories per frame for graphs and for the summary over the stream, such as the Layer III block types.

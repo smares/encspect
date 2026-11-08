@@ -89,7 +89,7 @@ flowchart TD
 - **Streams:** a format parser reports each audio stream as a `StreamInfo` (`ParseContext.AddStream`):
   - the nodes that hold it, codec, sample rate, channels, channel mode, channel layout, bits per sample where the coding has them;
   - samples, duration in seconds, average bitrate in kbps, whether the bitrate varies;
-  - the encoder and the writer, each with the confidence in it.
+  - the encoder, the writer and the processor, each with the confidence in it.
 - **A stream is what the format says it is:** an MPEG stream continues across a tag embedded in it and ends where the version, layer, sample rate or free format changes, so one stream may span several regions and one region hold several streams.
 - **How many:** a raw stream parser (MPEG audio, ADTS, AC-3 and E-AC-3, DTS) reports at most 64 streams per file (see "Stream changes"). A container reports one stream per track, or per stream its codec parser finds in it, bounded by its own record and node budgets, not by this cap.
 - **The summary and the CSV** read streams only: they count real streams, add up durations and samples, and weigh the average bitrate by duration. The CSV's Channel Layout column is the first stream's described layout, next to its channel mode.
@@ -137,11 +137,12 @@ flowchart TD
 
 ### Encoder and writer
 
-- **Two roles:** the encoder is the software that turned the audio into the coded stream; the writer is the software that put the stream into the file (a muxer, a container writer, a tagger).
-  - They are two fields of a stream (`Encoder` and `Writer`, shown as "Written by" in the GUI), each with a confidence and evidence of its own, because a file can be remuxed or tagged without its audio being touched, and a container layout or a muxer tag says nothing about the encoder.
-- **Claims:** every `EncoderClaim` carries a `ClaimRole`, `Encoder` or `Writer`, given by the parser that makes it, with no default.
-  - Each format parser resolves each role from its own claims: the encoder from the stream's evidence (signatures, encoder-specific header fields, coding habits) and the claims of the encoder role; the writer from the claims of the writer role (`WriterDetection`).
-  - A writer that differs from the encoder is a fact and no finding. Only two claims of one role that name different software are (`<format>.encoder-claim-differs`, `<format>.writer-claim-differs`).
+- **Three roles:** the encoder is the software that turned the audio into the coded stream; the writer is the software that put the stream into the file (a muxer, a container writer, a tagger); the processor is software that changed the audio between its source and the encoder, such as lossyWAV, which turns PCM into PCM.
+  - They are three fields of a stream (`Encoder`, `Writer` and `Processor`, shown as "Written by" and "processed by" in the GUI), each with a confidence and evidence of its own, because a file can be remuxed or tagged without its audio being touched, a container layout or a muxer tag says nothing about the encoder, and a processor's output is coded by an encoder that never saw the original.
+- **Claims:** every `EncoderClaim` carries a `ClaimRole`, `Encoder`, `Writer` or `Processor`, given by the parser that makes it, with no default.
+  - Each format parser resolves each role from its own claims: the encoder from the stream's evidence (signatures, encoder-specific header fields, coding habits) and the claims of the encoder role; the writer from the claims of the writer role (`WriterDetection`); the processor from the claims of the processor role (`ProcessorDetection`).
+  - A writer or a processor that differs from the encoder is a fact and no finding. Only two claims of one role that name different software are (`<format>.encoder-claim-differs`, `<format>.writer-claim-differs`); claims of the processor role that name other software add no evidence, and the analyzer knows one processor, lossyWAV.
+- **The processor's marker:** lossyWAV's `fact` chunk text (read by the WAV, FLAC, WavPack and Monkey's Audio parsers through the shared `FactText`) is a claim of the processor role with high confidence and the settings as evidence; a text that starts as lossyWAV's does but has not its form is an information finding, `<format>.…fact-text-unrecognized`, and makes no claim. See [wav.md](formats/wav.md#reported) and the `lossywav` article.
 - **Which role a tag has** is where its specification puts it, and the writer's where the specification leaves it open:
   - ID3v2 TSSE is the encoder's (ID3v2.3 section 4.2.1 and ID3v2.4 frames section 4.2.5 define it as the used audio encoder and its settings);
   - a Vorbis comment's vendor string is the encoder's and its ENCODER field the writer's (section 5.2.2 of the Vorbis I specification lists no such field; RFC 7845 section 5.2 has applications use it to identify themselves);
@@ -158,10 +159,10 @@ flowchart TD
   - A writer of another name, such as ffmpeg's or GPAC's, lends none.
   - A writer claim never creates an encoder or raises its confidence.
 - **Evidence from behavior:**
-  - a file without tags can be misidentified, so every encoder result carries a confidence, and an encoder's habits name it only with low or medium confidence;
+  - a file without tags can be misidentified, so every encoder result carries a confidence, and an encoder's habits name it only with low or medium confidence; a processor's habits name it only with low confidence, and only where files it processed show them and the other files of the test set do not (a text the processor writes into the file is a marker and has high confidence);
   - only where encodes of known signals with that encoder show them every time and the other encoders available for testing do not, over at least 20 frames or payloads, which leaves out encoders that no longer run;
   - container traces name an encoder only where its stream holds nothing to name it by (Apple's AAC encoder). Where the stream itself has a layout (exhale's UsacConfig), the container's traces are not used, since a remux drops them.
-- **Output:** the CLI writes `Writer` and `Writer Confidence` next to the encoder's columns, and `writer`, `writerConfidence` next to `encoder` in JSON; the GUI has a "Written by" column and names the writer after the encoder in a stream's line. The articles are `encoder-detection` and `writer-detection`.
+- **Output:** the CLI writes `Writer` and `Writer Confidence` next to the encoder's columns, then `Processor` and `Processor Confidence`, and `writer`, `writerConfidence`, `processor`, `processorConfidence` next to `encoder` in JSON; the GUI has a "Written by" column and names the writer and then the processor ("processed by lossyWAV 1.4.2 (high)") after the encoder in a stream's line, with no column of its own for the processor. The articles are `encoder-detection`, `writer-detection` and, for the processor, `lossywav`.
 
 ### Stream changes
 

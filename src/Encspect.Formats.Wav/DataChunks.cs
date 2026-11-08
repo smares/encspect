@@ -270,6 +270,12 @@ internal static class DataChunks
             node.Add(writer);
         }
 
+        Node? processor = ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
+        if (processor is not null)
+        {
+            node.Add(processor);
+        }
+
         StreamVerification? verification = PcmRoute.Run(s, format, data);
         context.AddStream(new StreamInfo
         {
@@ -286,6 +292,8 @@ internal static class DataChunks
             AverageBitrate = bitrate,
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
+            Processor = ClaimRoles.Resolved(processor).Name,
+            ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
         });
     }
 

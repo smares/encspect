@@ -12,6 +12,7 @@ public class MonkeysAudioFindingTests
 
     private static readonly Dictionary<string, Func<byte[]>> Crafts = new()
     {
+        ["monkeys-audio.header-fact-text-unrecognized"] = () => LossyWavFiles.WithoutTimeSeparator("monkeys-audio/external-lossywav.ape"),
         ["monkeys-audio.no-descriptor"] = () => new byte[1000],
         ["monkeys-audio.writer-claim-differs"] = () => [.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. File.ReadAllBytes(MonkeysAudioBuilder.FixturePath(Stereo)), .. TestFiles.ApeText("Encoder", "LAME 3.100")],
         ["monkeys-audio.data-after-tag"] = () =>

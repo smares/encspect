@@ -67,6 +67,8 @@ internal static class Explain
     public const string ApplicationShort = "The bytes of an application block that are fewer than the four of its application ID.";
     public const string ApplicationId = "The ID of the application that wrote the block, four characters (RFC 9639, section 8).";
     public const string ApplicationData = "The application's own data, which only that application reads.";
+    public const string RiffChunkId = "The four-character ID of the RIFF chunk this block holds. flac's foreign metadata option keeps the chunks of a WAVE file in blocks with the application ID \"riff\", each with its ID, its size and its body.";
+    public const string RiffChunkSize = "The size of the chunk's body, a 32-bit little-endian number as in the WAVE file.";
 
     public const string SeekPoints = "The seek points of the table, in the order of the stream: the sample number, the byte offset of the frame that holds it and the samples in that frame (RFC 9639, section 8).";
     public const string SeekPoint = "One seek point: 18 bytes that tell a player which frame to start from to reach a sample.";

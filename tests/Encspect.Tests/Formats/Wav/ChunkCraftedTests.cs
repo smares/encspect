@@ -74,6 +74,36 @@ public class ChunkCraftedTests
     }
 
     [Fact]
+    public void LossyWavTextWithoutTheFormIsAnInformationFindingAndNoClaim()
+    {
+        byte[] text = [.. "lossyWAV 1.4.2 - 08/11/2026 08:37:19\r\n"u8, 0, 0];
+        byte[] data = Riff(0, Format(), Chunk("fact", text), Chunk("data", new byte[200]));
+        data[4] = (byte)(data.Length - 8);
+        data[5] = (byte)((data.Length - 8) >> 8);
+
+        Report report = Analyze(data, "text.wav");
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wav.fact-text-unrecognized");
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Null(Assert.Single(report.Streams).Processor);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "wav.fact-samples-mismatch" or "parse.failed");
+    }
+
+    [Fact]
+    public void LossyWavTextInAFactChunkAfterTheDataIsNoClaim()
+    {
+        byte[] text = [.. "lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard\r\n"u8, 0, 0];
+        byte[] data = Riff(0, Format(), Chunk("data", new byte[200]), Chunk("fact", text));
+        data[4] = (byte)(data.Length - 8);
+        data[5] = (byte)((data.Length - 8) >> 8);
+
+        Report report = Analyze(data, "late.wav");
+
+        Assert.Null(Assert.Single(report.Streams).Processor);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+    }
+
+    [Fact]
     public void ASoftwareChunkAndAnId3TagThatNameOtherWritersAreAConflict()
     {
         byte[] list = Chunk("LIST", [.. "INFO"u8, .. Chunk("ISFT", [.. "Fixture Tagger 1.2"u8, 0])]);

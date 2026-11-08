@@ -56,6 +56,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 
 - The descriptor states the version of the program that wrote the file (13.44 for mac 13.44, shown as "Monkey's Audio 13.44"; Encspect's test files were written by 13.44, and one seven-channel file by 13.42). The confidence is high when it is there.
 - A file before version 3.98 states no program version; the encoder is "Monkey's Audio (file version 3.97)" with medium confidence, the evidence being the format of the file.
+- lossyWAV (a **processor**, not an encoder or a writer): the stored WAV header data of a RIFF, RF64 or BW64 file lists the chunks of the source file up to the data. A `fact` chunk there whose body starts with `lossyWAV ` is shown as a "fact Chunk" with its ID, size and "Text" node (version, date and time, settings), and the stream's Processor is "lossyWAV 1.4.2" with high confidence and the settings as evidence. The shared reader is `FactText`. A text that starts with `lossyWAV ` but has not the form is `monkeys-audio.header-fact-text-unrecognized` (info) and makes no claim. With the flag for a header created on decompression the stored bytes are ignored, so they make no claim. See the `lossywav` article.
 - Tags in or around the file that name another program as its writer are reported once as `monkeys-audio.writer-claim-differs`.
 
 ## Decoding
@@ -149,7 +150,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - Header fields: `monkeys-audio.compression-level`, `monkeys-audio.channels`, `monkeys-audio.bits-per-sample`, `monkeys-audio.sample-rate`, `monkeys-audio.blocks-per-frame`, `monkeys-audio.final-frame-blocks`, `monkeys-audio.no-frames`.
 - Seek table and frames: `monkeys-audio.seek-table-size`, `monkeys-audio.seek-table-cut`, `monkeys-audio.seek-table-start`, `monkeys-audio.frame-misplaced`, `monkeys-audio.frame-cut`, `monkeys-audio.frame-too-short`, `monkeys-audio.frame-start-bit` (3.80), `monkeys-audio.frames-not-listed`.
 - Checksums: `monkeys-audio.md5-mismatch`, `monkeys-audio.md5-not-compared`, `monkeys-audio.frame-crc-mismatch` (decoding), `monkeys-audio.frame-checksum-mismatch` (decoding), `monkeys-audio.frame-not-decoded` (decoding).
-- Encoder: `monkeys-audio.writer-claim-differs`.
+- Encoder: `monkeys-audio.writer-claim-differs`, `monkeys-audio.header-fact-text-unrecognized`.
 
 The descriptor MD5 is worked out over the layout the descriptor states, as `VerifyFileW2` reads it, with the header found at the end of a descriptor of at least 52 bytes. For a descriptor that states fewer than 52 bytes for itself, the SDK is not consistent: its quick verify reads the header from the stated offset (and reports error 1009 on `built-descriptor-bytes-smaller.ape`), while its decoder reads the header after 52 bytes. The analyzer follows the decoder's layout, the one the frames are found from, and reports `monkeys-audio.descriptor-size`.
 
@@ -158,10 +159,11 @@ The descriptor MD5 is worked out over the layout the descriptor states, as `Veri
 - Verifying the audio of a file that is mostly digital silence and longer than about 6.8 hours (stereo, 16 bits, 44.1 kHz; fewer hours with more channels, a wider sample or a higher rate): its frames cost a few bytes however long they are, so the work budget (`decode.limit`) ends the decoding and the stream stays unverified, as it does for every format. Shorter silence verifies.
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
 - Decoding of files before version 3.80 and of the files named under "Files it does not decode"; they are parsed in full.
-- The rest of the WAV header data: only the fmt chunk's format tag, channels and channel mask are read, from a RIFF, RF64, BW64 or Wave64 header. The sizes of the ds64 chunk, the fact chunk and every other chunk are not used. An AIFF or CAF header's channel information (the `chan` chunk, the `CHAN` chunk) is not read.
+- The rest of the WAV header data: only the fmt chunk's format tag, channels and channel mask are read, from a RIFF, RF64, BW64 or Wave64 header. The sizes of the ds64 chunk and of every other chunk are not used, and the fact chunk is read only for lossyWAV's text. An AIFF or CAF header's channel information (the `chan` chunk, the `CHAN` chunk) is not read.
 - The APEv2 tag's own content beyond what the tag parser reads; the Monkey's Audio link files (`.apl`).
 - Monkey's Audio inside other containers (Matroska, MP4): none of the container parsers routes to it.
 
 ## Articles
 
 - **Articles:** `monkeys-audio-file`, `monkeys-audio-seek-table`, `monkeys-audio-frames`, `monkeys-audio-range-coding`, `monkeys-audio-prediction`, `monkeys-audio-descriptor-md5`.
+- **Shared with other formats:** `lossywav`.

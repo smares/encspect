@@ -12,13 +12,15 @@ public sealed record Evidence(string Description, long Offset, long Length);
 
 // What the claim is evidence of. An encoder turns the audio into the coded stream; a writer puts
 // that stream into a file (a muxer, a container writer, a tagger) and need not be the encoder: a
-// file can be remuxed, or tagged by other software, without its audio being touched. The two are
-// resolved apart, each with a confidence and evidence of its own. There is no default, so a claim
-// that forgot its role is an error.
+// file can be remuxed, or tagged by other software, without its audio being touched. A processor
+// changed the audio between the source and the encoder (lossyWAV turns PCM into PCM) and is neither.
+// The three are resolved apart, each with a confidence and evidence of its own. There is no default,
+// so a claim that forgot its role is an error.
 public enum ClaimRole
 {
     Encoder = 1,
     Writer = 2,
+    Processor = 3,
 }
 
 // What a tag or a container says about the software behind the file (an ID3v2 TSSE frame, an MP4
@@ -44,6 +46,9 @@ public sealed record EncoderClaim(string Text, Node Source, string Description, 
     // it copies puts it (ffmpeg's ASF muxer: the WM/EncodingSettings attribute is the last of the Extended Content Description Object).
     // Only ASF's Extended Content Description Object sets it; it is false for every other claim.
     public bool IsLastItem { get; init; }
+
+    // The settings a processor's claim states (lossyWAV's "--quality standard"), shown as the claim's evidence; null for any other claim.
+    public string? Settings { get; init; }
 }
 
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature

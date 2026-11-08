@@ -239,6 +239,28 @@ internal static partial class Nodes
         return children;
     }
 
+    // The node of the name at the offset below the node, or the node itself where the tree does not list it.
+    internal static Node FindAt(Node under, string name, long offset)
+    {
+        var pending = new Stack<Node>();
+        pending.Push(under);
+        while (pending.Count > 0)
+        {
+            Node node = pending.Pop();
+            if (node.Name == name && node.Offset == offset)
+            {
+                return node;
+            }
+
+            foreach (Node child in node.Children)
+            {
+                pending.Push(child);
+            }
+        }
+
+        return under;
+    }
+
     internal static Node Field(long offset, long length, string name, NodeValue? value, string description, string? topic = null) =>
         new(name, offset, length, value) { Description = description, Topic = topic };
 
