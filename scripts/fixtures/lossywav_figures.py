@@ -1,33 +1,43 @@
 #!/usr/bin/env python3
-"""The prototype of the per-block low-bit figures of docs/design/lossywav-detection.md, over integer PCM in WAV files,
-and the writer of the false-positive variants the design measured. Standard library only; it reads files as data.
+"""The prototype of the low-bit figures of docs/design/lossywav-detection.md, and the writer of the false-positive
+variants the design measured. Standard library only; it reads files as data and never runs lossyWAV.
 
-The figures, per stream, in one pass and bounded memory:
-- blocks of 32 samples per channel, anchored at the stream's first sample; a block's count is the number of low bits
-  that are zero in all its samples, and a block whose samples are all 0 has none;
-- Low Bits Unused: the smallest count over the stream (the levels' figure: the trailing zeros of the OR of every sample);
-- the distribution of the counts over the blocks of every channel;
-- the changes: the blocks whose count differs from the channel's last block with a count;
-- the block grid: the largest power of two from 256 to 65,536 samples such that at least 95% of the changes fall within
-  one block of 32 samples of one phase of it, given at least 20 changes; else none;
-- the share of times (blocks with a count in every channel) at which all channels have the same count.
+The measurement's figures, per stream, over integer PCM in a WAV file (8, 16, 24 and 32 bits, any rate and channel count):
+- spans of 32 samples per channel, anchored at the stream's position 0; a span's count is the number of low bits that
+  are zero in all its samples (the trailing zeros of their OR within the declared width), and its magnitude the bits of
+  its largest sample without the sign;
+- a span whose samples are all 0 is silent; one whose magnitude is fewer than QUIET bits above its count is quiet, and
+  one of fewer than 32 samples (the last of the stream) is short; the silent spans are counted apart, and none of the
+  three takes part in the changes;
+- Low Bits Unused: the smallest count over the stream (the levels' existing figure);
+- the distribution of the counts over the spans that are not silent, all channels together;
+- the changes: the spans, neither silent, quiet nor short, whose count differs from the same channel's last such span;
+- the grid of the changes: the largest power of two from 256 to 65,536 samples such that at least 95% of the changes
+  fall within one span of one phase of it (hits * 20 >= changes * 19, in integers), given at least 20 changes;
+- the times (span positions at which no channel is silent) at which all channels have the same count.
 
-Usage: lossywav_figures.py FILE.wav [...]                prints one JSON line of figures per file
-       lossywav_figures.py --variants OUT SRC16.wav SRC24.wav LOSSY24.wav LOSSY16.wav
-                                                          writes the false-positive variants into OUT
+The coded counterpart, over a FLAC file's subframes as `flac -a` lists them (--flac): the wasted bits of each subframe,
+the changes between consecutive frames of each channel, and the behavior rule of the design.
+
+Usage: lossywav_figures.py [--quiet K] FILE.wav [...]       one JSON line of figures per file
+       lossywav_figures.py --flac FILE.flac [...]            one JSON line of wasted-bit figures per file (needs flac)
+       lossywav_figures.py --variants OUT SRC16.wav SRC24.wav LOSSY24.wav LOSSY16.wav LOSSY24B.wav
+                                                            writes the false-positive variants into OUT
 """
 
 import json
 import pathlib
 import random
 import struct
+import subprocess
 import sys
+import tempfile
 
-CELL = 32
+SPAN = 32
 BINS = 2048
 MIN_CHANGES = 20
 MIN_GRID = 256
-SHARE = 0.95
+QUIET = 4
 
 
 def read_wav(path):
@@ -59,52 +69,129 @@ def trailing_zeros(value):
     return (value & -value).bit_length() - 1
 
 
-def figures(path):
+def spans(wav):
+    """Per channel, the (count, magnitude, whether it is short) of each span, or None for a silent span."""
+    channels, values, frames = wav["channels"], wav["values"], wav["frames"]
+    mask = (1 << wav["bits"]) - 1
+    out = [[] for _ in range(channels)]
+    for start in range(0, frames, SPAN):
+        end = min(frames, start + SPAN)
+        for channel in range(channels):
+            o = m = 0
+            for i in range(start, end):
+                v = values[i * channels + channel]
+                o |= v & mask
+                m |= v if v >= 0 else ~v
+            out[channel].append((trailing_zeros(o), m.bit_length(), end - start < SPAN) if o else None)
+    return out
+
+
+def grid_of(phase, changes, unit=SPAN, bins=BINS, smallest=MIN_GRID):
+    """The largest power-of-two grid, in samples, at one phase of which at least 95% of the changes fall within one unit."""
+    if changes < MIN_CHANGES:
+        return None, None
+    length = bins * unit
+    while length >= max(smallest, unit):
+        n = length // unit
+        folded = [sum(phase[k::n]) for k in range(n)]
+        m = max(range(n), key=folded.__getitem__)
+        hits = folded[m] + (folded[(m - 1) % n] + folded[(m + 1) % n] if n > 2 else folded[(m + 1) % n] if n == 2 else 0)
+        if hits * 20 >= changes * 19:
+            return length, hits
+        length //= 2
+    return None, None
+
+
+def figures(path, quiet=QUIET):
     wav = read_wav(path)
-    channels, values, bits = wav["channels"], wav["values"], wav["bits"]
-    mask = (1 << bits) - 1
-    frames = wav["frames"]
+    channels, bits = wav["channels"], wav["bits"]
+    cells = spans(wav)
     histogram = [0] * (bits + 1)
     phase = [0] * BINS
-    changes, whole, agree, rows = 0, 0, 0, 0
-    last = [None] * channels
-    for cell in range(0, (frames + CELL - 1) // CELL):
-        counts = []
-        for channel in range(channels):
-            o = 0
-            for i in range(cell * CELL, min(frames, (cell + 1) * CELL)):
-                o |= values[i * channels + channel] & mask
-            whole |= o
-            if o == 0:
-                counts.append(None)
+    changes = quiet_spans = silent = 0
+    smallest = None
+    for channel in range(channels):
+        last = None
+        for index, cell in enumerate(cells[channel]):
+            if cell is None:
+                silent += 1
                 continue
-            z = trailing_zeros(o)
-            counts.append(z)
-            histogram[z] += 1
-            if last[channel] is not None and last[channel] != z:
+            count, magnitude, short = cell
+            histogram[count] += 1
+            smallest = count if smallest is None else min(smallest, count)
+            if magnitude - count < quiet:
+                quiet_spans += 1
+                continue
+            if short:
+                continue
+            if last is not None and last != count:
                 changes += 1
-                phase[cell % BINS] += 1
-            last[channel] = z
-        if channels > 1 and None not in counts:
-            rows += 1
-            agree += len(set(counts)) == 1
-    grid, on_grid = None, None
-    if changes >= MIN_CHANGES:
-        length = BINS * CELL
-        while length >= MIN_GRID:
-            n = length // CELL
-            folded = [sum(phase[k::n]) for k in range(n)]
-            m = max(range(n), key=folded.__getitem__)
-            hits = folded[m] + folded[(m - 1) % n] + folded[(m + 1) % n]
-            if hits >= SHARE * changes:
-                grid, on_grid = length, hits
-                break
-            length //= 2
+                phase[index % BINS] += 1
+            last = count
+    agree = times = 0
+    if channels > 1:
+        for row in zip(*cells):
+            if None not in row:
+                times += 1
+                agree += len({c for c, _, _ in row}) == 1
+    grid, on_grid = grid_of(phase, changes)
+    total = sum(histogram)
     return {"file": str(path), "rate": wav["rate"], "bits": bits, "channels": channels, "chunks": wav["chunks"],
-            "lowBitsUnused": trailing_zeros(whole) if whole else None,
-            "blocks": sum(histogram), "distribution": {z: n for z, n in enumerate(histogram) if n},
+            "frames": wav["frames"], "lowBitsUnused": smallest, "spans": total, "silentSpans": silent, "quietSpans": quiet_spans,
+            "distribution": {z: n for z, n in enumerate(histogram) if n},
+            "spansAboveLowBitsUnused": sum(histogram[smallest + 1:]) if smallest is not None else 0,
             "changes": changes, "grid": grid, "changesOnGrid": on_grid,
-            "timesWithEqualCounts": agree if channels > 1 else None, "times": rows if channels > 1 else None}
+            "timesWithEqualCounts": agree if channels > 1 else None, "times": times if channels > 1 else None}
+
+
+# The lossyWAV grid at the rates the design tested; the FLAC behavior rule applies at these rates only.
+TESTED_GRIDS = {8000: 512, 22050: 512, 32000: 512, 44100: 512, 48000: 512, 88200: 1024, 96000: 1024, 176400: 2048, 192000: 2048}
+
+
+def flac_units(path):
+    """The wasted bits of each subframe of a FLAC file, from `flac -a`, and the design's behavior rule over them."""
+    with tempfile.TemporaryDirectory() as work:
+        analysis = pathlib.Path(work) / "a.ana"
+        result = subprocess.run(["flac", "-a", "-s", "-f", "-o", str(analysis), str(path)], capture_output=True)
+        if result.returncode != 0 or not analysis.exists():
+            return {"file": str(path), "error": result.stderr.decode("utf-8", "replace").strip()[-200:]}
+        frames, rate, sizes = [], None, set()
+        with analysis.open() as lines:
+            for line in lines:
+                if line.startswith("frame="):
+                    fields = dict(f.split("=", 1) for f in line.split())
+                    rate = int(fields["sample_rate"])
+                    sizes.add(int(fields["blocksize"]))
+                    frames.append([])
+                elif line.startswith("\tsubframe=") and frames:
+                    frames[-1].append(int(line.split("wasted_bits=")[1].split()[0]))
+    if not frames:
+        return {"file": str(path), "error": "no frames"}
+    size = max(sizes)
+    histogram, changes, phase = {}, 0, {}
+    grid = TESTED_GRIDS.get(rate)
+    for channel in range(max(len(f) for f in frames)):
+        last = None
+        for index, frame in enumerate(frames):
+            if channel >= len(frame):
+                continue
+            count = frame[channel]
+            histogram[count] = histogram.get(count, 0) + 1
+            if last is not None and count != last:
+                changes += 1
+                if grid and grid % size == 0:
+                    phase[index % (grid // size)] = phase.get(index % (grid // size), 0) + 1
+            last = count
+    smallest = min(histogram)
+    above = sum(n for c, n in histogram.items() if c > smallest)
+    units = sum(histogram.values())
+    on_phase = max(phase.values()) if phase else 0
+    # The rule: a tested rate, fixed frames whose length divides the grid, at least 20 changes, 95% of them on frames at one
+    # phase of the grid, and more than half of the subframes above the stream's smallest count.
+    claim = (grid is not None and len(sizes - {size}) <= 1 and grid % size == 0 and changes >= MIN_CHANGES
+             and on_phase * 20 >= changes * 19 and above * 2 > units)
+    return {"file": str(path), "rate": rate, "frameLength": size, "subframes": units, "distribution": dict(sorted(histogram.items())),
+            "changes": changes, "changesOnGridFrames": on_phase, "subframesAboveSmallest": above, "claim": claim}
 
 
 def write_wav(path, frames, channels, rate, bits):
@@ -129,12 +216,24 @@ def frames_of(wav):
     return [v[i * c:(i + 1) * c] for i in range(wav["frames"])]
 
 
-def variants(out, src16, src24, lossy24, lossy16):
-    """The false positives of the design, from files the design names; a fixed seed, so every run writes the same bytes."""
+def faded(frames, start, length):
+    """A linear fade to digital silence over length frames from start, as an editor applies it, rounded to the nearest."""
+    out = [list(f) for f in frames]
+    for i in range(start, min(len(out), start + length)):
+        gain_num, gain_den = start + length - 1 - i, length - 1
+        out[i] = [(2 * v * gain_num + gain_den) // (2 * gain_den) for v in out[i]]
+    for i in range(start + length, len(out)):
+        out[i] = [0] * len(out[i])
+    return out
+
+
+def variants(out, src16, src24, lossy24, lossy16, lossy24b):
+    """The false positives of the design, from files the design names; a fixed seed, so every run writes the same bytes.
+    lossy24 and lossy24b are two lossyWAV outputs of the same rate and width (the 24-bit recording at standard and portable)."""
     out = pathlib.Path(out)
     out.mkdir(parents=True, exist_ok=True)
     rng = random.Random(1)
-    a16, a24, l24, l16 = (read_wav(p) for p in (src16, src24, lossy24, lossy16))
+    a16, a24, l24, l16, l24b = (read_wav(p) for p in (src16, src24, lossy24, lossy16, lossy24b))
     s24 = frames_of(a24)
     write_wav(out / "trunc14.wav", [[(v >> 10) << 10 for v in f] for f in s24], 2, 44100, 24)
     tpdf = [[((v + rng.randrange(1024) - rng.randrange(1024) + 512) >> 10) << 10 for v in f] for f in s24]
@@ -161,14 +260,28 @@ def variants(out, src16, src24, lossy24, lossy16):
     for i in range(3 * 44100, 5 * 44100):
         fade[i] = [int(round(v * (1 - (i - 3 * 44100) / (2 * 44100 - 1)))) for v in fade[i]]
     write_wav(out / "fade-silence.wav", fade + [[0, 0]] * 44100 + s16[:44100], 2, 44100, 16)
+    # Edits after lossyWAV: two outputs joined off the grid (the first cut 100 samples after a grid line), a fade to
+    # digital silence over the last 5 s, and a fade out, 1 s of digital silence and the output again.
+    g24b = frames_of(l24b)
+    write_wav(out / "lossy-joined.wav", g24[:15 * 44100 + 100] + g24b[15 * 44100:], 2, 44100, 24)
+    write_wav(out / "lossy-fade-end.wav", faded(g24, len(g24) - 5 * 44100, 5 * 44100), 2, 44100, 24)
+    write_wav(out / "lossy-fade-silence.wav", faded(g24[:10 * 44100], 7 * 44100, 3 * 44100) + [[0, 0]] * 44100 + g24[:10 * 44100], 2, 44100, 24)
 
 
 def main():
-    if sys.argv[1:2] == ["--variants"]:
-        variants(*sys.argv[2:7])
+    args = sys.argv[1:]
+    if args[:1] == ["--variants"]:
+        variants(*args[1:7])
         return
-    for path in sys.argv[1:]:
-        print(json.dumps(figures(path)))
+    if args[:1] == ["--flac"]:
+        for path in args[1:]:
+            print(json.dumps(flac_units(path)))
+        return
+    quiet = QUIET
+    if args[:1] == ["--quiet"]:
+        quiet, args = int(args[1]), args[2:]
+    for path in args:
+        print(json.dumps(figures(path, quiet)))
 
 
 if __name__ == "__main__":

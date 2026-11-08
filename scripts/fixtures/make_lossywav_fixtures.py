@@ -3,23 +3,27 @@
 quality presets and settings, and that output coded again with FLAC (lossyFLAC), WavPack and Monkey's Audio.
 
 lossyWAV is GPL. It is used here only as a black-box tool: the workflow lossywav-fixtures.yml builds the POSIX port
-(github.com/MoSal/lossywav-for-posix, a pinned commit of lossyWAV 1.4.2) with its own Makefile.unix on a CI runner and
-passes the binary to this script; nothing of its source is read or ported, and it is never run outside CI. The files
-are uploaded as an artifact and analyzed as data.
+(lossywav_tool.py: github.com/MoSal/lossywav-for-posix, a pinned commit of lossyWAV 1.4.2) with its own Makefile.unix on
+a CI runner and passes the binary to this script; nothing of its source is read or ported, and it is never run outside
+CI. The files are uploaded as an artifact and analyzed as data.
 
 Inputs, all 44.1 kHz unless named otherwise:
 - the deterministic signals of flac_signal.py (tones under a tremolo, then noise; loud noise; silence around a tone),
-  in 16 and 24 bits, mono, stereo and six channels, at 44.1, 48 and 96 kHz, with a length that is not a multiple of
-  any block size;
+  in 8, 16, 24 and 32 bits, mono, stereo and six channels, at 8, 22.05, 32, 44.1, 48, 88.2, 96, 176.4 and 192 kHz,
+  with a length that is not a multiple of any block size;
 - the same music signal at 24 bits with its low 8 bits zero (16-bit audio in a 24-bit file);
 - 30 s of two recordings from the Internet Archive, pinned by SHA-256: Kimiko Ishizaka's Goldberg Variations,
   Variation 4 (Musopen, public domain mark, 16 bits) and Anonymous420's "D'un vieux jardin" (CC0, 24 bits).
+
+The fixtures the design commits (FIXTURES) are made at their committed length: lossyWAV runs on inputs of that length,
+so each committed file is the bytes lossyWAV and the coder wrote, and the manifest holds its SHA-256, its figures
+(lossywav_figures.py) and lossyWAV's own --check answer.
 
 Every run of lossyWAV is a case: a name, the arguments and the inputs. A case that lossyWAV refuses is recorded with its
 exit code and output, not dropped; the help texts are recorded first, so the next run can name the settings exactly.
 
 Usage: make_lossywav_fixtures.py OUT --lossywav PATH [--mac PATH]
-Writes OUT/source (inputs), OUT/lossy/<case>/ (what lossyWAV wrote, its WAV output only for the cases of KEEP_WAV:
+Writes OUT/fixtures/<path in the repository> (the files to commit), OUT/source (inputs), OUT/lossy/<case>/ (what lossyWAV wrote, its WAV output only for the cases of KEEP_WAV:
 the flac-b512-foreign coding holds the samples and chunks of the others), OUT/coded/<case>/ (the codings), OUT/tools
 (versions and help texts) and OUT/manifest.json (every file with its SHA-256, input, arguments and exit codes).
 """
@@ -37,8 +41,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import downloads  # noqa: E402
 import flac_signal  # noqa: E402
-
-COMMIT = "c3a22be0e1d8d516e3aa1761b6822ec68c06f920"
+import lossywav_figures  # noqa: E402
+import lossywav_tool  # noqa: E402
 
 # (name, addresses, SHA-256, start in seconds) of the recordings; 30 s are taken from the start.
 MUSIC = [
@@ -52,6 +56,12 @@ MUSIC = [
      "137c9129542e6ab8308bf904d8c13abde8cbf06cf6d74014d44169ead5512c6e", 60),
 ]
 MUSIC_SECONDS = 30
+
+
+def sources():
+    """For check_sources.py: (name, SHA-256, addresses) of every file this script downloads."""
+    for name, addresses, digest, _ in MUSIC:
+        yield f"{name}.flac", digest, addresses
 
 # (name, kind, rate, channels, bits, shift): 10 s plus 123 frames, so no block grid divides the length.
 SIGNALS = [
@@ -67,6 +77,12 @@ SIGNALS = [
     ("music-192k-24-st", "music", 192000, 2, 24, 0),
     ("music-44k-8-st", "music", 44100, 2, 8, 0),
     ("music-44k-32-st", "music", 44100, 2, 32, 0),
+    ("music-48k-24-6ch", "music", 48000, 6, 24, 0),
+    ("music-8k-24-st", "music", 8000, 2, 24, 0),
+    ("music-22k-24-st", "music", 22050, 2, 24, 0),
+    ("music-32k-24-st", "music", 32000, 2, 24, 0),
+    ("music-88k-24-st", "music", 88200, 2, 24, 0),
+    ("music-176k-24-st", "music", 176400, 2, 24, 0),
 ]
 
 PRESETS = [("insane", "I"), ("extreme", "E"), ("high", "H"), ("standard", "S"), ("economic", "C"),
@@ -166,14 +182,17 @@ def bext():
 
 # The variants of channels and rates run at two presets only.
 VARIANTS = ["music-44k-16-mono", "music-44k-16-6ch", "music-48k-24-st", "music-96k-24-st", "music-192k-24-st", "music-44k-8-st",
-            "music-44k-32-st", "music-44k-16-st-chunks"]
+            "music-44k-32-st", "music-44k-16-st-chunks", "music-48k-24-6ch", "music-8k-24-st", "music-22k-24-st", "music-32k-24-st",
+            "music-88k-24-st", "music-176k-24-st"]
 VARIANT_PRESETS = ["standard", "portable"]
+# The six-channel signals run at extraportable too.
+EXTRA_VARIANTS = {"extraportable": ["music-44k-16-6ch", "music-48k-24-6ch"]}
 
 
 def cases():
     every = [name for name, *_ in SIGNALS if name not in VARIANTS] + [name for name, *_ in MUSIC]
     for name, letter in PRESETS:
-        yield f"preset-{name}", ["-q", letter], every + (VARIANTS if name in VARIANT_PRESETS else [])
+        yield f"preset-{name}", ["-q", letter], every + (VARIANTS if name in VARIANT_PRESETS else []) + EXTRA_VARIANTS.get(name, [])
     for name, arguments in SETTINGS:
         yield name, arguments, SETTINGS_INPUTS
     # The same run twice, to see whether the output is the same bytes.
@@ -201,24 +220,51 @@ def run_lossywav(lossywav, case, arguments, name, source, out):
     return code, written
 
 
-def codings(mac, full):
-    """(name, extension, command builder) of the lossless codings of each output. flac-b512-foreign is lossyFLAC with the
-    WAV file's other chunks kept, so it holds every sample and chunk lossyWAV wrote; full adds the other block sizes."""
-    yield "flac-b512-foreign", ".flac", lambda i, o: ["flac", "-s", "-f", "-5", "-b", "512", "--keep-foreign-metadata", "-o", o, i]
-    yield "wavpack", ".wv", lambda i, o: ["wavpack", "-q", "-y", i, "-o", o]
+def grid_length(rate):
+    """lossyWAV's block length as the files of the first runs show it: 512 samples up to 48 kHz, 1,024 up to 96 kHz, 2,048 above."""
+    return 512 if rate <= 48000 else 1024 if rate <= 96000 else 2048
+
+
+CODERS = {
+    "flac-b512-foreign": (".flac", lambda i, o, m, r: ["flac", "-s", "-f", "-5", "-b", "512", "--keep-foreign-metadata", "-o", o, i]),
+    "flac-b512": (".flac", lambda i, o, m, r: ["flac", "-s", "-f", "-5", "-b", "512", "-o", o, i]),
+    "flac-b4096": (".flac", lambda i, o, m, r: ["flac", "-s", "-f", "-5", "-o", o, i]),
+    "flac-bgrid": (".flac", lambda i, o, m, r: ["flac", "-s", "-f", "-5", "-b", str(grid_length(r)), "-o", o, i]),
+    "wavpack": (".wv", lambda i, o, m, r: ["wavpack", "-q", "-y", i, "-o", o]),
+    "wavpack-b512": (".wv", lambda i, o, m, r: ["wavpack", "-q", "-y", "--blocksize=512", i, "-o", o]),
+    "wavpack-b512-merge": (".wv", lambda i, o, m, r: ["wavpack", "-q", "-y", "--blocksize=512", "--merge-blocks", i, "-o", o]),
+    "mac-c2000": (".ape", lambda i, o, m, r: [m, i, o, "-c2000"]),
+}
+
+
+def codings(mac, full, rate):
+    """The names of the lossless codings of each output. flac-b512-foreign is lossyFLAC with the WAV file's other chunks
+    kept, so it holds every sample and chunk lossyWAV wrote; full adds the other block sizes; above 48 kHz, flac-bgrid
+    codes frames of lossyWAV's block length."""
+    yield "flac-b512-foreign"
+    yield "wavpack"
+    yield "wavpack-b512-merge"
     if mac:
-        yield "mac-c2000", ".ape", lambda i, o: [mac, i, o, "-c2000"]
+        yield "mac-c2000"
     if full:
-        yield "flac-b512", ".flac", lambda i, o: ["flac", "-s", "-f", "-5", "-b", "512", "-o", o, i]
-        yield "flac-b4096", ".flac", lambda i, o: ["flac", "-s", "-f", "-5", "-o", o, i]
-        yield "wavpack-b512", ".wv", lambda i, o: ["wavpack", "-q", "-y", "--blocksize=512", i, "-o", o]
+        yield from ("flac-b512", "flac-b4096", "wavpack-b512")
+    if rate > 48000:
+        yield "flac-bgrid"
+
+
+def wav_rate(path):
+    data = pathlib.Path(path).read_bytes()[:4096]
+    at = data.find(b"fmt ")
+    return int.from_bytes(data[at + 12:at + 16], "little") if at >= 0 else 44100
 
 
 def code_file(path, folder, mac, record, full=False):
     folder.mkdir(parents=True, exist_ok=True)
-    for name, extension, command in codings(mac, full):
+    rate = wav_rate(path)
+    for name in codings(mac, full, rate):
+        extension, command = CODERS[name]
         output = folder / f"{path.stem}.{name}{extension}"
-        code, _, stderr = run(command(path, output))
+        code, _, stderr = run(command(path, output, mac, rate))
         entry = {"coding": name, "input": str(path), "exit": code}
         if code == 0 and output.exists():
             entry.update(path=str(output), sha256=sha256(output), size=output.stat().st_size)
@@ -230,7 +276,7 @@ def code_file(path, folder, mac, record, full=False):
 def tool_records(out, lossywav, mac):
     tools = out / "tools"
     tools.mkdir(parents=True, exist_ok=True)
-    info = {"lossywav": {"path": str(lossywav), "sha256": sha256(lossywav), "source": f"github.com/MoSal/lossywav-for-posix {COMMIT}"}}
+    info = {"lossywav": {"path": str(lossywav), "sha256": sha256(lossywav), "source": f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"}}
     for arguments in HELP_ARGUMENTS:
         code, stdout, stderr = run([lossywav, *arguments], timeout=60)
         label = "-".join(a.strip("-") for a in arguments) or "none"
@@ -283,10 +329,150 @@ def probes(lossywav, out, inputs, manifest):
         result = subprocess.run([str(lossywav), copy.name, "-q", "S", "--stdout"], cwd=work, capture_output=True, timeout=900)
         path = folder / "stdout-music-44k-16-st.wav"
         path.write_bytes(result.stdout)
-        record.append({"probe": "stdout", "exit": result.returncode, "sha256": sha256(path), "size": len(result.stdout),
-                       "chunks": [i.decode("latin-1") for i, _ in riff_chunks(result.stdout)] if result.stdout[:4] == b"RIFF" else None,
-                       "stderr": result.stderr.decode("utf-8", "replace")[-1500:]})
+        record.append(output_record("stdout", result, path))
+    # Input from STDIN ("-"), as foobar2000's lossyFLAC pipelines run it: to STDOUT, and to a file named by --stdinname.
+    source = inputs["music-44k-16-st"]["path"].read_bytes()
+    with tempfile.TemporaryDirectory() as work:
+        result = subprocess.run([str(lossywav), "-", "-q", "S", "--stdout"], cwd=work, input=source, capture_output=True, timeout=900)
+        path = folder / "stdin-stdout-music-44k-16-st.wav"
+        path.write_bytes(result.stdout)
+        record.append(output_record("stdin-stdout", result, path))
+    with tempfile.TemporaryDirectory() as work:
+        result = subprocess.run([str(lossywav), "-", "-q", "S", "--stdinname", "piped"], cwd=work, input=source, capture_output=True, timeout=900)
+        written = sorted(pathlib.Path(work).iterdir())
+        entry = {"probe": "stdin-file", "exit": result.returncode, "files": [p.name for p in written],
+                 "stderr": result.stderr.decode("utf-8", "replace")[-1500:]}
+        for p in written:
+            shutil.move(str(p), folder / f"stdin-file-{p.name}")
+            if p.suffix == ".wav":
+                data = (folder / f"stdin-file-{p.name}").read_bytes()
+                entry.setdefault("outputs", []).append(riff_summary(p.name, data))
+        record.append(entry)
     manifest["probes"] = record
+
+
+def riff_summary(name, data):
+    """The chunks of a RIFF file with their sizes, the size its RIFF header states, and its length."""
+    return {"name": name, "size": len(data), "riffSize": int.from_bytes(data[4:8], "little") if data[:4] == b"RIFF" else None,
+            "chunks": [(i.decode("latin-1"), len(b)) for i, b in riff_chunks(data)] if data[:4] == b"RIFF" else None}
+
+
+def output_record(probe, result, path):
+    return {"probe": probe, "exit": result.returncode, "sha256": sha256(path), **riff_summary(path.name, result.stdout),
+            "stderr": result.stderr.decode("utf-8", "replace")[-1500:]}
+
+
+# The fixtures to commit, made at their committed length. Inputs: (name, source, seconds, frames added), where source is
+# a signal of SIGNALS (made again at the length) or a recording of MUSIC (its first seconds, from the same start).
+FIXTURE_INPUTS = {
+    "marker": ("music-44k-16-st", 0.5, 123),
+    "marker-chunks": ("music-44k-16-st", 0.5, 123),
+    "jardin-3s": ("vieux-jardin-24bit", 3, 0),
+    "goldberg-5s": ("goldberg-var4-16bit", 5, 0),
+    "goldberg-3s": ("goldberg-var4-16bit", 3, 0),
+    "synthetic-48k-3s": ("music-48k-24-st", 3, 123),
+    "synthetic-96k-3s": ("music-96k-24-st", 3, 123),
+    "synthetic-48k-6ch-3s": ("music-48k-24-6ch", 3, 123),
+}
+
+# (path in the repository, input, lossyWAV arguments, what is committed: "lossy", "lwcdf", "stdout" or a coding of CODERS,
+# whether the file must show the pattern: at least twice the 20 changes the grid needs).
+FIXTURES = [
+    ("tests/fixtures/wav/lossywav-standard.wav", "marker", ["-q", "S"], "lossy", False),
+    ("tests/fixtures/wav/lossywav-correction.lossy.wav", "marker", ["-q", "S", "--correction"], "lossy", False),
+    ("tests/fixtures/wav/lossywav-correction.lwcdf.wav", "marker", ["-q", "S", "--correction"], "lwcdf", False),
+    ("tests/fixtures/wav/lossywav-standard-chunks.wav", "marker-chunks", ["-q", "S"], "lossy", False),
+    ("tests/fixtures/wav/lossywav-stdout.wav", "marker", ["-q", "S"], "stdout", False),
+    ("tests/fixtures/monkeys-audio/external-lossywav.ape", "marker", ["-q", "S"], "mac-c2000", False),
+    ("tests/fixtures/flac/external-lossyflac-b512.flac", "jardin-3s", ["-q", "S"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-b512-foreign.flac", "jardin-3s", ["-q", "S"], "flac-b512-foreign", True),
+    ("tests/fixtures/flac/external-lossyflac-b4096.flac", "jardin-3s", ["-q", "S"], "flac-b4096", True),
+    ("tests/fixtures/flac/external-lossyflac-goldberg-standard.flac", "goldberg-5s", ["-q", "S"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-goldberg-portable.flac", "goldberg-3s", ["-q", "P"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-synthetic-b512.flac", "synthetic-48k-3s", ["-q", "P"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-synthetic-b4096.flac", "synthetic-48k-3s", ["-q", "P"], "flac-b4096", True),
+    ("tests/fixtures/flac/external-lossyflac-96k-b1024.flac", "synthetic-96k-3s", ["-q", "P"], "flac-bgrid", True),
+    ("tests/fixtures/flac/external-lossyflac-96k-b512.flac", "synthetic-96k-3s", ["-q", "P"], "flac-b512", True),
+    ("tests/fixtures/flac/external-lossyflac-6ch.flac", "synthetic-48k-6ch-3s", ["-q", "X"], "flac-b512-foreign", True),
+    ("tests/fixtures/wavpack/external-lossywav.wv", "jardin-3s", ["-q", "S"], "wavpack", True),
+    ("tests/fixtures/wavpack/external-lossywav-merge-blocks.wv", "jardin-3s", ["-q", "S"], "wavpack-b512-merge", True),
+    ("tests/fixtures/wavpack/external-lossywav-synthetic-merge-blocks.wv", "synthetic-48k-3s", ["-q", "P"], "wavpack-b512-merge", True),
+]
+
+
+def fixture_input(name, inputs, folder):
+    source, seconds, extra = FIXTURE_INPUTS[name]
+    path = folder / f"{name}.wav"
+    signal = next((s for s in SIGNALS if s[0] == source), None)
+    if signal is not None:
+        _, kind, rate, channels, bits, shift = signal
+        path.write_bytes(flac_signal.wav(kind, rate, channels, int(rate * seconds) + extra, bits, shift=shift))
+    else:
+        data = inputs[source]["path"].read_bytes()
+        chunks = riff_chunks(data)
+        fmt = next(b for i, b in chunks if i == b"fmt ")
+        align, rate = int.from_bytes(fmt[12:14], "little"), int.from_bytes(fmt[4:8], "little")
+        chunks = [(i, b[:int(rate * seconds) * align] if i == b"data" else b) for i, b in chunks]
+        path.write_bytes(riff(chunks))
+    if name == "marker-chunks":
+        path.write_bytes(with_chunks(path.read_bytes(), [list_info(), bext()], before=b"data"))
+    return path
+
+
+def make_fixtures(lossywav, mac, out, inputs, manifest):
+    """Writes OUT/fixtures/<path> for every fixture lossyWAV and the coders could make, and records each in the manifest."""
+    folder = out / "fixture-source"
+    folder.mkdir(parents=True, exist_ok=True)
+    made, record = {}, []
+    for path, name, arguments, kind, behavior in FIXTURES:
+        entry = {"path": path, "input": name, "arguments": arguments, "kind": kind}
+        source = folder / f"{name}.wav"
+        if not source.exists():
+            fixture_input(name, inputs, folder)
+        entry["inputSha256"] = sha256(source)
+        key = (name, tuple(arguments))
+        if key not in made:
+            case = f"fixture-{name}-{'-'.join(a.strip('-') for a in arguments)}"
+            code, written = run_lossywav(lossywav, case, arguments, name, source, out)
+            made[key] = (code, written)
+        code, written = made[key]
+        lossy = next((p for p in written if p.name.endswith(".lossy.wav")), None)
+        target = out / "fixtures" / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if kind == "lossy" and lossy:
+            shutil.copyfile(lossy, target)
+        elif kind == "lwcdf":
+            lwcdf = next((p for p in written if p.name.endswith(".lwcdf.wav")), None)
+            if lwcdf:
+                shutil.copyfile(lwcdf, target)
+        elif kind == "stdout":
+            with tempfile.TemporaryDirectory() as work:
+                shutil.copyfile(source, pathlib.Path(work) / source.name)
+                result = subprocess.run([str(lossywav), source.name, *arguments, "--stdout"], cwd=work, capture_output=True, timeout=900)
+                if result.returncode == 0:
+                    target.write_bytes(result.stdout)
+                entry["stdoutExit"] = result.returncode
+        elif lossy:
+            extension, command = CODERS[kind]
+            if kind != "mac-c2000" or mac:
+                result = run(command(lossy, target, mac, wav_rate(lossy)))
+                entry["codingExit"] = result[0]
+        entry["lossyWavExit"] = code
+        if target.exists():
+            entry.update(sha256=sha256(target), size=target.stat().st_size)
+        if lossy:
+            figures = lossywav_figures.figures(lossy)
+            entry["figures"] = {k: figures[k] for k in ("lowBitsUnused", "spans", "silentSpans", "quietSpans", "spansAboveLowBitsUnused",
+                                                        "changes", "grid", "changesOnGrid", "timesWithEqualCounts", "times")}
+            entry["passesGate"] = figures["changes"] >= 2 * lossywav_figures.MIN_CHANGES and figures["grid"] is not None
+            entry["mustShowPattern"] = behavior
+            check = run([lossywav, lossy.name, "--check"], cwd=lossy.parent)
+            entry["lossyWavCheck"] = {"exit": check[0], "stderr": check[2].strip().splitlines()[-1:] if check[2].strip() else []}
+        if target.exists() and target.suffix == ".flac":
+            entry["flacUnits"] = {k: v for k, v in lossywav_figures.flac_units(target).items() if k != "file"}
+        record.append(entry)
+    manifest["fixtures"] = record
+    return [e["path"] for e in record if e.get("mustShowPattern") and not e.get("passesGate")]
 
 
 def main():
@@ -323,6 +509,7 @@ def main():
                         path.unlink()
 
     probes(lossywav, out, inputs, manifest)
+    short = make_fixtures(lossywav, mac, out, inputs, manifest)
     for entry in manifest["codings"]:
         for key in ("input", "path"):
             if key in entry:
@@ -330,6 +517,7 @@ def main():
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")
     runs = len(manifest["runs"])
     print(f"{runs} runs, {refused} refused; {sum(e['exit'] != 0 for e in manifest['codings'])} codings failed")
+    print(f"{len(manifest['fixtures'])} fixtures, {sum('sha256' in e for e in manifest['fixtures'])} made; below the change gate: {short or 'none'}")
     presets = [r for r in manifest["runs"] if r["case"].startswith("preset-")]
     if not any(r["exit"] == 0 and r["files"] for r in presets):
         raise SystemExit("lossyWAV wrote nothing at any preset")
