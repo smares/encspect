@@ -15,7 +15,7 @@ The elements of the Matroska element registry (ebml_matroska.xml, pinned by comm
 described as from "the Matroska element registry", and the registry gives every element its default value, which RFC 8794 section 6.1
 has an empty element take (the EBML header elements' defaults are RFC 8794's own).
 
-The specifications are fetched by matroska_specs.py into the directory (default matroska-specs).
+The specifications are fetched by matroska_specs.py into the directory (default .cache/matroska-specs).
 """
 
 import pathlib
@@ -212,7 +212,7 @@ def render(table):
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    directory = matroska_specs.fetch(args[0] if args else "matroska-specs")
+    directory = matroska_specs.fetch(args[0] if args else matroska_specs.DEFAULT_DIRECTORY)
     rfc9559 = (directory / "rfc9559.txt").read_text(encoding="utf-8")
     rfc8794 = (directory / "rfc8794.txt").read_text(encoding="utf-8")
     table = elements(rfc9559, rfc8794)
