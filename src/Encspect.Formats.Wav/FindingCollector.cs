@@ -37,6 +37,20 @@ internal sealed class FindingCollector
         _order.Add(key);
     }
 
+    // Reports the case of one code as another code with the same node and its own message, at the same place in the order.
+    public void Recode(string code, string newCode, Func<int, string> message)
+    {
+        (string, string) key = (code, "");
+        if (!_aggregated.Remove(key, out var entry))
+        {
+            return;
+        }
+
+        int index = _order.IndexOf(key);
+        _order[index] = (newCode, "");
+        _aggregated[(newCode, "")] = entry with { Message = message };
+    }
+
     public void AddNow(Severity severity, string code, string message, Node node) => _immediate.Add(new Finding(severity, code, message, node));
 
     public void Flush(AnalysisContext context)

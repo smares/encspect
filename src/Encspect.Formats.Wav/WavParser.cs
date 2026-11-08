@@ -144,6 +144,12 @@ public sealed class WavParser : IFormatParser
             state.Findings.Add(Severity.Warning, "wav.trailing-bytes", extra, _ => $"The RIFF chunk holds {Counts.Of(left, "byte", "bytes")} after its last chunk, too few for another.");
         }
 
+        if (!isPlaceholder && declared > reader.End && stop >= end && !state.IsWalkCut)
+        {
+            long past = declared - reader.End;
+            state.Findings.Recode("wav.truncated", "wav.riff-size-past-chunks", _ => RiffSizePastChunks("RIFF chunk", past));
+        }
+
         Finish(state, header, size);
 
         if (!isPlaceholder && end < reader.End)
@@ -157,6 +163,10 @@ public sealed class WavParser : IFormatParser
         state.Findings.Flush(context);
         return end;
     }
+
+    // A size past the end of a file whose chunks are all whole: the file may be cut at a chunk boundary, or the size counts chunks never written.
+    internal static string RiffSizePastChunks(string label, long past) =>
+        $"The {label} states {Counts.Of(past, "byte", "bytes")} more than the chunks in the file hold; the file may have lost chunks after its last, or the size counts chunks that were never written.";
 
     // Why the ds64 chunk gives no size to read the RIFF chunk by. A ds64 chunk that is not first is read all the same, and its size is compared
     // with what the file holds.

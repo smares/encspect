@@ -88,6 +88,8 @@ internal static class Explain
     public const string StatContainerSamples = "The length of the stream as the fact chunk states it, in samples per channel; the file's own count is Samples or Sample Frames.";
     public const string StatContainerDuration = "The length of the stream as the fact chunk states it, in seconds: its sample length at the sample rate of the format chunk.";
     public const string FactSamples = "The number of samples of each channel, dwFileSize in the specification's notation; 0xFFFFFFFF in an RF64 file means the ds64 chunk gives it.";
+    public const string FactText = "Text in place of a sample length: lossyWAV writes its version, the date and time of the run and its settings here. It states no number of samples, so none is read from it.";
+
     public const string FactFurther = "Fields after the sample count, which the specification keeps for later formats.";
     public const string DataChunk = "The data chunk: the audio samples, in the coding the fmt chunk states (RIFF specification, \"Storage of WAVE Data\").";
     public const string Statistics = "Figures over the audio the file describes: its length, rate, channels and the bits of its samples.";

@@ -88,6 +88,7 @@ internal static class Walker
                 long from = position;
                 s.Findings.Add(Severity.Warning, "wav.node-limit", rest, _ =>
                     $"The tree holds {MaxNodes} nodes, the most the report builds; the chunks from 0x{from:X} on are not read.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -95,6 +96,7 @@ internal static class Walker
             {
                 Node more = parent.Add(new Node("Further Chunks", position, end - position, NodeValue.Integer(end - position, "bytes", "byte")) { Description = Explain.FurtherChunks, Topic = Topics.RiffChunks });
                 s.Findings.Add(Severity.Info, "wav.chunk-limit", more, _ => $"The chunks from 0x{more.Offset:X} on are not read: the report lists at most {MaxListed} chunks at one level.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -105,6 +107,7 @@ internal static class Walker
                 long at = position;
                 s.Findings.Add(Severity.Warning, "wav.chunk-id-invalid", unread, _ =>
                     $"The bytes at 0x{at:X} should start a chunk, but their first four are not an ID of printable characters; the remaining {Counts.Of(end - at, "byte", "bytes")} are not read.");
+                s.IsWalkCut = true;
                 return end;
             }
 
@@ -267,6 +270,7 @@ internal static class Walker
 
             if (isPastEnd || isPlaceholder || isUnresolved)
             {
+                s.IsWalkCut = true;
                 return end;
             }
 

@@ -43,6 +43,9 @@ internal sealed class State(ParseContext context)
 
     public ulong FactSamples64 { get; set; }
 
+    // Whether the walk met a chunk it could not read to its end (cut by the end of the data, or of no size) or stopped before the end of the chunks.
+    public bool IsWalkCut { get; set; }
+
     public Node? FactNode { get; set; }
 
     public DataChunk? Data { get; set; }

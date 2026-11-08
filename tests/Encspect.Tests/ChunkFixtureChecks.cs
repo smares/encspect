@@ -21,7 +21,7 @@ internal static class ChunkFixtureChecks
         foreach (string manifest in Directory.EnumerateFiles(path, "*.expected.json").Order(StringComparer.Ordinal))
         {
             string stem = Path.GetFileName(manifest)[..^".expected.json".Length];
-            string file = Directory.EnumerateFiles(path, stem + ".*").Single(p => !p.EndsWith(".json", StringComparison.Ordinal));
+            string file = Directory.EnumerateFiles(path, stem + ".*").Single(p => !p.EndsWith(".json", StringComparison.Ordinal) && Path.GetFileNameWithoutExtension(p) == stem);
             data.Add($"{directory}/{Path.GetFileName(file)}");
         }
 

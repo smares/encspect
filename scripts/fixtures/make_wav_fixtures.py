@@ -216,6 +216,9 @@ fixture("built-riff-size-too-small", riff(basic(), size=2), ["wav.riff-size-plac
 whole = riff(basic())
 fixture("built-truncated-data", whole[:-40], ["wav.truncated", "wav.chunk-past-end"])
 fixture("built-truncated-in-format", whole[:12 + 8 + 10], ["wav.truncated", "wav.chunk-past-end", "wav.chunk-too-short", "wav.no-data-chunk"], stream=False)
+trailing_list = chunk("LIST", b"INFO" + chunk("INAM", zstr("Fixture title")))
+# Cut at a chunk boundary (a trailing LIST chunk lost): every chunk left is whole, so this is no wav.truncated.
+fixture("built-riff-size-past-chunks", riff([*basic(), trailing_list])[:-len(trailing_list)], ["wav.riff-size-past-chunks"])
 fixture("built-data-after-riff", whole + bytes(range(1, 21)), ["wav.data-after-riff"])
 fixture("built-trailing-bytes", riff([*basic(), chunk("JUNK", b""), b"\1\2\3\4\5"]), ["wav.trailing-bytes"])
 fixture("built-chunk-id-invalid", riff([chunk("fmt ", fmt_body()), b"\x01\x02\x03\x04\x05\x06\x07\x08" + b"\xff" * 20]), ["wav.chunk-id-invalid", "wav.no-data-chunk"], stream=False)
@@ -360,6 +363,8 @@ fixture("built-w64-riff-size-ffff", w64([W_FMT, W_DATA], size=0xFFFFFFFFFFFFFFFF
 w64_whole = w64([W_FMT, W_DATA])
 fixture("built-w64-truncated-data", w64_whole[:-40], ["wav.truncated", "wav.chunk-past-end"])
 fixture("built-w64-truncated-in-format", w64_whole[:40 + 24 + 6], ["wav.truncated", "wav.chunk-past-end", "wav.chunk-too-short", "wav.no-data-chunk"], stream=False)
+w64_trailing_list = w64_chunk(m.W64_LIST, b"INFO" + b"\0" * 12)
+fixture("built-w64-riff-size-past-chunks", w64([W_FMT, W_DATA, w64_trailing_list])[:-len(w64_trailing_list)], ["wav.riff-size-past-chunks"])
 fixture("built-w64-header-only", w64([]), ["wav.no-format-chunk", "wav.no-data-chunk"], stream=False)
 fixture("built-w64-data-after-riff", w64_whole + bytes(range(1, 21)), ["wav.data-after-riff"])
 fixture("built-w64-trailing-bytes", w64([W_FMT, W_DATA, b"\1\2\3\4\5\6\7\x08\x09"]), ["wav.trailing-bytes"])
