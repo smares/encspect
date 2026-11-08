@@ -48,6 +48,9 @@ internal sealed class State(ParseContext context)
 
     public Node? FactNode { get; set; }
 
+    // Whether the fact chunk read held lossyWAV's text, which is a fact chunk but states no sample length.
+    public bool IsFactText { get; set; }
+
     public DataChunk? Data { get; set; }
 
     public Node? FirstDataNode { get; set; }

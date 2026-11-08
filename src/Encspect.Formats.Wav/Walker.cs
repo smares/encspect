@@ -264,6 +264,7 @@ internal static class Walker
             if (isPadMissing)
             {
                 Node at = chunk;
+                s.IsWalkCut |= next >= end;
                 s.Findings.Add(Severity.Warning, "wav.pad-byte-missing", at, _ =>
                     $"The {id.TrimEnd()} chunk's size is odd, but no pad byte follows it{(next >= end ? " before the end" : $"; the next chunk starts right after the data at 0x{next:X}")}.");
             }

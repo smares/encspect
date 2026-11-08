@@ -1,0 +1,50 @@
+{
+ "length": 145,
+ "container": {
+  "id": "RIFF",
+  "size": 138,
+  "end": 145
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "data",
+   "offset": 36,
+   "end": 145,
+   "size": 101,
+   "length": 101
+  }
+ ],
+ "stream": {
+  "codec": "PCM",
+  "sample_rate": 11025,
+  "channels": 1,
+  "bits": 8,
+  "samples": 101,
+  "duration": 0.009160997732426304,
+  "layout": [
+   "front center"
+  ],
+  "average_bitrate": 88.2,
+  "pcm": {
+   "samples": 101,
+   "md5": "2eae4db4e440b94377041cec2268b3b5",
+   "bits": 8,
+   "format": "integer"
+  }
+ },
+ "findings": [
+  {
+   "code": "wav.truncated"
+  },
+  {
+   "code": "wav.pad-byte-missing"
+  }
+ ]
+}

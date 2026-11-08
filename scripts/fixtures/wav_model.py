@@ -155,7 +155,8 @@ def read_w64(data):
         key = chunk["key"]
         if key == "fmt " and "fmt" not in result:
             result["fmt"] = parse_fmt(data, {"offset": chunk["offset"] + 16, "length": chunk["length"]}, False)
-        elif key == "fact" and "fact" not in result and chunk["length"] >= 4:
+        elif key == "fact" and "fact" not in result and chunk["length"] >= 4 and not (
+                "data" not in result and data[chunk["offset"] + 24:chunk["offset"] + 33] == b"lossyWAV "):
             result["fact"] = u32(data, chunk["offset"] + 24)
         elif key == "data" and "data" not in result:
             result["data"] = {**chunk, "offset": chunk["offset"] + 16}
@@ -197,7 +198,9 @@ def read(data):
     for chunk in chunks:
         if chunk["id"] == "fmt " and "fmt" not in result:
             result["fmt"] = parse_fmt(data, chunk, big)
-        elif chunk["id"] == "fact" and "fact" not in result and chunk["length"] >= 4:
+        elif chunk["id"] == "fact" and "fact" not in result and chunk["length"] >= 4 and not (
+                "data" not in result and data[chunk["offset"] + 8:chunk["offset"] + 17] == b"lossyWAV "):
+            # lossyWAV's text, which states no sample length.
             samples = u32(data, chunk["offset"] + 8, big)
             result["fact"] = ds64["sample_count"] if magic == "RF64" and samples == 0xFFFFFFFF and ds64 else samples
         elif chunk["id"] == "data" and "data" not in result:

@@ -12,10 +12,16 @@
  "inputSha256": "1e0d4698f6c2dea77145498525992891effd2767003cc4caa0d0a0ee8503edc5",
  "arguments": [
   "-q",
-  "S"
+  "S",
+  "--stdout"
  ],
  "kind": "stdout",
  "lossyWavCheck": {
+  "exit": 0,
+  "answer": "not marked",
+  "basis": "derived from the file's bytes by lossyWAV's rule"
+ },
+ "lossyWavCheckOfLossyFile": {
   "exit": 255,
   "stderr": [
    "lossyWAV 1.4.2 @ 08/11/2026 10:03:42, --quality standard"

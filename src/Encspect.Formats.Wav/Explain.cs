@@ -84,7 +84,7 @@ internal static class Explain
     public const string Mp3FramesPerBlock = "The number of frames in a block, nFramesPerBlock of the MPEGLAYER3WAVEFORMAT.";
     public const string Mp3CodecDelay = "The delay of the codec in samples, nCodecDelay of the MPEGLAYER3WAVEFORMAT.";
 
-    public const string FactChunk = "The fact chunk: the number of samples of each channel in the audio. The specification requires it for every format but PCM (RIFF specification, \"FACT Chunk\").";
+    public const string FactChunk = "The fact chunk: by the specification, the number of samples of each channel in the audio, required for every format but PCM (RIFF specification, \"FACT Chunk\"). A writer may put other content in it, which is then shown as text.";
     public const string StatContainerSamples = "The length of the stream as the fact chunk states it, in samples per channel; the file's own count is Samples or Sample Frames.";
     public const string StatContainerDuration = "The length of the stream as the fact chunk states it, in seconds: its sample length at the sample rate of the format chunk.";
     public const string FactSamples = "The number of samples of each channel, dwFileSize in the specification's notation; 0xFFFFFFFF in an RF64 file means the ds64 chunk gives it.";

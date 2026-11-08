@@ -50,12 +50,17 @@ Sources:
 - The three sizes are the least a `ds64` chunk gives (24 bytes); a chunk without the table length after them (under 28 bytes) is `wav.ds64-too-short` and lists no chunk, and one that holds fewer than the three sizes is `wav.chunk-too-short` and gives none, so the sizes it should have resolved are `wav.chunk-size-unresolved`.
 - `DeclaredEnd` is the RIFF chunk's own end (for RF64 from `ds64`). It is what lets the host tell a tag after the chunk from a tag inside it; a size that is 0, `0xFFFFFFFF` or under 4 states no end.
 - Bytes inside the RIFF chunk after its last chunk, too few for another, are `wav.trailing-bytes`; any bytes after the end the RIFF chunk states are `wav.data-after-riff` (whether they look like a chunk is not checked). A chunk cut by the end of the file is `wav.chunk-past-end` and the file `wav.truncated`.
-- A RIFF size past the end of the file, when every chunk in the file is whole and the last ends exactly at the end of the file, is `wav.riff-size-past-chunks` (warning) in place of `wav.truncated`: the file may have lost chunks after its last (a file cut at a chunk boundary meets the same condition), or the size counts chunks that were never written. The message gives how many bytes the size counts beyond the file. Wave64 raises it for its riff chunk the same way.
+- A RIFF size past the end of the file, when every chunk in the file is whole and the last, with its padding, ends exactly at the end of the file, is `wav.riff-size-past-chunks` (warning) in place of `wav.truncated`: the file may have lost chunks after its last (a file cut at a chunk boundary meets the same condition), or the size counts chunks that were never written. The size must count at least 8 bytes (24 in Wave64) past the file, as no chunk fits in fewer; fewer is a cut, `wav.truncated`. The message gives how many bytes the size counts beyond the file. Wave64 raises it for its riff chunk the same way.
 - A pad byte that is missing where the next chunk starts right after an odd chunk is `wav.pad-byte-missing`; the parser follows the layout that gives a valid chunk ID next. A nonzero pad byte is `wav.pad-byte-not-zero`.
 
 ## Reported
 
-A `fact` chunk before the data whose body starts with `lossyWAV ` holds text, not a sample length: lossyWAV 1.4.2 writes its version, the date and time of the run and its settings there. It is shown as a "Text" node, no sample length is read from it, and so neither `wav.fact-samples-mismatch` nor Container Samples and Container Duration appear for it. The analyzer does not yet name lossyWAV from it. `lossywav-stdout.wav` is the output of `lossyWAV --stdout`, which leaves the `fact` chunk out but states a RIFF size that still counts it (`wav.riff-size-past-chunks`, 68 bytes); the other `lossywav-*` files in `tests/fixtures/wav` keep the chunk.
+A `fact` chunk before the data whose body starts with `lossyWAV ` holds text, not a sample length:
+
+- lossyWAV 1.4.2 writes its version, the date and time of the run and its settings there.
+- It is shown as a "Text" node. No sample length is read from it, so neither `wav.fact-samples-mismatch`, nor `wav.fact-missing`, nor Container Samples and Container Duration appear for it.
+- The analyzer does not name the program from it.
+- `lossywav-stdout.wav` is the output of `lossyWAV --stdout`: it has no `fact` chunk but states a RIFF size that still counts it (`wav.riff-size-past-chunks`, 68 bytes). The other `lossywav-*` files in `tests/fixtures/wav` keep the chunk.
 
 A fact chunk's sample length is also reported as **Container Samples**, with **Container Duration** at the sample rate, beside the samples the data holds.
 

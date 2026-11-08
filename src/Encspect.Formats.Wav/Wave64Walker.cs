@@ -143,6 +143,7 @@ internal static class Wave64Walker
             if (padPresent < padLength)
             {
                 Node at = chunk;
+                s.IsWalkCut = true;
                 long missing = padLength - padPresent;
                 s.Findings.Add(Severity.Warning, "wav.pad-byte-missing", at, _ =>
                     $"The chunk is followed by {Counts.Of(missing, "byte", "bytes")} too few of the padding that takes it to a multiple of 8 bytes.");

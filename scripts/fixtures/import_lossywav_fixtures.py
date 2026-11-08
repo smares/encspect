@@ -9,7 +9,12 @@ and checked by content, never regenerated. This script never runs lossyWAV.
 
 For each file of the sets below it checks the SHA-256 and size against the artifact's manifest, copies it, and writes
 `<name>.provenance.json` (where it came from, the settings, and the SHA-256) and, for a WAV file, `<name>.expected.json` from wav_model.py,
-with the findings the analyzer must raise. A file already there is left alone unless it has the same bytes or --force is given.
+with the findings the analyzer must raise.
+
+The manifest's `arguments` leave out `--stdout` for the stdout file (it is a second run of the same input), so the importer adds it, and its
+`lossyWavCheck` is the answer for the `.lossy.wav` of the same run, not for the committed file. The importer therefore records that answer as
+`lossyWavCheckOfLossyFile` and derives the committed file's own from its bytes by lossyWAV's rule (a fact chunk before the data whose text starts
+with lossyWAV; `--check` looks at nothing else): exit 255 and "already processed" if there is one, exit 0 and "not marked" if not. A file already there is left alone unless it has the same bytes or --force is given.
 
 The sets that are imported so far are the WAV files (PR 0 of docs/design/lossywav-detection.md); the FLAC, WavPack and Monkey's Audio files
 join with the change that reads their marker.
@@ -42,6 +47,16 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def own_check(data):
+    """lossyWAV's --check answer for the file, by its rule (the design's probes), never by running it."""
+    for chunk in m.read(data)["chunks"]:
+        if chunk["id"] == "data":
+            break
+        if chunk["id"] == "fact" and data[chunk["offset"] + 8:chunk["offset"] + 8 + chunk["length"]].startswith(b"lossyWAV"):
+            return {"exit": 255, "answer": "already processed", "basis": "derived from the file's bytes by lossyWAV's rule"}
+    return {"exit": 0, "answer": "not marked", "basis": "derived from the file's bytes by lossyWAV's rule"}
+
+
 def main():
     arguments = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(arguments) != 1:
@@ -60,6 +75,7 @@ def main():
             raise SystemExit(f"{relative}: already committed with other bytes; --force replaces it")
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(artifact / "fixtures" / record["path"], target)
+        run_arguments = [*record["arguments"], "--stdout"] if record["kind"] == "stdout" else record["arguments"]
         stem = target.parent / target.name[:-len(target.suffix)]
         provenance = {
             "file": target.name,
@@ -69,15 +85,16 @@ def main():
             "workflow": RUN,
             "input": record["input"],
             "inputSha256": record["inputSha256"],
-            "arguments": record["arguments"],
+            "arguments": run_arguments,
             "kind": record["kind"],
-            "lossyWavCheck": record["lossyWavCheck"],
+            "lossyWavCheck": own_check(data),
+            "lossyWavCheckOfLossyFile": record["lossyWavCheck"],
         }
         pathlib.Path(f"{stem}.provenance.json").write_text(json.dumps(provenance, indent=1) + "\n", encoding="utf-8")
         expected = m.manifest(data)
         expected["findings"] = [{"code": code} for code in findings]
         expected["tool"] = "lossyWAV 1.4.2 (POSIX port)"
-        expected["arguments"] = record["arguments"]
+        expected["arguments"] = run_arguments
         pathlib.Path(f"{stem}.expected.json").write_text(json.dumps(expected, indent=1) + "\n", encoding="utf-8")
         print(f"{relative}: {record['size']} bytes")
 

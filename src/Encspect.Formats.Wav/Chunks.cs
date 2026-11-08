@@ -124,10 +124,9 @@ internal static class Chunks
         f.Reader.Position = start;
         if (isLossyWav)
         {
-            long at = start;
-            string text = f.ReadText(length).TrimEnd('\r', '\n');
-            Node textNode = chunk.Add("Text", at, length, text, Explain.FactText);
-            chunk.Value = textNode.Value;
+            s.IsFactText = true;
+            string text = f.Text("Text", length, Explain.FactText);
+            chunk.Children[^1].Value = text.TrimEnd('\r', '\n');
             return;
         }
 

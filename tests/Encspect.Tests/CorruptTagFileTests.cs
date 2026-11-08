@@ -239,10 +239,10 @@ public class CorruptMonkeysAudioBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The WAV fixtures written by FFmpeg, each analyzed with and without decoding and measuring.
+// The WAV fixtures written by FFmpeg and by lossyWAV, each analyzed with and without decoding and measuring.
 public class CorruptWavFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wav/external-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wav/external-", StringComparison.Ordinal) || n.StartsWith("wav/lossywav-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
