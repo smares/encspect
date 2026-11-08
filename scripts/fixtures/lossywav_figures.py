@@ -105,7 +105,17 @@ def grid_of(phase, changes, unit=SPAN, bins=BINS, smallest=MIN_GRID):
 
 
 def figures(path, thin=THIN):
-    wav = read_wav(path)
+    return figures_of(read_wav(path), path, thin)
+
+
+def pcm_of(channels, rate, bits):
+    """The samples of lists of integers (one list a channel) as the dictionary figures_of reads, as read_wav returns it."""
+    frames = len(channels[0])
+    values = [channels[c][i] for i in range(frames) for c in range(len(channels))]
+    return {"rate": rate, "channels": len(channels), "bits": bits, "frames": frames, "values": values, "chunks": []}
+
+
+def figures_of(wav, path="", thin=THIN):
     channels, bits = wav["channels"], wav["bits"]
     cells = spans(wav)
     histogram = [0] * (bits + 1)

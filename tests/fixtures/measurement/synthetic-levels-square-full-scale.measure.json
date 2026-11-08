@@ -85,6 +85,37 @@
       "bitDepth": {
         "lowBitsUnused": 0,
         "highestMagnitude": 32768
+      },
+      "lowBitsPerSpan": {
+        "spanLength": 32,
+        "spans": 157,
+        "silentSpans": 0,
+        "thinSpans": 33,
+        "shortSpans": 1,
+        "distribution": [
+          {
+            "lowBitsUnused": 0,
+            "spans": 124
+          },
+          {
+            "lowBitsUnused": 15,
+            "spans": 33
+          }
+        ],
+        "spansAboveLowBitsUnused": {
+          "count": 33,
+          "of": 157,
+          "unit": "spans",
+          "percent": 21
+        },
+        "changes": {
+          "count": 0
+        },
+        "grid": {
+          "samples": null,
+          "changesOnGrid": 0,
+          "changes": 0
+        }
       }
     },
     "loudness": {
