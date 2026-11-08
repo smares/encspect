@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the byte-exact Xing, Info, LAME tag and VBRI fixtures in tests/fixtures/vbr.
+"""Writes the byte-exact Xing, Info, LAME tag and VBRI fixtures in tests/fixtures/mpeg/vbr.
 
 Each fixture is a Layer III stream whose first frame holds a VBR header (see vbr_tags.py for the
 layouts and their sources), followed by frames with zero side information, which every decoder
@@ -33,7 +33,7 @@ import make_layer3_fixtures as layer3
 from make_layer3_fixtures import Bits, Granule, Layer3Fixture, Layer3Frame
 from make_mpeg_fixtures import Fixture, Frame
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "vbr"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "vbr"
 
 
 class VbrFixture(Fixture):

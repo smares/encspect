@@ -2568,7 +2568,7 @@ def tags_only():
 # must still be reported unchanged, and no forged identifier may produce a warning or an error
 # beyond the case's "findings": an identifier written into the ID3v1 year makes it not a number.
 
-COLLISIONS_OUT = OUT.parent / "collisions"
+COLLISIONS_OUT = OUT / "collisions"
 
 COLLISION_IDENTIFIERS = ["TAG", "TAG+", "ID3", "3DI", "APETAGEX", "LYRICSBEGIN", "LYRICSEND", "LYRICS200", "000040LYRICS200"]
 

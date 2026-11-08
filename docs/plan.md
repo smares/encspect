@@ -129,6 +129,7 @@ Every lossless format with a decoder design is decoded and measured, except WMA 
    - **Limits:** silence and audio truncated on purpose also have zeroed bits, and processing after lossyWAV (gain, dither, resampling) removes the pattern. Another tool that zeroes bits per block the same way looks the same.
 3. **The ALAC and TTA decoders,** small and exact, checked bit for bit (the lead, 2026-11-08); steps L1 and L2 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order).
 4. **TAK and OptimFROG at header level** ([planned.md](formats/planned.md#in-02-header-level-only)). Both are poorly documented, so they get only what their headers reveal.
+   - Where a header stores the encoder's settings (OptimFROG's mode and speedup, TAK's preset), they are read and named, as Monkey's Audio's compression level and WavPack's mode flags are; whether each header holds them is checked against a source that can be verified and against files the encoders write (the lead, 2026-11-08).
 5. **Two level figures** from step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout), which need no lossy decoder: a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00, so only its negative runs count today).
 
 ### 0.3: Lossy formats measured
@@ -156,7 +157,13 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - Matroska header stripping for AAC, AC-3, DTS and MPEG audio (mkvmerge writes it): a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
 3. **The small separate items:** WavPack 1 to 3; finding the `.wvc` that belongs to a `.wv` (host access to a companion file); ASF script command and marker contents.
 4. **The coding graphs of formats whose data the parsers already read,** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
-5. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
+5. **A guess at the FLAC compression level** (the lead, 2026-11-08). The frames do not store the level, but each libFLAC level picks a typical block size, maximum predictor order and partition order.
+   - Named as the encoder's settings with a confidence, as LAME's presets are, from reference files of each level, across libFLAC versions, and of FFmpeg's encoder, whose defaults differ.
+   - Levels that share their settings are named together, never one of them by chance.
+6. **PASC (the Digital Compact Cassette's coding) told apart from MPEG-1 Layer I** (the lead, 2026-11-08). PASC streams are Layer I bitstreams, so nothing in the syntax names them.
+   - First a research step: the traits a DCC recorder or Philips' encoder leaves (the fixed 384 kbps, the header bits it sets, its allocation habits), from sources that can be checked and from real DCC transfers, since the DCC standard (IEC 61119) is sold and is not bought.
+   - Then, only where files back them, an encoder claim with a confidence, as for other encoders; otherwise the research is recorded and the item goes under "Not planned".
+7. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
 
 ### 0.5: AAC and WMA
 
