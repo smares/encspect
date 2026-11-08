@@ -174,7 +174,7 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 3. **WMA standard, Professional and Lossless,** each after its clean-room supplement, with Microsoft's decoder as the reference.
 4. **AAC Main, LTP and ER AAC.**
 5. **USAC** (xHE-AAC).
-6. **WMA Voice,** only if the lead wants it (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
+6. **WMA Voice,** after its clean-room supplement. The lead wants it covered, as Speex is (2026-11-08; decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
 
 ### After 0.5
