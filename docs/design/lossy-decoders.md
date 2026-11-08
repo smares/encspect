@@ -77,7 +77,7 @@ Value is how many files a decoder makes measurable and how much the measurements
 | 11, 12 | WMA standard, Professional, and WMA Lossless | medium | high: clean-room supplements of the reconstruction come first (decision 12) | Microsoft's decoder on the Windows runners is the reference; WMA Lossless shares the clean-room write-up and is checked bit for bit |
 | 13 | AAC Main, LTP and ER AAC | low | medium | rare object types |
 | 14 | USAC (xHE-AAC) | low today | highest: a second codec (arithmetic coding, LPD with ACELP and TCX, eSBR, MPEG Surround 2-1-2) | last but one |
-| 15 | WMA Voice | low | high: a speech codec with many tables, clean-room | last, and only if the lead wants it |
+| 15 | WMA Voice | low | high: a speech codec with many tables, clean-room | last (the lead wants it, 2026-11-08) |
 
 ## Sources and licenses
 
@@ -634,7 +634,7 @@ The steps follow [Order](#order); each is one pull request for the decoder, with
 9. **AAC LC,** after its clean-room description (decision 1), and 10. **HE-AAC**.
 11. **WMA standard** and 12. **WMA Professional,** each after its clean-room supplement, with Microsoft's decoder writing PCM on the Windows runner.
 13. **AAC Main, LTP and ER AAC,** with AAC-ELD's Coded Bandwidth, and 14. **USAC,** with xHE-AAC's.
-15. **WMA Voice,** if the lead wants it.
+15. **WMA Voice,** after its clean-room supplement (the lead, 2026-11-08).
 
 Each step brings:
 
@@ -677,7 +677,7 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
 11. **Integer or float:** Opus with the float CELT (normative, unclipped; SILK and the range state exact); Speex with the fixed-point decoder, bit-exact, the enhancer on.
     - Considered: the fixed-point CELT, bit-exact but limited to 16 bits.
     - Considered: the float Speex decoder within the tolerance.
-12. **WMA:** clean-room supplements of the reconstruction for standard and Professional; Voice last, and only if wanted.
+12. **WMA:** clean-room supplements of the reconstruction for standard, Professional and Voice; Voice last. The lead wants Voice decoded, as Speex is (2026-11-08).
     - Considered: no WMA decoding.
 13. **A change of channel mode inside an MPEG stream:** the decoder keeps the stream's channels (a mono frame on both, a stereo frame averaged).
     - Considered: the parser splitting the stream, with golden churn.
