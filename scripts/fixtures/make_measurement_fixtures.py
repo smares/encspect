@@ -470,15 +470,15 @@ def add_lowbits():
     half = rate // 2
     build("mixed-16-24", "The same signal in 24 bits: the first half truncated to 16 bits, the second half whole.",
           [[((v >> 8) << 8) if i < half else v for i, v in enumerate(c)] for c in unprocessed], 24)
-    long = source(2 * rate)
+    long = source(5 * rate)
     blocks = [list(c) for c in long]
-    for start in range(0, 2 * rate, 4096):
+    for start in range(0, 5 * rate, 4096):
         for c in range(2):
             peak = max(1, max(abs(v) for v in blocks[c][start:start + 4096]))
             k = max(6, min(12, peak.bit_length() - 11))
-            for i in range(start, min(2 * rate, start + 4096)):
+            for i in range(start, min(5 * rate, start + 4096)):
                 blocks[c][i] = (blocks[c][i] >> k) << k
-    build("other-4096", "A noise-floor signal of 2 s in 24 bits with a count of 6 to 12 low bits zeroed per block of 4,096 samples and channel, as another tool might: its grid is 4,096.", blocks, 24)
+    build("other-4096", "A noise-floor signal of 5 s in 24 bits with a count of 6 to 12 low bits zeroed per block of 4,096 samples and channel, as another tool might: its grid is 4,096.", blocks, 24)
     alaw_file = (ROOT / "tests" / "fixtures" / "wav" / "external-alaw-mono-8000.wav").read_bytes()
     at = alaw_file.index(b"data")
     codes = alaw_file[at + 8:at + 8 + int.from_bytes(alaw_file[at + 4:at + 8], "little")]
