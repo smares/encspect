@@ -2,7 +2,7 @@
 the C# tests compare the analyzer's report with, and a decoder whose output is the reference for the fixtures' decoded audio. It also holds
 the writer that builds the hand-made fixtures (FlacWriter).
 
-Frames are found as the analyzer finds them (the rule is in the plan, "Tag detection and false positives", and CLAUDE.md): in sequence from
+Frames are found as the analyzer finds them (the rule is in docs/architecture.md, "Tag detection and false positives", and CLAUDE.md): in sequence from
 the end of the metadata, and after damage by a search for a header that reads, agrees with STREAMINFO, has a CRC-16 that holds over the
 frame its subframes walk to, and is followed by the end of the data or another such header. The model is a second reading of the
 specification, written separately from the analyzer's C#; crosscheck_flac_fixtures.py confirms both against flac, ffprobe and FFmpeg.

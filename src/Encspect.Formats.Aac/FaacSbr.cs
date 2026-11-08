@@ -32,7 +32,7 @@ internal static class FaacSbr
     public const int HeaderPeriod = 30;
 
     // Access units with SBR data that the layout needs before it names an encoder: 20, as for any
-    // evidence that is a behavior (the plan's guidance). The header's constants alone would not justify
+    // evidence that is a behavior (docs/architecture.md, "Encoder and writer"). The header's constants alone would not justify
     // fewer: they are a handful of fields, and the plain data (no coupling, no time-coded envelopes)
     // is what makes the layout specific, which needs frames to show.
     private const int MinimumPayloads = 20;

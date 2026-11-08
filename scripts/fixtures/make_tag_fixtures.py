@@ -1543,7 +1543,7 @@ def id3v24_seek_to_tag_with_warnings():
     f = Fixture(
         "id3v24-seek-to-tag-with-warnings",
         "ID3v2.4 SEEK frame pointing at a tag that sets an undefined frame flag. The guided search accepts only a fully "
-        "validated tag (plan, tag detection rule 1), so the tag stays data and the SEEK frame finds nothing.",
+        "validated tag (architecture.md, tag detection rule 1), so the tag stays data and the SEEK frame finds nothing.",
     )
     f.tag("ID3v2", "2.4.0", seek_tag("Lead", 300), "High", {"SEEK/Minimum Offset": "300"})
     flagged = id3v2(4, [frame24("TIT2", text_frame_data(UTF8, ["Flagged"]), status=0x80)])
@@ -1850,7 +1850,7 @@ def ape_leading_truncated():
     f = Fixture(
         "ape-leading-truncated",
         "Leading APEv2 header declaring more bytes than the file has: its size points outside the file, so the extent "
-        "is unknown and the candidate is rejected (plan, rule 2).",
+        "is unknown and the candidate is rejected (architecture.md, tag detection rule 2).",
     )
     f.add(ape_tag([ape_item("Title", "Cut")], header_overrides={"size": 5000})[:32 + 15], {"name": "Data"})
     f.finding("tag.rejected", "size points outside the file")

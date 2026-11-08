@@ -122,14 +122,14 @@ What the lead asked for:
 
 What the plan already settles, and this design keeps:
 
-- Both front ends are thin views over the same result model, "so neither can show something the other cannot" (plan, "CLI and GUI"). Every graph and summary the GUI draws is therefore in the JSON report, and its summary in the text tree.
-- The GUI draws its own graphs, from the streams' series alone, without a charting library (plan, "CLI and GUI"; [gui.md](../gui.md#graphs), "Graphs").
+- Both front ends are thin views over the same result model, "so neither can show something the other cannot" ([gui.md](../gui.md), once the plan's "CLI and GUI"). Every graph and summary the GUI draws is therefore in the JSON report, and its summary in the text tree.
+- The GUI draws its own graphs, from the streams' series alone, without a charting library ([gui.md](../gui.md#graphs), "Graphs").
 - Front ends read kinds and streams, never node names ([`CLAUDE.md`](../../CLAUDE.md)).
 - Reports keep compact records per frame and a bounded number of bytes per frame (`MemoryTests`).
 
 What is not in scope:
 
-- Anything that needs the entropy-coded data the parsers do not walk: Layer III scalefactors and Huffman-coded spectra, DTS core subframes, Vorbis floors and residues, Opus SILK and CELT, Musepack SV8 frames inside packets. The plan puts these under "Later" ("An entropy pass, format by format").
+- Anything that needs the entropy-coded data the parsers do not walk: Layer III scalefactors and Huffman-coded spectra, DTS core subframes, Vorbis floors and residues, Opus SILK and CELT, Musepack SV8 frames inside packets. The plan put these under "Later" ("An entropy pass, format by format"); since 2026-11-08 each comes with its format's decoder in the [milestones](../plan.md#milestones).
 - Anything from decoded audio (lowpass measured from the spectrum, waveform, spectrogram), which the [decoder design](decoders.md) leaves to host-side PCM analyses.
 
 Sources read for this design:
@@ -253,7 +253,7 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 | Sum/difference coding | SUMF (front pair), SUMS (surround pair), 5.4.2 | yes (`Facts`: `IsSumDifferenceFront`, `IsSumDifferenceSurround`) | no | 1 byte per frame, recorded while reading (or derived from `Facts` if the pull request keeps it there) | code | 2 |
 | Joint intensity coding | JOINX per channel (5.4.3) | read into the syntax walker's array `_joinx` only, not kept in `Facts` | no | 1 byte per channel, recorded while reading | code | 2 |
 | Frames by kind and extension | core, XCh, X96, XXCH, extension substream | yes | "Frames With Extension" and the frame counts | 1 byte per frame | code | later |
-| Transient modes | TMODE per subband, in the subframes | no (core subframes are "Later" in the plan) | no | | spec | later |
+| Transient modes | TMODE per subband, in the subframes | no (core subframes come with the DTS core decoder in 0.4) | no | | spec | later |
 
 - Joint intensity coding fills a channel's subbands above its active ones from a source channel, so the highest active subband over all channels is the coded bandwidth (the parser's description of SUBS).
 
@@ -689,7 +689,7 @@ The lead asked that where other formats have concepts like MP3's, they are graph
 | **Coded Bandwidth** | "Coded Bandwidth", Layers I and II (wave 1) | "Coded Bandwidth" (wave 1) | "Coded Bandwidth", "Blocks With Spectral Extension" (E-AC-3; wave 1) | not a series (residue_end is fixed per residue) | the signaled "Bandwidths", a different figure | "Coded Bandwidth" (wave 1) | "Coded Bandwidth" (wave 2) | none | "Coded Bandwidth" of the core (wave 2) | none: time-domain prediction, no frequency bands | none: as FLAC | none: as FLAC | none: PCM |
 
 - **Not yet read, and what each needs:**
-  - **DTS.** SUMF and SUMS are read and kept in `Facts`; JOINX and SUBS are read (the audio coding header, code at 2310aa3) but live only in the syntax walker's arrays (`_joinx`, `_subs`). Keeping them costs a few bytes per frame in the kept record (`UnitRecord`: 1 byte per channel for JOINX, and the coded bandwidth's 8-byte value is built from SUBS), or they are recorded while reading; either way no new per-frame state beyond that. They are wave 2. The transient modes (TMODE) sit in the core subframes, behind side information of variable length (prediction modes, bit allocation, transition modes; ETSI TS 102 114 clause 5, section number **unverified** here). They need a subframe side information reader, which the plan puts under "Later"; they are a later wave.
+  - **DTS.** SUMF and SUMS are read and kept in `Facts`; JOINX and SUBS are read (the audio coding header, code at 2310aa3) but live only in the syntax walker's arrays (`_joinx`, `_subs`). Keeping them costs a few bytes per frame in the kept record (`UnitRecord`: 1 byte per channel for JOINX, and the coded bandwidth's 8-byte value is built from SUBS), or they are recorded while reading; either way no new per-frame state beyond that. They are wave 2. The transient modes (TMODE) sit in the core subframes, behind side information of variable length (prediction modes, bit allocation, transition modes; ETSI TS 102 114 clause 5, section number **unverified** here). They need a subframe side information reader, which comes with the DTS core decoder in 0.4 of the [plan](../plan.md#04-free-decoders-and-routes-complete); they are a later wave.
   - **Opus CELT.** Its transient flag, intensity and dual stereo, and the mid/side coding of a stereo band (CELT's default unless dual stereo is set, RFC 6716 clause 4.3, **unverified** here), are coded by the range decoder in the frame. The Opus parser reads the TOC byte and the frame packing and does not run the range decoder, so none of these can be graphed until the entropy pass: a later wave.
 - **Naming decision.** The concept is one heading; the series keep the names of their tallies, so no golden is renamed for it:
   - **AC-3's rematrixing is grouped under "Stereo Coding" and keeps its specification name.** It codes the left and right channels' bands as sum and difference (A/52 5.4.3.20, 2/0 only), the operation mid/side stereo names in Layer III and AAC. "One concept, one name" argues for renaming it; against that, the existing node "Blocks With Rematrixing" and "Bands Coded as Sum/Difference" are the specification's words, rematrixing is chosen per band and block and exists only in 2/0, and a rename would change every AC-3 golden for a label. The heading carries the comparison, and the descriptions carry the concept: the descriptions of the rematrixing nodes and series (and of DTS' SUMF and SUMS) and the `mid-side-stereo` article word it as mid/side coding, for example "mid/side (sum/difference) coding of the band". The node names stay the existing specification-derived ones; renaming would change every AC-3 golden for no gain in meaning, since the description says the shared concept. [`CLAUDE.md`](../../CLAUDE.md) is not changed.
