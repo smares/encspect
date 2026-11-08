@@ -180,7 +180,7 @@ MP3 came first, then the other lossy formats, then the lossless ones; each later
 | Gate 2 | Pipeline green, review findings fixed | passed, 2026-10-18 at fa4e0c5 |
 | 3 (lossless) | FLAC, WAV and AIFF, ALAC, WMA Lossless frames, Monkey's Audio, TTA, Dolby TrueHD and MLP; decoders for the codings that store a checksum over decoded audio | built |
 | Gate 3 | Pipeline green, review findings fixed | passed, 2026-11-01 at 5f054cc |
-| 3, continued | Official-decoder cross-checks (built); lossyWAV and lossyFLAC detection (paused) | see "Phase 3, continued" |
+| 3, continued | Official-decoder cross-checks (built); lossyWAV and lossyFLAC detection (design drafted) | see "Phase 3, continued" |
 | Next | Lossy decoders | in design |
 | 4 | TAK and OptimFROG at header level only ([planned.md](formats/planned.md#phase-4-header-level-only)) | planned |
 | 5 | More formats, the better documented first | planned |
@@ -294,7 +294,7 @@ After Gate 3, in this order:
    - Windows has no decoder for AC-3 and E-AC-3 on any runner image, so step 7 does not apply.
    - DTS, DTS-HD, TrueHD and MLP have no freely available official decoder; FFmpeg stays their reference.
    - Each difference from FFmpeg that would change counts, findings or goldens goes to the project lead before the analyzer follows it.
-2. **lossyWAV and lossyFLAC detection:** paused (see [Paused and on hold](#paused-and-on-hold)).
+2. **lossyWAV and lossyFLAC detection:** resumed by the project lead on 2026-11-08; the design is drafted for the lead in [lossywav-detection.md](design/lossywav-detection.md), which replaces the paused text under [Paused and on hold](#paused-and-on-hold).
 
 #### Gap audits
 
@@ -331,7 +331,7 @@ After Gate 3, in this order:
 
 ### Paused and on hold
 
-- **lossyWAV and lossyFLAC detection:** paused by the project lead. The plan as it stood:
+- **lossyWAV and lossyFLAC detection:** resumed on 2026-11-08 ([lossywav-detection.md](design/lossywav-detection.md), which checked the text below against lossyWAV's files and corrects it: the counts are per channel by default, and the marker is a `fact` chunk). The plan as it stood:
   - lossyWAV sets the lowest bits of every channel to zero in fixed blocks, as many in each block as its noise allows, so that a lossless coder stores them almost for free; lossyFLAC is its output in FLAC at the same block size;
   - the pattern: zeroed low bits in most blocks, in all channels at once, a count that changes from block to block, and block edges on one fixed grid. Audio that is lossless throughout has none or a constant count (a 16-bit recording in a 24-bit file);
   - FLAC from the wasted bits of each subframe, which the parser reads already; WavPack, Monkey's Audio, TrueHD and WAV from a measurement of the decoded audio;
