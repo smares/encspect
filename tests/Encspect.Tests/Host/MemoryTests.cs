@@ -2555,7 +2555,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     [Fact]
     public void AdifBlocksPastTheCapStayBounded()
     {
-        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"))[..17];
+        byte[] header = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "adif.aac"))[..17];
         byte[] data = [.. header, .. Enumerable.Repeat((byte)0xE0, Adif.MaxBlocks + 1_000)];
 
         Report report = Bounded("end-blocks.aac", data, 320_000_000, "aac.blocks-limit");
@@ -2591,7 +2591,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     public void AdtsThatChangesItsHeaderStaysBounded()
     {
         const int runs = 6_000;
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "stream-change.aac"));
         byte[][] frames = [source[..13], source[503..516]];
         var data = new MemoryStream();
         for (int run = 0; run < runs; run++)

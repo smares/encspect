@@ -153,15 +153,15 @@ public class AacGraphsTests
         surround.Close();
 
         // The hand-built pairs of every stereo coding, with the reserved one.
-        DetailWindow pairs = Open(Path.Combine(Fixtures.Directory, "adts", "stereo-coding.aac"));
+        DetailWindow pairs = Open(Path.Combine(Fixtures.Directory, "aac", "adts", "stereo-coding.aac"));
         Choose(pairs, "Stereo Coding", GraphForm.Summary);
         ScreenshotTests.Save(pairs, $"aac-hand-built-stereo-coding-summary-{variant}.png");
         pairs.Close();
-        DetailWindow reserved = Open(Path.Combine(Fixtures.Directory, "adts", "stereo-coding-reserved.aac"));
+        DetailWindow reserved = Open(Path.Combine(Fixtures.Directory, "aac", "adts", "stereo-coding-reserved.aac"));
         Choose(reserved, "Stereo Coding", GraphForm.Frames);
         ScreenshotTests.Save(reserved, $"aac-hand-built-reserved-frames-{variant}.png");
         reserved.Close();
-        DetailWindow elements = Open(Path.Combine(Fixtures.Directory, "adts", "stereo-coding-elements.aac"));
+        DetailWindow elements = Open(Path.Combine(Fixtures.Directory, "aac", "adts", "stereo-coding-elements.aac"));
         Choose(elements, "Stereo Coding", GraphForm.Frames);
         ScreenshotTests.Save(elements, $"aac-hand-built-elements-stereo-coding-frames-{variant}.png");
         elements.Close();

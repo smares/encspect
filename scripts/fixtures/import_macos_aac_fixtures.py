@@ -11,7 +11,7 @@ a file that is the same bytes as an earlier one is not imported twice. It then c
 and unrewritten:
 
 - AAC in M4A, MP4, 3GP and ADTS to tests/fixtures/aac/apple-<name>, where the other encoders'
-  files are (the GOLDEN set, which has manifests and golden reports), or to tests/fixtures/apple (the rest), and Apple Lossless to tests/fixtures/alac/apple-<name> (ALAC is phase 3: the analyzer
+  files are (the GOLDEN set, which has manifests and golden reports), or to tests/fixtures/aac/apple (the rest), and Apple Lossless to tests/fixtures/alac/apple-<name> (ALAC is phase 3: the analyzer
   shows the container and an unknown codec today, and the files wait for its parser);
 - AAC in CAF to tests/fixtures/caf/apple-<name>.caf, for a container the analyzer does not read yet.
 
@@ -159,7 +159,7 @@ def runner(environment):
 
 # The files with a manifest and a golden report in tests/fixtures/aac, which the MP4 fixture tests and the cross-check walk;
 # a golden report is 0.6 to 1.7 MB, so the others (the other runner's, the rest of the containers and options) go to
-# tests/fixtures/apple, where only AppleEncoderTests reads them.
+# tests/fixtures/aac/apple, where only AppleEncoderTests reads them.
 GOLDEN = {
     "lc-m4a-cbr-st44", "lc-adts-cbr-st44", "he-m4a-cbr-st44", "he-m4a-cbr-mono44", "hev2-m4a-cbr-st44", "hev2-adts-cbr-st44",
     "aacl-m4a-cbr-mono44", "aace-m4a-cbr-mono44",
@@ -172,7 +172,7 @@ def destination(encode, runner=False):
         return FIXTURES / "alac", extension
     if encode["file_type"] == "caff":
         return FIXTURES / "caf", extension
-    return (FIXTURES / "aac" if encode["name"] in GOLDEN and not runner else FIXTURES / "apple"), extension
+    return (FIXTURES / "aac" if encode["name"] in GOLDEN and not runner else FIXTURES / "aac" / "apple"), extension
 
 
 def import_encode(artifact, encode, sources, environment, force, allow_large, prefix="apple-", identical=None):

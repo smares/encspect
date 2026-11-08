@@ -357,7 +357,7 @@ public class MpegCodingSeriesTests
     [Fact]
     public void The_first_stream_of_a_region_that_holds_two_has_no_joint_stereo_modes_of_the_second()
     {
-        Report report = Fixtures.AnalyzeMpeg("vbr/lame-after-joined-frames.mp3");
+        Report report = Fixtures.AnalyzeMpeg("mpeg/vbr/lame-after-joined-frames.mp3");
 
         Assert.Equal(2, report.Streams.Count);
         Assert.Equal([false, true], report.Streams.Select(s => Series(s, "Joint Stereo Modes") is not null));

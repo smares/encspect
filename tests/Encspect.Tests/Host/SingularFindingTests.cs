@@ -47,7 +47,7 @@ public class SingularFindingTests
 
     // One byte of junk before the first frame and after the last, in each raw format: the same wording everywhere, "1 byte … is not …".
     [Theory]
-    [InlineData("adts/stereo.aac", "aac")]
+    [InlineData("aac/adts/stereo.aac", "aac")]
     [InlineData("ac3/external-ffmpeg-mono-96k.ac3", "ac3")]
     [InlineData("dts/external-ffmpeg-mono-8k-64k.dts", "dts")]
     [InlineData("mpeg/external-lame-cbr128-joint.mp3", "mpeg")]

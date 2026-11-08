@@ -101,7 +101,7 @@ public class AacEvidenceTests
     [Fact]
     public void SbrDataInAFewBlocksOnlyIsReported()
     {
-        Report report = Fixtures.AnalyzeMpeg("adts/sbr-in-one-block.aac");
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/sbr-in-one-block.aac");
 
         Assert.Equal("AAC LC", Assert.Single(report.Streams).Codec);
         Assert.Contains(report.Findings, f => f.Code == "aac.sbr-data-sparse");

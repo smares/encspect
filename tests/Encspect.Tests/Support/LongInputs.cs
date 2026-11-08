@@ -21,7 +21,7 @@ internal static class LongInputs
     {
         "mpeg-layer3-lame" => Repeat("mpeg/external-lame-cbr128-joint.mp3", 94),
         "mpeg-layer3-frames" => Layer3Frames(2060),
-        "adts" => Repeat("adts/stereo.aac", 345),
+        "adts" => Repeat("aac/adts/stereo.aac", 345),
         "ac3" => Repeat("ac3/external-ffmpeg-stereo-192k.ac3", 129),
         "eac3" => Repeat("ac3/external-ffmpeg-eac3-stereo-96k.eac3", 129),
         "dts" => Repeat("dts/external-ffmpeg-stereo-44k-256k.dts", 47),
@@ -273,7 +273,7 @@ internal static class LongInputs
     // An ADIF file: the header of the fixture and its raw data blocks repeated.
     private static byte[] AdifBlocks(int blocks)
     {
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"));
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "adif.aac"));
         Report report = Analyzer.CreateDefault().Analyze("adif.aac", new MemoryStream(source));
         Node first = report.Root.Children.Single(c => c.Name == "ADIF").Children.First(c => c.Name == "Raw Data Block");
         int header = (int)first.Offset;

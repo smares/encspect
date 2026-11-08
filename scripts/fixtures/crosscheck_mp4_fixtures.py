@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the MP4 and raw AAC fixtures' manifests against independent tools.
 
-For every fixture in tests/fixtures/mp4, tests/fixtures/adts and tests/fixtures/aac, its manifest's
+For every fixture in tests/fixtures/mp4, tests/fixtures/aac/adts and tests/fixtures/aac, its manifest's
 "crosscheck" says what to confirm:
 
 - "ffprobe": ffprobe (ffmpeg 8.0) must list exactly the manifest's access units as its audio packets,
@@ -81,7 +81,7 @@ import mediainfo_tool as mi
 import tool_versions
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mp4", ROOT / "adts", ROOT / "aac"]
+DIRECTORIES = [ROOT / "mp4", ROOT / "aac" / "adts", ROOT / "aac"]
 EXTENSIONS = {".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"}
 
 

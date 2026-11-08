@@ -427,7 +427,7 @@ public partial class WriterRoleTests
         Assert.Equal(("LAME 3.100", "FFmpeg", Confidence.Low), (bitExact.Encoder, bitExact.Writer, bitExact.WriterConfidence));
 
         // ffmpeg's tag CRC over the frame's first 190 bytes is the muxer's layout, whatever the encoder string says
-        StreamInfo quirk = Assert.Single(Fixtures.AnalyzeMpeg("vbr/lame-ffmpeg-crc.mp3").Streams);
+        StreamInfo quirk = Assert.Single(Fixtures.AnalyzeMpeg("mpeg/vbr/lame-ffmpeg-crc.mp3").Streams);
         Assert.Equal(("FFmpeg", Confidence.Low), (quirk.Writer, quirk.WriterConfidence));
         Assert.StartsWith("FFmpeg (Lavc", quirk.Encoder, StringComparison.Ordinal);
     }

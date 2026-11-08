@@ -269,7 +269,7 @@ public class DtsTests
     [Fact]
     public void AdtsFollowedByDtsIsAdtsInEitherOrderOfTheParsers()
     {
-        byte[] adts = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "cbr.aac"));
+        byte[] adts = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "cbr.aac"));
         byte[] data = [.. adts, .. Fixture("core-16be.dts")];
         Assert.Equal("AAC", FormatOf(data));
         Assert.Equal("AAC", FormatOf(data, DefaultParsers.Formats.Reverse()));

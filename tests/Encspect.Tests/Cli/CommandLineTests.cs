@@ -258,7 +258,7 @@ public class CommandLineTests
         {
             File.Copy(Tagged, Path.Combine(folder, "a.mp3"));
             File.Copy(Path.Combine(Fixtures.FixtureDirectory, "mp4", "lc-implicit.m4a"), Path.Combine(folder, "b.bin"));
-            File.Copy(Path.Combine(Fixtures.FixtureDirectory, "adts", "cbr.aac"), Path.Combine(folder, "c.mp4"));
+            File.Copy(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "cbr.aac"), Path.Combine(folder, "c.mp4"));
 
             string mp4 = Run("--csv", "--only-format", "mp4", folder).Output;
             string aac = Run("--csv", "--only-format", "aac", folder).Output;

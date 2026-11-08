@@ -26,7 +26,7 @@ public partial class ContainerTests
     [InlineData("mpeg/trailing-garbage.mp3")]
     [InlineData("mpeg/stream-change-after-gap.mp3")]
     [InlineData("mpeg/leading-junk.mp3")]
-    [InlineData("layer2/crc-mismatch.mp2")]
+    [InlineData("mpeg/layer2/crc-mismatch.mp2")]
     public void MpegPayloadIsAnalyzedAsTheSameBytesInAFile(string fixture)
     {
         byte[] audio = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));

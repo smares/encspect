@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes the byte-exact MP4 fixtures in tests/fixtures/mp4 and the raw AAC (ADTS and ADIF) ones in
-tests/fixtures/adts.
+tests/fixtures/aac/adts.
 
 The MP4 files are built box by box (mp4_boxes.py): every size, table and offset is under control, and the
 access units are AAC raw data blocks that decoders play as silence, so the files decode while the parser
@@ -41,7 +41,7 @@ from mp4_boxes import (
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 MP4 = ROOT / "mp4"
-ADTS = ROOT / "adts"
+ADTS = ROOT / "aac" / "adts"
 
 STSD = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a"
 ESDS = STSD + "/esds/ES_Descriptor/DecoderConfigDescriptor"

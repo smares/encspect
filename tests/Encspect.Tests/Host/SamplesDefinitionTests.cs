@@ -384,7 +384,7 @@ public class SamplesDefinitionTests
         #region MPEG audio
         // Rule 2: a frame cut by the end of the data or by the next frame counts its declared 1,152 samples and is lost.
         { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
-        { "vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
+        { "mpeg/vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
         { "mpeg/cut-frame-stream-change.mp3", 6912, 1152 },
         { "mpeg/damaged-bitrate.mp3", 9216, 1152 },
         #endregion
@@ -480,13 +480,13 @@ public class SamplesDefinitionTests
         #region ADTS, ADIF and AAC
         // Rule 2: a cut frame counts its declared samples and is lost; rule 3: bytes skipped while searching for sync declare nothing; a block that breaks
         // the syntax (question 8) is lost; a declaration the bytes contradict (question 5) and a finding the reading survives are not.
-        { "adts/truncated.aac", 12288, 1024 },
-        { "adts/sbr-in-truncated-frame.aac", 4096, 2048 },
-        { "adts/damaged-header.aac", 29696, 0 },
-        { "adts/blocks-missing.aac", 10240, 0 },
-        { "adts/corrupt-syntax.aac", 21504, 6144 },
-        { "adts/corrupt-soft.aac", 21504, 0 },
-        { "adts/adif.aac", 20480, 0 },
+        { "aac/adts/truncated.aac", 12288, 1024 },
+        { "aac/adts/sbr-in-truncated-frame.aac", 4096, 2048 },
+        { "aac/adts/damaged-header.aac", 29696, 0 },
+        { "aac/adts/blocks-missing.aac", 10240, 0 },
+        { "aac/adts/corrupt-syntax.aac", 21504, 6144 },
+        { "aac/adts/corrupt-soft.aac", 21504, 0 },
+        { "aac/adts/adif.aac", 20480, 0 },
         #endregion
 
         #region MP4
@@ -819,8 +819,8 @@ public class SamplesDefinitionTests
     [InlineData(20)]
     public void AnAdifStreamWhoseLastBlockBreaksCountsItsDeclaredSamplesAndLosesThem(int cut)
     {
-        StreamInfo whole = AnalyzeCut("adts/adif.aac", 0).Streams.Single();
-        Report report = AnalyzeCut("adts/adif.aac", cut);
+        StreamInfo whole = AnalyzeCut("aac/adts/adif.aac", 0).Streams.Single();
+        Report report = AnalyzeCut("aac/adts/adif.aac", cut);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         StreamInfo stream = report.Streams.Single();
         Assert.Equal(whole.Samples, stream.Samples);

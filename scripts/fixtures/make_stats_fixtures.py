@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the stream statistics fixtures in tests/fixtures/stats.
+"""Writes the stream statistics fixtures in tests/fixtures/mpeg/stats.
 
 Every hand-built manifest lists each MPEG Audio region's statistics and each stream's figures (see
 stream_stats.py for the definitions); these fixtures are the ones built for them: several seconds of VBR audio for the
@@ -21,7 +21,7 @@ import make_mpeg_fixtures as mpeg
 from make_mpeg_fixtures import Frame
 from make_vbr_fixtures import LAME_CBR, LAME_VBR, VbrFixture, encoder, vbr_audio, vbri_frame, xing_frame
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "stats"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "stats"
 
 
 class StatsFixture(VbrFixture):

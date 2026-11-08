@@ -13,11 +13,11 @@ namespace Encspect.Tests;
 // as a listed difference whose recorded analyzer figure it still is. The trimmed figures (iTunSMPB, edit list) are held to the total of Core Audio's ExtAudioFile at the core rate in
 // the same way, and so are the converter's and the transform's totals beside the coded figure (the Source Reader's is a coded-stage witness). The findings of the aac codes (warnings and errors) must be the listed ones, so a finding that appears,
 // goes or moves fails here. An entry whose SHA-256 is not the fixture's is stale: it is listed and does not fail, since a regenerated fixture would otherwise need a new run before
-// its pull request could pass. tests/fixtures/apple has no goldens, so its files are not read here.
+// its pull request could pass. tests/fixtures/aac/apple has no goldens, so its files are not read here.
 public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
 {
     private static readonly string[] Statuses = ["explained", "noted", "pending", "follow", "keep", "build-dependent", "stale"];
-    private static readonly string[] Folders = ["aac", "adts", "mp4"];
+    private static readonly string[] Folders = ["aac", "aac/adts", "mp4"];
 
     // Lists go to the test output and, in the one CI job that sets ENCSPECT_OFFICIAL_SUMMARY (the rest shard on Linux), to the job summary, where they are seen
     // without opening a log; the other jobs would only repeat them.
@@ -52,7 +52,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData("aac")]
-    [InlineData("adts")]
+    [InlineData("aac/adts")]
     [InlineData("mp4")]
     public void ResultsNameTheirRunAndEveryStatusIsOneTheDesignDefines(string folder)
     {
@@ -131,7 +131,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
     // AAC fixtures that have no entry are listed, not failed: a new fixture is run by the next run of the workflow.
     [Theory]
     [InlineData("aac")]
-    [InlineData("adts")]
+    [InlineData("aac/adts")]
     [InlineData("mp4")]
     public void FixturesWithoutAnEntryAreListed(string folder)
     {
@@ -152,7 +152,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
     [MemberData(nameof(Entries))]
     public void AnalyzerFiguresEqualTheReferenceOrAreListedDifferences(string name)
     {
-        string folder = name[..name.IndexOf('/', StringComparison.Ordinal)];
+        string folder = name[..name.LastIndexOf('/')];
         string file = name[(folder.Length + 1)..];
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(ResultsPath(folder)));
         JsonElement entry = document.RootElement.GetProperty("files").EnumerateArray().Single(f => f.GetProperty("path").GetString() == file);

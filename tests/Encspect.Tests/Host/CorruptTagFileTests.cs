@@ -29,27 +29,27 @@ public class CorruptLameFileTests
 // The other fixtures in tests/fixtures/mpeg.
 public class CorruptMpegFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/", StringComparison.Ordinal) && !n.StartsWith("mpeg/external-lame-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/", StringComparison.Ordinal) && n.IndexOf('/', 5) < 0 && !n.StartsWith("mpeg/external-lame-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The fixtures in tests/fixtures/layer2 and layer3.
+// The fixtures in tests/fixtures/mpeg/layer2 and mpeg/layer3.
 public class CorruptLayerFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("layer", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/layer", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The fixtures in tests/fixtures/vbr and stats.
+// The fixtures in tests/fixtures/mpeg/vbr and mpeg/stats.
 public class CorruptVbrFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("vbr/", StringComparison.Ordinal) || n.StartsWith("stats/", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/vbr/", StringComparison.Ordinal) || n.StartsWith("mpeg/stats/", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
@@ -66,10 +66,10 @@ public class CorruptMp4FileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The fixtures in tests/fixtures/adts and aac.
+// The fixtures in tests/fixtures/aac, with aac/adts.
 public class CorruptAdtsFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("adts/", StringComparison.Ordinal) || n.StartsWith("aac/", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("aac/", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]

@@ -252,7 +252,7 @@ public class StreamTests
     [Fact]
     public void StreamContinuesAcrossASplitRegion()
     {
-        Report report = Fixtures.AnalyzeMpeg("stats/split-by-tag.mp3");
+        Report report = Fixtures.AnalyzeMpeg("mpeg/stats/split-by-tag.mp3");
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(2, report.Root.Children.Count(c => c.Kind == NodeKind.Stream));
@@ -280,7 +280,7 @@ public class StreamTests
     [Fact]
     public void PerSecondSeriesAreShownAfterTheirStatistics()
     {
-        Report report = Fixtures.AnalyzeMpeg("stats/vbr-seconds.mp3");
+        Report report = Fixtures.AnalyzeMpeg("mpeg/stats/vbr-seconds.mp3");
         Series bitrate = report.Streams.Single().Series.Single(s => s.Name == "Bitrate Over Time");
         var writer = new StringWriter();
 
@@ -297,8 +297,8 @@ public class StreamTests
     [Fact]
     public void SummaryReadsStreamsNotRegions()
     {
-        ReportSummary split = ReportSummary.From(Fixtures.AnalyzeMpeg("stats/split-by-tag.mp3"));
-        Report changed = Fixtures.AnalyzeMpeg("stats/sample-rate-change-statistics.mp3");
+        ReportSummary split = ReportSummary.From(Fixtures.AnalyzeMpeg("mpeg/stats/split-by-tag.mp3"));
+        Report changed = Fixtures.AnalyzeMpeg("mpeg/stats/sample-rate-change-statistics.mp3");
         ReportSummary summary = ReportSummary.From(changed);
 
         Assert.Equal(1, split.Streams);
@@ -317,7 +317,7 @@ public class StreamTests
     {
         var writer = new StringWriter();
 
-        ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("stats/split-by-tag.mp3")], writer);
+        ReportCsvWriter.Write([Fixtures.AnalyzeMpeg("mpeg/stats/split-by-tag.mp3")], writer);
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal("split-by-tag.mp3,MPEG Audio,1,MPEG-1 Layer III,0.261,11520,139.0,44100,Joint stereo,\"stereo (front left, front right)\",,,,,\"ID3v2, ID3v2\",0,0,0,false,,false,,,,,,,,,0", lines[1]);
@@ -388,7 +388,7 @@ public class FindingPathTests
     [Fact]
     public void AggregatedFindingsCarryTheirCount()
     {
-        Report report = Fixtures.AnalyzeMpeg("layer3/side-info-invalid.mp3");
+        Report report = Fixtures.AnalyzeMpeg("mpeg/layer3/side-info-invalid.mp3");
 
         Finding huffman = report.Findings.Single(f => f.Code == "mpeg.huffman-table-undefined");
         Assert.Equal(2, huffman.Count);

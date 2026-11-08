@@ -42,7 +42,7 @@ last = F[-1] and middle = F[len(F) // 2]:
 
 A variant that equals an earlier one (a one-frame file's first, middle and last frame are the same frame) is not written.
 
-AAC (the files of tests/fixtures/aac and tests/fixtures/apple, which encoders wrote). The units are those of unit_list.py, the one extractor of the direct paths, so a
+AAC (the files of tests/fixtures/aac and tests/fixtures/aac/apple, which encoders wrote). The units are those of unit_list.py, the one extractor of the direct paths, so a
 variant is cut where the decoders will be fed. A file with fewer than three units has no variants. With U the units, first = U[0], last = U[-1] and middle = U[len(U) // 2].
 
 ADTS files (the frames are the extractor's; the header is 7 bytes, 9 with a CRC):
@@ -79,7 +79,7 @@ import unit_list  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OGG_DIRECTORY = ROOT / "tests" / "fixtures" / "ogg"
 TTA_DIRECTORY = ROOT / "tests" / "fixtures" / "tta"
-AAC_DIRECTORIES = (ROOT / "tests" / "fixtures" / "aac", ROOT / "tests" / "fixtures" / "apple")
+AAC_DIRECTORIES = (ROOT / "tests" / "fixtures" / "aac", ROOT / "tests" / "fixtures" / "aac" / "apple")
 AAC_EXTENSIONS = (".aac", ".m4a", ".mp4", ".m4b", ".3gp")
 TTA_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "drop-frame-table", "repeat-frame", "samples-plus-one", "samples-minus-one")
 AAC_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "repeat-frame", "cut-first-sample", "cut-middle-sample", "cut-last-sample")
@@ -309,7 +309,7 @@ def aac_variants(data):
 
 
 def aac_sources():
-    """The fixtures the rules apply to: the AAC files of tests/fixtures/aac and tests/fixtures/apple, which encoders wrote."""
+    """The fixtures the rules apply to: the AAC files of tests/fixtures/aac and tests/fixtures/aac/apple, which encoders wrote."""
     return sorted((p for directory in AAC_DIRECTORIES for p in directory.iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS), key=lambda p: (p.name, str(p)))
 
 

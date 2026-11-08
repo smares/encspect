@@ -8,7 +8,7 @@ namespace Encspect.Tests;
 
 // Apple's AudioToolbox is named from the way its files are written (AacEncoder, Mp4Parser.AppleEvidence): the encoder with medium confidence where
 // an sbtd box records the PCM source of an encode, the writer with low confidence otherwise, since the writer lays its layout around packets it only copied: the files afconvert wrote
-// on the macOS 15.7 runners are in tests/fixtures/aac (apple-*, with manifests and golden reports) and tests/fixtures/apple (the rest), and here each piece of the evidence is taken away in turn.
+// on the macOS 15.7 runners are in tests/fixtures/aac (apple-*, with manifests and golden reports) and tests/fixtures/aac/apple (the rest), and here each piece of the evidence is taken away in turn.
 public class AppleEncoderTests
 {
     // The writer, named from a layout; the encoder, named when an sbtd box records the PCM source of an encode.
@@ -62,9 +62,9 @@ public class AppleEncoderTests
     // afconvert -q 127 (maximum quality) writes KBD windows, up to every channel stream (win-lc-m4a-q127-*, 8 s of window_signals.py, macOS 15.7 arm64).
     // The window shape tells nothing about the encoder, so no rule may use it: the encoder is named from the sbtd box and the stream type 0x14 alone.
     [Theory]
-    [InlineData("apple/apple-win-lc-m4a-q127-cbr64-clicks.m4a")]
-    [InlineData("apple/apple-win-lc-m4a-q127-cbr64-pluck.m4a")]
-    [InlineData("apple/apple-win-lc-m4a-q127-cbr128-tones.m4a")]
+    [InlineData("aac/apple/apple-win-lc-m4a-q127-cbr64-clicks.m4a")]
+    [InlineData("aac/apple/apple-win-lc-m4a-q127-cbr64-pluck.m4a")]
+    [InlineData("aac/apple/apple-win-lc-m4a-q127-cbr128-tones.m4a")]
     public void KbdWindowsAtMaximumQualityStillNameTheEncoderWithMediumConfidence(string name)
     {
         byte[] bytes = Read(name);
@@ -122,18 +122,18 @@ public class AppleEncoderTests
     [InlineData("aac/apple-he-m4a-cbr-st44.m4a")]
     [InlineData("aac/apple-hev2-m4a-cbr-st44.m4a")]
     [InlineData("aac/apple-aacl-m4a-cbr-mono44.m4a")]
-    [InlineData("apple/apple-intel-he-m4a-cbr-st44.m4a")]
-    [InlineData("apple/apple-intel-lc-m4a-cbr-mono44.m4a")]
-    [InlineData("apple/apple-lc-m4a-cbr-mono44.m4a")]
-    [InlineData("apple/apple-lc-m4a-cbr-st44-64.m4a")]
-    [InlineData("apple/apple-lc-m4a-vbr-q64-st44.m4a")]
-    [InlineData("apple/apple-lc-m4a-music-st44.m4a")]
-    [InlineData("apple/apple-lc-m4b-cbr-st44.m4b")]
-    [InlineData("apple/apple-he-m4a-cbr-st44-32.m4a")]
-    [InlineData("apple/apple-he-m4a-cbr-mono22.m4a")]
-    [InlineData("apple/apple-lc-m4a-cbr-six48-lout.m4a")]
-    [InlineData("apple/apple-lc-m4a-soundcheck-st44.m4a")]
-    [InlineData("apple/apple-lc-m4a-condensed-st44.m4a")]
+    [InlineData("aac/apple/apple-intel-he-m4a-cbr-st44.m4a")]
+    [InlineData("aac/apple/apple-intel-lc-m4a-cbr-mono44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-cbr-mono44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-cbr-st44-64.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-vbr-q64-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-music-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4b-cbr-st44.m4b")]
+    [InlineData("aac/apple/apple-he-m4a-cbr-st44-32.m4a")]
+    [InlineData("aac/apple/apple-he-m4a-cbr-mono22.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-cbr-six48-lout.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-soundcheck-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-condensed-st44.m4a")]
     public void EveryM4aAndM4bEncodeIsNamedAsApplesEncoder(string name)
     {
         StreamInfo stream = Assert.Single(Analyze(name, Read(name)).Streams);
@@ -144,16 +144,16 @@ public class AppleEncoderTests
     [Fact]
     public void A3gpEncodeIsNamedAsTheWriter()
     {
-        StreamInfo stream = Assert.Single(Analyze("3gp", Read("apple/apple-lc-3gp-cbr-st44.3gp")).Streams);
+        StreamInfo stream = Assert.Single(Analyze("3gp", Read("aac/apple/apple-lc-3gp-cbr-st44.3gp")).Streams);
         Assert.Equal((Apple, Confidence.Low), (stream.Writer, stream.WriterConfidence));
         Assert.Null(stream.Encoder);
     }
 
     [Theory]
     [InlineData("aac/apple-lc-adts-cbr-st44.aac")]
-    [InlineData("apple/apple-intel-lc-adts-cbr-st44.aac")]
+    [InlineData("aac/apple/apple-intel-lc-adts-cbr-st44.aac")]
     [InlineData("aac/apple-hev2-adts-cbr-st44.aac")]
-    [InlineData("apple/apple-he-adts-cbr-st44.aac")]
+    [InlineData("aac/apple/apple-he-adts-cbr-st44.aac")]
     public void AdtsHeadersNameAppleAsTheWriterWithLowConfidence(string name)
     {
         StreamInfo stream = Assert.Single(Analyze(name, Read(name)).Streams);
@@ -234,13 +234,13 @@ public class AppleEncoderTests
     // fixture, whose envelopes take as many bits as their resolutions say, ran past their fill elements (aac.sbr-past-fill).
     [Theory]
     [InlineData("aac/apple-he-m4a-cbr-st44.m4a")]
-    [InlineData("apple/apple-he-m4a-cbr-st44-32.m4a")]
-    [InlineData("apple/apple-he-m4a-cbr-mono22.m4a")]
-    [InlineData("apple/apple-intel-he-m4a-cbr-st44-32.m4a")]
-    [InlineData("apple/apple-intel-he-m4a-cbr-mono22.m4a")]
-    [InlineData("apple/apple-intel-he-m4a-cbr-st44.m4a")]
-    [InlineData("apple/apple-he-adts-cbr-st44.aac")]
-    [InlineData("adts/sbr-fixvar-resolutions.aac")]
+    [InlineData("aac/apple/apple-he-m4a-cbr-st44-32.m4a")]
+    [InlineData("aac/apple/apple-he-m4a-cbr-mono22.m4a")]
+    [InlineData("aac/apple/apple-intel-he-m4a-cbr-st44-32.m4a")]
+    [InlineData("aac/apple/apple-intel-he-m4a-cbr-mono22.m4a")]
+    [InlineData("aac/apple/apple-intel-he-m4a-cbr-st44.m4a")]
+    [InlineData("aac/apple/apple-he-adts-cbr-st44.aac")]
+    [InlineData("aac/adts/sbr-fixvar-resolutions.aac")]
     public void SbrPayloadsOfFixvarFramesFitTheirFillElements(string name)
     {
         Report report = Analyze(name, Read(name));
@@ -249,13 +249,13 @@ public class AppleEncoderTests
 
     // Sound Check adds an iTunNORM item and a loudness box, afconvert's 16-bit framing a compact sample size box, and 5.1 a channel configuration.
     [Theory]
-    [InlineData("apple/apple-lc-m4a-soundcheck-st44.m4a")]
-    [InlineData("apple/apple-lc-m4a-condensed-st44.m4a")]
-    [InlineData("apple/apple-lc-m4a-cbr-six48-lout.m4a")]
-    [InlineData("apple/apple-lc-3gp-cbr-st44.3gp")]
-    [InlineData("apple/apple-lc-m4a-vbr-q64-st44.m4a")]
-    [InlineData("apple/apple-lc-m4a-music-st44.m4a")]
-    [InlineData("apple/apple-lc-m4b-cbr-st44.m4b")]
+    [InlineData("aac/apple/apple-lc-m4a-soundcheck-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-condensed-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-cbr-six48-lout.m4a")]
+    [InlineData("aac/apple/apple-lc-3gp-cbr-st44.3gp")]
+    [InlineData("aac/apple/apple-lc-m4a-vbr-q64-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4a-music-st44.m4a")]
+    [InlineData("aac/apple/apple-lc-m4b-cbr-st44.m4b")]
     public void OtherAppleFilesReportNothingBeyondInformation(string name)
     {
         Report report = Analyze(name, Read(name));
@@ -364,7 +364,7 @@ public class AppleEncoderTests
     public static TheoryData<string> Provenance()
     {
         var data = new TheoryData<string>();
-        foreach (string directory in new[] { "aac", "apple", "alac" })
+        foreach (string directory in new[] { "aac", "aac/apple", "alac" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, directory), "apple-*.provenance.json").Order(StringComparer.Ordinal))
             {
@@ -394,10 +394,10 @@ public class AppleEncoderTests
     // stream type byte 0x14 when the source is ADTS. A copy of an fdkaac stream, which writes no text, is therefore named for the writer, with low
     // confidence; an M4A copied into M4A keeps its esds (stream type byte 0x15) and shows no layout.
     [Theory]
-    [InlineData("apple/apple-passthru-m4a-from-fdkaac-he-adts.m4a")]
-    [InlineData("apple/apple-passthru-adts-from-fdkaac-m4a.aac")]
-    [InlineData("apple/apple-intel-passthru-m4a-from-fdkaac-he-adts.m4a")]
-    [InlineData("apple/apple-intel-passthru-adts-from-fdkaac-m4a.aac")]
+    [InlineData("aac/apple/apple-passthru-m4a-from-fdkaac-he-adts.m4a")]
+    [InlineData("aac/apple/apple-passthru-adts-from-fdkaac-m4a.aac")]
+    [InlineData("aac/apple/apple-intel-passthru-m4a-from-fdkaac-he-adts.m4a")]
+    [InlineData("aac/apple/apple-intel-passthru-adts-from-fdkaac-m4a.aac")]
     public void CopiedStreamsWithoutASignatureNameOnlyTheWriterWithLowConfidence(string name)
     {
         Report report = Analyze(name, Read(name));
@@ -407,8 +407,8 @@ public class AppleEncoderTests
     }
 
     [Theory]
-    [InlineData("apple/apple-passthru-m4a-from-fdkaac-m4a.m4a")]
-    [InlineData("apple/apple-intel-passthru-m4a-from-fdkaac-m4a.m4a")]
+    [InlineData("aac/apple/apple-passthru-m4a-from-fdkaac-m4a.m4a")]
+    [InlineData("aac/apple/apple-intel-passthru-m4a-from-fdkaac-m4a.m4a")]
     public void ACopyOfAnM4aKeepsItsEsdsAndShowsNoLayout(string name)
     {
         AssertNothingNamed(Analyze(name, Read(name)));
@@ -417,9 +417,9 @@ public class AppleEncoderTests
     // A signature in the stream names the encoder and the writer's layout names the writer; they are different facts, so no finding: through the
     // MP4 parser's claim (M4A made from ffmpeg's ADTS) and through the ADTS parser's (ADTS from ffmpeg's ADTS), on both runners' files.
     [Theory]
-    [InlineData("apple/apple-passthru-m4a-from-ffmpeg-adts.m4a")]
-    [InlineData("apple/apple-intel-passthru-m4a-from-ffmpeg-adts.m4a")]
-    [InlineData("apple/apple-passthru-adts-from-ffmpeg-adts.aac")]
+    [InlineData("aac/apple/apple-passthru-m4a-from-ffmpeg-adts.m4a")]
+    [InlineData("aac/apple/apple-intel-passthru-m4a-from-ffmpeg-adts.m4a")]
+    [InlineData("aac/apple/apple-passthru-adts-from-ffmpeg-adts.aac")]
     public void ASignatureInTheStreamAndTheWritersLayoutAreSeparateFacts(string name)
     {
         Report report = Analyze(name, Read(name));
@@ -433,7 +433,7 @@ public class AppleEncoderTests
     [Fact]
     public void TheAdtsCopyOfFfmpegsStreamIsOneFileForBothRunners()
     {
-        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "apple/apple-passthru-adts-from-ffmpeg-adts.provenance.json")));
+        using JsonDocument document = JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "aac/apple/apple-passthru-adts-from-ffmpeg-adts.provenance.json")));
         JsonElement other = Assert.Single(document.RootElement.GetProperty("identical_on").EnumerateArray());
         Assert.Contains("X86_64", other.GetProperty("uname").GetString(), StringComparison.Ordinal);
     }
@@ -450,8 +450,8 @@ public class AppleEncoderTests
 
     // FAAC's copy came from an M4A: the esds is kept, there is no layout, and the version text names the encoder.
     [Theory]
-    [InlineData("apple/apple-passthru-m4a-from-faac-m4a.m4a")]
-    [InlineData("apple/apple-intel-passthru-m4a-from-faac-m4a.m4a")]
+    [InlineData("aac/apple/apple-passthru-m4a-from-faac-m4a.m4a")]
+    [InlineData("aac/apple/apple-intel-passthru-m4a-from-faac-m4a.m4a")]
     public void ACopyOfAnM4aKeepsItsVersionText(string name)
     {
         Report report = Analyze(name, Read(name));

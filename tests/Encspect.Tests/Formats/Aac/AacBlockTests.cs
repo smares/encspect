@@ -95,7 +95,7 @@ public class AacBlockTests
     [Fact]
     public void FramesPastTheStreamLimitAreNotRead()
     {
-        Report report = Fixtures.AnalyzeMpeg("adts/streams-limited.aac");
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/streams-limited.aac");
 
         Node[] frames = [.. Frames(report.Root)];
         Assert.Equal(66 * 3, frames.Length);
@@ -113,7 +113,7 @@ public class AacBlockTests
     [Fact]
     public void ProtectedFramesPastTheStreamLimitKeepTheirCrc()
     {
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", "adts", "crc-mono.aac"));
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.TagDirectory, "..", "aac", "adts", "crc-mono.aac"));
         byte[] first = source[..58];
         byte[] second = [.. first];
         second[2] = (byte)((second[2] & ~0x3C) | (3 << 2));

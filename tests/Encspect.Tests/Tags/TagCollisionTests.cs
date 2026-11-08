@@ -12,7 +12,7 @@ public class TagCollisionTests
 {
     private static readonly Lazy<Dictionary<string, JsonElement>> Cases = new(() =>
     {
-        string path = Path.Combine(Fixtures.TagDirectory, "..", "collisions", "cases.json");
+        string path = Path.Combine(Fixtures.TagDirectory, "collisions", "cases.json");
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
         return document.RootElement.GetProperty("cases").EnumerateArray()
             .ToDictionary(c => c.GetProperty("name").GetString()!, c => c.Clone());

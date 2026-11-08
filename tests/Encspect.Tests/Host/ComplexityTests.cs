@@ -561,7 +561,7 @@ public class ComplexityTests
     public void AdtsThatChangesItsSampleRateAlternately()
     {
         const int runs = 6_000;
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "stream-change.aac"));
         byte[] first = source[..13];
         byte[] second = source[503..516];
         var data = new MemoryStream();
@@ -595,7 +595,7 @@ public class ComplexityTests
     [Fact]
     public void AdtsFramesCountedPastTheRecordCapAreInNoStreamPastTheStreamLimit()
     {
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "stream-change.aac"));
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "stream-change.aac"));
         byte[][] frames = [source[..13], source[503..516]];
         const int tail = 2_200_000;
         var data = new MemoryStream();

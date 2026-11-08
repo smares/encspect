@@ -23,7 +23,7 @@ TTA (comparison-tta.txt, comparison-tta.json, --write-official-tta): one figure 
              sample of the WAVE header it wrote, when it exited 0 and left the output; a nonzero exit, a crash or a timeout gives no official reference
   fallback   ffmpeg's count, only when `tta -d` gave no reference and ffmpeg exited 0, labeled `ffmpeg (fallback)`; else none. A partial count is never a figure
 
-AAC (comparison-aac.txt, comparison-aac.json, --write-official-aac DIR, which writes official-decoders.<folder>.draft.json for tests/fixtures/aac, adts and mp4; the
+AAC (comparison-aac.txt, comparison-aac.json, --write-official-aac DIR, which writes official-decoders.<folder>.draft.json for tests/fixtures/aac, aac/adts and mp4; the
 apple folder has no goldens, so nothing reads its entries and they stay in the run's comparison): FDK AAC's direct path is the reference of the coded stage (a unit counts as
 output when IS_OUTPUT_VALID holds, concealed frames included; the frames AACDEC_FLUSH drains are counted apart), compared with the stream's `samples`, per run of constant output
 format. The trimmed stage (the analyzer's "Samples (iTunSMPB)" and "Samples (Edit List)") is held to Core Audio's ExtAudioFile (rollout step 5) and has no reference for a file without a Core Audio record. The units FDK
@@ -79,6 +79,8 @@ import official_probe as probe  # noqa: E402
 
 ROOT = HERE.parent.parent
 FIXTURES = ROOT / "tests" / "fixtures"
+# The AAC folders by the name their records carry (the name of the folder), under tests/fixtures.
+AAC_FOLDER_PATHS = {"aac": "aac", "adts": "aac/adts", "mp4": "mp4"}
 SCHEMA = 1
 UNIT_FINDING = re.compile(r"^(opus\.(packet-r\d|self-delimiting|stream-durations-differ)|vorbis\.(window-flag-mismatch|mode-invalid|not-audio|empty-packet))$")
 STATUSES = ("explained", "noted", "pending", "follow", "keep", "build-dependent", "stale")
@@ -1714,7 +1716,7 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             cli_reports.update(run_cli(args.encspect, pathlib.Path(args.downloaded)))
         apple = tmp / "apple-media"
         apple.mkdir()
-        for path in probe.files("apple", driver.AAC_EXTENSIONS):
+        for path in probe.files("aac/apple", driver.AAC_EXTENSIONS):
             (apple / path.name).write_bytes(path.read_bytes())
         cli_reports.update(run_cli(args.encspect, apple))
 
@@ -1751,8 +1753,8 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             results.append(result)
     for folder in ("aac", "adts", "mp4"):
         committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
-        apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")
-        carry_coreaudio(committed_results, FIXTURES / folder / "official-decoders.json")
+        apply_reviewed(committed_results, FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json")
+        carry_coreaudio(committed_results, FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json")
     # Media Foundation is the third decoder of the rule: its column and its reference (where FDK and Core Audio give none) are set once the Core Audio data of every file, carried ones
     # included, are final.
     for r in results:
@@ -1762,8 +1764,8 @@ def run_aac_comparison(args, records, environments, ffmpeg_version, warnings, tm
             r["differences"] = r["differences"] + mediafoundation_differences(r["figures"], {"streams": r["analyzerStreams"] or [], "findings": [{"code": c} for c in r.get("analyzerFindingCodes", [])]})
     for folder in ("aac", "adts", "mp4"):
         committed_results = [r for r in results if r["folder"] == folder and not r["derived"]]
-        apply_reviewed(committed_results, FIXTURES / folder / "official-decoders.json")
-        carry_mediafoundation(committed_results, FIXTURES / folder / "official-decoders.json")
+        apply_reviewed(committed_results, FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json")
+        carry_mediafoundation(committed_results, FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json")
     not_run += coreaudio_not_run(results) + mediafoundation_not_run(results)
     if not ca_records:
         warnings = warnings + ["no Core Audio records in the artifacts: the macos job did not run or uploaded nothing; the Core Audio columns of the committed files are carried over"]
@@ -2159,7 +2161,7 @@ def main(argv):
             target.mkdir(parents=True, exist_ok=True)
             for folder in ("aac", "adts", "mp4"):
                 subset = [r for r in aac_results if r["folder"] == folder and not r["derived"]]
-                write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / folder / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
+                write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
         print("comparison-aac.txt: %d files compared, %d not run" % (len(aac_results), len(aac_document["notRun"])))
     ac3 = run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp)
     if ac3:

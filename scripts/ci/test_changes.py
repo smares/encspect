@@ -169,7 +169,7 @@ class ChangesTests(unittest.TestCase):
         self.assertNotEqual(run("scripts/fixtures/windows/x.bin"), set(changes.ALL_JOBS))
 
     def test_apple_fixtures_and_their_macos_scripts_are_known(self):
-        self.assertEqual(run("tests/fixtures/apple/apple-passthru-m4a-from-faac-m4a.m4a"),
+        self.assertEqual(run("tests/fixtures/aac/apple/apple-passthru-m4a-from-faac-m4a.m4a"),
                          set(changes.CI_JOBS_DOTNET) | {"fixtures", "mp4-crosscheck"})
         self.assertIn("mp4-crosscheck", run("tests/fixtures/alac/apple-alac-st44.m4a"))
         self.assertEqual(run("scripts/fixtures/macos/make_macos_aac_fixtures.sh"), {"fixtures"})

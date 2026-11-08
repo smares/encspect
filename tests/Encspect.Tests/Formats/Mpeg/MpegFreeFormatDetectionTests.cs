@@ -14,10 +14,10 @@ public class MpegFreeFormatDetectionTests
 
     public static TheoryData<string, string, int, string, int> Streams() => new()
     {
-        { "layer2", "free-format-48000-unprotected.mp2", 6, "Layer II", 30 },
+        { "mpeg/layer2", "free-format-48000-unprotected.mp2", 6, "Layer II", 30 },
         { "mpeg", "mpeg1-layer1-free-format.mp1", 6, "Layer I", 30 },
-        { "layer2", "free-format-44100-crc-mismatch.mp2", 6, "Layer II", 90 },
-        { "layer2", "free-format-44100.mp2", 6, "Layer II", 90 },
+        { "mpeg/layer2", "free-format-44100-crc-mismatch.mp2", 6, "Layer II", 90 },
+        { "mpeg/layer2", "free-format-44100.mp2", 6, "Layer II", 90 },
     };
 
     [Theory]
@@ -39,7 +39,7 @@ public class MpegFreeFormatDetectionTests
     [Fact]
     public void TheFirstFrameWithABadCrcIsReported()
     {
-        Report report = Analyzer.CreateDefault().Analyze("damaged.mp2", new MemoryStream(Bytes("layer2", "free-format-44100-crc-mismatch.mp2")));
+        Report report = Analyzer.CreateDefault().Analyze("damaged.mp2", new MemoryStream(Bytes("mpeg/layer2", "free-format-44100-crc-mismatch.mp2")));
         Assert.Contains(report.Findings, f => f.Code == "mpeg.crc-mismatch");
     }
 

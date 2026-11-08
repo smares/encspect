@@ -16,7 +16,7 @@ internal static class Fixtures
     {
         var data = new TheoryData<string>();
         string[] extensions = [".mp1", ".mp2", ".mp3"];
-        foreach (string directory in new[] { "mpeg", "layer3", "layer2", "vbr", "stats" })
+        foreach (string directory in new[] { "mpeg", "mpeg/layer3", "mpeg/layer2", "mpeg/vbr", "mpeg/stats" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(FixtureDirectory, directory))
                 .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
@@ -59,7 +59,7 @@ internal static class Fixtures
     public static IEnumerable<string> Mp4FixtureNames()
     {
         string[] extensions = [".m4a", ".mp4", ".mov", ".m4b", ".3gp", ".aac", ".mp3"];
-        foreach (string directory in new[] { "mp4", "adts", "aac" })
+        foreach (string directory in new[] { "mp4", "aac/adts", "aac" })
         {
             string path = Path.Combine(FixtureDirectory, directory);
             if (!Directory.Exists(path))

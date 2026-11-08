@@ -240,7 +240,7 @@ public class AacCodingSeriesTests
     [Fact]
     public void Channel_pairs_with_and_without_a_common_window_have_the_coding_their_bands_state()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/stereo-coding.aac").Streams);
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aac/adts/stereo-coding.aac").Streams);
         CategorySeries pairs = Series(stream, "Stereo Coding")!;
 
         // Left/right (mask 0, and mask 1 with no flag), mid/side (mask 1 with flags, mask 2), intensity stereo (flags only on intensity stereo
@@ -254,7 +254,7 @@ public class AacCodingSeriesTests
     [Fact]
     public void The_reserved_ms_mask_present_takes_precedence_over_intensity_stereo()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/stereo-coding-reserved.aac").Streams);
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aac/adts/stereo-coding-reserved.aac").Streams);
         CategorySeries pairs = Series(stream, "Stereo Coding")!;
 
         Assert.Equal([4, 4, 0], Enumerable.Range(0, pairs.Count).Select(unit => (int)pairs[unit, 0]));
@@ -265,7 +265,7 @@ public class AacCodingSeriesTests
     [Fact]
     public void A_unit_with_two_pairs_has_a_value_for_each_in_element_order()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/stereo-coding-elements.aac").Streams);
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aac/adts/stereo-coding-elements.aac").Streams);
         CategorySeries pairs = Series(stream, "Stereo Coding")!;
         CategorySeries windows = Series(stream, "Block Usage")!;
 
@@ -277,7 +277,7 @@ public class AacCodingSeriesTests
     [Fact]
     public void An_adts_frame_of_several_blocks_is_one_unit()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("adts/raw-blocks.aac").Streams);
+        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("aac/adts/raw-blocks.aac").Streams);
         CategorySeries windows = Series(stream, "Block Usage")!;
         Node[] frames = [.. stream.Nodes.SelectMany(n => n.Children).Where(c => c.Name == "Frame")];
 
@@ -349,7 +349,7 @@ public class AacCodingSeriesTests
     [Fact]
     public void An_adif_stream_that_breaks_in_its_last_block_keeps_that_block_as_a_unit_of_the_series()
     {
-        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "adts", "adif.aac"));
+        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "adif.aac"));
         Report intact = Analyzer.CreateDefault().Analyze("adif.aac", new MemoryStream(whole));
         Assert.NotNull(Series(Assert.Single(intact.Streams), "Block Usage")!.XSeries);
 
