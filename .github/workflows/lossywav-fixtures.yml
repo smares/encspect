@@ -10,13 +10,6 @@ name: lossyWAV fixtures
 # in the manifest, which is enough for files committed once. The design they check is docs/design/lossywav-detection.md.
 on:
   workflow_dispatch:
-  push:
-    branches: [design/lossywav-detection]
-    paths:
-      - .github/workflows/lossywav-fixtures.yml
-      - scripts/fixtures/make_lossywav_fixtures.py
-      - scripts/fixtures/lossywav_figures.py
-      - scripts/fixtures/lossywav_tool.py
 
 permissions:
   contents: read
