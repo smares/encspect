@@ -129,6 +129,40 @@ public class MeasurementWithheldTests
         Assert.Equal(1, m.Gaps);
     }
 
+    [Fact]
+    public void WideningTheTrimAfterABlockPassedItsEndLeavesTheEndWhereItWas()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(0, 1000);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        measurer.Trim(0, 5000);
+        Write(measurer, 2000, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1000L, 2000L, 0L, 0), (m.Samples, m.TrailingTrimmedSamples, m.LostSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void OverflowedSpansBeforeTheFirstBlockStayInTheLeadingRegion()
+    {
+        StreamMeasurer measurer = Measurer();
+        for (int i = 0; i < 2000; i++)
+        {
+            measurer.Withhold(i * 20, 10, (WithholdReason)(i % 2));
+        }
+
+        Write(measurer, 100000, 10);
+        Write(measurer, 200000, 10);
+        measurer.SetCodedRange(0, 200010);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal(20000L, m.LeadingWithheldSamples);
+        Assert.Equal(80000L, m.LeadingLostSamples);
+        Assert.Equal(99990L, m.InnerLostSamples);
+        Assert.Equal(199990L, m.SkippedSamples);
+    }
+
     // Through the decode route.
 
     private sealed class WithholdingDecoder : IDecoder
@@ -183,6 +217,7 @@ public class MeasurementWithheldTests
 
         string text = string.Join('\n', MeasurementText.Lines(m, isLossy: true).Select(l => l.Text));
         Assert.Contains("1 gap skipped 100 samples; 50 samples withheld (after a gap)", text);
+        Assert.Contains("1 gap, 500 samples withheld (after a gap)", string.Join('\n', MeasurementText.Lines(m with { LostSamples = 0, WithheldSamples = 500, WithheldByReason = new WithheldCounts(500, 0, 0, 0) }, isLossy: true).Select(l => l.Text)));
         Assert.DoesNotContain("trimmed", text);
 
         using var stream = new MemoryStream();
@@ -214,8 +249,19 @@ public class MeasurementWithheldTests
         Assert.Equal(0, m.LostSamples);
     }
 
+    [Fact]
+    public void ARangeThatEndsBeforeItStartsIsAParserBug()
+    {
+        Report report = new Analyzer([], [new TrimmingParser { First = 400, End = 100 }], [], [new WithholdingDecoder()]).Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        Assert.Contains(report.Findings, f => f.Code == "parse.failed");
+    }
+
     private sealed class TrimmingParser : IFormatParser
     {
+        public long First { get; init; } = 100;
+
+        public long End { get; init; } = 400;
+
         public string Name => "Trim";
 
         public SniffResult Sniff(SniffContext context) => new(100);
@@ -225,7 +271,7 @@ public class MeasurementWithheldTests
             Node stream = context.Root.Add("Stream", 0, 64);
             byte[] data = new byte[64];
             IDecodeSession session = context.StartDecoding("test", new DecodeSetup { Stream = stream, Channels = 1, BitsPerSample = 16, Samples = 300, IsLossy = true });
-            session.Trim(100, 400);
+            session.Trim(First, End);
             for (int i = 0; i < 5; i++)
             {
                 session.Decode(new CodedFrame(new MappedBytes(data.AsMemory(i * 10, 10), i * 10), "Frame", i * 100, 100));

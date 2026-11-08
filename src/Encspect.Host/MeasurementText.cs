@@ -311,7 +311,9 @@ public static class MeasurementText
 
         if (m.WithheldSamples > 0)
         {
-            text += $"; {Counts.Of(m.WithheldSamples, "sample", "samples")} withheld ({WithheldReasonsText(m)})";
+            // A jump that is withheld whole is still a gap.
+            string gaps = m.Gaps > 0 && m.LostSamples == 0 ? $"; {Counts.Of(m.Gaps, "gap", "gaps")}," : ";";
+            text += $"{gaps} {Counts.Of(m.WithheldSamples, "sample", "samples")} withheld ({WithheldReasonsText(m)})";
         }
 
         if (m.TrimmedSamples > 0)

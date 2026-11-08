@@ -95,7 +95,7 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
         Maximum Momentary Loudness: -20.3 LUFS
         Maximum Short-Term Loudness: none (the stream is shorter than 3 s)
 
-  - `Measured:` gives the audio measured, `(lossy stream)` after the duration where the verification says so, the channels measured where a stream has more than 32, the gaps skipped, the samples a decoder withheld with their reasons (`1,056 samples withheld (after a gap)`; with several reasons each with its count), the samples the stream's syntax trims (`42 samples trimmed`), and why measuring stopped early.
+  - `Measured:` gives the audio measured, `(lossy stream)` after the duration where the verification says so, the channels measured where a stream has more than 32, the gaps skipped (a jump that was withheld whole shows as `1 gap, 500 samples withheld (after a gap)`), the samples a decoder withheld with their reasons (`1,056 samples withheld (after a gap)`; with several reasons each with its count), the samples the stream's syntax trims (`42 samples trimmed`), and why measuring stopped early.
   - `Spectral Cutoff: none found (largest step 2.3 dB, at 2,003 Hz)` where no cutoff is found, and `not searched (the sample rate is below 8,000 Hz)` under 8,000 Hz.
   - The frequencies are those of the upper edge of a row of the spectrum (43 Hz wide at 44,100 Hz); the figures are measurements, never verdicts.
   - **Levels,** each with the figure of each channel in parentheses (named by its speaker where the stream states distinct ones, else `channel 1`, `channel 2`) for a stream of several channels. Levels are in dBFS, tenths with a sign, `-inf` for a channel whose samples are all 0, and a value of -0.0 is written 0.0.

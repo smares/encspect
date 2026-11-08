@@ -16,9 +16,9 @@ public class DecoderDeterminismTests
 
     // The scripted decoder's output for the stream below, on every platform. A change to DetMath or to the rules the decoder follows fails here first; the
     // new value prints in the message.
-    private const string ScriptedHash = "40d554ddf5ab8d91ceda8773302f51d99e3e8633f72a4d2fd5fd90a186fa4fcb";
+    private const string ScriptedHash = "211ad8eb72580947de06f6beb7475c45412b797683aa8b9c4dce7f2f79c26c0f";
 
-    private const string ScriptedGappedHash = "f2fee6d7ff59e2a75325456bdde2e98d0491f97e4fa57fc3dc57ec62711f0d73";
+    private const string ScriptedGappedHash = "d7de5d740467e9a59128b17d4689abda0a8d047c60e265d474ecdc9963148920";
 
     internal sealed class ScriptedFloatDecoder(bool usesVectors = true) : IDecoder
     {

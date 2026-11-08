@@ -94,6 +94,7 @@ internal sealed class StreamMeasurer
     private readonly List<Span> _pending = [];
     private readonly List<Span> _leading = [];
     private long _overflow;
+    private long _leadingOverflow;
     private bool _hasCodedRange;
     private long _codedStart;
     private long _codedEnd;
@@ -197,7 +198,7 @@ internal sealed class StreamMeasurer
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {
         int measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
-        long bytes = 64 * 1024;
+        long bytes = (64 * 1024) + (2L * MaxPendingSpans * 24);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
         bool isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
         if ((kinds & MeasurementKinds.Levels) != 0)
@@ -331,7 +332,10 @@ internal sealed class StreamMeasurer
     // measuring has not begun, and from the end on is not measured; the leading trim only holds before the first measured sample.
     public void Trim(long firstPosition, long endPosition)
     {
-        (_trimStart, _trimEnd) = (firstPosition, endPosition);
+        // Blocks past the current end are already counted as trimmed and the next measured block would follow the measured ones as if nothing lay
+        // between: once the end has been passed it can only stay or shrink. The start only matters before the measuring begins.
+        long end = _hasReceived && _received > _trimEnd ? Math.Min(_trimEnd, endPosition) : endPosition;
+        (_trimStart, _trimEnd) = (_hasStarted ? _trimStart : firstPosition, end);
     }
 
     // Takes the pending spans' overlap with [from, to) into the totals and returns it; the spans stay.
@@ -411,6 +415,7 @@ internal sealed class StreamMeasurer
             // Spans withheld before the first block lie in the stream's leading positions.
             _leading.AddRange(_pending);
             _pending.Clear();
+            (_leadingOverflow, _overflow) = (_overflow, 0);
         }
 
         if (block.Position < _received)
@@ -1000,7 +1005,7 @@ internal sealed class StreamMeasurer
         {
             leading = Math.Max(0, _firstReceived - _codedStart);
             trailing = Math.Max(0, _codedEnd - _received);
-            leadingWithheld = leading > 0 ? Overlap(_leading, _codedStart, _firstReceived, withheld) : 0;
+            leadingWithheld = leading > 0 ? Math.Min(leading, Overlap(_leading, _codedStart, _firstReceived, withheld) + _leadingOverflow) : 0;
             trailingWithheld = trailing > 0 ? Overlap(_pending, _received, _codedEnd, withheld) : 0;
         }
 

@@ -309,9 +309,16 @@ public class MeasurementDeterminismTests
         || parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal)
         || (parent.StartsWith("System.Numerics.", StringComparison.Ordinal) && !parent.StartsWith("System.Numerics.BitOperations", StringComparison.Ordinal));
 
+    // The x86 and Arm intrinsic classes name their fused operations MultiplyAdd*, MultiplySubtract* and FusedMultiply* and their approximations
+    // Reciprocal* (rcpps and rsqrtps differ between Intel and AMD).
+    private static bool IsPlatformIntrinsic(string parent) =>
+        parent.StartsWith("System.Runtime.Intrinsics.X86.", StringComparison.Ordinal) || parent.StartsWith("System.Runtime.Intrinsics.Arm.", StringComparison.Ordinal);
+
     internal static bool IsBanned(string parent, string name) =>
         (DefinesArithmetic(parent) && BannedMath.Contains(name))
         || (DefinesArithmetic(parent) && (name.EndsWith("Native", StringComparison.Ordinal) || name.EndsWith("Estimate", StringComparison.Ordinal) || name.Contains("FusedMultiplyAdd", StringComparison.Ordinal)))
+        || (IsPlatformIntrinsic(parent) && (name.Contains("MultiplyAdd", StringComparison.Ordinal) || name.Contains("MultiplySubtract", StringComparison.Ordinal) || name.Contains("FusedMultiply", StringComparison.Ordinal) || name.Contains("Reciprocal", StringComparison.Ordinal)))
+        || (parent is "System.Numerics.Vector2" or "System.Numerics.Vector3" or "System.Numerics.Vector4" && name is "Length" or "LengthSquared" or "Distance" or "DistanceSquared")
         || parent.StartsWith("System.Numerics.Tensors", StringComparison.Ordinal)
         || ((parent.StartsWith("System.Runtime.Intrinsics.", StringComparison.Ordinal) || parent.StartsWith("System.Numerics.", StringComparison.Ordinal)) && name is "Sum" or "Dot")
         || parent == "System.Numerics.Complex"
@@ -527,7 +534,7 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
@@ -545,6 +552,8 @@ public class MeasurementDeterminismTests
         Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Max"));
         Assert.False(IsBanned("System.Runtime.Intrinsics.Vector128", "Add"));
         Assert.False(IsBanned("System.Math", "Sqrt"));
+        Assert.False(IsBanned("System.Runtime.Intrinsics.X86.Sse", "Add"));
+        Assert.False(IsBanned("System.Numerics.Vector3", "Add"));
         Assert.False(IsBanned("System.Double", "IsNaN"));
         Assert.True(IsBanned("System.Double", "Cbrt"));
         Assert.True(IsBanned("System.Numerics.ITrigonometricFunctions`1", "Sin"));
@@ -583,6 +592,11 @@ internal static class BannedSamples
         sum += rented.Length;
         var wide = new System.Numerics.Vector<double>(x);
         sum += (wide + wide)[0];
+        var f = System.Runtime.Intrinsics.Vector128.Create((float)x);
+        sum += System.Runtime.Intrinsics.X86.Fma.MultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplyAddScalar(f, f, f)[0] + System.Runtime.Intrinsics.X86.Fma.MultiplySubtract(f, f, f)[0];
+        sum += System.Runtime.Intrinsics.X86.Sse.Reciprocal(f)[0] + System.Runtime.Intrinsics.X86.Sse.ReciprocalSqrt(f)[0];
+        sum += System.Runtime.Intrinsics.Arm.AdvSimd.FusedMultiplyAdd(f, f, f)[0] + System.Runtime.Intrinsics.Arm.AdvSimd.ReciprocalEstimate(f)[0];
+        sum += new System.Numerics.Vector3((float)x).Length() + System.Numerics.Vector2.Distance(new System.Numerics.Vector2(1), new System.Numerics.Vector2(2));
         sum += Math.Sqrt(x) + Math.Floor(x) + Math.Min(x, sum);
         return sum;
     }

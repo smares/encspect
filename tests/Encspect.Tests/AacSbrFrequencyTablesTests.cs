@@ -89,11 +89,12 @@ public class AacSbrFrequencyTablesTests
                                 {
                                     var (bands, error) = Sbr.Derive(Header(start, stop, scale, alter, xover, noise), rate);
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record, bands is null ? -1 : bands.Value.Kx);
-                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[4..], bands?.K2 ?? error!.Length);
+                                    System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[4..], bands?.K2 ?? 0);
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[8..], bands?.High ?? 0);
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[12..], bands?.Low ?? 0);
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[16..], bands?.Noise ?? 0);
                                     hash.AppendData(record[..20]);
+                                    hash.AppendData(System.Text.Encoding.UTF8.GetBytes(error ?? string.Empty));
                                 }
                             }
                         }
@@ -103,7 +104,7 @@ public class AacSbrFrequencyTablesTests
         }
 
         string result = Convert.ToHexStringLower(hash.GetHashAndReset());
-        Assert.True(result == "0796c8c0681aaead6b45d866f7f423ddfc332c43a4a2fe6c1c4e85051185164f", result);
+        Assert.True(result == "1c373d54eff3007180cb1c044806bb051c3de0b4c22d242dd408a2978e6d3192", result);
     }
 
     private static string? ReadGrid(string bitText) => Read(bitText, 0).Error;

@@ -163,26 +163,51 @@ class FixedReferenceTests(unittest.TestCase):
 
 
 class BandTests(unittest.TestCase):
-    def test_band_energies_are_compared_within_the_tolerance(self):
-        analyzer = noise(8192, 10)
-        case = Case(self, [analyzer], [[0, 8192]])
-        case.write_reference([[v * 1.04 for v in analyzer]])
-        code, result, _ = case.run("--bands", "0,3000,8000,16000,24000", "--no-sample-bounds")
-        self.assertEqual(code, 0, result)
-        self.assertEqual(result["bands"]["channels"][0]["bandsOutside"], 0)
-        self.assertGreater(result["bands"]["channels"][0]["bandsCompared"], 20)
+    EDGES = "0,3000,8000,16000,24000"
 
-        case.write_reference([[v * 1.2 for v in analyzer]])
-        code, result, _ = case.run("--bands", "0,3000,8000,16000,24000", "--no-sample-bounds")
+    def test_two_independent_noise_fills_of_equal_energy_agree_and_one_dB_more_does_not(self):
+        frames = 64
+        first = noise(frames * 1024, 10)
+        case = Case(self, [first], [[0, len(first)]])
+        case.write_reference([noise(frames * 1024, 11)])
+        code, result, _ = case.run("--bands", self.EDGES, "--no-sample-bounds")
+        self.assertEqual(code, 0, result)
+        bands = result["bands"]["channels"][0]
+        self.assertEqual((bands["bandsOutside"], bands["bandsCompared"]), (0, 4))
+        self.assertLess(bands["largestDifferenceDb"], 0.5)
+
+        louder = 10 ** (1 / 20)
+        case.write_reference([[v * louder for v in noise(frames * 1024, 11)]])
+        code, result, _ = case.run("--bands", self.EDGES, "--no-sample-bounds")
         self.assertEqual(code, 1)
-        self.assertGreater(result["bands"]["channels"][0]["largestDifferenceDb"], 1.5)
+        self.assertEqual(result["bands"]["channels"][0]["bandsOutside"], 4)
+
+    def test_the_stated_spread_covers_the_real_spread_of_independent_noise(self):
+        # Differences of the mean band energy of two independent fills, over many trials: their standard deviation stays under the stated sigma.
+        frames, trials = 8, 60
+        differences = []
+        for trial in range(trials):
+            a, bins = compare.band_powers(noise(frames * 256, 100 + trial), 48000, 256, [0, 12000])
+            b, _ = compare.band_powers(noise(frames * 256, 500 + trial), 48000, 256, [0, 12000])
+            differences.append(compare.db(sum(r[0] for r in a) / frames) - compare.db(sum(r[0] for r in b) / frames))
+        spread = math.sqrt(sum(d * d for d in differences) / trials)
+        self.assertLess(spread, compare.band_sigma_db(frames, bins[0]))
+
+    def test_a_band_with_too_few_samples_is_inconclusive_not_compared(self):
+        first = noise(2048, 12)
+        case = Case(self, [first], [[0, 2048]])
+        case.write_reference([noise(2048, 13)])
+        code, result, _ = case.run("--bands", "0,200,24000", "--no-sample-bounds")
+        bands = result["bands"]["channels"][0]
+        self.assertGreaterEqual(bands["bandsInconclusive"], 1)
+        self.assertEqual(bands["bands"][0]["status"], "inconclusive")
 
     def test_a_tone_lands_in_the_band_that_holds_it(self):
         tone = [0.5 * math.sin(2 * math.pi * 5000 * i / 48000) for i in range(1024)]
-        rows = compare.band_energies(tone, 48000, 1024, [0, 3000, 8000, 24000])
-        self.assertLess(rows[0][0], -60)
-        self.assertGreater(rows[0][1], -15)
-        self.assertLess(rows[0][2], -60)
+        rows, _ = compare.band_powers(tone, 48000, 1024, [0, 3000, 8000, 24000])
+        self.assertLess(compare.db(rows[0][0]), -60)
+        self.assertGreater(compare.db(rows[0][1]), -15)
+        self.assertLess(compare.db(rows[0][2]), -60)
 
     def test_a_frame_never_spans_a_jump(self):
         analyzer = noise(2048, 11)
@@ -191,12 +216,19 @@ class BandTests(unittest.TestCase):
         reference[0:1024] = analyzer[:1024]
         reference[4096:5120] = analyzer[1024:]
         case.write_reference([reference])
-        code, result, _ = case.run("--bands", "0,6000,24000", "--no-sample-bounds")
+        code, result, _ = case.run("--bands", "0,6000,24000", "--no-sample-bounds", "--band-sigmas", "0")
         self.assertEqual(code, 0, result)
-        self.assertEqual(result["bands"]["channels"][0]["bandsCompared"], 4)
+        self.assertEqual(result["bands"]["channels"][0]["bands"][0]["frames"], 2)
 
 
 class UsageTests(unittest.TestCase):
+    def test_a_channel_with_every_sample_skipped_does_not_pass(self):
+        case = Case(self, [[1.5, 1.6]], [[0, 2]])
+        case.write_reference([[1.0, 1.0]])
+        code, result, _ = case.run("--skip-full-scale")
+        self.assertEqual(code, 1)
+        self.assertFalse(result["channels"][0]["passes"])
+
     def test_a_channel_count_that_differs_is_a_usage_error(self):
         case = Case(self, [noise(100, 13)], [[0, 100]])
         case.write_reference(case.channels)

@@ -17,8 +17,10 @@ Bounds, per channel:
                                2 LSB and the RMS at most 1 LSB (--max-lsb, --rms-lsb override).
 
 Frames that use random noise (AAC noise substitution, AC-3 dither, WMA noise coding) cannot match sample by sample. --bands EDGES (hertz, comma separated, the
-edges of the scalefactor or exponent bands) compares the energy of each band in each frame of --band-frame samples (Hann window) instead, within --band-tolerance
-dB (0.5), for the bands whose energy on both sides is above --band-floor-db; use it with --no-sample-bounds to leave the sample bounds out.
+edges of the scalefactor or exponent bands) compares the energy of each band, averaged over every frame of --band-frame samples (Hann window), within --band-tolerance
+dB (0.5), for the bands whose energy on both sides is above --band-floor-db; use it with --no-sample-bounds to leave the sample bounds out. Two independent noise fills
+of equal energy differ in a single frame by several dB, so only the mean over many frames can show 0.5 dB: a band whose estimate has a standard deviation above a
+third of the tolerance (4.34 * sqrt(2) * 1.5 / sqrt(frames * bins) dB) is reported as inconclusive and not compared (--band-sigmas).
 
 Exit status: 0 where every bound holds, 1 where one fails, 2 for a usage error or input the script cannot read. --json prints the result as JSON.
 """
@@ -224,45 +226,78 @@ def fft(values):
     return out
 
 
-def band_energies(samples, rate, frame, edges):
-    """Per frame, the mean-square power of each band in dB (Hann window), for frames of `frame` samples that lie in `samples`."""
+def band_powers(samples, rate, frame, edges):
+    """Per frame, the mean-square power of each band (Hann window, linear), for the frames of `frame` samples that lie in `samples`, and the bins of each band."""
     window = [0.5 - 0.5 * math.cos(2 * math.pi * i / frame) for i in range(frame)]
     norm = sum(w * w for w in window) * frame
     bins = [min(frame // 2, round(e * frame / rate)) for e in edges]
     frames = []
     for start in range(0, len(samples) - frame + 1, frame):
         spectrum = fft([samples[start + i] * window[i] for i in range(frame)])
-        row = []
-        for lo, hi in zip(bins, bins[1:]):
-            power = sum(abs(spectrum[k]) ** 2 for k in range(lo, hi)) * 2 / norm
-            row.append(10 * math.log10(power) if power > 0 else -math.inf)
-        frames.append(row)
-    return frames
+        frames.append([sum(abs(spectrum[k]) ** 2 for k in range(lo, hi)) * 2 / norm for lo, hi in zip(bins, bins[1:])])
+    return frames, [hi - lo for lo, hi in zip(bins, bins[1:])]
 
 
-def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, tolerance, floor):
-    """Band energies are compared inside each stretch of consecutive kept positions; a frame never spans a jump."""
+def db(power):
+    return 10 * math.log10(power) if power > 0 else -math.inf
+
+
+def band_sigma_db(frames, bins):
+    """The standard deviation, in dB, of the difference of two band energies, each averaged over `frames` frames of `bins` bins of independent noise.
+
+    The power of a bin of noise is exponentially distributed, so the mean of n of them has a relative spread of 1 / sqrt(n), 4.34 / sqrt(n) dB; the
+    difference of two independent estimates has sqrt(2) times that. Hann-windowed bins of neighboring frequencies are correlated, which the factor
+    of 1.5 covers (the test measures the real spread on noise and holds it under this value)."""
+    n = frames * bins
+    return math.inf if n == 0 else 4.343 * math.sqrt(2) * 1.5 / math.sqrt(n)
+
+
+def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, tolerance, floor, sigmas):
+    """Compares the energy of each band averaged over all the frames of the kept stretches (a frame never spans a jump).
+
+    Two decoders that fill a band with independent noise (AAC noise substitution, AC-3 dither, WMA noise coding) agree on the band's energy only on
+    average, not frame by frame; the figure compared is the mean over every frame. A band whose 'sigmas' times the spread of that mean exceeds the
+    tolerance cannot show a difference of the tolerance and is counted as inconclusive, not as compared."""
     bits = FORMATS[fmt][1]
     scale = 1.0 if bits is None else float(1 << (bits - 1))
     result = []
     for a_channel, r_channel in zip(analyzer, reference):
-        compared = exceeded = 0
-        largest = 0.0
+        total_a = total_r = None
+        count = 0
         offset = 0
         for first, end in merge_adjacent(positions):
             n = end - first
-            a_part = a_channel[offset:offset + n]
-            r_part = [r / scale for r in r_channel[offset:offset + n]]
+            frames_a, bins = band_powers(a_channel[offset:offset + n], rate, frame, edges)
+            frames_r, _ = band_powers([r / scale for r in r_channel[offset:offset + n]], rate, frame, edges)
             offset += n
-            for row_a, row_r in zip(band_energies(a_part, rate, frame, edges), band_energies(r_part, rate, frame, edges)):
-                for ea, er in zip(row_a, row_r):
-                    if ea < floor or er < floor:
-                        continue
-                    d = abs(ea - er)
-                    compared += 1
-                    largest = max(largest, d)
-                    exceeded += d > tolerance
-        result.append({"bandsCompared": compared, "bandsOutside": exceeded, "largestDifferenceDb": round(largest, 3)})
+            if total_a is None:
+                total_a = [0.0] * len(bins)
+                total_r = [0.0] * len(bins)
+            for row_a, row_r in zip(frames_a, frames_r):
+                total_a = [t + v for t, v in zip(total_a, row_a)]
+                total_r = [t + v for t, v in zip(total_r, row_r)]
+                count += 1
+        bands = []
+        compared = outside = inconclusive = 0
+        largest = 0.0
+        for i in range(len(total_a or [])):
+            ea, er = db(total_a[i] / count), db(total_r[i] / count)
+            sigma = band_sigma_db(count, bins[i])
+            entry = {"band": i, "frames": count, "analyzerDb": round(ea, 3), "referenceDb": round(er, 3), "sigmaDb": round(sigma, 3)}
+            if ea < floor or er < floor:
+                entry["status"] = "below the floor"
+            elif sigmas * sigma > tolerance:
+                entry["status"] = "inconclusive"
+                inconclusive += 1
+            else:
+                d = abs(ea - er)
+                entry["status"] = "outside" if d > tolerance else "ok"
+                entry["differenceDb"] = round(d, 3)
+                compared += 1
+                largest = max(largest, d)
+                outside += d > tolerance
+            bands.append(entry)
+        result.append({"bandsCompared": compared, "bandsOutside": outside, "bandsInconclusive": inconclusive, "largestDifferenceDb": round(largest, 3), "bands": bands})
     return result
 
 
@@ -307,7 +342,7 @@ def run(args):
     figures = statistics(a_samples, r_samples, args.reference_format, args.skip_full_scale)
     ok = True
     for figure in figures:
-        figure["passes"] = figure["max"] <= bound_max and figure["rms"] <= bound_rms
+        figure["passes"] = figure["samples"] > 0 and figure["max"] <= bound_max and figure["rms"] <= bound_rms
         if not args.no_sample_bounds:
             ok &= figure["passes"]
     result = {
@@ -325,7 +360,7 @@ def run(args):
             del figure["passes"]
     if args.bands:
         edges = [float(x) for x in args.bands.split(",")]
-        bands = compare_bands(a_samples, r_samples, args.reference_format, positions, entry["sampleRate"], args.band_frame, edges, args.band_tolerance, args.band_floor_db)
+        bands = compare_bands(a_samples, r_samples, args.reference_format, positions, entry["sampleRate"], args.band_frame, edges, args.band_tolerance, args.band_floor_db, args.band_sigmas)
         result["bands"] = {"toleranceDb": args.band_tolerance, "floorDb": args.band_floor_db, "channels": bands}
         ok &= all(b["bandsOutside"] == 0 for b in bands)
     result["passes"] = ok
@@ -342,7 +377,7 @@ def report(result):
     lines.append(f"  excluded: {ranges_text(result['excluded'])}")
     if "bands" in result:
         for c, band in enumerate(result["bands"]["channels"]):
-            lines.append(f"  channel {c} bands: {band['bandsCompared']} compared, {band['bandsOutside']} outside {result['bands']['toleranceDb']} dB, largest {band['largestDifferenceDb']} dB")
+            lines.append(f"  channel {c} bands: {band['bandsCompared']} compared, {band['bandsOutside']} outside {result['bands']['toleranceDb']} dB, {band['bandsInconclusive']} inconclusive (too few samples), largest {band['largestDifferenceDb']} dB")
     lines.append("passes" if result["passes"] else "FAILS")
     return "\n".join(lines)
 
@@ -365,6 +400,7 @@ def main(argv=None):
     parser.add_argument("--band-frame", type=int, default=1024, help="samples per frame of the band comparison, a power of two (default 1024)")
     parser.add_argument("--band-tolerance", type=float, default=BAND_TOLERANCE_DB)
     parser.add_argument("--band-floor-db", type=float, default=BAND_FLOOR_DB)
+    parser.add_argument("--band-sigmas", type=float, default=3.0, help="a band is compared only if this many standard deviations of its estimate fit in the tolerance (default 3)")
     parser.add_argument("--no-sample-bounds", action="store_true", help="compare the bands only")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)

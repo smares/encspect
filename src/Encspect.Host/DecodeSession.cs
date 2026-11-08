@@ -529,9 +529,14 @@ internal sealed class DecodeSession : IDecodeSession
     {
         if (_sink is null)
         {
-            if ((_earlyWithheld?.Count ?? 0) < StreamMeasurer.MaxPendingSpans)
+            List<(long First, long Samples, WithholdReason Reason)> early = _earlyWithheld ??= [];
+            if (early.Count > 0 && early[^1].Reason == reason && early[^1].First + early[^1].Samples == first)
             {
-                (_earlyWithheld ??= []).Add((first, samples, reason));
+                early[^1] = early[^1] with { Samples = early[^1].Samples + samples };
+            }
+            else if (early.Count < StreamMeasurer.MaxPendingSpans)
+            {
+                early.Add((first, samples, reason));
             }
         }
         else
@@ -542,7 +547,9 @@ internal sealed class DecodeSession : IDecodeSession
 
     public void Trim(long firstPosition, long endPosition)
     {
-        if (!IsDecoding || endPosition < firstPosition || firstPosition < 0)
+        ArgumentOutOfRangeException.ThrowIfNegative(firstPosition);
+        ArgumentOutOfRangeException.ThrowIfLessThan(endPosition, firstPosition);
+        if (!IsDecoding)
         {
             return;
         }

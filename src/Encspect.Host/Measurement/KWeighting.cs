@@ -1,8 +1,9 @@
-using Encspect.Core;
 // The derivation of the K-weighting filter's coefficients for rates other than 48 kHz follows libebur128's (ebur128_init_filter): the
 // parameters of the two filters (frequency, Q and gain) and the bilinear transforms that turn them into coefficients. libebur128 is
 // Copyright (c) 2011 Jan Kokemuller and is released under the MIT license; its notice is in THIRD-PARTY-NOTICES.md. Calls of the
 // platform's tan and pow are replaced by DetMath's, so that the coefficients are the same on every platform.
+
+using Encspect.Core;
 
 namespace Encspect.Host.Measurement;
 

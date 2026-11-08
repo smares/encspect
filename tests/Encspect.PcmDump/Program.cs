@@ -6,8 +6,8 @@ using Encspect.Host;
 namespace Encspect.PcmDump;
 
 // Writes the PCM that Encspect's decoders deliver, for the cross-check scripts (scripts/fixtures/compare_pcm.py): the library with an Output
-// sink, nothing more. For each file and each decoded stream it writes <name>.s<index>.pcm, the samples in the canonical layout of
-// CanonicalPcm (interleaved, little-endian, floats as IEEE 754 singles), and one <name>.pcm.json that says what the files hold: the stream's
+// sink, nothing more. For each file and each decoded stream it writes <number>-<name>.s<index>.pcm, the samples in the canonical layout of
+// CanonicalPcm (interleaved, little-endian, floats as IEEE 754 singles), and one <number>-<name>.pcm.json that says what the files hold: the stream's
 // format and the blocks as runs of [position, samples], untrimmed and at the coded stage, so that a position a decoder withheld or lost is a
 // jump between runs. Not shipped (docs/design/lossy-decoders.md, "The PCM cross-checks").
 internal static class Program
@@ -23,11 +23,12 @@ internal static class Program
 
         Directory.CreateDirectory(args[0]);
         int failures = 0;
+        int input = 0;
         foreach (string path in args.Skip(1))
         {
             try
             {
-                Dump(args[0], path);
+                Dump(args[0], path, input++);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -116,9 +117,11 @@ internal static class Program
         }
     }
 
-    private static void Dump(string folder, string path)
+    private static void Dump(string folder, string path, int input)
     {
+        // Two inputs of the same name in different folders must not overwrite each other: the output names carry the input's number.
         string name = Path.GetFileName(path);
+        string stem = $"{input:D4}-{name}";
         var sinks = new List<DumpSink>();
         try
         {
@@ -128,7 +131,7 @@ internal static class Program
                 {
                     Output = stream =>
                     {
-                        var sink = new DumpSink(Path.Combine(folder, $"{name}.s{sinks.Count}.pcm"), stream.Format, sinks.Count, stream.CodecId, stream.Stream);
+                        var sink = new DumpSink(Path.Combine(folder, $"{stem}.s{sinks.Count}.pcm"), stream.Format, sinks.Count, stream.CodecId, stream.Stream);
                         sinks.Add(sink);
                         return sink;
                     },
@@ -142,11 +145,11 @@ internal static class Program
                 sink.Dispose();
             }
 
-            using var json = new FileStream(Path.Combine(folder, name + ".pcm.json"), FileMode.Create);
+            using var json = new FileStream(Path.Combine(folder, stem + ".pcm.json"), FileMode.Create);
             using (var writer = new Utf8JsonWriter(json, new JsonWriterOptions { Indented = true }))
             {
                 writer.WriteStartObject();
-                writer.WriteString("file", name);
+                writer.WriteString("file", path);
                 writer.WriteStartArray("streams");
                 foreach (DumpSink sink in sinks)
                 {
