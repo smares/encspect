@@ -119,7 +119,7 @@ Each milestone is something a user can do that they could not do before. Its ite
 
 Every lossless format with a decoder design is decoded and measured, except WMA Lossless (0.5) and DTS-HD's lossless extension (a follow-up after 0.5). Files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
 
-1. **The lossy groundwork** (#232, in flight): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
+1. **The lossy groundwork** (#232, merged 2026-11-08): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
 2. **lossyWAV and lossyFLAC detection,** with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).
    - **What lossyWAV does:** it sets the lowest bits of every channel to zero in fixed blocks, as many in each block as its noise allows, so that a lossless coder stores them almost for free. lossyFLAC is its output in FLAC at the same block size.
    - **The pattern:** zeroed low bits in most blocks, in all channels at once, a count that changes from block to block, and block edges on one fixed grid. Audio that is lossless throughout has none or a constant count (a 16-bit recording in a 24-bit file).
