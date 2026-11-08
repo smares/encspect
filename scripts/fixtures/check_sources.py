@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Downloads every pinned file the scripts fetch from every one of its addresses (downloads.py)
 and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_sources.py extracts), so the scheduled sources workflow notices when an original address or one
-of its copies stops serving it, before the fallback is all that is left. FAAC's releases are pinned by
+of its copies stops serving it, before the fallback is all that is left. A Wayback Machine address that fails while another address of
+the same file serves its pinned bytes is a warning, not a problem: the Wayback Machine answers 404 now and then for captures
+it lists (BladeEnc 0.92.0, 2026-11-08), and the file is still at hand. A file that no address serves is always a problem. FAAC's releases are pinned by
 the commits of their tags (faac_tool.py), which it asks both repositories for, and Apple's ALAC source by its commit (alac_tool.py).
 
 Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
@@ -144,6 +146,25 @@ def listing(selected=None):
             for name, digest, address in sorted(found) if selected is None or (name, digest, address) in selected]
 
 
+def is_wayback(address):
+    return address.startswith("https://web.archive.org/")
+
+
+def settle(failures, served, serves_elsewhere):
+    """Splits the failed downloads into problems and warnings. failures holds (name, digest, address, problem);
+    served holds the (name, digest) some address served with its pinned bytes in this run; serves_elsewhere(name,
+    digest, address) tells whether another address of that file serves them, for a file no address served yet.
+    A Wayback Machine address is only a warning when the file is served elsewhere; every other failure is a problem."""
+    problems, warnings = [], []
+    for name, digest, address, problem in failures:
+        if is_wayback(address) and ((name, digest) in served or serves_elsewhere(name, digest, address)):
+            warnings.append((name, digest, address, problem))
+            served.add((name, digest))
+        else:
+            problems.append((name, digest, address, problem))
+    return problems, warnings
+
+
 def main():
     args = sys.argv[1:]
     if args == ["--list"]:
@@ -165,9 +186,13 @@ def main():
     problems = 0
     checked = 0
     skipped = 0
+    failures = []
+    served = set()
+    alternatives = {}
     with tempfile.TemporaryDirectory() as temp:
         path = pathlib.Path(temp) / "download"
         for name, digest, addresses in sources():
+            alternatives[name, digest] = addresses
             for address in addresses:
                 wanted_file = wanted_entry(name, digest, address)
                 # The archive is the one the scripts extract FILES from: each must be in it.
@@ -179,7 +204,7 @@ def main():
                     continue
                 checked += int(wanted_file) + len(members)
                 # The Wayback Machine limits how fast one client may download.
-                if address.startswith("https://web.archive.org/"):
+                if is_wayback(address):
                     time.sleep(ARCHIVE_PAUSE)
                 error = downloads.download(address, path)
                 if error is not None:
@@ -187,14 +212,29 @@ def main():
                 elif downloads.sha256(path) != digest:
                     problem = f"serves SHA-256 {downloads.sha256(path)}"
                 else:
+                    served.add((name, digest))
                     if members:
                         for absent in ffmpeg_sources.missing(path, members):
                             problems += 1
                             print(f"{name}: {address} does not hold {absent}")
                     continue
-                problems += 1
-                print(f"{name}: {address} {problem}")
+                failures.append((name, digest, address, problem))
                 path.unlink(missing_ok=True)
+
+        def serves_elsewhere(name, digest, failed):
+            for other in alternatives.get((name, digest), []):
+                if other == failed or is_wayback(other) or not downloads.has_token(other):
+                    continue
+                if downloads.download(other, path) is None and downloads.sha256(path) == digest:
+                    return True
+            return False
+
+        failed, warned = settle(failures, served, serves_elsewhere)
+        for name, _, address, problem in failed:
+            problems += 1
+            print(f"{name}: {address} {problem}")
+        for name, _, address, problem in warned:
+            print(f"warning: {name}: {address} {problem}; another address serves the pinned file")
     note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
     # LAME's betas, its alpha and 3.99.5 are trees of files in svn, checked by their digests.
     for version, (tag, expected) in old_lame_tool.SVN_TREES.items():
@@ -226,7 +266,8 @@ def main():
         for problem in alac_tool.commit_problems({alac_address}):
             problems += 1
             print(problem)
-    print(f"Checked {checked} entries, {problems} problems{note}.", file=sys.stderr)
+    warn = f", {len(warned)} warnings" if warned else ""
+    print(f"Checked {checked} entries, {problems} problems{warn}{note}.", file=sys.stderr)
     sys.exit(1 if problems else 0)
 
 
