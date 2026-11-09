@@ -10,15 +10,11 @@ public sealed class WastedBitsTally
     // The most channels whose previous count is kept; a unit of a channel past it is in the distribution only.
     public const int MaxChannels = 64;
 
-    // lossyWAV's longest block (2,048 samples at 176.4 and 192 kHz) is a multiple of every other, so a phase folded to it folds to each of them.
-    private const int PhaseLength = 2048;
-
     private readonly long[] _distribution = new long[256];
     private readonly int[] _previous = new int[MaxChannels];
-    private long[]? _phases;
-    private long _firstPosition;
-    private long _lastPosition;
-    private long _step;
+    private long _firstChange;
+    private long _gridOfChanges;
+    private bool _hasChange;
     private bool _hasUnit;
 
     // The units counted, and those with a count above zero.
@@ -39,17 +35,10 @@ public sealed class WastedBitsTally
         if (!_hasUnit)
         {
             _hasUnit = true;
-            _firstPosition = position;
-            _lastPosition = position;
             for (int i = 0; i < _previous.Length; i++)
             {
                 _previous[i] = -1;
             }
-        }
-        else if (position != _lastPosition)
-        {
-            _lastPosition = position;
-            _step = Gcd(_step, Math.Abs(position - _firstPosition));
         }
 
         Units++;
@@ -64,8 +53,15 @@ public sealed class WastedBitsTally
         if (previous >= 0 && previous != bits)
         {
             Changes++;
-            _phases ??= new long[PhaseLength];
-            _phases[(int)(((position - _firstPosition) % PhaseLength + PhaseLength) % PhaseLength)]++;
+            if (!_hasChange)
+            {
+                _hasChange = true;
+                _firstChange = position;
+            }
+            else
+            {
+                _gridOfChanges = Gcd(_gridOfChanges, Math.Abs(position - _firstChange));
+            }
         }
     }
 
@@ -89,31 +85,18 @@ public sealed class WastedBitsTally
         _ => 0,
     };
 
-    // The smallest number of changes that can make the pattern, and the shares: 95% of the changes at one phase, more than half of the units above the
-    // stream's smallest count. The numbers are conventions of this analysis, set from the fixtures (design: From behavior).
+    // The smallest number of changes that can make the pattern; a convention of this analysis, set from the fixtures (design: From behavior).
     public const int MinimumChanges = 20;
 
-    // The pattern lossyWAV's output shows in the coded counts, or null where the stream lacks it: a tested rate, units whose starts all lie on a multiple
-    // of a length that divides lossyWAV's block, at least 20 changes, 95% of them at one phase of the block's grid, and more than half of the units above
-    // the stream's smallest count.
+    // The pattern lossyWAV's output shows in the coded counts, or null where the stream lacks it: a tested rate, at least 20 changes, the greatest common
+    // divisor of the distances between the changes' positions equal to lossyWAV's block at that rate (so every change lies on its grid, and not all on a
+    // coarser one, as a tool with longer blocks would put them), and more than half of the units above the stream's smallest count.
     public LossyWavPattern? Pattern(int sampleRate)
     {
         int block = LossyWavBlock(sampleRate);
-        if (block == 0 || _step <= 0 || block % _step != 0 || Changes < MinimumChanges || _phases is null)
+        if (block == 0 || Changes < MinimumChanges || _gridOfChanges != block)
         {
             return null;
-        }
-
-        long best = 0;
-        for (int phase = 0; phase < block; phase++)
-        {
-            long sum = 0;
-            for (int at = phase; at < PhaseLength; at += block)
-            {
-                sum += _phases[at];
-            }
-
-            best = Math.Max(best, sum);
         }
 
         int smallest = 0;
@@ -123,7 +106,7 @@ public sealed class WastedBitsTally
         }
 
         long above = Units - _distribution[smallest];
-        return best * 20 >= Changes * 19 && above * 2 > Units ? new LossyWavPattern(Changes, best, block, above, Units) : null;
+        return above * 2 > Units ? new LossyWavPattern(Changes, block, above, Units) : null;
     }
 
     // The statistic: the node with an entry for each count that occurred and the changes, or null where no unit has a wasted bit (a stream without
@@ -160,11 +143,11 @@ public sealed class WastedBitsTally
 // The unit a format counts wasted bits in and the descriptions its parser gives the statistic's nodes, which are constants of the format.
 public sealed record WastedBitsWording(string Singular, string Plural, string Statistic, string Count, string ChangesDescription);
 
-// What the counts show of lossyWAV's pattern: the changes, how many fall at the most common phase of the grid, the grid's length in samples, and the
-// units above the stream's smallest count.
-public sealed record LossyWavPattern(long Changes, long OnGrid, int Grid, long Above, long Units)
+// What the counts show of lossyWAV's pattern: the changes, the grid's length in samples that their positions share, and the units above the stream's
+// smallest count.
+public sealed record LossyWavPattern(long Changes, int Grid, long Above, long Units)
 {
     public string Evidence(string units) =>
         string.Create(CultureInfo.InvariantCulture,
-            $"{Changes} changes of the wasted bits between consecutive {units} of a channel, {WastedBitsTally.Share(OnGrid, Changes)} of them at one phase of a grid of {Grid} samples, and {WastedBitsTally.Share(Above, Units)} of the {units} above the stream's smallest count");
+            $"{Changes} changes of the wasted bits between consecutive {units} of a channel, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} above the stream's smallest count");
 }

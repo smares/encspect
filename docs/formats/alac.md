@@ -62,6 +62,7 @@ ALAC stores no checksum and has no decoder, so no figure is compared. The stream
 - **What was checked:** ALAC's shifted bytes (whole bytes of each sample coded apart; "Bytes Shifted") are a different mechanism from lossyWAV's zeroed bits, which are not whole bytes. The two 24-bit stereo noise-floor files (see [tta.md](tta.md#lossywav-output)) coded with Apple's `alacconvert` (CAF copied into an M4A file by `ffmpeg -c copy`) and with FFmpeg's ALAC encoder (`scripts/fixtures/check_lossywav_coders.py`):
   - `alacconvert`, before lossyWAV and after: 154,278 and 154,474 bytes, 124,725 and 124,636 bytes; FFmpeg: 150,944 and 151,026 bytes, 126,115 and 126,254 bytes.
   - Every element of a 24-bit stream states one shifted byte, before and after lossyWAV: the shift does not follow the zeroed bits.
+- **Fixture:** `external-alacconvert-24-stereo-lossywav.m4a` (124,706 bytes, Apple's `alacconvert` with the CAF copied into M4A by MP4Box, as the other `alacconvert` fixtures), made by `scripts/fixtures/make_external_alac_fixtures.py` from the samples of the committed lossyWAV fixture `flac/external-lossyflac-floor-44k.flac` (the input kind `lossywav-floor-44k` of `flac_signal.py`, decoded by `flac_model.py`); its manifest and golden are committed.
 - **What Encspect reports:** the same as for any ALAC track. ALAC has no decoder yet, so the levels and the low bits per span are not measured (`decode.no-decoder`).
 - **No claim:** nothing in the frames names lossyWAV.
 

@@ -9,8 +9,27 @@ import math
 import struct
 
 
+def lossywav_samples(kind, count):
+    """The frames of lossyWAV 1.4.2's output that a committed FLAC fixture holds (kind "lossywav-<input>": tests/fixtures/flac/external-lossyflac-<input>.flac,
+    the output of the standard preset on a noise-floor signal of make_lossywav_fixtures.py), decoded by flac_model.py; the first count frames."""
+    import pathlib
+    import flac_model
+    path = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "flac" / f"external-lossyflac-{kind[len('lossywav-'):]}.flac"
+    stream = flac_model.Stream(path.read_bytes())
+    frames = []
+    for frame in stream.frames:
+        if "channels" in frame:
+            frames.extend(list(f) for f in zip(*frame["channels"]))
+    if count > len(frames):
+        raise ValueError(f"{path.name} holds {len(frames)} frames, fewer than {count}")
+    return iter(frames[:count])
+
+
 def samples(kind, rate, channels, count, bits, shift=0):
     """count frames of channels integers each, in the range of bits (signed)."""
+    if kind.startswith("lossywav-"):
+        yield from lossywav_samples(kind, count)
+        return
     scale = 1 << (bits - 1)
     state = 12345
     for i in range(count):

@@ -85,7 +85,7 @@ public class LossyWavBehaviorTests
         Node[] nodes = Walk(report.Root).ToArray();
         Node wasted = Statistic(report)!;
         Assert.Equal(changes, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
-        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks of a channel, 100.0% of them at one phase of a grid of 512 samples", StringComparison.Ordinal));
+        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks of a channel, all on a grid of 512 samples", StringComparison.Ordinal));
         Assert.Equal("lossyWAV 1.4.2", Assert.Single(report.Streams).Processor);
     }
 

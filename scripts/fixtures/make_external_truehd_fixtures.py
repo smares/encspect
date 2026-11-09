@@ -35,6 +35,8 @@ CHANNELS = {"mono": 1, "stereo": 2, "2.1": 3, "3.0": 3, "3.1": 4, "4.0": 4, "4.1
 
 # name: (codec, rate, layout, bits, kind, samples, extra arguments of ffmpeg)
 FIXTURES = {
+    # The samples lossyWAV 1.4.2 wrote (see make_external_tta_fixtures.py): the encoder states output shifts for them (docs/formats/truehd.md, "lossyWAV output").
+    "truehd-stereo-44k-24-lossywav": ("truehd", 44100, "stereo", 24, "lossywav-floor-44k", 44223, []),
     "truehd-mono-48k-16": ("truehd", 48000, "mono", 16, "music", 7200, []),
     "truehd-stereo-44k-16": ("truehd", 44100, "stereo", 16, "music", 6600, []),
     "truehd-stereo-48k-24": ("truehd", 48000, "stereo", 24, "music", 9600, []),

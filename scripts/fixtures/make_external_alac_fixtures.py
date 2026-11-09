@@ -69,6 +69,8 @@ FFMPEG = {
 
 # name: (input (kind, rate, channels, bits, samples)), written by alacconvert as external-alacconvert-<name>.m4a.
 ALACCONVERT = {
+    # The samples lossyWAV 1.4.2 wrote (see make_external_tta_fixtures.py): ALAC states a shifted byte for every 24-bit element, whatever the audio.
+    "24-stereo-lossywav": ("lossywav-floor-44k", 44100, 2, 24, 44223),
     "16-stereo": ("music", 44100, 2, 16, 50000),
     "16-mono": ("music", 44100, 1, 16, 50000),
     "24-stereo": ("music", 48000, 2, 24, 30000),

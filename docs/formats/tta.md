@@ -91,6 +91,7 @@ The header states a channel count and no speaker positions. The layout comes fro
 
 - **What was checked:** TTA's syntax has no count of low bits that are zero. Encspect's test files of the two 24-bit stereo noise-floor signals (`external-lossyflac-b512.flac` and `external-lossyflac-floor-44k.flac`, whose samples are lossyWAV 1.4.2's output at the standard preset), coded with libtta-c 2.3's `tta` (`scripts/fixtures/check_lossywav_coders.py`):
   - the signal before lossyWAV: 148,475 and 104,736 bytes; lossyWAV's output: 148,563 and 104,894 bytes. The zeroed bits bought nothing.
+- **Fixture:** `external-libtta-24-stereo-lossywav.tta` (104,894 bytes, libtta-c 2.3), made by `scripts/fixtures/make_external_tta_fixtures.py` from the samples of the committed lossyWAV fixture `flac/external-lossyflac-floor-44k.flac` (the input kind `lossywav-floor-44k` of `flac_signal.py`, decoded by `flac_model.py`); its manifest and golden are committed.
 - **What Encspect reports:** the same as for any TTA file. TTA has no decoder yet, so the levels and the low bits per span are not measured for it (`decode.no-decoder`); once it decodes, those figures come from the samples and read as the WAV file's do.
 - **No claim:** the file holds no marker and no coded count, so nothing in it names lossyWAV.
 

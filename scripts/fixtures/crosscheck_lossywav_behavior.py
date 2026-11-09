@@ -9,7 +9,7 @@ Needs flac. Takes every FLAC fixture in tests/fixtures/flac and tests/fixtures/m
 at 44.1 kHz where the rate is not one of lossyWAV's tested rates (so that the rule is applied to every file), and runs the analyzer on both. Each file must show:
 
 - no Processor node and no processor in the stream: the claim from behavior does not name lossyWAV;
-- at most 3 changes of wasted bits (the Changes entry of Wasted Bits);
+- at most 3 changes of wasted bits (the Changes entry of Wasted Bits), except in the simulated tools of synthetic-lowbits-other-*, which have theirs by construction;
 - the changes the analyzer counts equal those that `flac -a` lists for the same file (the wasted bits of each subframe, in frame order).
 
 The same check runs on the lossyWAV fixtures of the FLAC folder, where the claim must follow the importer's recomputation (flacUnits.claim of the
@@ -28,10 +28,6 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
 DEFAULT_ENCSPECT = "dotnet " + str(ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect.dll")
-# Files that zero bits per block on another grid, as a tool other than lossyWAV might (make_measurement_fixtures.py). Coded in frames of 512, a count per block
-# of 4,096 samples changes only on frame boundaries, which lie on lossyWAV's grid of 512, so the rule cannot tell them apart: a limit the design states,
-# listed here and not counted as a problem.
-KNOWN_LIMITS = ("synthetic-lowbits-other-",)
 TESTED = {22050, 32000, 44100, 48000, 88200, 96000, 176400, 192000}
 
 
@@ -95,7 +91,7 @@ def main():
     parser.add_argument("--encspect", default=DEFAULT_ENCSPECT)
     parser.add_argument("--keep")
     arguments = parser.parse_args()
-    problems, limits, files, runs, most = [], [], 0, 0, 0
+    problems, files, runs, most = [], 0, 0, 0
     sources = sorted(p for folder in ("flac", "measurement") for p in (FIXTURES / folder).glob("*.flac") if "lossyflac" not in p.name and "lossywav" not in p.name)
     for source in sources:
         with tempfile.TemporaryDirectory() as directory:
@@ -111,14 +107,10 @@ def main():
                 found = analyze(arguments.encspect, coded)
                 expected, _ = flac_changes(coded)
                 label = f"{source.name} at {variant or 'its own rate'}"
-                if source.name.startswith(KNOWN_LIMITS):
-                    limits.append(f"{label}: {'claimed' if found['evidence'] else 'not claimed'}, {found['changes']} changes of wasted bits")
-                    if found["changes"] != expected:
-                        problems.append(f"{label}: {found['changes']} changes, but flac lists {expected}")
-                    continue
                 if found["node"] or any(found["processor"]) or found["evidence"]:
                     problems.append(f"{label}: claimed as {found['processor']}")
-                if found["changes"] > 3:
+                # A simulated tool that zeroes bits per block has its changes by construction; it must still not be named.
+                if found["changes"] > 3 and not source.name.startswith("synthetic-lowbits-other-"):
                     problems.append(f"{label}: {found['changes']} changes of wasted bits")
                 if found["changes"] != expected:
                     problems.append(f"{label}: {found['changes']} changes, but flac lists {expected}")
@@ -136,9 +128,7 @@ def main():
             problems.append(f"{path.name}: the analyzer's claim from behavior is {claimed}, the importer's {record['flacUnits']['claim']}")
         if found["changes"] != expected:
             problems.append(f"{path.name}: {found['changes']} changes, but flac lists {expected}")
-    print(f"{files} files, {runs} codings, at most {most} changes of wasted bits outside the known limits; {len(problems)} problems")
-    for limit in limits:
-        print("  known limit:", limit)
+    print(f"{files} files, {runs} codings, at most {most} changes of wasted bits ; {len(problems)} problems")
     for problem in problems:
         print(" ", problem)
     sys.exit(1 if problems else 0)

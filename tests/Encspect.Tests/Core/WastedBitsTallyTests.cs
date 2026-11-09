@@ -40,8 +40,8 @@ public class WastedBitsTallyTests
     {
         LossyWavPattern? pattern = Frames(512, 60, 4, 6, 5, 7).Pattern(44100);
         Assert.NotNull(pattern);
-        Assert.Equal((59L, 59L, 512), (pattern.Changes, pattern.OnGrid, pattern.Grid));
-        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, 100.0% of them at one phase of a grid of 512 samples", pattern.Evidence("subframes"), StringComparison.Ordinal);
+        Assert.Equal((59L, 512), (pattern.Changes, pattern.Grid));
+        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, all on a grid of 512 samples", pattern.Evidence("subframes"), StringComparison.Ordinal);
     }
 
     [Theory]
@@ -59,11 +59,30 @@ public class WastedBitsTallyTests
     }
 
     [Fact]
-    public void FramesThatDivideTheBlockPutTheChangesOnOnePhaseOrNot()
+    public void TheChangesMustShareTheGridOfTheBlockAndNoCoarserOne()
     {
-        // 256-sample frames at 44.1 kHz (a block of 512): changes at every frame lie on both phases, changes only at even frames on one.
+        // 256-sample frames at 44.1 kHz (a block of 512): changes at every frame lie on a grid of 256, changes only at even frames on 512.
         Assert.Null(Frames(256, 80, 4, 6, 5, 7).Pattern(44100));
         Assert.NotNull(Frames(256, 80, 4, 4, 6, 6, 5, 5, 7, 7).Pattern(44100));
+    }
+
+    [Fact]
+    public void ChangesOnlyEveryEighthFrameAreOnACoarserGridThanTheBlock()
+    {
+        // A tool with blocks of 4,096 samples, coded in frames of 512: the changes lie on 4,096, a multiple of lossyWAV's block, not on its grid.
+        Assert.Null(Frames(512, 160, 4, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7).Pattern(44100));
+    }
+
+    [Fact]
+    public void ACutStreamKeepsTheGridWhateverItsFirstPosition()
+    {
+        var tally = new WastedBitsTally();
+        for (int i = 0; i < 60; i++)
+        {
+            tally.Add(0, 100 + (i * 512L), new[] { 4, 6, 5, 7 }[i % 4]);
+        }
+
+        Assert.NotNull(tally.Pattern(44100));
     }
 
     [Fact]
