@@ -43,7 +43,7 @@ class Info(ctypes.Structure):
 
 def find(manifest):
     stem = manifest.name[:-len(".expected.json")]
-    return next(p for p in DIRECTORY.glob(stem + ".*") if p.suffix in (".ofr", ".ofs"))
+    return next(p for p in DIRECTORY.glob(stem + ".*") if p.suffix in (".ofr", ".ofs", ".ofc"))
 
 
 def library_info(library, path):
