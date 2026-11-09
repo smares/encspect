@@ -102,8 +102,12 @@
  },
  "lossy": false,
  "findings": [
-  "optimfrog.data-after-blocks",
-  "tag.near-miss"
+  {
+   "code": "optimfrog.data-after-blocks"
+  },
+  {
+   "code": "tag.near-miss"
+  }
  ],
  "encoder": {
   "built": "make_optimfrog_fixtures.py from external-chunks.ofr"

@@ -84,7 +84,7 @@ def main():
         (OUT / name).write_bytes(data)
         # The model walks the blocks; the tag after them is the host's, so the manifest's blocks end where the encoder's end.
         manifest = m.manifest(data, {"encoder": {"built": "make_optimfrog_fixtures.py from external-chunks.ofr"}})
-        manifest["findings"] += findings
+        manifest["findings"] += [{"code": code} for code in findings]
         (OUT / name.replace(".ofr", ".expected.json")).write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print("wrote", name, len(data))
 
