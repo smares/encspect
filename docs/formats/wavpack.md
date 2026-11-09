@@ -47,6 +47,8 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Hybrid mode and correction files
 
+- **Names as a second signal (rule, 2026-11-09):** WavPack makes no claim from a file name today: hybrid mode is read from the block flags. Where a claim of this shape is made (OptimFROG's lossy part of a DualStream, [optimfrog.md](optimfrog.md)), the extension (`.wv`, `.wvc`) may raise a claim the bytes make from low to medium confidence, never makes one alone and never decides detection; the 0.4 pairing finds `x.wvc` beside `x.wv` by base name and extension.
+
 - A hybrid `.wv` is lossy by itself. A `.wvc` file holds the correction that makes it lossless: its blocks are read the same way and the stream is reported as correction data.
 - A `.wvc` opened alone is a finding (`wavpack.correction-file`), not an error.
 - The extra bitstream (wvx) that 32-bit integer and float data need can sit in the `.wv` or in the `.wvc` block; a block that holds only that is not a block without a bitstream.

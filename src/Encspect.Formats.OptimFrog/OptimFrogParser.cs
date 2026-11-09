@@ -35,6 +35,11 @@ public sealed class OptimFrogParser : IFormatParser
             return SniffCorrection(reader, start, firstLength);
         }
 
+        if (reader.Length is >= 4 and < Layout.BlockHeaderLength && reader.MatchesAt(start, "CORR"u8))
+        {
+            return new SniffResult(70, start, 0, 0, "correction block cut short", reader.End);
+        }
+
         Span<byte> bytes = stackalloc byte[Layout.BlockHeaderLength + Layout.MainFields];
         int available = (int)Math.Min(bytes.Length, reader.Length);
         reader.Position = start;

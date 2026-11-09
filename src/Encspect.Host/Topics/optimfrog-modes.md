@@ -16,4 +16,6 @@ references: OptimFROG 5.100 SDK, SDK/Documentation/format.txt (appendix D) and c
 - The presets 0 and 1 store "fast", 2 "normal", 3 "high", 4 to 6 "extra", 7 "highnew", 8 "extranew", 9 "bestnew", 10 and max "ultranew". The presets also set options the header does not store, so the report names the mode and never a preset.
 - The two bytes in each data block that the specification calls reserved differ between these files: 0x42 or 0x41 in the low byte for the older modes, 0xC2 for the newer ones. The analyzer shows them and does not use them.
 
+**DualStream.** In the files of `ofs` 5.100 in Encspect's tests the two reserved bytes of every data block read 0x1101 (stereo) or 0x0901 (mono), and never so in a lossless file. The analyzer uses this as a low-confidence sign of the lossy part of a DualStream, medium when the file name ends in .ofs too; the pairing with the correction file in a later release will confirm it.
+
 **What you see.** The mode and speedup as stored, with this caveat in their descriptions. Files from before 4.506 can store "extra" for what the encoder called extranew.

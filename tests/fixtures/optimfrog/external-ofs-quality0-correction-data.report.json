@@ -1,0 +1,138 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ofs-quality0-correction-data.ofc",
+    "root": {
+      "name": "File",
+      "value": "OptimFROG",
+      "offset": 0,
+      "length": 28268,
+      "children": [
+        {
+          "name": "OptimFROG correction data",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 28268,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 28268,
+              "children": [
+                {
+                  "name": "Blocks",
+                  "value": 1,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 28268
+                },
+                {
+                  "name": "Verified Block Checksums",
+                  "value": 1,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 28268
+                }
+              ]
+            },
+            {
+              "name": "Correction Block",
+              "value": 28268,
+              "unit": "bytes",
+              "offset": 0,
+              "length": 28268,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "CORR",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 28260,
+                  "unit": "bytes",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 617962301,
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 617962301,
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Correction Data",
+                  "value": 28256,
+                  "unit": "bytes",
+                  "offset": 12,
+                  "length": 28256
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "OptimFROG correction data",
+        "sampleRate": 0,
+        "channels": 0,
+        "samples": 0,
+        "duration": 0,
+        "isVbr": false,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "block CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            }
+          ]
+        },
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "optimfrog.correction-file",
+        "message": "The file holds correction data only: it adds to the DualStream .ofs file with the same blocks and cannot be decoded alone. The analyzer reads its blocks and compares their CRC-32s.",
+        "offset": 0,
+        "length": 28268,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

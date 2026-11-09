@@ -457,7 +457,7 @@
               ]
             },
             {
-              "name": "Unknown Block",
+              "name": "Detail Block",
               "value": 78,
               "unit": "bytes",
               "offset": 41513,
@@ -610,31 +610,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "optimfrog.main-block-variant",
-        "message": "The main block's ID is \"OFRX\", which format.txt does not define; the files the float encoder `off` 5.100 wrote in Encspect's tests start with it, and its fields are read as those of \"OFR \".",
-        "offset": 0,
-        "length": 25,
-        "path": [
-          0,
-          0
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "optimfrog.block-unknown",
-        "message": "The block \"DETA\" at 0xA229 has an ID the specification does not define, so it is skipped by its length of 70 bytes.",
-        "offset": 41513,
-        "length": 78,
-        "path": [
-          0,
-          5
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

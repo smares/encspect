@@ -55,7 +55,7 @@ internal static class Walk
     public static long End(ByteReader reader, int limit = int.MaxValue, bool isCorrection = false)
     {
         long position = reader.Start;
-        for (int count = 0; count < limit && Accepts(reader, position, out _, out _, out long end); count++)
+        for (int count = 0; count < limit && Accepts(reader, position, out _, out _, out long end, isCorrection); count++)
         {
             position = end;
             if (position >= reader.End)
@@ -100,7 +100,7 @@ internal static class Walk
                     rank = blockRank;
                 }
             }
-            else if (id is not (Layout.Deta or Layout.Corr))
+            else if (id != Layout.Deta && !(id == Layout.Corr && s.IsCorrection))
             {
                 block.Status |= BlockStatus.Unknown;
             }

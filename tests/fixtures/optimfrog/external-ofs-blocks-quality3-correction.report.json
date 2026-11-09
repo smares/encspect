@@ -133,6 +133,26 @@
               ]
             },
             {
+              "name": "Lossy Stream",
+              "value": "Probably the lossy part of a DualStream",
+              "offset": 0,
+              "length": 178402,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The reserved bytes of all 3 data blocks have the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's tests, and the file name ends in .ofs, the extension of DualStream files",
+                  "offset": 0,
+                  "length": 178402
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -678,6 +698,7 @@
         "isVbr": true,
         "verification": {
           "isVerified": true,
+          "isLossy": true,
           "decoding": "noDecoder",
           "decodedSamples": 0,
           "checksums": [
