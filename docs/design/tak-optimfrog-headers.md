@@ -119,7 +119,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
   - If nothing in the header tells a DualStream file from a lossless one, the stream cannot be named lossy from its header; that goes back to the lead before PR 2 lands.
 - **Reported in 0.2,** in WavPack's words ([wavpack.md](../formats/wavpack.md#hybrid-mode-and-correction-files)):
   - an `.ofs` is "OptimFROG DualStream", lossy by itself, as a hybrid `.wv` is "WavPack hybrid"; where its header says a correction file was written, `IsCorrectionFileCreated` is true, which does not say the file is next to this one;
-  - it is verified as its lossy stream by the CRC-32s of its blocks (`IsLossy`), as a hybrid `.wv` without its `.wvc`; an MD5 of the lossless audio is declared and not compared;
+  - it is verified by the CRC-32s of its blocks (decided on 2026-11-09 after the fixtures: `IsLossy` is not set from the low-confidence claim, which lives in `StreamInfo.Claims`); an MD5 of the lossless audio is declared and not compared;
   - an `.ofc` opened alone is "OptimFROG correction data" with `optimfrog.correction-file` (info), worded as `wavpack.correction-file`: the file holds correction data only, adds to the DualStream `.ofs` with the same blocks, and cannot be decoded alone. Its blocks are walked and their CRC-32s compared where the fixtures show the specification's layout; otherwise it is detected by its structure and named only.
 - **The pair, in 0.4,** with WavPack's `.wvc` ([plan](../plan.md#04-free-decoders-and-routes-complete), item 3), since both need the host to open a companion file:
   - look for the `.ofc` beside the `.ofs` (and the `.wvc` beside the `.wv`);
@@ -202,7 +202,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ## Docs and articles
 
-- `docs/formats/tak.md` and `docs/formats/optimfrog.md` in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
+- `docs/formats/tak.md` and [`docs/formats/optimfrog.md`](../formats/optimfrog.md) in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
 - Articles in `src/Encspect.Host/Topics`: `tak-metadata` (the objects and their CRC-24), `tak-presets` (preset, evaluation and profile), `optimfrog-blocks`, `optimfrog-modes` (mode, speedup and the presets that select each mode). The `lossywav` article gains the two formats.
 - [development.md](../development.md): the fixture sections, the tools, the pinned sources, and the "Header" checksum line for TAK in the table of names. OptimFROG's package address stays in `optimfrog_tool.py` only; the docs and the provenance link the download page, as its author asks.
 - [architecture.md](../architecture.md): the two formats in the detection table (classes 100, 80 and 70), and TAK and OptimFROG among the parsers that read lossyWAV's `fact` text through `FactText`.
@@ -240,8 +240,13 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ### Pending on the fixtures
 
-- **The correction file's detection:** if it has a signature other than `OFR `, its detection classes come to the lead as an amendment to this design before PR 2's parser reads it ([Detection](#detection)).
-- **The naming of DualStream files:** if nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), it comes back to the lead before PR 2 lands.
+What the fixtures of PR 2 (OptimFROG 5.100, run 42672985679) show, and what the lead decided on 2026-11-09:
+
+- **Decided:** an `.ofc` is detected by structure (a chain of `CORR` blocks whose CRC-32s hold: class 100; blocks that fit with a CRC-32 that fails: 80; the signature alone: 70) and named "OptimFROG correction data" with `optimfrog.correction-file` (Info). An `.ofs` is named "OptimFROG", with a claim that it is the lossy part of a DualStream from the data blocks' reserved bytes (low confidence); the file name's extension is a second signal: pattern and `.ofs` agreeing give medium confidence, the pattern alone low, and `.ofs` over bytes that look lossless gives no claim and an Info note (`optimfrog.extension-differs`). The extension never drives detection and never makes anything lossless; the parsers do not see the name, so the host applies it after the parse. The same rule is written for WavPack's `.wvc` and hybrid files, which make no such claim today (docs only). `OFRX` is read as the main block and `DETA` shown as a known, undocumented block, without findings. The 4.600ex `--speedup` probe was not done.
+
+- **The correction file (as found):** an `.ofc` starts with `CORR`, not `OFR `. It is a run of `CORR` blocks (the same 4-byte ID and 4-byte length as the `.ofr` blocks), one for each data block of its `.ofs`, whose first 4 data bytes are the IEEE CRC-32 of the rest of the block's data in all six fixtures. Nothing else of its layout is known. Its detection classes, if it is to be matched, come to the lead as an amendment to this design.
+- **DualStream files (as found):** an `.ofs` has the main block of a lossless file (same encoder ID, same compression byte, speedup 4x) and differs in two places only: the minimum decoder version is 4.520 (a lossless file stores 4.600, or 4.520 at preset 0), and the two bytes of every data block that the specification calls reserved read 0x1101 (stereo) or 0x0901 (mono) where a lossless file's read 0x1042, 0x10C2, 0x1041, 0x0841 or 0x0842 and so on. The header does not record whether a correction file was written: an `.ofs` is the same file with and without `--correction`. A lossy-by-itself reading would rest on those undocumented bytes. The quiet sine fixtures (`ofs-blocks-*`) decode exactly even without the `.ofc`.
+- **Not in the design (as found):** `off` writes the main block as `OFRX` and a block `DETA` (70 bytes; 18,624 with `--mantissabits 8`) after the data blocks, and its files are `.ofr`. The parser reads `OFRX` as the main block and shows `DETA` as a block of its own, without findings; see [optimfrog.md](../formats/optimfrog.md).
 
 ## Pull requests, in order
 

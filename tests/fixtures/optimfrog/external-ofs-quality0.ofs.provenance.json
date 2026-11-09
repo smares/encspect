@@ -1,0 +1,114 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-quality0",
+ "tool": "ofs",
+ "arguments": [
+  "--quality",
+  "0"
+ ],
+ "input": {
+  "kind": "music",
+  "rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30000,
+  "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+  "size": 120044
+ },
+ "sha256": "74f73c5508d6932c3488d0256c52866b6e07645783abc4e7ea87215e0c561bf7",
+ "size": 13816,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "0",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "0",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 120044,
+   "sha256": "a9ea6e8d785284ae72e6639f87b38e7f8ce27c054fdf683d7d757ee8120f53a9",
+   "equals_input": false,
+   "samples_equal_input": false
+  }
+ },
+ "identicalCases": [
+  {
+   "case": "ofs-quality0-correction",
+   "arguments": [
+    "--quality",
+    "0",
+    "--correction"
+   ],
+   "tool": "ofs",
+   "input": {
+    "kind": "music",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 16,
+    "samples": 30000,
+    "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+    "size": 120044
+   }
+  }
+ ]
+}

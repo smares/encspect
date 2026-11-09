@@ -84,6 +84,12 @@ AREAS = {
         "scripts": ["crosscheck_tta_fixtures.py", "crosscheck_tta_pcm.py", "compare_pcm.py", "libtta_tool.py"],
         "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
     },
+    "optimfrog-crosscheck": {
+        "projects": ["Encspect.Formats.OptimFrog", "Encspect.Tags.Ape"],
+        "fixtures": ["optimfrog"],
+        "scripts": ["crosscheck_optimfrog_fixtures.py", "optimfrog_tool.py"],
+        "globs": ["scripts/fixtures/make_*optimfrog*", "scripts/fixtures/import_optimfrog*", "scripts/fixtures/optimfrog_*"],
+    },
     "alac-crosscheck": {
         "projects": ["Encspect.Formats.Alac"],
         "fixtures": ["alac"],

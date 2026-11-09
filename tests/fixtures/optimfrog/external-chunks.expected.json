@@ -1,0 +1,121 @@
+{
+ "length": 41571,
+ "end": 41571,
+ "blocks": [
+  {
+   "id": "OFR ",
+   "offset": 0,
+   "length": 17,
+   "end": 25
+  },
+  {
+   "id": "HEAD",
+   "offset": 25,
+   "length": 80,
+   "end": 113
+  },
+  {
+   "id": "COMP",
+   "offset": 113,
+   "length": 41420,
+   "end": 41541
+  },
+  {
+   "id": "TAIL",
+   "offset": 41541,
+   "length": 22,
+   "end": 41571
+  }
+ ],
+ "main": {
+  "samples": 60000,
+  "sample_type": 3,
+  "channel_config": 1,
+  "sample_rate": 44100,
+  "encoder_id": 9602,
+  "version": 5100,
+  "system": 2,
+  "compression": 10,
+  "mode": 1,
+  "speedup": 2,
+  "size": 17,
+  "min_decoder_version": 4600
+ },
+ "comp": [
+  {
+   "crc": 3840055187,
+   "crc_ok": true,
+   "samples": 60000,
+   "sample_type": 3,
+   "channel_config": 1,
+   "reserved": 4162,
+   "encoder_id": 9602,
+   "offset": 113,
+   "size": 41428
+  }
+ ],
+ "md5": null,
+ "head": {
+  "offset": 33,
+  "length": 80,
+  "chunks": [
+   "fmt ",
+   "LIST",
+   "data"
+  ],
+  "fmt": {
+   "tag": 1,
+   "channels": 2
+  }
+ },
+ "tail": {
+  "offset": 41549,
+  "length": 22,
+  "chunks": [
+   "id3 "
+  ]
+ },
+ "stream_info": {
+  "codec": "OptimFROG",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits_per_sample": 16,
+  "samples": 30000,
+  "encoder": "OptimFROG 5.100"
+ },
+ "verification": {
+  "checksums": [
+   {
+    "name": "block CRC-32",
+    "stored": 1,
+    "checked": 1,
+    "failed": 0,
+    "covers_all": true
+   },
+   {
+    "name": "MD5",
+    "stored": 0,
+    "checked": 0,
+    "failed": 0
+   }
+  ]
+ },
+ "lossy": false,
+ "findings": [],
+ "encoder": {
+  "tool": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+  "arguments": [],
+  "case": "chunks",
+  "tool_program": "ofr",
+  "input": {
+   "kind": "music",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 30000,
+   "extra": "LIST chunk before data, id3  chunk after",
+   "sha256": "6ae20545f33bc47e0e0a53282ac04b8d92998bf6ffdc0d1b2b43559521546701",
+   "size": 120102
+  }
+ }
+}

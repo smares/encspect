@@ -1,0 +1,114 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-blocks-quality3",
+ "tool": "ofs",
+ "arguments": [
+  "--quality",
+  "3"
+ ],
+ "input": {
+  "kind": "quiet",
+  "rate": 44100,
+  "channels": 1,
+  "bits": 16,
+  "samples": 1808100,
+  "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+  "size": 3616244
+ },
+ "sha256": "ee7bfb7bcedd43bf0b7c2e43eecd65f9aa86b25de49aa09f4110a5d99300a2e3",
+ "size": 178402,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 3616244,
+   "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+   "equals_input": true,
+   "samples_equal_input": true
+  }
+ },
+ "identicalCases": [
+  {
+   "case": "ofs-blocks-quality3-correction",
+   "arguments": [
+    "--quality",
+    "3",
+    "--correction"
+   ],
+   "tool": "ofs",
+   "input": {
+    "kind": "quiet",
+    "rate": 44100,
+    "channels": 1,
+    "bits": 16,
+    "samples": 1808100,
+    "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+    "size": 3616244
+   }
+  }
+ ]
+}

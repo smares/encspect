@@ -1,0 +1,92 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-lossywav",
+ "tool": "ofs",
+ "arguments": [
+  "--quality",
+  "3"
+ ],
+ "input": {
+  "kind": "lossyWAV output",
+  "source": "tests/fixtures/wav/lossywav-standard.wav",
+  "sha256": "5e046d2ac08a07e9d4dca92b212ca38a3fe90a62fa076cde6bdebb0650241da1",
+  "size": 88804
+ },
+ "sha256": "52bcdc2768aaae9079f007720c50d9da1e5d4a3524e6b7f9351cfa4abf5d6b7b",
+ "size": 13560,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 88804,
+   "sha256": "af2c6f49a24b3e2a890811a0caad3b2a8126837be290b1d42dc4478c0b6bdaa9",
+   "equals_input": false,
+   "samples_equal_input": false
+  }
+ },
+ "identicalCases": []
+}

@@ -1,0 +1,133 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-blocks-quality3-correction",
+ "tool": "ofs",
+ "arguments": [
+  "--quality",
+  "3",
+  "--correction"
+ ],
+ "input": {
+  "kind": "quiet",
+  "rate": 44100,
+  "channels": 1,
+  "bits": 16,
+  "samples": 1808100,
+  "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+  "size": 3616244
+ },
+ "sha256": "d12b44ea35126a853123ca2dd4aa8ba33c1853b24c43fd5cf494cdfc4f919f61",
+ "size": 51,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "--correction",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "--correction",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "decode_correction": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "--correction",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "decode_without_correction": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 3616244,
+   "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+   "equals_input": true,
+   "samples_equal_input": true
+  },
+  "decode-correction": {
+   "size": 3616244,
+   "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+   "equals_input": true,
+   "samples_equal_input": true
+  },
+  "decode-without-correction": {
+   "size": 3616244,
+   "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
+   "equals_input": true,
+   "samples_equal_input": true
+  }
+ },
+ "identicalCases": []
+}

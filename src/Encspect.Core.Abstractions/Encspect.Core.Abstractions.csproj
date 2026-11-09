@@ -5,5 +5,7 @@
   <ItemGroup>
     <!-- The cursor's buffer in local variables (BitCursor.Detach and Attach). -->
     <InternalsVisibleTo Include="Encspect.Formats.TrueHd" />
+    <!-- The host raises a StreamClaim when the file name agrees (ExtensionSignals). -->
+    <InternalsVisibleTo Include="Encspect.Host" />
   </ItemGroup>
 </Project>

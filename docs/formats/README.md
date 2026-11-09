@@ -19,6 +19,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | FLAC (native and in Ogg, with decoding for verification) | [flac.md](flac.md) |
 | Monkey's Audio (all versions parsed; versions 3.80 to 3.99 and 4.11 decoded for verification) | [monkeys-audio.md](monkeys-audio.md) |
 | TTA (True Audio, verified by its CRC-32s and decoded for measurements; the frames of a Matroska track) | [tta.md](tta.md) |
+| OptimFROG (`.ofr`: the blocks, the stored WAV header, the encoder's mode and the CRC-32 of every data block; no decoder) | [optimfrog.md](optimfrog.md) |
 | Apple Lossless (ALAC) frame by frame in MP4 and Matroska (the "alac" codec parser; CAF waits for a CAF parser) | [alac.md](alac.md) |
 | Dolby TrueHD and MLP (raw `.thd` and `.mlp` files, with decoding for verification) | [truehd.md](truehd.md) |
 | ASF and WMA (versions 1 and 2, Professional, Lossless and Voice frame by frame) | [asf-wma.md](asf-wma.md) |
@@ -52,6 +53,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | no |
+| OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
 | Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
@@ -90,6 +92,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | WavPack | walked by the decoder | verified and measured | Stereo Coding |
 | Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
 | TTA | walked by the decoder; the frames' CRC-32s are checked over the coded bytes | measured (audio format 1) | none |
+| OptimFROG | the blocks are walked and their CRC-32s checked over the compressed data; the data itself is not read | no decoder | none |
 | ALAC | walked by the parser | measured (no checksum to verify) | Element Coding, Stereo Coding |
 | Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |

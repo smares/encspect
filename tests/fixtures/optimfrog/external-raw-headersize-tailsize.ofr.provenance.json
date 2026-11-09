@@ -1,0 +1,123 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "raw-headersize-tailsize",
+ "tool": "ofr",
+ "arguments": [
+  "--raw",
+  "--channelconfig",
+  "STEREO_LR",
+  "--sampletype",
+  "SINT16",
+  "--rate",
+  "44100",
+  "--headersize",
+  "16",
+  "--tailsize",
+  "10"
+ ],
+ "input": {
+  "kind": "music",
+  "rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30000,
+  "extra": "16 bytes of text before the samples and 10 after",
+  "sha256": "aa18812a8a3fd88c1e3417d2417c272b58700781021f539edd1a6d68d2463ae3",
+  "size": 120026
+ },
+ "sha256": "fc46bd1228d0cf80c33506660cda27045225a96338ed50cf41864e29cfe6f007",
+ "size": 41495,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofr",
+    "--encode",
+    "--raw",
+    "--channelconfig",
+    "STEREO_LR",
+    "--sampletype",
+    "SINT16",
+    "--rate",
+    "44100",
+    "--headersize",
+    "16",
+    "--tailsize",
+    "10",
+    "in.raw",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofr",
+    "--encode",
+    "--raw",
+    "--channelconfig",
+    "STEREO_LR",
+    "--sampletype",
+    "SINT16",
+    "--rate",
+    "44100",
+    "--headersize",
+    "16",
+    "--tailsize",
+    "10",
+    "in.raw",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "--decode",
+    "out.ofr",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 120026,
+   "sha256": "aa18812a8a3fd88c1e3417d2417c272b58700781021f539edd1a6d68d2463ae3",
+   "equals_input": true,
+   "samples_equal_input": null
+  }
+ },
+ "identicalCases": []
+}

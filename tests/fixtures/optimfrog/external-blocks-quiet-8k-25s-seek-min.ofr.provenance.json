@@ -1,0 +1,130 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "blocks-quiet-8k-25s-seek-min",
+ "tool": "ofr",
+ "arguments": [
+  "--seek",
+  "min"
+ ],
+ "input": {
+  "kind": "quiet",
+  "rate": 8000,
+  "channels": 1,
+  "bits": 16,
+  "samples": 200000,
+  "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+  "size": 400044
+ },
+ "sha256": "a4c35ce3f641c61338bdd8c7c4f37567988d09a3226f547856c6cd76ec86d37a",
+ "size": 16015,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofr",
+    "--encode",
+    "--seek",
+    "min",
+    "in.wav",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofr",
+    "--encode",
+    "--seek",
+    "min",
+    "in.wav",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "--decode",
+    "out.ofr",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 400044,
+   "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+   "equals_input": true,
+   "samples_equal_input": true
+  }
+ },
+ "identicalCases": [
+  {
+   "case": "blocks-quiet-8k-25s-seek-fast",
+   "arguments": [
+    "--seek",
+    "fast"
+   ],
+   "tool": "ofr",
+   "input": {
+    "kind": "quiet",
+    "rate": 8000,
+    "channels": 1,
+    "bits": 16,
+    "samples": 200000,
+    "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+    "size": 400044
+   }
+  },
+  {
+   "case": "blocks-quiet-8k-25s-seek-normal",
+   "arguments": [
+    "--seek",
+    "normal"
+   ],
+   "tool": "ofr",
+   "input": {
+    "kind": "quiet",
+    "rate": 8000,
+    "channels": 1,
+    "bits": 16,
+    "samples": 200000,
+    "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+    "size": 400044
+   }
+  }
+ ]
+}

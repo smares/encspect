@@ -120,6 +120,13 @@ public sealed record StreamInfo
 
     public Confidence? ProcessorConfidence { get; init; }
 
+    // Claims made from evidence of different strength (StreamClaim), such as the lossy part of a DualStream; empty where there are none.
+    public IReadOnlyList<StreamClaim> Claims { get; init; } = [];
+
+    // What the bytes show against a claim that a signal outside them could make (the data blocks of a lossless OptimFROG file against the extension .ofs of
+    // its sibling DualStream). It is not reported: only the host reads it, to say that the signals disagree.
+    public IReadOnlyList<StreamClaim> ClaimsAgainst { get; init; } = [];
+
     public IReadOnlyList<Series> Series { get; init; } = [];
 
     // Categories per frame for graphs and for the summary over the stream, such as the Layer III block types.
