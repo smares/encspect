@@ -18,7 +18,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | WavPack (lossless, hybrid and DSD, with correction files, and with decoding for verification) | [wavpack.md](wavpack.md) |
 | FLAC (native and in Ogg, with decoding for verification) | [flac.md](flac.md) |
 | Monkey's Audio (all versions parsed; versions 3.80 to 3.99 and 4.11 decoded for verification) | [monkeys-audio.md](monkeys-audio.md) |
-| TTA (True Audio, verified by its CRC-32s; the frames of a Matroska track) | [tta.md](tta.md) |
+| TTA (True Audio, verified by its CRC-32s and decoded for measurements; the frames of a Matroska track) | [tta.md](tta.md) |
 | Apple Lossless (ALAC) frame by frame in MP4 and Matroska (the "alac" codec parser; CAF waits for a CAF parser) | [alac.md](alac.md) |
 | Dolby TrueHD and MLP (raw `.thd` and `.mlp` files, with decoding for verification) | [truehd.md](truehd.md) |
 | ASF and WMA (versions 1 and 2, Professional, Lossless and Voice frame by frame) | [asf-wma.md](asf-wma.md) |
@@ -89,7 +89,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | FLAC | walked by the parser | verified and measured | Stereo Coding |
 | WavPack | walked by the decoder | verified and measured | Stereo Coding |
 | Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
-| TTA | not walked; the frames' CRC-32s are checked over the coded bytes | no (0.2) | none |
+| TTA | walked by the decoder; the frames' CRC-32s are checked over the coded bytes | measured (audio format 1) | none |
 | ALAC | walked by the parser | no (0.2) | Element Coding, Stereo Coding |
 | Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |

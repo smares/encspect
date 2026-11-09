@@ -1,8 +1,10 @@
 # TTA
 
-True Audio files (`.tta`, TTA1), and the frames of a TTA track that a container stores without the header (the "tta" codec parser, for Matroska's `A_TTA1`, which the Matroska parser routes to it). There is no decoder: the coded samples are not read.
+True Audio files (`.tta`, TTA1), and the frames of a TTA track that a container stores without the header (the "tta" codec parser, for Matroska's `A_TTA1`, which the Matroska parser routes to it). A decoder (`Encspect.Formats.Tta.Decoding`, ID `tta`) reads the coded samples of audio format 1 where a front end asks for the samples ([Decoding](#decoding)).
 
-Sources: the TTA authors' format description (https://tta.sourceforge.net/en/tta-format-description/) and its "Compression Theory" page, Matroska's codec mapping for `A_TTA1` (https://www.matroska.org/technical/codec_specs.html), and FFmpeg 6.1.1, libtta-c 2.3 and MediaInfo as black-box readers and writers of the test files. libtta-c 2.3, the TTA authors' own encoder, is built from its pinned source (`libtta_tool.py`) and run on inputs the fixture scripts write; the reference code (libtta, ttaenc) and FFmpeg's TTA sources are LGPL or GPL and were not read ([decoders.md](../design/decoders.md), decision 10). A field whose meaning no description or tool confirms is not claimed.
+Sources: the TTA authors' format description (https://tta.sourceforge.net/en/tta-format-description/) and its "Compression Theory" page, Matroska's codec mapping for `A_TTA1` (https://www.matroska.org/technical/codec_specs.html), and FFmpeg 6.1.1, libtta-c 2.3 and MediaInfo as black-box readers and writers of the test files. libtta-c 2.3, the TTA authors' own encoder, is built from its pinned source (`libtta_tool.py`) and run on inputs the fixture scripts write; the reference code (libtta, ttaenc) and FFmpeg's TTA sources are LGPL or GPL and were not read for the parser ([decoders.md](../design/decoders.md), decision 10); for the decoder only the describing agent read libtta (below). A field whose meaning no description or tool confirms is not claimed.
+
+The authors' pages describe the container only: the header, the seek table and the frame's CRC-32. The coded samples (the adaptive Rice codes, the filter, the predictor and the channel decorrelation) are described there only in outline, so the decoder follows a clean-room description of libtta-c 2.3 ([development.md](../development.md#tta-decoding-clean-room)): written by an agent that read libtta's source and contains no code, and implemented by an agent that did not read it. Neither agent read FFmpeg's TTA decoder or any other TTA implementation; only the describing agent read libtta. `tta -d` and FFmpeg are black boxes that the decoded samples are compared with ([Decoding](#decoding)).
 
 The description does not say how the frame length is rounded, what each CRC-32 covers or what an entry holds. The readings below come from the 26 files in Encspect's tests that FFmpeg 6.1.1 and libtta-c 2.3 wrote ([development.md](../development.md)), each with its manifest, and the analyzer uses them.
 
@@ -45,7 +47,7 @@ The description does not say how the frame length is rounded, what each CRC-32 c
 
 ## Verification
 
-Three checksums are declared and tallied; none needs decoding, so they are compared in every analysis, and the stream's decoding is `NoDecoder` (`--verify` adds the info `decode.no-decoder`).
+Three checksums are declared and tallied; none needs decoding, so they are compared in every analysis. The stream stores no checksum over its decoded audio, so the decoder compares none, and it runs only where a front end asks for the samples (the stream's decoding is `NotRequested` otherwise, as for WAV).
 
 | Checksum | Covers | Counts as covering all of the audio when |
 |---|---|---|
@@ -92,14 +94,40 @@ The header states a channel count and no speaker positions. The layout comes fro
 - **What was checked:** TTA's syntax has no count of low bits that are zero. Encspect's test files of the two 24-bit stereo noise-floor signals (`external-lossyflac-b512.flac` and `external-lossyflac-floor-44k.flac`, whose samples are lossyWAV 1.4.2's output at the standard preset), coded with libtta-c 2.3's `tta` (`scripts/fixtures/check_lossywav_coders.py`):
   - the signal before lossyWAV: 148,475 and 104,736 bytes; lossyWAV's output: 148,563 and 104,894 bytes. The zeroed bits bought nothing.
 - **Fixture:** `external-libtta-24-stereo-lossywav.tta` (104,894 bytes, libtta-c 2.3), made by `scripts/fixtures/make_external_tta_fixtures.py` from the samples of the committed lossyWAV fixture `flac/external-lossyflac-floor-44k.flac` (the input kind `lossywav-floor-44k` of `flac_signal.py`, decoded by `flac_model.py`); its manifest and golden are committed.
-- **What Encspect reports:** the same as for any TTA file. TTA has no decoder yet, so the levels and the low bits per span are not measured for it (`decode.no-decoder`); once it decodes, those figures come from the samples and read as the WAV file's do.
+- **What Encspect reports:** the same as for any TTA file. With measuring on, the decoded samples give the levels and the low bits per span, which read as the WAV file's do (`external-libtta-24-stereo-lossywav.measure.json`).
 - **No claim:** the file holds no marker and no coded count, so nothing in it names lossyWAV.
+
+## Decoding
+
+- **When:** the decoder runs where the front end asks for the samples (`--measure`, the GUI's audio panels, an `Output` sink of the library). The tree is the same either way. It declares no checksum over the decoded audio, because the stream stores none: the frames' CRC-32s cover the coded bytes only and say nothing about the reconstruction.
+- **What it reads:** audio format 1, 1 to 24 bits per sample (decoded at the container width of 1, 2 or 3 bytes; a depth that is not a multiple of 8 is left-justified, its low bits zero) and any channel count the header states. Each frame is decoded on its own from the same starting state, so a damaged or lost frame costs only itself.
+- **The stages** (each channel in turn for every sample time):
+  - the adaptive Rice code: the unary part is a run of 1 bits ended by a 0, and the binary part has the width of one of two running parameters; both adapt to a running sum of the values;
+  - an adaptive filter of 8 taps, whose coefficients follow the signs of the history (sign-sign least mean squares), with a shift of 10 bits for 8 and 24 bit samples and 9 for 16 bit samples;
+  - a fixed first-order predictor of 31/32 (15/16 for 8 bit samples);
+  - the undoing of the channel decorrelation: the coded values are differences of neighboring channels, and the last channel is a mid-like one (mono is not decorrelated).
+  - All of it in 32-bit wraparound arithmetic; the division by two in the decorrelation rounds toward zero, the shifts toward minus infinity.
+- **Output:** signed integers at the container width, interleaved in channel order by the sink (planar blocks of up to 4,096 sample times). 8-bit streams decode to values around 0 (silence is 0), not unsigned bytes.
+- **Checked against:** a test-side encoder that inverts the description (round trips for 8, 16 and 24 bits, 1 to 6 channels, silence, noise, the ends of the range, long runs of ones after silence), the worked examples of the description, and `tta -d` and FFmpeg sample for sample on the 26 encoder-written files it can (the 27th is the password file), which `scripts/fixtures/crosscheck_tta_pcm.py` runs in CI ([development.md](../development.md#tta-decoding-clean-room)). `tta -d` refuses the 8-bit and 8-channel files, so FFmpeg is the only reference for them; the 8-bit coding (a predictor of 15/16 and a filter shift of 10) rests on FFmpeg's decode of its own file.
+- **Damage:**
+  - a sample outside the range of the depth, a Rice code of 31 bits or more, a Rice parameter beyond 32 bits, or coded data that ends inside a sample: the frame is not decoded (`decode.frame-invalid`), and the blocks it had written stay; the next frame decodes on its own;
+  - a frame the parser calls damaged (its CRC-32 fails) is decoded all the same;
+  - a frame cut by the end of the data or shorter than its CRC-32 is not decoded;
+  - bytes left after the last code of a frame are ignored, as the reference ignores them;
+  - a frame of more than 64 MiB is not read into memory and not decoded (`tta.frame-not-decoded`, Info).
+- **Memory:** a frame is held whole while it is decoded (at most 64 MiB); the output is written in blocks of at most 65,536 samples over all channels; the state is a few hundred bytes for each channel.
+- **Work:** `DecodeContext.AddWork` is charged before the work: 16 units a byte of the frame's coded data, and for each sample of each channel the fixed work of `DecodeWork.ForSample` plus 20 (the filter's 8 taps to predict and 8 to update, the predictor and the decorrelation).
+- **Frames decoded:** the first 2,097,152 frames of a stream (`Records.MaxEntries`); a file with more is not decoded past them.
 
 ## Not covered
 
-- The coded samples: no decoding, no waveform, spectrogram or lowpass for TTA, and no check of the audio beyond the frames' CRC-32s.
+- Audio format 2 (a stream encoded with a password): the decoder refuses it (`decode.not-possible`, "audio format 2"). The password only changes the filter's starting coefficients, but the analyzer takes no password.
+- A track in a container that stores no header (neither mkvmerge nor FFmpeg writes a CodecPrivate for `A_TTA1`): the samples of its last frame are not known, so the track is not decoded (`decode.not-possible`). With the header in the CodecPrivate the track decodes.
+- Rice parameters above 24 bits. libtta's bit cache is 32 bits wide, so for a stream whose parameter grows past that (24-bit noise near full scale) the encoders may not round-trip, and the decoder reads the bits exactly; no committed file reaches it. A parameter beyond 32 bits is damage.
+- 8-bit streams of encoders other than FFmpeg's: the reference decoder refuses 8 bits, and only FFmpeg's file tells how they decode.
 - TTA2, and a decrypted view of audio format 2.
 - Finding frames in a file whose seek table is damaged beyond its CRC-32 (the description says such a file can be decoded only in an "unseekable" mode; the analyzer follows the lengths).
+- No check of the audio beyond the frames' CRC-32s: the stream stores none over the decoded samples.
 - Compression ratio per frame, which [coding-graphs.md](../design/coding-graphs.md) plans for TTA after the parser.
 
 ## Articles

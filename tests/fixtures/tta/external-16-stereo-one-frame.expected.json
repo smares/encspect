@@ -58,7 +58,7 @@
  "verification": {
   "default": {
    "isVerified": true,
-   "decoding": "noDecoder",
+   "decoding": "notRequested",
    "checksums": [
     {
      "name": "header CRC-32",
@@ -98,5 +98,8 @@
    "bits": 16,
    "samples": 5000
   }
- }
+ },
+ "decoded_samples": 5000,
+ "decoded_pcm_md5": "36ed9ef2aa3b7744d2639e2437005090",
+ "decode_findings": []
 }

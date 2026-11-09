@@ -126,7 +126,7 @@ public sealed record PcmCoding
 
 ### TTA
 
-- TTA has no decoder ([decoders.md](decoders.md), decision 5). Measuring it needs one, built clean-room as [decoders.md](decoders.md)'s decision 10 requires: libtta-c and FFmpeg's `tta.c` are LGPL. One agent reads them and writes a format description without code, as [`truehd-format.md`](truehd-format.md) was; another agent who has not read them implements from that description, with libtta-c and FFmpeg as black-box cross-checks of the decoded PCM's MD5.
+- TTA is measured since its decoder was built ([decoders.md](decoders.md#as-built-the-tta-decoder)): clean-room as [decoders.md](decoders.md)'s decision 10 requires, because libtta-c and FFmpeg's `tta.c` are LGPL. One agent read libtta-c and wrote the format description without code ([`tta-format.md`](tta-format.md), as [`truehd-format.md`](truehd-format.md) was); another agent who had not read it implemented from that description, with libtta-c's `tta -d` and FFmpeg as black-box cross-checks of the decoded PCM, bit for bit.
 - TTA stores only CRC-32s over coded data, so the decoder adds no verification; its correctness rests on the fixtures' decoded MD5 from libtta-c and FFmpeg.
 - **Recommendation:** leave TTA out of this design's steps; its decoder is a change of its own (under "Later" then, in 0.2 since 2026-11-08), and its streams are measured once it lands, with no further work here (decision 12).
 

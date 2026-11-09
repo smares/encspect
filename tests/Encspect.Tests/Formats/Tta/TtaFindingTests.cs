@@ -260,7 +260,7 @@ public class TtaFindingTests
 
         StreamVerification verification = Analyze(stream).Streams.Single().Verification!;
 
-        Assert.Equal(DecodeStatus.NoDecoder, verification.Decoding);
+        Assert.Equal(DecodeStatus.NotRequested, verification.Decoding);
         Assert.Equal(true, verification.IsVerified);
         Assert.Equal(["header CRC-32", "seek table CRC-32", "frame CRC-32"], verification.Checksums.Select(c => c.Name));
         Assert.Equal([ChecksumCoverage.Header, ChecksumCoverage.Header, ChecksumCoverage.CodedData], verification.Checksums.Select(c => c.Covers));

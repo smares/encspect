@@ -16,6 +16,8 @@ For each file:
   A file it refuses or stops on (8-bit, 8 channels) has no `tta -d` reference. `tta -dp secret` decodes the file written with that password; the analyzer does
   not (audio format 2), so that file is checked to produce no stream.
 - FFmpeg decodes the file to raw PCM of the same width: a second reference, and the only one where `tta -d` gives none.
+- Each reference's MD5 must equal the manifest's decoded_pcm_md5 (the samples of the signal the encoder was given), also for the file written with a password,
+  which `tta -dp secret` decodes and the analyzer does not.
 - compare_pcm.py compares the analyzer's samples with each reference by position, with no difference allowed (--max-lsb 0 --rms-lsb 0); the analyzer must
   also have as many samples as the reference, in one run from position 0.
 
@@ -24,6 +26,7 @@ sample differs, if a count differs, if a tool fails where it is expected to work
 """
 
 import argparse
+import hashlib
 import json
 import pathlib
 import shlex
@@ -99,6 +102,21 @@ def compare(manifest, reference, bits, channels, label):
     return problems
 
 
+def manifest_problems(path, references, channels, bits):
+    """The references against the manifest's decoded_pcm_md5 and decoded_samples."""
+    manifest_file = path.with_name(path.name.rsplit(".", 1)[0] + ".expected.json")
+    if not manifest_file.exists():
+        return []
+    manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    problems = []
+    for label, reference in references:
+        if hashlib.md5(reference).hexdigest() != manifest["decoded_pcm_md5"]:
+            problems.append(f"{label} decodes to MD5 {hashlib.md5(reference).hexdigest()}, the manifest says {manifest['decoded_pcm_md5']}")
+        if len(reference) != manifest["decoded_samples"] * channels * (bits // 8):
+            problems.append(f"{label} decodes {len(reference) // (channels * (bits // 8))} samples, the manifest says {manifest['decoded_samples']}")
+    return problems
+
+
 def header_of(path):
     """(bits, channels) of the TTA1 header in a TTA file, or None (a Matroska track without a CodecPrivate stores none)."""
     data = path.read_bytes()
@@ -138,11 +156,15 @@ def main(argv=None):
             header = header_of(path)
             if path.name in PASSWORDS or header is None:
                 why = "audio format 2, which the decoder does not take" if path.name in PASSWORDS else "no TTA1 header, so the samples of its last frame are not known"
+                problems = []
                 if streams:
-                    print(f"FAIL {path.name}: the analyzer decoded {len(streams)} streams, but the file has {why}")
-                    failed += 1
-                else:
-                    print(f"ok   {path.name}: no decoded stream ({why})")
+                    problems.append(f"the analyzer decoded {len(streams)} streams, but the file has {why}")
+                if path.name in PASSWORDS:
+                    password_bits, password_channels = header_of(path)
+                    pcm, reason = tta_reference(program, path, base)
+                    problems += manifest_problems(path, [("tta -dp", pcm)], password_channels, password_bits) if pcm is not None else [reason]
+                failed += bool(problems)
+                print(f"FAIL {path.name}: " + "; ".join(problems) if problems else f"ok   {path.name}: no decoded stream ({why})")
                 continue
             bits, channels = header
             if len(streams) != 1:
@@ -164,6 +186,7 @@ def main(argv=None):
                 print(f"FAIL {path.name}: no reference ({why}; {ffmpeg_why})")
                 failed += 1
                 continue
+            problems += manifest_problems(path, references, channels, bits)
             if entry["runs"] != [[0, entry["samples"]]]:
                 problems.append(f"the analyzer's runs are {entry['runs']}, not one from position 0")
             for label, reference in references:
