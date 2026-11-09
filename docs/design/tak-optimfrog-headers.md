@@ -240,8 +240,11 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ### Pending on the fixtures
 
-- **The correction file's detection:** if it has a signature other than `OFR `, its detection classes come to the lead as an amendment to this design before PR 2's parser reads it ([Detection](#detection)).
-- **The naming of DualStream files:** if nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), it comes back to the lead before PR 2 lands.
+What the fixtures of PR 2 (OptimFROG 5.100, run 42672985679) show; the lead decides both items below, and the parser names neither until then (the codec is "OptimFROG" for every file).
+
+- **The correction file's detection:** an `.ofc` starts with `CORR`, not `OFR `. It is a run of `CORR` blocks (the same 4-byte ID and 4-byte length as the `.ofr` blocks), one for each data block of its `.ofs`, whose first 4 data bytes are the IEEE CRC-32 of the rest of the block's data in all six fixtures. Nothing else of its layout is known. Its detection classes, if it is to be matched, come to the lead as an amendment to this design.
+- **The naming of DualStream files:** an `.ofs` has the main block of a lossless file (same encoder ID, same compression byte, speedup 4x) and differs in two places only: the minimum decoder version is 4.520 (a lossless file stores 4.600, or 4.520 at preset 0), and the two bytes of every data block that the specification calls reserved read 0x1101 (stereo) or 0x0901 (mono) where a lossless file's read 0x1042, 0x10C2, 0x1041, 0x0841 or 0x0842 and so on. The header does not record whether a correction file was written: an `.ofs` is the same file with and without `--correction`. A lossy-by-itself reading would rest on those undocumented bytes. The quiet sine fixtures (`ofs-blocks-*`) decode exactly even without the `.ofc`.
+- **Not in the design:** `off` writes the main block as `OFRX` and a block `DETA` (70 bytes; 18,624 with `--mantissabits 8`) after the data blocks, and its files are `.ofr`. The parser reads `OFRX` as the main block (`optimfrog.main-block-variant`) and shows `DETA` as an unknown block; see [optimfrog.md](../formats/optimfrog.md).
 
 ## Pull requests, in order
 
