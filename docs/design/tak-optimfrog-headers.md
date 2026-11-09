@@ -72,7 +72,12 @@ Checked on real files from samples.ffmpeg.org's archive (first bytes only, 2026-
 - **Statistics:** Mode, Speedup, Sample Type, Build System.
 - **Claims:** Encoder "OptimFROG 5.100" (high confidence) from the encoder ID; processor lossyWAV as above.
 - **The mode, not a preset.** 5.100's presets 0 to 10 and max each set a mode, `--optimize` and `--aca`/`--acm`; only the mode is stored. The report names the mode and the speedup; the article lists which presets select each mode. No preset is claimed (decision 5).
-- **Declared end:** the end of the last block before an APEv2 or ID3v1 tag, which the specification places last.
+- **The block walk** never stops on a tag's signature (CLAUDE.md: never a signature match alone), by the rule DTS-HD's chunk walk follows ([dtshd.md](../formats/dtshd.md)):
+  - a block header is four printable ASCII bytes and a length that ends inside the data;
+  - a block of a known ID whose length runs past the data is a cut block (`optimfrog.block-cut`), read as far as it goes, and ends the walk;
+  - a block of an unknown ID goes on the walk only when a valid block header follows it or it ends exactly at the end of the data (`optimfrog.block-unknown`, info); otherwise the walk stops before it;
+  - a length that does not fit ends the walk with a finding and no guess at where the next block starts (no resync).
+- **Declared end:** the end of the last block the walk accepts. The bytes after it go to the host's search for trailing tags (APEv2 with or without its header, Lyrics3, ID3v1), and bytes that are no tag are `optimfrog.data-after-blocks`. The specification lists ID3v1 and APEv2 among its blocks, but they are the host's, as in every other format; a tag-like run of bytes inside a `COMP` block is no tag (`tag.near-miss`).
 
 ### Detection
 
@@ -113,7 +118,10 @@ Checked on real files from samples.ffmpeg.org's archive (first bytes only, 2026-
   - `off` on a 32-bit float WAV;
   - `ofs` at two bitrates, read only if the files have the specification's layout (decision 6).
 - **Speedup** was deprecated in a 4.5xx release and is not offered by 5.100, so files with a speedup other than 1x come only from older encoders: `luckynight.ofr` (4.509, 4x) as a real file (`check_optimfrog_samples.py`, pinned, not committed), and optionally the Linux amd64 4.600ex build from the previous releases page.
-- **Hand-built** (`make_optimfrog_fixtures.py`): a failing `COMP` CRC-32, a file cut in a block, an unknown block, an APEv2 and ID3v1 tag after the blocks.
+- **Hand-built** (`make_optimfrog_fixtures.py`, from the committed files):
+  - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end;
+  - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 and ID3v1, and junk that is no tag (`optimfrog.data-after-blocks`);
+  - tag-like bytes (`APETAGEX`, `TAG`) inside a `COMP` block (`tag.near-miss`).
 
 ## Cross-checks
 
