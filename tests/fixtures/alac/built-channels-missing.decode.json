@@ -1,0 +1,17 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 5904,
+    "isVerified": null,
+    "checksums": []
+  },
+  "pcmSha256": "8efc148125ceab1d51bcab4ba3020116ac833c0fd69cebdee7d28cd7fa6f0f78",
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The alac decoder could not decode the frame at 0x1504: The frame holds elements for 1 of the 2 channels the cookie states."
+    }
+  ]
+}
