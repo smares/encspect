@@ -80,17 +80,23 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
 - **Declared end:** the end of the last frame by the last frame info object (TAK 1.1.1 and later), used only when its CRC-24 holds, as TTA uses its seek table only when its CRC holds; the APEv2 tag after it is the host's. A declared end past the data is a file cut in the audio (`tak.audio-cut`, with the bytes missing), the most common damage. Without the object, or with a failing CRC, no declared end, and trailing tags are looked for as in a file with no declared size.
 - **A tag before `tBaK`** (ID3v2) is the host's, as in every format, with `tak.leading-tag` (info): TAK's readme says its decoder throws an error on tags prepended to the file.
 
-### OptimFROG
+### OptimFROG files
 
 - **Nodes:** every block by its ID and length, in the order of the specification's layout rule:
-  - main block: total samples (all channels: the specification counts single values, so samples per channel are the total over the channels), sample type (the 11 names of appendix A), channel configuration (mono, stereo left/right), sample rate, encoder ID with version and build system, compression with mode and speedup, and `minDecoderVersion` where the main size is over 15 (5.100);
-  - `HEAD` and `TAIL`: the stored WAV header and footer, the header's chunks listed, lossyWAV's `fact` as above;
-  - each `COMP` block: its CRC-32 compared over the data after it, its sample count, sample type, channel configuration and encoder ID (open decision 4);
+  - main block: total samples (all channels: the specification counts single values, so samples per channel are the total over the channels), sample type (the 11 names of appendix A), channel configuration (mono, stereo left/right), sample rate, encoder ID with version and build system, compression with mode and speedup, and, where the main size is over 15, `minDecoderVersion` (stored less 4500, so 600 is 5.100) and any further bytes as unknown fields, skipped as the specification asks;
+  - `HEAD` and `TAIL`: the stored WAV header data and terminating data, named as Monkey's Audio names them, with the header's chunks listed and lossyWAV's `fact` chunk read with `FactText`. A `HEAD` that does not start with `RIFF` (`ofr --raw --headersize`) is shown as bytes with no chunk listing;
+  - each `COMP` block: its CRC-32, compared (the IEEE CRC-32 of zlib, over the block's data after the CRC field, as `luckynight.ofr` shows), its sample count, sample type, channel configuration, the 2-byte field "reserved for internal use" (shown, never flagged: `luckynight.ofr` has 0x1041 in every block) and encoder ID;
   - `MD5 ` (shown, not compared), `RECV` (shown, not interpreted), unknown blocks by ID and length.
-- **StreamInfo:** codec "OptimFROG", sample rate, channels, bits per sample (32 for the float types), samples, duration, average bitrate; with decision 4 the bitrate per block as a series under the shared names of [development.md](../development.md#names-of-statistics-and-series).
-- **Statistics:** Mode, Speedup, Sample Type, Build System.
+- **Checks across blocks:** a `COMP` block whose sample type, channel configuration or encoder ID differs from the main block's (`optimfrog.block-differs`); the blocks' samples not adding up to the main block's total (`optimfrog.samples-mismatch`, which also catches a file cut at a block boundary or a missing block); a total the channels do not divide; a missing `HEAD` or `TAIL`, which the layout rule does not bracket as optional (`optimfrog.head-missing`, `optimfrog.tail-missing`); a block out of the layout rule's order.
+- **Undefined values** are named as such with an info finding: sample types above 10, channel configurations above 1, build systems 9 to 14 (15 is "unknown"), modes 15 to 31, speedups 3 to 7.
+- **StreamInfo:** codec "OptimFROG lossless" (named as WavPack's codecs are, beside the DualStream codecs below), sample rate, channels, bits per sample (32 for the float types), samples, duration, average bitrate.
+- **Channel layout,** in the words of TTA and Monkey's Audio: the channel configuration gives one channel center and two left/right; a nonzero channel mask in the stored WAV header sets the layout where it is there, as in Monkey's Audio.
+- **Statistics and series,** under the names TTA and Monkey's Audio use ([development.md](../development.md#names-of-statistics-and-series)): Mode, Speedup, Sample Type, Build System, Channel Layout, "Blocks", "Verified Block Checksums" and "Failed Block Checksums", the smallest and largest block as WavPack names them, "Minimum Bitrate" and "Maximum Bitrate", "Bitrate Mode" and "Bitrate Distribution", and the series "Bitrate" (per block) and "Bitrate Over Time" (per second), as TTA draws them per frame.
 - **Claims:** Encoder "OptimFROG 5.100" (high confidence) from the encoder ID; processor lossyWAV as above.
-- **The mode, not a preset.** 5.100's presets 0 to 10 and max each set a mode, `--optimize` and `--aca`/`--acm`; only the mode is stored. The report names the mode and the speedup; the article lists which presets select each mode. No preset is claimed (decision 5).
+- **The mode, not a preset.**
+  - The mode is informational: the changelog of 4.506 says the encoder "now writes the exact compression mode used in the informational purpose field of the header (instead of just extra for the extranew mode)", so before 4.506 "extra" can mean extranew. The description says so.
+  - 5.100's `ofr --help` accepts 19 mode names (10 listed, 9 "also available"); its four `-light` modes are not in the specification's table, so the fixtures run all 19 and the article states which ones the stored mode cannot tell apart.
+  - The presets 0 to 10 and max each set a mode, `--optimize` and `--aca`/`--acm` (the preset table of `ofr --help`, which the article cites); only the mode is stored, so the report names the mode and the speedup, and no preset (decision 5).
 - **The block walk** never stops on a tag's signature ([CLAUDE.md](../../CLAUDE.md): never a signature match alone), by the rule DTS-HD's chunk walk follows ([dtshd.md](../formats/dtshd.md)):
   - a block header is four printable ASCII bytes and a length that ends inside the data;
   - a block of a known ID whose length runs past the data is a cut block (`optimfrog.block-cut`), read as far as it goes, and ends the walk;
@@ -108,7 +114,7 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
 
 - **Both:** a CRC that fails (each TAK object; each OptimFROG `COMP` block, once with a count), data cut in a metadata object or block, and data after the declared end that is no tag.
 - **TAK,** beside the walk's codes above, each field a value takStream.pas does not define: a codec it does not list, a frame size type of 10 to 15 or one that does not fit the rate, a data type of 1 to 7 (only 0, PCM, is defined), a sample bits code outside the defined range, a channel count over 16, an evaluation of 3, a speaker code of 19 to 63; a stream info that is not first; a last frame past the data (`tak.audio-cut`); a missing End object; an object whose size runs past the data.
-- **OptimFROG:** see [Findings of the block walk](#optimfrog) and the fields below.
+- **OptimFROG:** the codes of the walk, the checks across blocks and the undefined values in [OptimFROG files](#optimfrog-files).
 - Each finding code gets a test or a manifest entry, as `FindingCoverageTests` asks.
 
 ### Verification
