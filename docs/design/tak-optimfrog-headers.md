@@ -131,7 +131,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 - **TAK:** `tBaK` at the start of the data (after leading tags) and a stream info object whose CRC-24 holds is certain (100); the signature with an object header of ID 1 and a plausible size but a failing CRC is likely (80); the signature alone is possible (70).
 - **OptimFROG:** `OFR ` with a main size of at least 15, a sample type of 0–10, a known channel configuration, a sample rate above 0, and a block with a known ID after the main block is certain (100); the main block alone with valid fields is likely (80); the four bytes alone are possible (70).
-- **DualStream:** an `.ofs` is matched as any OptimFROG file and named from what its header shows; a correction file by the structure the fixtures show, with the classes above, and never by its signature alone.
+- **DualStream:** an `.ofs` is matched as any OptimFROG file and named from what its header shows; a correction file by the structure the fixtures show, never by its signature alone. If it starts with `OFR ` and the block layout, the classes above apply; if it has a signature of its own, its classes (and their rows in [architecture.md](../architecture.md)'s detection table) are an amendment to this design, made before PR 2's parser reads it.
 - **Neither** is matched further into the data.
 
 ### Findings
@@ -238,7 +238,8 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ### Pending on the fixtures
 
-- **Pending on the fixtures:** if nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), the naming of DualStream files comes back to the lead before PR 2 lands.
+- **The correction file's detection:** if it has a signature other than `OFR `, its detection classes come to the lead as an amendment to this design before PR 2's parser reads it ([Detection](#detection)).
+- If nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), the naming of DualStream files comes back to the lead before PR 2 lands.
 
 ## Pull requests, in order
 
