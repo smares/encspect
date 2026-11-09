@@ -1,0 +1,107 @@
+{
+ "source": "TAK 2.3.3 (Takc.exe), http://www.thbeck.de/Tak/Tak.html",
+ "run": {
+  "run": 42719547527,
+  "commit": "363314feebd0e7002ce1ce9edaa87f1b4cf87f45",
+  "artifact": "tak-fixtures"
+ },
+ "case": "preset-p4m",
+ "tool": "Takc.exe",
+ "arguments": [
+  "-p4m"
+ ],
+ "mode": "file",
+ "input": {
+  "name": "cd-16-stereo",
+  "sha256": "a978a63728af02ae4ad0ea3f376c460398ba51e29f5882daad0705a16a3061bb",
+  "size": 44140,
+  "signal": {
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "frames": 11024,
+   "kind": "tones",
+   "mask": null,
+   "chunks": false,
+   "unknownSize": false,
+   "size": 44140
+  },
+  "lossywav": null
+ },
+ "sha256": "00a38cabb9e579307423fb705f59a71380b4e2046afd2c59e15040a74ebe25c0",
+ "size": 9929,
+ "reproducible": true,
+ "encode": {
+  "exit": 0,
+  "output": "cd-16-stereo.wav                    ..........  22.49%   68* \r\n\r\nCompression:     22.49 %\r\nDuration:         0.00 sec\r\nSpeed:           67.11 * real time",
+  "error": ""
+ },
+ "info": {
+  "any": "=== preset-p4m.tak ============================================\r\n\r\n  File size:                     0.01 MB\r\n  Header size:                   0.11 KB\r\n    Unused:                      0.00 KB\r\n  Compression:                  22.49 %\r\n  Samples per channel:          11024\r\n  File duration:                 0.25 sec\r\n  Frame duration:                 250 ms\r\n  Seek table:              Not available\r\n  Audio format:            PCM, 44100 Hz, 16 Bits, 2 Channels\r\n  Encoder:                 V 2.3.3, -p4m\r\n  Codec:                   2 Integer 24 bit (TAK 2.0)\r\n  Wave file meta data:     Header 44, Footer 0 Bytes\r\n  MD5:                     Not available\r\n  APEv2-Tag:               No\r\n  Status:                  Ok",
+  "anyExit": 0,
+  "compactRaw": "0;44100;16;2;11024;;2.3.3;2;4m;11025;1",
+  "compactRawExit": 0
+ },
+ "decode": {
+  "exit": 0,
+  "output": "preset-p4m.tak                      ..........  220* Ok\r\n\r\nDuration:        0.00 sec\r\nSpeed:         213.44 * real time",
+  "wholeFileEqual": true,
+  "decodedSize": 44140,
+  "audioEqual": true
+ },
+ "md5Test": null,
+ "sdk": {
+  "structSize": 72,
+  "libraryVersionResult": 0,
+  "libraryVersion": "0x00020303",
+  "libraryCompatibility": "0x00010000",
+  "valid": 1,
+  "state": 0,
+  "streamInfoResult": 0,
+  "codec": 2,
+  "codecName": "2 Integer 24 bit (TAK 2.0)",
+  "profile": 4,
+  "frameSizeType": 3,
+  "frameSizeInSamples": 11025,
+  "sampleCount": 11024,
+  "dataType": 0,
+  "sampleRate": 44100,
+  "bitsPerSample": 16,
+  "channels": 2,
+  "blockSize": 4,
+  "hasExtension": 0,
+  "validBitsPerSample": 0,
+  "hasSpeakerAssignment": 0,
+  "speakerAssignment": [
+   0,
+   0
+  ],
+  "encoderInfoResult": 0,
+  "encoderVersion": "2.3.3",
+  "encoderVersionRaw": "0x020303",
+  "preset": 4,
+  "evaluation": 2,
+  "waveDataResult": 0,
+  "waveHeaderSize": 44,
+  "waveFooterSize": 0,
+  "md5Result": 1,
+  "frameSize": 11025,
+  "stateInfoResult": 0,
+  "openResult": 0,
+  "sumResult": 0,
+  "streamSampleCount": 11024
+ },
+ "environment": {
+  "windowsCaption": "Microsoft Windows Server 2025 Datacenter",
+  "windowsVersion": "10.0.26100",
+  "windowsBuild": "26100",
+  "runnerImageOS": "win25-vs2026",
+  "runnerImageVersion": "20261103.298.1",
+  "takVersion": "2.3.3",
+  "takcSha256": "a78a96a6fb7c0a83dfa6d2ed9156f11a51a5f1deed97187c18b24def82dbc195",
+  "librarySha256": "8f0e97949187adccac9a469c64a0534c6bb296d5d73ac19f6c6e2902585f2a1f",
+  "libraryFileVersion": "2.3.3.0",
+  "lossywavSha256": "2022215759a1e48c43989a56f47011cdb1194c6a4926dea7f5033cbfa0d90334"
+ },
+ "identicalCases": []
+}

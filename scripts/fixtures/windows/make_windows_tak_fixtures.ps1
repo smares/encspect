@@ -166,9 +166,9 @@ foreach ($case in $plan.cases) {
             if ($case.mode -eq 'pipe') {
                 $arguments = @('-e') + @($case.arguments) + @('-overwrite', '-', $target)
                 $run = $null
-                # Takc answered "Wave file not supported" to the bytes written to its standard input from .NET (run 42719141357), so the
-                # other ways to feed a pipe are tried in turn; the record names the one that worked.
-                foreach ($method in @('stdin', 'redirect', 'type')) {
+                # Takc answered "Wave file not supported" to the bytes written to its standard input from .NET (run 42719141357), so the input is redirected
+                # from the file first (run 42719547527 used it); the other ways follow if it fails, and the record names the one that worked.
+                foreach ($method in @('redirect', 'stdin', 'type')) {
                     Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
                     if ($method -eq 'stdin') {
                         $run = Invoke-Tool $takc $arguments $source $work
