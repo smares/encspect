@@ -1794,6 +1794,26 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The decoding of a TTA file holds one frame's bytes, a chunk of output and the state of its channels, so what it holds does not grow with the frames. Measured
+    // as the Monkey's Audio test above does, at 50,000 and 200,000 frames: at a sample rate of 1 Hz a frame is one sample, and of silence 6 bytes with its CRC-32.
+    [Fact]
+    public void DecodingManyTtaFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        static byte[] Silence(int count) => TtaEncoder.Encode(1, 16, [new int[count]]).File;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Silence(100)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.tta", Silence(fewer), fewer, 1);
+        (long held, long kept) = LastFrameReading("frames.tta", Silence(frames), frames, 1);
+        (_, long plainKept) = LastFrameReading("frames.tta", Silence(frames), frames, 1, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     private const long MonkeysAudioKeptBound = 140;
 
     private const long MonkeysAudioPeakBound = 140;

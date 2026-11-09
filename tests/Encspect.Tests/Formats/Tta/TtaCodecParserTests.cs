@@ -53,6 +53,40 @@ public class TtaCodecParserTests
 
     private static (byte[] Header, uint[] Sizes, List<byte[]> Frames) Parts() => TtaBuilder.Parts(File.ReadAllBytes(TtaBuilder.FixturePath(Fixture)));
 
+    private static (Report Report, PcmHashingSink Sink) AnalyzeDecoding(IReadOnlyList<byte[]> frames, Func<Node, CodecConfiguration?> configure)
+    {
+        var sink = new PcmHashingSink();
+        byte[] file = [.. "PKTS"u8, .. frames.SelectMany(f => f)];
+        var container = new Packets([.. frames.Select(f => f.Length)], configure);
+        Report report = TestFiles.Analyze(file, container, options: new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } }, decoders: DefaultParsers.Decoders);
+        return (report, sink);
+    }
+
+    [Fact]
+    public void FramesWithTheHeaderOfTheTrackAreDecodedAsTheFileIs()
+    {
+        (byte[] header, _, List<byte[]> frames) = Parts();
+        using System.Text.Json.JsonDocument manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "tta", "external-16-stereo.expected.json")));
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => Header(node, header));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed");
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_samples").GetInt64(), sink.Samples);
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_pcm_md5").GetString(), sink.Hash());
+        Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
+    }
+
+    [Fact]
+    public void FramesWithoutAHeaderAreNotDecodedBecauseTheLastFramesSamplesAreNotKnown()
+    {
+        (_, _, List<byte[]> frames) = Parts();
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node) { Format = new AudioFormat(0, 2, 44100, 0, 0, 16) });
+
+        Assert.Contains(report.Findings, f => f.Code == "decode.not-possible" && f.Message.Contains("no TTA1 header", StringComparison.Ordinal));
+        Assert.Equal(0, sink.Declared);
+    }
+
     [Fact]
     public void FramesWithTheHeaderOfTheTrackAreReportedAsTheFileIs()
     {

@@ -359,8 +359,8 @@ internal static class TestFiles
 
     // The test containers stand in for RIFF and FORM files, which the WAV and AIFF parsers would take as their own.
     public static Report Analyze(byte[] file, IFormatParser container, IEnumerable<ICodecParser>? codecs = null, IEnumerable<ITagParser>? tags = null,
-        AnalysisOptions? options = null) =>
-        new Analyzer(tags ?? DefaultParsers.Tags, [container, .. DefaultParsers.Formats.Where(f => f.Name is not ("WAV" or "AIFF"))], codecs ?? DefaultParsers.Codecs).Analyze("test.bin", new MemoryStream(file), options);
+        AnalysisOptions? options = null, IEnumerable<IDecoder>? decoders = null) =>
+        new Analyzer(tags ?? DefaultParsers.Tags, [container, .. DefaultParsers.Formats.Where(f => f.Name is not ("WAV" or "AIFF"))], codecs ?? DefaultParsers.Codecs, decoders ?? []).Analyze("test.bin", new MemoryStream(file), options);
 
     // The node a finding's or a stream's path leads to.
     public static Node Follow(Node root, IReadOnlyList<int> path)

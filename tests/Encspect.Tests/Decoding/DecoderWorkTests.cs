@@ -4,6 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
+using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
@@ -188,6 +189,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("pcm", StringComparison.Ordinal) => new Encspect.Formats.Wav.Decoding.PcmDecoder(),
         _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
+        _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -197,6 +199,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     {
         _ when name.StartsWith("flac", StringComparison.Ordinal) => ".flac",
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
+        _ when name.StartsWith("tta", StringComparison.Ordinal) => ".tta",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -297,6 +300,24 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("monkeys-audio-" + label, () => new Case("monkeys-audio-" + label, MonkeysAudioCases.Repeated(file)));
+        }
+
+        // TTA: each depth and channel count the fixtures hold, the loudest noise (the longest codes), silence (the cheapest code, one bit a sample) and 24 bits at the
+        // highest rate. Each case repeats the first frame an encoder wrote.
+        foreach ((string label, string file) in new[]
+        {
+            ("16-stereo", "external-16-stereo.tta"),
+            ("16-mono", "external-16-mono.tta"),
+            ("16-loud-noise", "external-libtta-16-loud-noise.tta"),
+            ("16-silent", "external-16-silent.tta"),
+            ("24-stereo", "external-24-stereo.tta"),
+            ("24-stereo-lossywav", "external-libtta-24-stereo-lossywav.tta"),
+            ("24-mono-192000", "external-192000-mono.tta"),
+            ("8-stereo", "external-8-stereo.tta"),
+            ("16-8-channels", "external-16-8ch.tta"),
+        })
+        {
+            Add("tta-" + label, () => new Case("tta-" + label, TtaCases.Repeated(file)));
         }
 
         // Monkey's Audio before version 3.93, whose decoder is another (Old/UnMACOld.cpp): each bit coding (the Rice coding up to 3.85, from 3.86, with the overflow cap
@@ -680,6 +701,32 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             long unitsPerFrame = (block * 2 * (16 + 1)) + (16L * (subframes.Length + 14));
             int frames = (int)(target / unitsPerFrame);
             return Stream(block, 2, 16, (long)frames * block, Enumerable.Range(0, frames).Select(number => FlacBuilder.FrameOf(number, block, Rate, 1, 16, subframes)));
+        }
+    }
+
+    // Files of copies of the first frame of a fixture, sized to charge about Target units: a TTA frame decodes by itself, so the copies are a file of as much audio.
+    internal static class TtaCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            (byte[] header, _, List<byte[]> frames) = TtaBuilder.Parts(File.ReadAllBytes(TtaBuilder.FixturePath(fixture)));
+            uint rate = BinaryPrimitives.ReadUInt32LittleEndian(header.AsSpan(10));
+            int channels = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6));
+            int bits = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(8));
+            long length = TtaBuilder.FrameLength(rate);
+            byte[] Build(int copies) => Unpooled.Join(
+                [TtaBuilder.Header(rate, channels, bits, length * copies), TtaBuilder.Table(Enumerable.Repeat((uint)frames[0].Length, copies)), Unpooled.Join(Enumerable.Repeat(frames[0], copies))]);
+            long perCopy = Math.Max(1, Units(Build(2)) / 2);
+            return Build((int)Math.Clamp(target / perCopy, 2, 1 << 20));
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new TtaDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            Report report = analyzer.Analyze("probe.tta", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit" or "decode.frame-invalid");
+            return counting.Units;
         }
     }
 
