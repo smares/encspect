@@ -41,6 +41,8 @@ internal sealed class State
 
     public int FirstCrcFailure { get; set; } = -1;
 
+    public BlockRecord FirstCrcFailureBlock { get; set; }
+
     public long DifferingBlocks { get; set; }
 
     public int FirstDiffering { get; set; } = -1;

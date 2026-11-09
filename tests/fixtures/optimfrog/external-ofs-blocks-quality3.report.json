@@ -1,0 +1,740 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ofs-blocks-quality3.ofs",
+    "root": {
+      "name": "File",
+      "value": "OptimFROG",
+      "offset": 0,
+      "length": 178402,
+      "children": [
+        {
+          "name": "OptimFROG",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 178402,
+          "children": [
+            {
+              "name": "Main Block",
+              "value": 25,
+              "unit": "bytes",
+              "offset": 0,
+              "length": 25,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "OFR ",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 17,
+                  "unit": "bytes",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "Total Samples",
+                  "value": 1808100,
+                  "unit": "samples",
+                  "offset": 8,
+                  "length": 6
+                },
+                {
+                  "name": "Sample Type",
+                  "value": "SINT16",
+                  "offset": 14,
+                  "length": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "MONO",
+                  "offset": 15,
+                  "length": 1
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 16,
+                  "length": 4
+                },
+                {
+                  "name": "Encoder ID",
+                  "value": 9602,
+                  "offset": 20,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Encoder Version",
+                      "value": "5.100",
+                      "offset": 20,
+                      "length": 2
+                    },
+                    {
+                      "name": "Build System",
+                      "value": "Linux x64",
+                      "offset": 20,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Compression",
+                  "value": 10,
+                  "offset": 22,
+                  "length": 1,
+                  "children": [
+                    {
+                      "name": "Mode",
+                      "value": "normal",
+                      "offset": 22,
+                      "length": 1
+                    },
+                    {
+                      "name": "Speedup",
+                      "value": "4x",
+                      "offset": 22,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Minimum Decoder Version",
+                  "value": "4.520",
+                  "offset": 23,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Encoder",
+              "value": "OptimFROG 5.100",
+              "offset": 0,
+              "length": 178402,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "High",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The main block's encoder ID states version 5.100",
+                  "offset": 0,
+                  "length": 178402
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 178402,
+              "children": [
+                {
+                  "name": "Blocks",
+                  "value": 3,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Samples",
+                  "value": 1808100,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Duration",
+                  "value": 41,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "mono (front center)",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Mode",
+                  "value": "normal",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Speedup",
+                  "value": "4x",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Sample Type",
+                  "value": "SINT16",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Build System",
+                  "value": "Linux x64",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Verified Block Checksums",
+                  "value": 3,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 34.79356097560976,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Smallest Block",
+                  "value": 4584,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Largest Block",
+                  "value": 86904,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 34.7316,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 36.672,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 178402
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 178402,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "3 blocks (100.0%)",
+                      "offset": 0,
+                      "length": 178402
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Header Block",
+              "value": 52,
+              "unit": "bytes",
+              "offset": 25,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "HEAD",
+                  "offset": 25,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 44,
+                  "unit": "bytes",
+                  "offset": 29,
+                  "length": 4
+                },
+                {
+                  "name": "WAV Header Data",
+                  "value": "44 bytes, a RIFF WAVE header",
+                  "offset": 33,
+                  "length": 44,
+                  "children": [
+                    {
+                      "name": "Format Tag",
+                      "value": "0x0001 (PCM)",
+                      "offset": 53,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 55,
+                      "length": 2
+                    },
+                    {
+                      "name": "Chunks",
+                      "value": 2,
+                      "unit": "chunks",
+                      "offset": 45,
+                      "length": 32,
+                      "children": [
+                        {
+                          "name": "fmt Chunk",
+                          "value": 16,
+                          "unit": "bytes",
+                          "offset": 45,
+                          "length": 24,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "fmt ",
+                              "offset": 45,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 16,
+                              "unit": "bytes",
+                              "offset": 49,
+                              "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "data Chunk",
+                          "value": 3616200,
+                          "unit": "bytes",
+                          "offset": 69,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "data",
+                              "offset": 69,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 3616200,
+                              "unit": "bytes",
+                              "offset": 73,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Data Block",
+              "kind": "Frame",
+              "value": 86829,
+              "unit": "bytes",
+              "offset": 77,
+              "length": 86829,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "COMP",
+                  "offset": 77,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 86821,
+                  "unit": "bytes",
+                  "offset": 81,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 1070446482,
+                  "offset": 85,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 1070446482,
+                  "offset": 85,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 85,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 882000,
+                  "unit": "samples",
+                  "offset": 89,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Type",
+                  "value": "SINT16",
+                  "offset": 93,
+                  "length": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "MONO",
+                  "offset": 94,
+                  "length": 1
+                },
+                {
+                  "name": "Reserved",
+                  "value": 4353,
+                  "offset": 95,
+                  "length": 2
+                },
+                {
+                  "name": "Encoder ID",
+                  "value": 9602,
+                  "offset": 97,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Encoder Version",
+                      "value": "5.100",
+                      "offset": 97,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Compressed Data",
+                  "value": 86807,
+                  "unit": "bytes",
+                  "offset": 99,
+                  "length": 86807
+                }
+              ]
+            },
+            {
+              "name": "Data Block",
+              "kind": "Frame",
+              "value": 86904,
+              "unit": "bytes",
+              "offset": 86906,
+              "length": 86904,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "COMP",
+                  "offset": 86906,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 86896,
+                  "unit": "bytes",
+                  "offset": 86910,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 2944417980,
+                  "offset": 86914,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 2944417980,
+                  "offset": 86914,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 86914,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 882000,
+                  "unit": "samples",
+                  "offset": 86918,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Type",
+                  "value": "SINT16",
+                  "offset": 86922,
+                  "length": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "MONO",
+                  "offset": 86923,
+                  "length": 1
+                },
+                {
+                  "name": "Reserved",
+                  "value": 4353,
+                  "offset": 86924,
+                  "length": 2
+                },
+                {
+                  "name": "Encoder ID",
+                  "value": 9602,
+                  "offset": 86926,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Encoder Version",
+                      "value": "5.100",
+                      "offset": 86926,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Compressed Data",
+                  "value": 86882,
+                  "unit": "bytes",
+                  "offset": 86928,
+                  "length": 86882
+                }
+              ]
+            },
+            {
+              "name": "Data Block",
+              "kind": "Frame",
+              "value": 4584,
+              "unit": "bytes",
+              "offset": 173810,
+              "length": 4584,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "COMP",
+                  "offset": 173810,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 4576,
+                  "unit": "bytes",
+                  "offset": 173814,
+                  "length": 4
+                },
+                {
+                  "name": "CRC-32",
+                  "value": 2591630368,
+                  "offset": 173818,
+                  "length": 4
+                },
+                {
+                  "name": "Computed CRC-32",
+                  "value": 2591630368,
+                  "offset": 173818,
+                  "length": 4
+                },
+                {
+                  "name": "IsCrc32Valid",
+                  "value": true,
+                  "offset": 173818,
+                  "length": 4
+                },
+                {
+                  "name": "Samples",
+                  "value": 44100,
+                  "unit": "samples",
+                  "offset": 173822,
+                  "length": 4
+                },
+                {
+                  "name": "Sample Type",
+                  "value": "SINT16",
+                  "offset": 173826,
+                  "length": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "MONO",
+                  "offset": 173827,
+                  "length": 1
+                },
+                {
+                  "name": "Reserved",
+                  "value": 4353,
+                  "offset": 173828,
+                  "length": 2
+                },
+                {
+                  "name": "Encoder ID",
+                  "value": 9602,
+                  "offset": 173830,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "Encoder Version",
+                      "value": "5.100",
+                      "offset": 173830,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Compressed Data",
+                  "value": 4562,
+                  "unit": "bytes",
+                  "offset": 173832,
+                  "length": 4562
+                }
+              ]
+            },
+            {
+              "name": "Footer Block",
+              "value": 8,
+              "unit": "bytes",
+              "offset": 178394,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Block ID",
+                  "value": "TAIL",
+                  "offset": 178394,
+                  "length": 4
+                },
+                {
+                  "name": "Block Length",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 178398,
+                  "length": 4
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "OptimFROG",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 1808100,
+        "duration": 41,
+        "averageBitrate": 34.79356097560976,
+        "isVbr": true,
+        "verification": {
+          "isVerified": true,
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "block CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 3,
+              "checked": 3,
+              "failed": 0
+            },
+            {
+              "name": "MD5",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "OptimFROG 5.100",
+        "encoderConfidence": "High",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              77,
+              86906,
+              173810
+            ],
+            "values": [
+              34.7316,
+              34.7616,
+              36.672
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              20,
+              40
+            ],
+            "values": [
+              35,
+              35,
+              37
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

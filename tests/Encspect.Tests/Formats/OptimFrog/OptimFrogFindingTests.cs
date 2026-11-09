@@ -224,7 +224,7 @@ public class OptimFrogFindingTests
         Report report = Analyze(file);
 
         Finding finding = Single(report, "optimfrog.block-crc-mismatch");
-        Assert.Contains("data block 0", finding.Message);
+        Assert.Contains($"data block at 0x{Builder.MainBlock().Length + Builder.Head().Length:X} ", finding.Message);
         Assert.Contains("1 more block differs", finding.Message);
         StreamVerification verification = report.Streams.Single().Verification!;
         Assert.Equal(false, verification.IsVerified);
@@ -412,13 +412,13 @@ public class OptimFrogFindingTests
         Report report = Analyze(data);
 
         Finding limit = Single(report, "optimfrog.blocks-limit");
-        Assert.Contains($"{count + 0} blocks", limit.Message.Replace(",", string.Empty, StringComparison.Ordinal));
+        Assert.Contains($"{count + 1} blocks", limit.Message);
         Finding mismatch = Single(report, "optimfrog.block-crc-mismatch");
-        Assert.Contains($"data block {count - 1} ", mismatch.Message);
+        Assert.Contains($"data block at 0x{Builder.MainBlock().Length + ((count - 1) * 22):X} ", mismatch.Message);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
         Node stream = report.Root.Children.Single(c => c.Name == "OptimFROG");
-        Assert.Equal(Records.MaxBlocks, stream.Children.Count(c => c.Name == "Data Block"));
+        Assert.Equal(Records.MaxBlocks - 1, stream.Children.Count(c => c.Name == "Data Block"));
     }
 
     // The stored WAV header.

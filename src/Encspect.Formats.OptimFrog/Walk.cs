@@ -288,7 +288,12 @@ internal static class Walk
         if (!block.IsCrcValid)
         {
             s.CrcFailures++;
-            s.FirstCrcFailure = s.FirstCrcFailure < 0 ? ordinal : s.FirstCrcFailure;
+            if (s.FirstCrcFailure < 0)
+            {
+                s.FirstCrcFailure = ordinal;
+                s.FirstCrcFailureBlock = block;
+            }
+
         }
 
         if (s.Figures is { } figures && s.Records.Counted < Records.MaxBlocks)

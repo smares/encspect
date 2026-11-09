@@ -19,7 +19,7 @@ public class OptimFrogFixtureTests
             foreach (string manifest in Directory.EnumerateFiles(directory, "*.expected.json").Order(StringComparer.Ordinal))
             {
                 string stem = Path.GetFileName(manifest)[..^".expected.json".Length];
-                string file = Directory.EnumerateFiles(directory, stem + ".*").Single(p => !p.EndsWith(".json", StringComparison.Ordinal));
+                string file = Directory.EnumerateFiles(directory, stem + ".*").Single(p => p.EndsWith(".ofr", StringComparison.Ordinal) || p.EndsWith(".ofs", StringComparison.Ordinal));
                 data.Add("optimfrog/" + Path.GetFileName(file));
             }
 

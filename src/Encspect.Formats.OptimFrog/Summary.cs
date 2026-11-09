@@ -127,12 +127,12 @@ internal static class Summary
         if (s.CrcFailures > 0)
         {
             int index = s.FirstCrcFailure;
-            BlockRecord b = r.Blocks[Math.Min(index, r.Blocks.Count - 1)];
+            BlockRecord b = s.FirstCrcFailureBlock;
             uint stored = b.StoredCrc;
             uint computed = b.ComputedCrc;
             Func<Node> node = index < Records.MaxBlocks ? () => Nodes.CrcField(source, index) : () => stream;
             s.Findings.Add(Severity.Warning, "optimfrog.block-crc-mismatch", node, count =>
-                $"The CRC-32 of data block {index} is {stored:x8}, but its data gives {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", s.CrcFailures);
+                $"The CRC-32 of the data block at 0x{b.Offset:X} is {stored:x8}, but its data gives {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", s.CrcFailures);
         }
 
         if (s.UnknownBlocks > 0)
@@ -215,7 +215,7 @@ internal static class Summary
             int index = s.FirstDiffering;
             BlockRecord b = r.Blocks[Math.Min(index, r.Blocks.Count - 1)];
             s.Findings.Add(Severity.Warning, "optimfrog.block-differs", At(index), count =>
-                $"Data block {index} gives a sample type, channel configuration or encoder ID other than the main block's{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")} too" : string.Empty)}.", s.DifferingBlocks);
+                $"The data block at 0x{b.Offset:X} gives a sample type, channel configuration or encoder ID other than the main block's{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")} too" : string.Empty)}.", s.DifferingBlocks);
         }
 
         if (s.CutBlocks == 0 && s.CompSamples != main.Samples && r.Blocks.Count == r.Counted)
