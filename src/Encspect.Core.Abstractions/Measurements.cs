@@ -8,7 +8,7 @@ public sealed record StreamMeasurements
 {
     public required MeasurementStatus Status { get; init; }
 
-    // Why less than was asked was measured, as text for the front ends ("the stream decodes to DSD", "no decoder for TTA"); null
+    // Why less than was asked was measured, as text for the front ends ("the stream decodes to DSD", "no decoder for <codec>"); null
     // where everything asked was measured.
     public string? Reason { get; init; }
 
