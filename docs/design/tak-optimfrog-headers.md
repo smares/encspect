@@ -4,7 +4,7 @@ Status: draft for the lead, 2026-11-09. Milestone 0.2, item 4 of the [plan](../p
 
 ## Scope
 
-- **In:** detection of TAK (`.tak`) and OptimFROG (`.ofr`, and `.off` for IEEE float) files; their headers and metadata; the encoder's version and the settings the header stores, named as Monkey's Audio's compression level is; the stored WAV header with lossyWAV's `fact` chunk; the checksums the container defines.
+- **In:** detection of TAK (`.tak`) and OptimFROG (`.ofr`, `.off` for IEEE float, and DualStream's `.ofs` and its correction file) files; their headers and metadata; the encoder's version and the settings the header stores, named as Monkey's Audio's compression level is; the stored WAV header with lossyWAV's `fact` chunk; the checksums the container defines.
 - **Out:** decoding, measurements and coding graphs of either format (no public description of the coded audio exists for OptimFROG, and for TAK only FFmpeg's LGPL decoder describes it); see [Not covered](#not-covered).
 
 ## Sources and licenses
@@ -104,6 +104,29 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - a length that does not fit ends the walk with a finding and no guess at where the next block starts (no resync).
 - **Declared end:** the end of the last block the walk accepts. The bytes after it go to the host's search for trailing tags (APEv2 with or without its header, Lyrics3, ID3v1), and bytes that are no tag are `optimfrog.data-after-blocks`. The specification lists ID3v1 and APEv2 among its blocks, but they are the host's, as in every other format; a tag-like run of bytes inside a `COMP` block is no tag (`tag.near-miss`).
 
+### OptimFROG DualStream
+
+The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybrid file with its correction file does, in the same words.
+
+- **What is known:**
+  - `ofs` 5.100 writes DualStream files (`.ofs`) at `--quality` or `--bitrate`, and `--correction` "create or use correction file(s)" (its help);
+  - its strings hold the block IDs of `ofr` (`OFR `, `HEAD`, `COMP`, `TAIL`, `MD5 `) and messages about the correction file and its version ("Incompatible correction file version 4.507 alpha"), and the SDK reads `.ofs` files through the same functions as `.ofr`;
+  - format.txt describes neither what marks a DualStream file nor the correction file.
+- **What the fixtures settle first,** in PR 2 before the parser reads anything they show:
+  - what in an `.ofs` header tells it from a lossless `.ofr` (the mode byte, the encoder ID, a block of its own), and whether it records that a correction file was written;
+  - the correction file's name (`.ofc` is expected; the strings of `ofs` do not show it, so the fixture confirms it) and layout: its signature, whether it repeats the main block, and whether it has blocks with CRC-32s and sample counts that match the `.ofs`.
+  - If nothing in the header tells a DualStream file from a lossless one, the stream cannot be named lossy from its header; that goes back to the lead before PR 2 lands.
+- **Reported in 0.2,** in WavPack's words ([wavpack.md](../formats/wavpack.md#hybrid-mode-and-correction-files)):
+  - an `.ofs` is "OptimFROG DualStream", lossy by itself, as a hybrid `.wv` is "WavPack hybrid"; where its header says a correction file was written, `IsCorrectionFileCreated` is true, which does not say the file is next to this one;
+  - it is verified as its lossy stream by the CRC-32s of its blocks (`IsLossy`), as a hybrid `.wv` without its `.wvc`; an MD5 of the lossless audio is declared and not compared;
+  - an `.ofc` opened alone is "OptimFROG correction data" with `optimfrog.correction-file` (info), worded as `wavpack.correction-file`: the file holds correction data only, adds to the DualStream `.ofs` with the same blocks, and cannot be decoded alone. Its blocks are walked and their CRC-32s compared where the fixtures show the specification's layout; otherwise it is detected by its structure and named only.
+- **The pair, in 0.4,** with WavPack's `.wvc` ([plan](../plan.md#04-free-decoders-and-routes-complete), item 3), since both need the host to open a companion file:
+  - look for the `.ofc` beside the `.ofs` (and the `.wvc` beside the `.wv`);
+  - check the pair against each other: rate, channels, sample type, total samples, and each block's sample count and position, and each file's CRC-32s;
+  - report the pair as lossless only when the correction file is there and consistent, in the same words for both formats.
+  - For OptimFROG the claim rests on headers and checksums only, since no decoder exists: the analyzer can say the two files belong together and are intact, not that the decoded pair equals the source. The report and the doc say so.
+- **Fixtures:** `ofs` at qualities 0 and 3 and at one bitrate, each with and without `--correction`, mono and stereo, one long enough for several blocks; each pair decoded by `ofs --decode` with and without its `.ofc` and compared with the input (black box: lossless only with the `.ofc`), recorded in the manifest; hand-built: an `.ofc` alone, a pair whose `.ofc` belongs to another encode (for 0.4).
+
 ### Detection
 
 - **TAK:** `tBaK` at the start of the data (after leading tags) and a stream info object whose CRC-24 holds is certain (100); the signature with an object header of ID 1 and a plausible size but a failing CRC is likely (80); the signature alone is possible (70).
@@ -146,7 +169,8 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - `ofr --preset 0` to `10` and `max`, and `--mode` with each of the 15 named modes once (this settles how the `-light` modes are stored, which the specification does not list), 16-bit stereo 44.1 kHz;
   - formats at the default preset: 8-bit unsigned mono, 24-bit stereo, 32-bit integer, `--md5`, a WAV with an extra chunk before the data and a trailing chunk (`HEAD` and `TAIL`), a lossyWAV output;
   - `off` on a 32-bit float WAV;
-  - `ofs` at two bitrates, read only if the files have the specification's layout (decision 6).
+  - `off` with `--mantissabits 16` (a lossy preprocessing of the mantissa, which may leave no trace in the header: the fixture shows it), and with each `--sampletype` (its help lists `FLOAT32_1` where format.txt lists `FLOAT32_0`; the fixtures show which value is stored);
+  - `ofs`: see [OptimFROG DualStream](#optimfrog-dualstream).
 - **Speedup** was deprecated in a 4.5xx release and is not offered by 5.100, so files with a speedup other than 1x come only from older encoders: `luckynight.ofr` (4.509, 4x) as a real file (`check_optimfrog_samples.py`, pinned, not committed), and optionally the Linux amd64 4.600ex build from the previous releases page.
 - **Hand-built** (`make_optimfrog_fixtures.py`, from the committed files):
   - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end;
@@ -177,7 +201,9 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - A TAK decoder needs the clean-room split above; it goes under "Not planned", brought back if the lead wants TAK measured.
 - **TAK frames** (decision 3): frame count, frame CRC-24s, the bitrate per frame.
 - **OptimFROG before 4.5xx**, whose layout the specification does not cover; such a file is not matched.
-- **DualStream (`ofs`) files** beyond their header, unless decision 6 says otherwise.
+- **The DualStream pair** (finding the `.ofc` beside the `.ofs` and checking the two together) until 0.4, with WavPack's `.wvc`; and the decoded pair, which needs a decoder.
+- **OptimFROG self-extracting files** (`--selfextract`: the OFR data after an executable stub), which are not matched.
+- **`off --mantissabits`,** if the fixtures show the header does not record it.
 - **The meaning of OptimFROG's float sample types** beyond their names (`FLOAT32_0`, `_16`, `_24`): the specification gives none.
 - **`RECV`** recovery data: shown as a block, not interpreted.
 
@@ -188,7 +214,7 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
 3. **TAK frames in 0.2:** walk frames by sync word and header CRC to count them, compare their CRC-24s and draw the bitrate per frame, or stay at the metadata. Recommended: metadata only in 0.2, as the plan says; the frame walk queued in 0.4's "small separate items", since bitrate over time is then owed to TAK by the one-concept rule.
 4. **OptimFROG's `COMP` blocks:** walk them, compare their CRC-32s and draw the bitrate per block. Recommended: yes; the blocks are length-prefixed and specified, so this is container reading, cheap, and gives the coded data a verification.
 5. **OptimFROG's preset:** report mode and speedup only. Recommended: yes; the presets also set options the header does not store, so naming a preset would be a guess.
-6. **OptimFROG's other encoders:** `off` read as OptimFROG (the same layout, float sample types); `ofs` read at header level if its files follow the specification's layout, otherwise only named. Recommended: yes to both.
+6. **OptimFROG's other encoders** (replaced by the lead's requirement, 2026-11-09): `off` is read as OptimFROG lossless with the float sample types; `ofs` and its correction file follow [OptimFROG DualStream](#optimfrog-dualstream), as WavPack's hybrid mode does, and the pair check goes to 0.4 with WavPack's.
 7. **Download addresses:** both sites serve the archives over HTTP only; pin SHA-256, add Wayback and encspect-private fallbacks, and link OptimFROG's download page (not the package) in the docs, as its author asks. Recommended: yes.
 
 ## Pull requests, in order
