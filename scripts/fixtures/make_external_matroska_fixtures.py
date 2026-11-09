@@ -104,6 +104,8 @@ FIXTURES = {
     "external-mkvmerge-opus-webm": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"], ["--webm"], [("Opus", 48000, 2)],
                                     [("matroska.webm-timestamp-scale", "20832")], "webm"),
     "external-mkvmerge-tta": ("mkvmerge", ["tta/external-16-stereo.tta"], [], [("TTA", 44100, 2)], [], "mka"),
+    # A mono track, whose Channels element mkvmerge leaves out (the default is 1).
+    "external-mkvmerge-tta-mono": ("mkvmerge", ["tta/external-libtta-16-mono-24000-last-frame-one-sample.tta"], [], [("TTA", 24000, 1)], [], "mka"),
     "external-mkvmerge-tta-last-frame-one-sample": ("mkvmerge", ["tta/external-libtta-16-stereo-32000-last-frame-one-sample.tta"], [], [("TTA", 32000, 2)], [], "mka"),
     # WavPack blocks of lossyWAV's output (no marker) in Matroska: the codec route counts the zero bits of each packet's blocks (docs/formats/wavpack.md).
     "external-mkvmerge-wavpack-lossywav": ("mkvmerge", ["wavpack/external-lossywav-floor-44k-merge-blocks.wv"], [], [("WavPack lossless", 44100, 2)], [], "mka"),

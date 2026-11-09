@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using Encspect.Core;
+using Encspect.Formats.Tta;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Host;
 
@@ -141,14 +142,14 @@ public class TtaDecoderTests
     {
         byte[] data = [0x06, 0x00, 0xF0, 0x01, 0x00, 0x00, 0x00, 0x00];
         var bits = new BitSource(data);
-        var state = new FrameDecoder.Channel();
+        var state = new RiceState();
         state.Reset();
 
-        Assert.Equal(2, FrameDecoder.ReadResidual(ref bits, state));
+        Assert.Equal(2, Codes.ReadResidual(ref bits, state));
         Assert.Equal((9, 15363u), (state.KA, state.SumA));
-        Assert.Equal(-128, FrameDecoder.ReadResidual(ref bits, state));
+        Assert.Equal(-128, Codes.ReadResidual(ref bits, state));
         Assert.Equal((9, 14659u), (state.KA, state.SumA));
-        Assert.Equal(-1792, FrameDecoder.ReadResidual(ref bits, state));
+        Assert.Equal(-1792, Codes.ReadResidual(ref bits, state));
         Assert.Equal((10, 17327u, 10, 18432u), (state.KA, state.SumA, state.KB, state.SumB));
     }
 
@@ -198,21 +199,21 @@ public class TtaDecoderTests
     [Fact]
     public void AParameterBeyond32BitsIsDamageAndNotAnException()
     {
-        var state = new FrameDecoder.Channel();
+        var state = new RiceState();
         state.Reset();
         state.KA = 33;
         byte[] data = new byte[16];
         Assert.Throws<InvalidDataException>(() =>
         {
             var bits = new BitSource(data);
-            FrameDecoder.ReadResidual(ref bits, state);
+            Codes.ReadResidual(ref bits, state);
         });
         state.KA = 10;
         state.KB = 40;
         Assert.Throws<InvalidDataException>(() =>
         {
             var bits = new BitSource([0x01, 0, 0, 0, 0, 0, 0, 0]);
-            FrameDecoder.ReadResidual(ref bits, state);
+            Codes.ReadResidual(ref bits, state);
         });
     }
 

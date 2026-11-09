@@ -120,11 +120,19 @@ internal sealed class Records
     public long DataEnd { get; set; }
 
     // Samples in frame index; -1 where the sample rate or the sample count is not known.
+    // A track a container stores without the header: the frame length its rate implies, its frames, and the samples of the last one, which its codes give
+    // (TtaCodecParser); 0 until they are known.
+    public long TrackFrameLength { get; set; }
+
+    public long TrackFrames { get; set; }
+
+    public long TrackLastSamples { get; set; }
+
     public long SamplesOf(long index)
     {
         if (Header is not { SampleRate: > 0 } header)
         {
-            return -1;
+            return TrackFrames <= 0 ? -1 : index == TrackFrames - 1 ? TrackLastSamples : TrackFrameLength;
         }
 
         long frameLength = header.FrameLength;

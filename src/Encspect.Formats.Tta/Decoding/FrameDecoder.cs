@@ -13,12 +13,9 @@ internal sealed class FrameDecoder : IFrameDecoder
         public readonly int[] W = new int[8];
         public readonly int[] V = new int[8];
         public readonly int[] S = new int[8];
+        public readonly RiceState Rice = new();
         public int PreviousResidual;
         public int Previous;
-        public int KA;
-        public int KB;
-        public uint SumA;
-        public uint SumB;
 
         public void Reset()
         {
@@ -27,10 +24,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             Array.Clear(S);
             PreviousResidual = 0;
             Previous = 0;
-            KA = 10;
-            KB = 10;
-            SumA = 1 << 14;
-            SumB = 1 << 14;
+            Rice.Reset();
         }
     }
 
@@ -41,8 +35,6 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     private readonly DecodeContext _context;
     private readonly uint _sampleRate;
-    private readonly bool _followsCodes;
-    private readonly int _frameLength;
     private readonly int _channels;
     private readonly int _depth;
     private readonly int _filterShift;
@@ -56,14 +48,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly long _perSample;
     private IPcmSink? _sink;
 
-    // followsCodes: the stream has no header (a container's track), so a frame's samples are where its codes end: the count the parser hands is only a hint
-    // that chooses among the counts whose codes end in the frame's last byte.
-    public FrameDecoder(DecodeContext context, uint sampleRate, int channels, int bitsPerSample, bool followsCodes)
+    public FrameDecoder(DecodeContext context, uint sampleRate, int channels, int bitsPerSample)
     {
         _context = context;
         _sampleRate = sampleRate;
-        _followsCodes = followsCodes;
-        _frameLength = (int)Math.Min(TtaHeader.FrameLengthOf(sampleRate), int.MaxValue);
         _channels = channels;
         _depth = (bitsPerSample + 7) / 8;
         _filterShift = _depth == 2 ? 9 : 10;
@@ -99,11 +87,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         ReadOnlySpan<byte> coded = data[..^4];
 
         ChargeCodes(coded.Length);
-        if (_followsCodes)
-        {
-            ChargeCodes(coded.Length);
-            samples = SamplesOfCodes(coded, samples);
-        }
 
         _sink ??= _context.DeclareOutput(new PcmFormat((int)Math.Min(_sampleRate, int.MaxValue), _channels, 8 * _depth, SampleFormat.Integer)
         {
@@ -158,54 +141,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
     }
 
-    // The samples of a frame of a stream without a header: a pass over the Rice codes alone finds the counts of sample times (up to the frame length) after
-    // which the codes end in the frame's last byte, the rest of it padding. Where several do (codes of a bit or two in the last byte), the one nearest the
-    // parser's count wins (the container's figure for the last frame, the frame length for the others), the smaller on a tie; where the codes fill the
-    // frame length and bytes remain, the frame length (bytes after the codes are ignored, as in a stream with a header).
-    private int SamplesOfCodes(ReadOnlySpan<byte> coded, int hint)
-    {
-        foreach (Channel channel in _state)
-        {
-            channel.Reset();
-        }
-
-        var bits = new BitSource(coded);
-        int first = -1;
-        int last = -1;
-        int done = 0;
-        try
-        {
-            for (; done < _frameLength; done++)
-            {
-                if ((done & 4095) == 0)
-                {
-                    _context.CancellationToken.ThrowIfCancellationRequested();
-                }
-
-                for (int c = 0; c < _channels; c++)
-                {
-                    ReadResidual(ref bits, _state[c]);
-                }
-
-                if (bits.ConsumedBytes == coded.Length)
-                {
-                    first = first < 0 ? done + 1 : first;
-                    last = done + 1;
-                }
-            }
-        }
-        catch (EndOfStreamException) when (first > 0)
-        {
-        }
-
-        if (first < 0)
-        {
-            return done;
-        }
-
-        return Math.Clamp(hint, first, last);
-    }
-
     private void DecodeChunk(ref BitSource bits, int count)
     {
         int channels = _channels;
@@ -215,7 +150,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             for (int c = 0; c < channels; c++)
             {
                 Channel state = _state[c];
-                int residual = ReadResidual(ref bits, state);
+                int residual = Codes.ReadResidual(ref bits, state.Rice);
                 int filtered = Filter(state, residual, _filterShift);
                 unchecked
                 {
@@ -248,77 +183,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _output[(channel * _chunk) + index] = value;
-    }
-
-    // The adaptive Rice code of one value. The widths of the binary parts, and the sums that set them, are the channel's.
-    internal static int ReadResidual(ref BitSource bits, Channel state)
-    {
-        long unary = bits.ReadUnary();
-        uint m;
-        if (unary == 0)
-        {
-            if (state.KA > 32)
-            {
-                throw new InvalidDataException("A Rice parameter is beyond the 32 bits a value can have");
-            }
-
-            uint value = bits.ReadBits(state.KA);
-            if (value >= 0x80000000u)
-            {
-                throw new InvalidDataException("A Rice code decodes to a value of 31 bits or more");
-            }
-
-            m = value;
-        }
-        else
-        {
-            if (state.KB > 32)
-            {
-                throw new InvalidDataException("A Rice parameter is beyond the 32 bits a value can have");
-            }
-
-            if (state.KA > 31)
-            {
-                throw new InvalidDataException("A Rice code decodes to a value of 31 bits or more");
-            }
-
-            ulong q = (ulong)(unary - 1) << state.KB;
-            q += bits.ReadBits(state.KB);
-            ulong full = q + (1UL << state.KA);
-            if (full >= 0x80000000UL)
-            {
-                throw new InvalidDataException("A Rice code decodes to a value of 31 bits or more");
-            }
-
-            m = (uint)full;
-            unchecked
-            {
-                state.SumB = state.SumB + (uint)q - (state.SumB >> 4);
-            }
-
-            state.KB = Adapt(state.SumB, state.KB);
-        }
-
-        unchecked
-        {
-            state.SumA = state.SumA + m - (state.SumA >> 4);
-        }
-
-        state.KA = Adapt(state.SumA, state.KA);
-        return (m & 1) != 0 ? (int)((m + 1) >> 1) : -(int)(m >> 1);
-    }
-
-    // 2^n, saturated at 2^31 from n = 31 on.
-    private static uint Pow2(int n) => n >= 31 ? 0x80000000u : 1u << n;
-
-    private static int Adapt(uint sum, int k)
-    {
-        if (k > 0 && sum < Pow2(k + 4))
-        {
-            return k - 1;
-        }
-
-        return sum > Pow2(k + 5) ? k + 1 : k;
     }
 
     // The adaptive filter of eight taps whose coefficients follow the signs of the history: sign-sign least mean squares, in 32-bit wraparound arithmetic.

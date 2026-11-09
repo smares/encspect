@@ -47,12 +47,11 @@ public sealed class TtaDecoder : IDecoder
             throw new InvalidDataException("The header states no channels or no sample rate");
         }
 
-        return new FrameDecoder(context, header.SampleRate, header.Channels, header.BitsPerSample, followsCodes: false);
+        return new FrameDecoder(context, header.SampleRate, header.Channels, header.BitsPerSample);
     }
 
     // A track a container stores without the header (Matroska's A_TTA1 as FFmpeg and mkvmerge write it): the sample rate, channels and bit depth come from the
-    // container, and the samples of each frame from its codes (FrameDecoder, followsCodes), the parser's count only choosing among the few the padding allows.
-    // The audio format is not known; the frames are decoded as format 1.
+    // container, and the samples of each frame from the parser, which counts the last frame's codes. The audio format is not known; the frames are decoded as format 1.
     private static FrameDecoder FromContainer(DecodeContext context)
     {
         if (context.Setup.Format is not { } format)
@@ -70,6 +69,6 @@ public sealed class TtaDecoder : IDecoder
             throw new InvalidDataException("The container states no channels or no sample rate for the stream");
         }
 
-        return new FrameDecoder(context, (uint)format.SampleRate, format.Channels, format.BitsPerSample, followsCodes: true);
+        return new FrameDecoder(context, (uint)format.SampleRate, format.Channels, format.BitsPerSample);
     }
 }

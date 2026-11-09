@@ -35,7 +35,7 @@ public sealed class TtaCodecParser : ICodecParser
         long end = 0;
         int index = 0;
 
-        // Without a header the last frame's samples come from the container's length, so each packet is fed when the next one arrives.
+        // Without a header the last frame's samples come from its codes, so each packet is fed when the next one arrives and the last is counted first.
         (MappedBytes Packet, Entry Entry)? held = null;
         foreach (MappedBytes packet in packets)
         {
@@ -47,29 +47,33 @@ public sealed class TtaCodecParser : ICodecParser
             start = start < 0 ? packet.FileStart : start;
             end = Math.Max(end, packet.FileEnd);
             Entry entry = Add(state, packet, index);
-            if (session.IsDecoding)
+            if (state.Header is not null)
             {
-                if (state.Header is not null)
+                if (session.IsDecoding)
                 {
                     Feeding.FromPacket(state, session, packet, entry, index, isLast: false);
                 }
-                else
+            }
+            else if (state.ContainerFormat is not null)
+            {
+                if (held is { } previous && session.IsDecoding)
                 {
-                    if (held is { } previous)
-                    {
-                        Feeding.FromPacket(state, session, previous.Packet, previous.Entry, index - 1, isLast: false);
-                    }
-
-                    held = (packet, entry);
+                    Feeding.FromPacket(state, session, previous.Packet, previous.Entry, index - 1, isLast: false);
                 }
+
+                held = (packet, entry);
             }
 
             index++;
         }
 
-        if (held is { } final && session.IsDecoding)
+        if (held is { } final)
         {
-            Feeding.FromPacket(state, session, final.Packet, final.Entry, index - 1, isLast: true);
+            CountLastFrame(state, final.Packet, final.Entry, index);
+            if (session.IsDecoding)
+            {
+                Feeding.FromPacket(state, session, final.Packet, final.Entry, index - 1, isLast: true);
+            }
         }
 
         if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Listed)
@@ -87,6 +91,52 @@ public sealed class TtaCodecParser : ICodecParser
         }
 
         Summary.Finish(state, start, end);
+    }
+
+    // The samples of a track stored without the header (docs/design/samples-definition.md: what the decoding process assigns): the frame length for every frame
+    // but the last, and for the last the sample times its Rice codes hold, the bytes after them padding of under a byte. Where codes of a bit or two leave
+    // several counts in the padding (silence), the container's length picks among them, and without one the smallest; either way an info finding says so.
+    // The last frame of a track whose packets are only held, not decoded, is counted too, since the count is the stream's.
+    private static void CountLastFrame(State s, MappedBytes packet, in Entry entry, int frames)
+    {
+        if (s.Header is not null || s.ContainerFormat is null || s.SampleRate <= 0 || s.Channels < 1)
+        {
+            return;
+        }
+
+        long frameLength = TtaHeader.FrameLengthOf(s.SampleRate);
+        int maxSamples = (int)Math.Min(frameLength, int.MaxValue);
+        int index = frames - 1;
+        long fromLength = s.ContainerSamples is { } total ? Math.Clamp(total - (index * frameLength), 1, frameLength) : frameLength;
+        long count = fromLength;
+        if (entry.IsComplete)
+        {
+            (int First, int Last)? counts;
+            try
+            {
+                counts = Codes.CountSampleTimes(packet.Span[..^4], s.Channels, maxSamples, s.Context.CancellationToken);
+            }
+            catch (InvalidDataException)
+            {
+                counts = null;
+            }
+
+            if (counts is { } found)
+            {
+                count = s.ContainerSamples is null ? found.First : Math.Clamp(fromLength, found.First, found.Last);
+                if (found.First != found.Last)
+                {
+                    long chosen = count;
+                    bool hasLength = s.ContainerSamples is not null;
+                    Records records = s.Records;
+                    s.Findings.Add(Severity.Info, "tta.last-frame-samples-ambiguous", () => index < Records.MaxEntries ? Nodes.Frame(records, index) : s.Stream, _ =>
+                        $"The codes of the last frame end in its last byte after any of {found.First} to {found.Last} samples, since codes of a bit fit the padding; the analyzer counts {chosen}, "
+                        + (hasLength ? "the nearest to what the container's length leaves." : "the fewest, as the container states no length."));
+                }
+            }
+        }
+
+        s.SetTrackSamples(frameLength, frames, count);
     }
 
     private static void Configure(State s, CodecConfiguration configuration)

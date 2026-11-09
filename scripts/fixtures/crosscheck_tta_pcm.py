@@ -98,7 +98,7 @@ def ffmpeg_reference(ffmpeg, path, bits):
     return result.stdout, None
 
 
-def compare(manifest, reference, bits, channels, label, is_prefix=False):
+def compare(manifest, reference, bits, channels, label, prefix=None):
     """Runs compare_pcm.py with no difference allowed; returns the problems."""
     raw = manifest.parent / f"{label}.raw"
     raw.write_bytes(reference)
@@ -111,8 +111,11 @@ def compare(manifest, reference, bits, channels, label, is_prefix=False):
     if output.returncode != 0:
         problems.append(f"{label}: the samples differ (largest {max(c['max'] for c in result['channels'])} LSB)")
     tail = result["notComparedOnlyInAnalyzer"]
-    if is_prefix and len(tail) == 1 and tail[0][1] - tail[0][0] > 0 and not result["notComparedOnlyInReference"]:
-        return problems
+    if prefix is not None:
+        # FFmpeg must stop exactly before the last frame: a listed shortfall that changes, or goes away, fails.
+        if not result["notComparedOnlyInReference"] and len(tail) == 1 and tail[0][0] == prefix:
+            return problems
+        return problems + [f"{label}: listed to stop after {prefix} samples, but the positions only one side has are reference {result['notComparedOnlyInReference']}, analyzer {tail}"]
     if result["notComparedOnlyInReference"] or tail:
         problems.append(f"{label}: positions only one side has: reference {result['notComparedOnlyInReference']}, analyzer {result['notComparedOnlyInAnalyzer']}")
     return problems
@@ -148,11 +151,20 @@ def manifest_problems(path, references, channels, bits):
     return problems
 
 
+def frames_before_last(source):
+    """The samples of every frame but the last of the TTA file a track was made from, by its manifest."""
+    manifest = manifest_of(source) if source is not None else None
+    if not manifest or not manifest.get("table"):
+        return -1
+    return (manifest["table"]["expected"] - 1) * manifest["frame_length"]
+
+
 def header_of(path):
     """(bits, channels) of the TTA1 header in a TTA file, or of the TrackEntry of a Matroska fixture's manifest; None where neither states them."""
     if path.suffix != ".tta":
         tracks = (manifest_of(path) or {}).get("tracks", [])
-        return (tracks[0]["bits"], tracks[0]["channels"]) if tracks and tracks[0].get("bits") else None
+        # Channels defaults to 1 (RFC 9559), and mkvmerge leaves it out of a mono track.
+        return (tracks[0]["bits"], tracks[0]["channels"] or 1) if tracks and tracks[0].get("bits") else None
     data = path.read_bytes()
     at = data.find(b"TTA1") if path.suffix == ".tta" else -1
     if at < 0 or len(data) < at + 22:
@@ -238,7 +250,8 @@ def main(argv=None):
                 if len(reference) % (channels * (bits // 8)):
                     problems.append(f"{label}: {len(reference)} bytes are not whole sample frames")
                     continue
-                problems += compare(manifest, reference, bits, channels, label.split()[0], is_prefix=label == "ffmpeg" and path.name in FFMPEG_SHORT)
+                prefix = frames_before_last(source) if label == "ffmpeg" and path.name in FFMPEG_SHORT else None
+                problems += compare(manifest, reference, bits, channels, label.split()[0], prefix)
             note = "; ".join(n for n in notes if n)
             if problems:
                 failed += 1

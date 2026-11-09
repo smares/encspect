@@ -53,6 +53,19 @@ internal sealed class State
 
     public long? ContainerSamples { get; set; }
 
+    // A track without the header whose samples its frames give: every frame but the last the frame length, the last what its codes hold.
+    public bool HasTrackSamples => Header is null && Records.TrackFrames > 0;
+
+    // Sets the samples of a track without the header once its last frame is counted. The frames the data cuts short were counted with the frame length as they came.
+    public void SetTrackSamples(long frameLength, long frames, long lastSamples)
+    {
+        Records.TrackFrameLength = frameLength;
+        Records.TrackFrames = frames;
+        Records.TrackLastSamples = lastSamples;
+        bool isLastWhole = Records.Entries.Count == frames && Records.Entries[(int)frames - 1].IsComplete;
+        Samples += isLastWhole ? ((Frames - 1) * frameLength) + lastSamples : Frames * frameLength;
+    }
+
     // The decoding session, once started.
     public IDecodeSession? Session { get; set; }
 

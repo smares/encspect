@@ -182,7 +182,8 @@ internal static class Summary
             Stream = s.Stream,
             Channels = s.Channels,
             BitsPerSample = s.BitsPerSample,
-            Samples = s.Header?.Samples ?? s.ContainerSamples,
+            // A track without the header states no count before its last frame is read: the session gets none (the parser reports it with the stream).
+            Samples = s.Header?.Samples,
             Configuration = s.HeaderBytes,
             Format = s.HeaderBytes is null ? s.ContainerFormat : null,
         });
@@ -200,7 +201,7 @@ internal static class Summary
         int channels = s.Channels;
         IReadOnlyList<Speaker>? layout = channels switch { 1 => [Speaker.FrontCenter], 2 => [Speaker.FrontLeft, Speaker.FrontRight], _ => null };
         int bits = s.BitsPerSample;
-        bool hasSamples = s.Header is { SampleRate: > 0 };
+        bool hasSamples = s.Header is { SampleRate: > 0 } || (s.HasTrackSamples && s.SampleRate > 0);
         long samples = hasSamples ? s.Samples : 0;
         double duration = hasSamples && rate > 0 ? samples / (double)rate : 0;
         StreamFigures? figures = hasSamples ? Figures(s) : null;
