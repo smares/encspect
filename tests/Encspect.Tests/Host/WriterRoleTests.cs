@@ -515,7 +515,7 @@ public partial class WriterRoleTests
         Report report = Analyze("oggenc.ogg", Fixture("ogg/external-oggenc-q5.ogg"));
         var csv = new StringWriter();
         ReportCsvWriter.Write([report], csv);
-        Assert.Contains(",libvorbis 1.3.7,High,,,,,Vorbis Comment,", csv.ToString(), StringComparison.Ordinal);
+        Assert.Contains(",libvorbis 1.3.7,High,,,,,,,Vorbis Comment,", csv.ToString(), StringComparison.Ordinal);
 
         var json = new MemoryStream();
         ReportJsonWriter.Write([report], json);
