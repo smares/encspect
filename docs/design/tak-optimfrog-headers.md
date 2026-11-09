@@ -16,7 +16,17 @@ Status: draft for the lead, 2026-11-09. Milestone 0.2, item 4 of the [plan](../p
   - License of the applications, the library and the SDK: freeware "only for private, non-commercial use", "also free for educational and scientific use"; commercial use needs the author's written approval; the intact archive may be redistributed without a fee. Windows only.
 - **`Sdk/Source/takStream.pas`**, in the SDK: the author's own source of TAK's container ("Hopefully anything needed to understand, how TAK's container works", version 2.2.0). Its license: "Do with it, whatever you want", asking only that the module is not distributed without the SDK and that a modified version says it is not official. It defines every metadata object, the stream info's bit layout, the frame header, the frame size types and the CRC ("Any CRC used in the stream is CRC 24 RFC2440", OpenPGP's CRC-24).
 - **The SDK documentation** (`Sdk/Doc/*.html`, `Sdk/Header/tak_deco_lib.h`): the meaning of the fields (`Ttak_str_EncoderInfo`: codec 0–63 and profile; `Ttak_str_MetaEncoderInfo`: version, preset, evaluation; the frame size types; `tak_SSD_GetEncoderInfo`). It is all rights reserved; it is read as documentation and nothing is copied from it.
-- **Not used:** FFmpeg's `takdec.c`, `tak.c` and `takdec` demuxer (LGPL), and the MultimediaWiki page on TAK (its sources are not stated). Neither is needed: takStream.pas covers everything the header holds.
+- **MediaInfoLib's `File_Tak.cpp`** (BSD, tag v26.01): a second reader of the metadata objects, used as evidence where the files depart from takStream.pas (below) and as a cross-check.
+- **Not used:** FFmpeg's `takdec.c`, `tak.c` and `takdec` demuxer (LGPL), and the MultimediaWiki page on TAK (its sources are not stated).
+
+#### Where the files depart from takStream.pas
+
+The files win wherever they and takStream.pas disagree. Each departure is stated with its evidence, the fixtures pin it, and the implementer follows this list over the module.
+
+- **An object's size counts its CRC.** takStream.pas says the 24-bit size covers "the Data (excluding header and Crc)". In `lostchord-tak_2_2_0.tak` the stream info states 13 bytes (10 of data and the 3-byte CRC-24, at offset 4), last frame info 11 (8 and 3, offset 21), encoder info 7 (4 and 3, offset 36), and each CRC-24 holds over the size less 3 bytes. MediaInfo's `Header_Parse` takes the element as the stated size and reads the CRC inside it (`Skip_L3("crc")`).
+- **Wave data has one CRC, at the end.** takStream.pas puts a CRC right after the 6 size bytes (`tak_str_SimpleWaveDataSize`). The files hold the header size (3 bytes), the footer size (3), the header bytes, the footer bytes and one CRC-24 over all of them: 53 = 6 + 44 + 3 in both lostchord files. MediaInfo's `WAVEMETADATA` reads the same order.
+- **The End object** (ID 0) is a header with size 0 and no CRC, in both files.
+- **How the fixtures prove it:** every metadata CRC-24 of every Takc-written fixture and both real files must hold under this reading (a test, not only the goldens), and the SDK library opens every fixture without `tak_res_ssd_MetaDataDamaged`. A further departure that a fixture shows is added here with its evidence before the parser follows it.
 
 ### OptimFROG
 
@@ -30,36 +40,45 @@ Status: draft for the lead, 2026-11-09. Milestone 0.2, item 4 of the [plan](../p
 ### The clean-room question
 
 - **No split is needed.** Every field read in this item comes from the authors' own material: takStream.pas, whose terms allow following it, and OptimFROG's published specification. Nothing comes from LGPL or GPL code.
-- **The TAK parser follows takStream.pas** and carries its notice (the author, the terms quoted) in the source and in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md), as [CLAUDE.md](../../CLAUDE.md) asks of a permissive source followed closely. The module is not committed: the scripts fetch the pinned archive into the cache, which honors "don't distribute this module without the SDK". The implementer reads takStream.pas and the SDK documentation and nothing else about TAK.
+- **The TAK parser follows takStream.pas** where the files agree with it, and the departures above where they do not.
+  - Its notice, in the source and in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md) as [CLAUDE.md](../../CLAUDE.md) asks of a permissive source followed closely, quotes "Copyright 2006 by Thomas Becker" and the terms, and states, as the terms ask of a published modified version, that Encspect's reader is not an official release of TAK.
+  - The module is not committed: the scripts fetch the pinned archive into the cache, which honors "don't distribute this module without the SDK".
+  - The implementer reads takStream.pas, the SDK documentation, MediaInfo's `File_Tak.cpp` and this design, and nothing else about TAK.
 - **A TAK decoder would need a split.** The coded frames are described only by FFmpeg's LGPL decoder, so one agent would read it and describe the format, and another would implement from the description, as for TrueHD and TTA. That is outside 0.2 ([Not covered](#not-covered)).
 
 ## What the files show
 
-Checked on real files from samples.ffmpeg.org's archive (first bytes only, 2026-11-09); the fixtures confirm the rest.
+Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this design and its review); the fixtures confirm the rest.
 
-- `lostchord-tak_2_2_0.tak`: `tBaK`, a stream info object (ID 1), then an encoder info object (ID 4, 4 data bytes and the CRC-24) holding version 2.2.0 and preset byte 0x02 (preset 2, standard evaluation), then a wave data object (ID 3) with a 44-byte WAV header and no footer.
-- `lostchord-tak_1_0.tak`: the same stream info, and no encoder info object, as the SDK says of TAK 1.0 files.
-- `luckynight.ofr` (2004): `OFR ` with a main size of 15, encoder ID 0x0090 (version 4.509, build system 0, Windows x86), compression byte 0x0A (mode 1, normal; speedup 2, 4x), then `HEAD` with the 44-byte WAV header.
+- `lostchord-tak_2_2_0.tak`: `tBaK`; stream info (ID 1); last frame info (ID 7); encoder info (ID 4: version 2.2.0, preset 2, standard evaluation); wave data (ID 3: a 44-byte WAV header, no footer); the End object (ID 0). The audio starts at byte 108. Every CRC-24 holds.
+- `lostchord-tak_1_0.tak`: `tBaK`; stream info with codec 0; a seek table (ID 2, 637 bytes, its CRC-24 holds); wave data; End. No encoder info object, as the SDK says of TAK 1.0 files. The audio starts at byte 723.
+- `luckynight.ofr` (2004): `OFR ` with a main size of 15, encoder ID 0x0090 (version 4.509, build system 0, Windows x86), compression byte 0x0A (mode 1, normal; speedup 2, 4x), `HEAD` with the 44-byte WAV header, then 7 `COMP` blocks of 882,000 values (10 s of stereo at 44.1 kHz) each, the last shorter. Each block's CRC-32 is the plain IEEE (zlib) CRC-32 over the block's data after the CRC field, and all hold; the blocks' samples add up to the main block's total. The 2-byte reserved field is 0x1041 in every block.
 
 ## What is read and reported
 
 ### TAK
 
-- **Nodes:** the signature; each metadata object with its header (ID, size) and CRC-24, compared:
-  - stream info: codec (0 "Integer 24 bit (TAK 1.0)", 2 "Integer 24 bit (TAK 2.0)", 3 "LossyWav (TAK 2.1 Beta)", 4 multichannel (TAK 2.2), as `tak_GetCodecName` names them), profile, frame size type and the frame length it gives, the sample count, data type, sample rate, bits per sample, channels and, from 2.2.0, valid bits and speaker assignment;
-  - the obsolete seek table (before 1.1.1): its entries;
-  - wave data: the stored WAV header and footer, the header's chunks listed, a lossyWAV `fact` chunk read with `FactText` as in Monkey's Audio;
-  - encoder info: the version, the preset and the evaluation;
-  - padding, MD5 (shown, not compared), last frame info (position and size);
+- **The object walk:** each object is an ID (7 bits), a reserved bit and a 24-bit size, then the data and its CRC-24 (OpenPGP's, RFC 2440: initial value 0xB704CE, polynomial 0x864CFB, stored little-endian, over the data); the End object (ID 0) has neither. Stream info must come first: the SDK's decoder signals damage otherwise (`tak.stream-info-not-first`). An unknown ID (8–127) is skipped by its size (`tak.object-unknown`, info); a reserved bit that is set is shown and is `tak.object-reserved-bit` (info).
+- **Nodes,** for each object its header (ID, reserved bit, size) and CRC-24, compared:
+  - stream info: codec (as Takc's readme and `tak_GetCodecName` name them: 0 "Integer 24 bit (TAK 1.0)", 1 "Experimental!", 2 "Integer 24 bit (TAK 2.0)", 3 "LossyWav (TAK 2.1 Beta)", 4 "Integer 24 bit MC (TAK 2.2)"), profile, frame size type and the frame length it gives, the sample count, data type, sample rate, bits per sample, channels, the extension flag and, where it is set (2.2.0 and later), valid bits and speaker assignment. Before 2.2 the channel count had 5 bits and no extension flag; the files hold at most 16 channels, so the top bit of the old field reads as the flag, 0, and one reader serves both;
+  - the obsolete seek table (before 1.1.1): one node with its size and CRC-24. Nothing at hand describes its entries beyond "a header and a list of seek points", so they are not read;
+  - wave data: the header and footer sizes, the stored WAV header data and terminating data (named as Monkey's Audio names them) with the header's chunks listed, and a lossyWAV `fact` chunk read with `FactText`;
+  - encoder info: the version (major in the top byte), the preset and the evaluation;
+  - padding (ID 5), MD5 (ID 6, shown, not compared), last frame info (ID 7: the last frame's position, counted from the first frame, which follows the End object, and its size);
+  - End;
   - the audio data as one node from the end of the metadata to the stream's end; frames are not walked.
-- **StreamInfo:** codec "TAK", sample rate, channels and layout (the speaker assignment where stored, else the WAVE default for the count), bits per sample, samples, duration, average bitrate (the audio data's bytes over the duration).
-- **Statistics:** Codec, Profile, Preset, Frame Length.
+- **The frame length** follows takStream.pas's rule for the frame size type: a time type (94, 125, 188 or 250 ms) gives the rate times the duration, a size type its samples. A time type that comes to more than 16,384 samples, or a size type that lasts more than 250 ms, is a stream info the decoder rejects (`tak.frame-size-invalid`); types 10 to 15 are reserved or "not supported yet" (`tak.frame-size-type-reserved`).
+- **StreamInfo:** codec "TAK", sample rate, channels, bits per sample, samples, duration, average bitrate (the audio data's bytes over the duration).
+- **Channel layout,** in the words of TTA and Monkey's Audio: TAK's speaker assignment where the stream info stores one; else the nonzero channel mask of the stored WAV header (`ChannelLayouts.FromWaveMask`, as Monkey's Audio takes it); else one channel is center, two are left/right, and more have no layout. The "Channel Layout" statistic shows it.
+- **Statistics:** Codec, Profile, Preset, Frame Length, Channel Layout, and "Verified Header Checksums" and "Failed Header Checksums" over the metadata objects (the unit "Header", as Musepack SV8 names the CRC of its stream header; [development.md](../development.md#names-of-statistics-and-series) gains the line).
 - **Claims:**
   - Encoder "TAK 2.3.3" (`ClaimRole.Encoder`, high confidence) from the encoder info object.
-  - A file without the object (TAK 1.0) is "TAK (format of TAK 1.0)" with medium confidence and the stream info as evidence, as Monkey's Audio names a file before 3.98.
+  - A file without the object is "TAK 1.0" with medium confidence and the stream info as evidence: the SDK's decoder takes 1.0.0 as the version of such a file, as Monkey's Audio names a file before 3.98 from its file version.
   - Processor lossyWAV from a `fact` chunk in the wave data, high confidence, the shared path of [lossywav-detection.md](lossywav-detection.md).
+  - Codec 3 makes no claim of its own (decision 9).
 - **The preset**, named as Takc prints it ("-p2", "-p3e", "-p4m"; "p" and the level, then "e" for Extra or "m" for Max). Without the encoder info object, the preset is the stream info's profile and the evaluation is unknown, as the SDK tells applications to show it. The profile is shown on its own: the SDK says it equals the preset only for the presets' standard settings (a Turbo preset with 128 predictors stores the High profile).
-- **Declared end:** with the last frame info object (TAK 1.1.1 and later), the end of the last frame; the APEv2 tag after it is the host's. Without it, no declared end.
+- **Declared end:** the end of the last frame by the last frame info object (TAK 1.1.1 and later), used only when its CRC-24 holds, as TTA uses its seek table only when its CRC holds; the APEv2 tag after it is the host's. A declared end past the data is a file cut in the audio (`tak.audio-cut`, with the bytes missing), the most common damage. Without the object, or with a failing CRC, no declared end, and trailing tags are looked for as in a file with no declared size.
+- **A tag before `tBaK`** (ID3v2) is the host's, as in every format, with `tak.leading-tag` (info): TAK's readme says its decoder throws an error on tags prepended to the file.
 
 ### OptimFROG
 
@@ -72,7 +91,7 @@ Checked on real files from samples.ffmpeg.org's archive (first bytes only, 2026-
 - **Statistics:** Mode, Speedup, Sample Type, Build System.
 - **Claims:** Encoder "OptimFROG 5.100" (high confidence) from the encoder ID; processor lossyWAV as above.
 - **The mode, not a preset.** 5.100's presets 0 to 10 and max each set a mode, `--optimize` and `--aca`/`--acm`; only the mode is stored. The report names the mode and the speedup; the article lists which presets select each mode. No preset is claimed (decision 5).
-- **The block walk** never stops on a tag's signature (CLAUDE.md: never a signature match alone), by the rule DTS-HD's chunk walk follows ([dtshd.md](../formats/dtshd.md)):
+- **The block walk** never stops on a tag's signature ([CLAUDE.md](../../CLAUDE.md): never a signature match alone), by the rule DTS-HD's chunk walk follows ([dtshd.md](../formats/dtshd.md)):
   - a block header is four printable ASCII bytes and a length that ends inside the data;
   - a block of a known ID whose length runs past the data is a cut block (`optimfrog.block-cut`), read as far as it goes, and ends the walk;
   - a block of an unknown ID goes on the walk only when a valid block header follows it or it ends exactly at the end of the data (`optimfrog.block-unknown`, info); otherwise the walk stops before it;
@@ -87,13 +106,18 @@ Checked on real files from samples.ffmpeg.org's archive (first bytes only, 2026-
 
 ### Findings
 
-- Both: a CRC that fails (each TAK object; each OptimFROG `COMP` block, once with a count), data cut in a metadata object or block, an unknown codec, sample type, channel configuration, mode or speedup, an object or block that breaks the specification's order, a total sample count that the channels do not divide (OptimFROG), and data after the declared end that is no tag.
+- **Both:** a CRC that fails (each TAK object; each OptimFROG `COMP` block, once with a count), data cut in a metadata object or block, and data after the declared end that is no tag.
+- **TAK,** beside the walk's codes above, each field a value takStream.pas does not define: a codec it does not list, a frame size type of 10 to 15 or one that does not fit the rate, a data type of 1 to 7 (only 0, PCM, is defined), a sample bits code outside the defined range, a channel count over 16, an evaluation of 3, a speaker code of 19 to 63; a stream info that is not first; a last frame past the data (`tak.audio-cut`); a missing End object; an object whose size runs past the data.
+- **OptimFROG:** see [Findings of the block walk](#optimfrog) and the fields below.
 - Each finding code gets a test or a manifest entry, as `FindingCoverageTests` asks.
 
 ### Verification
 
 - **Compared:** TAK's metadata CRC-24s (header only, never covering the audio); OptimFROG's `COMP` CRC-32s, which cover the coded data when every block the samples call for is there.
-- **Declared and not compared:** both MD5s over the decoded audio, which needs a decoder; the verification says so, as for a stream whose decoder is missing.
+- **Declared and not compared,** as [CLAUDE.md](../../CLAUDE.md) asks of every checksum a stream stores:
+  - both MD5s over the decoded audio, which needs a decoder; the verification says so, as for a stream whose decoder is missing;
+  - TAK's frame header CRC-24 and frame data CRC-24 (takStream.pas, "Audio frames"), since frames are not walked in 0.2 (decision 3).
+- **OptimFROG's MD5** of 5.001 and earlier does not follow RFC 1321 for audio of 56 to 63 bytes modulo 64 (format.txt); the MD5 node's description and the article say so.
 
 ## Fixtures
 
