@@ -22,7 +22,9 @@ internal static class Explain
     public const string CorrData = "The correction data, which only OptimFROG's own library reads.";
     public const string CorrCut = "The bytes of a correction block that the data holds; they end before its CRC-32 does.";
     public const string LossyStream = "Whether the file looks like the lossy part of a DualStream. The data blocks' two reserved bytes read 0x1101 (stereo) or 0x0901 (mono) in every .ofs file of OptimFROG 5.100 in Encspect's tests and never in a lossless file; the analyzer uses that pattern.";
-    public const string LossyConfidence = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
+    public const string LossyConfidenceLow = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
+    public const string LossyConfidenceMedium = "Medium: the pattern of OptimFROG 5.100's files and the file name's extension, .ofs, agree. Pairing the file with its .ofc (0.4) would confirm it.";
+    public const string StatIsCorrectionFile = "Whether this file is a correction file: its blocks hold correction data and no audio.";
     public const string CorrStream = "An OptimFROG correction file: a run of correction blocks, each with a 4-byte ID, a length, a CRC-32 and correction data (the structure of the files in Encspect's tests; format.txt does not describe it).";
     public const string BlockId = "The 4 characters that name the kind of block (format.txt).";
     public const string BlockLength = "The number of bytes of data after the block's ID and length (format.txt).";

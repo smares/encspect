@@ -136,7 +136,7 @@ public class CorruptFlacFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The OptimFROG fixtures written by ofr, off and ofs (the correction files among them are no OptimFROG files and are read as unknown data).
+// The OptimFROG fixtures written by ofr, off and ofs (the correction files among them).
 public class CorruptOptimFrogFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("optimfrog/external-", StringComparison.Ordinal));

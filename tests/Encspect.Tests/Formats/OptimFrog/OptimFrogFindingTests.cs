@@ -550,7 +550,11 @@ public class OptimFrogFindingTests
             Node claim = Assert.IsType<Node>(Claim(report));
             Assert.Equal("Low", claim.Children.Single(c => c.Name == "Confidence").Value?.ToString());
             Assert.Contains("0x01", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
-            Assert.True(report.Streams.Single().Verification!.IsLossy);
+            Assert.False(report.Streams.Single().Verification!.IsLossy);
+            StreamClaim typed = Assert.Single(report.Streams.Single().Claims);
+            Assert.Equal((StreamClaim.LossyPart, Confidence.Low, true), (typed.Kind, typed.Confidence, typed.IsAsserted));
+            Assert.Equal(claim.Children.Single(c => c.Name == "Evidence").Value?.ToString(), typed.Evidence);
+            Assert.Contains("the data block has the low byte 0x01", typed.Evidence);
             Assert.Empty(report.Findings);
         }
     }
@@ -563,6 +567,8 @@ public class OptimFrogFindingTests
         Node claim = Assert.IsType<Node>(Claim(report));
         Assert.Equal("Medium", claim.Children.Single(c => c.Name == "Confidence").Value?.ToString());
         Assert.Contains(".ofs", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
+        Assert.StartsWith("Medium", claim.Children.Single(c => c.Name == "Confidence").Description);
+        Assert.Equal(Confidence.Medium, Assert.Single(report.Streams.Single().Claims).Confidence);
         Assert.Contains("reserved bytes", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
         Assert.Empty(report.Findings);
     }
@@ -574,9 +580,39 @@ public class OptimFrogFindingTests
 
         Assert.Null(Claim(report));
         Assert.False(report.Streams.Single().Verification!.IsLossy);
+        Assert.True(report.Streams.Single().Claims.All(c => !c.IsAsserted));
         Finding note = Single(report, "optimfrog.extension-differs");
         Assert.Equal(Severity.Info, note.Severity);
         Assert.NotNull(note.Path);
+    }
+
+    [Fact]
+    public void TheOfsExtensionSaysNothingWithoutAWholeDataBlockOrOnAMixture()
+    {
+        byte[] mixed = Builder.File(Builder.MainBlock(88200 * 2), Builder.Head(), Builder.Comp(88200, reserved: 0x1101), Builder.Comp(88200, seed: 1), Builder.Tail());
+        byte[] cut = Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Comp(88200, 500))[..^100];
+
+        Assert.DoesNotContain(AnalyzeNamed(mixed, "x.ofs").Findings, f => f.Code == "optimfrog.extension-differs");
+        Assert.Null(Claim(AnalyzeNamed(mixed, "x.ofs")));
+        Assert.DoesNotContain(AnalyzeNamed(cut, "x.ofs").Findings, f => f.Code == "optimfrog.extension-differs");
+    }
+
+    [Fact]
+    public void TheOfsExtensionOnATwoBlockLosslessFileIsNotedWithPluralWording()
+    {
+        Report report = AnalyzeNamed(Builder.Standard(2), "x.ofs");
+
+        Assert.Contains("none of the 2 data blocks", Single(report, "optimfrog.extension-differs").Message);
+    }
+
+    [Fact]
+    public void TheCorrectionFileStatisticIsTrueForACorrectionFileAndFalseOtherwise()
+    {
+        static bool? Stat(Report report) => report.Root.Children.Single(c => c.Name.StartsWith("OptimFROG", StringComparison.Ordinal)).Children.Single(c => c.Name == "Statistics")
+            .Children.Single(c => c.Name == "IsCorrectionFile").Value?.AsBoolean();
+
+        Assert.True(Stat(Analyze(Builder.File(Corr(), Corr(seed: 1)))));
+        Assert.False(Stat(Analyze(Builder.Standard())));
     }
 
     [Fact]

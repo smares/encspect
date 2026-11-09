@@ -62,13 +62,10 @@ internal static class Summary
             s.AddLeading(encoder);
         }
 
-        bool isLossy = s.CompBlocks > 0 && s.DualStreamBlocks == s.CompBlocks;
-        if (isLossy)
+        StreamClaim? claim = LossyClaim(s);
+        if (claim is { IsAsserted: true })
         {
-            Node lossy = Cover("Lossy Stream", "Probably the lossy part of a DualStream", Explain.LossyStream, Topics.Blocks);
-            lossy.Add(Cover("Confidence", "Low", Explain.LossyConfidence));
-            lossy.Add(Cover("Evidence", $"The reserved bytes of all {Counts.Of(s.CompBlocks, "data block", "data blocks")} have the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's tests", Explain.Evidence));
-            s.AddLeading(lossy);
+            s.AddLeading(LossyNode(claim, r.Offset, r.End - r.Offset));
         }
 
         Node? writer = WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
@@ -85,8 +82,8 @@ internal static class Summary
         }
 
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
-        StreamVerification verification = Verify(s, m, isLossy);
-        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification);
+        StreamVerification verification = Verify(s, m);
+        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification, claim);
         s.Context.AddStream(info);
         s.Findings.Flush(s.Context);
     }
@@ -101,6 +98,7 @@ internal static class Summary
             "The file holds correction data only: it adds to the DualStream .ofs file with the same blocks and cannot be decoded alone. The analyzer reads its blocks and compares their CRC-32s.");
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, r.Offset, Math.Max(0, r.End - r.Offset), value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", r.Offset, Math.Max(0, r.End - r.Offset)) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        statistics.Add(Cover("IsCorrectionFile", NodeValue.Boolean(true), Explain.StatIsCorrectionFile, Topics.Blocks));
         statistics.Add(Cover("Blocks", NodeValue.Integer(s.CompBlocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
         statistics.Add(Cover("Verified Block Checksums", NodeValue.Integer(s.CompBlocks - s.CrcFailures, "blocks", "block"), Explain.StatBlockChecksums, Topics.Crc));
         if (s.CrcFailures > 0)
@@ -264,7 +262,7 @@ internal static class Summary
                 $"The data blocks hold {Counts.Of(held, "sample", "samples")} over all channels, but the main block states {stated}; a block is missing, or the file ends at a block boundary.");
         }
 
-        if (!s.HasHead)
+        if (!s.HasHead && s.CutBlocks == 0)
         {
             s.Findings.Add(Severity.Warning, "optimfrog.head-missing", stream, _ => "The file holds no header block (HEAD), which the order in the specification does not bracket as optional.");
         }
@@ -275,6 +273,39 @@ internal static class Summary
         }
     }
 
+    // The claim that the file is the lossy part of a DualStream, from the data blocks' reserved bytes: asserted (low confidence) when every whole data block shows
+    // the pattern of the .ofs files in Encspect's tests, held unasserted when none does, and not made for a mixture or without a whole data block.
+    private static StreamClaim? LossyClaim(State s)
+    {
+        long complete = s.CompBlocks;
+        long pattern = s.DualStreamBlocks;
+        if (complete == 0 || (pattern != 0 && pattern != complete))
+        {
+            return null;
+        }
+
+        if (pattern == complete)
+        {
+            string blocks = complete == 1 ? "the data block has" : $"all {complete} data blocks have";
+            return new StreamClaim(StreamClaim.LossyPart, "Probably the lossy part of a DualStream", true, Confidence.Low,
+                $"The reserved field of {blocks} the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files");
+        }
+
+        string none = complete == 1 ? "the data block has another low byte than 0x01" : $"none of the {complete} data blocks has the low byte 0x01";
+        return new StreamClaim(StreamClaim.LossyPart, "Probably the lossy part of a DualStream", false, Confidence.Low, $"the reserved field of {none}, as in a lossless file");
+    }
+
+    private static Node LossyNode(StreamClaim claim, long offset, long length) =>
+        new("Lossy Stream", offset, length, claim.Value, () =>
+        [
+            new Node("Confidence", offset, length, claim.Confidence.ToString()) { Description = claim.Confidence == Confidence.Low ? Explain.LossyConfidenceLow : Explain.LossyConfidenceMedium },
+            new Node("Evidence", offset, length, claim.Evidence) { Description = Explain.Evidence },
+        ])
+        {
+            Description = Explain.LossyStream,
+            Topic = Topics.Blocks,
+        };
+
     private static Node? Encoder(State s, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover)
     {
         Node encoder = cover("Encoder", $"OptimFROG {Layout.VersionText(m.Version)}", Explain.Encoder, ClaimRoles.EncoderTopic);
@@ -283,12 +314,12 @@ internal static class Summary
         return encoder;
     }
 
-    private static StreamVerification Verify(State s, MainBlock m, bool isLossy)
+    private static StreamVerification Verify(State s, MainBlock m)
     {
         Records r = s.Records;
         bool coversAll = s.CompBlocks > 0 && s.CompSamples == m.Samples && s.CutBlocks == 0 && s.SizeInvalidBlocks == 0 && s.DifferingBlocks == 0 && s.OutOfOrderBlocks == 0;
         long wholeStored = s.CompBlocks + s.CutBlocks;
-        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = s.Stream, Channels = m.Channels, BitsPerSample = Math.Max(m.BitsPerSample, 8), Samples = m.SamplesPerChannel, IsLossy = isLossy });
+        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = s.Stream, Channels = m.Channels, BitsPerSample = Math.Max(m.BitsPerSample, 8), Samples = m.SamplesPerChannel });
         return session.Finish(
         [
             new ChecksumTally { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = wholeStored, Checked = s.CompBlocks, Failed = s.CrcFailures },
@@ -299,7 +330,7 @@ internal static class Summary
     private static IReadOnlyList<Speaker>? LayoutOf(MainBlock m, uint? mask) =>
         mask is { } value and not 0 ? ChannelLayouts.FromWaveMask(value, m.Channels) : m.Channels == 1 ? ChannelLayouts.Mono : ChannelLayouts.Stereo;
 
-    private static StreamInfo Statistics(State s, Source source, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover, Node? encoder, Node? writer, Node? processor, StreamVerification verification)
+    private static StreamInfo Statistics(State s, Source source, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover, Node? encoder, Node? writer, Node? processor, StreamVerification verification, StreamClaim? claim)
     {
         Records r = s.Records;
         Node stream = s.Stream;
@@ -333,6 +364,7 @@ internal static class Summary
         statistics.Add(cover("Speedup", Layout.Speedup(m.Speedup) ?? $"undefined ({m.Speedup})", Explain.StatSpeedup, Topics.Modes));
         statistics.Add(cover("Sample Type", Layout.SampleType(m.SampleType) ?? $"undefined ({m.SampleType})", Explain.StatSampleType, Topics.Blocks));
         statistics.Add(cover("Build System", Layout.BuildSystem(m.BuildSystem) ?? $"undefined ({m.BuildSystem})", Explain.StatBuildSystem, Topics.Blocks));
+        statistics.Add(cover("IsCorrectionFile", NodeValue.Boolean(false), Explain.StatIsCorrectionFile, Topics.Blocks));
         statistics.Add(cover("Verified Block Checksums", NodeValue.Integer(s.CompBlocks - s.CrcFailures, "blocks", "block"), Explain.StatBlockChecksums, Topics.Crc));
         if (s.CrcFailures > 0)
         {
@@ -365,6 +397,7 @@ internal static class Summary
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
+            Claims = claim is null ? [] : [claim],
             Series = figures.Units > 0 ? figures.Series(anchor, s.Context.CancellationToken) : [],
         };
     }

@@ -75,7 +75,8 @@ public class OptimFrogFixtureTests
         bool isLossy = manifest.GetProperty("lossy").GetBoolean();
         Node? lossy = stream.Children.FirstOrDefault(c => c.Name == "Lossy Stream");
         Assert.Equal(isLossy, lossy is not null);
-        Assert.Equal(isLossy, report.Streams.Single().Verification!.IsLossy);
+        Assert.False(report.Streams.Single().Verification!.IsLossy);
+        Assert.Equal(isLossy, report.Streams.Single().Claims.Any(c => c.IsAsserted));
         if (lossy is not null)
         {
             Assert.Equal(name.EndsWith(".ofs", StringComparison.Ordinal) ? "Medium" : "Low", lossy.Children.Single(c => c.Name == "Confidence").Value?.ToString());

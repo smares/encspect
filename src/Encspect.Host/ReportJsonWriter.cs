@@ -374,6 +374,22 @@ public static class ReportJsonWriter
             writer.WriteString("processorConfidence", processorConfidence.ToString());
         }
 
+        if (stream.Claims.Any(c => c.IsAsserted))
+        {
+            writer.WriteStartArray("claims");
+            foreach (StreamClaim claim in stream.Claims.Where(c => c.IsAsserted))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", claim.Kind);
+                writer.WriteString("value", claim.Value);
+                writer.WriteString("confidence", claim.Confidence.ToString());
+                writer.WriteString("evidence", claim.Evidence);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+
         writer.WriteStartArray("series");
         foreach (Series series in stream.Series)
         {

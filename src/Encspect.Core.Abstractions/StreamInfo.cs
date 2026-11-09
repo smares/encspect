@@ -120,6 +120,9 @@ public sealed record StreamInfo
 
     public Confidence? ProcessorConfidence { get; init; }
 
+    // Claims made from evidence of different strength (StreamClaim), such as the lossy part of a DualStream; empty where there are none.
+    public IReadOnlyList<StreamClaim> Claims { get; init; } = [];
+
     public IReadOnlyList<Series> Series { get; init; } = [];
 
     // Categories per frame for graphs and for the summary over the stream, such as the Layer III block types.

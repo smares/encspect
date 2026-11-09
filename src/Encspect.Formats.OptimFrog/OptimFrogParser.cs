@@ -87,8 +87,17 @@ public sealed class OptimFrogParser : IFormatParser
 
         reader.Position = start + Layout.BlockHeaderLength;
         uint stored = reader.ReadUInt32LittleEndian();
-        byte[] data = reader.ReadBytes((int)length - 4);
-        bool isValid = Crc32.Of(data) == stored;
+        uint crc = Crc32.Initial;
+        byte[] buffer = new byte[1 << 16];
+        for (long left = length - 4L; left > 0;)
+        {
+            int n = (int)Math.Min(left, buffer.Length);
+            reader.Read(buffer.AsSpan(0, n));
+            crc = Crc32.Update(crc, buffer.AsSpan(0, n));
+            left -= n;
+        }
+
+        bool isValid = Crc32.Finish(crc) == stored;
         bool isChained = end == reader.End || (Walk.TryReadHeader(reader, end, out uint next, out _) && next == Layout.Corr);
         return isValid && isChained ? new SniffResult(100, start, 1, 1, End: chain) : new SniffResult(80, start, 1, isValid ? 1 : 0, isValid ? "no block after the first" : "first CRC-32 differs", chain);
     }
