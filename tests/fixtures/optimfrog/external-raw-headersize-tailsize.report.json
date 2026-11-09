@@ -10,13 +10,13 @@
       "name": "File",
       "value": "OptimFROG",
       "offset": 0,
-      "length": 41571,
+      "length": 41495,
       "children": [
         {
           "name": "OptimFROG",
           "kind": "Stream",
           "offset": 0,
-          "length": 41571,
+          "length": 41495,
           "children": [
             {
               "name": "Main Block",
@@ -116,19 +116,19 @@
               "name": "Encoder",
               "value": "OptimFROG 5.100",
               "offset": 0,
-              "length": 41571,
+              "length": 41495,
               "children": [
                 {
                   "name": "Confidence",
                   "value": "High",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Evidence",
                   "value": "The main block's encoder ID states version 5.100",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 }
               ]
             },
@@ -136,138 +136,144 @@
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
-              "length": 41571,
+              "length": 41495,
               "children": [
                 {
                   "name": "Blocks",
                   "value": 1,
                   "unit": "blocks",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Samples",
                   "value": 30000,
                   "unit": "samples",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Duration",
                   "value": 0.6802721088435374,
                   "unit": "s",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Sample Rate",
                   "value": 44100,
                   "unit": "Hz",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Channels",
                   "value": 2,
                   "unit": "channels",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Channel Layout",
                   "value": "stereo (front left, front right)",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Bits Per Sample",
                   "value": 16,
                   "unit": "bits",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Mode",
                   "value": "normal",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Speedup",
                   "value": "4x",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Sample Type",
                   "value": "SINT16",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Build System",
                   "value": "Linux x64",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
+                },
+                {
+                  "name": "IsCorrectionFile",
+                  "value": false,
+                  "offset": 0,
+                  "length": 41495
                 },
                 {
                   "name": "Verified Block Checksums",
                   "value": 1,
                   "unit": "blocks",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Average Bitrate",
                   "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Bitrate Mode",
                   "value": "unknown",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Smallest Block",
                   "value": 41428,
                   "unit": "bytes",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Largest Block",
                   "value": 41428,
                   "unit": "bytes",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Minimum Bitrate",
                   "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Maximum Bitrate",
                   "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41571
+                  "length": 41495
                 },
                 {
                   "name": "Bitrate Distribution",
                   "offset": 0,
-                  "length": 41571,
+                  "length": 41495,
                   "children": [
                     {
                       "name": "480 to 511 kbps",
                       "value": "1 block (100.0%)",
                       "offset": 0,
-                      "length": 41571
+                      "length": 41495
                     }
                   ]
                 }
@@ -275,10 +281,10 @@
             },
             {
               "name": "Header Block",
-              "value": 88,
+              "value": 24,
               "unit": "bytes",
               "offset": 25,
-              "length": 88,
+              "length": 24,
               "children": [
                 {
                   "name": "Block ID",
@@ -288,106 +294,16 @@
                 },
                 {
                   "name": "Block Length",
-                  "value": 80,
+                  "value": 16,
                   "unit": "bytes",
                   "offset": 29,
                   "length": 4
                 },
                 {
                   "name": "WAV Header Data",
-                  "value": "80 bytes, a RIFF WAVE header",
+                  "value": "16 bytes",
                   "offset": 33,
-                  "length": 80,
-                  "children": [
-                    {
-                      "name": "Format Tag",
-                      "value": "0x0001 (PCM)",
-                      "offset": 53,
-                      "length": 2
-                    },
-                    {
-                      "name": "Channels",
-                      "value": 2,
-                      "unit": "channels",
-                      "offset": 55,
-                      "length": 2
-                    },
-                    {
-                      "name": "Chunks",
-                      "value": 3,
-                      "unit": "chunks",
-                      "offset": 45,
-                      "length": 68,
-                      "children": [
-                        {
-                          "name": "fmt Chunk",
-                          "value": 16,
-                          "unit": "bytes",
-                          "offset": 45,
-                          "length": 24,
-                          "children": [
-                            {
-                              "name": "Chunk ID",
-                              "value": "fmt ",
-                              "offset": 45,
-                              "length": 4
-                            },
-                            {
-                              "name": "Chunk Size",
-                              "value": 16,
-                              "unit": "bytes",
-                              "offset": 49,
-                              "length": 4
-                            }
-                          ]
-                        },
-                        {
-                          "name": "LIST Chunk",
-                          "value": 27,
-                          "unit": "bytes",
-                          "offset": 69,
-                          "length": 35,
-                          "children": [
-                            {
-                              "name": "Chunk ID",
-                              "value": "LIST",
-                              "offset": 69,
-                              "length": 4
-                            },
-                            {
-                              "name": "Chunk Size",
-                              "value": 27,
-                              "unit": "bytes",
-                              "offset": 73,
-                              "length": 4
-                            }
-                          ]
-                        },
-                        {
-                          "name": "data Chunk",
-                          "value": 120000,
-                          "unit": "bytes",
-                          "offset": 105,
-                          "length": 8,
-                          "children": [
-                            {
-                              "name": "Chunk ID",
-                              "value": "data",
-                              "offset": 105,
-                              "length": 4
-                            },
-                            {
-                              "name": "Chunk Size",
-                              "value": 120000,
-                              "unit": "bytes",
-                              "offset": 109,
-                              "length": 4
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
+                  "length": 16
                 }
               ]
             },
@@ -396,75 +312,75 @@
               "kind": "Frame",
               "value": 41428,
               "unit": "bytes",
-              "offset": 113,
+              "offset": 49,
               "length": 41428,
               "children": [
                 {
                   "name": "Block ID",
                   "value": "COMP",
-                  "offset": 113,
+                  "offset": 49,
                   "length": 4
                 },
                 {
                   "name": "Block Length",
                   "value": 41420,
                   "unit": "bytes",
-                  "offset": 117,
+                  "offset": 53,
                   "length": 4
                 },
                 {
                   "name": "CRC-32",
                   "value": 3840055187,
-                  "offset": 121,
+                  "offset": 57,
                   "length": 4
                 },
                 {
                   "name": "Computed CRC-32",
                   "value": 3840055187,
-                  "offset": 121,
+                  "offset": 57,
                   "length": 4
                 },
                 {
                   "name": "IsCrc32Valid",
                   "value": true,
-                  "offset": 121,
+                  "offset": 57,
                   "length": 4
                 },
                 {
                   "name": "Samples",
                   "value": 60000,
                   "unit": "samples",
-                  "offset": 125,
+                  "offset": 61,
                   "length": 4
                 },
                 {
                   "name": "Sample Type",
                   "value": "SINT16",
-                  "offset": 129,
+                  "offset": 65,
                   "length": 1
                 },
                 {
                   "name": "Channel Configuration",
                   "value": "STEREO_LR",
-                  "offset": 130,
+                  "offset": 66,
                   "length": 1
                 },
                 {
                   "name": "Reserved",
                   "value": 4162,
-                  "offset": 131,
+                  "offset": 67,
                   "length": 2
                 },
                 {
                   "name": "Encoder ID",
                   "value": 9602,
-                  "offset": 133,
+                  "offset": 69,
                   "length": 2,
                   "children": [
                     {
                       "name": "Encoder Version",
                       "value": "5.100",
-                      "offset": 133,
+                      "offset": 69,
                       "length": 2
                     }
                   ]
@@ -473,62 +389,62 @@
                   "name": "Compressed Data",
                   "value": 41406,
                   "unit": "bytes",
-                  "offset": 135,
+                  "offset": 71,
                   "length": 41406
                 }
               ]
             },
             {
               "name": "Footer Block",
-              "value": 30,
+              "value": 18,
               "unit": "bytes",
-              "offset": 41541,
-              "length": 30,
+              "offset": 41477,
+              "length": 18,
               "children": [
                 {
                   "name": "Block ID",
                   "value": "TAIL",
-                  "offset": 41541,
+                  "offset": 41477,
                   "length": 4
                 },
                 {
                   "name": "Block Length",
-                  "value": 22,
+                  "value": 10,
                   "unit": "bytes",
-                  "offset": 41545,
+                  "offset": 41481,
                   "length": 4
                 },
                 {
                   "name": "WAV Terminating Data",
-                  "value": "22 bytes",
-                  "offset": 41549,
-                  "length": 22,
+                  "value": "10 bytes",
+                  "offset": 41485,
+                  "length": 10,
                   "children": [
                     {
                       "name": "Chunks",
                       "value": 1,
                       "unit": "chunks",
-                      "offset": 41549,
-                      "length": 22,
+                      "offset": 41485,
+                      "length": 10,
                       "children": [
                         {
-                          "name": "id3 Chunk",
-                          "value": 14,
+                          "name": "TAIL Chunk",
+                          "value": 1163155778,
                           "unit": "bytes",
-                          "offset": 41549,
-                          "length": 22,
+                          "offset": 41485,
+                          "length": 10,
                           "children": [
                             {
                               "name": "Chunk ID",
-                              "value": "id3 ",
-                              "offset": 41549,
+                              "value": "TAIL",
+                              "offset": 41485,
                               "length": 4
                             },
                             {
                               "name": "Chunk Size",
-                              "value": 14,
+                              "value": 1163155778,
                               "unit": "bytes",
-                              "offset": 41553,
+                              "offset": 41489,
                               "length": 4
                             }
                           ]
@@ -595,7 +511,7 @@
             "unit": "kbps",
             "axis": "frameOffset",
             "x": [
-              113
+              49
             ],
             "values": [
               487.19328

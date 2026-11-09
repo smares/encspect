@@ -119,7 +119,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
   - If nothing in the header tells a DualStream file from a lossless one, the stream cannot be named lossy from its header; that goes back to the lead before PR 2 lands.
 - **Reported in 0.2,** in WavPack's words ([wavpack.md](../formats/wavpack.md#hybrid-mode-and-correction-files)):
   - an `.ofs` is "OptimFROG DualStream", lossy by itself, as a hybrid `.wv` is "WavPack hybrid"; where its header says a correction file was written, `IsCorrectionFileCreated` is true, which does not say the file is next to this one;
-  - it is verified as its lossy stream by the CRC-32s of its blocks (`IsLossy`), as a hybrid `.wv` without its `.wvc`; an MD5 of the lossless audio is declared and not compared;
+  - it is verified by the CRC-32s of its blocks (decided on 2026-11-09 after the fixtures: `IsLossy` is not set from the low-confidence claim, which lives in `StreamInfo.Claims`); an MD5 of the lossless audio is declared and not compared;
   - an `.ofc` opened alone is "OptimFROG correction data" with `optimfrog.correction-file` (info), worded as `wavpack.correction-file`: the file holds correction data only, adds to the DualStream `.ofs` with the same blocks, and cannot be decoded alone. Its blocks are walked and their CRC-32s compared where the fixtures show the specification's layout; otherwise it is detected by its structure and named only.
 - **The pair, in 0.4,** with WavPack's `.wvc` ([plan](../plan.md#04-free-decoders-and-routes-complete), item 3), since both need the host to open a companion file:
   - look for the `.ofc` beside the `.ofs` (and the `.wvc` beside the `.wv`);

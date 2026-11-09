@@ -58,16 +58,18 @@ def main():
         if case.get("status") != "no output":
             groups.setdefault(case["sha256"], []).append(case)
     written = 0
+    seen_companions = set()
     for case in sorted(manifest["cases"], key=lambda c: c["name"]):
         if case.get("status") == "no output":
             continue
         same = sorted(groups[case["sha256"]], key=canonical_key)
-        if same[0] is not case:
-            continue
+        is_canonical = same[0] is case
         identical = [{"case": c["name"], "arguments": c["arguments"], "tool": c["tool"], "input": c["input"]} for c in same[1:]]
-        entries = [(case["fixture"], case["sha256"], case["size"], case.get("model"))]
+        entries = [(case["fixture"], case["sha256"], case["size"], case.get("model"))] if is_canonical else []
         for companion in case.get("companions", {}).values():
-            entries.append((companion["fixture"], companion["sha256"], companion["size"], companion.get("model")))
+            if companion["sha256"] not in seen_companions:
+                seen_companions.add(companion["sha256"])
+                entries.append((companion["fixture"], companion["sha256"], companion["size"], companion.get("model")))
         for name, digest, size, _ in entries:
             source_name = name
             source = artifact / "fixtures" / name
@@ -85,7 +87,7 @@ def main():
             provenance = {"source": SOURCE, "run": RUN, "case": case["name"], "tool": case["tool"], "arguments": case["arguments"], "input": case["input"],
                           "sha256": digest, "size": size, "reproducible": all(case["reproducible"].values()),
                           "runs": {k: {"command": v["command"], "exit": v["exit"]} for k, v in case["runs"].items()},
-                          "decoded": case.get("decoded", {}), "identicalCases": identical}
+                          "decoded": case.get("decoded", {}), "identicalCases": identical if name.endswith((".ofr", ".ofs")) else []}
             target.with_name(name + ".provenance.json").write_text(json.dumps(provenance, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             if target.suffix in (".ofr", ".ofs", ".ofc"):
                 extra = {"encoder": {"tool": SOURCE, "arguments": case["arguments"], "case": case["name"], "tool_program": case["tool"], "input": case["input"]}}

@@ -1,8 +1,8 @@
 {
  "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
  "run": {
-  "run": 42672985679,
-  "commit": "feat/optimfrog",
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
   "artifact": "optimfrog-fixtures"
  },
  "case": "float-32",
@@ -67,7 +67,7 @@
   },
   "decode": {
    "command": [
-    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/off",
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/off",
     "--decode",
     "out.ofr",
     "--output",
@@ -84,5 +84,79 @@
    "equals_input": true,
    "samples_equal_input": true
   }
- }
+ },
+ "identicalCases": [
+  {
+   "case": "float-mantissa-16",
+   "arguments": [
+    "--mantissabits",
+    "16"
+   ],
+   "tool": "off",
+   "input": {
+    "kind": "music-float",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 32,
+    "samples": 30000,
+    "format": "IEEE float",
+    "sha256": "603f268e7b960b1af1f1bf4434c8e6838183024159e241ae9dfe6e48ca55e286",
+    "size": 240044
+   }
+  },
+  {
+   "case": "float-sampletype-float32_1",
+   "arguments": [
+    "--sampletype",
+    "FLOAT32_1"
+   ],
+   "tool": "off",
+   "input": {
+    "kind": "music-float",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 32,
+    "samples": 30000,
+    "format": "IEEE float",
+    "sha256": "603f268e7b960b1af1f1bf4434c8e6838183024159e241ae9dfe6e48ca55e286",
+    "size": 240044
+   }
+  },
+  {
+   "case": "float-sampletype-float32_16",
+   "arguments": [
+    "--sampletype",
+    "FLOAT32_16"
+   ],
+   "tool": "off",
+   "input": {
+    "kind": "music-float",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 32,
+    "samples": 30000,
+    "format": "IEEE float",
+    "sha256": "603f268e7b960b1af1f1bf4434c8e6838183024159e241ae9dfe6e48ca55e286",
+    "size": 240044
+   }
+  },
+  {
+   "case": "float-sampletype-float32_24",
+   "arguments": [
+    "--sampletype",
+    "FLOAT32_24"
+   ],
+   "tool": "off",
+   "input": {
+    "kind": "music-float",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 32,
+    "samples": 30000,
+    "format": "IEEE float",
+    "sha256": "603f268e7b960b1af1f1bf4434c8e6838183024159e241ae9dfe6e48ca55e286",
+    "size": 240044
+   }
+  }
+ ]
 }

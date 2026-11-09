@@ -45,7 +45,17 @@ def walk(data, start=0):
     while pos + 8 <= len(data):
         block_id = data[pos:pos + 4]
         length = struct.unpack_from("<I", data, pos + 4)[0]
-        if not printable(block_id) or pos + 8 + length > len(data):
+        if not printable(block_id):
+            break
+        known = block_id in KNOWN_IDS
+        end = pos + 8 + length
+        if not known and (end > len(data) or not (end == len(data) or (end + 8 <= len(data) and printable(data[end:end + 4])
+                                                                          and end + 8 + struct.unpack_from("<I", data, end + 4)[0] <= len(data)))):
+            break
+        if known and end > len(data):
+            # A known block the data cuts short owns the rest of the data and ends the walk.
+            blocks.append({"id": block_id.decode("ascii"), "offset": pos, "length": length, "end": end})
+            pos = end
             break
         blocks.append({"id": block_id.decode("ascii"), "offset": pos, "length": length, "end": pos + 8 + length})
         pos += 8 + length
@@ -119,8 +129,9 @@ def manifest(data, extra=None):
     md5 = next((data[b["offset"] + 8:b["end"]].hex() for b in blocks if b["id"] == "MD5 " and b["length"] == 16), None)
     result["md5"] = md5
     head = next((b for b in blocks if b["id"] == "HEAD"), None)
+    is_riff = head is not None and data[head["offset"] + 8:head["offset"] + 12] in (b"RIFF", b"RF64", b"BW64")
     result["head"] = None if head is None else {"offset": head["offset"] + 8, "length": head["length"],
-                                                 "chunks": [c["id"] for c in riff_chunks(data, head["offset"] + 8, head["end"])],
+                                                 "chunks": [c["id"] for c in riff_chunks(data, head["offset"] + 8, head["end"])] if is_riff else [],
                                                  "fmt": fmt_fields(data, head["offset"] + 8, head["end"])}
     tail = next((b for b in blocks if b["id"] == "TAIL"), None)
     result["tail"] = None if tail is None else {"offset": tail["offset"] + 8, "length": tail["length"],

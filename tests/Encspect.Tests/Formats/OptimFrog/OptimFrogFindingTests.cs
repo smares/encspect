@@ -569,7 +569,7 @@ public class OptimFrogFindingTests
         Assert.Contains(".ofs", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
         Assert.StartsWith("Medium", claim.Children.Single(c => c.Name == "Confidence").Description);
         Assert.Equal(Confidence.Medium, Assert.Single(report.Streams.Single().Claims).Confidence);
-        Assert.Contains("reserved bytes", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
+        Assert.Contains("reserved field", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
         Assert.Empty(report.Findings);
     }
 

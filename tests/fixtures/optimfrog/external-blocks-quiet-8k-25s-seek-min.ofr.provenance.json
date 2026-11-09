@@ -1,8 +1,8 @@
 {
  "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
  "run": {
-  "run": 42672985679,
-  "commit": "feat/optimfrog",
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
   "artifact": "optimfrog-fixtures"
  },
  "case": "blocks-quiet-8k-25s-seek-min",
@@ -73,7 +73,7 @@
   },
   "decode": {
    "command": [
-    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
     "--decode",
     "out.ofr",
     "--output",
@@ -90,5 +90,41 @@
    "equals_input": true,
    "samples_equal_input": true
   }
- }
+ },
+ "identicalCases": [
+  {
+   "case": "blocks-quiet-8k-25s-seek-fast",
+   "arguments": [
+    "--seek",
+    "fast"
+   ],
+   "tool": "ofr",
+   "input": {
+    "kind": "quiet",
+    "rate": 8000,
+    "channels": 1,
+    "bits": 16,
+    "samples": 200000,
+    "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+    "size": 400044
+   }
+  },
+  {
+   "case": "blocks-quiet-8k-25s-seek-normal",
+   "arguments": [
+    "--seek",
+    "normal"
+   ],
+   "tool": "ofr",
+   "input": {
+    "kind": "quiet",
+    "rate": 8000,
+    "channels": 1,
+    "bits": 16,
+    "samples": 200000,
+    "sha256": "0799484a19c4c4f3d28aa691703ece43166c23bbc5f91d0342ae8855bae436b7",
+    "size": 400044
+   }
+  }
+ ]
 }

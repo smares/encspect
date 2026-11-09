@@ -1,8 +1,8 @@
 {
  "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
  "run": {
-  "run": 42672985679,
-  "commit": "feat/optimfrog",
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
   "artifact": "optimfrog-fixtures"
  },
  "case": "raw-headersize-tailsize",
@@ -16,9 +16,9 @@
   "--rate",
   "44100",
   "--headersize",
-  "80",
+  "16",
   "--tailsize",
-  "22"
+  "10"
  ],
  "input": {
   "kind": "music",
@@ -26,12 +26,12 @@
   "channels": 2,
   "bits": 16,
   "samples": 30000,
-  "extra": "LIST chunk before data, id3  chunk after",
-  "sha256": "6ae20545f33bc47e0e0a53282ac04b8d92998bf6ffdc0d1b2b43559521546701",
-  "size": 120102
+  "extra": "16 bytes of text before the samples and 10 after",
+  "sha256": "aa18812a8a3fd88c1e3417d2417c272b58700781021f539edd1a6d68d2463ae3",
+  "size": 120026
  },
- "sha256": "c70b4690dfefd1ba7727b56d96303a543c63c8e9d0ba1c5ddbc085397b4b5181",
- "size": 41571,
+ "sha256": "fc46bd1228d0cf80c33506660cda27045225a96338ed50cf41864e29cfe6f007",
+ "size": 41495,
  "reproducible": true,
  "runs": {
   "encode1": {
@@ -46,10 +46,10 @@
     "--rate",
     "44100",
     "--headersize",
-    "80",
+    "16",
     "--tailsize",
-    "22",
-    "in.wav",
+    "10",
+    "in.raw",
     "--output",
     "out.ofr",
     "--overwrite"
@@ -68,10 +68,10 @@
     "--rate",
     "44100",
     "--headersize",
-    "80",
+    "16",
     "--tailsize",
-    "22",
-    "in.wav",
+    "10",
+    "in.raw",
     "--output",
     "out.ofr",
     "--overwrite"
@@ -101,7 +101,7 @@
   },
   "decode": {
    "command": [
-    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
     "--decode",
     "out.ofr",
     "--output",
@@ -113,10 +113,11 @@
  },
  "decoded": {
   "decode": {
-   "size": 120102,
-   "sha256": "6ae20545f33bc47e0e0a53282ac04b8d92998bf6ffdc0d1b2b43559521546701",
-   "equals_input": null,
+   "size": 120026,
+   "sha256": "aa18812a8a3fd88c1e3417d2417c272b58700781021f539edd1a6d68d2463ae3",
+   "equals_input": true,
    "samples_equal_input": null
   }
- }
+ },
+ "identicalCases": []
 }

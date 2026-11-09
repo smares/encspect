@@ -1,6 +1,6 @@
 {
- "length": 41571,
- "end": 41571,
+ "length": 41495,
+ "end": 41495,
  "blocks": [
   {
    "id": "OFR ",
@@ -11,20 +11,20 @@
   {
    "id": "HEAD",
    "offset": 25,
-   "length": 80,
-   "end": 113
+   "length": 16,
+   "end": 49
   },
   {
    "id": "COMP",
-   "offset": 113,
+   "offset": 49,
    "length": 41420,
-   "end": 41541
+   "end": 41477
   },
   {
    "id": "TAIL",
-   "offset": 41541,
-   "length": 22,
-   "end": 41571
+   "offset": 41477,
+   "length": 10,
+   "end": 41495
   }
  ],
  "main": {
@@ -50,29 +50,22 @@
    "channel_config": 1,
    "reserved": 4162,
    "encoder_id": 9602,
-   "offset": 113,
+   "offset": 49,
    "size": 41428
   }
  ],
  "md5": null,
  "head": {
   "offset": 33,
-  "length": 80,
-  "chunks": [
-   "fmt ",
-   "LIST",
-   "data"
-  ],
-  "fmt": {
-   "tag": 1,
-   "channels": 2
-  }
+  "length": 16,
+  "chunks": [],
+  "fmt": null
  },
  "tail": {
-  "offset": 41549,
-  "length": 22,
+  "offset": 41485,
+  "length": 10,
   "chunks": [
-   "id3 "
+   "TAIL"
   ]
  },
  "stream_info": {
@@ -113,9 +106,9 @@
    "--rate",
    "44100",
    "--headersize",
-   "80",
+   "16",
    "--tailsize",
-   "22"
+   "10"
   ],
   "case": "raw-headersize-tailsize",
   "tool_program": "ofr",
@@ -125,9 +118,9 @@
    "channels": 2,
    "bits": 16,
    "samples": 30000,
-   "extra": "LIST chunk before data, id3  chunk after",
-   "sha256": "6ae20545f33bc47e0e0a53282ac04b8d92998bf6ffdc0d1b2b43559521546701",
-   "size": 120102
+   "extra": "16 bytes of text before the samples and 10 after",
+   "sha256": "aa18812a8a3fd88c1e3417d2417c272b58700781021f539edd1a6d68d2463ae3",
+   "size": 120026
   }
  }
 }

@@ -5,18 +5,18 @@
       "name": "encspect",
       "version": "(build)"
     },
-    "source": "external-float-sampletype-float32_16.ofr",
+    "source": "built-tag-ape-with-header.ofr",
     "root": {
       "name": "File",
       "value": "OptimFROG",
       "offset": 0,
-      "length": 41599,
+      "length": 41653,
       "children": [
         {
           "name": "OptimFROG",
           "kind": "Stream",
           "offset": 0,
-          "length": 41599,
+          "length": 41571,
           "children": [
             {
               "name": "Main Block",
@@ -27,7 +27,7 @@
               "children": [
                 {
                   "name": "Block ID",
-                  "value": "OFRX",
+                  "value": "OFR ",
                   "offset": 0,
                   "length": 4
                 },
@@ -47,7 +47,7 @@
                 },
                 {
                   "name": "Sample Type",
-                  "value": "FLOAT32_0",
+                  "value": "SINT16",
                   "offset": 14,
                   "length": 1
                 },
@@ -106,7 +106,7 @@
                 },
                 {
                   "name": "Minimum Decoder Version",
-                  "value": "4.520",
+                  "value": "4.600",
                   "offset": 23,
                   "length": 2
                 }
@@ -116,19 +116,19 @@
               "name": "Encoder",
               "value": "OptimFROG 5.100",
               "offset": 0,
-              "length": 41599,
+              "length": 41571,
               "children": [
                 {
                   "name": "Confidence",
                   "value": "High",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Evidence",
                   "value": "The main block's encoder ID states version 5.100",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 }
               ]
             },
@@ -136,138 +136,144 @@
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
-              "length": 41599,
+              "length": 41571,
               "children": [
                 {
                   "name": "Blocks",
                   "value": 1,
                   "unit": "blocks",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Samples",
                   "value": 30000,
                   "unit": "samples",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Duration",
                   "value": 0.6802721088435374,
                   "unit": "s",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Sample Rate",
                   "value": 44100,
                   "unit": "Hz",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Channels",
                   "value": 2,
                   "unit": "channels",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Channel Layout",
                   "value": "stereo (front left, front right)",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Bits Per Sample",
-                  "value": 32,
+                  "value": 16,
                   "unit": "bits",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Mode",
                   "value": "normal",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Speedup",
                   "value": "4x",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Sample Type",
-                  "value": "FLOAT32_0",
+                  "value": "SINT16",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Build System",
                   "value": "Linux x64",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
+                },
+                {
+                  "name": "IsCorrectionFile",
+                  "value": false,
+                  "offset": 0,
+                  "length": 41571
                 },
                 {
                   "name": "Verified Block Checksums",
                   "value": 1,
                   "unit": "blocks",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Average Bitrate",
-                  "value": 487.28736,
+                  "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Bitrate Mode",
                   "value": "unknown",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Smallest Block",
-                  "value": 41436,
+                  "value": 41428,
                   "unit": "bytes",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Largest Block",
-                  "value": 41436,
+                  "value": 41428,
                   "unit": "bytes",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Minimum Bitrate",
-                  "value": 487.28736,
+                  "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Maximum Bitrate",
-                  "value": 487.28736,
+                  "value": 487.19328,
                   "unit": "kbps",
                   "offset": 0,
-                  "length": 41599
+                  "length": 41571
                 },
                 {
                   "name": "Bitrate Distribution",
                   "offset": 0,
-                  "length": 41599,
+                  "length": 41571,
                   "children": [
                     {
                       "name": "480 to 511 kbps",
                       "value": "1 block (100.0%)",
                       "offset": 0,
-                      "length": 41599
+                      "length": 41571
                     }
                   ]
                 }
@@ -275,10 +281,10 @@
             },
             {
               "name": "Header Block",
-              "value": 52,
+              "value": 88,
               "unit": "bytes",
               "offset": 25,
-              "length": 52,
+              "length": 88,
               "children": [
                 {
                   "name": "Block ID",
@@ -288,20 +294,20 @@
                 },
                 {
                   "name": "Block Length",
-                  "value": 44,
+                  "value": 80,
                   "unit": "bytes",
                   "offset": 29,
                   "length": 4
                 },
                 {
                   "name": "WAV Header Data",
-                  "value": "44 bytes, a RIFF WAVE header",
+                  "value": "80 bytes, a RIFF WAVE header",
                   "offset": 33,
-                  "length": 44,
+                  "length": 80,
                   "children": [
                     {
                       "name": "Format Tag",
-                      "value": "0x0003 (PCM (floating-point))",
+                      "value": "0x0001 (PCM)",
                       "offset": 53,
                       "length": 2
                     },
@@ -314,10 +320,10 @@
                     },
                     {
                       "name": "Chunks",
-                      "value": 2,
+                      "value": 3,
                       "unit": "chunks",
                       "offset": 45,
-                      "length": 32,
+                      "length": 68,
                       "children": [
                         {
                           "name": "fmt Chunk",
@@ -342,23 +348,45 @@
                           ]
                         },
                         {
-                          "name": "data Chunk",
-                          "value": 240000,
+                          "name": "LIST Chunk",
+                          "value": 27,
                           "unit": "bytes",
                           "offset": 69,
-                          "length": 8,
+                          "length": 35,
                           "children": [
                             {
                               "name": "Chunk ID",
-                              "value": "data",
+                              "value": "LIST",
                               "offset": 69,
                               "length": 4
                             },
                             {
                               "name": "Chunk Size",
-                              "value": 240000,
+                              "value": 27,
                               "unit": "bytes",
                               "offset": 73,
+                              "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "data Chunk",
+                          "value": 120000,
+                          "unit": "bytes",
+                          "offset": 105,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "data",
+                              "offset": 105,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 120000,
+                              "unit": "bytes",
+                              "offset": 109,
                               "length": 4
                             }
                           ]
@@ -372,138 +400,374 @@
             {
               "name": "Data Block",
               "kind": "Frame",
-              "value": 41436,
+              "value": 41428,
               "unit": "bytes",
-              "offset": 77,
-              "length": 41436,
+              "offset": 113,
+              "length": 41428,
               "children": [
                 {
                   "name": "Block ID",
                   "value": "COMP",
-                  "offset": 77,
+                  "offset": 113,
                   "length": 4
                 },
                 {
                   "name": "Block Length",
-                  "value": 41428,
+                  "value": 41420,
                   "unit": "bytes",
-                  "offset": 81,
+                  "offset": 117,
                   "length": 4
                 },
                 {
                   "name": "CRC-32",
-                  "value": 712532931,
-                  "offset": 85,
+                  "value": 3840055187,
+                  "offset": 121,
                   "length": 4
                 },
                 {
                   "name": "Computed CRC-32",
-                  "value": 712532931,
-                  "offset": 85,
+                  "value": 3840055187,
+                  "offset": 121,
                   "length": 4
                 },
                 {
                   "name": "IsCrc32Valid",
                   "value": true,
-                  "offset": 85,
+                  "offset": 121,
                   "length": 4
                 },
                 {
                   "name": "Samples",
                   "value": 60000,
                   "unit": "samples",
-                  "offset": 89,
+                  "offset": 125,
                   "length": 4
                 },
                 {
                   "name": "Sample Type",
-                  "value": "FLOAT32_0",
-                  "offset": 93,
+                  "value": "SINT16",
+                  "offset": 129,
                   "length": 1
                 },
                 {
                   "name": "Channel Configuration",
                   "value": "STEREO_LR",
-                  "offset": 94,
+                  "offset": 130,
                   "length": 1
                 },
                 {
                   "name": "Reserved",
-                  "value": 4161,
-                  "offset": 95,
+                  "value": 4162,
+                  "offset": 131,
                   "length": 2
                 },
                 {
                   "name": "Encoder ID",
                   "value": 9602,
-                  "offset": 97,
+                  "offset": 133,
                   "length": 2,
                   "children": [
                     {
                       "name": "Encoder Version",
                       "value": "5.100",
-                      "offset": 97,
+                      "offset": 133,
                       "length": 2
                     }
                   ]
                 },
                 {
                   "name": "Compressed Data",
-                  "value": 41414,
+                  "value": 41406,
                   "unit": "bytes",
-                  "offset": 99,
-                  "length": 41414
-                }
-              ]
-            },
-            {
-              "name": "Detail Block",
-              "value": 78,
-              "unit": "bytes",
-              "offset": 41513,
-              "length": 78,
-              "children": [
-                {
-                  "name": "Block ID",
-                  "value": "DETA",
-                  "offset": 41513,
-                  "length": 4
-                },
-                {
-                  "name": "Block Length",
-                  "value": 70,
-                  "unit": "bytes",
-                  "offset": 41517,
-                  "length": 4
-                },
-                {
-                  "name": "Block Data",
-                  "value": 70,
-                  "unit": "bytes",
-                  "offset": 41521,
-                  "length": 70
+                  "offset": 135,
+                  "length": 41406
                 }
               ]
             },
             {
               "name": "Footer Block",
-              "value": 8,
+              "value": 30,
               "unit": "bytes",
-              "offset": 41591,
-              "length": 8,
+              "offset": 41541,
+              "length": 30,
               "children": [
                 {
                   "name": "Block ID",
                   "value": "TAIL",
-                  "offset": 41591,
+                  "offset": 41541,
                   "length": 4
                 },
                 {
                   "name": "Block Length",
-                  "value": 0,
+                  "value": 22,
                   "unit": "bytes",
-                  "offset": 41595,
+                  "offset": 41545,
                   "length": 4
+                },
+                {
+                  "name": "WAV Terminating Data",
+                  "value": "22 bytes",
+                  "offset": 41549,
+                  "length": 22,
+                  "children": [
+                    {
+                      "name": "Chunks",
+                      "value": 1,
+                      "unit": "chunks",
+                      "offset": 41549,
+                      "length": 22,
+                      "children": [
+                        {
+                          "name": "id3 Chunk",
+                          "value": 14,
+                          "unit": "bytes",
+                          "offset": 41549,
+                          "length": 22,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "id3 ",
+                              "offset": 41549,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 14,
+                              "unit": "bytes",
+                              "offset": 41553,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "APE",
+          "kind": "Tag",
+          "value": "2.0",
+          "offset": 41571,
+          "length": 82,
+          "children": [
+            {
+              "name": "Header",
+              "offset": 41571,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 41571,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 41579,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 50,
+                  "offset": 41583,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 41587,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2684354560,
+                  "offset": 41591,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 41591,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 41591,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": true,
+                      "offset": 41591,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 41591,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 41595,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Items",
+              "value": 1,
+              "unit": "items",
+              "offset": 41603,
+              "length": 18,
+              "children": [
+                {
+                  "name": "Title",
+                  "value": "Song",
+                  "offset": 41603,
+                  "length": 18,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 4,
+                      "offset": 41603,
+                      "length": 4
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 41607,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "IsReadOnly",
+                          "value": false,
+                          "offset": 41607,
+                          "length": 4
+                        },
+                        {
+                          "name": "Item Type",
+                          "value": "Text",
+                          "offset": 41607,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Key",
+                      "value": "Title",
+                      "offset": 41611,
+                      "length": 5
+                    },
+                    {
+                      "name": "Value",
+                      "value": "Song",
+                      "offset": 41617,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Footer",
+              "offset": 41621,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Preamble",
+                  "value": "APETAGEX",
+                  "offset": 41621,
+                  "length": 8
+                },
+                {
+                  "name": "Version",
+                  "value": 2000,
+                  "offset": 41629,
+                  "length": 4
+                },
+                {
+                  "name": "Tag Size",
+                  "value": 50,
+                  "offset": 41633,
+                  "length": 4
+                },
+                {
+                  "name": "Item Count",
+                  "value": 1,
+                  "offset": 41637,
+                  "length": 4
+                },
+                {
+                  "name": "Flags",
+                  "value": 2147483648,
+                  "offset": 41641,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "HasHeader",
+                      "value": true,
+                      "offset": 41641,
+                      "length": 4
+                    },
+                    {
+                      "name": "HasFooter",
+                      "value": true,
+                      "offset": 41641,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsHeader",
+                      "value": false,
+                      "offset": 41641,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsReadOnly",
+                      "value": false,
+                      "offset": 41641,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Reserved",
+                  "offset": 41645,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Detection",
+              "value": "High",
+              "offset": 41571,
+              "length": 82,
+              "children": [
+                {
+                  "name": "Evidence",
+                  "value": "\"APETAGEX\" footer with version 2000 and a size that fits the file",
+                  "offset": 41621,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Header agrees with the footer",
+                  "offset": 41571,
+                  "length": 32
+                },
+                {
+                  "name": "Evidence",
+                  "value": "1 item ends exactly where the size says",
+                  "offset": 41603,
+                  "length": 18
                 }
               ]
             }
@@ -527,10 +791,10 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "bitsPerSample": 32,
+        "bitsPerSample": 16,
         "samples": 30000,
         "duration": 0.6802721088435374,
-        "averageBitrate": 487.28736,
+        "averageBitrate": 487.19328,
         "isVbr": false,
         "verification": {
           "isVerified": true,
@@ -563,10 +827,10 @@
             "unit": "kbps",
             "axis": "frameOffset",
             "x": [
-              77
+              113
             ],
             "values": [
-              487.28736
+              487.19328
             ]
           },
           {

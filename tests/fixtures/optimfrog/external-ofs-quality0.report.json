@@ -146,7 +146,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "The reserved bytes of all 1 data block have the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's tests, and the file name ends in .ofs, the extension of DualStream files",
+                  "value": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files",
                   "offset": 0,
                   "length": 13816
                 }
@@ -227,6 +227,12 @@
                 {
                   "name": "Build System",
                   "value": "Linux x64",
+                  "offset": 0,
+                  "length": 13816
+                },
+                {
+                  "name": "IsCorrectionFile",
+                  "value": false,
                   "offset": 0,
                   "length": 13816
                 },
@@ -525,7 +531,6 @@
         "isVbr": false,
         "verification": {
           "isVerified": true,
-          "isLossy": true,
           "decoding": "noDecoder",
           "decodedSamples": 0,
           "checksums": [
@@ -549,6 +554,14 @@
         },
         "encoder": "OptimFROG 5.100",
         "encoderConfidence": "High",
+        "claims": [
+          {
+            "kind": "lossy-part",
+            "value": "Probably the lossy part of a DualStream",
+            "confidence": "Medium",
+            "evidence": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files"
+          }
+        ],
         "series": [
           {
             "name": "Bitrate",

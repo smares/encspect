@@ -1,8 +1,8 @@
 {
  "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
  "run": {
-  "run": 42672985679,
-  "commit": "feat/optimfrog",
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
   "artifact": "optimfrog-fixtures"
  },
  "case": "raw-headersize",
@@ -16,7 +16,7 @@
   "--rate",
   "44100",
   "--headersize",
-  "44"
+  "16"
  ],
  "input": {
   "kind": "music",
@@ -24,11 +24,12 @@
   "channels": 2,
   "bits": 16,
   "samples": 30000,
-  "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
-  "size": 120044
+  "extra": "16 bytes of text before the samples, no RIFF header",
+  "sha256": "2a70ec9d211f6c649c2178abdf33e42cafc0a425cce3e9c1bf93d61a01fe4516",
+  "size": 120016
  },
- "sha256": "df310b7b7e533057ab061701aefff9e1031371464df5ed12fa136cb6e71ae0ff",
- "size": 41513,
+ "sha256": "038fbe9203245fc0364d83a34bae33400d97e14d546463c88571ddadbc3fdff4",
+ "size": 41485,
  "reproducible": true,
  "runs": {
   "encode1": {
@@ -43,8 +44,8 @@
     "--rate",
     "44100",
     "--headersize",
-    "44",
-    "in.wav",
+    "16",
+    "in.raw",
     "--output",
     "out.ofr",
     "--overwrite"
@@ -63,8 +64,8 @@
     "--rate",
     "44100",
     "--headersize",
-    "44",
-    "in.wav",
+    "16",
+    "in.raw",
     "--output",
     "out.ofr",
     "--overwrite"
@@ -94,7 +95,7 @@
   },
   "decode": {
    "command": [
-    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
     "--decode",
     "out.ofr",
     "--output",
@@ -106,10 +107,11 @@
  },
  "decoded": {
   "decode": {
-   "size": 120044,
-   "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
-   "equals_input": null,
+   "size": 120016,
+   "sha256": "2a70ec9d211f6c649c2178abdf33e42cafc0a425cce3e9c1bf93d61a01fe4516",
+   "equals_input": true,
    "samples_equal_input": null
   }
- }
+ },
+ "identicalCases": []
 }

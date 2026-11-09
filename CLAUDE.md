@@ -8,7 +8,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 ## Layout
 
-- `src/Encspect.Core.Abstractions`: result model, byte and bit readers, mapped bytes, parser interfaces and their contexts, the PCM description and feed shared by the WAV and AIFF parsers (`PcmCoding`, carried by `DecodeSetup.Pcm`, and `PcmFeed`), and the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), the reader of lossyWAV's `fact` chunk text that four parsers share (`FactText`), the reader of a stored WAV header that Monkey's Audio and OptimFROG share (`WavHeader`), and the deterministic math (`DetMath`) that measurements and lossy decoders share.
+- `src/Encspect.Core.Abstractions`: result model, byte and bit readers, mapped bytes, parser interfaces and their contexts, the PCM description and feed shared by the WAV and AIFF parsers (`PcmCoding`, carried by `DecodeSetup.Pcm`, and `PcmFeed`), and the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), the reader of lossyWAV's `fact` chunk text that the WAV, FLAC, WavPack, Monkey's Audio and OptimFROG parsers share (`FactText`), the reader of a stored WAV header that Monkey's Audio and OptimFROG share (`WavHeader`), and the deterministic math (`DetMath`) that measurements and lossy decoders share.
 - `src/Encspect.Host`: analyzer (format detection, parser orchestration, the routes between parsers), report writers and the input walker both front ends use.
 - `src/Encspect.Cli`: console app, assembly name `encspect`.
 - `src/Encspect.Gui`: Avalonia GUI, assembly name `encspect-gui`; it references the host only.

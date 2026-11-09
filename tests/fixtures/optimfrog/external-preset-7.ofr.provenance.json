@@ -1,8 +1,8 @@
 {
  "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
  "run": {
-  "run": 42672985679,
-  "commit": "feat/optimfrog",
+  "run": 42687280631,
+  "commit": "74ae1ca86a131ba486abcedd676810020f91515b",
   "artifact": "optimfrog-fixtures"
  },
  "case": "preset-7",
@@ -73,7 +73,7 @@
   },
   "decode": {
    "command": [
-    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "/tmp/optimfrog-8pznfkw_/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
     "--decode",
     "out.ofr",
     "--output",
@@ -90,5 +90,24 @@
    "equals_input": true,
    "samples_equal_input": true
   }
- }
+ },
+ "identicalCases": [
+  {
+   "case": "mode-highnew-light",
+   "arguments": [
+    "--mode",
+    "highnew-light"
+   ],
+   "tool": "ofr",
+   "input": {
+    "kind": "music",
+    "rate": 44100,
+    "channels": 2,
+    "bits": 16,
+    "samples": 30000,
+    "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+    "size": 120044
+   }
+  }
+ ]
 }
