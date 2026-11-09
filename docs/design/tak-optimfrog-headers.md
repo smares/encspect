@@ -101,7 +101,8 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - a block header is four printable ASCII bytes and a length that ends inside the data;
   - a block of a known ID whose length runs past the data is a cut block (`optimfrog.block-cut`), read as far as it goes, and ends the walk;
   - a block of an unknown ID goes on the walk only when a valid block header follows it or it ends exactly at the end of the data (`optimfrog.block-unknown`, info); otherwise the walk stops before it;
-  - a length that does not fit ends the walk with a finding and no guess at where the next block starts (no resync).
+  - a length that does not fit ends the walk with a finding and no guess at where the next block starts (no resync);
+  - a known block whose length breaks the specification (an `MD5 ` block of other than 16 bytes, a main block under 15) is `optimfrog.block-size-invalid`, read as far as it holds fields.
 - **Declared end:** the end of the last block the walk accepts. The bytes after it go to the host's search for trailing tags (APEv2 with or without its header, Lyrics3, ID3v1), and bytes that are no tag are `optimfrog.data-after-blocks`. The specification lists ID3v1 and APEv2 among its blocks, but they are the host's, as in every other format; a tag-like run of bytes inside a `COMP` block is no tag (`tag.near-miss`).
 
 ### OptimFROG DualStream
@@ -184,7 +185,8 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Speedup** was deprecated in 4.506 and is not offered by 5.100, yet `luckynight.ofr` (4.509) stores 4x, so older encoders could still write it: `luckynight.ofr` is a real file (`check_optimfrog_samples.py`, pinned, not committed), and the Linux amd64 4.600ex build (its address on the previous releases page is a PHP page that serves the zip, so it can be pinned) is tried with `--speedup`; whether it still writes a speedup above 1x is unverified.
 - **Hand-built** (`make_optimfrog_fixtures.py`, from the committed files):
   - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end, a missing middle `COMP` block (`optimfrog.samples-mismatch`), a missing `TAIL`, a main size of 21 with unknown fields after `minDecoderVersion`, an ID3v2 tag before `OFR `;
-  - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 and ID3v1, and junk that is no tag (`optimfrog.data-after-blocks`);
+  - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 and ID3v1, an ID3v1 tag whose title has 1 or 2 characters (its first bytes read as a printable ID, `TAGx`, with a small length, as in DTS-HD's case), and junk that is no tag (`optimfrog.data-after-blocks`);
+  - an `MD5 ` block whose length is not 16 (`optimfrog.block-size-invalid`);
   - tag-like bytes (`APETAGEX`, `TAG`) inside a `COMP` block (`tag.near-miss`).
 
 ## Cross-checks
@@ -239,7 +241,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 ### Pending on the fixtures
 
 - **The correction file's detection:** if it has a signature other than `OFR `, its detection classes come to the lead as an amendment to this design before PR 2's parser reads it ([Detection](#detection)).
-- If nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), the naming of DualStream files comes back to the lead before PR 2 lands.
+- **The naming of DualStream files:** if nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), it comes back to the lead before PR 2 lands.
 
 ## Pull requests, in order
 
