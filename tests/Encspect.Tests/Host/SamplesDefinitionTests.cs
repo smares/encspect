@@ -211,6 +211,7 @@ public class SamplesDefinitionTests
         #region TrueHD
         ["truehd/built-parameters-change.decode.json"] = Reasons.truehd,
         ["truehd/built-splice-channel-count.decode.json"] = Reasons.truehd,
+        ["truehd/external-truehd-stereo-44k-24-lossywav.decode.json"] = Reasons.truehd,
         ["truehd/external-truehd-stereo-48k-24-odd-length.decode.json"] = Reasons.truehd,
         #endregion
 
