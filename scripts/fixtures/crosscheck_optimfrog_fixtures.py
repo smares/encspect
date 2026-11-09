@@ -26,6 +26,7 @@ import sys
 import tempfile
 
 import mediainfo_tool as mi
+import optimfrog_model as model
 import optimfrog_tool
 import tool_versions
 
@@ -38,6 +39,7 @@ class Info(ctypes.Structure):
     # struct __attribute__((packed)). Offsets: channels 0, samplerate 4, bitspersample 8, bitrate 12, version 16, method 20, speedup 28, noPoints 36,
     # originalSize 44, compressedSize 52, length_ms 60, sampleType 68, channelConfig 76; 84 bytes.
     _pack_ = 1
+    _layout_ = "ms"  # Python 3.13 and later warn about _pack_ without a layout; 1-byte packing is the same on every platform
     _fields_ = [("channels", ctypes.c_uint32), ("samplerate", ctypes.c_uint32), ("bitspersample", ctypes.c_uint32), ("bitrate", ctypes.c_uint32),
                 ("version", ctypes.c_uint32), ("method", ctypes.c_char_p), ("speedup", ctypes.c_char_p),
                 ("noPoints", ctypes.c_int64), ("originalSize", ctypes.c_int64), ("compressedSize", ctypes.c_int64), ("length_ms", ctypes.c_int64),
@@ -45,6 +47,22 @@ class Info(ctypes.Structure):
 
 
 assert ctypes.sizeof(Info) == 84 and Info.method.offset == 20 and Info.noPoints.offset == 36 and Info.sampleType.offset == 68, "OptimFROG_Info does not have the packed layout of OptimFROG.h"
+
+
+# Files the 5.100 library does not open in CI (job 129444958413 of PR 249: "the SDK library does not open the file"): the float files `off` writes, whose main block
+# is "OFRX". The reason is an observation, not a cause found in the SDK (its header and documentation say nothing of float files). They are checked with `off --info`
+# instead, and the run fails if the library starts to open one.
+LIBRARY_REFUSES = {
+    "external-float-32-md5.ofr": "OFRX main block of `off`",
+    "external-float-32.ofr": "OFRX main block of `off`",
+    "external-float-mantissa-8.ofr": "OFRX main block of `off`",
+}
+
+# Files MediaInfo reports an audio track for, with the reason; the run fails if it stops reporting one.
+MEDIAINFO_READS = {
+    "built-tag-id3v1-short-title.ofr": "MediaInfo 24.01 and 26.01 read the file as MPEG Audio (Layer 1, 160 kb/s); the file is the encoder's blocks plus a 128-byte ID3v1 tag with a one-character title, "
+                                      "which no other built file shows, and MediaInfo's reason is not known",
+}
 
 
 def find(manifest):
@@ -91,6 +109,15 @@ def main():
         if main is None:
             skipped.setdefault("no main block in the manifest", []).append(path.name)
             continue
+        if path.name in LIBRARY_REFUSES:
+            if info is not None:
+                failures.append(f"{path.name}: the SDK library opens the file now; remove it from LIBRARY_REFUSES and compare its fields")
+            result = subprocess.run([str(package / "off"), "--info", str(path)], capture_output=True, text=True)
+            print(f"{path.name}: library refuses ({LIBRARY_REFUSES[path.name]}); off --info exits with {result.returncode}")
+            if result.returncode != 0:
+                failures.append(f"{path.name}: off --info exits with {result.returncode}")
+            checked += 1
+            continue
         if info is None:
             failures.append(f"{path.name}: the SDK library does not open the file")
             continue
@@ -100,6 +127,11 @@ def main():
                                       ("noPoints", stream["samples"], info["noPoints"])):
             if expected != actual:
                 failures.append(f"{path.name}: {key} is {actual} in the SDK library, {expected} in the manifest")
+        # The documented tables of format.txt (appendices A, B, D) against the library's own names, and the bits per sample.
+        for key, expected, actual in (("speedup", model.SPEEDUPS[main["speedup"]], info["speedup"]), ("sampleType", model.SAMPLE_TYPES[main["sample_type"]], info["sampleType"]),
+                                      ("channelConfig", model.CHANNEL_CONFIGS[main["channel_config"]], info["channelConfig"]), ("bitspersample", stream["bits_per_sample"], info["bitspersample"])):
+            if str(expected).casefold() != str(actual).casefold():
+                failures.append(f"{path.name}: {key} is {actual!r} in the SDK library, {expected!r} by the table of format.txt")
         methods.setdefault(main["mode"], set()).add(info["method"])
         print(f"{path.name}: library bits={info['bitspersample']} version={info['version']} method={info['method']} speedup={info['speedup']} "
               f"type={info['sampleType']} config={info['channelConfig']}; manifest bits={stream['bits_per_sample']} mode={main['mode']} speedup={main['speedup']} "
@@ -120,8 +152,11 @@ def main():
                 tracks = json.loads(probe.stdout or b"{}").get("media", {}).get("track", [])
             except json.JSONDecodeError:
                 tracks = []
-            if any(t.get("@type") == "Audio" for t in tracks):
+            reads = any(t.get("@type") == "Audio" for t in tracks)
+            if reads and path.name not in MEDIAINFO_READS:
                 failures.append(f"{path.name}: MediaInfo finds an audio track")
+            elif not reads and path.name in MEDIAINFO_READS:
+                failures.append(f"{path.name}: MediaInfo no longer finds the audio track it found ({MEDIAINFO_READS[path.name]}); remove it from MEDIAINFO_READS")
         else:
             skipped.setdefault("mediainfo is not installed", []).append(path.name)
         checked += 1
