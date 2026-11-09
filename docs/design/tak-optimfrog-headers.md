@@ -155,25 +155,31 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Workflow** `.github/workflows/tak-fixtures.yml`, by hand or by a push to `fixtures/tak`, on `windows-2025`, as [WMA fixtures](../development.md#wma-fixtures-from-microsofts-encoders) are made: `scripts/fixtures/windows/make_windows_tak_fixtures.ps1` fetches the pinned archive, encodes signals the fixture scripts write, and uploads the files with their records; `import_windows_tak_fixtures.py` copies them to `tests/fixtures/tak` with a `.provenance.json` each.
 - **Settings matrix** (0.25 s signals, to keep files small):
   - presets `-p0` to `-p4`, each standard, `e` and `m` (15 files), 16-bit stereo 44.1 kHz;
-  - formats at `-p2`: 8-bit mono, 24-bit stereo, 96 kHz, 5.1 with a WAVE_FORMAT_EXTENSIBLE mask (codec 4 and the speaker assignment), 6 channels without a mask;
-  - options: `-fsl512` and `-fsl16384` (frame size types), `-md5`, `-wm0` (no wave data), pipe encoding with and without `-ihs`;
+  - formats at `-p2`: 8-bit mono, 24-bit stereo, 96 kHz, 192 kHz (125 ms would be 24,000 samples, over the 16,384 a frame may hold: the file shows which frame size type Takc picks), 5.1 with a WAVE_FORMAT_EXTENSIBLE mask (codec 4 and the speaker assignment), and 6 channels without a mask (optional, recorded with the reason if Takc refuses it, as the WMA workflow marks optional encodes);
+  - options: `-fsl512` and `-fsl16384` (frame size types), `-md5`, `-wm0` (no wave data), pipe encoding with and without `-ihs` (the WAV piped through `cmd /c` so that PowerShell does not re-encode the bytes), and an APEv2 tag written by Takc itself (`-tt "TITLE=..."`);
   - a lossyWAV 1.4.2 output at `-p2 -fsl512` (TAK's readme recommends 512 for lossyWAV), its `fact` chunk in the wave data.
-- **Records:** for each file, `Takc -fi -fim0` (codec, encoder version and preset, frame duration, wave data sizes, MD5) and the SDK library's `tak_SSD_GetStreamInfo_V22` and `tak_SSD_GetEncoderInfo` through a P/Invoke from PowerShell (the profile, which `-fi` does not print). Both are black boxes.
-- **Hand-built** (`make_tak_fixtures.py`, from the committed files): a failing CRC-24 in stream info and in encoder info, a file cut in the metadata, an APEv2 tag after the last frame, a file without the last frame info object.
+- **Records:** for each file, `Takc -fi -fim0` (codec, encoder version and preset, frame duration, wave data sizes, MD5) and the x64 SDK library's `tak_SSD_GetStreamInfo_V22` and `tak_SSD_GetEncoderInfo` through a P/Invoke from PowerShell (the profile, which `-fi` does not print). Both are black boxes.
+- **Reproducibility:** the workflow encodes every file twice. If the bytes are equal, `import_windows_tak_fixtures.py` records it and a later run is compared byte for byte; if not, the files are committed once and checked by content, as the WMA fixtures are.
+- **Hand-built** (`make_tak_fixtures.py`, from the committed files):
+  - a failing CRC-24 in stream info, in encoder info and in last frame info (no declared end);
+  - a file cut in the metadata, a file cut in the audio (`tak.audio-cut`), an object whose size runs past the data, a missing End object, an unknown object ID, stream info not first;
+  - an APEv2 tag after the last frame, a file without the last frame info object, an ID3v2 tag before `tBaK` (`tak.leading-tag`);
+  - every object's layout as the departures list states it is asserted by a test over all TAK files.
 - **Real files** (`check_tak_samples.py`, pinned, not committed): `lostchord-tak_1_0.tak` and `lostchord-tak_2_2_0.tak` from samples.ffmpeg.org, TAK 1.0 (no encoder info) and 2.2.0. No other TAK version can be downloaded from the author.
 
 ### OptimFROG, on Linux
 
 - **Tool** `optimfrog_tool.py`: the pinned Linux x64 package through `downloads.py`, with a Wayback fallback and a copy in encspect-private (the license allows redistributing the unmodified package). The binaries are static; no build.
 - **Generator** `make_external_optimfrog_fixtures.py`, rerun in CI, which checks the files are reproducible byte for byte:
-  - `ofr --preset 0` to `10` and `max`, and `--mode` with each of the 15 named modes once (this settles how the `-light` modes are stored, which the specification does not list), 16-bit stereo 44.1 kHz;
-  - formats at the default preset: 8-bit unsigned mono, 24-bit stereo, 32-bit integer, `--md5`, a WAV with an extra chunk before the data and a trailing chunk (`HEAD` and `TAIL`), a lossyWAV output;
+  - `ofr --preset 0` to `10` and `max`, and `--mode` with each of the 19 names `ofr --help` accepts (this settles how the `-light` modes are stored, which the specification does not list), 16-bit stereo 44.1 kHz;
+  - several `COMP` blocks: a block holds 10 s at the default `--seek normal` (`luckynight.ofr`), so a 25-second mono signal at 8 kHz, encoded with `--seek normal`, `fast` and `min`, gives several blocks in a small file; the smallest file with at least three blocks is kept, and the run records the blocks of each setting;
+  - formats at the default preset: 8-bit unsigned mono, 24-bit stereo, 32-bit integer, `--md5`, a WAV with an extra chunk before the data and a trailing chunk (`HEAD` and `TAIL`), a raw input with `--headersize` (a `HEAD` without `RIFF`), a lossyWAV output;
   - `off` on a 32-bit float WAV;
   - `off` with `--mantissabits 16` (a lossy preprocessing of the mantissa, which may leave no trace in the header: the fixture shows it), and with each `--sampletype` (its help lists `FLOAT32_1` where format.txt lists `FLOAT32_0`; the fixtures show which value is stored);
   - `ofs`: see [OptimFROG DualStream](#optimfrog-dualstream).
-- **Speedup** was deprecated in a 4.5xx release and is not offered by 5.100, so files with a speedup other than 1x come only from older encoders: `luckynight.ofr` (4.509, 4x) as a real file (`check_optimfrog_samples.py`, pinned, not committed), and optionally the Linux amd64 4.600ex build from the previous releases page.
+- **Speedup** was deprecated in 4.506 and is not offered by 5.100, yet `luckynight.ofr` (4.509) stores 4x, so older encoders could still write it: `luckynight.ofr` is a real file (`check_optimfrog_samples.py`, pinned, not committed), and the Linux amd64 4.600ex build (its address on the previous releases page is a PHP page that serves the zip, so it can be pinned) is tried with `--speedup`; whether it still writes a speedup above 1x is unverified.
 - **Hand-built** (`make_optimfrog_fixtures.py`, from the committed files):
-  - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end;
+  - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end, a missing middle `COMP` block (`optimfrog.samples-mismatch`), a missing `TAIL`, a main size of 21 with unknown fields after `minDecoderVersion`, an ID3v2 tag before `OFR `;
   - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 and ID3v1, and junk that is no tag (`optimfrog.data-after-blocks`);
   - tag-like bytes (`APETAGEX`, `TAG`) inside a `COMP` block (`tag.near-miss`).
 
@@ -181,7 +187,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 - **TAK** (`crosscheck_tak_fixtures.py`, Linux):
   - ffprobe 8.0.1: sample rate, channels, bit depth and sample count (FFmpeg's demuxer as a black box);
-  - MediaInfo 26.01: format, sample rate, bit depth, duration, `Encoded_Library` ("TAK 2.3.3") and `Encoded_Library_Settings` ("-p2e"), which `File_Tak.cpp` (BSD) reads from the encoder info object. It reads the channel count as one bit (mono or stereo), so the multichannel files are listed as read otherwise, with that line as evidence;
+  - MediaInfo 26.01: format, sample rate, bit depth, duration, `Encoded_Library` ("TAK"), `Encoded_Library_String` ("TAK 2.3.3") and `Encoded_Library_Settings` ("-p2e"), which `File_Tak.cpp` (BSD) reads from the encoder info object. Its expected differences, each listed with the line of `File_Tak.cpp` as evidence: the channel count read as one bit (mono or stereo), the bits per sample from 2 bits of the 5-bit code (right for 8, 16 and 24 only), the samples from 34 of the 35 bits;
   - the Windows records above: codec, profile, preset and evaluation, version, frame length.
 - **OptimFROG** (`crosscheck_optimfrog_fixtures.py`, Linux):
   - the SDK library `libOptimFROG.so` called through ctypes (`OptimFROG_getInfo`: channels, sample rate, bits per sample, version, method, speedup, sample type, channel configuration, samples), and `ofr --info`;
@@ -192,7 +198,11 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 - `docs/formats/tak.md` and `docs/formats/optimfrog.md` in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
 - Articles in `src/Encspect.Host/Topics`: `tak-metadata` (the objects and their CRC-24), `tak-presets` (preset, evaluation and profile), `optimfrog-blocks`, `optimfrog-modes` (mode, speedup and the presets that select each mode). The `lossywav` article gains the two formats.
-- [development.md](../development.md): the fixture sections, the tools, the pinned sources.
+- [development.md](../development.md): the fixture sections, the tools, the pinned sources, and the "Header" checksum line for TAK in the table of names. OptimFROG's package address stays in `optimfrog_tool.py` only; the docs and the provenance link the download page, as its author asks.
+- [architecture.md](../architecture.md): the two formats in the detection table (classes 100, 80 and 70), and TAK and OptimFROG among the parsers that read lossyWAV's `fact` text through `FactText`.
+- `check_sources.py` and `sources.yml` check the new pinned addresses weekly; the Wayback snapshots (TAK 2026-10-14, OptimFROG 2022-08-13) are hashed when the tool scripts add them, since the Internet Archive could not be reached while this design was written.
+- **Shared code:** Monkey's Audio's reader of the stored WAV header (`WavHeader`, internal to `Encspect.Formats.MonkeysAudio`) moves to `Encspect.Core.Abstractions` in PR 2, since parsers cannot reference each other and three now need it; [CLAUDE.md](../../CLAUDE.md)'s layout and architecture lists gain it in the same change. The node names stay Monkey's Audio's ("WAV Header Data", "WAV Terminating Data"); WavPack's "RIFF Header" is its own sub-block and keeps its name.
+- **Tests:** `DescriptionTests` walks the fixtures by an extension list, which gains `.ofr`, `.off`, `.ofs` and `.ofc` in PR 2 and `.tak` in PR 4, so the description, forced-format and detection-order tests cover the new files.
 
 ## Not covered
 
