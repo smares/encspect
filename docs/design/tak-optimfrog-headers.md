@@ -1,6 +1,6 @@
 # TAK and OptimFROG at header level
 
-Status: the lead accepted decisions 1 to 7 on 2026-11-09 and replaced decision 6 with the DualStream requirement; this revision fixes the independent review's findings. Decisions 8 and 9 are open. Milestone 0.2, item 4 of the [plan](../plan.md#02-lossless-complete) and [planned.md](../formats/planned.md#in-02-header-level-only).
+Status: the lead accepted decisions 1 to 7 on 2026-11-09 and replaced decision 6 with the DualStream requirement; this revision fixes the independent review's findings. The lead decided 8 and 9 on 2026-11-09; the fix review's findings are fixed. Milestone 0.2, item 4 of the [plan](../plan.md#02-lossless-complete) and [planned.md](../formats/planned.md#in-02-header-level-only).
 
 ## Scope
 
@@ -75,7 +75,7 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - Encoder "TAK 2.3.3" (`ClaimRole.Encoder`, high confidence) from the encoder info object.
   - A file without the object is "TAK 1.0" with medium confidence and the stream info as evidence, since the SDK's decoder takes 1.0.0 as the version of such a file; the confidence is medium because the version is inferred from a missing object, not stated.
   - Processor lossyWAV from a `fact` chunk in the wave data, high confidence, the shared path of [lossywav-detection.md](lossywav-detection.md).
-  - Codec 3 is named; whether it makes a claim of its own is decision 9 (recommended: no).
+  - Codec 3 is named and makes no claim of its own (decision 9).
 - **The preset**, named as Takc prints it ("-p2", "-p3e", "-p4m"; "p" and the level, then "e" for Extra or "m" for Max). Without the encoder info object, the preset is the stream info's profile and the evaluation is unknown, as the SDK tells applications to show it. The profile is shown on its own: the SDK says it equals the preset only for the presets' standard settings (a Turbo preset with 128 predictors stores the High profile).
 - **Declared end:** the end of the last frame by the last frame info object (TAK 1.1.1 and later), used only when its CRC-24 holds, as TTA uses its seek table only when its CRC holds; the APEv2 tag after it is the host's. A declared end past the data is a file cut in the audio (`tak.audio-cut`, with the bytes missing), the most common damage. Without the object, or with a failing CRC, no declared end, and trailing tags are looked for as in a file with no declared size.
 - **A tag before `tBaK`** (ID3v2) is the host's, as in every format, with `tak.leading-tag` (info): TAK's readme says its decoder throws an error on tags prepended to the file.
@@ -223,7 +223,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ## Decisions
 
-### Accepted by the lead, 2026-11-09
+### Decided by the lead, 2026-11-09
 
 1. **TAK's source:** follow takStream.pas directly, with its notice, and no clean-room split. Recommended: yes; its terms allow it, and FFmpeg is not needed for the header.
 2. **TAK's license for CI:** run Takc.exe on a Windows runner to write fixtures for a non-commercial MIT project, commit only its output, keep the archive in the cache and in encspect-private. Recommended: yes; the terms allow private, non-commercial and educational use, and the archive is redistributable intact.
@@ -233,13 +233,11 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 6. **OptimFROG's other encoders** (replaced by the lead's requirement, 2026-11-09): `off` is read as OptimFROG lossless with the float sample types; `ofs` and its correction file follow [OptimFROG DualStream](#optimfrog-dualstream), as WavPack's hybrid mode does, and the pair check goes to 0.4 with WavPack's.
 7. **Download addresses:** both sites serve the archives over HTTP only; pin SHA-256, add Wayback and encspect-private fallbacks, and link OptimFROG's download page (not the package) in the docs, as its author asks. Recommended: yes.
 
-### Open
+8. **The unit of TAK's metadata checksums** (the lead, 2026-11-09): "Verified Header Checksums" and "Failed Header Checksums", counting the objects, as Musepack SV8 names the CRC of its stream header; a new unit would be a second name for one concept.
+9. **TAK's codec 3** ("LossyWav (TAK 2.1 Beta)", the dedicated lossyWAV codec of the 2.1 betas, removed in 2.1.0; the lead, 2026-11-09): named, with no processor claim. In [lossywav-detection.md](lossywav-detection.md)'s model a claim comes from the marker (high) or from a pattern in the coded syntax that files show (low); codec 3 is neither, nothing checkable says whether the beta picked it itself or because the user asked, and no encoder that writes it can be downloaded. A `fact` chunk in the wave data still gives lossyWAV's claim with high confidence.
 
-8. **The unit of TAK's metadata checksums:** "Verified Header Checksums" and "Failed Header Checksums", counting the objects, or a new unit ("Object", "Metadata"). Recommended: "Header", as Musepack SV8 names the CRC of its stream header; the objects are TAK's header, and a new unit would be a second name for one concept.
-9. **TAK's codec 3** ("LossyWav (TAK 2.1 Beta)"), the dedicated lossyWAV codec of the 2.1 betas, removed in 2.1.0 (Takc's readme, history of 2.1.0):
-   - **(a)** name the codec only and make no processor claim from it; a `fact` chunk in the wave data still gives lossyWAV's claim with high confidence;
-   - **(b)** a processor claim "lossyWAV" with low confidence and the codec as evidence.
-   - Recommended: (a). In [lossywav-detection.md](lossywav-detection.md)'s model a claim comes from the marker (high) or from a pattern in the coded syntax that files show (low). Codec 3 is neither: nothing checkable says whether the beta picked it on finding lossyWAV's output or because the user asked, and no encoder that writes it can be downloaded, so no fixture could back the claim.
+### Pending on the fixtures
+
 - **Pending on the fixtures:** if nothing in an `.ofs` header tells it from a lossless `.ofr` ([OptimFROG DualStream](#optimfrog-dualstream)), the naming of DualStream files comes back to the lead before PR 2 lands.
 
 ## Pull requests, in order
