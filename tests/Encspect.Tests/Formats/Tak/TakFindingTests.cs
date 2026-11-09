@@ -48,7 +48,8 @@ public class TakFindingTests
         Assert.Equal(DecodeStatus.NoDecoder, stream.Verification.Decoding);
         ChecksumTally header = stream.Verification.Checksums.Single(c => c.Name == "header CRC-24");
         Assert.Equal((4, 4, 0), (header.Stored, header.Checked, header.Failed));
-        Assert.Equal(2, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Stored);
+        // One frame header CRC-24 and one frame data CRC-24 for each frame the stream info's samples and frame length call for: 44,100 samples in frames of 5512.
+        Assert.Equal(9, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Stored);
         Assert.Equal(0, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Checked);
     }
 
@@ -139,7 +140,7 @@ public class TakFindingTests
         Report report = Analyze([.. file, .. "these bytes are no tag at all"u8]);
 
         Finding extra = Single(report, "tak.data-after-frames");
-        Assert.Equal("Trailing Data", extra.Path?.Split('/').Last());
+        Assert.Equal("Trailing Data", extra.Node?.Name);
         Assert.DoesNotContain(report.Findings, f => f.Code == "tak.audio-cut");
     }
 
@@ -216,7 +217,7 @@ public class TakFindingTests
         Assert.Equal(2, unknown.Count);
         Assert.Contains("1 more object", unknown.Message, StringComparison.Ordinal);
         Assert.Contains(report.Root.Children.Single(n => n.Name == "TAK").Children, c => c.Name == "Unknown Object");
-        Assert.Empty(report.Findings.Where(f => f.Severity > Severity.Info));
+        Assert.DoesNotContain(report.Findings, f => f.Severity > Severity.Info);
     }
 
     [Fact]
@@ -250,7 +251,7 @@ public class TakFindingTests
         Assert.Empty(report.Findings);
         Node padding = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Padding Object");
         Assert.DoesNotContain(padding.Children, c => c.Name == "CRC-24");
-        Assert.Equal(3, report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "header CRC-24").Checked);
+        Assert.Equal(4, report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "header CRC-24").Checked);
     }
 
     [Fact]
@@ -272,7 +273,7 @@ public class TakFindingTests
 
         Finding finding = Single(report, "tak.stream-info-not-first");
         Assert.Equal(Severity.Warning, finding.Severity);
-        Assert.Equal("Encoder Info Object", finding.Path?.Split('/').Last());
+        Assert.Equal("Encoder Info Object", finding.Node?.Name);
         Assert.NotEmpty(report.Streams);
     }
 
@@ -283,7 +284,7 @@ public class TakFindingTests
 
         Single(report, "tak.stream-info-missing");
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Null(stream.Samples);
+        Assert.Equal(0, stream.Samples);
     }
 
     // The CRC-24s and the sizes.
@@ -308,8 +309,8 @@ public class TakFindingTests
         Report report = Analyze(file);
 
         Finding finding = Single(report, "tak.object-crc-mismatch");
-        Assert.Equal("CRC-24", finding.Path?.Split('/').Last());
-        Assert.Single(report.Findings.Where(f => f.Severity >= Severity.Warning));
+        Assert.Equal("CRC-24", finding.Node?.Name);
+        Assert.Single(report.Findings, f => f.Severity >= Severity.Warning);
         ChecksumTally tally = report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "header CRC-24");
         Assert.Equal(1, tally.Failed);
         Assert.False(report.Streams.Single().Verification!.IsVerified);
@@ -336,7 +337,7 @@ public class TakFindingTests
         byte[][] files =
         [
             Builder.Standard(encoderInfo: Builder.Object(4, [3, 3, 2, 2, 0])),
-            Builder.Standard(streamInfo: Builder.Object(1, new byte[12])),
+            Builder.Standard(streamInfo: Builder.Object(1, new byte[9])),
             Builder.Standard(extra: Builder.Object(6, new byte[17])),
             Builder.Standard(lastFrameInfo: Builder.Object(7, new byte[9])),
             Builder.Standard(waveData: Builder.Object(3, [.. new byte[6], .. new byte[10]])),
@@ -361,7 +362,7 @@ public class TakFindingTests
         Report report = Analyze(file[..(waveAt + 30)]);
 
         Finding cut = Single(report, "tak.metadata-cut");
-        Assert.Equal("Wave Data Object", cut.Path?.Split('/').Last());
+        Assert.Equal("Wave Data Object", cut.Node?.Name);
         Assert.Contains("26 of them", cut.Message, StringComparison.Ordinal);
         Node stream = report.Root.Children.Single(n => n.Name == "TAK");
         Assert.DoesNotContain(stream.Children, c => c.Name == "Audio Data");
@@ -407,7 +408,7 @@ public class TakFindingTests
             "codec" => Builder.Standard(streamInfo: Builder.StreamInfo(codec: 9)),
             "data-type" => Builder.Standard(streamInfo: Builder.StreamInfo(dataType: 3)),
             "sample-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(bitsCode: 20)),
-            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 270000)),
+            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 265000)),
             "valid-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(validBits: 20)),
             "evaluation" => Builder.Standard(encoderInfo: Builder.EncoderInfo(evaluation: 3)),
             _ => Builder.Standard(streamInfo: Builder.StreamInfo(speakers: [1, 40])),
@@ -540,7 +541,7 @@ public class TakFindingTests
     [Fact]
     public void TheSpeakerAssignmentGivesTheLayoutBeforeTheHeadersMask()
     {
-        Report report = Analyze(Builder.Standard(streamInfo: Builder.StreamInfo(channels: 6, speakers: [1, 2, 3, 4, 5, 6], validBits: 16)));
+        Report report = Analyze(Builder.Standard(streamInfo: Builder.StreamInfo(channels: 6, speakers: [1, 2, 3, 4, 5, 6], validBits: 16), waveData: Builder.WaveData(Builder.Wav(channels: 6))));
 
         Assert.Empty(report.Findings);
         StreamInfo stream = report.Streams.Single();

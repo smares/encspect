@@ -178,15 +178,26 @@ def preset_name(preset, evaluation):
     return f"-p{preset}" + {0: "", 1: "e", 2: "m"}.get(evaluation, f"?{evaluation}")
 
 
+def id3v2_length(data):
+    """The length of an ID3v2 tag at the start of data (the host's: the analyzer reads TAK from the byte after it), or 0."""
+    if len(data) >= 10 and data[:3] == b"ID3":
+        return 10 + ((data[6] << 21) | (data[7] << 14) | (data[8] << 7) | data[9]) + (10 if data[5] & 0x10 else 0)
+    return 0
+
+
 def manifest(data, extra=None):
     """The manifest of a fixture: the objects, the stream info, the encoder info, the wave data, the last frame info, the end of the stream and the
     findings the analyzer must raise, all worked out here from the bytes."""
     result = {"length": len(data)}
     findings = []
-    if data[:4] != b"tBaK":
+    start = id3v2_length(data)
+    result["start"] = start
+    if start:
+        findings.append({"code": "tak.leading-tag"})
+    if data[start:start + 4] != b"tBaK":
         result["findings"] = [{"code": "tak.no-signature"}]
         return result
-    objects, audio = walk(data)
+    objects, audio = walk(data, start)
     result["objects"] = [dict(o) for o in objects]
     result["audio_start"] = audio
     if audio is None:
@@ -228,6 +239,10 @@ def manifest(data, extra=None):
     if last is not None and last["size"] == 11 and not last.get("cut"):
         result["last_frame"] = last_frame(data, last, audio)
         result["last_frame"]["crc_ok"] = last["crc_ok"]
+    if any(o["id"] > 7 for o in objects):
+        findings.append({"code": "tak.object-unknown"})
+    if any(o["reserved"] for o in objects):
+        findings.append({"code": "tak.object-reserved-bit"})
     failed = sum(1 for o in objects if o["crc_ok"] is False)
     compared = sum(1 for o in objects if o["crc_ok"] is not None)
     result["checksums"] = {"compared": compared, "failed": failed}
@@ -242,6 +257,11 @@ def manifest(data, extra=None):
             findings.append({"code": "tak.audio-cut"})
     result["end"] = min(end, len(data))
     result["declared_end"] = end if result["last_frame"] and result["last_frame"]["crc_ok"] else None
+    if result["declared_end"] is not None and result["declared_end"] < len(data):
+        # The bytes after the last frame are the host's tag (an APEv2 tag with its header, as Takc writes it) or a finding.
+        result["trailing"] = {"bytes": len(data) - result["declared_end"], "is_ape_tag": data[result["declared_end"]:result["declared_end"] + 8] == b"APETAGEX"}
+        if not result["trailing"]["is_ape_tag"]:
+            findings.append({"code": "tak.data-after-frames"})
     if stream is not None:
         rate = stream["sample_rate"]
         result["summary"] = {"codec": stream["codec"], "codec_name": CODECS[stream["codec"]] if stream["codec"] < len(CODECS) else None, "profile": stream["profile"],

@@ -1,0 +1,103 @@
+{
+ "length": 10959,
+ "start": 0,
+ "objects": [
+  {
+   "id": 1,
+   "offset": 4,
+   "reserved": 0,
+   "size": 13,
+   "end": 21,
+   "crc_ok": true,
+   "crc": 14171344
+  },
+  {
+   "id": 4,
+   "offset": 21,
+   "reserved": 0,
+   "size": 7,
+   "end": 32,
+   "crc_ok": true,
+   "crc": 15261466
+  },
+  {
+   "id": 3,
+   "offset": 32,
+   "reserved": 0,
+   "size": 53,
+   "end": 89,
+   "crc_ok": true,
+   "crc": 7817292
+  },
+  {
+   "id": 0,
+   "offset": 89,
+   "reserved": 0,
+   "size": 0,
+   "end": 93,
+   "crc_ok": null
+  }
+ ],
+ "audio_start": 93,
+ "stream_info_first": true,
+ "stream_info": {
+  "codec": 2,
+  "profile": 2,
+  "frame_size_type": 1,
+  "samples": 11024,
+  "data_type": 0,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "channels": 2,
+  "has_extension": false,
+  "frame_length": 5512,
+  "frame_size_valid": true
+ },
+ "encoder_info": {
+  "version": "2.3.3",
+  "preset": 2,
+  "evaluation": 0,
+  "name": "-p2"
+ },
+ "wave_data": {
+  "header_size": 44,
+  "footer_size": 0,
+  "size_fits": true,
+  "header_chunks": [
+   "fmt ",
+   "data"
+  ],
+  "footer_chunks": []
+ },
+ "md5": null,
+ "last_frame": null,
+ "checksums": {
+  "compared": 3,
+  "failed": 0
+ },
+ "first_frame": {
+  "info": true,
+  "last": false,
+  "length": 19
+ },
+ "end": 10959,
+ "declared_end": null,
+ "summary": {
+  "codec": 2,
+  "codec_name": "Integer 24 bit (TAK 2.0)",
+  "profile": 2,
+  "frame_length": 5512,
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits_per_sample": 16,
+  "samples": 11024,
+  "encoder": "TAK 2.3.3",
+  "preset": "-p2"
+ },
+ "findings": [],
+ "built": {
+  "from": "external-preset-p2.tak",
+  "script": "scripts/fixtures/make_tak_fixtures.py",
+  "change": "the last frame info is removed, so there is no declared end"
+ }
+}

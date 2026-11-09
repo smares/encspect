@@ -27,7 +27,7 @@ public class TakFixtureTests
     }
 
     [Fact]
-    public void TheFixturesAreThere() => Assert.True(Names.Count >= 30, $"Found only {Names.Count} fixtures.");
+    public void TheFixturesAreThere() => Assert.True(Names.Count >= 45, $"Found only {Names.Count} fixtures.");
 
     [Theory]
     [MemberData(nameof(Names))]
@@ -39,16 +39,36 @@ public class TakFixtureTests
         Assert.Equal(manifest.GetProperty("length").GetInt64(), report.Root.Length);
         Node stream = Assert.Single(report.Root.Children, n => n.Name == "TAK");
         Assert.Equal(manifest.GetProperty("end").GetInt64(), stream.End);
-        Assert.Equal(manifest.GetProperty("audio_start").GetInt64(), stream.Children.Single(c => c.Name == "Audio Data").Offset);
         Node[] objects = [.. stream.Children.Where(c => c.Name.EndsWith(" Object", StringComparison.Ordinal))];
         JsonElement[] expected = [.. manifest.GetProperty("objects").EnumerateArray()];
         Assert.Equal(expected.Length, objects.Length);
         for (int i = 0; i < expected.Length; i++)
         {
-            CheckObject(expected[i], objects[i], $"{name}, object {i}");
+            CheckObject(expected[i], objects[i], manifest.GetProperty("length").GetInt64(), $"{name}, object {i}");
         }
 
-        Assert.True(manifest.GetProperty("stream_info_first").GetBoolean());
+        Node? audio = stream.Children.SingleOrDefault(c => c.Name == "Audio Data");
+        if (manifest.GetProperty("audio_start").ValueKind == JsonValueKind.Null)
+        {
+            Assert.Null(audio);
+        }
+        else
+        {
+            Assert.Equal(manifest.GetProperty("audio_start").GetInt64(), audio!.Offset);
+        }
+
+        string[] codes = [.. manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal)];
+        Assert.Equal(codes, report.Findings.Select(f => f.Code).Order(StringComparer.Ordinal));
+        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+        Assert.Equal(manifest.GetProperty("stream_info_first").GetBoolean(), objects.Length > 0 && objects[0].Name == "Stream Info Object");
+        if (!name.StartsWith("tak/external-", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // The files Takc wrote: every CRC-24 holds, the figures are the manifest's, and nothing is a finding.
+        Assert.Empty(codes);
+        Assert.All(expected, e => Assert.True(e.GetProperty("crc_ok").ValueKind == JsonValueKind.Null || e.GetProperty("crc_ok").GetBoolean()));
         CheckStreamInfo(manifest, stream, objects, Assert.Single(report.Streams));
         CheckEncoder(manifest, objects, Assert.Single(report.Streams));
         CheckWaveData(manifest, objects);
@@ -65,9 +85,6 @@ public class TakFixtureTests
         }
 
         CheckVerification(manifest, report.Streams.Single().Verification!);
-        string[] codes = [.. manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal)];
-        Assert.Equal(codes, report.Findings.Select(f => f.Code).Order(StringComparer.Ordinal));
-        Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 
     [Theory]
@@ -89,13 +106,13 @@ public class TakFixtureTests
 
     private static string Hex(NodeValue? value, int digits) => ((long)value!.AsInteger()!).ToString("x" + digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
 
-    private static void CheckObject(JsonElement expected, Node node, string where)
+    private static void CheckObject(JsonElement expected, Node node, long fileLength, string where)
     {
         Node Field(string field) => node.Children.Single(c => c.Name == field);
         Assert.True(expected.GetProperty("offset").GetInt64() == node.Offset, $"{where} is at {node.Offset}");
         Assert.Equal(expected.GetProperty("id").GetInt32(), Field("Object ID").Value?.AsInteger());
         Assert.Equal(expected.GetProperty("size").GetInt64(), Field("Object Size").Value?.AsInteger());
-        Assert.Equal(expected.GetProperty("end").GetInt64() - node.Offset, node.Length);
+        Assert.Equal(Math.Min(expected.GetProperty("end").GetInt64(), fileLength) - node.Offset, node.Length);
         if (expected.GetProperty("crc_ok").ValueKind == JsonValueKind.Null)
         {
             Assert.DoesNotContain(node.Children, c => c.Name == "CRC-24");
@@ -104,7 +121,6 @@ public class TakFixtureTests
 
         Assert.Equal(expected.GetProperty("crc").GetInt64().ToString("x6", CultureInfo.InvariantCulture), Hex(Field("CRC-24").Value, 6));
         Assert.Equal(expected.GetProperty("crc_ok").GetBoolean(), Field("IsCrc24Valid").Value?.AsBoolean());
-        Assert.True(expected.GetProperty("crc_ok").GetBoolean(), $"{where}: every CRC-24 of a Takc-written file holds");
     }
 
     private static void CheckStreamInfo(JsonElement manifest, Node streamNode, Node[] objects, StreamInfo info)
@@ -114,6 +130,7 @@ public class TakFixtureTests
         Node node = objects.Single(o => o.Name == "Stream Info Object");
         Node Field(string field) => node.Children.Single(c => c.Name == field);
         Assert.Equal(Layout.CodecName(stream.GetProperty("codec").GetInt32()), Field("Codec").Value?.ToString());
+        Assert.Equal(summary.GetProperty("codec_name").GetString(), Field("Codec").Value?.ToString());
         Assert.Equal(stream.GetProperty("profile").GetInt32(), Field("Profile").Value?.AsInteger());
         Assert.Equal(stream.GetProperty("frame_length").GetInt32(), Field("Frame Size Type").Children.Single().Value?.AsInteger());
         Assert.Equal(stream.GetProperty("samples").GetInt64(), Field("Samples").Value?.AsInteger());
