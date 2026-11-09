@@ -1,0 +1,119 @@
+{
+ "length": 41234,
+ "end": 41234,
+ "blocks": [
+  {
+   "id": "OFR ",
+   "offset": 0,
+   "length": 17,
+   "end": 25
+  },
+  {
+   "id": "HEAD",
+   "offset": 25,
+   "length": 44,
+   "end": 77
+  },
+  {
+   "id": "COMP",
+   "offset": 77,
+   "length": 41141,
+   "end": 41226
+  },
+  {
+   "id": "TAIL",
+   "offset": 41226,
+   "length": 0,
+   "end": 41234
+  }
+ ],
+ "main": {
+  "samples": 60000,
+  "sample_type": 3,
+  "channel_config": 1,
+  "sample_rate": 44100,
+  "encoder_id": 9602,
+  "version": 5100,
+  "system": 2,
+  "compression": 26,
+  "mode": 3,
+  "speedup": 2,
+  "size": 17,
+  "min_decoder_version": 4600
+ },
+ "comp": [
+  {
+   "crc": 3304222248,
+   "crc_ok": true,
+   "samples": 60000,
+   "sample_type": 3,
+   "channel_config": 1,
+   "reserved": 4290,
+   "encoder_id": 9602,
+   "offset": 77,
+   "size": 41149
+  }
+ ],
+ "md5": null,
+ "head": {
+  "offset": 33,
+  "length": 44,
+  "chunks": [
+   "fmt ",
+   "data"
+  ],
+  "fmt": {
+   "tag": 1,
+   "channels": 2
+  }
+ },
+ "tail": {
+  "offset": 41234,
+  "length": 0,
+  "chunks": []
+ },
+ "stream_info": {
+  "codec": "OptimFROG",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits_per_sample": 16,
+  "samples": 30000,
+  "encoder": "OptimFROG 5.100"
+ },
+ "verification": {
+  "checksums": [
+   {
+    "name": "block CRC-32",
+    "stored": 1,
+    "checked": 1,
+    "failed": 0,
+    "covers_all": true
+   },
+   {
+    "name": "MD5",
+    "stored": 0,
+    "checked": 0,
+    "failed": 0
+   }
+  ]
+ },
+ "findings": [],
+ "encoder": {
+  "tool": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+  "arguments": [
+   "--mode",
+   "normalnew"
+  ],
+  "case": "mode-normalnew",
+  "tool_program": "ofr",
+  "input": {
+   "kind": "music",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 30000,
+   "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+   "size": 120044
+  }
+ }
+}

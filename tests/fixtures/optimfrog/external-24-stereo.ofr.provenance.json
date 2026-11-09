@@ -1,0 +1,87 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42672985679,
+  "commit": "feat/optimfrog",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "24-stereo",
+ "tool": "ofr",
+ "arguments": [],
+ "input": {
+  "kind": "music",
+  "rate": 48000,
+  "channels": 2,
+  "bits": 24,
+  "samples": 30000,
+  "sha256": "6adc5ab7268d0d37d4e1a38e8ef303fcb25c57b604770f1f64df5f53ca713c9b",
+  "size": 180068
+ },
+ "sha256": "ad9a86bb15e4fcdd58dfb69cb49cead087e88bf3dfb248d75b5eeb78b7d1099f",
+ "size": 65929,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofr",
+    "--encode",
+    "in.wav",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofr",
+    "--encode",
+    "in.wav",
+    "--output",
+    "out.ofr",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofr"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofr",
+    "--decode",
+    "out.ofr",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 180068,
+   "sha256": "6adc5ab7268d0d37d4e1a38e8ef303fcb25c57b604770f1f64df5f53ca713c9b",
+   "equals_input": true,
+   "samples_equal_input": true
+  }
+ }
+}

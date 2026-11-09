@@ -227,6 +227,7 @@ internal static class Walk
 
         // The CRC-32 covers the data after its own field (OptimFROG 4.509 and 5.100 files: zlib's CRC-32 of those bytes).
         uint crc = Crc32.Initial;
+        reader.Position = position + Layout.BlockHeaderLength + 4;
         for (long left = block.Length - 4; left > 0;)
         {
             int n = (int)Math.Min(left, buffer.Length);

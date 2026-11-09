@@ -1,0 +1,94 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42672985679,
+  "commit": "feat/optimfrog",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-bitrate400",
+ "tool": "ofs",
+ "arguments": [
+  "--bitrate",
+  "400"
+ ],
+ "input": {
+  "kind": "music",
+  "rate": 44100,
+  "channels": 2,
+  "bits": 16,
+  "samples": 30000,
+  "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+  "size": 120044
+ },
+ "sha256": "d89c60cd8b2f64fa5d0893525a2ea3a50768092da6f462005dd6e723f8226ab4",
+ "size": 30905,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--bitrate",
+    "400",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--bitrate",
+    "400",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 120044,
+   "sha256": "b772d5911bc154b0c890d97c881954482842c2a9332bdc07b83720537d0034bc",
+   "equals_input": false,
+   "samples_equal_input": false
+  }
+ }
+}

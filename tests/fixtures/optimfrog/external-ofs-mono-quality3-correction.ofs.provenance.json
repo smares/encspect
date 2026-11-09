@@ -1,0 +1,132 @@
+{
+ "source": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+ "run": {
+  "run": 42672985679,
+  "commit": "feat/optimfrog",
+  "artifact": "optimfrog-fixtures"
+ },
+ "case": "ofs-mono-quality3-correction",
+ "tool": "ofs",
+ "arguments": [
+  "--quality",
+  "3",
+  "--correction"
+ ],
+ "input": {
+  "kind": "music",
+  "rate": 44100,
+  "channels": 1,
+  "bits": 16,
+  "samples": 30000,
+  "sha256": "1fbb0abdcb45191a090e38e408b3a78e19105098d3ff2bb999f20d6b6f741a65",
+  "size": 60044
+ },
+ "sha256": "4732bfbda2beab06453f2ba586e294e05fff045e0eacdb9748c5230beb78f570",
+ "size": 8657,
+ "reproducible": true,
+ "runs": {
+  "encode1": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "--correction",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "encode2": {
+   "command": [
+    "ofs",
+    "--encode",
+    "--quality",
+    "3",
+    "--correction",
+    "in.wav",
+    "--output",
+    "out.ofs",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "info": {
+   "command": [
+    "--info",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "verify": {
+   "command": [
+    "--verify",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "check": {
+   "command": [
+    "--check",
+    "out.ofs"
+   ],
+   "exit": 0
+  },
+  "decode": {
+   "command": [
+    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "decode_correction": {
+   "command": [
+    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "--correction",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  },
+  "decode_without_correction": {
+   "command": [
+    "/tmp/optimfrog-zkijol6o/optimfrog-5.100/OptimFROG_Linux_x64_5100/ofs",
+    "--decode",
+    "out.ofs",
+    "--output",
+    "back.wav",
+    "--overwrite"
+   ],
+   "exit": 0
+  }
+ },
+ "decoded": {
+  "decode": {
+   "size": 60044,
+   "sha256": "ee8d43a7fa76974e815ca5488d552f62135a6080ae83ab4d4b888c30ad6ef620",
+   "equals_input": false,
+   "samples_equal_input": false
+  },
+  "decode-correction": {
+   "size": 60044,
+   "sha256": "1fbb0abdcb45191a090e38e408b3a78e19105098d3ff2bb999f20d6b6f741a65",
+   "equals_input": true,
+   "samples_equal_input": true
+  },
+  "decode-without-correction": {
+   "size": 60044,
+   "sha256": "ee8d43a7fa76974e815ca5488d552f62135a6080ae83ab4d4b888c30ad6ef620",
+   "equals_input": false,
+   "samples_equal_input": false
+  }
+ }
+}
