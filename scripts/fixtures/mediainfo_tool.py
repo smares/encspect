@@ -43,14 +43,15 @@ class Failed(Exception):
         self.returncode = returncode
 
 
-def read(path, full=False):
+def read(path, full=False, whole=False):
     """MediaInfo's tracks of the file as {"General": track, "Audio": [tracks], ...}, every value a
     string as MediaInfo writes it (custom fields under "extra"). Raises Failed where MediaInfo exits
     with an error or a signal or writes nothing: that is a problem of the fixture, not a file
-    without a format (see Tally.read). With full, the fields of --Full as well."""
+    without a format (see Tally.read). With full, the fields of --Full as well. With whole, MediaInfo
+    reads the whole file (--ParseSpeed=1): by default it stops counting TrueHD access units at 1,024."""
     # Without a UTF-8 locale, MediaInfo writes every character outside ASCII as "?".
     environment = dict(os.environ, LC_ALL="C.UTF-8")
-    command = ["mediainfo", "--Output=JSON", *(["--Full"] if full else []), str(path)]
+    command = ["mediainfo", "--Output=JSON", *(["--Full"] if full else []), *(["--ParseSpeed=1"] if whole else []), str(path)]
     result = subprocess.run(command, capture_output=True, text=True, env=environment)
     if result.returncode != 0 or not result.stdout.strip():
         raise Failed(result.returncode)
@@ -68,10 +69,10 @@ def read(path, full=False):
     return tracks
 
 
-def read_or_problem(path, problems, full=False):
+def read_or_problem(path, problems, full=False, whole=False):
     """read(), with a failure added to the fixture's problems and None returned, for a script without a Tally."""
     try:
-        return read(path, full)
+        return read(path, full, whole)
     except Failed as failure:
         problems.append(str(failure))
         return None
