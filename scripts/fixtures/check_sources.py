@@ -53,6 +53,7 @@ import optimfrog_tool
 import musepack_tool
 import old_lame_tool
 import speex_tool
+import tak_tool
 import wavpack_tool
 import xing_tool
 
@@ -109,6 +110,7 @@ def sources():
     yield from monkeys_audio_tool.sources()
     yield from libtta_tool.sources()
     yield from optimfrog_tool.sources()
+    yield from tak_tool.sources()
     yield from make_lossywav_fixtures.sources()
     yield from lossywav_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
