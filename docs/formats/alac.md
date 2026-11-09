@@ -74,16 +74,18 @@ ALAC stores no checksum, so no figure is compared and the verdict stays unknown.
   - the adaptive predictor of each channel, with its first-order stage for a nonzero prediction type and the first-order difference of order 31, wrapping on 32 bits as the C code does;
   - the undoing of the mixing of a channel pair (the left/side, mid/side or weighted coding that `mixBits` and `mixRes` state);
   - the shifted bytes put back below the samples of 24-bit and 32-bit streams. For 16 and 20 bits Apple's decoder ignores them, and so does this one.
-- **Output:** 20-bit samples are written as 20-bit integers (Apple's decoder left-justifies them in three bytes). Frames are placed by their position in the stream; a frame that cannot be decoded leaves a gap, counted as not decoded.
+- **Output:** 20-bit samples are written as 20-bit integers (Apple's decoder left-justifies them in three bytes).
+- **Departure from Apple's decoder:** for a 32-bit channel pair with a mixing resolution other than 0 and no shifted bytes, Apple's `unmix32` ORs in the 16-bit halves of whatever its shift buffer holds (the buffer shares memory with the predictor's residuals, and the code does not check `bytesShifted`); this decoder outputs the plain value. Apple's encoder always shifts 2 bytes at 32 bits and FFmpeg writes no 32-bit stream, so only a crafted file differs. Frames are placed by their position in the stream; a frame that cannot be decoded leaves a gap, counted as not decoded.
+- **A frame whose walk fails after the cookie's last channel is decoded:** Apple's decoder stops reading once the cookie's channels are decoded, so an unknown tag or a cut element after them is never read. The parser reports the fault but does not count the frame as unreadable or its samples as lost, and the decoder decodes it (`built-element-unknown-after-channels`, `built-frame-overrun-after-channels`).
 - **A frame is not decoded** (`decode.frame-invalid`, in addition to the parser's finding) where its elements cover fewer channels than the cookie states, where its elements state different sample counts, or where an element states more samples than the cookie's frame length (Apple's decoder reads past its buffers there). Where the walk fails (`alac.frame-overrun`, `alac.element-unknown` and the others) the frame is unreadable and not handed to the decoder.
-- **Not decoded** (`decode.not-possible`): a cookie shorter than the configuration, a compatible version above 0, a frame length of 0 or above 1,048,576, a bit depth other than 16, 20, 24 and 32, channels outside 1 to 8, a sample rate of 0, and a stream without a cookie.
-- **Work:** per sample of each channel `DecodeWork.ForSample`; per tap of the predictor 3 units, one more tap for a nonzero prediction type; 4 units a sample where bytes were shifted ([decoders.md](../design/decoders.md#as-built-alac)).
+- **Not decoded** (`decode.not-possible`): a cookie shorter than the configuration, a compatible version above 0, a frame length of 0 or above 1,048,576, a bit depth other than 16, 20, 24 and 32, channels outside 1 to 8, a sample rate of 0 (Encspect's refusal: Apple's decoder ignores the rate, but the PCM format needs one), and a stream without a cookie.
+- **Work:** per sample of each channel `DecodeWork.ForSample`; per tap of the predictor 4 units, one more tap for a nonzero prediction type; 4 units a sample where bytes were shifted ([decoders.md](../design/decoders.md#as-built-alac)).
 - **Memory:** the session lends one frame of the cookie's frame length per channel (at most 2^20 samples of 8 channels); the decoder holds one more output of the same size.
 
 ## Not covered
 
 - CAF files.
-- A decoded view of 20-bit streams in the cross-check: `alacconvert` reads and writes none.
+- 20-bit streams against Apple's decoder: `alacconvert` decodes them but writes `channels * 2.5` bytes a frame of 3-byte samples, so the cross-check compares them with FFmpeg's.
 - The program and coupling channel elements (tags 5 and 2), which the reference decoder refuses.
 - Channel layouts other than the cookie's.
 

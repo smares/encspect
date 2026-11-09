@@ -161,6 +161,9 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - Levels that share their settings are named together, never one of them by chance.
 6. **PASC (the Digital Compact Cassette's coding) told apart from MPEG-1 Layer I** (the lead, 2026-11-08). PASC streams are Layer I bitstreams, so nothing in the syntax names them.
    - First a research step: the traits a DCC recorder or Philips' encoder leaves (the fixed 384 kbps, the header bits it sets, its allocation habits), from sources that can be checked and from real DCC transfers, since the DCC standard (IEC 61119) is sold and is not bought.
+   - **A tool for fixtures:** github.com/MEDVEDx64/wav2pasc, a reimplementation of DCC2WAV.EXE. It has no license, so it is only a black-box tool for making fixtures; its code is not read or followed.
+   - **The first structural signal to check:** its `.mpp` container: a 2-byte preamble (0x2C or 0x30, then 0x00) and records of 420 bytes (384 at 48 kHz), each starting FF FF C0 or FF FF C4 and then 00.
+   - **Padding tells nothing by itself:** 24 of 49 frames padded at 384 kbps and 44.1 kHz is what every compliant Layer I encoder does, so padding alone does not tell PASC from MPEG-1 Layer I. Real DCC-Studio files are needed to confirm anything.
    - Then, only where files back them, an encoder claim with a confidence, as for other encoders; otherwise the research is recorded and the item goes under "Not planned".
 7. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
 
