@@ -78,7 +78,7 @@ public partial class AlacFixtureTests
         CheckStreamInfos(manifest.GetProperty("stream_infos"), report.Streams);
         if (manifest.GetProperty("stream_infos").ValueKind == JsonValueKind.Array && report.Streams.Count > 0)
         {
-            FlacFixtureTests.CheckVerification(manifest.GetProperty("verification").GetProperty("default"), report.Streams.Single().Verification, DecodeStatus.NoDecoder);
+            FlacFixtureTests.CheckVerification(manifest.GetProperty("verification").GetProperty("default"), report.Streams.Single().Verification, DecodeStatus.NotRequested);
         }
 
         CheckFindings(manifest.GetProperty("findings"), report.Findings);

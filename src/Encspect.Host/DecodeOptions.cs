@@ -6,9 +6,8 @@ namespace Encspect.Host;
 // it is read, and the checksums over its decoded audio are compared. See docs/design/decoders.md.
 public sealed class DecodeOptions
 {
-    // The default work budget is the larger of this and the size of the file times the largest IDecoder.WorkPerInputByte
-    // among the decoders that started a session in the analysis (DecodeWork.DefaultPerInputByte unless a decoder says
-    // otherwise).
+    // The default work budget is the larger of this and the bytes of the units handed to the sessions, each times the
+    // IDecoder.WorkPerInputByte of its own session's decoder (DecodeWork.DefaultPerInputByte unless a decoder says otherwise).
     public const long MinimumWork = 1L << 35;
 
     // Stops decoding only: the structure analysis carries on, and the report says how far decoding got

@@ -43,6 +43,10 @@ def planes(channels, bits, rate, count, kind="music"):
     if kind == "sparse":
         # Zeros but for the first and the last sample: the residuals are one long run of zeros.
         return [[5] + [0] * (count - 2) + [-7] for _ in range(channels)]
+    if kind == "ramp":
+        # A steep rising ramp of 2,048 samples, repeated in every frame: with a predictor of shift 15 and zero coefficients every residual is positive and every
+        # difference below 2^15, so the sign adaptation of the filter runs over all of its taps for each sample.
+        return [[(5 * (i % 2048)) - 5000 for i in range(count)] for _ in range(channels)]
     if kind == "spikes":
         # Faint noise with a full-scale spike every 37 samples: the residual of a spike is far above the running mean, so it is written with the long prefix.
         state = 987
@@ -170,6 +174,17 @@ def build():
     valid("stereo-16-order-0", "A channel pair with no filter (0 coefficients), so the residuals are the samples.", 2, 16, 44100, 10000, [m.Channel([]), m.Channel([])], mix_res=2)
     valid("stereo-16-prediction-type-1", "A channel pair whose channels state prediction type 1, the first-order pass Apple's decoder runs before the filter; FFmpeg 6.1.1 does not decode it as Apple's decoder does.",
           2, 16, 44100, 10000, [m.Channel([1166, -755, -9, 37], mode=1), m.Channel([1099, -651], mode=1)], mix_res=2, decoders=("alacconvert",))
+    valid("stereo-16-orders-21-and-25", "A channel pair with filters of 21 and 25 coefficients, orders between those of the other fixtures and the largest the format codes.", 2, 16, 44100, 10000,
+          [m.Channel([400 - 15 * i for i in range(21)]), m.Channel([300 - 10 * i for i in range(25)])], mix_res=2, decoders=("alacconvert",))
+    valid("stereo-16-orders-30-and-28-shift-15", "A channel pair with filters of 30 and 28 coefficients and a predictor shift of 15, the largest the header codes.", 2, 16, 44100, 10000,
+          [m.Channel([3000 - 90 * i for i in range(30)], shift=15), m.Channel([2500 - 80 * i for i in range(28)], shift=12)], mix_res=2, decoders=("alacconvert",))
+    valid("stereo-16-order-31", "A channel pair whose channels state 31 coefficients: not a filter of 31 taps but the first-order difference (dp_dec.c, numactive 31), the coefficients being read and ignored.",
+          2, 16, 44100, 10000, [m.Channel(list(range(1, 32))), m.Channel([7] * 31)], mix_res=2, decoders=("alacconvert",))
+    valid("stereo-16-order-31-prediction-type-1", "A channel pair of 31 coefficients and prediction type 1: the first-order pass of the type, then the difference of order 31.",
+          2, 16, 44100, 10000, [m.Channel(list(range(1, 32)), mode=1), m.Channel([7] * 31, mode=1)], mix_res=2, decoders=("alacconvert",))
+    valid("stereo-16-order-30-shift-15-ramp", "A channel pair of 2,048-sample frames whose filters have 30 coefficients, all 0, and a predictor shift of 15, over a steep ramp: the sign adaptation of the filter runs "
+          "over every tap for every sample, the most work a sample of the decoder costs.", 2, 16, 44100, 6144, [m.Channel([0] * 30, shift=15), m.Channel([0] * 30, shift=15)], frame_length=2048,
+          kind="ramp", mix_res=0, decoders=("alacconvert",))
     valid("stereo-24-shifted", "24-bit audio as Apple's encoder writes it: one byte of every sample shifted out and stored apart, mid/side mixing.", 2, 24, 44100, 10000, STEREO,
           mix_res=2, shifted=1)
     valid("stereo-24-unshifted", "24-bit audio with no byte shifted out, which the format allows.", 2, 24, 44100, 10000, STEREO, mix_res=2)
@@ -307,6 +322,13 @@ def build():
     part = split(data, 4096)[1]
     mono = [part[0]]
     exceeding = custom(lambda w: m.write_audio(w, m.CPE, 0, part, 16, 4096, parameters=STEREO, mix_res=2), lambda w: m.write_audio(w, m.SCE, 0, mono, 16, 4096, parameters=MONO), m.write_end)
+    after_pair = lambda w: m.write_audio(w, m.CPE, 0, part, 16, 4096, parameters=STEREO, mix_res=2)
+    unknown_after = custom(after_pair, lambda w: w.write(m.CCE, 3), lambda w: w.write(0, 13))
+    damaged("element-unknown-after-channels", "The second packet holds the channel pair element of the cookie's two channels, then a coupling channel element (tag 2) and no end tag: Apple's decoder has stopped reading by then and decodes the frame.",
+            [packets[0], unknown_after, packets[2]])
+    overrun_after = custom(after_pair, lambda w: m.write_audio(w, m.SCE, 0, mono, 16, 4096, parameters=MONO))[:-200]
+    damaged("frame-overrun-after-channels", "The second packet holds the channel pair element of the cookie's two channels, then a single channel element that the packet is cut 200 bytes short inside: Apple's decoder never reads it and decodes the frame.",
+            [packets[0], overrun_after, packets[2]])
     damaged("channels-exceed", "The second packet holds a channel pair element and a single channel element, three channels, where the cookie states two.", [packets[0], exceeding, packets[2]])
     missing = custom(lambda w: m.write_audio(w, m.SCE, 0, mono, 16, 4096, parameters=MONO), m.write_end)
     damaged("channels-missing", "The second packet holds one single channel element, where the cookie states two channels.", [packets[0], missing, packets[2]])

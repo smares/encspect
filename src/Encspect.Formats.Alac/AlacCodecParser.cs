@@ -4,8 +4,8 @@ namespace Encspect.Formats.Alac;
 
 // ALAC frames a container stores one to a packet (MP4's alac sample entry, Matroska's A_ALAC), with the magic cookie from the container's configuration
 // (the alac box, the CodecPrivate). Each packet is walked as Apple's reference decoder reads a frame, far enough to know where every element ends: the
-// element headers, the prediction parameters and the adaptive Golomb code of the residuals. Nothing is decoded; ALAC stores no checksum, and its decoder
-// waits under "Later" (docs/design/decoders.md, decision 5).
+// element headers, the prediction parameters and the adaptive Golomb code of the residuals. ALAC stores no checksum, so the decoder (Decoding namespace) runs only
+// where a front end asks for measurements or output; the walk then stores what the decoder reconstructs the samples from in the buffers the session lends.
 public sealed class AlacCodecParser : ICodecParser
 {
     public const string CodecId = "alac";
@@ -57,5 +57,14 @@ public sealed class AlacCodecParser : ICodecParser
         s.CookieNode = node;
         Summary.CookieFindings(s, cookie, node);
         s.Figures = new StreamFigures(cookie.IsComplete ? cookie.SampleRate : 0);
+
+        // The frames follow, so the session starts here and the walk of each frame can store into the buffers it lends.
+        s.Session = s.Context.StartDecoding(CodecId, new DecodeSetup
+        {
+            Stream = s.Stream,
+            Channels = cookie.Channels,
+            BitsPerSample = cookie.BitDepth,
+            Configuration = data,
+        });
     }
 }

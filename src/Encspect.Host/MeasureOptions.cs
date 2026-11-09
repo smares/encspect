@@ -9,7 +9,7 @@ public sealed class MeasureOptions
     public MeasurementKinds? Include { get; init; }
 
     // The measurements' work budget in work units, counted apart from the decoders' (DecodeWork); null for the default (the larger
-    // of 2^35 and the file's size times the largest allowance among the decoders). Tests and the fuzzer lower it. An option of the
+    // of 2^35 and the allowance the sessions earn: the bytes of the units each is handed times its own decoder's units per byte). Tests and the fuzzer lower it. An option of the
     // call, not a setting.
     public long? MaxWork { get; init; }
 

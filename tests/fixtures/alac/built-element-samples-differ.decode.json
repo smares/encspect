@@ -1,0 +1,17 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 5904,
+    "isVerified": null,
+    "checksums": []
+  },
+  "pcmSha256": "1e44b96602df1ae0b628f95e471197057392064f76bff5c46ec6393736d607cc",
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The alac decoder could not decode the frame at 0x1504: The elements of the frame state different numbers of samples."
+    }
+  ]
+}

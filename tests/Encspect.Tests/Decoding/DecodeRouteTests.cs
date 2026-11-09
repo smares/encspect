@@ -658,7 +658,7 @@ public class DecodeRouteTests
 
         // The message names the file's size only where the file's size set the budget, and writes both numbers alike.
         Finding limit = Assert.Single(Analyze(new FrameParser { Frames = 1 }, [Heavy(null)], Verify).Findings, f => f.Code == "decode.limit");
-        Assert.Equal("Decoding stopped after 1 frame: its work passed the budget of 34,359,738,368 work units that the file's size allows.", limit.Message);
+        Assert.Equal("Decoding stopped after 1 frame: its work passed the budget of 34,359,738,368 work units that the stream's coded bytes allow.", limit.Message);
     }
 
     [Fact]
@@ -1782,7 +1782,7 @@ public class DecodeRouteTests
     [Fact]
     public void ADefaultAnalyzerSaysSoWhenDecodingIsAskedForAndNoDecoderHasTheCodec()
     {
-        Assert.Equal(["flac", "wavpack", "monkeys-audio", "truehd", "mlp", "pcm"], DefaultParsers.Decoders.Select(d => d.Id));
+        Assert.Equal(["flac", "wavpack", "monkeys-audio", "alac", "truehd", "mlp", "pcm"], DefaultParsers.Decoders.Select(d => d.Id));
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);
         Assert.Contains(report.Findings, f => f.Code == "decode.no-decoder");
     }

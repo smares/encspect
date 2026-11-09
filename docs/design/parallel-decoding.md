@@ -343,7 +343,7 @@ For the replay to know where a serial run would stop, a worker looks at cancella
   - **CPU time** may be up to the number of workers running times that.
 - **The alternative** is to limit the window by planned work, at most the degree times 2^27 units in flight, which would make the work wasted past the budget small. It would also run every Monkey's Audio frame of the higher levels inline (a 16-bit insane frame is about 2.4 × 10^9 units, (2·16 + 2·(192 + 48 + 776)) × 1,179,648 by the decoder's constants; estimated), which removes the format's gain. Decision 10 asks for the choice; this document assumes the restated bound.
 - **Accounting across threads:** the charges of a worker go into its frame's journal (one thread writes it) and into a per-frame running total that the workers of later frames read with `Volatile.Read` (a sum over the window, at each charge point); `DecodeRun`'s count stays on the analysis thread and is advanced only by the replay. Nothing else is shared between threads but the cancellation.
-- **What `decode.limit` means:** unchanged: "Decoding stopped after N frames: its work passed the budget of B work units that the file's size allows", with N and B as a serial run gives them.
+- **What `decode.limit` means:** unchanged: "Decoding stopped after N frames: its work passed the budget of B work units that the stream's coded bytes allow", with N and B as a serial run gives them.
 - **The floor of the charge** (`DecodeSession.CheckFloorOfCharge`) is checked at each commit on the replayed totals: the same check at the same frame.
 - **`MaxWork`, `MinimumWork`, `WorkPerInputByte`:** unchanged.
 

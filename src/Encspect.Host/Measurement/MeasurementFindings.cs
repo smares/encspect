@@ -32,7 +32,7 @@ internal static class MeasurementFindings
         {
             status = MeasurementStatus.Stopped;
             long tenths = measurer.SampleRate > 0 ? measurer.Samples * 10 / measurer.SampleRate : 0;
-            string basis = run.Options.Measure?.MaxWork is null ? " that the file's size allows" : string.Empty;
+            string basis = run.Options.Measure?.MaxWork is null ? " that the stream's coded bytes allow" : string.Empty;
             add(Severity.Info, "measure.limit", $"Measuring stopped after {(tenths / 10).ToString("N0", CultureInfo.InvariantCulture)}.{tenths % 10} s of the stream: its work passed the budget of {run.MeasureBudget.ToString("N0", CultureInfo.InvariantCulture)} work units{basis}.", null, 1);
         }
         else if (measurer.IsCanceled || decodingEndedEarly)

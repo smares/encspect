@@ -120,12 +120,13 @@ Each milestone is something a user can do that they could not do before. Its ite
 Every lossless format with a decoder design is decoded and measured, except WMA Lossless (0.5) and DTS-HD's lossless extension (a follow-up after 0.5). Files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
 
 1. **The lossy groundwork** (#232, merged 2026-11-08): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
-2. **lossyWAV and lossyFLAC detection,** with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).
+2. **lossyWAV and lossyFLAC detection** (done: PRs #239, #240, #242 and #243), with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).
    - **Design:** [lossywav-detection.md](design/lossywav-detection.md), signed off by the lead on 2026-11-08 with 13 decisions, from files lossyWAV 1.4.2 wrote in CI (used only as a black-box tool).
    - **What the files show:** lossyWAV marks its WAV output with a `fact` chunk naming itself and its settings, which lossyFLAC pipelines usually drop. It zeroes low bits in blocks of 512 samples at 44.1 and 48 kHz, counted per channel unless `--linkchannels` is set.
    - **Pull requests, in order:** PR 0, the WAV parser's fixes (the misread `fact` chunk and a false `wav.truncated`); PR 1, the marker and a "Processed by" claim; PR 2, the measurement of zeroed low bits; PR 3, the wasted-bits statistic in FLAC and WavPack and the claim from behavior.
    - **Reported** as figures with their basis and as a claim with a confidence. No finding says a file is not lossless.
 3. **The ALAC and TTA decoders,** small and exact, checked bit for bit (the lead, 2026-11-08); steps L1 and L2 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order).
+   - **ALAC (done):** the decoder follows Apple's reference decoder and is checked sample for sample against it ([alac.md](formats/alac.md#decoding)). TTA is still to do.
 4. **TAK and OptimFROG at header level** ([planned.md](formats/planned.md#in-02-header-level-only)). Both are poorly documented, so they get only what their headers reveal.
    - Where a header stores the encoder's settings (OptimFROG's mode and speedup, TAK's preset), they are read and named, as Monkey's Audio's compression level and WavPack's mode flags are; whether each header holds them is checked against a source that can be verified and against files the encoders write (the lead, 2026-11-08).
 5. **Two level figures** from step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout), which need no lossy decoder: a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00, so only its negative runs count today).
@@ -160,6 +161,9 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - Levels that share their settings are named together, never one of them by chance.
 6. **PASC (the Digital Compact Cassette's coding) told apart from MPEG-1 Layer I** (the lead, 2026-11-08). PASC streams are Layer I bitstreams, so nothing in the syntax names them.
    - First a research step: the traits a DCC recorder or Philips' encoder leaves (the fixed 384 kbps, the header bits it sets, its allocation habits), from sources that can be checked and from real DCC transfers, since the DCC standard (IEC 61119) is sold and is not bought.
+   - **A tool for fixtures:** github.com/MEDVEDx64/wav2pasc, a reimplementation of DCC2WAV.EXE. It has no license, so it is only a black-box tool for making fixtures; its code is not read or followed.
+   - **The first structural signal to check:** its `.mpp` container: a 2-byte preamble (0x2C or 0x30, then 0x00) and records of 420 bytes (384 at 48 kHz), each starting FF FF C0 or FF FF C4 and then 00.
+   - **Padding tells nothing by itself:** 24 of 49 frames padded at 384 kbps and 44.1 kHz is what every compliant Layer I encoder does, so padding alone does not tell PASC from MPEG-1 Layer I. Real DCC-Studio files are needed to confirm anything.
    - Then, only where files back them, an encoder claim with a confidence, as for other encoders; otherwise the research is recorded and the item goes under "Not planned".
 7. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
 

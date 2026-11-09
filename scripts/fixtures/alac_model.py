@@ -349,7 +349,11 @@ def write_audio(w, tag, instance, channels, bit_depth, frame_length=4096, partia
         w.write((params.weight << 5) | len(params.coefficients), 8)
         for c in params.coefficients:
             w.write(c & 0xFFFF, 16)
-        r = predict(channel, params.coefficients, params.shift, chan_bits)
+        if len(params.coefficients) == 31:
+            # A filter of 31 coefficients is not one: dp_dec.c's numactive 31 is the first-order difference, and the coefficients are read and ignored.
+            r = first_order(list(channel), chan_bits)
+        else:
+            r = predict(channel, params.coefficients, params.shift, chan_bits)
         if params.mode:
             r = first_order(r, chan_bits)
         residuals.append(r)
@@ -553,6 +557,7 @@ def walk_frame(data, cookie_):
             break
         element = {"start": position}
         elements.append(element)
+        channels_before = out["channels"]
         index = len(elements) - 1
         try:
             tag = bits_at(data, position, 3)
@@ -669,6 +674,8 @@ def walk_frame(data, cookie_):
         except Fault as fault:
             element["end"] = position
             out["status"] = fault.args[0]
+            # A fault in an element after the cookie's channels is one the decoder never reads: the frame decodes.
+            out["beyond"] = channels_before >= wanted
             break
     return out
 
@@ -886,9 +893,10 @@ def manifest(data, kind, extra=None):
         frames.append(record)
         fault_code = FAULT_CODES.get(status)
         elements = w["elements"]
+        beyond = bool(w.get("beyond"))
         if fault_code:
             add(fault_code)
-            unreadable_frames += 1
+            unreadable_frames += 0 if beyond else 1
         if status == "end-missing":
             add("alac.end-missing")
         if status == "ok" and w["walked"] < size:
@@ -939,7 +947,7 @@ def manifest(data, kind, extra=None):
                 tally["pair_codings"][code] += 1
                 frame_pairs.append(code)
         samples = w["samples"]
-        if fault_code and status != "tuning" and size > 0:
+        if fault_code and status != "tuning" and size > 0 and not beyond:
             # A frame whose first byte is there declares its samples all the same: its first element's, else the cookie's frame length; one that cannot be read is lost.
             samples = samples or c["frame_length"]
             lost_samples += samples
@@ -979,7 +987,7 @@ def manifest(data, kind, extra=None):
         })
     # A track without a cookie gets the container's own stream, whose figures the model does not work out.
     result["stream_infos"] = streams if (c is not None and c["complete"]) else ([] if c is not None else None)
-    result["verification"] = {"default": {"isVerified": None, "decoding": "noDecoder", "checksums": []}}
+    result["verification"] = {"default": {"isVerified": None, "decoding": "notRequested", "checksums": []}}
     return result
 
 

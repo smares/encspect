@@ -187,6 +187,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     {
         _ when name.StartsWith("pcm", StringComparison.Ordinal) => new Encspect.Formats.Wav.Decoding.PcmDecoder(),
         _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
+        _ when name.StartsWith("alac", StringComparison.Ordinal) => new Encspect.Formats.Alac.Decoding.AlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
@@ -196,6 +197,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     private static string ExtensionOf(string name) => name switch
     {
         _ when name.StartsWith("flac", StringComparison.Ordinal) => ".flac",
+        _ when name.StartsWith("alac", StringComparison.Ordinal) => ".m4a",
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
@@ -384,6 +386,22 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("truehd-crafted-fir-4-iir-4", () => new Case("truehd-crafted-fir-4-iir-4", TrueHdCases.Crafted(4, 4, 0)));
         Add("truehd-crafted-8-matrices", () => new Case("truehd-crafted-8-matrices", TrueHdCases.Crafted(0, 0, 8)));
         Add("truehd-crafted-fir-4-iir-4-8-matrices", () => new Case("truehd-crafted-fir-4-iir-4-8-matrices", TrueHdCases.Crafted(4, 4, 8)));
+
+        // ALAC: the frames the encoders wrote, repeated: 16, 24 and 32 bits (shifted bytes), eight channels, and noise that fills the residuals.
+        foreach ((string label, string file) in new[]
+        {
+            ("fixture-16-stereo", "external-alacconvert-16-stereo.m4a"),
+            ("fixture-24-stereo", "external-alacconvert-24-stereo.m4a"),
+            ("fixture-32-stereo", "external-alacconvert-32-stereo.m4a"),
+            ("fixture-16-8-channels", "external-alacconvert-16-8ch.m4a"),
+            ("fixture-16-loud-noise", "external-alacconvert-16-loud-noise.m4a"),
+            ("fixture-ffmpeg-16-stereo", "external-ffmpeg-16-stereo.m4a"),
+            ("fixture-ffmpeg-order-20", "external-ffmpeg-16-stereo-order-20.m4a"),
+            ("order-30-shift-15-full-adaptation", "built-stereo-16-order-30-shift-15-ramp.m4a"),
+        })
+        {
+            Add("alac-" + label, () => new Case("alac-" + label, AlacCases.Repeated(file)));
+        }
 
         // PCM: the samples of a WAV or AIFF file unpacked, one case of integers (16-bit little-endian, and 24-bit big-endian, which takes the three-byte path with
         // the swap), one of floats and one of A-law, each of pseudo-random bytes so that no path is cheaper for its content.
@@ -1003,6 +1021,32 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             int copies = (int)Math.Max(1, (Target + units - 1) / units);
             return WavPackBuilder.Concat(Enumerable.Repeat(blocks, copies).SelectMany(b => b));
         }
+    }
+
+    // ALAC: the whole frames of an encoder's fixture, repeated in an MP4 file until the units come to the target.
+    internal static class AlacCases
+    {
+        public static byte[] Repeated(string file)
+        {
+            string name = "alac/" + file;
+            byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+            System.Text.Json.JsonElement manifest = Fixtures.LoadMpegManifest(name);
+            Node cookieNode = Find(Fixtures.AnalyzeMpeg(name).Root, "Magic Cookie")!;
+            byte[] cookie = data[(int)cookieNode.Offset..(int)(cookieNode.Offset + cookieNode.Length)];
+            System.Text.Json.JsonElement info = manifest.GetProperty("cookie");
+            int frameLength = info.GetProperty("frame_length").GetInt32();
+            List<byte[]> frames = [.. manifest.GetProperty("frames").EnumerateArray().Where(f => f.GetProperty("samples").GetInt32() == frameLength)
+                .Select(f => data[f.GetProperty("offset").GetInt32()..(f.GetProperty("offset").GetInt32() + f.GetProperty("size").GetInt32())])];
+            int channels = info.GetProperty("channels").GetInt32();
+            int bits = info.GetProperty("bit_depth").GetInt32();
+            uint rate = info.GetProperty("rate").GetUInt32();
+            byte[] once = AlacBuilder.M4a(frames, cookie, channels, bits, rate, frameLength);
+            (_, long units, _) = Run(new Case("alac-once", once), decode: true);
+            int copies = (int)Math.Max(1, (Target + units - 1) / units);
+            return AlacBuilder.M4a([.. Enumerable.Repeat(frames, copies).SelectMany(f => f)], cookie, channels, bits, rate, frameLength);
+        }
+
+        private static Node? Find(Node node, string name) => node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null);
     }
 
     internal static class TrueHdCases
