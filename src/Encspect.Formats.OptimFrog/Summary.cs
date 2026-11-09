@@ -62,10 +62,10 @@ internal static class Summary
             s.AddLeading(encoder);
         }
 
-        StreamClaim? claim = LossyClaim(s);
-        if (claim is { IsAsserted: true })
+        (StreamClaim? claim, StreamClaim? against) = LossyClaim(s);
+        if (claim is { } made)
         {
-            s.AddLeading(LossyNode(claim, r.Offset, r.End - r.Offset));
+            s.AddLeading(LossyNode(made, r.Offset, r.End - r.Offset));
         }
 
         Node? writer = WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
@@ -83,7 +83,7 @@ internal static class Summary
 
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
         StreamVerification verification = Verify(s, m);
-        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification, claim);
+        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification, claim, against);
         s.Context.AddStream(info);
         s.Findings.Flush(s.Context);
     }
@@ -275,28 +275,28 @@ internal static class Summary
 
     // The claim that the file is the lossy part of a DualStream, from the data blocks' reserved bytes: asserted (low confidence) when every whole data block shows
     // the pattern of the .ofs files in Encspect's tests, held unasserted when none does, and not made for a mixture or without a whole data block.
-    private static StreamClaim? LossyClaim(State s)
+    private static (StreamClaim? Made, StreamClaim? Against) LossyClaim(State s)
     {
         long complete = s.CompBlocks;
         long pattern = s.DualStreamBlocks;
         if (complete == 0 || (pattern != 0 && pattern != complete))
         {
-            return null;
+            return (null, null);
         }
 
         if (pattern == complete)
         {
             string blocks = complete == 1 ? "the data block has" : $"all {complete} data blocks have";
-            return new StreamClaim(StreamClaim.LossyPart, "Probably the lossy part of a DualStream", true, Confidence.Low,
-                $"The reserved field of {blocks} the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files");
+            return (new StreamClaim(StreamClaim.LossyPart, "DualStream", Confidence.Low,
+                $"The reserved field of {blocks} the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files"), null);
         }
 
         string none = complete == 1 ? "the data block has another low byte than 0x01" : $"none of the {complete} data blocks has the low byte 0x01";
-        return new StreamClaim(StreamClaim.LossyPart, "Probably the lossy part of a DualStream", false, Confidence.Low, $"the reserved field of {none}, as in a lossless file");
+        return (null, new StreamClaim(StreamClaim.LossyPart, "DualStream", Confidence.Low, $"the reserved field of {none}, as in a lossless file"));
     }
 
     private static Node LossyNode(StreamClaim claim, long offset, long length) =>
-        new("Lossy Stream", offset, length, claim.Value, () =>
+        new("Lossy Part", offset, length, claim.Value, () =>
         [
             new Node("Confidence", offset, length, claim.Confidence.ToString()) { Description = claim.Confidence == Confidence.Low ? Explain.LossyConfidenceLow : Explain.LossyConfidenceMedium },
             new Node("Evidence", offset, length, claim.Evidence) { Description = Explain.Evidence },
@@ -330,7 +330,7 @@ internal static class Summary
     private static IReadOnlyList<Speaker>? LayoutOf(MainBlock m, uint? mask) =>
         mask is { } value and not 0 ? ChannelLayouts.FromWaveMask(value, m.Channels) : m.Channels == 1 ? ChannelLayouts.Mono : ChannelLayouts.Stereo;
 
-    private static StreamInfo Statistics(State s, Source source, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover, Node? encoder, Node? writer, Node? processor, StreamVerification verification, StreamClaim? claim)
+    private static StreamInfo Statistics(State s, Source source, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover, Node? encoder, Node? writer, Node? processor, StreamVerification verification, StreamClaim? claim, StreamClaim? against)
     {
         Records r = s.Records;
         Node stream = s.Stream;
@@ -398,6 +398,7 @@ internal static class Summary
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
             Claims = claim is null ? [] : [claim],
+            ClaimsAgainst = against is null ? [] : [against],
             Series = figures.Units > 0 ? figures.Series(anchor, s.Context.CancellationToken) : [],
         };
     }

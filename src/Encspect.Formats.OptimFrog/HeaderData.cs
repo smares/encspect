@@ -36,7 +36,7 @@ internal static class HeaderData
 
     private static readonly string[] Riff = ["RIFF", "RF64", "BW64"];
 
-    public static HeaderInfo Analyze(State s, ByteReader reader, long at, long held, int blockIndex, bool isHeader)
+    public static HeaderInfo Analyze(State s, ByteReader reader, long at, long held, int blockIndex, bool isHeader, bool isRiffFile)
     {
         string? container = isHeader ? WavHeader.Container(reader, at, held) : null;
         WavFormat? format = isHeader && container is not null ? WavHeader.Read(reader, at, held) : null;
@@ -46,7 +46,7 @@ internal static class HeaderData
         {
             position = at + 12;
         }
-        else if (isHeader)
+        else if (isHeader || !isRiffFile)
         {
             return info;
         }

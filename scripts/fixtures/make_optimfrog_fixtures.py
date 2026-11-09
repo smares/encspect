@@ -61,7 +61,13 @@ def with_tag_bytes_in_comp(base):
     return b"".join(parts)
 
 
+def bad_ape_footer():
+    """An APEv2 footer whose tag size and item count fit no tag: the host's search for trailing tags finds the signature at the end of the data and rejects it."""
+    return b"APETAGEX" + struct.pack("<IIII", 2000, 4000, 9, 0) + bytes(8)
+
+
 FILES = {
+    "built-tag-like-bytes-after-blocks.ofr": (lambda b: b + bad_ape_footer(), ["optimfrog.data-after-blocks", "tag.near-miss"]),
     "built-tag-ape-footer-only.ofr": (lambda b: b + ape_footer_only(), []),
     "built-tag-ape-with-header.ofr": (lambda b: b + ape_with_header(), []),
     "built-tag-ape-and-id3v1.ofr": (lambda b: b + ape_footer_only() + id3v1(), []),

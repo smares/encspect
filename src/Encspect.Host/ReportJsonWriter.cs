@@ -374,10 +374,10 @@ public static class ReportJsonWriter
             writer.WriteString("processorConfidence", processorConfidence.ToString());
         }
 
-        if (stream.Claims.Any(c => c.IsAsserted))
+        if (stream.Claims.Count > 0)
         {
             writer.WriteStartArray("claims");
-            foreach (StreamClaim claim in stream.Claims.Where(c => c.IsAsserted))
+            foreach (StreamClaim claim in stream.Claims)
             {
                 writer.WriteStartObject();
                 writer.WriteString("kind", claim.Kind);

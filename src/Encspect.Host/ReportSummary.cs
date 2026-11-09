@@ -45,6 +45,11 @@ public sealed record ReportSummary(
 
     public Confidence? ProcessorConfidence { get; init; }
 
+    // What the first stream with a claim of being the lossy part of a pair is the lossy part of ("DualStream"), and the confidence in it.
+    public string? LossyPart { get; init; }
+
+    public Confidence? LossyPartConfidence { get; init; }
+
     // The lost samples of the streams Samples adds up (StreamInfo.LostSamples), counted the same way: the longest stream of a playback group once.
     public long LostSamples { get; init; }
 
@@ -91,6 +96,7 @@ public sealed record ReportSummary(
         StreamInfo? encoded = audio.FirstOrDefault(s => s.Encoder is not null);
         StreamInfo? written = streams.FirstOrDefault(s => s.Writer is not null);
         StreamInfo? processed = streams.FirstOrDefault(s => s.Processor is not null);
+        StreamClaim? lossyPart = streams.SelectMany(s => s.Claims).FirstOrDefault(c => c.Kind == StreamClaim.LossyPart);
         List<StreamInfo> timed = audio.Where(s => s.AverageBitrate is not null && s.Duration > 0).ToList();
         double timedDuration = timed.Sum(s => s.Duration);
         List<StreamInfo> counted = [.. audio.Where(s => s.PlaybackGroup is null),
@@ -131,6 +137,8 @@ public sealed record ReportSummary(
             IsVerified = verified,
             Processor = processed?.Processor,
             ProcessorConfidence = processed?.ProcessorConfidence,
+            LossyPart = lossyPart?.Value,
+            LossyPartConfidence = lossyPart?.Confidence,
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,

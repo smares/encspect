@@ -83,6 +83,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add("processed by " + Format.Encoder(processor, Stream.ProcessorConfidence));
             }
 
+            if (Stream.Claims.FirstOrDefault(c => c.Kind == StreamClaim.LossyPart) is { } lossyPart)
+            {
+                parts.Add($"lossy part of a {lossyPart.Value} (" + lossyPart.Confidence.ToString().ToLowerInvariant() + ")");
+            }
+
             return string.Join(" · ", parts);
         }
     }

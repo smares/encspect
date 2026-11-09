@@ -127,7 +127,7 @@ internal static class Walk
                     if (isFirst && index >= 0 && held > 0)
                     {
                         long at = position + Layout.BlockHeaderLength;
-                        s.Source.Headers[at] = HeaderData.Analyze(s, reader, at, held, index, isHead);
+                        s.Source.Headers[at] = HeaderData.Analyze(s, reader, at, held, index, isHead, IsRiffFile(s));
                     }
 
                     break;
@@ -169,6 +169,10 @@ internal static class Walk
 
         records.End = Math.Min(position, reader.End);
     }
+
+    // Whether the stored header is a RIFF, RF64 or BW64 WAVE header: only then is the stored footer the chunks after the data chunk.
+    private static bool IsRiffFile(State s) =>
+        s.Source.Headers.Values.FirstOrDefault(h => h.Name == "WAV Header Data")?.Container is WavHeader.RiffContainer or WavHeader.Rf64Container or WavHeader.Bw64Container;
 
     private static void ReadMain(State s, ByteReader reader, long position, long held, uint length, ref BlockRecord block)
     {

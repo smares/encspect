@@ -326,6 +326,18 @@ public class DetailViewModelTests
         Assert.EndsWith(" · written by fdkaac 1.0.0 (libfdk-aac 4.0.1) (low)", model.StreamsText, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void A_stream_line_names_the_lossy_part_of_a_DualStream_with_its_confidence()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "optimfrog", "external-ofs-quality3.ofs"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.EndsWith(" · lossy part of a DualStream (medium)", model.StreamsText, StringComparison.Ordinal);
+    }
+
     // The processor comes last in the stream's line.
     [Fact]
     public void A_stream_line_names_the_processor_after_the_writer()

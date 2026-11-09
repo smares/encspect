@@ -135,7 +135,7 @@ def manifest(data, extra=None):
                                                  "fmt": fmt_fields(data, head["offset"] + 8, head["end"])}
     tail = next((b for b in blocks if b["id"] == "TAIL"), None)
     result["tail"] = None if tail is None else {"offset": tail["offset"] + 8, "length": tail["length"],
-                                                 "chunks": [c["id"] for c in riff_chunks(data, tail["offset"] + 8, tail["end"], skip_header=False)]}
+                                                 "chunks": [c["id"] for c in riff_chunks(data, tail["offset"] + 8, tail["end"], skip_header=False)] if is_riff else []}
     if main is not None:
         channels = CHANNELS[main["channel_config"]] if main["channel_config"] < 2 else 2
         samples = main["samples"] // channels

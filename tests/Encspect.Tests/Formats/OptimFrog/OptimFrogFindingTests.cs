@@ -538,7 +538,7 @@ public class OptimFrogFindingTests
 
     private static Report AnalyzeNamed(byte[] data, string name) => Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
 
-    private static Node? Claim(Report report) => report.Root.Children.Single(c => c.Name == "OptimFROG").Children.FirstOrDefault(c => c.Name == "Lossy Stream");
+    private static Node? Claim(Report report) => report.Root.Children.Single(c => c.Name == "OptimFROG").Children.FirstOrDefault(c => c.Name == "Lossy Part");
 
     [Fact]
     public void TheReservedBytePatternAloneIsALowConfidenceClaimOfTheLossyPart()
@@ -552,7 +552,7 @@ public class OptimFrogFindingTests
             Assert.Contains("0x01", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
             Assert.False(report.Streams.Single().Verification!.IsLossy);
             StreamClaim typed = Assert.Single(report.Streams.Single().Claims);
-            Assert.Equal((StreamClaim.LossyPart, Confidence.Low, true), (typed.Kind, typed.Confidence, typed.IsAsserted));
+            Assert.Equal((StreamClaim.LossyPart, Confidence.Low), (typed.Kind, typed.Confidence));
             Assert.Equal(claim.Children.Single(c => c.Name == "Evidence").Value?.ToString(), typed.Evidence);
             Assert.Contains("the data block has the low byte 0x01", typed.Evidence);
             Assert.Empty(report.Findings);
@@ -574,13 +574,45 @@ public class OptimFrogFindingTests
     }
 
     [Fact]
+    public void TheClaimIsInTheSummaryTheCsvAndTheJson()
+    {
+        Report report = AnalyzeNamed(DualStream(), "Song.ofs");
+
+        ReportSummary summary = ReportSummary.From(report);
+        Assert.Equal(("DualStream", Confidence.Medium), (summary.LossyPart, summary.LossyPartConfidence));
+        var csv = new StringWriter();
+        ReportCsvWriter.Write([report], csv);
+        string[] lines = csv.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Contains(",Processor,Processor Confidence,Lossy Part,Lossy Part Confidence,Tags,", lines[0], StringComparison.Ordinal);
+        Assert.Contains(",,,DualStream,Medium,", lines[1], StringComparison.Ordinal);
+        var json = new MemoryStream();
+        ReportJsonWriter.Write([report], json);
+        using var document = System.Text.Json.JsonDocument.Parse(json.ToArray());
+        System.Text.Json.JsonElement claim = document.RootElement[0].GetProperty("streams")[0].GetProperty("claims")[0];
+        Assert.Equal(("lossy-part", "DualStream", "Medium"), (claim.GetProperty("kind").GetString(), claim.GetProperty("value").GetString(), claim.GetProperty("confidence").GetString()));
+
+        ReportSummary lossless = ReportSummary.From(AnalyzeNamed(Builder.Standard(), "x.ofr"));
+        Assert.Null(lossless.LossyPart);
+        using var plain = System.Text.Json.JsonDocument.Parse(JsonOf(AnalyzeNamed(Builder.Standard(), "x.ofs")));
+        Assert.False(plain.RootElement[0].GetProperty("streams")[0].TryGetProperty("claims", out _));
+    }
+
+    private static byte[] JsonOf(Report report)
+    {
+        var json = new MemoryStream();
+        ReportJsonWriter.Write([report], json);
+        return json.ToArray();
+    }
+
+    [Fact]
     public void TheOfsExtensionOnALosslessFileMakesNoClaimAndIsNoted()
     {
         Report report = AnalyzeNamed(Builder.Standard(), "x.ofs");
 
         Assert.Null(Claim(report));
         Assert.False(report.Streams.Single().Verification!.IsLossy);
-        Assert.True(report.Streams.Single().Claims.All(c => !c.IsAsserted));
+        Assert.Empty(report.Streams.Single().Claims);
+        Assert.Single(report.Streams.Single().ClaimsAgainst);
         Finding note = Single(report, "optimfrog.extension-differs");
         Assert.Equal(Severity.Info, note.Severity);
         Assert.NotNull(note.Path);

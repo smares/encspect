@@ -21,7 +21,7 @@ internal static class Explain
     public const string CorrCrc = "The CRC-32 the block stores, over its data after this field: zlib's CRC-32 in all six correction files of Encspect's tests. The analyzer compares it in every analysis.";
     public const string CorrData = "The correction data, which only OptimFROG's own library reads.";
     public const string CorrCut = "The bytes of a correction block that the data holds; they end before its CRC-32 does.";
-    public const string LossyStream = "Whether the file looks like the lossy part of a DualStream. The data blocks' two reserved bytes read 0x1101 (stereo) or 0x0901 (mono) in every .ofs file of OptimFROG 5.100 in Encspect's tests and never in a lossless file; the analyzer uses that pattern.";
+    public const string LossyStream = "What the file looks like the lossy part of: a DualStream, the pair of a lossy .ofs file and its correction file. The data blocks' two reserved bytes read 0x1101 (stereo) or 0x0901 (mono) in every .ofs file of OptimFROG 5.100 in Encspect's tests and never in a lossless file; the analyzer uses that pattern.";
     public const string LossyConfidenceLow = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
     public const string LossyConfidenceMedium = "Medium: the pattern of OptimFROG 5.100's files and the file name's extension, .ofs, agree. Pairing the file with its .ofc (0.4) would confirm it.";
     public const string StatIsCorrectionFile = "Whether this file is a correction file: its blocks hold correction data and no audio.";

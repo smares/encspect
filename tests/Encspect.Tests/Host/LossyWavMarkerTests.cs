@@ -120,7 +120,7 @@ public class LossyWavMarkerTests
         var csv = new StringWriter();
         ReportCsvWriter.Write([report], csv);
         string[] lines = csv.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.Contains(",Writer,Writer Confidence,Processor,Processor Confidence,Tags,", lines[0], StringComparison.Ordinal);
+        Assert.Contains(",Writer,Writer Confidence,Processor,Processor Confidence,Lossy Part,Lossy Part Confidence,Tags,", lines[0], StringComparison.Ordinal);
         Assert.Contains(",lossyWAV 1.4.2,High,", lines[1], StringComparison.Ordinal);
     }
 

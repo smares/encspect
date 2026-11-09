@@ -23,15 +23,13 @@ internal static class ExtensionSignals
         {
             foreach (StreamClaim claim in stream.Claims.Where(c => c.Kind == StreamClaim.LossyPart))
             {
-                if (claim.IsAsserted)
-                {
-                    claim.Raise(Confidence.Medium, $"the file name ends in .{extension}, the extension of DualStream files");
-                }
-                else
-                {
-                    context.AddFinding(Severity.Info, "optimfrog.extension-differs",
-                        $"The file name ends in .{extension}, the extension of DualStream files, but {claim.Evidence}; no claim is made, and the extension decides nothing.", stream.Nodes[0]);
-                }
+                claim.Raise(Confidence.Medium, $"the file name ends in .{extension}, the extension of DualStream files");
+            }
+
+            foreach (StreamClaim against in stream.ClaimsAgainst.Where(c => c.Kind == StreamClaim.LossyPart))
+            {
+                context.AddFinding(Severity.Info, "optimfrog.extension-differs",
+                    $"The file name ends in .{extension}, the extension of DualStream files, but {against.Evidence}; no claim is made, and the extension decides nothing.", stream.Nodes[0]);
             }
         }
     }
