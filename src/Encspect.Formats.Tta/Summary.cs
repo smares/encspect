@@ -17,7 +17,7 @@ internal static class Summary
         };
 
     // Ends the analysis of a stream: the checks, the nodes and the stream info. start and end are the stream node's extent.
-    public static void Finish(State s, long start, long end)
+    public static void Finish(State s, long start, long end, Action<IDecodeSession>? feed = null)
     {
         Node stream = s.Stream;
         Checks(s);
@@ -35,7 +35,7 @@ internal static class Summary
             s.AddLeading(writer);
         }
 
-        StreamVerification verification = Verify(s);
+        StreamVerification verification = Verify(s, feed);
         StreamInfo? info = Statistics(s, Cover, stream, writer, verification);
         if (info is not null)
         {
@@ -136,7 +136,7 @@ internal static class Summary
         }
     }
 
-    private static StreamVerification Verify(State s)
+    private static StreamVerification Verify(State s, Action<IDecodeSession>? feed)
     {
         Records records = s.Records;
         var tallies = new List<ChecksumTally>();
@@ -165,8 +165,19 @@ internal static class Summary
             Failed = s.CrcFailures,
         });
 
-        // No decoder exists for TTA, so the session decodes nothing and its Finish says so.
-        IDecodeSession session = s.Context.StartDecoding(TtaCodecParser.CodecId, new DecodeSetup
+        // A container's packets are fed as they are read, so its session exists already; a file's frames are fed from here, once its stream node exists.
+        IDecodeSession session = s.Session ?? StartSession(s);
+        if (feed is not null && session.IsDecoding)
+        {
+            feed(session);
+        }
+
+        return session.Finish(tallies);
+    }
+
+    // The decoder takes the header as its configuration; a stream without one (a container that stores none) is refused by it, since the samples of its last frame are not known.
+    public static IDecodeSession StartSession(State s) =>
+        s.Session = s.Context.StartDecoding(TtaCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,
             Channels = s.Channels,
@@ -174,8 +185,6 @@ internal static class Summary
             Samples = s.Header?.Samples,
             Configuration = s.HeaderBytes,
         });
-        return session.Finish(tallies);
-    }
 
     private static Node? Writer(State s, long start, long end) =>
         WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },

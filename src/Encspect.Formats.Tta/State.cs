@@ -47,6 +47,9 @@ internal sealed class State
     // The header's bytes, which a decoder would take as its configuration.
     public MappedBytes? HeaderBytes { get; set; }
 
+    // The decoding session, once started.
+    public IDecodeSession? Session { get; set; }
+
     // What the stream states about the audio, from the header or from the container's own figures.
     public long SampleRate { get; set; }
 

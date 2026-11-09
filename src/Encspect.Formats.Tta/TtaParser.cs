@@ -127,7 +127,7 @@ public sealed class TtaParser : IFormatParser
         long? end = Walk(state, reader);
         if (end is { } streamEnd)
         {
-            Summary.Finish(state, reader.Start, streamEnd);
+            Summary.Finish(state, reader.Start, streamEnd, session => Feeding.FromFile(state, reader, session));
         }
         else
         {

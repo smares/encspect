@@ -30,6 +30,7 @@ public sealed class TtaCodecParser : ICodecParser
             Configure(state, configuration);
         }
 
+        IDecodeSession session = Summary.StartSession(state);
         long start = -1;
         long end = 0;
         int index = 0;
@@ -42,7 +43,13 @@ public sealed class TtaCodecParser : ICodecParser
 
             start = start < 0 ? packet.FileStart : start;
             end = Math.Max(end, packet.FileEnd);
-            Add(state, packet, index++);
+            Add(state, packet, index);
+            if (session.IsDecoding)
+            {
+                Feeding.FromPacket(state, session, packet, index);
+            }
+
+            index++;
         }
 
         if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Listed)
