@@ -175,24 +175,6 @@
       ]
     },
     {
-      "scope": "stream",
-      "array": "series",
-      "name": "Bitrate",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Bitrate Over Time",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
       "scope": "finding",
       "code": "tta.last-frame-samples-ambiguous",
       "goldens": [
@@ -213,7 +195,8 @@
         "samples",
         "duration",
         "averageBitrate",
-        "isVbr"
+        "isVbr",
+        "series"
       ],
       "goldens": [
         "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
