@@ -76,12 +76,47 @@ public class TtaCodecParserTests
         Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
     }
 
+    // Without the header the container's figures and length stand in: the frames decode to the file's samples, the last one's count chosen by its codes.
+    // 100,000 samples at 44,100 Hz are frames of 46,080, 46,080 and 7,840.
+    [Theory]
+    [InlineData(100_000L)]
+    [InlineData(100_003L)]
+    [InlineData(140_000L)]
+    public void FramesWithoutAHeaderAreDecodedWithTheContainersFiguresAndLength(long length)
+    {
+        (_, _, List<byte[]> frames) = Parts();
+        using System.Text.Json.JsonDocument manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "tta", "external-16-stereo.expected.json")));
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node)
+        {
+            Format = new AudioFormat(0, 2, 44100, 0, 0, 16),
+            DurationSamples = length,
+        });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed");
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_pcm_md5").GetString(), sink.Hash());
+        Assert.Equal(100_000, report.Streams.Single().Verification!.DecodedSamples);
+    }
+
     [Fact]
-    public void FramesWithoutAHeaderAreNotDecodedBecauseTheLastFramesSamplesAreNotKnown()
+    public void WithoutAHeaderOrALengthTheLastFrameIsNotDecoded()
     {
         (_, _, List<byte[]> frames) = Parts();
 
         (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node) { Format = new AudioFormat(0, 2, 44100, 0, 0, 16) });
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.last-frame-samples-unknown");
+        Assert.NotNull(finding.Path);
+        Assert.Equal(2 * 46080, sink.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
+    [Fact]
+    public void WithoutAHeaderOrAFormatTheTrackIsNotDecoded()
+    {
+        (_, _, List<byte[]> frames) = Parts();
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node));
 
         Assert.Contains(report.Findings, f => f.Code == "decode.not-possible" && f.Message.Contains("no TTA1 header", StringComparison.Ordinal));
         Assert.Equal(0, sink.Declared);

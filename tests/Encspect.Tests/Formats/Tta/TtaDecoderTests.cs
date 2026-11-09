@@ -264,6 +264,24 @@ public class TtaDecoderTests
         Assert.NotEmpty(file);
     }
 
+    [Fact]
+    public void BytesAfterAFramesCodesAreReportedAndTheSamplesStillDecode()
+    {
+        int[][] samples = Signal("sine", 2, 16, 3000);
+        (_, List<byte[]> frames) = TtaEncoder.Encode(8000, 16, samples);
+        byte[] coded = frames[0][..^4];
+        byte[] padded = [.. coded, 0x55, 0xAA, 0x0F, 0, 0, 0, 0];
+        BinaryPrimitives.WriteUInt32LittleEndian(padded.AsSpan(padded.Length - 4), Crc32.Of(padded.AsSpan(0, padded.Length - 4)));
+        byte[] file = Unpooled.Join([TtaBuilder.Header(8000, 2, 16, 3000), TtaBuilder.Table([(uint)padded.Length]), padded]);
+
+        (Report report, CollectingSink sink) = Decode(file);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.frame-bytes-after-codes");
+        Assert.Contains("3 bytes", finding.Message);
+        Assert.NotNull(finding.Path);
+        Assert.Equal(samples[1], sink.Channels[1]);
+    }
+
     [Theory]
     [InlineData(2, 16, "password")]
     [InlineData(3, 16, "audio format 3")]

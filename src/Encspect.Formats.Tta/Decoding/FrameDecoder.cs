@@ -129,6 +129,18 @@ internal sealed class FrameDecoder : IFrameDecoder
             done += count;
         }
 
+        // The reference ignores bytes after the last code and its byte of padding; they are reported, since no checksum over the decoded audio would show a
+        // frame whose codes end early (tta-format.md, section 8).
+        long after = coded.Length - bits.ConsumedBytes;
+        if (after > 0)
+        {
+            MappedBytes bytes = frame.Bytes;
+            IReadOnlyList<ByteRange> ranges = bytes.FileRanges();
+            _context.AddFinding(Severity.Info, "tta.frame-bytes-after-codes",
+                $"The codes of the frame at 0x{bytes.FileStart:X} end {Counts.Of(after, "byte", "bytes")} before its CRC-32; the bytes after them are not read, as the reference decoder does not read them either.",
+                new Node(frame.NodeName, bytes.FileStart, bytes.FileEnd - bytes.FileStart) { Ranges = ranges.Count > 1 ? ranges : null });
+        }
+
         return samples;
     }
 
@@ -260,9 +272,14 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
         else
         {
-            if (state.KB > 32 || state.KA > 31)
+            if (state.KB > 32)
             {
                 throw new InvalidDataException("A Rice parameter is beyond the 32 bits a value can have");
+            }
+
+            if (state.KA > 31)
+            {
+                throw new InvalidDataException("A Rice code decodes to a value of 31 bits or more");
             }
 
             ulong q = (ulong)(unary - 1) << state.KB;

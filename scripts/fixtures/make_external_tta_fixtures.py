@@ -57,6 +57,8 @@ FIXTURES = {
     "16-stereo-one-frame": (("music", 44100, 2, 16, 5000), []),
     "16-silent": (("silent", 44100, 2, 16, 100000), []),
     "16-loud-noise": (("loud", 22050, 2, 16, 50000), []),
+    # Full-scale noise at 24 bits: the Rice parameters grow to near 24 bits, where libtta's bit cache is narrowest (docs/formats/tta.md, "Not covered").
+    "24-stereo-loud-noise": (("loud", 48000, 2, 24, 30000), ["-sample_fmt", "s32"]),
     "16-stereo-tags": (("music", 44100, 2, 16, 50000), ["-metadata", "title=Fixture title", "-metadata", "artist=Fixture artist", "-metadata", "album=Fixture album"]),
     "16-stereo-bitexact": (("music", 44100, 2, 16, 50000), ["-fflags", "+bitexact", "-flags:a", "+bitexact"]),
 }

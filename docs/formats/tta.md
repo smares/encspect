@@ -100,7 +100,7 @@ The header states a channel count and no speaker positions. The layout comes fro
 ## Decoding
 
 - **When:** the decoder runs where the front end asks for the samples (`--measure`, the GUI's audio panels, an `Output` sink of the library). The tree is the same either way. It declares no checksum over the decoded audio, because the stream stores none: the frames' CRC-32s cover the coded bytes only and say nothing about the reconstruction.
-- **What it reads:** audio format 1, 1 to 24 bits per sample (decoded at the container width of 1, 2 or 3 bytes; a depth that is not a multiple of 8 is left-justified, its low bits zero) and any channel count the header states. Each frame is decoded on its own from the same starting state, so a damaged or lost frame costs only itself.
+- **What it reads:** audio format 1, 1 to 24 bits per sample (decoded at the container width of 1, 2 or 3 bytes; a depth that is not a multiple of 8 is output as the container's values, which for a left-justified source have their low bits zero; no encoder-written file of such a depth is at hand) and any channel count the header states. Each frame is decoded on its own from the same starting state, so a damaged or lost frame costs only itself.
 - **The stages** (each channel in turn for every sample time):
   - the adaptive Rice code: the unary part is a run of 1 bits ended by a 0, and the binary part has the width of one of two running parameters; both adapt to a running sum of the values;
   - an adaptive filter of 8 taps, whose coefficients follow the signs of the history (sign-sign least mean squares), with a shift of 10 bits for 8 and 24 bit samples and 9 for 16 bit samples;
