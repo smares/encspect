@@ -21,7 +21,7 @@ internal static class OptimFrogBuilder
 
     // The main block's data: the total number of samples over all channels, the sample type, the channel configuration, the sample rate, the encoder ID,
     // the compression byte and, from 5.100, the minimum decoder version less 4500; extra adds bytes the specification leaves unknown.
-    public static byte[] Main(long samples = 88200, int sampleType = 3, int channelConfiguration = 1, uint rate = 44100, int encoderId = 0x2582, int compression = 0x0A,
+    public static byte[] MainBlock(long samples = 88200, int sampleType = 3, int channelConfiguration = 1, uint rate = 44100, int encoderId = 0x2582, int compression = 0x0A,
         int? minDecoder = 100, int extra = 0, string id = "OFR ", int? size = null)
     {
         var data = new List<byte>(21);
@@ -115,7 +115,7 @@ internal static class OptimFrogBuilder
     public static byte[] File(params byte[][] blocks) => [.. blocks.SelectMany(b => b)];
 
     public static byte[] Standard(int comps = 1, long valuesPerBlock = 88200, int payload = 100) =>
-        File(Main(valuesPerBlock * comps), Head(), .. Enumerable.Range(0, comps).Select(i => Comp(valuesPerBlock, payload, seed: i)), Tail());
+        [.. MainBlock(valuesPerBlock * comps), .. Head(), .. Enumerable.Range(0, comps).SelectMany(i => Comp(valuesPerBlock, payload, seed: i)), .. Tail()];
 
     // An ID3v1.1 tag: 128 bytes, the title and artist padded with NUL bytes.
     public static byte[] Id3v1(string title, string artist)

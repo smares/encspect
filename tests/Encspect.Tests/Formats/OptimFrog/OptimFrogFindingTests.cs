@@ -53,8 +53,8 @@ public class OptimFrogFindingTests
     [Fact]
     public void AMainBlockAloneWithValidFieldsIsLikely()
     {
-        Assert.Equal(80, Sniff(Builder.Main()).Class);
-        Assert.Equal(80, Sniff([.. Builder.Main(), .. "junk that is not a block"u8]).Class);
+        Assert.Equal(80, Sniff(Builder.MainBlock()).Class);
+        Assert.Equal(80, Sniff([.. Builder.MainBlock(), .. "junk that is not a block"u8]).Class);
     }
 
     [Theory]
@@ -64,7 +64,7 @@ public class OptimFrogFindingTests
     [InlineData(17, 3, 1, 0u)]
     public void AMainBlockWhoseFieldsCannotBeOneIsPossible(int size, int sampleType, int channelConfiguration, uint rate)
     {
-        byte[] main = Builder.Main(sampleType: sampleType, channelConfiguration: channelConfiguration, rate: rate, size: size);
+        byte[] main = Builder.MainBlock(sampleType: sampleType, channelConfiguration: channelConfiguration, rate: rate, size: size);
 
         Assert.Equal(70, Sniff(main).Class);
     }
@@ -100,7 +100,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ADeclaredEndLiesPastTheDataOfAFileCutInABlock()
     {
-        byte[] file = Builder.File(Builder.Main(), Builder.Head(), Builder.Comp(88200, 500));
+        byte[] file = Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Comp(88200, 500));
 
         Assert.Equal(file.Length, DeclaredEnd(file[..^100]));
     }
@@ -108,14 +108,14 @@ public class OptimFrogFindingTests
     [Fact]
     public void AnUnknownBlockFollowedByAValidOneIsWalkedAndReported()
     {
-        byte[] file = Builder.File(Builder.Main(), Builder.Head(), Builder.Block("XTRA", [1, 2, 3, 4, 5]), Builder.Comp(88200), Builder.Tail());
+        byte[] file = Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Block("XTRA", [1, 2, 3, 4, 5]), Builder.Comp(88200), Builder.Tail());
 
         Report report = Analyze(file);
 
         Finding unknown = Single(report, "optimfrog.block-unknown");
         Assert.Equal(Severity.Info, unknown.Severity);
         Assert.Equal(1, report.Streams.Single().Verification!.Checksums[0].Checked);
-        Assert.Empty(report.Findings.Where(f => f.Code != "optimfrog.block-unknown"));
+        Assert.DoesNotContain(report.Findings, f => f.Code != "optimfrog.block-unknown");
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AFileCutInADataBlockIsReportedAndItsCrcIsNotCompared()
     {
-        byte[] file = Builder.File(Builder.Main(), Builder.Head(), Builder.Comp(88200, 500));
+        byte[] file = Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Comp(88200, 500));
         byte[] cut = file[..^100];
 
         Report report = Analyze(cut);
@@ -209,7 +209,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AFileCutInTheMainBlockIsReadAsFarAsItGoes()
     {
-        Report report = Analyze(Builder.Main()[..16], new AnalysisOptions { ForcedFormat = "OptimFROG" });
+        Report report = Analyze(Builder.MainBlock()[..16], new AnalysisOptions { ForcedFormat = "OptimFROG" });
 
         Single(report, "optimfrog.block-cut");
         Assert.Empty(report.Streams);
@@ -219,7 +219,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AFailingCrcIsReportedOnceWithACount()
     {
-        byte[] file = Builder.File(Builder.Main(88200 * 3), Builder.Head(), Builder.Comp(88200, crc: 1), Builder.Comp(88200, seed: 1), Builder.Comp(88200, crc: 2, seed: 2), Builder.Tail());
+        byte[] file = Builder.File(Builder.MainBlock(88200 * 3), Builder.Head(), Builder.Comp(88200, crc: 1), Builder.Comp(88200, seed: 1), Builder.Comp(88200, crc: 2, seed: 2), Builder.Tail());
 
         Report report = Analyze(file);
 
@@ -234,7 +234,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AMissingMiddleBlockIsASamplesMismatch()
     {
-        byte[] file = Builder.File(Builder.Main(88200 * 3), Builder.Head(), Builder.Comp(88200), Builder.Comp(88200, seed: 2), Builder.Tail());
+        byte[] file = Builder.File(Builder.MainBlock(88200 * 3), Builder.Head(), Builder.Comp(88200), Builder.Comp(88200, seed: 2), Builder.Tail());
 
         Report report = Analyze(file);
 
@@ -247,7 +247,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ABlockThatDiffersFromTheMainBlockIsReported()
     {
-        byte[] file = Builder.File(Builder.Main(88200 * 2), Builder.Head(), Builder.Comp(88200), Builder.Comp(88200, sampleType: 5, seed: 1), Builder.Tail());
+        byte[] file = Builder.File(Builder.MainBlock(88200 * 2), Builder.Head(), Builder.Comp(88200), Builder.Comp(88200, sampleType: 5, seed: 1), Builder.Tail());
 
         Report report = Analyze(file);
 
@@ -258,7 +258,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AMissingHeaderAndFooterAreReported()
     {
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Comp(88200)));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Comp(88200)));
 
         Single(report, "optimfrog.head-missing");
         Single(report, "optimfrog.tail-missing");
@@ -267,7 +267,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ABlockOutOfOrderIsReported()
     {
-        byte[] file = Builder.File(Builder.Main(88200), Builder.Tail(), Builder.Head(), Builder.Comp(88200));
+        byte[] file = Builder.File(Builder.MainBlock(88200), Builder.Tail(), Builder.Head(), Builder.Comp(88200));
 
         Report report = Analyze(file);
 
@@ -279,7 +279,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ASecondMainBlockOrHeaderBlockIsOutOfOrder()
     {
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(), Builder.Head(), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Head(), Builder.Comp(88200), Builder.Tail()));
 
         Single(report, "optimfrog.block-out-of-order");
     }
@@ -293,8 +293,8 @@ public class OptimFrogFindingTests
         byte[] file = kind switch
         {
             "main" => [.. Builder.Block("OFR ", new byte[12]), .. Builder.File(Builder.Head(), Builder.Comp(88200), Builder.Tail())],
-            "comp" => Builder.File(Builder.Main(), Builder.Head(), Builder.Block("COMP", new byte[10]), Builder.Tail()),
-            _ => Builder.File(Builder.Main(), Builder.Head(), Builder.Comp(88200), Builder.Tail(), Builder.Md5(8)),
+            "comp" => Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Block("COMP", new byte[10]), Builder.Tail()),
+            _ => Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Comp(88200), Builder.Tail(), Builder.Md5(8)),
         };
 
         Report report = Analyze(file, new AnalysisOptions { ForcedFormat = "OptimFROG" });
@@ -312,7 +312,7 @@ public class OptimFrogFindingTests
     [InlineData("speedup", 3, 1, 0x2582, 0x0A | 5)]
     public void AnUndefinedValueIsNamedWithAnInfoFinding(string problem, int sampleType, int configuration, int encoder, int compression)
     {
-        byte[] file = Builder.File(Builder.Main(sampleType: sampleType, channelConfiguration: configuration, encoderId: encoder, compression: compression), Builder.Head(),
+        byte[] file = Builder.File(Builder.MainBlock(sampleType: sampleType, channelConfiguration: configuration, encoderId: encoder, compression: compression), Builder.Head(),
             Builder.Comp(88200, sampleType: sampleType, channelConfiguration: configuration, encoderId: encoder), Builder.Tail());
 
         Report report = Analyze(file);
@@ -326,7 +326,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AnUnknownBuildSystemOfFifteenIsDefined()
     {
-        Report report = Analyze(Builder.File(Builder.Main(encoderId: 0x258F), Builder.Head(), Builder.Comp(88200, encoderId: 0x258F), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(encoderId: 0x258F), Builder.Head(), Builder.Comp(88200, encoderId: 0x258F), Builder.Tail()));
 
         Assert.Empty(report.Findings);
     }
@@ -334,7 +334,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ASampleRateOfZeroIsReported()
     {
-        Report report = Analyze(Builder.File(Builder.Main(rate: 0), Builder.Head(), Builder.Comp(88200), Builder.Tail()), new AnalysisOptions { ForcedFormat = "OptimFROG" });
+        Report report = Analyze(Builder.File(Builder.MainBlock(rate: 0), Builder.Head(), Builder.Comp(88200), Builder.Tail()), new AnalysisOptions { ForcedFormat = "OptimFROG" });
 
         Single(report, "optimfrog.sample-rate-zero");
         Assert.Equal(0, report.Streams.Single().Duration);
@@ -343,7 +343,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void ATotalTheChannelsDoNotDivideIsReported()
     {
-        Report report = Analyze(Builder.File(Builder.Main(88201), Builder.Head(), Builder.Comp(88201), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(88201), Builder.Head(), Builder.Comp(88201), Builder.Tail()));
 
         Single(report, "optimfrog.samples-channels-mismatch");
     }
@@ -351,7 +351,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void TheFloatEncodersMainBlockIsReadAsTheMainBlock()
     {
-        byte[] file = Builder.File(Builder.Main(sampleType: 8, id: "OFRX"), Builder.Head(), Builder.Comp(88200, sampleType: 8), Builder.Block("DETA", new byte[70]), Builder.Tail());
+        byte[] file = Builder.File(Builder.MainBlock(sampleType: 8, id: "OFRX"), Builder.Head(), Builder.Comp(88200, sampleType: 8), Builder.Block("DETA", new byte[70]), Builder.Tail());
 
         Report report = Analyze(file);
 
@@ -364,7 +364,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AnAdditionalFieldInTheMainBlockIsSkipped()
     {
-        Report report = Analyze(Builder.File(Builder.Main(extra: 4), Builder.Head(), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(extra: 4), Builder.Head(), Builder.Comp(88200), Builder.Tail()));
 
         Assert.Empty(report.Findings);
         Node main = report.Root.Children.Single(c => c.Name == "OptimFROG").Children.First(c => c.Name == "Main Block");
@@ -399,12 +399,12 @@ public class OptimFrogFindingTests
     public void BlocksPastTheRecordsAreCountedAndTheirCrcsCompared()
     {
         int count = Records.MaxBlocks + 10;
-        byte[] data = new byte[Builder.Main().Length + (count * 22)];
-        Builder.Main(count).CopyTo(data, 0);
+        byte[] data = new byte[Builder.MainBlock().Length + (count * 22)];
+        Builder.MainBlock(count).CopyTo(data, 0);
         byte[] block = Builder.Comp(1, 0);
         for (int i = 0; i < count; i++)
         {
-            block.CopyTo(data, Builder.Main().Length + (i * 22));
+            block.CopyTo(data, Builder.MainBlock().Length + (i * 22));
         }
 
         data[^1] ^= 1;
@@ -427,7 +427,7 @@ public class OptimFrogFindingTests
     public void ARiffHeaderIsNamedAndItsChunksAreListed()
     {
         byte[] wav = Builder.Wav(beforeData: Builder.Chunk("LIST", "INFOabcd"u8.ToArray()));
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail(Builder.Chunk("id3 ", new byte[11]))));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail(Builder.Chunk("id3 ", new byte[11]))));
 
         Assert.Empty(report.Findings);
         Node stream = report.Root.Children.Single(c => c.Name == "OptimFROG");
@@ -441,7 +441,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AHeaderWhoseFormatStatesOtherChannelsIsReported()
     {
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(Builder.Wav(channels: 1)), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(Builder.Wav(channels: 1)), Builder.Comp(88200), Builder.Tail()));
 
         Finding finding = Single(report, "optimfrog.wav-channels-differ");
         Assert.Equal(Severity.Warning, finding.Severity);
@@ -451,7 +451,7 @@ public class OptimFrogFindingTests
     public void AChannelMaskThatNamesOtherSpeakersThanTheChannelsIsReported()
     {
         byte[] wav = Builder.Wav(format: Builder.Format(2, 44100, tag: 0xFFFE, mask: 0x3F));
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
 
         Finding finding = Single(report, "optimfrog.channel-mask-mismatch");
         Assert.Equal(Severity.Info, finding.Severity);
@@ -462,7 +462,7 @@ public class OptimFrogFindingTests
     public void AChannelMaskSetsTheLayout()
     {
         byte[] wav = Builder.Wav(format: Builder.Format(2, 44100, tag: 0xFFFE, mask: 0x600));
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
 
         Assert.Empty(report.Findings);
         Assert.Contains("side", ChannelLayouts.Describe(report.Streams.Single().ChannelLayout!));
@@ -483,7 +483,7 @@ public class OptimFrogFindingTests
             _ => Builder.Wav(format: Builder.Format(2, 44100, tag: 0xFFFE, cbSize: 4)),
         };
 
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
 
         Finding finding = Single(report, "optimfrog.wav-header-damaged");
         Assert.Equal(Severity.Warning, finding.Severity);
@@ -493,7 +493,7 @@ public class OptimFrogFindingTests
     [Fact]
     public void AHeaderThatIsNoRiffFileIsShownAsBytes()
     {
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(new byte[44]), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(new byte[44]), Builder.Comp(88200), Builder.Tail()));
 
         Assert.Empty(report.Findings);
         Node head = report.Root.Children.Single(c => c.Name == "OptimFROG").Children.Single(c => c.Name == "Header Block").Children.Single(c => c.Name == "WAV Header Data");
@@ -505,7 +505,7 @@ public class OptimFrogFindingTests
     {
         byte[] fact = Builder.Chunk("fact", [.. "lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard\r\n"u8, 0, 0]);
         byte[] wav = Builder.Wav(beforeData: fact);
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(wav), Builder.Comp(88200), Builder.Tail()));
 
         Assert.Empty(report.Findings);
         StreamInfo stream = report.Streams.Single();
@@ -517,7 +517,7 @@ public class OptimFrogFindingTests
     public void AFactTextOfNoKnownFormIsReported()
     {
         byte[] fact = Builder.Chunk("fact", [.. "lossyWAV is a program"u8, 0, 0]);
-        Report report = Analyze(Builder.File(Builder.Main(), Builder.Head(Builder.Wav(beforeData: fact)), Builder.Comp(88200), Builder.Tail()));
+        Report report = Analyze(Builder.File(Builder.MainBlock(), Builder.Head(Builder.Wav(beforeData: fact)), Builder.Comp(88200), Builder.Tail()));
 
         Single(report, "optimfrog.header-fact-text-unrecognized");
     }
