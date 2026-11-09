@@ -173,7 +173,10 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Tool** `optimfrog_tool.py`: the pinned Linux x64 package through `downloads.py`, with a Wayback fallback and a copy in encspect-private (the license allows redistributing the unmodified package). The binaries are static; no build.
 - **Generator** `make_external_optimfrog_fixtures.py`, rerun in CI, which checks the files are reproducible byte for byte:
   - `ofr --preset 0` to `10` and `max`, and `--mode` with each of the 19 names `ofr --help` accepts (this settles how the `-light` modes are stored, which the specification does not list), 16-bit stereo 44.1 kHz;
-  - several `COMP` blocks: a block holds 10 s at the default `--seek normal` (`luckynight.ofr`), so a 25-second mono signal at 8 kHz, encoded with `--seek normal`, `fast` and `min`, gives several blocks in a small file; the smallest file with at least three blocks is kept, and the run records the blocks of each setting;
+  - several `COMP` blocks. `luckynight.ofr` (4.509) has blocks of 882,000 values, 441,000 per channel at 44.1 kHz, which can be a duration (10 s) or a count of samples; one file does not tell which. The generator tries, in order, until a file has at least three blocks:
+    - a 25-second mono signal at 8 kHz with `--seek min`, `fast` and `normal` (three blocks if a block is a duration);
+    - a 31-second mono signal at 44.1 kHz with the same settings (1,367,100 values, three blocks if a block is 441,000 values), kept small by a quiet, simple signal, with its size checked against the fixture limit;
+  - and it fails, naming the blocks each setting gave, when none reaches three; it records which rule the blocks follow, and the article states it;
   - formats at the default preset: 8-bit unsigned mono, 24-bit stereo, 32-bit integer, `--md5`, a WAV with an extra chunk before the data and a trailing chunk (`HEAD` and `TAIL`), a raw input with `--headersize` (a `HEAD` without `RIFF`), a lossyWAV output;
   - `off` on a 32-bit float WAV;
   - `off` with `--mantissabits 16` (a lossy preprocessing of the mantissa, which may leave no trace in the header: the fixture shows it), and with each `--sampletype` (its help lists `FLOAT32_1` where format.txt lists `FLOAT32_0`; the fixtures show which value is stored);
