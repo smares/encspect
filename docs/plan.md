@@ -130,6 +130,8 @@ Every lossless format with a decoder design is decoded and measured, except WMA 
    - **TTA (done):** the author's public pages describe only the container, so the decoder follows a clean-room description of libtta ([tta-format.md](design/tta-format.md)) and is checked sample for sample against the reference `tta` and FFmpeg ([tta.md](formats/tta.md)).
 4. **TAK and OptimFROG at header level** ([planned.md](formats/planned.md#in-02-header-level-only)). Both are poorly documented, so they get only what their headers reveal.
    - Where a header stores the encoder's settings (OptimFROG's mode and speedup, TAK's preset), they are read and named, as Monkey's Audio's compression level and WavPack's mode flags are; whether each header holds them is checked against a source that can be verified and against files the encoders write (the lead, 2026-11-08).
+   - **Design:** [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md), decided by the lead on 2026-11-09.
+   - **OptimFROG DualStream** is reported as WavPack's hybrid mode is (the lead, 2026-11-09): an `.ofs` is "OptimFROG DualStream", lossy by itself, and a correction file opened alone is "OptimFROG correction data". Finding the correction file beside the `.ofs` and checking the pair waits for 0.4, item 3, with WavPack's `.wvc`.
 5. **Two level figures** from step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout), which need no lossy decoder: a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00, so only its negative runs count today).
 
 ### 0.3: Lossy formats measured

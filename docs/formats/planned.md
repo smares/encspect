@@ -8,6 +8,7 @@ The order follows how well a format is documented: the better documented, the so
 
 - **TAK and OptimFROG:** what their headers reveal.
 - **Encoder settings:** where a header stores them (OptimFROG's mode and speedup, TAK's preset), they are read and named, once a verifiable source and files the encoders write confirm the fields.
+- **OptimFROG DualStream:** an `.ofs` is named "OptimFROG DualStream", lossy by itself, and a correction file opened alone "OptimFROG correction data", as WavPack's hybrid files and `.wvc` files are; the pair is checked in 0.4 with WavPack's ([tak-optimfrog-headers.md](../design/tak-optimfrog-headers.md#optimfrog-dualstream)).
 - **Why no deeper:** both are poorly documented.
 
 ## After 0.5: more formats
