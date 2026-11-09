@@ -136,6 +136,9 @@ def manifest_problems(path, references, channels, bits):
     if not manifest_file.exists():
         return []
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    if "decoded_pcm_md5" not in manifest:
+        # A Matroska manifest states no samples; its track's are those of its source, or (a track FFmpeg encoded) FFmpeg's and the analyzer's alone.
+        return [] if path.suffix != ".tta" else [f"{manifest_file.name} has no decoded_pcm_md5"]
     problems = []
     for label, reference in references:
         if hashlib.md5(reference).hexdigest() != manifest["decoded_pcm_md5"]:
