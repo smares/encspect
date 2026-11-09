@@ -1,0 +1,48 @@
+name: TAK fixtures
+
+# Encodes the project's test signals with Takc.exe of TAK 2.3.3 (scripts/fixtures/tak_tool.py: the author's archive for Windows,
+# pinned by SHA-256, freeware for private, non-commercial and educational use) and uploads the files with a record of the settings,
+# the output of `Takc -fi` and of the SDK's decoder library, the decoding check and whether a second encode wrote the same
+# bytes (scripts/fixtures/windows/make_windows_tak_fixtures.ps1; the signals and the plan are scripts/fixtures/tak_cases.py).
+# Takc.exe and the library run on this runner only, as black boxes; only the files they write are committed, never the archive.
+# Run by hand (Actions, "TAK fixtures", Run workflow). Nothing is released and no build is uploaded: only the fixture files, for
+# 90 days. scripts/fixtures/import_windows_tak_fixtures.py takes them into tests/fixtures/tak. The design is
+# docs/design/tak-optimfrog-headers.md, "Fixtures".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  encode:
+    name: encode on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      # ENCSPECT_PRIVATE_TOKEN reaches the private repository's copies of the TAK archive (the fallback when thbeck.de
+      # does not answer) and of lossyWAV 1.4.2 (the official Windows build, which only that repository holds).
+      - name: Encode with Takc
+        shell: powershell
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/make_windows_tak_fixtures.ps1 -Out tak-out
+
+      - name: Print the records
+        if: always()
+        shell: bash
+        continue-on-error: true
+        run: |
+          cat tak-out/environment.json
+          ls -la tak-out/tak tak-out/pcm
+          python scripts/fixtures/import_windows_tak_fixtures.py --summary tak-out
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tak-fixtures
+          path: tak-out
+          retention-days: 90
+          if-no-files-found: error
