@@ -8,6 +8,8 @@ name: OptimFROG fixtures
 # docs/design/tak-optimfrog-headers.md, "Fixtures".
 on:
   workflow_dispatch:
+  push:
+    branches: [fixtures/optimfrog]
 
 permissions:
   contents: read
