@@ -385,7 +385,7 @@ internal static partial class Summary
         };
     }
 
-    internal static readonly WastedBitsWording Wording = new("block", "blocks", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "consecutive blocks at the same place of consecutive block sets");
+    internal static readonly WastedBitsWording Wording = new("block", "blocks", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "blocks at the same place of consecutive block sets");
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
 }

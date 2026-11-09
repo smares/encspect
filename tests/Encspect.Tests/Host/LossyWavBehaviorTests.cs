@@ -85,7 +85,7 @@ public class LossyWavBehaviorTests
         Node[] nodes = Walk(report.Root).ToArray();
         Node wasted = Statistic(report)!;
         Assert.Equal(changes, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
-        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks at the same place of consecutive block sets, at {changes} positions, all on a grid of 512 samples", StringComparison.Ordinal));
+        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} changes of the wasted bits between blocks at the same place of consecutive block sets, at {changes} positions, all on a grid of 512 samples", StringComparison.Ordinal));
         Assert.Equal("lossyWAV 1.4.2", Assert.Single(report.Streams).Processor);
     }
 
@@ -153,7 +153,7 @@ public class LossyWavBehaviorTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(("lossyWAV", Confidence.Low), (stream.Processor, stream.ProcessorConfidence));
         Node[] nodes = Walk(report.Root).ToArray();
-        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith("31 changes of the wasted bits between consecutive blocks at the same place of consecutive block sets, at 31 positions, all on a grid of 512 samples", StringComparison.Ordinal));
+        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith("31 changes of the wasted bits between blocks at the same place of consecutive block sets, at 31 positions, all on a grid of 512 samples", StringComparison.Ordinal));
         Node wasted = Statistic(report)!;
         Assert.Equal(31, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
     }
