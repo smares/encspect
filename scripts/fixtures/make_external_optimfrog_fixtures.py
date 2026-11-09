@@ -103,6 +103,10 @@ def inputs():
                              lambda: with_chunks(sig.wav("music", 44100, 2, 30000, 16), chunk(b"LIST", b"INFOISFT\x0e\0\0\0Encspect test\0\0"), chunk(b"id3 ", b"trailer bytes!"))),
         "quiet-8k-25s": ({"kind": "quiet", "rate": 8000, "channels": 1, "bits": 16, "samples": 200000}, lambda: signal("quiet", 8000, 1, 16, 200000)),
         "quiet-44k-41s": ({"kind": "quiet", "rate": 44100, "channels": 1, "bits": 16, "samples": 1808100}, lambda: signal("quiet", 44100, 1, 16, 1808100)),
+        "raw-prefixed": ({"kind": "music", "rate": 44100, "channels": 2, "bits": 16, "samples": 30000, "extra": "16 bytes of text before the samples, no RIFF header"},
+                         lambda: b"ENCSPECT-PREFIX!" + sig.pcm("music", 44100, 2, 30000, 16)),
+        "raw-prefixed-tail": ({"kind": "music", "rate": 44100, "channels": 2, "bits": 16, "samples": 30000, "extra": "16 bytes of text before the samples and 10 after"},
+                              lambda: b"ENCSPECT-PREFIX!" + sig.pcm("music", 44100, 2, 30000, 16) + b"TAILBYTES!"),
         "lossywav": ({"kind": "lossyWAV output", "source": "tests/fixtures/wav/lossywav-standard.wav"}, lossywav_input),
     }
 
@@ -124,10 +128,12 @@ def case_list():
         {"name": "md5", "tool": "ofr", "input": "music-16-stereo", "args": ["--md5"]},
         {"name": "chunks", "tool": "ofr", "input": "chunks-16-stereo", "args": []},
         {"name": "lossywav", "tool": "ofr", "input": "lossywav", "args": []},
-        {"name": "raw-headersize", "tool": "ofr", "input": "music-16-stereo", "raw": True,
-         "args": ["--raw", "--channelconfig", "STEREO_LR", "--sampletype", "SINT16", "--rate", "44100", "--headersize", "@header"]},
-        {"name": "raw-headersize-tailsize", "tool": "ofr", "input": "chunks-16-stereo", "raw": True,
-         "args": ["--raw", "--channelconfig", "STEREO_LR", "--sampletype", "SINT16", "--rate", "44100", "--headersize", "@header", "--tailsize", "@tail"]},
+        # Raw input whose first bytes are no RIFF header, so that HEAD (and TAIL) hold bytes that are no WAVE header. A WAV file given with its own header length as
+        # --headersize encodes to the same file as the WAV (the first run: raw-headersize equalled mode-normal byte for byte).
+        {"name": "raw-headersize", "tool": "ofr", "input": "raw-prefixed", "raw": True,
+         "args": ["--raw", "--channelconfig", "STEREO_LR", "--sampletype", "SINT16", "--rate", "44100", "--headersize", "16"]},
+        {"name": "raw-headersize-tailsize", "tool": "ofr", "input": "raw-prefixed-tail", "raw": True,
+         "args": ["--raw", "--channelconfig", "STEREO_LR", "--sampletype", "SINT16", "--rate", "44100", "--headersize", "16", "--tailsize", "10"]},
         {"name": "float-32", "tool": "off", "input": "float-32-stereo", "args": []},
         {"name": "float-32-md5", "tool": "off", "input": "float-32-stereo", "args": ["--md5"]},
         {"name": "float-mantissa-16", "tool": "off", "input": "float-32-stereo", "args": ["--mantissabits", "16"]},
@@ -179,25 +185,23 @@ def encode(package, case, wav, description, work, fixtures):
     """Encodes twice, records --info, --verify and --decode, and writes the encoder's files to fixtures."""
     tool = package / case["tool"]
     name = case["name"]
-    header = wav.index(b"data") + 8
-    tail = len(wav) - header - struct.unpack_from("<I", wav, header - 4)[0]
-    case = {**case, "args": [{"@header": str(header), "@tail": str(tail)}.get(a, a) for a in case["args"]]}
     ext = output_extension(case["tool"])
     record = {"name": name, "tool": case["tool"], "arguments": case["args"], "input": {**description, "sha256": sha256(wav), "size": len(wav)}, "runs": {}}
     directory = work / name
     directory.mkdir()
-    source = directory / "in.wav"
+    input_name = "in.raw" if case.get("raw") else "in.wav"
+    source = directory / input_name
     source.write_bytes(wav)
     runs = []
     for attempt in (1, 2):
         out = directory / f"run{attempt}"
         out.mkdir()
-        shutil.copy(source, out / "in.wav")
-        command = [tool, "--encode", *case["args"], "in.wav", "--output", "out" + ext, "--overwrite"]
+        shutil.copy(source, out / input_name)
+        command = [tool, "--encode", *case["args"], input_name, "--output", "out" + ext, "--overwrite"]
         record["runs"][f"encode{attempt}"] = {"command": [os.path.basename(str(c)) for c in command], **run(command, out)}
         runs.append(out)
     first, second = runs
-    files = sorted(p.name for p in first.iterdir() if p.name not in ("in.wav",))
+    files = sorted(p.name for p in first.iterdir() if p.name != input_name)
     record["files"] = files
     produced = first / ("out" + ext)
     if not produced.exists():
@@ -232,7 +236,7 @@ def encode(package, case, wav, description, work, fixtures):
         trial = directory / label
         trial.mkdir()
         for fname in files:
-            if fname != "in.wav" and not (remove and fname.endswith("." + remove)):
+            if fname != input_name and not (remove and fname.endswith("." + remove)):
                 shutil.copy(first / fname, trial / fname)
         command = [tool, "--decode", *arguments, "out" + ext, "--output", "back.wav", "--overwrite"]
         record["runs"][label.replace("-", "_")] = {"command": command, **run(command, trial)}
@@ -240,7 +244,7 @@ def encode(package, case, wav, description, work, fixtures):
         if back.exists():
             body = data_of(back.read_bytes())
             record.setdefault("decoded", {})[label] = {"size": len(back.read_bytes()), "sha256": sha256(back.read_bytes()),
-                                                         "equals_input": back.read_bytes() == wav if not case.get("raw") else None,
+                                                         "equals_input": back.read_bytes() == wav,
                                                          "samples_equal_input": body[:len(data_of(wav))] == data_of(wav) if not case.get("raw") else None}
     return record
 
