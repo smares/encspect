@@ -36,7 +36,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // Per sample of each channel, besides the fixed work of DecodeWork.ForSample: the filter (eight taps to predict from and eight to update and step), the predictor
     // and the undoing of the decorrelation.
-    internal const long FilterUnits = 16;
+    internal const long FilterUnits = 24;
     internal const long PredictorUnits = 4;
 
     private readonly DecodeContext _context;

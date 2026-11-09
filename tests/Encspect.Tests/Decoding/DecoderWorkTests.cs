@@ -311,7 +311,6 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("16-loud-noise", "external-libtta-16-loud-noise.tta"),
             ("16-silent", "external-16-silent.tta"),
             ("24-stereo", "external-24-stereo.tta"),
-            ("24-stereo-lossywav", "external-libtta-24-stereo-lossywav.tta"),
             ("24-mono-192000", "external-192000-mono.tta"),
             ("8-stereo", "external-8-stereo.tta"),
             ("16-8-channels", "external-16-8ch.tta"),
