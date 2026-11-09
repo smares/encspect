@@ -8,7 +8,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const int MaxChunk = 4096;
 
     // The values of a channel's filter, Rice codes and predictor. Every frame starts from the same state.
-    private sealed class Channel
+    internal sealed class Channel
     {
         public readonly int[] W = new int[8];
         public readonly int[] V = new int[8];
@@ -44,7 +44,6 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int _channels;
     private readonly int _depth;
     private readonly int _filterShift;
-    private readonly int _filterRound;
     private readonly int _predictorShift;
     private readonly int _minimum;
     private readonly int _maximum;
@@ -62,7 +61,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         _channels = header.Channels;
         _depth = (header.BitsPerSample + 7) / 8;
         _filterShift = _depth == 2 ? 9 : 10;
-        _filterRound = 1 << (_filterShift - 1);
         _predictorShift = _depth == 1 ? 4 : 5;
         _minimum = -(1 << ((8 * _depth) - 1));
         _maximum = (1 << ((8 * _depth) - 1)) - 1;
@@ -139,7 +137,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             {
                 Channel state = _state[c];
                 int residual = ReadResidual(ref bits, state);
-                int filtered = Filter(state, residual);
+                int filtered = Filter(state, residual, _filterShift);
                 unchecked
                 {
                     int value = filtered + ((state.Previous * ((1 << _predictorShift) - 1)) >> _predictorShift);
@@ -174,7 +172,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The adaptive Rice code of one value. The widths of the binary parts, and the sums that set them, are the channel's.
-    private static int ReadResidual(ref BitSource bits, Channel state)
+    internal static int ReadResidual(ref BitSource bits, Channel state)
     {
         long unary = bits.ReadUnary();
         uint m;
@@ -240,7 +238,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The adaptive filter of eight taps whose coefficients follow the signs of the history: sign-sign least mean squares, in 32-bit wraparound arithmetic.
-    private int Filter(Channel state, int residual)
+    internal static int Filter(Channel state, int residual, int shift)
     {
         int[] w = state.W;
         int[] v = state.V;
@@ -262,7 +260,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 }
             }
 
-            int sum = _filterRound;
+            int sum = 1 << (shift - 1);
             for (int j = 0; j < 8; j++)
             {
                 sum += v[j] * w[j];
@@ -277,7 +275,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             s[6] = v[6] >= 0 ? 2 : -2;
             s[7] = v[7] >= 0 ? 4 : -4;
 
-            int y = residual + (sum >> _filterShift);
+            int y = residual + (sum >> shift);
             state.PreviousResidual = residual;
             v[0] = v[1];
             v[1] = v[2];
