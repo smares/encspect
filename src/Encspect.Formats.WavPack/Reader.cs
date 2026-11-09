@@ -198,6 +198,11 @@ internal static class Reader
 
         if (header.HasAudio)
         {
+            if (!header.IsDsd && (status & BlockStatus.HasWv) != 0)
+            {
+                s.Wasted.Add(header.IsInitial || !s.SetOpen ? 0 : s.SetBlocks, header.BlockIndex, s.ZeroBitsOfBlock, header.MaxMagnitude == 0 && !header.IsFloat && s.ZeroBitsOfBlock == 0);
+            }
+
             TrackSet(s, entry, header, offset, block.Length - wrapper);
         }
 
@@ -394,6 +399,7 @@ internal static class Reader
         }
 
         result |= Checks(s, entry, offset, header, block, detail, found, status | result);
+        s.ZeroBitsOfBlock = found.Int32ZeroBits;
         return result | found.Status;
     }
 
@@ -437,6 +443,8 @@ internal static class Reader
         public (int Term, int Delta)[]? Terms { get; set; }
 
         public int Int32SentBits { get; set; }
+
+        public int Int32ZeroBits { get; set; }
 
         public int FloatFlags { get; set; }
 
@@ -548,6 +556,7 @@ internal static class Reader
                 if (data.Length == 4)
                 {
                     found.Int32SentBits = data[0];
+                    found.Int32ZeroBits = data[1];
                 }
                 else
                 {

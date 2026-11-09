@@ -57,6 +57,15 @@ ALAC stores no checksum and has no decoder, so no figure is compared. The stream
 - From the containers' claims only: the MP4 writer's tool atom and Matroska's WritingApp and MuxingApp, weighed by the host's writer detection with low confidence. Two claims that name different software are `alac.writer-claim-differs`, and software known to write another format is `alac.writer-other-format`.
 - The frames name no encoder and the analyzer applies no rule to them. Observed in Encspect's test files, and not used by the analyzer: Apple's `afconvert` and `alacconvert` write filters of 4 and 8 coefficients only, with prediction type 0, and `maxRun` 255; `alacconvert` leaves `maxFrameBytes` and the average bitrate at 0, `afconvert` states them; FFmpeg 6.1.1's encoder writes filters of 4 to 6 coefficients at its default compression level, `maxRun` 0, a `maxFrameBytes` of the raw frame's size plus 4 (16,388 for 16-bit stereo) and the average bitrate of the input's PCM, and at compression level 0 stores every frame uncompressed with `pb`, `mb` and `kb` of 0. FFmpeg's encoder takes 1, 2, 4, 5, 6 and 7 channels (it mixes 3 down to two and 8 down to seven) and 16-bit and 24-bit input (a 32-bit input becomes a 24-bit stream).
 
+## lossyWAV output
+
+- **What was checked:** ALAC's shifted bytes (whole bytes of each sample coded apart; "Bytes Shifted") are a different mechanism from lossyWAV's zeroed bits, which are not whole bytes. The two 24-bit stereo noise-floor files (see [tta.md](tta.md#lossywav-output)) coded with Apple's `alacconvert` (CAF copied into an M4A file by `ffmpeg -c copy`) and with FFmpeg's ALAC encoder (`scripts/fixtures/check_lossywav_coders.py`):
+  - `alacconvert`, before lossyWAV and after: 154,278 and 154,474 bytes, 124,725 and 124,636 bytes; FFmpeg: 150,944 and 151,026 bytes, 126,115 and 126,254 bytes.
+  - Every element of a 24-bit stream states one shifted byte, before and after lossyWAV: the shift does not follow the zeroed bits.
+- **Fixture:** `external-alacconvert-24-stereo-lossywav.m4a` (124,706 bytes, Apple's `alacconvert` with the CAF copied into M4A by MP4Box, as the other `alacconvert` fixtures), made by `scripts/fixtures/make_external_alac_fixtures.py` from the samples of the committed lossyWAV fixture `flac/external-lossyflac-floor-44k.flac` (the input kind `lossywav-floor-44k` of `flac_signal.py`, decoded by `flac_model.py`); its manifest and golden are committed.
+- **What Encspect reports:** the same as for any ALAC track. ALAC has no decoder yet, so the levels and the low bits per span are not measured (`decode.no-decoder`).
+- **No claim:** nothing in the frames names lossyWAV.
+
 ## Not covered
 
 - CAF files, and any decoded view of the samples: no waveform, spectrum or lowpass for ALAC, and no check of the audio.

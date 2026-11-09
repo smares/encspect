@@ -1,0 +1,229 @@
+{
+  "measurements": {
+    "status": "complete",
+    "samples": 44100,
+    "firstPosition": 0,
+    "lostSamples": 0,
+    "gaps": 0,
+    "sampleRate": 44100,
+    "channels": 2,
+    "channelsMeasured": 2,
+    "channelLayout": ["front left", "front right"],
+    "spectrum": {
+      "fftSize": 4096,
+      "frames": 20,
+      "rowCount": 512,
+      "binsPerRow": 4,
+      "rows": {
+        "unit": "dB",
+        "valuesPerUnit": 10,
+        "combined": "sha256:f452acbc230491da6fa9a16a63fd5f31a0328c678a6c60316cb26943a31fc2e5",
+        "perChannel": ["sha256:66481b08c5d553e004341f5fd764e2507f189050ab94d53254fe378d7a781e65", "sha256:9e21a4a002a96cd6ef33884f8f8e1ec28741186975c7ae8877e16fccc232cb26"]
+      },
+      "cutoff": {
+        "isFound": false,
+        "stepFrequency": {
+          "value": 10982,
+          "unit": "Hz"
+        },
+        "step": {
+          "value": 0.7,
+          "unit": "dB"
+        },
+        "framesShowing": 0,
+        "framesWithSignal": 20
+      },
+      "channelCutoffs": [
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 21792,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 0.7,
+            "unit": "dB"
+          },
+          "framesShowing": 0,
+          "framesWithSignal": 20
+        },
+        {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 11154,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 0.8,
+            "unit": "dB"
+          },
+          "framesShowing": 0,
+          "framesWithSignal": 20
+        }
+      ]
+    },
+    "levels": {
+      "format": "integer",
+      "bitsPerSample": 24,
+      "samplePeak": {
+        "value": -38.3,
+        "unit": "dBFS",
+        "perChannel": [-38.3, -38.3]
+      },
+      "rms": {
+        "value": -47.2,
+        "unit": "dBFS",
+        "perChannel": [-47.2, -47.2]
+      },
+      "dcOffset": {
+        "value": 0.001357,
+        "unit": "%",
+        "perChannel": [0.000414, 0.001357]
+      },
+      "dcOffsetLevel": {
+        "value": -97.3,
+        "unit": "dBFS",
+        "perChannel": [-107.7, -97.3]
+      },
+      "clipping": {
+        "minimumRunLength": 3,
+        "runs": 0,
+        "samples": 0,
+        "longestRun": 0,
+        "perChannel": [
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          },
+          {
+            "runs": 0,
+            "samples": 0,
+            "longestRun": 0
+          }
+        ]
+      },
+      "digitalSilence": {
+        "atStart": 0,
+        "atEnd": 0,
+        "perChannel": [
+          {
+            "atStart": 0,
+            "atEnd": 0
+          },
+          {
+            "atStart": 0,
+            "atEnd": 0
+          }
+        ]
+      },
+      "zeroSamples": {
+        "value": 10000,
+        "unit": "samples",
+        "perChannel": [10087, 10091]
+      },
+      "bitDepth": {
+        "lowBitsUnused": 8,
+        "highestMagnitude": 102144,
+        "perChannel": [
+          {
+            "lowBitsUnused": 8,
+            "highestMagnitude": 101888
+          },
+          {
+            "lowBitsUnused": 8,
+            "highestMagnitude": 102144
+          }
+        ]
+      },
+      "lowBitsPerSpan": {
+        "spanLength": 32,
+        "spans": 2148,
+        "silentSpans": 610,
+        "thinSpans": 0,
+        "shortSpans": 2,
+        "distribution": [
+          {
+            "lowBitsUnused": 8,
+            "spans": 2147
+          },
+          {
+            "lowBitsUnused": 9,
+            "spans": 1
+          }
+        ],
+        "spansAboveLowBitsUnused": {
+          "count": 1,
+          "of": 2148,
+          "unit": "spans",
+          "percent": 0
+        },
+        "changes": {
+          "count": 0,
+          "moments": 0
+        },
+        "grid": {
+          "samples": null,
+          "momentsOnGrid": 0,
+          "moments": 0
+        },
+        "channelsWithEqualLowBitsUnused": {
+          "count": 1073,
+          "of": 1074,
+          "unit": "times",
+          "percent": 99.9
+        }
+      }
+    },
+    "loudness": {
+      "channelWeights": [1, 1],
+      "integratedLoudness": {
+        "value": -41.2,
+        "unit": "LUFS"
+      },
+      "loudnessRange": {
+        "absence": "tooShort",
+        "unit": "LU"
+      },
+      "maximumMomentaryLoudness": {
+        "value": -40.7,
+        "unit": "LUFS"
+      },
+      "maximumShortTermLoudness": {
+        "absence": "tooShort",
+        "unit": "LUFS"
+      },
+      "gatingBlocks": {
+        "total": 7,
+        "aboveAbsoluteGate": 7,
+        "aboveRelativeGate": 7
+      }
+    },
+    "truePeak": {
+      "oversampling": 4,
+      "maximumTruePeakLevel": {
+        "value": -35.1,
+        "unit": "dBTP",
+        "perChannel": [-35.1, -36]
+      }
+    },
+    "spectrogram": {
+      "columns": 22,
+      "rows": 512,
+      "hopsPerColumn": 1,
+      "hopSamples": 2048,
+      "unit": "dB",
+      "valueOffset": 200,
+      "noData": 0,
+      "power": "sha256:bbacb4f72a15fffed34d7fcb0d6a0e0fd745002513e8f5dac6087062b337010b"
+    },
+    "waveform": {
+      "columns": 22,
+      "channels": 2,
+      "unit": "16-bit sample codes",
+      "minimum": "sha256:960bb9c1036597accc97eb0ef897938c41db41254769e634a88cf5953124d7d2",
+      "maximum": "sha256:e367e454f166d6744195d264509752ebdbb49afa73b7e802048ec9e8a1d5a621"
+    }
+  },
+  "findings": []
+}

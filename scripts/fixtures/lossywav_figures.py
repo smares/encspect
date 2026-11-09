@@ -168,50 +168,56 @@ TESTED_GRIDS = {22050: 256, 32000: 256, 44100: 512, 48000: 512, 88200: 1024, 960
 
 
 def flac_units(path):
-    """The wasted bits of each subframe of a FLAC file, from `flac -a`, and the design's behavior rule over them."""
+    """The wasted bits of each subframe of a FLAC file, from `flac -a`, and the design's behavior rule over them (PR 3): a constant subframe of 0 is digital
+    silence and has no count; the claim needs a tested rate, 20 moments (frame positions at which some channel's count changes), the greatest common divisor
+    of the distances between the changes' positions equal to lossyWAV's block, and more than half of the counted subframes above the smallest count."""
+    import math
     with tempfile.TemporaryDirectory() as work:
         analysis = pathlib.Path(work) / "a.ana"
         result = subprocess.run(["flac", "-a", "-s", "-f", "-o", str(analysis), str(path)], capture_output=True)
         if result.returncode != 0 or not analysis.exists():
             return {"file": str(path), "error": result.stderr.decode("utf-8", "replace").strip()[-200:]}
-        frames, rate, sizes = [], None, set()
+        frames, rate, sizes, starts = [], None, [], []
+        position = 0
         with analysis.open() as lines:
             for line in lines:
                 if line.startswith("frame="):
                     fields = dict(f.split("=", 1) for f in line.split())
                     rate = int(fields["sample_rate"])
-                    sizes.add(int(fields["blocksize"]))
+                    sizes.append(int(fields["blocksize"]))
+                    starts.append(position)
+                    position += sizes[-1]
                     frames.append([])
                 elif line.startswith("\tsubframe=") and frames:
-                    frames[-1].append(int(line.split("wasted_bits=")[1].split()[0]))
+                    silent = "type=CONSTANT" in line and "value=0" in line.split("type=CONSTANT")[1].split()
+                    frames[-1].append(None if silent else int(line.split("wasted_bits=")[1].split()[0]))
     if not frames:
         return {"file": str(path), "error": "no frames"}
-    size = max(sizes)
-    histogram, changes, phase = {}, 0, {}
+    histogram, changes, moments, silent_units = {}, 0, set(), 0
     grid = TESTED_GRIDS.get(rate)
+    divisor, first_change = 0, None
     for channel in range(max(len(f) for f in frames)):
         last = None
         for index, frame in enumerate(frames):
             if channel >= len(frame):
                 continue
             count = frame[channel]
+            if count is None:
+                silent_units += 1
+                continue
             histogram[count] = histogram.get(count, 0) + 1
             if last is not None and count != last:
                 changes += 1
-                if grid and grid % size == 0:
-                    phase[index % (grid // size)] = phase.get(index % (grid // size), 0) + 1
+                moments.add(starts[index])
+                first_change = starts[index] if first_change is None else first_change
+                divisor = math.gcd(divisor, abs(starts[index] - first_change))
             last = count
     smallest = min(histogram)
     above = sum(n for c, n in histogram.items() if c > smallest)
     units = sum(histogram.values())
-    on_phase = max(phase.values()) if phase else 0
-    # The rule: a tested rate, fixed frames whose length divides the grid, at least 20 changes, 95% of them on frames at one
-    # phase of the grid, and more than half of the subframes above the stream's smallest count. With frames as long as the
-    # block the phase test always passes, and the rule rests on the other two.
-    claim = (grid is not None and len(sizes - {size}) <= 1 and grid % size == 0 and changes >= MIN_CHANGES
-             and on_phase * 20 >= changes * 19 and above * 2 > units)
-    return {"file": str(path), "rate": rate, "frameLength": size, "subframes": units, "distribution": dict(sorted(histogram.items())),
-            "changes": changes, "changesOnGridFrames": on_phase, "subframesAboveSmallest": above, "claim": claim}
+    claim = grid is not None and len(moments) >= MIN_CHANGES and divisor == grid and above * 2 > units
+    return {"file": str(path), "rate": rate, "frameLength": max(sizes), "subframes": units, "silentSubframes": silent_units, "distribution": dict(sorted(histogram.items())),
+            "changes": changes, "moments": len(moments), "gridOfChanges": divisor, "subframesAboveSmallest": above, "claim": claim}
 
 
 def write_wav(path, frames, channels, rate, bits):

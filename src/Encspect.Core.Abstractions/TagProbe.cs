@@ -49,6 +49,10 @@ public sealed record EncoderClaim(string Text, Node Source, string Description, 
 
     // The settings a processor's claim states (lossyWAV's "--quality standard"), shown as the claim's evidence; null for any other claim.
     public string? Settings { get; init; }
+
+    // Whether the claim comes from a pattern in the coded syntax and not from text the software wrote (a processor's claim from behavior, low
+    // confidence); its description is then the evidence as a whole.
+    public bool IsBehavior { get; init; }
 }
 
 // The outcome of probing one anchor: either a validated tag with its node tree, or a signature

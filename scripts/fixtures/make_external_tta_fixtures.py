@@ -71,6 +71,9 @@ LIBTTA = {
     "16-6ch": (("music", 22050, 6, 16, 50000), None),
     "16-loud-noise": (("loud", 22050, 2, 16, 50000), None),
     "16-stereo-password": (("music", 22050, 2, 16, 50000), "secret"),
+    # The samples lossyWAV 1.4.2 wrote (standard preset, a noise floor at -100 dBFS: tests/fixtures/flac/external-lossyflac-floor-44k.flac): TTA has no count of
+    # zeroed low bits, and the file is no smaller than the signal's (docs/formats/tta.md, "lossyWAV output").
+    "24-stereo-lossywav": (("lossywav-floor-44k", 44100, 2, 24, 44223), None),
 }
 
 

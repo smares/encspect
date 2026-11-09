@@ -6,115 +6,64 @@
     {
       "scope": "node",
       "parent": [
-        "FLAC",
-        "Statistics"
+        "FLAC"
       ],
-      "name": "Container Duration",
+      "name": "Processor",
       "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-blocks-repeated.report.json",
-        "tests/fixtures/flac/built-comment-trailing-bytes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cuesheet-invalid.report.json",
-        "tests/fixtures/flac/built-cuesheet-reserved.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-eight-channels.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-header-codes.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-metadata-all-types.report.json",
-        "tests/fixtures/flac/built-metadata-blocks-not-listed.report.json",
-        "tests/fixtures/flac/built-metadata-forbidden-type.report.json",
-        "tests/fixtures/flac/built-metadata-no-last-block.report.json",
-        "tests/fixtures/flac/built-metadata-truncated.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-padding-not-zero.report.json",
-        "tests/fixtures/flac/built-picture-invalid.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-seek-table-bad.report.json",
-        "tests/fixtures/flac/built-seek-table-placeholder.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-streaminfo-invalid.report.json",
-        "tests/fixtures/flac/built-streaminfo-length.report.json",
-        "tests/fixtures/flac/built-subframe-faults.report.json",
-        "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-sizes.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-3ch.report.json",
-        "tests/fixtures/flac/external-16-4ch.report.json",
-        "tests/fixtures/flac/external-16-5ch.report.json",
-        "tests/fixtures/flac/external-16-6ch.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-mono.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-8ch.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-640000-mono.report.json",
-        "tests/fixtures/flac/external-8-mono-b65535.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-8000-mono.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-8ch.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mono.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Processor"
+      ],
+      "name": "Confidence",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Processor"
+      ],
+      "name": "Evidence",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Processor"
+      ],
+      "name": "Evidence",
+      "last": 1,
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json"
       ]
     },
     {
@@ -123,192 +72,26 @@
         "FLAC",
         "Statistics"
       ],
-      "name": "Container Samples",
+      "name": "Wasted Bits",
       "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-blocks-repeated.report.json",
-        "tests/fixtures/flac/built-comment-trailing-bytes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cuesheet-invalid.report.json",
-        "tests/fixtures/flac/built-cuesheet-reserved.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-eight-channels.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-header-codes.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-metadata-all-types.report.json",
-        "tests/fixtures/flac/built-metadata-blocks-not-listed.report.json",
-        "tests/fixtures/flac/built-metadata-forbidden-type.report.json",
-        "tests/fixtures/flac/built-metadata-no-last-block.report.json",
-        "tests/fixtures/flac/built-metadata-truncated.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-padding-not-zero.report.json",
-        "tests/fixtures/flac/built-picture-invalid.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-seek-table-bad.report.json",
-        "tests/fixtures/flac/built-seek-table-placeholder.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
         "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-streaminfo-invalid.report.json",
-        "tests/fixtures/flac/built-streaminfo-length.report.json",
-        "tests/fixtures/flac/built-subframe-faults.report.json",
         "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-sizes.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-3ch.report.json",
-        "tests/fixtures/flac/external-16-4ch.report.json",
-        "tests/fixtures/flac/external-16-5ch.report.json",
-        "tests/fixtures/flac/external-16-6ch.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-mono.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
         "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-8ch.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
         "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-640000-mono.report.json",
-        "tests/fixtures/flac/external-8-mono-b65535.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-8000-mono.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-8ch.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mono.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "name": "Stereo Coding",
-      "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-pipe.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
       ]
     },
     {
@@ -316,73 +99,21 @@
       "parent": [
         "FLAC",
         "Statistics",
-        "Stereo Coding"
+        "Wasted Bits"
       ],
-      "name": "Left/right stereo",
+      "name": "0 Bits",
       "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
+        "tests/fixtures/flac/built-side-33-bit.report.json",
         "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
         "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json"
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
       ]
     },
     {
@@ -390,587 +121,345 @@
       "parent": [
         "FLAC",
         "Statistics",
-        "Stereo Coding"
+        "Wasted Bits"
       ],
-      "name": "Mid/side stereo",
+      "name": "1 Bit",
       "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
         "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
         "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-pipe.report.json"
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "10 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "11 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "15 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "16 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "17 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "18 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-32-opposed.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "2 Bits",
+      "goldens": [
+        "tests/fixtures/flac/built-subframe-types.report.json",
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "3 Bits",
+      "goldens": [
+        "tests/fixtures/flac/built-subframe-types.report.json",
+        "tests/fixtures/flac/external-16-wasted-bits.report.json",
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "4 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "5 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "6 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "7 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "8 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "9 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "Changes",
+      "goldens": [
+        "tests/fixtures/flac/built-side-33-bit.report.json",
+        "tests/fixtures/flac/built-subframe-types.report.json",
+        "tests/fixtures/flac/external-16-wasted-bits.report.json",
+        "tests/fixtures/flac/external-32-opposed.report.json",
+        "tests/fixtures/flac/external-lossyflac-6ch.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b1024.report.json",
+        "tests/fixtures/flac/external-lossyflac-96k-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512-foreign.report.json",
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b4096.report.json",
+        "tests/fixtures/flac/external-lossyflac-synthetic-b512.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "Silent",
+      "goldens": [
+        "tests/fixtures/flac/external-32-opposed.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Wasted Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "8 Bits",
+      "goldens": [
+        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "Changes",
+      "goldens": [
+        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
       ]
     },
     {
       "scope": "stream",
-      "key": "categorySeries",
+      "key": "processor",
       "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-differs-from-streaminfo.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-pipe.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
       ]
     },
     {
-      "scope": "node",
-      "parent": [
-        "FLAC",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Left/side stereo",
+      "scope": "stream",
+      "key": "processorConfidence",
       "goldens": [
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "FLAC",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Side/right stereo",
-      "goldens": [
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Stereo Coding",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Left/right stereo",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Mid/side stereo",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
+        "tests/fixtures/flac/external-lossyflac-b512.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-176k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-192k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-22k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-32k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-44k.report.json",
+        "tests/fixtures/flac/external-lossyflac-floor-88k.report.json"
       ]
     }
   ],
-  "renamed": [
-    {
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "from": "Independent Frames",
-      "to": "Stereo Coding",
-      "goldens": [
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
-        "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "from": "Independent Frames",
-      "to": "Stereo Coding",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    }
-  ],
-  "changed": [
-    {
-      "path": [
-        "FLAC",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "fields": [
-        "unit",
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/flac/built-cut-in-header.report.json",
-        "tests/fixtures/flac/built-seek-tag-between-frames.report.json",
-        "tests/fixtures/flac/built-subframe-types.report.json",
-        "tests/fixtures/flac/external-16-loud-noise.report.json",
-        "tests/fixtures/flac/external-16-stereo-independent.report.json",
-        "tests/fixtures/flac/external-16-stereo-l0.report.json",
-        "tests/fixtures/flac/external-ffmpeg-indep.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "fields": [
-        "unit",
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    }
-  ],
-  "removed": [
-    {
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "name": "Independent Frames",
-      "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-pipe.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "name": "Mid/Side Frames",
-      "goldens": [
-        "tests/fixtures/flac/built-block-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-blocking-strategy-changes.report.json",
-        "tests/fixtures/flac/built-crc16-fails.report.json",
-        "tests/fixtures/flac/built-crc8-fails-crc16-holds.report.json",
-        "tests/fixtures/flac/built-crc8-fails.report.json",
-        "tests/fixtures/flac/built-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-cut-mid-frame.report.json",
-        "tests/fixtures/flac/built-damaged-frame-after-frame.report.json",
-        "tests/fixtures/flac/built-decoy-header-between-frames.report.json",
-        "tests/fixtures/flac/built-first-frame-removed-md5-zero.report.json",
-        "tests/fixtures/flac/built-frame-repeated.report.json",
-        "tests/fixtures/flac/built-frame-size-out-of-range.report.json",
-        "tests/fixtures/flac/built-frames-swapped-md5-zero.report.json",
-        "tests/fixtures/flac/built-frames-swapped.report.json",
-        "tests/fixtures/flac/built-gap-frames-removed.report.json",
-        "tests/fixtures/flac/built-gap-md5-zero.report.json",
-        "tests/fixtures/flac/built-junk-after-last-frame.report.json",
-        "tests/fixtures/flac/built-junk-before-first-frame.report.json",
-        "tests/fixtures/flac/built-junk-between-frames.report.json",
-        "tests/fixtures/flac/built-leading-id3v2.report.json",
-        "tests/fixtures/flac/built-md5-mismatch-stored.report.json",
-        "tests/fixtures/flac/built-md5-mismatch.report.json",
-        "tests/fixtures/flac/built-md5-zero-cut-after-frame.report.json",
-        "tests/fixtures/flac/built-md5-zero.report.json",
-        "tests/fixtures/flac/built-no-marker.report.json",
-        "tests/fixtures/flac/built-padding-bits-set.report.json",
-        "tests/fixtures/flac/built-residual-bit-flipped.report.json",
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/built-total-samples-too-many.report.json",
-        "tests/fixtures/flac/built-total-samples-unknown.report.json",
-        "tests/fixtures/flac/built-trailing-ape.report.json",
-        "tests/fixtures/flac/built-trailing-id3v1.report.json",
-        "tests/fixtures/flac/built-variable-block-strategy.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-stereo-adaptive-mid-side.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b1152.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b4608.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-cuesheet-picture.report.json",
-        "tests/fixtures/flac/external-16-stereo-l5.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8-exhaustive.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-stereo-no-padding.report.json",
-        "tests/fixtures/flac/external-16-stereo-seekpoints.report.json",
-        "tests/fixtures/flac/external-16-stereo-tags.report.json",
-        "tests/fixtures/flac/external-176400-stereo.report.json",
-        "tests/fixtures/flac/external-192000-stereo.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-32-opposed.report.json",
-        "tests/fixtures/flac/external-32-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-8-stereo.report.json",
-        "tests/fixtures/flac/external-88200-stereo.report.json",
-        "tests/fixtures/flac/external-96000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-level0-fixed.report.json",
-        "tests/fixtures/flac/external-ffmpeg-mid-side.report.json",
-        "tests/fixtures/flac/external-ffmpeg-pipe.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "name": "Left/Side Frames",
-      "goldens": [
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/external-11025-stereo.report.json",
-        "tests/fixtures/flac/external-12000-stereo.report.json",
-        "tests/fixtures/flac/external-16-silent.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-stereo-b16384.report.json",
-        "tests/fixtures/flac/external-16-stereo-b5000.report.json",
-        "tests/fixtures/flac/external-16-stereo-b576.report.json",
-        "tests/fixtures/flac/external-16-stereo-l8.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-20-stereo.report.json",
-        "tests/fixtures/flac/external-32000-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-left-side.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "FLAC",
-        "Statistics"
-      ],
-      "name": "Side/Right Frames",
-      "goldens": [
-        "tests/fixtures/flac/built-side-33-bit.report.json",
-        "tests/fixtures/flac/external-16-stereo-b100.report.json",
-        "tests/fixtures/flac/external-16-wasted-bits.report.json",
-        "tests/fixtures/flac/external-22050-stereo.report.json",
-        "tests/fixtures/flac/external-24-stereo.report.json",
-        "tests/fixtures/flac/external-ffmpeg-right-side.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Independent Frames",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Mid/Side Frames",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-ffmpeg-16-stereo.report.json"
-      ]
-    }
-  ]
+  "changed": []
 }

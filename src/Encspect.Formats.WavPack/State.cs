@@ -241,6 +241,11 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public long CountedSamples { get; set; }
 
+    // The Zero Bits of the block just walked (0 where it has no INT32_INFO sub-block), and the wasted bits of every audio block as coded.
+    public int ZeroBitsOfBlock { get; set; }
+
+    public WastedBitsTally Wasted { get; } = new();
+
     // The samples of the sets that hold a block the parser cannot read (cut, malformed or refused), once for each set, as the set's
     // first block declares them; part of CountedSamples. LastLostSet is the offset of the set last added.
     public long LostSamples { get; set; }

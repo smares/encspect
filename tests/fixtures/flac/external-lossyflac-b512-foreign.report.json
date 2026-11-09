@@ -687,6 +687,12 @@
                   "value": "fact chunk in a riff application block at 0xF4 names \"lossyWAV 1.4.2\" with the settings \"--quality standard\"",
                   "offset": 0,
                   "length": 70760
+                },
+                {
+                  "name": "Evidence",
+                  "value": "68 changes of the wasted bits between consecutive subframes of a channel, at 54 positions, all on a grid of 512 samples (the greatest common divisor of the distances between them), and 98.9% of the subframes that have a count above the smallest",
+                  "offset": 0,
+                  "length": 70760
                 }
               ]
             },
@@ -849,6 +855,52 @@
                   "value": "174 subframes (100.0%)",
                   "offset": 0,
                   "length": 70760
+                },
+                {
+                  "name": "Wasted Bits",
+                  "value": 174,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 70760,
+                  "children": [
+                    {
+                      "name": "4 Bits",
+                      "value": "2 subframes (1.1%)",
+                      "offset": 0,
+                      "length": 70760
+                    },
+                    {
+                      "name": "6 Bits",
+                      "value": "10 subframes (5.7%)",
+                      "offset": 0,
+                      "length": 70760
+                    },
+                    {
+                      "name": "7 Bits",
+                      "value": "31 subframes (17.8%)",
+                      "offset": 0,
+                      "length": 70760
+                    },
+                    {
+                      "name": "8 Bits",
+                      "value": "61 subframes (35.1%)",
+                      "offset": 0,
+                      "length": 70760
+                    },
+                    {
+                      "name": "9 Bits",
+                      "value": "70 subframes (40.2%)",
+                      "offset": 0,
+                      "length": 70760
+                    },
+                    {
+                      "name": "Changes",
+                      "value": 68,
+                      "unit": "changes",
+                      "offset": 0,
+                      "length": 70760
+                    }
+                  ]
                 },
                 {
                   "name": "Partition Orders",

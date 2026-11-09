@@ -40,6 +40,11 @@ internal static partial class Summary
             context.AddEncoderClaim(processorClaim);
         }
 
+        if (s.Blocks > 0 && Reader.NativeRate(s) is > 0 and <= int.MaxValue && s.Wasted.Pattern((int)Reader.NativeRate(s)) is { } pattern)
+        {
+            context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, Wording));
+        }
+
         Node? processor = s.Blocks > 0 ? ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name))) : null;
         if (processor is not null)
         {
@@ -316,6 +321,7 @@ internal static partial class Summary
 
         Node? stereoNode = isDsd ? null : s.Stereo.AddTo(statistics, cover, Explain.StatStereoCoding, Topics.MidSideStereo, "Stereo Block", "Stereo Blocks");
 
+        s.Wasted.AddTo(statistics, cover, Wording, Topics.WastedBits);
         statistics.Add(cover("Verified Block Checksums", NodeValue.Integer(s.ChecksumValid, "blocks", "block"), Explain.StatChecksums, Topics.Crc));
         if (s.ChecksumInvalid + s.ChecksumMissing > 0)
         {
@@ -378,6 +384,8 @@ internal static partial class Summary
             Verification = s.Feed.Finish(s, isCorrection),
         };
     }
+
+    internal static readonly WastedBitsWording Wording = new("block", "blocks", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "blocks at the same place of consecutive block sets");
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
 }

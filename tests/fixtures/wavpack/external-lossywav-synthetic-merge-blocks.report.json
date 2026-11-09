@@ -55,6 +55,12 @@
                   "value": "fact chunk in the wrapper at 0x6C names \"lossyWAV 1.4.2\" with the settings \"--quality portable\"",
                   "offset": 0,
                   "length": 317612
+                },
+                {
+                  "name": "Evidence",
+                  "value": "30 changes of the wasted bits between blocks at the same place of consecutive block sets, at 30 positions, all on a grid of 512 samples (the greatest common divisor of the distances between them), and 54.1% of the blocks that have a count above the smallest",
+                  "offset": 0,
+                  "length": 317612
                 }
               ]
             },
@@ -191,6 +197,46 @@
                     {
                       "name": "Mid/side stereo",
                       "value": "37 stereo blocks (100.0%)",
+                      "offset": 0,
+                      "length": 317612
+                    }
+                  ]
+                },
+                {
+                  "name": "Wasted Bits",
+                  "value": 37,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 317612,
+                  "children": [
+                    {
+                      "name": "0 Bits",
+                      "value": "17 blocks (45.9%)",
+                      "offset": 0,
+                      "length": 317612
+                    },
+                    {
+                      "name": "1 Bit",
+                      "value": "14 blocks (37.8%)",
+                      "offset": 0,
+                      "length": 317612
+                    },
+                    {
+                      "name": "8 Bits",
+                      "value": "1 block (2.7%)",
+                      "offset": 0,
+                      "length": 317612
+                    },
+                    {
+                      "name": "16 Bits",
+                      "value": "5 blocks (13.5%)",
+                      "offset": 0,
+                      "length": 317612
+                    },
+                    {
+                      "name": "Changes",
+                      "value": 30,
+                      "unit": "changes",
                       "offset": 0,
                       "length": 317612
                     }

@@ -687,6 +687,12 @@
                   "value": "fact chunk in a riff application block at 0xF4 names \"lossyWAV 1.4.2\" with the settings \"--quality extraportable\"",
                   "offset": 0,
                   "length": 672911
+                },
+                {
+                  "name": "Evidence",
+                  "value": "371 changes of the wasted bits between consecutive subframes of a channel, at 115 positions, all on a grid of 512 samples (the greatest common divisor of the distances between them), and 71.9% of the subframes that have a count above the smallest",
+                  "offset": 0,
+                  "length": 672911
                 }
               ]
             },
@@ -835,6 +841,76 @@
                   "value": "1217 subframes (71.9%)",
                   "offset": 0,
                   "length": 672911
+                },
+                {
+                  "name": "Wasted Bits",
+                  "value": 1692,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 672911,
+                  "children": [
+                    {
+                      "name": "0 Bits",
+                      "value": "475 subframes (28.1%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "1 Bit",
+                      "value": "299 subframes (17.7%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "2 Bits",
+                      "value": "294 subframes (17.4%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "3 Bits",
+                      "value": "54 subframes (3.2%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "9 Bits",
+                      "value": "3 subframes (0.2%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "10 Bits",
+                      "value": "2 subframes (0.1%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "11 Bits",
+                      "value": "1 subframe (0.1%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "16 Bits",
+                      "value": "6 subframes (0.4%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "17 Bits",
+                      "value": "558 subframes (33.0%)",
+                      "offset": 0,
+                      "length": 672911
+                    },
+                    {
+                      "name": "Changes",
+                      "value": 371,
+                      "unit": "changes",
+                      "offset": 0,
+                      "length": 672911
+                    }
+                  ]
                 },
                 {
                   "name": "Partition Orders",

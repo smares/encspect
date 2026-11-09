@@ -78,7 +78,7 @@ def check_ffprobe(manifest, path, problems):
 
 
 def check_mediainfo(name, manifest, path, problems):
-    tracks = mi.read_or_problem(path, problems)
+    tracks = mi.read_or_problem(path, problems, whole=True)
     if tracks is None:
         return
     audio = tracks["Audio"][0] if tracks["Audio"] else None

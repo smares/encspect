@@ -19,7 +19,7 @@ The main window lists a folder's files on the right, with these columns:
 - sample rate and channel mode;
 - channel layout by its name (the cell's tooltip lists the speakers);
 - encoder with its confidence;
-- "Written by": the software that wrote the file around the audio (the muxer, the container writer, a tagger), with its confidence. It need not be the encoder: a remuxed file keeps the encoder of its audio. Software that changed the audio before it was encoded (lossyWAV) has no column: it shows as "processed by" in a stream's line, after the encoder and the writer, and as a Processor node with its confidence and evidence in the tree;
+- "Written by": the software that wrote the file around the audio (the muxer, the container writer, a tagger), with its confidence. It need not be the encoder: a remuxed file keeps the encoder of its audio. Software that changed the audio before it was encoded (lossyWAV; low confidence where only FLAC's or WavPack's counts of wasted bits show it) has no column: it shows as "processed by" in a stream's line, after the encoder and the writer, and as a Processor node with its confidence and evidence in the tree;
 - tags;
 - protection: "Protected" for a file with a protected stream, whose tooltip names the scheme and the DRM systems;
 - findings by severity.

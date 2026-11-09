@@ -55,6 +55,12 @@
                   "value": "fact chunk in the wrapper at 0x6C names \"lossyWAV 1.4.2\" with the settings \"--quality standard\"",
                   "offset": 0,
                   "length": 69664
+                },
+                {
+                  "name": "Evidence",
+                  "value": "36 changes of the wasted bits between blocks at the same place of consecutive block sets, at 36 positions, all on a grid of 512 samples (the greatest common divisor of the distances between them), and 97.3% of the blocks that have a count above the smallest",
+                  "offset": 0,
+                  "length": 69664
                 }
               ]
             },
@@ -191,6 +197,52 @@
                     {
                       "name": "Mid/side stereo",
                       "value": "37 stereo blocks (100.0%)",
+                      "offset": 0,
+                      "length": 69664
+                    }
+                  ]
+                },
+                {
+                  "name": "Wasted Bits",
+                  "value": 37,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 69664,
+                  "children": [
+                    {
+                      "name": "4 Bits",
+                      "value": "1 block (2.7%)",
+                      "offset": 0,
+                      "length": 69664
+                    },
+                    {
+                      "name": "6 Bits",
+                      "value": "4 blocks (10.8%)",
+                      "offset": 0,
+                      "length": 69664
+                    },
+                    {
+                      "name": "7 Bits",
+                      "value": "10 blocks (27.0%)",
+                      "offset": 0,
+                      "length": 69664
+                    },
+                    {
+                      "name": "8 Bits",
+                      "value": "15 blocks (40.5%)",
+                      "offset": 0,
+                      "length": 69664
+                    },
+                    {
+                      "name": "9 Bits",
+                      "value": "7 blocks (18.9%)",
+                      "offset": 0,
+                      "length": 69664
+                    },
+                    {
+                      "name": "Changes",
+                      "value": 36,
+                      "unit": "changes",
                       "offset": 0,
                       "length": 69664
                     }
