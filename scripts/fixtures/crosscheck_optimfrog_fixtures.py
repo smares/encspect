@@ -34,11 +34,17 @@ DIRECTORY = ROOT / "tests" / "fixtures" / "optimfrog"
 
 
 class Info(ctypes.Structure):
-    # OptimFROG_Info of SDK/OptimFROG/OptimFROG.h; the Linux x64 build does not pack it.
+    # OptimFROG_Info of SDK/OptimFROG/OptimFROG.h, packed: SystemID.h defines CFG_ATTRIBUTE_PACKED for GNUC_LINUX_X8664, and the header then declares the
+    # struct __attribute__((packed)). Offsets: channels 0, samplerate 4, bitspersample 8, bitrate 12, version 16, method 20, speedup 28, noPoints 36,
+    # originalSize 44, compressedSize 52, length_ms 60, sampleType 68, channelConfig 76; 84 bytes.
+    _pack_ = 1
     _fields_ = [("channels", ctypes.c_uint32), ("samplerate", ctypes.c_uint32), ("bitspersample", ctypes.c_uint32), ("bitrate", ctypes.c_uint32),
                 ("version", ctypes.c_uint32), ("method", ctypes.c_char_p), ("speedup", ctypes.c_char_p),
                 ("noPoints", ctypes.c_int64), ("originalSize", ctypes.c_int64), ("compressedSize", ctypes.c_int64), ("length_ms", ctypes.c_int64),
                 ("sampleType", ctypes.c_char_p), ("channelConfig", ctypes.c_char_p)]
+
+
+assert ctypes.sizeof(Info) == 84 and Info.method.offset == 20 and Info.noPoints.offset == 36 and Info.sampleType.offset == 68, "OptimFROG_Info does not have the packed layout of OptimFROG.h"
 
 
 def find(manifest):
