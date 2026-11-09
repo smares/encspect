@@ -1,0 +1,118 @@
+{
+ "description": "Two real TAK files from the FFmpeg sample archive, which Encspect does not commit: TAK 1.0 (with a seek table and no encoder info object) and TAK 2.2.0. They are the only TAK files of versions other than 2.3.3 that can be downloaded; the author publishes only the latest. They are downloaded and checked against their SHA-256 (check_tak_samples.py). Per file: what ffprobe and MediaInfo must report, what the analyzer must report with --analyzer, and the objects the design walked (docs/design/tak-optimfrog-headers.md, \"What the files show\").",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/A-codecs/tak/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "lostchord-tak_1_0.tak",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/tak/lostchord-tak_1_0.tak",
+   "sha256": "030237966086c0c0bca18be5bc8384b8b1cda8ac31230078a637a6b0cebbfb1d",
+   "md5": "402e50bcd2d3374644841f370598c37a",
+   "size": 5317286,
+   "archived": false,
+   "codec": 0,
+   "profile": 2,
+   "encoder": "TAK 1.0",
+   "encoder_confidence": "Medium",
+   "preset": "-p2",
+   "channels": 1,
+   "rate": 44100,
+   "bits": 16,
+   "samples": 5589504,
+   "frame_length": 5512,
+   "objects": [
+    [
+     1,
+     13
+    ],
+    [
+     2,
+     637
+    ],
+    [
+     3,
+     53
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "audio_start": 723,
+   "has_last_frame_info": false,
+   "ffmpeg_decodes": false,
+   "mediainfo": {
+    "Format": "TAK",
+    "Channels": "1",
+    "SamplingRate": "44100",
+    "BitDepth": "16"
+   },
+   "findings": [],
+   "info_findings": []
+  },
+  {
+   "file": "lostchord-tak_2_2_0.tak",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/tak/lostchord-tak_2_2_0.tak",
+   "sha256": "6696820264e05fd1dda2355a4ba92d2fc573716881d633553eaee448dd4b2eec",
+   "md5": "7723b260741c7252bbc05bc66a1b4a23",
+   "size": 5044247,
+   "archived": false,
+   "codec": 2,
+   "profile": 2,
+   "encoder": "TAK 2.2.0",
+   "encoder_confidence": "High",
+   "preset": "-p2",
+   "channels": 1,
+   "rate": 44100,
+   "bits": 16,
+   "samples": 5589504,
+   "frame_length": 5512,
+   "objects": [
+    [
+     1,
+     13
+    ],
+    [
+     7,
+     11
+    ],
+    [
+     4,
+     7
+    ],
+    [
+     3,
+     53
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "audio_start": 108,
+   "has_last_frame_info": true,
+   "last_frame": {
+    "position": 5044111,
+    "size": 28
+   },
+   "ffmpeg_decodes": true,
+   "decoded_pcm_md5": "e6b14173d8a2f4230d29e99deb929fb7",
+   "mediainfo": {
+    "Format": "TAK",
+    "Channels": "1",
+    "SamplingRate": "44100",
+    "BitDepth": "16",
+    "Encoded_Library_Version": "2.2.0",
+    "Encoded_Library_Settings": "-p2"
+   },
+   "findings": [],
+   "info_findings": []
+  }
+ ]
+}

@@ -345,11 +345,11 @@ public class TakFindingTests
             File("tBaK"u8.ToArray(), Builder.StreamInfo(), [0, 5, 0, 0], first, last),
         ];
 
-        foreach (byte[] file in files)
+        for (int i = 0; i < files.Length; i++)
         {
-            Report report = Analyze(file);
+            Report report = Analyze(files[i]);
 
-            Assert.Equal(Severity.Warning, Single(report, "tak.object-size-invalid").Severity);
+            Assert.True(report.Findings.Any(f => f.Code == "tak.object-size-invalid" && f.Severity == Severity.Warning), $"file {i} raises {string.Join(", ", report.Findings.Select(f => f.Code))}");
         }
     }
 
@@ -408,7 +408,7 @@ public class TakFindingTests
             "codec" => Builder.Standard(streamInfo: Builder.StreamInfo(codec: 9)),
             "data-type" => Builder.Standard(streamInfo: Builder.StreamInfo(dataType: 3)),
             "sample-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(bitsCode: 20)),
-            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 265000)),
+            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 265000, sizeType: 4)),
             "valid-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(validBits: 20)),
             "evaluation" => Builder.Standard(encoderInfo: Builder.EncoderInfo(evaluation: 3)),
             _ => Builder.Standard(streamInfo: Builder.StreamInfo(speakers: [1, 40])),

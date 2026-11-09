@@ -38,7 +38,8 @@ internal sealed class ObjectRecord
 
     public long Held { get; init; }
 
-    public bool IsCut => Held < Size;
+    // The End object holds no data whatever size its header states.
+    public bool IsCut => Id != Layout.End && Held < Size;
 
     public long DataOffset => Offset + Layout.ObjectHeaderLength;
 

@@ -2,7 +2,7 @@
 
 Encspect is released under the [MIT License](LICENSE). The published builds, the command line tool `encspect` (a native executable, compiled ahead of time) and the GUI `encspect-gui` (a self-contained single file), carry the components below. This file is shipped with each build and shown by the GUI's About window.
 
-Each license text below is copied from a file, never written by hand (the attribution of the Matroska element registry, which is licensed by reference, is the one short text written here); `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
+Each license text below is copied from a file, never written by hand (the attribution of the Matroska element registry, which is licensed by reference, is the one short text written here; the header of TAK's takStream.pas is a file's text too); `scripts/release/make_notices.py` regenerates this file and the release workflow fails when it differs:
 
 - **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
@@ -10,6 +10,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
+- **TAK's takStream.pas:** the header of `Sdk/Source/takStream.pas` of TAK 2.3.3 (its copyright and its license, "Do with it, whatever you want", with the request that a modified version says it is not an official release), extracted from `TAK_2.3.3.zip`, the archive `scripts/fixtures/tak_tool.py` pins by SHA-256 (`40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/tak-stream.txt`. The module itself is not committed.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
@@ -37,6 +38,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 | libspeex 1.2.1: the code of Encspect's Speex parser derived from it (the walk over a packet's frames: the narrowband decoder's reading of the submodes, the skip of wideband layers, the in-band handling) and the tables of bits per submode | 1.2.1 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources, and its reading of the frame headers of stream versions 4 to 7 | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
+| TAK's `takStream.pas` (TAK 2.3.3): the reading of the container in Encspect's TAK parser (the metadata objects and their layout, the stream info's bit layout, the CRC-24, the frame header and the frame size types). Encspect's reader is not an official release of TAK | 2.3.3 (module version 2.2.0) | "Do with it, whatever you want", with conditions | both builds, all platforms |
 | The Matroska element registry (`ebml_matroska.xml`): the default values of the elements and the descriptions of the elements RFC 9559 does not list, in `src/Encspect.Formats.Matroska/Elements.cs` (format data) | commit 1a943ead9bb4 | CC BY 4.0 | both builds, all platforms |
 | matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
 
@@ -3205,6 +3207,51 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+## TAK's takStream.pas
+
+Encspect's TAK parser (`src/Encspect.Formats.Tak`) is written in C#; its reading of the container (the metadata objects, the stream info's bit layout, the CRC-24 of RFC 2440, the frame header and the frame size types) follows `Sdk/Source/takStream.pas` of the TAK 2.3.3 SDK, the author's own source of the container, where the files Takc.exe wrote agree with it and departs from it where they do not (`docs/formats/tak.md`). The parser's source says so. **Encspect's reader is not an official release of TAK**; the module is not distributed with Encspect. The header of the module, which carries its copyright and license:
+
+```
+This source module is part of TAK, Tom's lossless audio kompressor.
+
+Homepage: http://www.thbeck.de/Tak/Tak.html
+
+Version: 2.2.0
+
+Copyright 2006 by Thomas Becker, D-49080 Osnabrueck, Germany.
+All rights reserved.
+
+
+Content:
+--------
+
+Hopefully anything needed to understand, how TAK's container works.
+
+
+Purpose:
+--------
+
+I understand, that there is a demand for a documentation of TAK's container.
+But unfortunately i am currently too short of time to write a comprehensive
+documentation. Therefore the best thing i can do is to publish this source
+module which contains all relevant code and definitions.
+
+I have also added some comments, unfortunately in my rather bad english...
+
+
+License:
+--------
+
+Do with it, whatever you want.
+
+But please:
+
+- Don't distribute this module without the SDK containing it.
+
+- If for some reason you want to publish a modified version, please
+  state clearly, that it isn't an official release.
 ```
 
 ## The Matroska element registry

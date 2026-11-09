@@ -58,7 +58,8 @@ public class TakFixtureTests
         }
 
         string[] codes = [.. manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal)];
-        Assert.Equal(codes, report.Findings.Select(f => f.Code).Order(StringComparer.Ordinal));
+        // The host's findings about a tag after the stream (Takc's APEv2 tag lists its items unsorted) are not the parser's.
+        Assert.Equal(codes, report.Findings.Select(f => f.Code).Where(c => c.StartsWith("tak.", StringComparison.Ordinal)).Order(StringComparer.Ordinal));
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.Equal(manifest.GetProperty("stream_info_first").GetBoolean(), objects.Length > 0 && objects[0].Name == "Stream Info Object");
         if (!name.StartsWith("tak/external-", StringComparison.Ordinal))

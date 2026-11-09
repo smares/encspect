@@ -1,0 +1,768 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-lossywav-fsl512.tak",
+    "root": {
+      "name": "File",
+      "value": "TAK",
+      "offset": 0,
+      "length": 41830,
+      "children": [
+        {
+          "name": "TAK",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 41830,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 41830,
+              "children": [
+                {
+                  "name": "Codec",
+                  "value": "Integer 24 bit (TAK 2.0)",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Profile",
+                  "value": 2,
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Preset",
+                  "value": "-p2",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 512,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Samples",
+                  "value": 44100,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Duration",
+                  "value": 1,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "stereo (front left, front right)",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 333.232,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Verified Header Checksums",
+                  "value": 4,
+                  "unit": "headers",
+                  "offset": 0,
+                  "length": 41830
+                }
+              ]
+            },
+            {
+              "name": "Encoder",
+              "value": "TAK 2.3.3",
+              "offset": 0,
+              "length": 41830,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "High",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The encoder info object states version 2.3.3",
+                  "offset": 0,
+                  "length": 41830
+                }
+              ]
+            },
+            {
+              "name": "Processor",
+              "value": "lossyWAV 1.4.2",
+              "offset": 0,
+              "length": 41830,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "High",
+                  "offset": 0,
+                  "length": 41830
+                },
+                {
+                  "name": "Evidence",
+                  "value": "fact chunk in the stored WAV header at 0x65 names \"lossyWAV 1.4.2\" with the settings \"--quality standard\"",
+                  "offset": 0,
+                  "length": 41830
+                }
+              ]
+            },
+            {
+              "name": "Stream ID",
+              "value": "tBaK",
+              "offset": 0,
+              "length": 4
+            },
+            {
+              "name": "Stream Info Object",
+              "value": 17,
+              "unit": "bytes",
+              "offset": 4,
+              "length": 17,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": 1,
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 7,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved Bit",
+                  "value": 0,
+                  "offset": 4,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Object Size",
+                  "value": 13,
+                  "unit": "bytes",
+                  "offset": 5,
+                  "length": 3
+                },
+                {
+                  "name": "Codec",
+                  "value": "Integer 24 bit (TAK 2.0)",
+                  "offset": 8,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 6,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Profile",
+                  "value": 2,
+                  "offset": 8,
+                  "length": 2,
+                  "bitOffset": 6,
+                  "bitLength": 4,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Frame Size Type",
+                  "value": "512 samples",
+                  "offset": 9,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4,
+                  "bitOrder": "leastSignificantFirst",
+                  "children": [
+                    {
+                      "name": "Frame Length",
+                      "value": 512,
+                      "unit": "samples",
+                      "offset": 9,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 4,
+                      "bitOrder": "leastSignificantFirst"
+                    }
+                  ]
+                },
+                {
+                  "name": "Samples",
+                  "value": 44100,
+                  "unit": "samples",
+                  "offset": 9,
+                  "length": 6,
+                  "bitOffset": 6,
+                  "bitLength": 35,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Data Type",
+                  "value": "PCM",
+                  "offset": 14,
+                  "length": 1,
+                  "bitOffset": 1,
+                  "bitLength": 3,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 14,
+                  "length": 3,
+                  "bitOffset": 4,
+                  "bitLength": 18,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 16,
+                  "length": 2,
+                  "bitOffset": 6,
+                  "bitLength": 5,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 17,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 4,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "HasExtension",
+                  "value": false,
+                  "offset": 17,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "CRC-24",
+                  "value": 9530092,
+                  "offset": 18,
+                  "length": 3
+                },
+                {
+                  "name": "Computed CRC-24",
+                  "value": 9530092,
+                  "offset": 18,
+                  "length": 3
+                },
+                {
+                  "name": "IsCrc24Valid",
+                  "value": true,
+                  "offset": 18,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Last Frame Info Object",
+              "value": 15,
+              "unit": "bytes",
+              "offset": 21,
+              "length": 15,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": 7,
+                  "offset": 21,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 7,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved Bit",
+                  "value": 0,
+                  "offset": 21,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Object Size",
+                  "value": 11,
+                  "unit": "bytes",
+                  "offset": 22,
+                  "length": 3
+                },
+                {
+                  "name": "Last Frame Position",
+                  "value": 41549,
+                  "unit": "bytes",
+                  "offset": 25,
+                  "length": 5
+                },
+                {
+                  "name": "Last Frame Size",
+                  "value": 105,
+                  "unit": "bytes",
+                  "offset": 30,
+                  "length": 3
+                },
+                {
+                  "name": "CRC-24",
+                  "value": 9694926,
+                  "offset": 33,
+                  "length": 3
+                },
+                {
+                  "name": "Computed CRC-24",
+                  "value": 9694926,
+                  "offset": 33,
+                  "length": 3
+                },
+                {
+                  "name": "IsCrc24Valid",
+                  "value": true,
+                  "offset": 33,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Encoder Info Object",
+              "value": 11,
+              "unit": "bytes",
+              "offset": 36,
+              "length": 11,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": 4,
+                  "offset": 36,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 7,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved Bit",
+                  "value": 0,
+                  "offset": 36,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Object Size",
+                  "value": 7,
+                  "unit": "bytes",
+                  "offset": 37,
+                  "length": 3
+                },
+                {
+                  "name": "Encoder Version",
+                  "value": "2.3.3",
+                  "offset": 40,
+                  "length": 3
+                },
+                {
+                  "name": "Preset",
+                  "value": 2,
+                  "offset": 43,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 4,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Evaluation",
+                  "value": "Standard",
+                  "offset": 43,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 2,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved",
+                  "value": 0,
+                  "offset": 43,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "CRC-24",
+                  "value": 15261466,
+                  "offset": 44,
+                  "length": 3
+                },
+                {
+                  "name": "Computed CRC-24",
+                  "value": 15261466,
+                  "offset": 44,
+                  "length": 3
+                },
+                {
+                  "name": "IsCrc24Valid",
+                  "value": true,
+                  "offset": 44,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Wave Data Object",
+              "value": 125,
+              "unit": "bytes",
+              "offset": 47,
+              "length": 125,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": 3,
+                  "offset": 47,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 7,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved Bit",
+                  "value": 0,
+                  "offset": 47,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Object Size",
+                  "value": 121,
+                  "unit": "bytes",
+                  "offset": 48,
+                  "length": 3
+                },
+                {
+                  "name": "Header Size",
+                  "value": 112,
+                  "unit": "bytes",
+                  "offset": 51,
+                  "length": 3
+                },
+                {
+                  "name": "Footer Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 54,
+                  "length": 3
+                },
+                {
+                  "name": "WAV Header Data",
+                  "value": "112 bytes, a RIFF WAVE header",
+                  "offset": 57,
+                  "length": 112,
+                  "children": [
+                    {
+                      "name": "Format Tag",
+                      "value": "0x0001 (PCM)",
+                      "offset": 77,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 79,
+                      "length": 2
+                    },
+                    {
+                      "name": "Chunks",
+                      "value": 3,
+                      "unit": "chunks",
+                      "offset": 69,
+                      "length": 100,
+                      "children": [
+                        {
+                          "name": "fmt Chunk",
+                          "value": 16,
+                          "unit": "bytes",
+                          "offset": 69,
+                          "length": 24,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "fmt ",
+                              "offset": 69,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 16,
+                              "unit": "bytes",
+                              "offset": 73,
+                              "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "fact Chunk",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 93,
+                          "length": 68,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "fact",
+                              "offset": 93,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 60,
+                              "unit": "bytes",
+                              "offset": 97,
+                              "length": 4
+                            }
+                          ]
+                        },
+                        {
+                          "name": "data Chunk",
+                          "value": 176400,
+                          "unit": "bytes",
+                          "offset": 161,
+                          "length": 8,
+                          "children": [
+                            {
+                              "name": "Chunk ID",
+                              "value": "data",
+                              "offset": 161,
+                              "length": 4
+                            },
+                            {
+                              "name": "Chunk Size",
+                              "value": 176400,
+                              "unit": "bytes",
+                              "offset": 165,
+                              "length": 4
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Fact Chunk",
+                      "offset": 93,
+                      "length": 68,
+                      "children": [
+                        {
+                          "name": "Chunk ID",
+                          "value": "fact",
+                          "offset": 93,
+                          "length": 4
+                        },
+                        {
+                          "name": "Chunk Size",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 97,
+                          "length": 4
+                        },
+                        {
+                          "name": "Text",
+                          "value": "lossyWAV 1.4.2 @ 09/11/2026 23:21:14, --quality standard",
+                          "offset": 101,
+                          "length": 60,
+                          "children": [
+                            {
+                              "name": "Version",
+                              "value": "lossyWAV 1.4.2",
+                              "offset": 101,
+                              "length": 14
+                            },
+                            {
+                              "name": "Date and Time",
+                              "value": "09/11/2026 23:21:14",
+                              "offset": 118,
+                              "length": 19
+                            },
+                            {
+                              "name": "Settings",
+                              "value": "--quality standard",
+                              "offset": 139,
+                              "length": 18
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "CRC-24",
+                  "value": 9165519,
+                  "offset": 169,
+                  "length": 3
+                },
+                {
+                  "name": "Computed CRC-24",
+                  "value": 9165519,
+                  "offset": 169,
+                  "length": 3
+                },
+                {
+                  "name": "IsCrc24Valid",
+                  "value": true,
+                  "offset": 169,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "End Object",
+              "value": 4,
+              "unit": "bytes",
+              "offset": 172,
+              "length": 4,
+              "children": [
+                {
+                  "name": "Object ID",
+                  "value": 0,
+                  "offset": 172,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 7,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Reserved Bit",
+                  "value": 0,
+                  "offset": 172,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1,
+                  "bitOrder": "leastSignificantFirst"
+                },
+                {
+                  "name": "Object Size",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 173,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Audio Data",
+              "value": 41654,
+              "unit": "bytes",
+              "offset": 176,
+              "length": 41654
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "TAK",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 44100,
+        "duration": 1,
+        "averageBitrate": 333.232,
+        "isVbr": false,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "header CRC-24",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 4,
+              "checked": 4,
+              "failed": 0
+            },
+            {
+              "name": "frame header CRC-24",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 87,
+              "checked": 0,
+              "failed": 0
+            },
+            {
+              "name": "frame data CRC-24",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 87,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "TAK 2.3.3",
+        "encoderConfidence": "High",
+        "processor": "lossyWAV 1.4.2",
+        "processorConfidence": "High",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

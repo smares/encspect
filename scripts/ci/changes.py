@@ -90,6 +90,13 @@ AREAS = {
         "scripts": ["crosscheck_optimfrog_fixtures.py", "optimfrog_tool.py"],
         "globs": ["scripts/fixtures/make_*optimfrog*", "scripts/fixtures/import_optimfrog*", "scripts/fixtures/optimfrog_*"],
     },
+    "tak-crosscheck": {
+        "projects": ["Encspect.Formats.Tak", "Encspect.Tags.Ape"],
+        "fixtures": ["tak"],
+        "scripts": ["crosscheck_tak_fixtures.py", "tak_tool.py", "check_tak_samples.py"],
+        "globs": ["scripts/fixtures/make_*tak*", "scripts/fixtures/import_windows_tak*", "scripts/fixtures/tak_*", "scripts/fixtures/windows/*tak*", "scripts/fixtures/windows/TakTools.cs",
+                  "tests/conformance/tak-samples.json"],
+    },
     "alac-crosscheck": {
         "projects": ["Encspect.Formats.Alac"],
         "fixtures": ["alac"],
