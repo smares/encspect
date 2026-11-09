@@ -47,7 +47,8 @@ def analyze(encspect, path):
         raise SystemExit(f"{path}: encspect failed: {result.stderr[-300:]}")
     report = json.loads(result.stdout)[0]
     nodes = list(walk(report["root"]))
-    wasted = next((n for n in nodes if n["name"] == "Wasted Bits"), None)
+    statistics = next((n for n in nodes if n["name"] == "Statistics"), {"children": []})
+    wasted = next((n for n in statistics["children"] if n["name"] == "Wasted Bits"), None)
     changes = next((c["value"] for c in wasted["children"] if c["name"] == "Changes"), 0) if wasted else 0
     streams = report.get("streams", [])
     return {"processor": [s.get("processor") for s in streams], "node": any(n["name"] == "Processor" for n in nodes), "changes": changes,

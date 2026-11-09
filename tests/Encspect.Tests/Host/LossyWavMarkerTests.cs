@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Encspect.Host;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
