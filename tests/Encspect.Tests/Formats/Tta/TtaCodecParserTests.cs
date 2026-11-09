@@ -114,7 +114,8 @@ public class TtaCodecParserTests
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed" or "tta.last-frame-samples-ambiguous");
     }
 
-    // Silence codes in a bit each once its parameters fall, so several counts end in the last byte: the fewest without a length, the nearest with one.
+    // Silence codes in a bit each once its parameters fall, so several counts end in the last byte: the fewest without a length, the nearest with one
+    // (with a length past the true count, the largest, which the padding bits put at the true count or up to 7 past it).
     [Theory]
     [InlineData(null, -1)]
     [InlineData(8359L + 5000, 0)]
@@ -136,13 +137,13 @@ public class TtaCodecParserTests
         switch (expected)
         {
             case -1:
-                Assert.InRange(samples, 8359 + 5000 - 7, 8359 + 5000 - 1);
+                Assert.InRange(samples, 8359 + 5000 - 7, 8359 + 5000);
                 break;
             case 0:
                 Assert.Equal(8359 + 5000, samples);
                 break;
             default:
-                Assert.InRange(samples, 8359 + 5000 + 1, 8359 + 5000 + 7);
+                Assert.InRange(samples, 8359 + 5000, 8359 + 5000 + 7);
                 break;
         }
     }

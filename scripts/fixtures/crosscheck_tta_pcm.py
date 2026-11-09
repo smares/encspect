@@ -55,6 +55,7 @@ NO_TTA_SOURCE = {"external-ffmpeg-tta.mka": "FFmpeg encoded the track from a sig
 FFMPEG_SHORT = {
     "external-ffmpeg-tta-last-frame-one-sample.mka": "the last frame holds one sample",
     "external-mkvmerge-tta-last-frame-one-sample.mka": "the last frame holds one sample",
+    "external-mkvmerge-tta-mono.mka": "the last frame holds one sample",
 }
 
 
