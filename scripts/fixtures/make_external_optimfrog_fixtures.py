@@ -171,7 +171,8 @@ def data_of(wav):
 
 
 def output_extension(tool):
-    return {"ofr": ".ofr", "off": ".off", "ofs": ".ofs"}[tool]
+    # off appends ".ofr" to any other name it is given (out.off became out.off.ofr in the first run), so its files carry the extension ofr's do.
+    return {"ofr": ".ofr", "off": ".ofr", "ofs": ".ofs"}[tool]
 
 
 def encode(package, case, wav, description, work, fixtures):
