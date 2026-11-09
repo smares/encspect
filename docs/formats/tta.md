@@ -118,7 +118,7 @@ The header states a channel count and no speaker positions. The layout comes fro
   - bytes left after the last code of a frame are ignored, as the reference ignores them;
   - a frame of more than 64 MiB is not read into memory and not decoded (`tta.frame-not-decoded`, Info).
 - **Memory:** a frame is held whole while it is decoded (at most 64 MiB); the output is written in blocks of at most 65,536 samples over all channels; the state is a few hundred bytes for each channel.
-- **Work:** `DecodeContext.AddWork` is charged before the work: 16 units a byte of the frame's coded data, and for each sample of each channel the fixed work of `DecodeWork.ForSample` plus 28 (the filter: 8 taps to predict and 8 to update and step, at 1.5 units a tap; the predictor and the decorrelation, 4).
+- **Work:** `DecodeContext.AddWork` is charged before the work: 16 units a byte of the frame's coded data, and for each sample of each channel the fixed work of `DecodeWork.ForSample` plus 34 (the filter: 8 taps to predict and 8 to update and step, at 1.5 units a tap; the predictor and the decorrelation, 10); a track without the header is charged its coded bytes twice, for the pass that counts its codes.
 - **Frames decoded:** the first 2,097,152 frames of a stream (`Records.MaxEntries`); a file with more is not decoded past them.
 
 ## Not covered

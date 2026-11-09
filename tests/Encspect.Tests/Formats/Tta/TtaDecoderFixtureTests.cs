@@ -29,6 +29,61 @@ public class TtaDecoderFixtureTests
         }
     }
 
+    // The TTA tracks of the Matroska fixtures: neither muxer stores the header, so the decoder takes the track's figures (docs/formats/tta.md, "TTA in Matroska").
+    public static TheoryData<string> MatroskaNames
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            foreach (string file in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "matroska"), "external-*tta*.mka").Order(StringComparer.Ordinal))
+            {
+                data.Add("matroska/" + Path.GetFileName(file));
+            }
+
+            return data;
+        }
+    }
+
+    // A track copied from a TTA file decodes to that file's samples (its manifest's decoded_pcm_md5); every track has its decode and measure goldens.
+    [Theory]
+    [MemberData(nameof(MatroskaNames))]
+    public void AMatroskaTrackDecodesToTheSamplesOfTheFileItWasMadeFrom(string name)
+    {
+        JsonElement manifest = Fixtures.LoadMpegManifest(name);
+        (Report report, PcmHashingSink sink) = Decode(name);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed");
+        Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
+        string source = manifest.GetProperty("encoder").GetProperty("inputs")[0].GetString()!;
+        if (source.EndsWith(".tta", StringComparison.Ordinal))
+        {
+            JsonElement original = Fixtures.LoadMpegManifest(source);
+            Assert.Equal(original.GetProperty("decoded_samples").GetInt64(), sink.Samples);
+            Assert.Equal(original.GetProperty("decoded_pcm_md5").GetString(), sink.Hash());
+        }
+        else
+        {
+            Assert.True(sink.Samples > 0);
+        }
+
+        Golden(name, ".decode.json", DecoderFixtureTests.Golden(report));
+        (Report measured, _) = Decode(name, new MeasureOptions());
+        Golden(name, ".measure.json", Encspect.Tests.Measurement.MeasurementFixtureTests.Golden(measured, Path.GetFileNameWithoutExtension(name)));
+    }
+
+    private static void Golden(string name, string suffix, string actual)
+    {
+        string path = Fixtures.MpegCompanion(name, suffix);
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
     private static (Report Report, PcmHashingSink Sink) Decode(string name, MeasureOptions? measure = null)
     {
         var sink = new PcmHashingSink();
