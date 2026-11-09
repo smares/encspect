@@ -1,23 +1,15 @@
 {
   "goldens": [
-    "tests/fixtures/tta/"
+    "tests/fixtures/tta/",
+    "tests/fixtures/matroska/external-ffmpeg-tta.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-tta.report.json"
   ],
-  "added": [
-    {
-      "scope": "node",
-      "parent": [
-        "TTA",
-        "Statistics"
-      ],
-      "name": "Channel Layout"
-    },
+  "changed": [
     {
       "scope": "stream",
-      "key": "channelLayout"
-    },
-    {
-      "scope": "stream",
-      "key": "channelLayoutName"
+      "fields": [
+        "verification"
+      ]
     }
   ]
 }
