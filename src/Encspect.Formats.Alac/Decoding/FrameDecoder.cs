@@ -7,7 +7,7 @@ namespace Encspect.Formats.Alac.Decoding;
 internal sealed class FrameDecoder : IFrameDecoder
 {
     // Units a tap of the predictor costs: the sum and the sign adaptation that follows it (docs/design/decoders.md, "As built: ALAC").
-    internal const long TapUnits = 3;
+    internal const long TapUnits = 4;
 
     // Units a sample costs on top of the fixed work where the element shifted bytes out: the read of their bits.
     internal const long ShiftedSampleUnits = 4;

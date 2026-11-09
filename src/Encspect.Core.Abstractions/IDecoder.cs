@@ -9,8 +9,8 @@ public interface IDecoder
     // The codec ID the parsers start sessions with, as ICodecParser.Id: "flac", "monkeys-audio", "truehd".
     string Id { get; }
 
-    // The work units per byte of the file that the host allows the analysis in total (the larger of 2^35 and the file's size
-    // times this, for the largest value among the decoders that started a session). A decoder overrides the default only
+    // The work units the host allows per byte of the units a session of this decoder is handed (the budget is the larger of
+    // 2^35 and the sum of those over the analysis's sessions). A decoder overrides the default only
     // with the derivation of its worst legitimate case in its "As built" section of docs/design/decoders.md.
     long WorkPerInputByte => DecodeWork.DefaultPerInputByte;
 

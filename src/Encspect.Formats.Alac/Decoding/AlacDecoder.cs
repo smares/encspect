@@ -1,3 +1,5 @@
+// Follows Apple's ALAC reference implementation (macosforge/alac, ALACDecoder.cpp, Init), Apache License 2.0:
+// Copyright (c) 2011 Apple Inc. See THIRD-PARTY-NOTICES.md.
 using Encspect.Core;
 
 namespace Encspect.Formats.Alac.Decoding;
@@ -13,8 +15,9 @@ public sealed class AlacDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The most a legitimate file charges for a byte: digital silence. FFmpeg's encoder codes a frame of 4,096 stereo samples of silence in 32 bytes, 4,096 units a byte at
-    // 16 units a sample; eight channels at 16 bits need about 73 bytes, about 7,200 units a byte (docs/design/decoders.md, "As built: ALAC").
+    // The most a legitimate file charges for a byte: digital silence. Apple's own encoder codes a frame of 4,096 stereo samples of silence in 32 bytes, 7,164 units a byte
+    // (28 units a sample with its filters of 4 coefficients at the weights before the tap weight of 4), and 6,999 for eight channels at 16 bits (docs/design/decoders.md,
+    // "As built: ALAC").
     public long WorkPerInputByte => 8192;
 
     public IFrameDecoder Open(DecodeContext context)
@@ -29,7 +32,8 @@ public sealed class AlacDecoder : IDecoder
             throw new InvalidDataException("The magic cookie is shorter than the 24 bytes of the configuration");
         }
 
-        // The refusals are Apple's (ALACDecoder.cpp, Init): a compatible version above 0. The others keep the decoder to what its buffers and the output hold.
+        // The refusal of a compatible version above 0 is Apple's (ALACDecoder.cpp, Init). The others are Encspect's: they keep the decoder to what its buffers and the PCM
+        // format hold, and a sample rate of 0 is no format (Apple's decoder ignores the rate).
         if (cookie.CompatibleVersion > 0)
         {
             throw new InvalidDataException($"The magic cookie states the compatible version {cookie.CompatibleVersion}, which Apple's decoder refuses");

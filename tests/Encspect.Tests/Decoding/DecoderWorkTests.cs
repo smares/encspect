@@ -397,6 +397,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("fixture-16-loud-noise", "external-alacconvert-16-loud-noise.m4a"),
             ("fixture-ffmpeg-16-stereo", "external-ffmpeg-16-stereo.m4a"),
             ("fixture-ffmpeg-order-20", "external-ffmpeg-16-stereo-order-20.m4a"),
+            ("order-30-shift-15-full-adaptation", "built-stereo-16-order-30-shift-15-ramp.m4a"),
         })
         {
             Add("alac-" + label, () => new Case("alac-" + label, AlacCases.Repeated(file)));

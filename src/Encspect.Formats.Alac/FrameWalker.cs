@@ -49,6 +49,10 @@ internal sealed class WalkResult
 
     public long FaultBit { get; set; }
 
+    // The fault is in an element that follows the cookie's channels, all of which were read: the reference decoder stops reading there (ALACDecoder.cpp,
+    // Decode: the loop ends once channelIndex reaches numChannels), so the frame decodes and only the report shows the fault.
+    public bool IsFaultBeyond { get; set; }
+
     public bool HasEnd { get; set; }
 
     // All channels of the cookie were read and the packet ends before an end tag.
@@ -96,6 +100,7 @@ internal sealed class WalkResult
         FaultChannelsBefore = 0;
         FaultTag = 0;
         FaultBit = 0;
+        IsFaultBeyond = false;
         HasEnd = false;
         IsEndMissing = false;
         Walked = 0;
@@ -216,6 +221,7 @@ internal static class FrameWalker
                 // A pair that does not fit the cookie's channels is skipped by the reference decoder (ID_CPE, NoMoreChannels), like any element after the last channel.
                 result.FaultChannelsBefore = tag == ElementTags.ChannelPair && channelsBefore + 2 > cookie.Channels ? Math.Max(channelsBefore, cookie.Channels) : channelsBefore;
                 result.FaultTag = tag;
+                result.IsFaultBeyond = channelsBefore >= cookie.Channels;
                 break;
             }
 
@@ -239,7 +245,7 @@ internal static class FrameWalker
             result.RestEnd = Math.Min(position, total);
         }
 
-        if (result.Fault != WalkFault.None)
+        if (result.Fault != WalkFault.None && !result.IsFaultBeyond)
         {
             result.Flags |= FrameFlags.Unreadable | (result.Fault == WalkFault.Truncated ? FrameFlags.IsTruncated : FrameFlags.None);
         }

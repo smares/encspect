@@ -116,10 +116,10 @@ internal sealed class State
             // A session that is decoding lends the buffers the walk stores the frame in, so the coded syntax is read once.
             SampleBuffers lent = Session is { IsDecoding: true } session && cookie.IsFrameLengthValid ? session.Lend(((int)cookie.FrameLength) + StoredLayout.MetaSlots, cookie.Channels) : default;
             FrameWalker.Walk(packet.Span, cookie, _walk, Tally, _kept, isDetailed ? Records.Store : null, _cancellation, lent);
-            isDecoded = !lent.IsEmpty && _walk.Fault == WalkFault.None;
+            isDecoded = !lent.IsEmpty && (_walk.Fault == WalkFault.None || _walk.IsFaultBeyond);
             flags |= _walk.Flags;
             samples = _walk.HasSamples ? _walk.Samples : 0;
-            isUnreadable = _walk.Fault != WalkFault.None;
+            isUnreadable = (_walk.Flags & FrameFlags.Unreadable) != 0;
 
             // A frame whose first byte is there declares its samples all the same: those of its first element if that was read, else the
             // cookie's frame length. One that cannot be read, or that the container says is cut, is lost.
