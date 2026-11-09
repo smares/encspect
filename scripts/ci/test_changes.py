@@ -75,6 +75,8 @@ class ChangesTests(unittest.TestCase):
                      "scripts/fixtures/make_external_tta_fixtures.py"):
             self.assertIn("tta-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_tta_fixtures.py"), {"tta-crosscheck", "fixtures"})
+        for path in ("scripts/fixtures/crosscheck_tta_pcm.py", "scripts/fixtures/compare_pcm.py", "scripts/fixtures/libtta_tool.py"):
+            self.assertIn("tta-crosscheck", run(path), path)
         self.assertNotIn("tta-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
     def test_wav_and_aiff_parsers_scripts_and_fixtures_belong_to_the_wav_job(self):

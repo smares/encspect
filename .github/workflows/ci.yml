@@ -1212,7 +1212,7 @@ jobs:
         run: python3 scripts/fixtures/check_ebu_loudness_set.py
 
   tta-crosscheck:
-    name: TTA fixtures agree with FFmpeg and MediaInfo
+    name: TTA fixtures agree with FFmpeg, MediaInfo and libtta-c's tta
     runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.tta-crosscheck == 'true'
@@ -1225,14 +1225,26 @@ jobs:
 
       # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were
       # checked with ffmpeg 6.1.1 and MediaInfo 26.01 built from source). No TTA encoder is packaged in Ubuntu: the
-      # files of libtta-c 2.3 are committed (libtta_tool.py builds it only to regenerate them), and both tools are black boxes here.
-      - name: Install ffmpeg and mediainfo
+      # files of libtta-c 2.3 are committed, and both tools are black boxes here. The PCM check below builds libtta-c 2.3's `tta` from the pinned
+      # archive (libtta_tool.py; gcc and make from build-essential) and runs it as a black box.
+      - name: Install ffmpeg, mediainfo and the compilers
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg mediainfo
+          sudo apt-get install -y ffmpeg mediainfo build-essential
 
       - name: Cross-check the TTA fixtures
         run: python3 scripts/fixtures/crosscheck_tta_fixtures.py
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The analyzer's decoded samples equal those of `tta -d` and of FFmpeg for every encoder-written file (FFmpeg alone for the 8-bit and 8-channel files).
+      - name: Compare the decoded PCM of the TTA fixtures
+        run: python3 scripts/fixtures/crosscheck_tta_pcm.py
 
   alac-crosscheck:
     name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder

@@ -280,6 +280,24 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("no position", error)
 
+    def test_an_integer_stream_of_eight_bits_is_compared_exactly_with_an_int8_reference(self):
+        directory = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: [p.unlink() for p in directory.iterdir()] and directory.rmdir())
+        values = [-128, -1, 0, 1, 127, 5, -77, 100]
+        (directory / "x.s0.pcm").write_bytes(array.array("b", values).tobytes())
+        manifest = {"file": "x", "streams": [{"index": 0, "codec": "test", "sampleRate": 8000, "channels": 2, "format": "integer", "bitsPerSample": 8,
+                                              "pcm": "x.s0.pcm", "samples": 4, "runs": [[0, 4]]}]}
+        (directory / "x.pcm.json").write_text(json.dumps(manifest))
+        (directory / "ref.raw").write_bytes(array.array("b", values).tobytes())
+        args = [str(directory / "x.pcm.json"), "--reference", str(directory / "ref.raw"), "--reference-format", "int8", "--reference-channels", "2", "--max-lsb", "0", "--rms-lsb", "0", "--json"]
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(compare.main(args), 0)
+        self.assertEqual(json.loads(out.getvalue())["compared"], 4)
+        (directory / "ref.raw").write_bytes(array.array("b", [*values[:-1], 99]).tobytes())
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(compare.main(args), 1)
+
     def test_range_arithmetic(self):
         self.assertEqual(compare.subtract([(0, 10), (20, 30)], [(5, 25)]), [(0, 5), (25, 30)])
         self.assertEqual(compare.intersect([(0, 10), (20, 30)], [(5, 25)]), [(5, 10), (20, 25)])

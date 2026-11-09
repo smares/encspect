@@ -81,7 +81,7 @@ AREAS = {
     "tta-crosscheck": {
         "projects": ["Encspect.Formats.Tta", "Encspect.Tags.Ape"],
         "fixtures": ["tta"],
-        "scripts": ["crosscheck_tta_fixtures.py"],
+        "scripts": ["crosscheck_tta_fixtures.py", "crosscheck_tta_pcm.py", "compare_pcm.py", "libtta_tool.py"],
         "globs": ["scripts/fixtures/make_*tta*", "scripts/fixtures/tta_*"],
     },
     "alac-crosscheck": {
