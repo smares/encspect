@@ -321,9 +321,13 @@ internal sealed partial class FileReader
             && track.Channels is > 0 and <= int.MaxValue && track.BitDepth is > 0 and <= int.MaxValue)
         {
             var format = new AudioFormat(0, (int)track.Channels.Value, (int)ttaRate, 0, 0, (int)track.BitDepth.Value);
+
+            // The segment's Duration (RFC 9559, section 5.1.2.4) gives the decoder the last frame's samples where no header states the stream's.
+            double length = segment.Duration is { } ticks ? ticks * segment.TimestampScale / 1e9 : 0;
+            long? samples = length > 0 && length * ttaRate < long.MaxValue ? (long)Math.Floor((length * ttaRate) + 0.5) : null;
             configuration = configuration is not null
-                ? configuration with { Format = format }
-                : new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, track.Node.Offset, track.Node.Offset), track.Node) { Format = format };
+                ? configuration with { Format = format, DurationSamples = samples }
+                : new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, track.Node.Offset, track.Node.Offset), track.Node) { Format = format, DurationSamples = samples };
         }
 
         string prefix = _segments.Count > 1 ? $"Segment {segment.Number} " : string.Empty;

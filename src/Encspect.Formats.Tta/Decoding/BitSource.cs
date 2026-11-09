@@ -18,6 +18,9 @@ internal ref struct BitSource
         _count = 0;
     }
 
+    // The bytes the bits read so far touch.
+    public readonly long ConsumedBytes => ((8L * _next) - _count + 7) / 8;
+
     private void Fill()
     {
         while (_count <= 56 && _next < _data.Length)

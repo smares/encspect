@@ -175,15 +175,16 @@ internal static class Summary
         return session.Finish(tallies);
     }
 
-    // The decoder takes the header as its configuration; a stream without one (a container that stores none) is refused by it, since the samples of its last frame are not known.
+    // The decoder takes the header as its configuration; a track a container stores without one gives the container's figures instead (State.ContainerFormat).
     public static IDecodeSession StartSession(State s) =>
         s.Session = s.Context.StartDecoding(TtaCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,
             Channels = s.Channels,
             BitsPerSample = s.BitsPerSample,
-            Samples = s.Header?.Samples,
+            Samples = s.Header?.Samples ?? s.ContainerSamples,
             Configuration = s.HeaderBytes,
+            Format = s.HeaderBytes is null ? s.ContainerFormat : null,
         });
 
     private static Node? Writer(State s, long start, long end) =>

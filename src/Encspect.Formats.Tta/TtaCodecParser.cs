@@ -34,6 +34,9 @@ public sealed class TtaCodecParser : ICodecParser
         long start = -1;
         long end = 0;
         int index = 0;
+
+        // Without a header the last frame's samples come from the container's length, so each packet is fed when the next one arrives.
+        (MappedBytes Packet, Entry Entry)? held = null;
         foreach (MappedBytes packet in packets)
         {
             if (index % 4096 == 0)
@@ -43,13 +46,30 @@ public sealed class TtaCodecParser : ICodecParser
 
             start = start < 0 ? packet.FileStart : start;
             end = Math.Max(end, packet.FileEnd);
-            Add(state, packet, index);
+            Entry entry = Add(state, packet, index);
             if (session.IsDecoding)
             {
-                Feeding.FromPacket(state, session, packet, index);
+                if (state.Header is not null)
+                {
+                    Feeding.FromPacket(state, session, packet, entry, index, isLast: false);
+                }
+                else
+                {
+                    if (held is { } previous)
+                    {
+                        Feeding.FromPacket(state, session, previous.Packet, previous.Entry, index - 1, isLast: false);
+                    }
+
+                    held = (packet, entry);
+                }
             }
 
             index++;
+        }
+
+        if (held is { } final && session.IsDecoding)
+        {
+            Feeding.FromPacket(state, session, final.Packet, final.Entry, index - 1, isLast: true);
         }
 
         if (state.Header is { SampleRate: > 0 } header && header.FrameCount != state.Listed)
@@ -107,6 +127,8 @@ public sealed class TtaCodecParser : ICodecParser
             s.SampleRate = Math.Max(0, format.SampleRate);
             s.Channels = format.Channels;
             s.BitsPerSample = format.BitsPerSample;
+            s.ContainerFormat = format;
+            s.ContainerSamples = configuration.DurationSamples;
         }
     }
 
@@ -124,7 +146,7 @@ public sealed class TtaCodecParser : ICodecParser
             + $"{header.SampleRate} Hz, {Counts.Of(header.Channels, "channel", "channels")} and {Counts.Of(header.BitsPerSample, "bit", "bits")} per sample; the header's figures are used.");
     }
 
-    private static void Add(State s, MappedBytes packet, int index)
+    private static Entry Add(State s, MappedBytes packet, int index)
     {
         ReadOnlySpan<byte> data = packet.Span;
         var entry = new Entry { Offset = packet.FileStart, Size = (uint)packet.Length };
@@ -155,5 +177,6 @@ public sealed class TtaCodecParser : ICodecParser
         }
 
         s.AddEntry(entry);
+        return entry;
     }
 }

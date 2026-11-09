@@ -41,6 +41,8 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     private readonly DecodeContext _context;
     private readonly uint _sampleRate;
+    private readonly bool _followsCodes;
+    private readonly int _frameLength;
     private readonly int _channels;
     private readonly int _depth;
     private readonly int _filterShift;
@@ -54,12 +56,16 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly long _perSample;
     private IPcmSink? _sink;
 
-    public FrameDecoder(DecodeContext context, TtaHeader header)
+    // followsCodes: the stream has no header (a container's track), so a frame's samples are where its codes end: the count the parser hands is only a hint
+    // that chooses among the counts whose codes end in the frame's last byte.
+    public FrameDecoder(DecodeContext context, uint sampleRate, int channels, int bitsPerSample, bool followsCodes)
     {
         _context = context;
-        _sampleRate = header.SampleRate;
-        _channels = header.Channels;
-        _depth = (header.BitsPerSample + 7) / 8;
+        _sampleRate = sampleRate;
+        _followsCodes = followsCodes;
+        _frameLength = (int)Math.Min(TtaHeader.FrameLengthOf(sampleRate), int.MaxValue);
+        _channels = channels;
+        _depth = (bitsPerSample + 7) / 8;
         _filterShift = _depth == 2 ? 9 : 10;
         _predictorShift = _depth == 1 ? 4 : 5;
         _minimum = -(1 << ((8 * _depth) - 1));
@@ -92,13 +98,11 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         ReadOnlySpan<byte> coded = data[..^4];
 
-        // The Rice codes are charged for the bytes they come from; a frame of the largest size the parser hands over takes 2^30 units, so they are charged in slices.
-        for (long left = coded.Length; left > 0;)
+        ChargeCodes(coded.Length);
+        if (_followsCodes)
         {
-            long slice = Math.Min(left, 1L << 22);
-            _context.AddWork(slice * DecodeWork.PerCodedByte);
-            _context.CancellationToken.ThrowIfCancellationRequested();
-            left -= slice;
+            ChargeCodes(coded.Length);
+            samples = SamplesOfCodes(coded, samples);
         }
 
         _sink ??= _context.DeclareOutput(new PcmFormat((int)Math.Min(_sampleRate, int.MaxValue), _channels, 8 * _depth, SampleFormat.Integer)
@@ -116,7 +120,10 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
             int count = Math.Min(_chunk, samples - done);
-            _context.AddWork(checked(_perSample * _channels * count));
+
+            // A sample of every channel takes one bit or more, so the bytes left cap what a chunk can decode; the charge follows the smaller count.
+            long possible = Math.Max(1, ((8L * (coded.Length - bits.ConsumedBytes)) + 8) / _channels);
+            _context.AddWork(checked(_perSample * _channels * Math.Min(count, possible)));
             DecodeChunk(ref bits, count);
             _sink.Write(new PcmBlock(frame.FirstSample + done, count, _channels, _chunk, _output));
             done += count;
@@ -126,6 +133,66 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
+
+    // The Rice codes are charged for the bytes they come from; a frame of the largest size the parser hands over takes 2^30 units, so they are charged in slices.
+    private void ChargeCodes(long length)
+    {
+        for (long left = length; left > 0;)
+        {
+            long slice = Math.Min(left, 1L << 22);
+            _context.AddWork(slice * DecodeWork.PerCodedByte);
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            left -= slice;
+        }
+    }
+
+    // The samples of a frame of a stream without a header: a pass over the Rice codes alone finds the counts of sample times (up to the frame length) after
+    // which the codes end in the frame's last byte, the rest of it padding. Where several do (codes of a bit or two in the last byte), the one nearest the
+    // parser's count wins (the container's figure for the last frame, the frame length for the others), the smaller on a tie; where the codes fill the
+    // frame length and bytes remain, the frame length (bytes after the codes are ignored, as in a stream with a header).
+    private int SamplesOfCodes(ReadOnlySpan<byte> coded, int hint)
+    {
+        foreach (Channel channel in _state)
+        {
+            channel.Reset();
+        }
+
+        var bits = new BitSource(coded);
+        int first = -1;
+        int last = -1;
+        int done = 0;
+        try
+        {
+            for (; done < _frameLength; done++)
+            {
+                if ((done & 4095) == 0)
+                {
+                    _context.CancellationToken.ThrowIfCancellationRequested();
+                }
+
+                for (int c = 0; c < _channels; c++)
+                {
+                    ReadResidual(ref bits, _state[c]);
+                }
+
+                if (bits.ConsumedBytes == coded.Length)
+                {
+                    first = first < 0 ? done + 1 : first;
+                    last = done + 1;
+                }
+            }
+        }
+        catch (EndOfStreamException) when (first > 0)
+        {
+        }
+
+        if (first < 0)
+        {
+            return done;
+        }
+
+        return Math.Clamp(hint, first, last);
+    }
 
     private void DecodeChunk(ref BitSource bits, int count)
     {

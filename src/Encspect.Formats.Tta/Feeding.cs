@@ -52,26 +52,44 @@ internal static class Feeding
         }
     }
 
-    // One packet of a container: a frame, or what is left of one.
-    public static void FromPacket(State s, IDecodeSession session, MappedBytes packet, int index)
+    // One packet of a container: a frame, or what is left of one. With the header the frame's samples are the header's; without it a frame holds the frame
+    // length for the container's rate, and the last one what the container's length leaves (the decoder checks either against the frame's codes).
+    public static void FromPacket(State s, IDecodeSession session, MappedBytes packet, in Entry entry, int index, bool isLast)
     {
         Records records = s.Records;
-        long frameLength = records.Header is { SampleRate: > 0 } header ? header.FrameLength : 0;
-        int samples = (int)Math.Min(Math.Max(records.SamplesOf(index), 0), int.MaxValue);
+        long frameLength = records.Header is { SampleRate: > 0 } header ? header.FrameLength : TtaHeader.FrameLengthOf(s.SampleRate);
         long first = index * frameLength;
+        long declared = records.Header is not null ? records.SamplesOf(index) : frameLength;
+        bool isUnknown = false;
+        if (records.Header is null && isLast)
+        {
+            long left = s.ContainerSamples is { } total ? total - first : -1;
+            isUnknown = left < 1 || left > frameLength;
+            declared = isUnknown ? 0 : left;
+        }
+
+        int samples = (int)Math.Min(Math.Max(declared, 0), int.MaxValue);
         bool isTooLarge = packet.Length > MaxDecodedFrameBytes;
-        if (packet.IsCut || packet.Length < 4 || isTooLarge)
+        bool isUsable = !packet.IsCut && packet.Length >= 4;
+        if (!isUsable || isTooLarge || isUnknown)
         {
             if (isTooLarge && !packet.IsCut)
             {
                 s.Findings.Add(Severity.Info, "tta.frame-not-decoded", () => index < Records.MaxEntries ? Nodes.Frame(records, index) : s.Stream, count =>
                     $"Frame {index} holds more than the {MaxDecodedFrameBytes >> 20} MiB the analyzer reads into memory to decode a frame, so it is not decoded{(count > 1 ? $"; {Counts.Of(count - 1, "more frame is", "more frames are")} not either" : string.Empty)}.");
             }
+            else if (isUnknown && isUsable)
+            {
+                long? total = s.ContainerSamples;
+                s.Findings.Add(Severity.Info, "tta.last-frame-samples-unknown", () => index < Records.MaxEntries ? Nodes.Frame(records, index) : s.Stream, _ => total is { } length
+                    ? $"The container stores no TTA header for the track, and its length of {Counts.Of(length, "sample", "samples")} leaves no count of 1 to {frameLength} for the last frame ({index}), so that frame is not decoded."
+                    : $"The container stores no TTA header for the track and states no length, so the samples of the last frame ({index}) are not known and it is not decoded.");
+            }
 
             session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, packet.FileStart), FrameName, first, samples) { IsUnreadable = true, FollowsGap = packet.FollowsGap });
             return;
         }
 
-        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = Crc32.Of(packet.Span[..^4]) != System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(packet.Span[^4..]), FollowsGap = packet.FollowsGap });
+        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FollowsGap = packet.FollowsGap });
     }
 }

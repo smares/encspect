@@ -16,8 +16,11 @@ public sealed class TtaDecoder : IDecoder
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        MappedBytes configuration = context.Setup.Configuration
-            ?? throw new InvalidDataException("The stream has no TTA1 header, so the number of samples in its last frame is not known");
+        if (context.Setup.Configuration is not { } configuration)
+        {
+            return FromContainer(context);
+        }
+
         if (configuration.Length < TtaHeader.Length || !TtaHeader.HasSignature(configuration.Span))
         {
             throw new InvalidDataException("The configuration is not a TTA1 header");
@@ -44,6 +47,29 @@ public sealed class TtaDecoder : IDecoder
             throw new InvalidDataException("The header states no channels or no sample rate");
         }
 
-        return new FrameDecoder(context, header);
+        return new FrameDecoder(context, header.SampleRate, header.Channels, header.BitsPerSample, followsCodes: false);
+    }
+
+    // A track a container stores without the header (Matroska's A_TTA1 as FFmpeg and mkvmerge write it): the sample rate, channels and bit depth come from the
+    // container, and the samples of each frame from its codes (FrameDecoder, followsCodes), the parser's count only choosing among the few the padding allows.
+    // The audio format is not known; the frames are decoded as format 1.
+    private static FrameDecoder FromContainer(DecodeContext context)
+    {
+        if (context.Setup.Format is not { } format)
+        {
+            throw new InvalidDataException("The stream has no TTA1 header and the container states no sample rate, channels and bit depth for it");
+        }
+
+        if (format.BitsPerSample is < 1 or > 24)
+        {
+            throw new InvalidDataException($"The container states {format.BitsPerSample} bits per sample; the decoder takes 1 to 24");
+        }
+
+        if (format.Channels is < 1 or > ushort.MaxValue || format.SampleRate <= 0)
+        {
+            throw new InvalidDataException("The container states no channels or no sample rate for the stream");
+        }
+
+        return new FrameDecoder(context, (uint)format.SampleRate, format.Channels, format.BitsPerSample, followsCodes: true);
     }
 }

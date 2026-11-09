@@ -47,6 +47,12 @@ internal sealed class State
     // The header's bytes, which a decoder would take as its configuration.
     public MappedBytes? HeaderBytes { get; set; }
 
+    // A container's figures for a track it stores without the header: its format (the sample rate, channels and bit depth) and its length in samples
+    // (the decoder's setup and the last frame's count), or null.
+    public AudioFormat? ContainerFormat { get; set; }
+
+    public long? ContainerSamples { get; set; }
+
     // The decoding session, once started.
     public IDecodeSession? Session { get; set; }
 
