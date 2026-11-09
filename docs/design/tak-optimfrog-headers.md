@@ -73,7 +73,7 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
 - **Statistics:** Codec, Profile, Preset, Frame Length, Channel Layout, and "Verified Header Checksums" and "Failed Header Checksums" over the metadata objects (the unit "Header", as Musepack SV8 names the CRC of its stream header; [development.md](../development.md#names-of-statistics-and-series) gains the line).
 - **Claims:**
   - Encoder "TAK 2.3.3" (`ClaimRole.Encoder`, high confidence) from the encoder info object.
-  - A file without the object is "TAK 1.0" with medium confidence and the stream info as evidence: the SDK's decoder takes 1.0.0 as the version of such a file, as Monkey's Audio names a file before 3.98 from its file version.
+  - A file without the object is "TAK 1.0" with medium confidence and the stream info as evidence, since the SDK's decoder takes 1.0.0 as the version of such a file; the confidence is medium because the version is inferred from a missing object, not stated.
   - Processor lossyWAV from a `fact` chunk in the wave data, high confidence, the shared path of [lossywav-detection.md](lossywav-detection.md).
   - Codec 3 is named; whether it makes a claim of its own is decision 9 (recommended: no).
 - **The preset**, named as Takc prints it ("-p2", "-p3e", "-p4m"; "p" and the level, then "e" for Extra or "m" for Max). Without the encoder info object, the preset is the stream info's profile and the evaluation is unknown, as the SDK tells applications to show it. The profile is shown on its own: the SDK says it equals the preset only for the presets' standard settings (a Turbo preset with 128 predictors stores the High profile).
