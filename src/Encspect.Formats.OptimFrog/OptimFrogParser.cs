@@ -13,6 +13,8 @@ public sealed class OptimFrogParser : IFormatParser
 
     private static ReadOnlySpan<byte> Signature => "OFR "u8;
 
+    private static ReadOnlySpan<byte> FloatSignature => "OFRX"u8;
+
     public string Name => FormatName;
 
     // The signature, the main block's fields and the block after it are the evidence: a main block with a length of at least 15, a sample type of 0 to
@@ -32,7 +34,7 @@ public sealed class OptimFrogParser : IFormatParser
         int available = (int)Math.Min(bytes.Length, reader.Length);
         reader.Position = start;
         reader.Read(bytes[..available]);
-        if (!bytes[..Math.Min(4, available)].SequenceEqual(Signature))
+        if (!bytes[..Math.Min(4, available)].SequenceEqual(Signature) && !bytes[..Math.Min(4, available)].SequenceEqual(FloatSignature))
         {
             return SniffResult.None;
         }
@@ -60,7 +62,7 @@ public sealed class OptimFrogParser : IFormatParser
     public long? DeclaredEnd(SniffContext context)
     {
         ByteReader reader = context.Reader;
-        if (reader.Length < Layout.BlockHeaderLength + Layout.MainFields || !Walk.Accepts(reader, reader.Start, out uint id, out uint length, out _) || id != Layout.Main || length < Layout.MainFields)
+        if (reader.Length < Layout.BlockHeaderLength + Layout.MainFields || !Walk.Accepts(reader, reader.Start, out uint id, out uint length, out _) || !Layout.IsMain(id) || length < Layout.MainFields)
         {
             return null;
         }

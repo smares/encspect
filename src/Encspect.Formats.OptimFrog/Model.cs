@@ -43,6 +43,9 @@ internal static class Layout
     public const int Md5Length = 16;
 
     public const uint Main = 0x2052464F;
+
+    // "OFRX": the main block of the files `off` 5.100 writes for IEEE float audio in Encspect's tests, with the fields of "OFR " (format.txt does not define it).
+    public const uint MainFloat = 0x5852464F;
     public const uint Head = 0x44414548;
     public const uint Comp = 0x504D4F43;
     public const uint Tail = 0x4C494154;
@@ -57,7 +60,9 @@ internal static class Layout
         }
     });
 
-    public static bool IsKnown(uint id) => id is Main or Head or Comp or Tail or Recovery or Md5Id;
+    public static bool IsKnown(uint id) => id is Main or MainFloat or Head or Comp or Tail or Recovery or Md5Id;
+
+    public static bool IsMain(uint id) => id is Main or MainFloat;
 
     // Four printable ASCII bytes.
     public static bool IsPrintable(uint id)
@@ -75,7 +80,7 @@ internal static class Layout
     }
 
     // Where a known block belongs in the order the specification's relation allows: ['ID3'] 'OFR ' [...] 'HEAD' 'COMP'* 'TAIL' [...] ['MD5 '] ['RECV'].
-    public static int Rank(uint id) => id switch { Main => 0, Head => 1, Comp => 2, Tail => 3, Md5Id => 4, Recovery => 5, _ => -1 };
+    public static int Rank(uint id) => id switch { Main or MainFloat => 0, Head => 1, Comp => 2, Tail => 3, Md5Id => 4, Recovery => 5, _ => -1 };
 
     public static readonly string[] SampleTypes =
         ["UINT8", "SINT8", "UINT16", "SINT16", "UINT24", "SINT24", "UINT32", "SINT32", "FLOAT32_0", "FLOAT32_16", "FLOAT32_24"];

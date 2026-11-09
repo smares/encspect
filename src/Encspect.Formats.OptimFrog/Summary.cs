@@ -81,13 +81,19 @@ internal static class Summary
         // The node of the block at an index, or the stream's where the records stopped before it (Records.MaxBlocks).
         Func<Node> At(int index) => index is >= 0 and < Records.MaxBlocks && index < r.Blocks.Count ? () => Nodes.Block(source, index) : () => stream;
 
-        if (r.Counted == 0 || (r.Main is null && r.MainIndex < 0 && (r.Blocks.Count == 0 || r.Blocks[0].Id != Layout.Main)))
+        if (r.Counted == 0 || (r.Main is null && r.MainIndex < 0 && (r.Blocks.Count == 0 || !Layout.IsMain(r.Blocks[0].Id))))
         {
             Node at = r.Blocks.Count > 0 ? Nodes.Block(source, 0) : stream;
             long length = r.Counted;
             s.Findings.AddNow(Severity.Warning, "optimfrog.main-block-missing", length == 0
                 ? "The data holds no block: a block is a 4-character ID and a length."
                 : "The first block is not the main block \"OFR \" that every OptimFROG file starts with, so the file's figures are not read.", at);
+        }
+
+        if (r.Blocks.Count > 0 && r.Blocks[0].Id == Layout.MainFloat)
+        {
+            s.Findings.Add(Severity.Info, "optimfrog.main-block-variant", At(0), _ =>
+                "The main block's ID is \"OFRX\", which format.txt does not define; the files the float encoder `off` 5.100 wrote in Encspect's tests start with it, and its fields are read as those of \"OFR \".");
         }
 
         if (s.SizeInvalidBlocks > 0)
@@ -98,7 +104,7 @@ internal static class Summary
             uint length = b.Length;
             string rule = b.Id switch
             {
-                Layout.Main => $"{Layout.MainFields} bytes for its fields",
+                Layout.Main or Layout.MainFloat => $"{Layout.MainFields} bytes for its fields",
                 Layout.Comp => $"{Layout.CompFields} bytes for its fields",
                 _ => $"{Layout.Md5Length} bytes",
             };

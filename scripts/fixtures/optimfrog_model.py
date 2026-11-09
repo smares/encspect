@@ -20,7 +20,12 @@ MODES = ["fast", "normal", "high", "extra", "best", "ultra", "insane", "highnew"
          "normalnew"]
 SPEEDUPS = ["1x", "2x", "4x"]
 SYSTEMS = ["Windows x86", "Linux x86", "Linux x64", "OS X ppc", "OS X x86", "OS X x64", "Windows x64", "FreeBSD x86", "FreeBSD x64"]
-KNOWN_IDS = {b"OFR ", b"HEAD", b"COMP", b"TAIL", b"RECV", b"MD5 "}
+# "OFRX" is the main block of the files `off` 5.100 writes (format.txt does not define it); its fields are those of "OFR ".
+MAIN_IDS = ("OFR ", "OFRX")
+KNOWN_IDS = {b"OFR ", b"OFRX", b"HEAD", b"COMP", b"TAIL", b"RECV", b"MD5 "}
+
+
+KNOWN_NAMES = {"OFR ", "OFRX", "HEAD", "COMP", "TAIL", "RECV", "MD5 "}
 
 
 def crc32(data):
@@ -69,8 +74,80 @@ def summary(data):
     """The figures the fixture scripts record: the main block, the COMP blocks' sample counts and sizes, and whether all their CRCs hold."""
     blocks, end = walk(data)
     result = {"length": len(data), "ids": [b["id"] for b in blocks], "end": end}
-    if blocks and blocks[0]["id"] == "OFR " and blocks[0]["length"] >= 15:
+    if blocks and blocks[0]["id"] in MAIN_IDS and blocks[0]["length"] >= 15:
         result["main"] = main_block(data, blocks[0])
     comps = [comp_block(data, b) for b in blocks if b["id"] == "COMP" and b["length"] >= 14]
     result["blocks"] = [{"samples": c["samples"], "size": c["size"], "crc_ok": c["crc_ok"]} for c in comps]
+    return result
+
+
+def riff_chunks(data, start, end, skip_header=True):
+    """The (id, size, offset) of the RIFF chunks in data[start:end], as the analyzer lists them: from 12 bytes after a RIFF, RF64 or BW64 header, from the
+    start otherwise, up to the data chunk or a chunk that does not fit; at most 64."""
+    position = start + 12 if skip_header and data[start:start + 4] in (b"RIFF", b"RF64", b"BW64") else start
+    chunks = []
+    while len(chunks) < 64 and end - position >= 8:
+        chunk_id = data[position:position + 4].decode("latin-1")
+        size = struct.unpack_from("<I", data, position + 4)[0]
+        chunks.append({"id": chunk_id, "size": size, "offset": position})
+        if position + 8 + size > end or chunk_id == "data":
+            break
+        position += 8 + size + (size & 1)
+    return chunks
+
+
+def fmt_fields(data, start, end):
+    """The format tag and channels of the fmt chunk of a RIFF header in data[start:end], or None."""
+    for chunk in riff_chunks(data, start, end):
+        if chunk["id"] == "fmt " and chunk["offset"] + 8 + 4 <= end:
+            tag, channels = struct.unpack_from("<HH", data, chunk["offset"] + 8)
+            return {"tag": tag, "channels": channels}
+    return None
+
+
+def manifest(data, extra=None):
+    """The manifest of a fixture: the blocks, the main block, every data block with its CRC-32, the MD5, the stored header, the stream info, the
+    verification and the findings the analyzer must raise, all worked out here from the bytes by the specification."""
+    blocks, end = walk(data)
+    result = {"length": len(data), "end": end, "blocks": [dict(b) for b in blocks]}
+    findings = []
+    main = main_block(data, blocks[0]) if blocks and blocks[0]["id"] in MAIN_IDS and blocks[0]["length"] >= 15 else None
+    result["main"] = main
+    comps = [comp_block(data, b) for b in blocks if b["id"] == "COMP" and b["length"] >= 14 and b["end"] <= len(data)]
+    result["comp"] = comps
+    md5 = next((data[b["offset"] + 8:b["end"]].hex() for b in blocks if b["id"] == "MD5 " and b["length"] == 16), None)
+    result["md5"] = md5
+    head = next((b for b in blocks if b["id"] == "HEAD"), None)
+    result["head"] = None if head is None else {"offset": head["offset"] + 8, "length": head["length"],
+                                                 "chunks": [c["id"] for c in riff_chunks(data, head["offset"] + 8, head["end"])],
+                                                 "fmt": fmt_fields(data, head["offset"] + 8, head["end"])}
+    tail = next((b for b in blocks if b["id"] == "TAIL"), None)
+    result["tail"] = None if tail is None else {"offset": tail["offset"] + 8, "length": tail["length"],
+                                                 "chunks": [c["id"] for c in riff_chunks(data, tail["offset"] + 8, tail["end"], skip_header=False)]}
+    if main is not None:
+        channels = CHANNELS[main["channel_config"]] if main["channel_config"] < 2 else 2
+        samples = main["samples"] // channels
+        bits = BITS[main["sample_type"]] if main["sample_type"] < len(BITS) else 0
+        total = sum(c["samples"] for c in comps)
+        failed = sum(1 for c in comps if not c["crc_ok"])
+        result["stream_info"] = {"codec": "OptimFROG", "sample_rate": main["sample_rate"], "channels": channels, "bits_per_sample": bits, "samples": samples,
+                                 "encoder": f"OptimFROG {main['version'] // 1000}.{main['version'] % 1000:03d}"}
+        covers_all = len(comps) > 0 and total == main["samples"] and all(c["sample_type"] == main["sample_type"] and c["channel_config"] == main["channel_config"] and c["encoder_id"] == main["encoder_id"] for c in comps)
+        result["verification"] = {"checksums": [{"name": "block CRC-32", "stored": len(comps), "checked": len(comps), "failed": failed, "covers_all": covers_all},
+                                                {"name": "MD5", "stored": 1 if md5 else 0, "checked": 0, "failed": 0}]}
+        if blocks[0]["id"] == "OFRX":
+            findings.append({"code": "optimfrog.main-block-variant"})
+        if any(b["id"] not in KNOWN_NAMES for b in blocks):
+            findings.append({"code": "optimfrog.block-unknown"})
+        if total != main["samples"]:
+            findings.append({"code": "optimfrog.samples-mismatch"})
+        if failed:
+            findings.append({"code": "optimfrog.block-crc-mismatch"})
+        if head is None:
+            findings.append({"code": "optimfrog.head-missing"})
+        if tail is None:
+            findings.append({"code": "optimfrog.tail-missing"})
+    result["findings"] = findings
+    if extra:
+        result.update(extra)
     return result

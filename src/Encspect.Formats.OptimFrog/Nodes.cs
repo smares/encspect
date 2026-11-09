@@ -9,7 +9,7 @@ internal static class Nodes
 {
     public static string NameOf(uint id) => id switch
     {
-        Layout.Main => "Main Block",
+        Layout.Main or Layout.MainFloat => "Main Block",
         Layout.Head => "Header Block",
         Layout.Comp => "Data Block",
         Layout.Tail => "Footer Block",
@@ -20,7 +20,7 @@ internal static class Nodes
 
     private static string DescriptionOf(uint id) => id switch
     {
-        Layout.Main => Explain.MainBlock,
+        Layout.Main or Layout.MainFloat => Explain.MainBlock,
         Layout.Head => Explain.HeadBlock,
         Layout.Comp => Explain.CompBlock,
         Layout.Tail => Explain.TailBlock,
@@ -60,7 +60,7 @@ internal static class Nodes
         };
         switch (b.Id)
         {
-            case Layout.Main:
+            case Layout.Main or Layout.MainFloat:
                 AddMain(source, children, at, held, b);
                 break;
             case Layout.Comp:

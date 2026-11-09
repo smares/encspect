@@ -106,7 +106,7 @@ internal static class Walk
 
             switch (id)
             {
-                case Layout.Main:
+                case Layout.Main or Layout.MainFloat:
                     ReadMain(s, reader, position, held, length, ref block);
                     break;
                 case Layout.Head or Layout.Tail:
