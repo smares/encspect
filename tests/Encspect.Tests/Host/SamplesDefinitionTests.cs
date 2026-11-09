@@ -238,6 +238,13 @@ public class SamplesDefinitionTests
         ["tta/built-whole-frames.decode.json"] = Reasons.tta,
         #endregion
 
+        #region TTA in Matroska
+        ["matroska/external-ffmpeg-tta-last-frame-one-sample.decode.json"] = Reasons.ttaInMatroska,
+        ["matroska/external-ffmpeg-tta.decode.json"] = Reasons.ttaInMatroska,
+        ["matroska/external-mkvmerge-tta-last-frame-one-sample.decode.json"] = Reasons.ttaInMatroska,
+        ["matroska/external-mkvmerge-tta.decode.json"] = Reasons.ttaInMatroska,
+        #endregion
+
         #region TrueHD
         ["truehd/built-parameters-change.decode.json"] = Reasons.truehd,
         ["truehd/built-splice-channel-count.decode.json"] = Reasons.truehd,
@@ -279,6 +286,9 @@ public class SamplesDefinitionTests
 
         public const string tta =
             "the frames of the hand-built files hold bytes in place of coded samples, so the decoder refuses the frames the parser reads (their CRC-32s hold) and decodes none, or only the ones that happen to read";
+
+        public const string ttaInMatroska =
+            "a track stored without the TTA header states no sample count, so the stream's samples come from the container's timing, which counts every frame as whole; the decoder counts the last frame's codes";
 
         public const string truehd =
             "the decoder refuses units that the parser reads without flagging them (a change of the stream's parameters, an odd-length end trimmed from the samples)";
