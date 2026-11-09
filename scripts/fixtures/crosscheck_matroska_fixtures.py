@@ -238,7 +238,8 @@ TTA_SHORT_LAST_FRAME = {
     "external-mkvmerge-tta-last-frame-one-sample.mka": "the last frame holds 1 of the 33,436 samples a frame has at 32,000 Hz",
     "external-mkvmerge-tta-mono.mka": "the last frame holds 1 of the 25,077 samples a frame has at 24,000 Hz",
 }
-TTA_LAST_FRAME_ERROR = re.compile(r"^\[aist#\d+:\d+/tta @ [0-9a-fx]+\] Decoding error: Invalid data found when processing input$")
+# FFmpeg 8.0 names the decoder too ("[aist#0:0/tta @ 0x...] [dec:tta @ 0x...] Decoding error: ..."); 6.1 does not.
+TTA_LAST_FRAME_ERROR = re.compile(r"^\[aist#\d+:\d+/tta @ [0-9a-fx]+\](?: \[dec:tta @ [0-9a-fx]+\])? Decoding error: Invalid data found when processing input$")
 
 
 def check_decode(path, problems, opus_tracks=0):
