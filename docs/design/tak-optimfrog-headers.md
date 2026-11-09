@@ -202,7 +202,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ## Docs and articles
 
-- `docs/formats/tak.md` and `docs/formats/optimfrog.md` in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
+- `docs/formats/tak.md` and [`docs/formats/optimfrog.md`](../formats/optimfrog.md) in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
 - Articles in `src/Encspect.Host/Topics`: `tak-metadata` (the objects and their CRC-24), `tak-presets` (preset, evaluation and profile), `optimfrog-blocks`, `optimfrog-modes` (mode, speedup and the presets that select each mode). The `lossywav` article gains the two formats.
 - [development.md](../development.md): the fixture sections, the tools, the pinned sources, and the "Header" checksum line for TAK in the table of names. OptimFROG's package address stays in `optimfrog_tool.py` only; the docs and the provenance link the download page, as its author asks.
 - [architecture.md](../architecture.md): the two formats in the detection table (classes 100, 80 and 70), and TAK and OptimFROG among the parsers that read lossyWAV's `fact` text through `FactText`.
