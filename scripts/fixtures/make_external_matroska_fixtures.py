@@ -68,6 +68,8 @@ FIXTURES = {
     "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [NOT_READ], "mka"),
     "external-ffmpeg-alac": ("ffmpeg", ["sine"], ["-c:a", "alac"], [("Apple Lossless", 44100, 1)], [], "mka"),
     "external-ffmpeg-tta": ("ffmpeg", ["sine"], ["-c:a", "tta"], [("TTA", 44100, 1)], [], "mka"),
+    # A stream that ends one sample into its third frame, copied without the header: the decoder takes the last frame's samples from the segment's Duration.
+    "external-ffmpeg-tta-last-frame-one-sample": ("ffmpeg", ["tta/external-libtta-16-stereo-32000-last-frame-one-sample.tta"], ["-c", "copy"], [("TTA", 32000, 2)], [], "mka"),
     "external-ffmpeg-truehd": ("ffmpeg", ["sine"], ["-c:a", "truehd", "-strict", "-2"], [("Dolby TrueHD", 44100, 1)], [], "mka"),
     "external-ffmpeg-live": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus"], ["-c", "copy", "-live", "1"], [("Opus", 48000, 2)],
                              [("matroska.segment-size-unknown", "unknown")], "mkv"),
@@ -102,6 +104,7 @@ FIXTURES = {
     "external-mkvmerge-opus-webm": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"], ["--webm"], [("Opus", 48000, 2)],
                                     [("matroska.webm-timestamp-scale", "20832")], "webm"),
     "external-mkvmerge-tta": ("mkvmerge", ["tta/external-16-stereo.tta"], [], [("TTA", 44100, 2)], [], "mka"),
+    "external-mkvmerge-tta-last-frame-one-sample": ("mkvmerge", ["tta/external-libtta-16-stereo-32000-last-frame-one-sample.tta"], [], [("TTA", 32000, 2)], [], "mka"),
     # WavPack blocks of lossyWAV's output (no marker) in Matroska: the codec route counts the zero bits of each packet's blocks (docs/formats/wavpack.md).
     "external-mkvmerge-wavpack-lossywav": ("mkvmerge", ["wavpack/external-lossywav-floor-44k-merge-blocks.wv"], [], [("WavPack lossless", 44100, 2)], [], "mka"),
     "external-mkvmerge-wavpack-silence": ("mkvmerge", ["wavpack/external-silence-16-in-24-merge-blocks.wv"], [], [("WavPack lossless", 44100, 2)], [], "mka"),

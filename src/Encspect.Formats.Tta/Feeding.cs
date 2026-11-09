@@ -53,7 +53,7 @@ internal static class Feeding
     }
 
     // One packet of a container: a frame, or what is left of one. With the header the frame's samples are the header's; without it a frame holds the frame
-    // length for the container's rate, and the last one what the container's length leaves (the decoder checks either against the frame's codes).
+    // length for the container's rate, and the last one what the container's length leaves (a hint: the decoder counts the frame's codes).
     public static void FromPacket(State s, IDecodeSession session, MappedBytes packet, in Entry entry, int index, bool isLast)
     {
         Records records = s.Records;
@@ -63,9 +63,9 @@ internal static class Feeding
         bool isUnknown = false;
         if (records.Header is null && isLast)
         {
-            long left = s.ContainerSamples is { } total ? total - first : -1;
-            isUnknown = left < 1 || left > frameLength;
-            declared = isUnknown ? 0 : left;
+            // A length that leaves no count of 1 to the frame length (FFmpeg's muxer counts the last frame as whole) still bounds the codes' count; the codes decide.
+            isUnknown = s.ContainerSamples is null;
+            declared = s.ContainerSamples is { } total ? Math.Clamp(total - first, 1, frameLength) : 0;
         }
 
         int samples = (int)Math.Min(Math.Max(declared, 0), int.MaxValue);
@@ -80,10 +80,8 @@ internal static class Feeding
             }
             else if (isUnknown && isUsable)
             {
-                long? total = s.ContainerSamples;
-                s.Findings.Add(Severity.Info, "tta.last-frame-samples-unknown", () => index < Records.MaxEntries ? Nodes.Frame(records, index) : s.Stream, _ => total is { } length
-                    ? $"The container stores no TTA header for the track, and its length of {Counts.Of(length, "sample", "samples")} leaves no count of 1 to {frameLength} for the last frame ({index}), so that frame is not decoded."
-                    : $"The container stores no TTA header for the track and states no length, so the samples of the last frame ({index}) are not known and it is not decoded.");
+                s.Findings.Add(Severity.Info, "tta.last-frame-samples-unknown", () => index < Records.MaxEntries ? Nodes.Frame(records, index) : s.Stream, _ =>
+                    $"The container stores no TTA header for the track and states no length, so the samples of the last frame ({index}) are not known and it is not decoded.");
             }
 
             session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, packet.FileStart), FrameName, first, samples) { IsUnreadable = true, FollowsGap = packet.FollowsGap });
