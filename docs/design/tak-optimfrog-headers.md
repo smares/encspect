@@ -175,7 +175,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
   - `ofr --preset 0` to `10` and `max`, and `--mode` with each of the 19 names `ofr --help` accepts (this settles how the `-light` modes are stored, which the specification does not list), 16-bit stereo 44.1 kHz;
   - several `COMP` blocks. `luckynight.ofr` (4.509) has blocks of 882,000 values, 441,000 per channel at 44.1 kHz, which can be a duration (10 s) or a count of samples; one file does not tell which. The generator tries, in order, until a file has at least three blocks:
     - a 25-second mono signal at 8 kHz with `--seek min`, `fast` and `normal` (three blocks if a block is a duration);
-    - a 31-second mono signal at 44.1 kHz with the same settings (1,367,100 values, three blocks if a block is 441,000 values), kept small by a quiet, simple signal, with its size checked against the fixture limit;
+    - a 41-second mono signal at 44.1 kHz with the same settings (1,808,100 values: at least three blocks whether a block is 10 s, 441,000 values per channel or 882,000 values in all), kept small by a quiet, simple signal, with its size checked against the fixture limit;
   - and it fails, naming the blocks each setting gave, when none reaches three; it records which rule the blocks follow, and the article states it;
   - formats at the default preset: 8-bit unsigned mono, 24-bit stereo, 32-bit integer, `--md5`, a WAV with an extra chunk before the data and a trailing chunk (`HEAD` and `TAIL`), a raw input with `--headersize` (a `HEAD` without `RIFF`), a lossyWAV output;
   - `off` on a 32-bit float WAV;
