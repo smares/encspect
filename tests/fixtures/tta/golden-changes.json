@@ -12,7 +12,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Samples"
+      "name": "Samples",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -21,7 +25,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Duration"
+      "name": "Duration",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -30,7 +38,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Average Bitrate"
+      "name": "Average Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -39,7 +51,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Bitrate Mode"
+      "name": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -48,7 +64,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Smallest Frame"
+      "name": "Smallest Frame",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -57,7 +77,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Largest Frame"
+      "name": "Largest Frame",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -66,7 +90,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Minimum Bitrate"
+      "name": "Minimum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -75,7 +103,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Maximum Bitrate"
+      "name": "Maximum Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -84,7 +116,11 @@
         "Track 1 Frames",
         "Statistics"
       ],
-      "name": "Bitrate Distribution"
+      "name": "Bitrate Distribution",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "node",
@@ -141,12 +177,20 @@
     {
       "scope": "stream",
       "array": "series",
-      "name": "Bitrate"
+      "name": "Bitrate",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "stream",
       "array": "series",
-      "name": "Bitrate Over Time"
+      "name": "Bitrate Over Time",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      ]
     },
     {
       "scope": "finding",
