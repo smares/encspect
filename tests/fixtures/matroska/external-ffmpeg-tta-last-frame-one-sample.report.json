@@ -809,6 +809,20 @@
                       "length": 119645
                     },
                     {
+                      "name": "Samples",
+                      "value": 66873,
+                      "unit": "samples",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 2.08978125,
+                      "unit": "s",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
                       "name": "Sample Rate",
                       "value": 32000,
                       "unit": "Hz",
@@ -848,6 +862,72 @@
                       "unit": "frames",
                       "offset": 505,
                       "length": 119645
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 457.9656363554798,
+                      "unit": "kbps",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Smallest Frame",
+                      "value": 8,
+                      "unit": "bytes",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Largest Frame",
+                      "value": 88825,
+                      "unit": "bytes",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 235.8023687043905,
+                      "unit": "kbps",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 2048,
+                      "unit": "kbps",
+                      "offset": 505,
+                      "length": 119645
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 505,
+                      "length": 119645,
+                      "children": [
+                        {
+                          "name": "224 to 255 kbps",
+                          "value": "1 frame (33.3%)",
+                          "offset": 505,
+                          "length": 119645
+                        },
+                        {
+                          "name": "672 to 703 kbps",
+                          "value": "1 frame (33.3%)",
+                          "offset": 505,
+                          "length": 119645
+                        },
+                        {
+                          "name": "2048 to 2079 kbps",
+                          "value": "1 frame (33.3%)",
+                          "offset": 505,
+                          "length": 119645
+                        }
+                      ]
                     }
                   ]
                 },
@@ -862,8 +942,8 @@
                     {
                       "name": "Frame",
                       "kind": "Frame",
-                      "value": 30798,
-                      "unit": "bytes",
+                      "value": 33436,
+                      "unit": "samples",
                       "offset": 505,
                       "length": 30798,
                       "children": [
@@ -897,8 +977,8 @@
                     {
                       "name": "Frame",
                       "kind": "Frame",
-                      "value": 88825,
-                      "unit": "bytes",
+                      "value": 33436,
+                      "unit": "samples",
                       "offset": 31311,
                       "length": 88825,
                       "children": [
@@ -932,8 +1012,8 @@
                     {
                       "name": "Frame",
                       "kind": "Frame",
-                      "value": 8,
-                      "unit": "bytes",
+                      "value": 1,
+                      "unit": "samples",
                       "offset": 120142,
                       "length": 8,
                       "children": [
@@ -1004,10 +1084,10 @@
         ],
         "channelLayoutName": "stereo",
         "bitsPerSample": 16,
-        "samples": 100320,
-        "duration": 3.135,
-        "averageBitrate": 305.27846889952156,
-        "isVbr": false,
+        "samples": 66873,
+        "duration": 2.08978125,
+        "averageBitrate": 457.9656363554798,
+        "isVbr": true,
         "playbackGroup": 1,
         "verification": {
           "decoding": "notRequested",
@@ -1025,7 +1105,38 @@
         },
         "writer": "FFmpeg (Lavf60.16.100)",
         "writerConfidence": "Low",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              505,
+              31311,
+              120142
+            ],
+            "values": [
+              235.8023687043905,
+              680.0813494437133,
+              2048
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              236,
+              680,
+              2048
+            ]
+          }
+        ]
       }
     ],
     "findings": []

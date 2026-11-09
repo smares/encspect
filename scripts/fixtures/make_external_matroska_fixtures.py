@@ -67,7 +67,8 @@ FIXTURES = {
     "external-mkvmerge-zlib-wavpack": ("mkvmerge", ["wavpack/external-ffmpeg-51-16.wv"], ["--compression", "0:zlib"], [("WavPack", 48000, 6)], [("matroska.track-encoding-not-read", "zlib compression")], "mka"),
     "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [NOT_READ], "mka"),
     "external-ffmpeg-alac": ("ffmpeg", ["sine"], ["-c:a", "alac"], [("Apple Lossless", 44100, 1)], [], "mka"),
-    "external-ffmpeg-tta": ("ffmpeg", ["sine"], ["-c:a", "tta"], [("TTA", 44100, 1)], [], "mka"),
+    # The sine ends in near silence: codes of a bit leave the last frame's count to the Segment Duration (docs/formats/tta.md, "TTA in Matroska").
+    "external-ffmpeg-tta": ("ffmpeg", ["sine"], ["-c:a", "tta"], [("TTA", 44100, 1)], [("tta.last-frame-samples-ambiguous", "44099 to 44100")], "mka"),
     # A stream that ends one sample into its third frame, copied without the header: the decoder takes the last frame's samples from the segment's Duration.
     "external-ffmpeg-tta-last-frame-one-sample": ("ffmpeg", ["tta/external-libtta-16-stereo-32000-last-frame-one-sample.tta"], ["-c", "copy"], [("TTA", 32000, 2)], [], "mka"),
     "external-ffmpeg-truehd": ("ffmpeg", ["sine"], ["-c:a", "truehd", "-strict", "-2"], [("Dolby TrueHD", 44100, 1)], [], "mka"),
