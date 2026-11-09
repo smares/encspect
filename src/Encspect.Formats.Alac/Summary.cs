@@ -154,9 +154,9 @@ internal static class Summary
 
     private static StreamVerification Verify(State s)
     {
-        // ALAC stores no checksum, and no decoder exists for it, so the session decodes nothing and its Finish says so.
+        // ALAC stores no checksum, so there is nothing to declare; the session says how much was decoded.
         AlacCookie? cookie = s.Cookie;
-        IDecodeSession session = s.Context.StartDecoding(AlacCodecParser.CodecId, new DecodeSetup
+        IDecodeSession session = s.Session ?? s.Context.StartDecoding(AlacCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,
             Channels = cookie?.Channels ?? 0,

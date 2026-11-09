@@ -9,6 +9,7 @@ internal sealed class State
     private readonly WalkResult _walk = new();
     private readonly List<ElementRecord> _kept = new(Records.MaxDetailedElements);
     private readonly CancellationToken _cancellation;
+    private bool _followsGap;
 
     public State(AnalysisContext context)
     {
@@ -35,8 +36,11 @@ internal sealed class State
 
     public Node? CookieNode { get; set; }
 
-    // The cookie's bytes, which a decoder would take as its configuration.
+    // The cookie's bytes, which the decoder takes as its configuration.
     public MappedBytes? CookieBytes { get; set; }
+
+    // The decoding of the stream, started with the cookie; null for a stream with none.
+    public IDecodeSession? Session { get; set; }
 
     // The nodes before the frames: the writer and the statistics.
     public List<Node> Leading { get; } = [];
@@ -69,6 +73,9 @@ internal sealed class State
     public void AddFrame(MappedBytes packet)
     {
         long listed = Listed++;
+        long first = Samples;
+        bool isDecoded = false;
+        bool isUnreadable = false;
         bool isRecorded = listed < Records.MaxEntries;
         int length = packet.Length;
         long offset = packet.FileStart;
@@ -94,6 +101,7 @@ internal sealed class State
             // A sample the container cut: its bytes are not read (the container's finding reports the cut), it declares the count its first element states, or the
             // cookie's frame length, and is lost, and it is in no frame count, size or bitrate.
             flags |= FrameFlags.NotWalked;
+            isUnreadable = true;
             // The count its first element states, where the element's header is in the bytes present (read with a tally and a list of its own, so
             // nothing of it enters the statistics or the findings), else the cookie's frame length.
             FrameWalker.Walk(packet.Span, Cookie!, _walk, new CodingTally(), [], null, _cancellation);
@@ -104,9 +112,14 @@ internal sealed class State
         else if (Cookie is { CanWalk: true } cookie)
         {
             bool isDetailed = isRecorded && listed < Records.MaxDetailedFrames;
-            FrameWalker.Walk(packet.Span, cookie, _walk, Tally, _kept, isDetailed ? Records.Store : null, _cancellation);
+
+            // A session that is decoding lends the buffers the walk stores the frame in, so the coded syntax is read once.
+            SampleBuffers lent = Session is { IsDecoding: true } session && cookie.IsFrameLengthValid ? session.Lend(((int)cookie.FrameLength) + StoredLayout.MetaSlots, cookie.Channels) : default;
+            FrameWalker.Walk(packet.Span, cookie, _walk, Tally, _kept, isDetailed ? Records.Store : null, _cancellation, lent);
+            isDecoded = !lent.IsEmpty && _walk.Fault == WalkFault.None;
             flags |= _walk.Flags;
             samples = _walk.HasSamples ? _walk.Samples : 0;
+            isUnreadable = _walk.Fault != WalkFault.None;
 
             // A frame whose first byte is there declares its samples all the same: those of its first element if that was read, else the
             // cookie's frame length. One that cannot be read, or that the container says is cut, is lost.
@@ -143,6 +156,17 @@ internal sealed class State
         }
 
         Samples += samples;
+        if (Session is { IsDecoding: true } decoding && Cookie is { CanWalk: true })
+        {
+            decoding.Decode(new CodedFrame(packet, "Frame", first, (int)Math.Min(samples, int.MaxValue))
+            {
+                IsWalked = isDecoded,
+                IsUnreadable = isUnreadable,
+                FollowsGap = _followsGap,
+            });
+            _followsGap = isUnreadable;
+        }
+
         if (isRecorded)
         {
             Records.Frames.Add(new FrameRecord { Offset = offset, Length = length, Samples = samples, Flags = flags, Elements = elements, Walked = walked, Detail = detail });
