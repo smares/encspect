@@ -15,6 +15,15 @@ internal static class Explain
     public const string Md5Block = "The MD5 block: the MD5 digest of the original raw PCM input data (format.txt, section 9).";
     public const string UnknownBlock = "A block whose ID the specification does not define. The walk follows it by its length, since a block's data is skipped when it is not known.";
 
+    public const string DetaBlock = "A block \"DETA\" that the float encoder `off` 5.100 writes after the data blocks in Encspect's tests (70 bytes, more with --mantissabits 8). format.txt does not define it, and the analyzer does not read it.";
+    public const string DetaData = "The data of a DETA block, which the analyzer does not read.";
+    public const string CorrBlock = "A correction block of a DualStream correction file: a CRC-32 and correction data that adds to the data block of the same position in the .ofs file. format.txt does not define it; the structure is the one the files of OptimFROG 5.100 in Encspect's tests show.";
+    public const string CorrCrc = "The CRC-32 the block stores, over its data after this field: zlib's CRC-32 in all six correction files of Encspect's tests. The analyzer compares it in every analysis.";
+    public const string CorrData = "The correction data, which only OptimFROG's own library reads.";
+    public const string CorrCut = "The bytes of a correction block that the data holds; they end before its CRC-32 does.";
+    public const string LossyStream = "Whether the file looks like the lossy part of a DualStream. The data blocks' two reserved bytes read 0x1101 (stereo) or 0x0901 (mono) in every .ofs file of OptimFROG 5.100 in Encspect's tests and never in a lossless file; the analyzer uses that pattern.";
+    public const string LossyConfidence = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
+    public const string CorrStream = "An OptimFROG correction file: a run of correction blocks, each with a 4-byte ID, a length, a CRC-32 and correction data (the structure of the files in Encspect's tests; format.txt does not describe it).";
     public const string BlockId = "The 4 characters that name the kind of block (format.txt).";
     public const string BlockLength = "The number of bytes of data after the block's ID and length (format.txt).";
 

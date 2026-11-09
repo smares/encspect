@@ -31,6 +31,11 @@ internal sealed class State
     // Whole COMP blocks, those compared, the sum of their samples and the CRC-32 failures with the first.
     public long CompBlocks { get; set; }
 
+    // Data blocks whose reserved field has the low byte the .ofs files of Encspect's tests show.
+    public long DualStreamBlocks { get; set; }
+
+    public bool IsCorrection { get; set; }
+
     public long CutBlocks { get; set; }
 
     public long ShortBlocks { get; set; }

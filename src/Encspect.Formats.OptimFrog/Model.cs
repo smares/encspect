@@ -52,6 +52,12 @@ internal static class Layout
     public const uint Recovery = 0x56434552;
     public const uint Md5Id = 0x2035444D;
 
+    // "DETA": a block the float encoder `off` 5.100 writes after the data blocks in Encspect's tests; format.txt does not define it.
+    public const uint Deta = 0x41544544;
+
+    // "CORR": the blocks of a DualStream correction file (.ofc); format.txt does not define it.
+    public const uint Corr = 0x52524F43;
+
     public static string Text(uint id) => string.Create(4, id, static (span, v) =>
     {
         for (int i = 0; i < 4; i++)
@@ -60,7 +66,7 @@ internal static class Layout
         }
     });
 
-    public static bool IsKnown(uint id) => id is Main or MainFloat or Head or Comp or Tail or Recovery or Md5Id;
+    public static bool IsKnown(uint id) => id is Main or MainFloat or Head or Comp or Tail or Recovery or Md5Id or Deta;
 
     public static bool IsMain(uint id) => id is Main or MainFloat;
 
@@ -81,6 +87,9 @@ internal static class Layout
 
     // Where a known block belongs in the order the specification's relation allows: ['ID3'] 'OFR ' [...] 'HEAD' 'COMP'* 'TAIL' [...] ['MD5 '] ['RECV'].
     public static int Rank(uint id) => id switch { Main or MainFloat => 0, Head => 1, Comp => 2, Tail => 3, Md5Id => 4, Recovery => 5, _ => -1 };
+
+    // The low byte of a data block's reserved field in the .ofs files of Encspect's tests (0x1101 and 0x0901); lossless files read 0x41, 0x42 or 0xC2.
+    public const int DualStreamReservedLow = 0x01;
 
     public static readonly string[] SampleTypes =
         ["UINT8", "SINT8", "UINT16", "SINT16", "UINT24", "SINT24", "UINT32", "SINT32", "FLOAT32_0", "FLOAT32_16", "FLOAT32_24"];

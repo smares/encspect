@@ -20,8 +20,6 @@ public class OptimFrogFindingTests
 
     private static Finding Single(Report report, string code) => Assert.Single(report.Findings, f => f.Code == code);
 
-    private static string[] Codes(Report report) => [.. report.Findings.Select(f => f.Code).Distinct().Order(StringComparer.Ordinal)];
-
     // The files that raise each code, for FindingCoverageTests to find the code in this file and for the tests below to hold each to its finding.
     [Fact]
     public void AStandardFileRaisesNoFinding()
@@ -349,13 +347,13 @@ public class OptimFrogFindingTests
     }
 
     [Fact]
-    public void TheFloatEncodersMainBlockIsReadAsTheMainBlock()
+    public void TheFloatEncodersMainBlockAndDetaBlockAreKnownWithoutAFinding()
     {
         byte[] file = Builder.File(Builder.MainBlock(sampleType: 8, id: "OFRX"), Builder.Head(), Builder.Comp(88200, sampleType: 8), Builder.Block("DETA", new byte[70]), Builder.Tail());
 
         Report report = Analyze(file);
 
-        Assert.Equal(["optimfrog.block-unknown", "optimfrog.main-block-variant"], Codes(report));
+        Assert.Empty(report.Findings);
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(32, stream.BitsPerSample);
         Assert.Equal(100, Sniff(file).Class);
@@ -532,5 +530,150 @@ public class OptimFrogFindingTests
         Report report = Analyze([.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. file, .. TestFiles.ApeText("Encoder", "LAME 3.100")]);
 
         Assert.Contains(report.Findings, f => f.Code == "optimfrog.writer-claim-differs");
+    }
+
+    // The lossy part of a DualStream: reserved bytes 0x1101 in every data block, and the file name as a second signal.
+
+    private static byte[] DualStream() => Builder.File(Builder.MainBlock(), Builder.Head(), Builder.Comp(88200, reserved: 0x1101), Builder.Tail());
+
+    private static Report AnalyzeNamed(byte[] data, string name) => Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
+
+    private static Node? Claim(Report report) => report.Root.Children.Single(c => c.Name == "OptimFROG").Children.FirstOrDefault(c => c.Name == "Lossy Stream");
+
+    [Fact]
+    public void TheReservedBytePatternAloneIsALowConfidenceClaimOfTheLossyPart()
+    {
+        foreach (string name in new[] { "x.ofr", "stdin", "x.bin" })
+        {
+            Report report = AnalyzeNamed(DualStream(), name);
+
+            Node claim = Assert.IsType<Node>(Claim(report));
+            Assert.Equal("Low", claim.Children.Single(c => c.Name == "Confidence").Value?.ToString());
+            Assert.Contains("0x01", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
+            Assert.True(report.Streams.Single().Verification!.IsLossy);
+            Assert.Empty(report.Findings);
+        }
+    }
+
+    [Fact]
+    public void TheOfsExtensionWithThePatternRaisesTheClaimToMedium()
+    {
+        Report report = AnalyzeNamed(DualStream(), "Song.OFS");
+
+        Node claim = Assert.IsType<Node>(Claim(report));
+        Assert.Equal("Medium", claim.Children.Single(c => c.Name == "Confidence").Value?.ToString());
+        Assert.Contains(".ofs", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
+        Assert.Contains("reserved bytes", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
+        Assert.Empty(report.Findings);
+    }
+
+    [Fact]
+    public void TheOfsExtensionOnALosslessFileMakesNoClaimAndIsNoted()
+    {
+        Report report = AnalyzeNamed(Builder.Standard(), "x.ofs");
+
+        Assert.Null(Claim(report));
+        Assert.False(report.Streams.Single().Verification!.IsLossy);
+        Finding note = Single(report, "optimfrog.extension-differs");
+        Assert.Equal(Severity.Info, note.Severity);
+        Assert.NotNull(note.Path);
+    }
+
+    [Fact]
+    public void ALosslessFileKeepsNoClaimUnderAnyOtherName()
+    {
+        Assert.Null(Claim(AnalyzeNamed(Builder.Standard(), "x.ofr")));
+        Assert.Empty(AnalyzeNamed(Builder.Standard(), "x.ofr").Findings);
+    }
+
+    // The correction file: CORR blocks with a CRC-32 each.
+
+    private static byte[] Corr(int payload = 50, uint? crc = null, int seed = 0)
+    {
+        byte[] data = new byte[4 + payload];
+        for (int i = 0; i < payload; i++)
+        {
+            data[4 + i] = (byte)((i * 31) + seed);
+        }
+
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(data, crc ?? Crc32.Of(data.AsSpan(4)));
+        return Builder.Block("CORR", data);
+    }
+
+    [Fact]
+    public void AChainOfCorrBlocksWhoseCrcsHoldIsCertainAndNamedCorrectionData()
+    {
+        byte[] file = Builder.File(Corr(), Corr(seed: 1), Corr(80, seed: 2));
+
+        Assert.Equal(100, Sniff(file).Class);
+        Assert.Equal(file.Length, DeclaredEnd(file));
+        Report report = Analyze(file);
+        Assert.Equal("OptimFROG correction data", Assert.Single(report.Streams).Codec);
+        Assert.Equal(3, report.Root.Children.Single(c => c.Name == "OptimFROG correction data").Children.Count(c => c.Name == "Correction Block"));
+        Finding note = Single(report, "optimfrog.correction-file");
+        Assert.Equal(Severity.Info, note.Severity);
+        Assert.Equal(1, Assert.Single(report.Findings).Count);
+        Assert.Null(report.Streams.Single().Verification!.IsVerified);
+    }
+
+    [Fact]
+    public void ACorrFileWithATagAfterItDeclaresItsEnd()
+    {
+        byte[] file = Builder.File(Corr(), Corr(seed: 1));
+
+        Report report = Analyze([.. file, .. TestFiles.ApeText("Title", "Song")]);
+
+        Assert.Equal(file.Length, DeclaredEnd([.. file, .. new byte[200]]));
+        Assert.Equal(["optimfrog.correction-file"], report.Findings.Select(f => f.Code).Distinct());
+        Assert.Contains(report.Root.Children, n => n.Name is "APE" or "APEv2");
+    }
+
+    [Fact]
+    public void ACorrBlockWhoseCrcFailsIsLikelyAndReported()
+    {
+        byte[] file = Builder.File(Corr(crc: 1), Corr(seed: 1), Corr(seed: 2, crc: 3));
+
+        Assert.Equal(80, Sniff(file).Class);
+        Report report = Analyze(file);
+        Finding finding = Single(report, "optimfrog.block-crc-mismatch");
+        Assert.Contains("1 more block", finding.Message);
+        Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
+    }
+
+    [Fact]
+    public void TheCorrSignatureAloneOrWithTextAfterItIsNotEnough()
+    {
+        Assert.Equal(70, Sniff("CORR"u8.ToArray()).Class);
+        Assert.Equal(70, Sniff([.. "CORR this is a text that begins like a block"u8]).Class);
+        Assert.Equal(80, Sniff(Builder.File(Builder.Block("CORR", new byte[40]))).Class);
+        Assert.False(Sniff("CORX and so on and so on"u8.ToArray()).IsMatch);
+    }
+
+    [Fact]
+    public void ACorrFileCutInABlockIsReported()
+    {
+        byte[] file = Builder.File(Corr(), Corr(200, seed: 1));
+
+        Report report = Analyze(file[..^100]);
+
+        Single(report, "optimfrog.block-cut");
+        Single(report, "optimfrog.correction-file");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "optimfrog.main-block-missing");
+    }
+
+    [Fact]
+    public void ACorrBlockUnderFourBytesIsSizeInvalid()
+    {
+        Report report = Analyze(Builder.File(Corr(), Builder.Block("CORR", new byte[2])), new AnalysisOptions { ForcedFormat = "OptimFROG" });
+
+        Single(report, "optimfrog.block-size-invalid");
+    }
+
+    [Fact]
+    public void ACorrBlockInsideALosslessFileIsAnUnknownBlock()
+    {
+        Report report = Analyze([.. Builder.Standard(), .. Corr()]);
+
+        Assert.Contains(report.Findings, f => f.Code is "optimfrog.data-after-blocks" or "optimfrog.block-unknown");
     }
 }

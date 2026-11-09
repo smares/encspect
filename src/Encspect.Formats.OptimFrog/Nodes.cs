@@ -15,6 +15,8 @@ internal static class Nodes
         Layout.Tail => "Footer Block",
         Layout.Recovery => "Recovery Block",
         Layout.Md5Id => "MD5 Block",
+        Layout.Deta => "Detail Block",
+        Layout.Corr => "Correction Block",
         _ => "Unknown Block",
     };
 
@@ -26,6 +28,8 @@ internal static class Nodes
         Layout.Tail => Explain.TailBlock,
         Layout.Recovery => Explain.RecoveryBlock,
         Layout.Md5Id => Explain.Md5Block,
+        Layout.Deta => Explain.DetaBlock,
+        Layout.Corr => Explain.CorrBlock,
         _ => Explain.UnknownBlock,
     };
 
@@ -66,6 +70,9 @@ internal static class Nodes
             case Layout.Comp:
                 AddComp(children, at, held, b);
                 break;
+            case Layout.Corr:
+                AddCorr(children, at, held, b);
+                break;
             case Layout.Head:
                 if (held > 0)
                 {
@@ -96,7 +103,7 @@ internal static class Nodes
                 {
                     children.Add(new Node(b.Id == Layout.Recovery ? "Recovery Data" : "Block Data", at, held, NodeValue.Integer(held, "bytes", "byte"))
                     {
-                        Description = b.Id == Layout.Recovery ? Explain.RecoveryData : Explain.UnknownData,
+                        Description = b.Id == Layout.Recovery ? Explain.RecoveryData : b.Id == Layout.Deta ? Explain.DetaData : Explain.UnknownData,
                         Topic = Topics.Blocks,
                     });
                 }
@@ -153,6 +160,31 @@ internal static class Nodes
         if (held > known)
         {
             children.Add(new Node("Additional Fields", at + known, held - known, NodeValue.Integer(held - known, "bytes", "byte")) { Description = Explain.AdditionalFields, Topic = Topics.Blocks });
+        }
+    }
+
+    private static void AddCorr(List<Node> children, long at, long held, BlockRecord b)
+    {
+        if (held < 4)
+        {
+            if (held > 0)
+            {
+                children.Add(new Node("Block Data", at, held, NodeValue.Integer(held, "bytes", "byte")) { Description = Explain.CorrCut, Topic = Topics.Blocks });
+            }
+
+            return;
+        }
+
+        children.Add(new Node("CRC-32", at, 4, NodeValue.Hex(b.StoredCrc, 8)) { Description = Explain.CorrCrc, Topic = Topics.Crc });
+        if (b.HasCrc)
+        {
+            children.Add(new Node("Computed CRC-32", at, 4, NodeValue.Hex(b.ComputedCrc, 8)) { Description = Explain.BlockComputedCrc, Topic = Topics.Crc });
+            children.Add(new Node("IsCrc32Valid", at, 4, NodeValue.Boolean(b.IsCrcValid)) { Description = Explain.BlockIsCrcValid, Topic = Topics.Crc });
+        }
+
+        if (held > 4)
+        {
+            children.Add(new Node("Correction Data", at + 4, held - 4, NodeValue.Integer(held - 4, "bytes", "byte")) { Description = Explain.CorrData, Topic = Topics.Blocks });
         }
     }
 

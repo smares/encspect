@@ -9,8 +9,8 @@ as they are and a later run is compared byte for byte. This script never runs an
 
 For each file it checks the SHA-256 and size against the artifact's manifest, copies it, and writes `<name>.provenance.json` (where it came from, the
 arguments, the input, the runs' exit statuses, the decoding checks) and, for the files the analyzer reads (`.ofr` and `.ofs`), `<name>.expected.json` from
-optimfrog_model.py, which reads the committed bytes by the specification apart from the analyzer. The correction files (`.ofc`) are copied with their
-provenance only: their detection is the lead's decision (docs/design/tak-optimfrog-headers.md, "Pending on the fixtures").
+optimfrog_model.py, which reads the committed bytes by the specification apart from the analyzer. The correction files (`.ofc`) get one too: a run of CORR blocks
+whose CRC-32s are compared (the lead's decision of 2026-11-09).
 """
 
 import hashlib
@@ -48,10 +48,14 @@ def main():
         for companion in case.get("companions", {}).values():
             entries.append((companion["fixture"], companion["sha256"], companion["size"], companion.get("model")))
         for name, digest, size, _ in entries:
+            source_name = name
             source = artifact / "fixtures" / name
             data = source.read_bytes()
             if sha256(data) != digest or len(data) != size:
                 raise SystemExit(f"{name} differs from the manifest")
+            if name.endswith(".ofc"):
+                # Beside the .ofs of the same case, whose manifest and golden take the stem.
+                name = name[:-4] + "-data.ofc"
             target = OUT / name
             if target.exists() and target.read_bytes() != data and not force:
                 raise SystemExit(f"{name} exists with other bytes; use --force")
@@ -62,7 +66,7 @@ def main():
                           "runs": {k: {"command": v["command"], "exit": v["exit"]} for k, v in case["runs"].items()},
                           "decoded": case.get("decoded", {})}
             target.with_name(name + ".provenance.json").write_text(json.dumps(provenance, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-            if target.suffix in (".ofr", ".ofs"):
+            if target.suffix in (".ofr", ".ofs", ".ofc"):
                 extra = {"encoder": {"tool": SOURCE, "arguments": case["arguments"], "case": case["name"], "tool_program": case["tool"], "input": case["input"]}}
                 stem.with_suffix(".expected.json").write_text(json.dumps(m.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             written += 1

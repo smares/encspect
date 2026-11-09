@@ -1,0 +1,63 @@
+{
+ "length": 28268,
+ "end": 28268,
+ "blocks": [
+  {
+   "id": "CORR",
+   "offset": 0,
+   "length": 28260,
+   "end": 28268
+  }
+ ],
+ "main": null,
+ "comp": [],
+ "md5": null,
+ "head": null,
+ "tail": null,
+ "corr": [
+  {
+   "offset": 0,
+   "size": 28268,
+   "crc": 617962301,
+   "crc_ok": true
+  }
+ ],
+ "stream_info": {
+  "codec": "OptimFROG correction data"
+ },
+ "verification": {
+  "checksums": [
+   {
+    "name": "block CRC-32",
+    "stored": 1,
+    "checked": 1,
+    "failed": 0
+   }
+  ]
+ },
+ "lossy": false,
+ "findings": [
+  {
+   "code": "optimfrog.correction-file"
+  }
+ ],
+ "encoder": {
+  "tool": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
+  "arguments": [
+   "--quality",
+   "0",
+   "--correction"
+  ],
+  "case": "ofs-quality0-correction",
+  "tool_program": "ofs",
+  "input": {
+   "kind": "music",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 30000,
+   "sha256": "d1c59fd07bbf780cd623396afee9872b7c578c8220d6ad4d6c16abad2929f58e",
+   "size": 120044
+  }
+ }
+}

@@ -882,6 +882,7 @@ public sealed class Analyzer
         try
         {
             parser.Parse(context);
+            ExtensionSignals.Apply(sniff.ExtensionHint, context);
         }
         catch (EndOfStreamException)
         {

@@ -30,6 +30,11 @@ public sealed class OptimFrogParser : IFormatParser
         }
 
         long start = reader.Start;
+        if (Walk.TryReadHeader(reader, start, out uint firstId, out uint firstLength) && firstId == Layout.Corr)
+        {
+            return SniffCorrection(reader, start, firstLength);
+        }
+
         Span<byte> bytes = stackalloc byte[Layout.BlockHeaderLength + Layout.MainFields];
         int available = (int)Math.Min(bytes.Length, reader.Length);
         reader.Position = start;
@@ -58,10 +63,43 @@ public sealed class OptimFrogParser : IFormatParser
         return new SniffResult(hasKnownNext ? 100 : 80, start, 1, 0, hasKnownNext ? null : "no known block after the main block", end);
     }
 
+    // A correction file: "CORR" blocks one after another, each with a CRC-32 over its data after the CRC-32. The first block's CRC-32 holding and the
+    // blocks chaining to the end of the data or to another header is certain (class 100); blocks that fit with a CRC-32 that fails, or a first block too
+    // long to check here, are likely (80); the signature alone is possible (70). The signature is never enough by itself.
+    private static SniffResult SniffCorrection(ByteReader reader, long start, uint length)
+    {
+        long end = start + Layout.BlockHeaderLength + length;
+        if (length < 4 || end > reader.End)
+        {
+            return new SniffResult(70, start, 0, 0, "correction block cut short or too small", Math.Min(end, reader.End));
+        }
+
+        long chain = Math.Min(Walk.End(reader, SniffResult.MaxFrames, isCorrection: true), reader.End);
+        if (length > CheckableLength)
+        {
+            return new SniffResult(80, start, 1, 0, "first correction block not checked", chain);
+        }
+
+        reader.Position = start + Layout.BlockHeaderLength;
+        uint stored = reader.ReadUInt32LittleEndian();
+        byte[] data = reader.ReadBytes((int)length - 4);
+        bool isValid = Crc32.Of(data) == stored;
+        bool isChained = end == reader.End || (Walk.TryReadHeader(reader, end, out uint next, out _) && next == Layout.Corr);
+        return isValid && isChained ? new SniffResult(100, start, 1, 1, End: chain) : new SniffResult(80, start, 1, isValid ? 1 : 0, isValid ? "no block after the first" : "first CRC-32 differs", chain);
+    }
+
+    // The longest first correction block whose CRC-32 the sniff computes.
+    private const int CheckableLength = 1 << 24;
+
     // The end of the last block the walk accepts: where the host looks for trailing tags. It lies past the end of a file cut in a block.
     public long? DeclaredEnd(SniffContext context)
     {
         ByteReader reader = context.Reader;
+        if (Walk.TryReadHeader(reader, reader.Start, out uint firstId, out uint firstLength) && firstId == Layout.Corr)
+        {
+            return firstLength >= 4 && reader.Start + Layout.BlockHeaderLength + (long)firstLength <= reader.End ? Walk.End(reader, isCorrection: true) : null;
+        }
+
         if (reader.Length < Layout.BlockHeaderLength + Layout.MainFields || !Walk.Accepts(reader, reader.Start, out uint id, out uint length, out _) || !Layout.IsMain(id) || length < Layout.MainFields)
         {
             return null;

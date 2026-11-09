@@ -22,10 +22,11 @@ SPEEDUPS = ["1x", "2x", "4x"]
 SYSTEMS = ["Windows x86", "Linux x86", "Linux x64", "OS X ppc", "OS X x86", "OS X x64", "Windows x64", "FreeBSD x86", "FreeBSD x64"]
 # "OFRX" is the main block of the files `off` 5.100 writes (format.txt does not define it); its fields are those of "OFR ".
 MAIN_IDS = ("OFR ", "OFRX")
-KNOWN_IDS = {b"OFR ", b"OFRX", b"HEAD", b"COMP", b"TAIL", b"RECV", b"MD5 "}
+# "DETA" is a block `off` 5.100 writes after the data blocks, "CORR" a block of a correction file; format.txt defines neither.
+KNOWN_IDS = {b"OFR ", b"OFRX", b"HEAD", b"COMP", b"TAIL", b"RECV", b"MD5 ", b"DETA", b"CORR"}
 
 
-KNOWN_NAMES = {"OFR ", "OFRX", "HEAD", "COMP", "TAIL", "RECV", "MD5 "}
+KNOWN_NAMES = {"OFR ", "OFRX", "HEAD", "COMP", "TAIL", "RECV", "MD5 ", "DETA", "CORR"}
 
 
 def crc32(data):
@@ -135,8 +136,6 @@ def manifest(data, extra=None):
         covers_all = len(comps) > 0 and total == main["samples"] and all(c["sample_type"] == main["sample_type"] and c["channel_config"] == main["channel_config"] and c["encoder_id"] == main["encoder_id"] for c in comps)
         result["verification"] = {"checksums": [{"name": "block CRC-32", "stored": len(comps), "checked": len(comps), "failed": failed, "covers_all": covers_all},
                                                 {"name": "MD5", "stored": 1 if md5 else 0, "checked": 0, "failed": 0}]}
-        if blocks[0]["id"] == "OFRX":
-            findings.append({"code": "optimfrog.main-block-variant"})
         if any(b["id"] not in KNOWN_NAMES for b in blocks):
             findings.append({"code": "optimfrog.block-unknown"})
         if total != main["samples"]:
@@ -147,6 +146,18 @@ def manifest(data, extra=None):
             findings.append({"code": "optimfrog.head-missing"})
         if tail is None:
             findings.append({"code": "optimfrog.tail-missing"})
+    if blocks and blocks[0]["id"] == "CORR":
+        corr = []
+        for b in blocks:
+            stored = struct.unpack_from("<I", data, b["offset"] + 8)[0]
+            corr.append({"offset": b["offset"], "size": b["length"] + 8, "crc": stored, "crc_ok": crc32(data[b["offset"] + 12:b["end"]]) == stored})
+        result["corr"] = corr
+        result["stream_info"] = {"codec": "OptimFROG correction data"}
+        result["verification"] = {"checksums": [{"name": "block CRC-32", "stored": len(corr), "checked": len(corr), "failed": sum(1 for c in corr if not c["crc_ok"])}]}
+        findings.append({"code": "optimfrog.correction-file"})
+        if any(not c["crc_ok"] for c in corr):
+            findings.append({"code": "optimfrog.block-crc-mismatch"})
+    result["lossy"] = bool(comps) and all(c["reserved"] & 0xFF == 1 for c in comps)
     result["findings"] = findings
     if extra:
         result.update(extra)

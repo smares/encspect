@@ -19,7 +19,7 @@ public class OptimFrogFixtureTests
             foreach (string manifest in Directory.EnumerateFiles(directory, "*.expected.json").Order(StringComparer.Ordinal))
             {
                 string stem = Path.GetFileName(manifest)[..^".expected.json".Length];
-                string file = Directory.EnumerateFiles(directory, stem + ".*").Single(p => p.EndsWith(".ofr", StringComparison.Ordinal) || p.EndsWith(".ofs", StringComparison.Ordinal));
+                string file = Directory.EnumerateFiles(directory, stem + ".*").Single(p => p.EndsWith(".ofr", StringComparison.Ordinal) || p.EndsWith(".ofs", StringComparison.Ordinal) || p.EndsWith(".ofc", StringComparison.Ordinal));
                 data.Add("optimfrog/" + Path.GetFileName(file));
             }
 
@@ -38,6 +38,12 @@ public class OptimFrogFixtureTests
         JsonElement manifest = Fixtures.LoadMpegManifest(name);
 
         Assert.Equal(manifest.GetProperty("length").GetInt64(), report.Root.Length);
+        if (manifest.TryGetProperty("corr", out JsonElement corr))
+        {
+            CheckCorrection(manifest, corr, report);
+            return;
+        }
+
         Node stream = Assert.Single(report.Root.Children, n => n.Name == "OptimFROG");
         Assert.Equal(manifest.GetProperty("end").GetInt64(), stream.End);
         JsonElement[] blocks = [.. manifest.GetProperty("blocks").EnumerateArray()];
@@ -66,9 +72,38 @@ public class OptimFrogFixtureTests
         CheckStored(manifest.GetProperty("tail"), stream, "Footer Block", "WAV Terminating Data");
         CheckStreamInfo(manifest.GetProperty("stream_info"), Assert.Single(report.Streams));
         CheckVerification(manifest.GetProperty("verification"), report.Streams.Single().Verification!);
+        bool isLossy = manifest.GetProperty("lossy").GetBoolean();
+        Node? lossy = stream.Children.FirstOrDefault(c => c.Name == "Lossy Stream");
+        Assert.Equal(isLossy, lossy is not null);
+        Assert.Equal(isLossy, report.Streams.Single().Verification!.IsLossy);
+        if (lossy is not null)
+        {
+            Assert.Equal(name.EndsWith(".ofs", StringComparison.Ordinal) ? "Medium" : "Low", lossy.Children.Single(c => c.Name == "Confidence").Value?.ToString());
+        }
+
         string[] expected = [.. manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal)];
         Assert.Equal(expected, report.Findings.Select(f => f.Code).Order(StringComparer.Ordinal));
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    private static void CheckCorrection(JsonElement manifest, JsonElement corr, Report report)
+    {
+        Node stream = Assert.Single(report.Root.Children, n => n.Name == "OptimFROG correction data");
+        Node[] blocks = [.. stream.Children.Where(c => c.Name == "Correction Block")];
+        JsonElement[] expected = [.. corr.EnumerateArray()];
+        Assert.Equal(expected.Length, blocks.Length);
+        for (int i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].GetProperty("offset").GetInt64(), blocks[i].Offset);
+            Assert.Equal(expected[i].GetProperty("size").GetInt64(), blocks[i].Length);
+            Assert.Equal(expected[i].GetProperty("crc").GetInt64().ToString("x8", CultureInfo.InvariantCulture), Hex(blocks[i].Children.Single(c => c.Name == "CRC-32").Value, 8));
+            Assert.Equal(expected[i].GetProperty("crc_ok").GetBoolean(), blocks[i].Children.Single(c => c.Name == "IsCrc32Valid").Value?.AsBoolean());
+        }
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.Equal(manifest.GetProperty("stream_info").GetProperty("codec").GetString(), info.Codec);
+        CheckVerification(manifest.GetProperty("verification"), info.Verification!);
+        Assert.Equal(manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal), report.Findings.Select(f => f.Code).Order(StringComparer.Ordinal));
     }
 
     [Theory]

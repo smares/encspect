@@ -7,6 +7,8 @@ internal static class Summary
 {
     public const string CodecName = "OptimFROG";
 
+    public const string CorrectionCodecName = "OptimFROG correction data";
+
     // The codec ID a decoder would register under; none exists, so the host reports that no decoder handles the coding.
     public const string CodecId = "optimfrog";
 
@@ -16,10 +18,11 @@ internal static class Summary
         Records r = s.Records;
         List<Node> leading = s.Leading;
         int first = r.MainIndex == 0 && r.Blocks.Count > 0 ? 1 : 0;
-        return new Node(CodecName, r.Offset, Math.Max(0, r.End - r.Offset), null, () => new BlockedChildren(leading, r.Blocks.Count - first, i => Nodes.Block(source, first + i)))
+        bool isCorrection = s.IsCorrection;
+        return new Node(isCorrection ? CorrectionCodecName : CodecName, r.Offset, Math.Max(0, r.End - r.Offset), null, () => new BlockedChildren(leading, r.Blocks.Count - first, i => Nodes.Block(source, first + i)))
         {
             Kind = NodeKind.Stream,
-            Description = Explain.Stream,
+            Description = isCorrection ? Explain.CorrStream : Explain.Stream,
             Topic = Topics.Blocks,
         };
     }
@@ -33,6 +36,12 @@ internal static class Summary
 
         Records r = s.Records;
         Node stream = s.Stream;
+        if (s.IsCorrection)
+        {
+            FinishCorrection(s, source);
+            return;
+        }
+
         MainBlock? main = r.Main;
         if (r.MainIndex == 0 && r.Blocks.Count > 0)
         {
@@ -53,6 +62,15 @@ internal static class Summary
             s.AddLeading(encoder);
         }
 
+        bool isLossy = s.CompBlocks > 0 && s.DualStreamBlocks == s.CompBlocks;
+        if (isLossy)
+        {
+            Node lossy = Cover("Lossy Stream", "Probably the lossy part of a DualStream", Explain.LossyStream, Topics.Blocks);
+            lossy.Add(Cover("Confidence", "Low", Explain.LossyConfidence));
+            lossy.Add(Cover("Evidence", $"The reserved bytes of all {Counts.Of(s.CompBlocks, "data block", "data blocks")} have the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's tests", Explain.Evidence));
+            s.AddLeading(lossy);
+        }
+
         Node? writer = WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => s.Findings.Add(Severity.Info, "optimfrog.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
         if (writer is not null)
@@ -67,9 +85,34 @@ internal static class Summary
         }
 
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
-        StreamVerification verification = Verify(s, m);
+        StreamVerification verification = Verify(s, m, isLossy);
         StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification);
         s.Context.AddStream(info);
+        s.Findings.Flush(s.Context);
+    }
+
+    // The end of the analysis of a correction file: the blocks, the checksum tally and a stream info without audio figures.
+    private static void FinishCorrection(State s, Source source)
+    {
+        Records r = s.Records;
+        Node stream = s.Stream;
+        Checks(s, source);
+        s.Findings.Add(Severity.Info, "optimfrog.correction-file", stream, _ =>
+            "The file holds correction data only: it adds to the DualStream .ofs file with the same blocks and cannot be decoded alone. The analyzer reads its blocks and compares their CRC-32s.");
+        Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, r.Offset, Math.Max(0, r.End - r.Offset), value) { Description = description, Topic = topic };
+        var statistics = new Node("Statistics", r.Offset, Math.Max(0, r.End - r.Offset)) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        statistics.Add(Cover("Blocks", NodeValue.Integer(s.CompBlocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
+        statistics.Add(Cover("Verified Block Checksums", NodeValue.Integer(s.CompBlocks - s.CrcFailures, "blocks", "block"), Explain.StatBlockChecksums, Topics.Crc));
+        if (s.CrcFailures > 0)
+        {
+            statistics.Add(Cover("Failed Block Checksums", NodeValue.Integer(s.CrcFailures, "blocks", "block"), Explain.StatBlockChecksumsFailed, Topics.Crc));
+        }
+
+        s.AddLeading(statistics);
+        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = stream, Channels = 1, BitsPerSample = 16 });
+        StreamVerification verification = session.Finish(
+            [new ChecksumTally { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, Stored = s.CompBlocks + s.CutBlocks, Checked = s.CompBlocks, Failed = s.CrcFailures }]);
+        s.Context.AddStream(new StreamInfo { Nodes = [stream], Codec = CorrectionCodecName, Verification = verification });
         s.Findings.Flush(s.Context);
     }
 
@@ -81,19 +124,13 @@ internal static class Summary
         // The node of the block at an index, or the stream's where the records stopped before it (Records.MaxBlocks).
         Func<Node> At(int index) => index is >= 0 and < Records.MaxBlocks && index < r.Blocks.Count ? () => Nodes.Block(source, index) : () => stream;
 
-        if (r.Counted == 0 || (r.Main is null && r.MainIndex < 0 && (r.Blocks.Count == 0 || !Layout.IsMain(r.Blocks[0].Id))))
+        if (!s.IsCorrection && (r.Counted == 0 || (r.Main is null && r.MainIndex < 0 && (r.Blocks.Count == 0 || !Layout.IsMain(r.Blocks[0].Id)))))
         {
             Node at = r.Blocks.Count > 0 ? Nodes.Block(source, 0) : stream;
             long length = r.Counted;
             s.Findings.AddNow(Severity.Warning, "optimfrog.main-block-missing", length == 0
                 ? "The data holds no block: a block is a 4-character ID and a length."
                 : "The first block is not the main block \"OFR \" that every OptimFROG file starts with, so the file's figures are not read.", at);
-        }
-
-        if (r.Blocks.Count > 0 && r.Blocks[0].Id == Layout.MainFloat)
-        {
-            s.Findings.Add(Severity.Info, "optimfrog.main-block-variant", At(0), _ =>
-                "The main block's ID is \"OFRX\", which format.txt does not define; the files the float encoder `off` 5.100 wrote in Encspect's tests start with it, and its fields are read as those of \"OFR \".");
         }
 
         if (s.SizeInvalidBlocks > 0)
@@ -106,6 +143,7 @@ internal static class Summary
             {
                 Layout.Main or Layout.MainFloat => $"{Layout.MainFields} bytes for its fields",
                 Layout.Comp => $"{Layout.CompFields} bytes for its fields",
+                Layout.Corr => "4 bytes for its CRC-32",
                 _ => $"{Layout.Md5Length} bytes",
             };
             long others = s.SizeInvalidBlocks - 1;
@@ -245,12 +283,12 @@ internal static class Summary
         return encoder;
     }
 
-    private static StreamVerification Verify(State s, MainBlock m)
+    private static StreamVerification Verify(State s, MainBlock m, bool isLossy)
     {
         Records r = s.Records;
         bool coversAll = s.CompBlocks > 0 && s.CompSamples == m.Samples && s.CutBlocks == 0 && s.SizeInvalidBlocks == 0 && s.DifferingBlocks == 0 && s.OutOfOrderBlocks == 0;
         long wholeStored = s.CompBlocks + s.CutBlocks;
-        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = s.Stream, Channels = m.Channels, BitsPerSample = Math.Max(m.BitsPerSample, 8), Samples = m.SamplesPerChannel });
+        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = s.Stream, Channels = m.Channels, BitsPerSample = Math.Max(m.BitsPerSample, 8), Samples = m.SamplesPerChannel, IsLossy = isLossy });
         return session.Finish(
         [
             new ChecksumTally { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = wholeStored, Checked = s.CompBlocks, Failed = s.CrcFailures },

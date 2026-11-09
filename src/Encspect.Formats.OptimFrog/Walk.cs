@@ -29,7 +29,7 @@ internal static class Walk
     // Whether the block at a position is accepted as part of the file, and where it ends (which lies past the data for a known block cut short).
     // A known ID is accepted whatever its length; an unknown one only when the block fits and either ends the data or is followed by a block
     // header whose length fits too.
-    public static bool Accepts(ByteReader reader, long position, out uint id, out uint length, out long end)
+    public static bool Accepts(ByteReader reader, long position, out uint id, out uint length, out long end, bool isCorrection = false)
     {
         end = position;
         if (!TryReadHeader(reader, position, out id, out length))
@@ -38,7 +38,7 @@ internal static class Walk
         }
 
         end = position + Layout.BlockHeaderLength + length;
-        if (Layout.IsKnown(id))
+        if (isCorrection ? id == Layout.Corr : Layout.IsKnown(id))
         {
             return true;
         }
@@ -52,7 +52,7 @@ internal static class Walk
     }
 
     // The end of the last block the walk accepts, without reading any block's data: where the host looks for trailing tags.
-    public static long End(ByteReader reader, int limit = int.MaxValue)
+    public static long End(ByteReader reader, int limit = int.MaxValue, bool isCorrection = false)
     {
         long position = reader.Start;
         for (int count = 0; count < limit && Accepts(reader, position, out _, out _, out long end); count++)
@@ -75,7 +75,8 @@ internal static class Walk
         long position = reader.Start;
         int rank = -1;
         byte[] buffer = new byte[ReadChunk];
-        while (Accepts(reader, position, out uint id, out uint length, out long end))
+        s.IsCorrection = TryReadHeader(reader, position, out uint firstId, out _) && firstId == Layout.Corr;
+        while (Accepts(reader, position, out uint id, out uint length, out long end, s.IsCorrection))
         {
             var block = new BlockRecord { Offset = position, Length = length, Id = id };
             long held = Math.Min(end, reader.End) - position - Layout.BlockHeaderLength;
@@ -99,7 +100,7 @@ internal static class Walk
                     rank = blockRank;
                 }
             }
-            else
+            else if (id is not (Layout.Deta or Layout.Corr))
             {
                 block.Status |= BlockStatus.Unknown;
             }
@@ -132,6 +133,9 @@ internal static class Walk
                     break;
                 case Layout.Comp:
                     ReadComp(s, reader, position, held, ordinal, buffer, ref block);
+                    break;
+                case Layout.Corr:
+                    ReadCorr(reader, position, held, buffer, ref block);
                     break;
                 case Layout.Md5Id:
                     s.HasMd5 = true;
@@ -240,6 +244,40 @@ internal static class Walk
         block.HasCrc = true;
     }
 
+    // A correction block: a CRC-32 over the data after it, then data the analyzer does not read.
+    private static void ReadCorr(ByteReader reader, long position, long held, byte[] buffer, ref BlockRecord block)
+    {
+        if (block.Length < 4)
+        {
+            block.Status |= BlockStatus.SizeInvalid;
+            return;
+        }
+
+        if (held < 4)
+        {
+            return;
+        }
+
+        reader.Position = position + Layout.BlockHeaderLength;
+        block.StoredCrc = reader.ReadUInt32LittleEndian();
+        if ((block.Status & BlockStatus.Cut) != 0)
+        {
+            return;
+        }
+
+        uint crc = Crc32.Initial;
+        for (long left = block.Length - 4L; left > 0;)
+        {
+            int n = (int)Math.Min(left, buffer.Length);
+            reader.Read(buffer.AsSpan(0, n));
+            crc = Crc32.Update(crc, buffer.AsSpan(0, n));
+            left -= n;
+        }
+
+        block.ComputedCrc = Crc32.Finish(crc);
+        block.HasCrc = true;
+    }
+
     // Adds a block to the totals and the figures.
     private static void Tally(State s, in BlockRecord block, int ordinal)
     {
@@ -267,6 +305,22 @@ internal static class Walk
             s.FirstCut = s.FirstCut < 0 ? ordinal : s.FirstCut;
         }
 
+        if (block.Id == Layout.Corr && block.HasCrc)
+        {
+            s.CompBlocks++;
+            if (!block.IsCrcValid)
+            {
+                s.CrcFailures++;
+                if (s.FirstCrcFailure < 0)
+                {
+                    s.FirstCrcFailure = ordinal;
+                    s.FirstCrcFailureBlock = block;
+                }
+            }
+
+            return;
+        }
+
         if (block.Id != Layout.Comp)
         {
             return;
@@ -285,6 +339,11 @@ internal static class Walk
 
         s.CompBlocks++;
         s.CompSamples += block.Samples;
+        if ((block.Reserved & 0xFF) == Layout.DualStreamReservedLow)
+        {
+            s.DualStreamBlocks++;
+        }
+
         if (!block.IsCrcValid)
         {
             s.CrcFailures++;
