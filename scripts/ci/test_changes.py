@@ -80,6 +80,13 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("tta-crosscheck", run(path), path)
         self.assertNotIn("tta-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
+    def test_optimfrog_parser_scripts_and_fixtures_belong_to_the_optimfrog_job(self):
+        for path in ("src/Encspect.Formats.OptimFrog/OptimFrogParser.cs", "tests/fixtures/optimfrog/a.ofr", "scripts/fixtures/optimfrog_model.py",
+                     "scripts/fixtures/make_external_optimfrog_fixtures.py", "scripts/fixtures/optimfrog_tool.py"):
+            self.assertIn("optimfrog-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_optimfrog_fixtures.py"), {"optimfrog-crosscheck", "fixtures"})
+        self.assertNotIn("optimfrog-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_wav_and_aiff_parsers_scripts_and_fixtures_belong_to_the_wav_job(self):
         for path in ("src/Encspect.Formats.Wav/WavParser.cs", "src/Encspect.Formats.Aiff/AiffParser.cs", "tests/fixtures/wav/a.wav", "tests/fixtures/aiff/a.aiff",
                      "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/pcm_model.py", "scripts/fixtures/make_wav_fixtures.py",

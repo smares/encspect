@@ -62,6 +62,7 @@ jobs:
       flac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.flac-crosscheck }}
       monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
       tta-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tta-crosscheck }}
+      optimfrog-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.optimfrog-crosscheck }}
       alac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.alac-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
@@ -1246,6 +1247,28 @@ jobs:
       - name: Compare the decoded PCM of the TTA fixtures
         run: python3 scripts/fixtures/crosscheck_tta_pcm.py
 
+  optimfrog-crosscheck:
+    name: OptimFROG fixtures agree with OptimFROG's own library and tools
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.optimfrog-crosscheck == 'true'
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # OptimFROG 5.100 for Linux x64 (optimfrog_tool.py, pinned by SHA-256): its SDK library and `ofr --info` are black boxes here. ffprobe and MediaInfo
+      # are installed to confirm that neither reads OptimFROG.
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Cross-check the OptimFROG fixtures
+        run: python3 scripts/fixtures/crosscheck_optimfrog_fixtures.py
+
   alac-crosscheck:
     name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder, and the decoded PCM with Apple's
     runs-on: ubuntu-26.04
@@ -1723,6 +1746,7 @@ jobs:
       - flac-crosscheck
       - monkeys-audio-crosscheck
       - tta-crosscheck
+      - optimfrog-crosscheck
       - alac-crosscheck
       - asf-crosscheck
       - ac3-crosscheck

@@ -34,7 +34,7 @@ internal static class Summary
         Records r = s.Records;
         Node stream = s.Stream;
         MainBlock? main = r.Main;
-        if (main is not null)
+        if (r.MainIndex == 0 && r.Blocks.Count > 0)
         {
             s.Leading.Insert(0, Nodes.Block(source, 0));
         }
