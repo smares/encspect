@@ -15,10 +15,10 @@ public sealed class AlacDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The most a legitimate file charges for a byte: digital silence. Apple's own encoder codes a frame of 4,096 stereo samples of silence in 32 bytes, 7,164 units a byte
-    // (28 units a sample with its filters of 4 coefficients at the weights before the tap weight of 4), and 6,999 for eight channels at 16 bits (docs/design/decoders.md,
-    // "As built: ALAC").
-    public long WorkPerInputByte => 8192;
+    // The most a legitimate file charges for a byte is digital silence: Apple's encoder and FFmpeg's both code a frame of 4,096 stereo samples of silence in 32 bytes with
+    // filters of 4 coefficients, 2 x 4,096 x (16 + 4 x 4) / 32 = 8,192 units a byte, and at any order, since each coefficient's 2 bytes cost 4 units a sample. Twice that
+    // leaves a margin for an encoder that writes silence in fewer bits or in longer frames (docs/design/decoders.md, "As built: ALAC").
+    public long WorkPerInputByte => 16384;
 
     public IFrameDecoder Open(DecodeContext context)
     {

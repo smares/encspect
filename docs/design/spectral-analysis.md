@@ -460,7 +460,7 @@ As under [CLI](#cli). The text never prints the spectrum rows or the grids, as i
 - **Recommendation:** measurements raise no finding about the audio. A cutoff, a clipped run, a padded bit depth or a loudness is a figure; a finding would read as a verdict and, through `--fail-on info`, act like one (decision 6).
 - **The one exception proposed:** `measure.non-finite-samples`, a warning, for float samples that are NaN or infinite: the file holds something no reader can play as written, which is the plan's definition of a warning. It points to the stream's node.
 - **The host's own:**
-  - `measure.limit`, info: "Measuring stopped after 1,234.5 s of the stream: its work passed the budget of 34,359,738,368 work units that the file's size allows."
+  - `measure.limit`, info: "Measuring stopped after 1,234.5 s of the stream: its work passed the budget of 34,359,738,368 work units that the stream's coded bytes allow."
   - `measure.failed`, error: a measurement's bug, with the exception's type and message; that stream's measurements are dropped (status `Failed`) and the analysis carries on. The fuzzer fails on it, as on `decode.failed`.
   - `measure.streams-limited`, info: more streams than the measurement memory bound allows (below); the rest are not measured.
   - `measure.channels-limited`, info: more than 32 channels; the first 32 are measured.

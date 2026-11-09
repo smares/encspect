@@ -477,7 +477,7 @@ internal sealed class DecodeSession : IDecodeSession
         else if (run.IsOutOfBudget)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.limit", $"Decoding stopped after {FramesDecoded()}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the file's size allows" : string.Empty)}.", null, 1);
+            Add(Severity.Info, "decode.limit", $"Decoding stopped after {FramesDecoded()}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the stream's coded bytes allow" : string.Empty)}.", null, 1);
         }
 
         if (_isEnded && _status == DecodeStatus.Decoded)
