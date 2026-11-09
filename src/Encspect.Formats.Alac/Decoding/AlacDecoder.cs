@@ -13,6 +13,10 @@ public sealed class AlacDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
+    // The most a legitimate file charges for a byte: digital silence. FFmpeg's encoder codes a frame of 4,096 stereo samples of silence in 32 bytes, 4,096 units a byte at
+    // 16 units a sample; eight channels at 16 bits need about 73 bytes, about 7,200 units a byte (docs/design/decoders.md, "As built: ALAC").
+    public long WorkPerInputByte => 8192;
+
     public IFrameDecoder Open(DecodeContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

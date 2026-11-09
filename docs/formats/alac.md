@@ -77,7 +77,7 @@ ALAC stores no checksum, so no figure is compared and the verdict stays unknown.
 - **Output:** 20-bit samples are written as 20-bit integers (Apple's decoder left-justifies them in three bytes). Frames are placed by their position in the stream; a frame that cannot be decoded leaves a gap, counted as not decoded.
 - **A frame is not decoded** (`decode.frame-invalid`, in addition to the parser's finding) where its elements cover fewer channels than the cookie states, where its elements state different sample counts, or where an element states more samples than the cookie's frame length (Apple's decoder reads past its buffers there). Where the walk fails (`alac.frame-overrun`, `alac.element-unknown` and the others) the frame is unreadable and not handed to the decoder.
 - **Not decoded** (`decode.not-possible`): a cookie shorter than the configuration, a compatible version above 0, a frame length of 0 or above 1,048,576, a bit depth other than 16, 20, 24 and 32, channels outside 1 to 8, a sample rate of 0, and a stream without a cookie.
-- **Work:** per sample of each channel `DecodeWork.ForSample`; per tap of the predictor 2 units, one more tap for a nonzero prediction type; 4 units a sample where bytes were shifted ([decoders.md](../design/decoders.md#as-built-alac)).
+- **Work:** per sample of each channel `DecodeWork.ForSample`; per tap of the predictor 3 units, one more tap for a nonzero prediction type; 4 units a sample where bytes were shifted ([decoders.md](../design/decoders.md#as-built-alac)).
 - **Memory:** the session lends one frame of the cookie's frame length per channel (at most 2^20 samples of 8 channels); the decoder holds one more output of the same size.
 
 ## Not covered
