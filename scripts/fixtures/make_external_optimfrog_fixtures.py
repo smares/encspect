@@ -201,6 +201,7 @@ def encode(package, case, wav, description, work, fixtures):
     produced = first / ("out" + ext)
     if not produced.exists():
         record["status"] = "no output"
+        print(name, json.dumps(record["runs"]["encode1"], default=str)[:1500], files, flush=True)
         return record
     equal = {}
     for fname in files:
@@ -281,7 +282,7 @@ def main():
             status = records[-1].get("status", "ok")
             print(case["name"], status, records[-1].get("size"), [r.get("exit") for k, r in records[-1]["runs"].items() if k.startswith("encode")], flush=True)
     manifest = {"tool": f"OptimFROG {optimfrog_tool.VERSION} for Linux x64 (SHA-256 {optimfrog_tool.SHA256})", "cases": records}
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
     failed = [r["name"] for r in records if r["name"] in REQUIRED and r.get("status") == "no output"]
     print(f"{len(records)} cases, {sum(1 for r in records if r.get('status') != 'no output')} wrote a file; required failures: {failed}")
     raise SystemExit(1 if failed else 0)

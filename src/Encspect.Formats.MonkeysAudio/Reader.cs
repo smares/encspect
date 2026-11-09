@@ -806,7 +806,7 @@ internal static class Reader
 
         if (s.Wav is { } wav)
         {
-            WavHeader.AddNodes(s, wav, data, h.Channels);
+            WavHeaderNodes.AddNodes(s, wav, data, h.Channels);
         }
 
         if (!h.CreatesWavHeader && container is not null)
