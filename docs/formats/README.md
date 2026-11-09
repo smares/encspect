@@ -49,7 +49,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Opus | planned (FFmpeg) | routed | routed | not planned | not planned | no | no |
 | Speex | not planned | not planned | routed | not planned | not planned | no | no |
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
-| ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | no |
+| ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | no |
 | Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
@@ -90,7 +90,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | WavPack | walked by the decoder | verified and measured | Stereo Coding |
 | Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
 | TTA | not walked; the frames' CRC-32s are checked over the coded bytes | no (0.2) | none |
-| ALAC | walked by the parser | no (0.2) | Element Coding, Stereo Coding |
+| ALAC | walked by the parser | measured (no checksum to verify) | Element Coding, Stereo Coding |
 | Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
 

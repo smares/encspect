@@ -979,7 +979,7 @@ def manifest(data, kind, extra=None):
         })
     # A track without a cookie gets the container's own stream, whose figures the model does not work out.
     result["stream_infos"] = streams if (c is not None and c["complete"]) else ([] if c is not None else None)
-    result["verification"] = {"default": {"isVerified": None, "decoding": "noDecoder", "checksums": []}}
+    result["verification"] = {"default": {"isVerified": None, "decoding": "notRequested", "checksums": []}}
     return result
 
 

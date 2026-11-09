@@ -1,8 +1,8 @@
 # ALAC (Apple Lossless)
 
-The frames of an Apple Lossless track that a container stores: MP4 and M4A (`alac` sample entries) and Matroska (`A_ALAC`), through the "alac" codec parser (`src/Encspect.Formats.Alac`). ALAC has no file format of its own for the analyzer to open: CAF files, which Apple's tools write, wait for a CAF parser. There is no decoder: the frames are walked, not decoded, and the format stores no checksum over its samples ([decoders.md](../design/decoders.md), decision 5).
+The frames of an Apple Lossless track that a container stores: MP4 and M4A (`alac` sample entries) and Matroska (`A_ALAC`), through the "alac" codec parser (`src/Encspect.Formats.Alac`). ALAC has no file format of its own for the analyzer to open: CAF files, which Apple's tools write, wait for a CAF parser. The frames are decoded (below) for the measurements and for a front end that asks for the samples; the format stores no checksum over its samples, so there is nothing to verify ([decoders.md](../design/decoders.md)).
 
-Sources: Apple's ALAC reference implementation (https://github.com/macosforge/alac, commit `c38887c5c5e64a4b31108733bd79ca9b2496d987`, Apache License 2.0) and its `ALACMagicCookieDescription.txt`. The walk follows `ALACDecoder.cpp` and `ag_dec.c` and carries Apple's notice ([`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md)). FFmpeg 6.1.1 and 8.0.1, MediaInfo 26.01 and Apple's `afconvert` are black boxes: they write and read the test files, and FFmpeg's `alac.c` was not read ([decoders.md](../design/decoders.md), decision 10).
+Sources: Apple's ALAC reference implementation (https://github.com/macosforge/alac, commit `c38887c5c5e64a4b31108733bd79ca9b2496d987`, Apache License 2.0) and its `ALACMagicCookieDescription.txt`. The walk follows `ALACDecoder.cpp` and `ag_dec.c`, and the decoder `dp_dec.c` and `matrix_dec.c`; both carry Apple's notice ([`THIRD-PARTY-NOTICES.md`](../../THIRD-PARTY-NOTICES.md)). FFmpeg 6.1.1 and 8.0.1, MediaInfo 26.01 and Apple's `afconvert` are black boxes: they write and read the test files, and FFmpeg's `alac.c` was not read ([decoders.md](../design/decoders.md), decision 10).
 
 ## What is read
 
@@ -27,7 +27,7 @@ Sources: Apple's ALAC reference implementation (https://github.com/macosforge/al
 
 ## Verification
 
-ALAC stores no checksum and has no decoder, so no figure is compared. The stream's verification is "no decoder" and unknown; `--verify` adds the info `decode.no-decoder`. The test files' samples are checked outside the analyzer: `crosscheck_alac_fixtures.py` decodes every undamaged fixture with Apple's `alacconvert` and with FFmpeg and compares the hash of each channel with the encoder's input ([development.md](../development.md)).
+ALAC stores no checksum, so no figure is compared and the verdict stays unknown. The decoder declares no checksum, so `--verify` alone opens no session and reads no sample (the verification says the decoding was not asked for); `--measure` and output decode. The decoded samples are checked outside the analyzer: `crosscheck_alac_fixtures.py` compares the hash of each channel that Apple's `alacconvert` and FFmpeg decode with the encoder's input, and `crosscheck_alac_pcm.py` compares the analyzer's PCM with `alacconvert`'s sample by sample ([development.md](../development.md)).
 
 ## Channel layout
 
@@ -63,12 +63,27 @@ ALAC stores no checksum and has no decoder, so no figure is compared. The stream
   - `alacconvert`, before lossyWAV and after: 154,278 and 154,474 bytes, 124,725 and 124,636 bytes; FFmpeg: 150,944 and 151,026 bytes, 126,115 and 126,254 bytes.
   - Every element of a 24-bit stream states one shifted byte, before and after lossyWAV: the shift does not follow the zeroed bits.
 - **Fixture:** `external-alacconvert-24-stereo-lossywav.m4a` (124,706 bytes, Apple's `alacconvert` with the CAF copied into M4A by MP4Box, as the other `alacconvert` fixtures), made by `scripts/fixtures/make_external_alac_fixtures.py` from the samples of the committed lossyWAV fixture `flac/external-lossyflac-floor-44k.flac` (the input kind `lossywav-floor-44k` of `flac_signal.py`, decoded by `flac_model.py`); its manifest and golden are committed.
-- **What Encspect reports:** the same as for any ALAC track. ALAC has no decoder yet, so the levels and the low bits per span are not measured (`decode.no-decoder`).
+- **What Encspect reports:** the same as for any ALAC track, and with `--measure` the levels and the zeroed low bits of the decoded samples.
 - **No claim:** nothing in the frames names lossyWAV.
+
+## Decoding
+
+- **What is decoded:** the frames of the "alac" codec parser, to 16, 20, 24 and 32-bit integer samples in the stream's channel order (`Encspect.Formats.Alac.Decoding`, ID `alac`), for the measurements and for an output sink. The decoder is registered in the host and opens only where a front end asks for measurements or output.
+- **Where the syntax is read:** the parser's walk of each frame stores the residuals, the uncompressed samples and the prediction parameters of the elements in the buffers the session lends; the decoder reads the bits of the shifted bytes only. A frame the walk did not store is walked by the decoder with the same code and charged 16 units a byte.
+- **What the decoder adds** (`dp_dec.c`, `matrix_dec.c`, `ALACDecoder.cpp`):
+  - the adaptive predictor of each channel, with its first-order stage for a nonzero prediction type and the first-order difference of order 31, wrapping on 32 bits as the C code does;
+  - the undoing of the mixing of a channel pair (the left/side, mid/side or weighted coding that `mixBits` and `mixRes` state);
+  - the shifted bytes put back below the samples of 24-bit and 32-bit streams. For 16 and 20 bits Apple's decoder ignores them, and so does this one.
+- **Output:** 20-bit samples are written as 20-bit integers (Apple's decoder left-justifies them in three bytes). Frames are placed by their position in the stream; a frame that cannot be decoded leaves a gap, counted as not decoded.
+- **A frame is not decoded** (`decode.frame-invalid`, in addition to the parser's finding) where its elements cover fewer channels than the cookie states, where its elements state different sample counts, or where an element states more samples than the cookie's frame length (Apple's decoder reads past its buffers there). Where the walk fails (`alac.frame-overrun`, `alac.element-unknown` and the others) the frame is unreadable and not handed to the decoder.
+- **Not decoded** (`decode.not-possible`): a cookie shorter than the configuration, a compatible version above 0, a frame length of 0 or above 1,048,576, a bit depth other than 16, 20, 24 and 32, channels outside 1 to 8, a sample rate of 0, and a stream without a cookie.
+- **Work:** per sample of each channel `DecodeWork.ForSample`; per tap of the predictor 2 units, one more tap for a nonzero prediction type; 4 units a sample where bytes were shifted ([decoders.md](../design/decoders.md#as-built-alac)).
+- **Memory:** the session lends one frame of the cookie's frame length per channel (at most 2^20 samples of 8 channels); the decoder holds one more output of the same size.
 
 ## Not covered
 
-- CAF files, and any decoded view of the samples: no waveform, spectrum or lowpass for ALAC, and no check of the audio.
+- CAF files.
+- A decoded view of 20-bit streams in the cross-check: `alacconvert` reads and writes none.
 - The program and coupling channel elements (tags 5 and 2), which the reference decoder refuses.
 - Channel layouts other than the cookie's.
 

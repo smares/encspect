@@ -68,6 +68,7 @@ class ChangesTests(unittest.TestCase):
                      "scripts/fixtures/make_external_alac_fixtures.py", "scripts/fixtures/alac_tool.py"):
             self.assertIn("alac-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_alac_fixtures.py"), {"alac-crosscheck", "fixtures"})
+        self.assertIn("alac-crosscheck", run("scripts/fixtures/crosscheck_alac_pcm.py"))
         self.assertNotIn("alac-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
     def test_tta_parser_scripts_and_fixtures_belong_to_the_tta_job(self):
