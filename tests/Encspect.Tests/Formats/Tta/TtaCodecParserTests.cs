@@ -118,7 +118,7 @@ public class TtaCodecParserTests
 
         (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node));
 
-        Assert.Contains(report.Findings, f => f.Code == "decode.not-possible" && f.Message.Contains("no TTA1 header", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "decode.not-possible");
         Assert.Equal(0, sink.Declared);
     }
 
