@@ -168,7 +168,11 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **The first structural signal to check:** its `.mpp` container: a 2-byte preamble (0x2C or 0x30, then 0x00) and records of 420 bytes (384 at 48 kHz), each starting FF FF C0 or FF FF C4 and then 00.
    - **Padding tells nothing by itself:** 24 of 49 frames padded at 384 kbps and 44.1 kHz is what every compliant Layer I encoder does, so padding alone does not tell PASC from MPEG-1 Layer I. Real DCC-Studio files are needed to confirm anything.
    - Then, only where files back them, an encoder claim with a confidence, as for other encoders; otherwise the research is recorded and the item goes under "Not planned".
-7. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
+7. **The TAK decoder** (the lead, 2026-11-09), after the TAK header parser of 0.2 and with the frame walk of item 3.
+   - TAK's author publishes only the container source (`takStream.pas`) and a closed decoder library; the only detailed source for the coding is FFmpeg's reverse-engineered TAK decoder (LGPL).
+   - So the clean-room split applies, as for TrueHD and TTA: one agent reads it and writes a description without code, another implements from that description.
+   - The TAK SDK's decoder library on the Windows runner is the black-box reference for the PCM cross-check, with FFmpeg as a second column.
+8. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
 
 ### 0.5: AAC and WMA
 
@@ -218,6 +222,7 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
   - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
   - Dolby's object audio, and AC-4 and MPEG-H: the design does not cover their decoders, which wait for a design of their own.
+- **An OptimFROG decoder** (the lead, 2026-11-09): the codec is closed and no open implementation exists, not even under the LGPL; its published `format.txt` covers the container only, which is what the header-level parser reads. Reverse-engineering the binaries is neither allowed by its license nor a source that can be checked. Not planned unless its author publishes the coding or an open implementation appears. Until then OptimFROG streams are checked by their block CRC-32s, and a DualStream pair is judged on headers and checksums alone.
 - Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification.
 - The ancient lossless compressors and obsolete vocoders.
 - Each of the many ADPCM and PCM variants as a format of its own: WAV and the containers name their codings.
