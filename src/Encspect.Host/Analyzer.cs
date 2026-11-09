@@ -205,7 +205,7 @@ public sealed class Analyzer
 
         // The decoding's token is linked to the analysis's and to the front end's stop: disposed with the analysis, also when
         // Analyze throws, so that a caller's long-lived token keeps none of them registered.
-        using DecodeRun? decodeRun = options.Decoding is { } decoding ? new DecodeRun(decoding, reader.Length, options.CancellationToken) : null;
+        using DecodeRun? decodeRun = options.Decoding is { } decoding ? new DecodeRun(decoding, options.CancellationToken) : null;
         Increasing? progress = options.BytesRead is { } report ? new Increasing(report) : null;
         var findings = new List<Finding>();
         var pending = new List<PendingFinding>();

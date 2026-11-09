@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 public class DecoderSessionInvariantTests
 {
     // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta"];
+    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)
@@ -21,6 +21,7 @@ public class DecoderSessionInvariantTests
         ["WavPack lossy"] = "wavpack",
         ["Monkey's Audio"] = "monkeys-audio",
         ["TTA"] = "tta",
+        ["Apple Lossless"] = "alac",
         ["Dolby TrueHD"] = "truehd",
         ["MLP"] = "mlp",
         ["PCM"] = "pcm",
@@ -46,6 +47,7 @@ public class DecoderSessionInvariantTests
         ["wav/built-wavl-list-without-fact.wav"] = NotDescribable,
         ["wav/built-wavl-list.wav"] = NotDescribable,
         ["wav/built-zero-bits.wav"] = NotDescribable,
+        ["alac/built-cookie-missing-mka.mka"] = "the track has no CodecPrivate, so the stream is the container's own and the codec parser reads no frame (alac.cookie-missing)",
         ["aiff/built-chunk-id-invalid.aiff"] = NotDescribable,
         ["aiff/built-chunk-limit.aiff"] = NotDescribable,
         ["aiff/built-no-frames.aiff"] = NotDescribable,

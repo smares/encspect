@@ -1247,7 +1247,7 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_tta_pcm.py
 
   alac-crosscheck:
-    name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder
+    name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder, and the decoded PCM with Apple's
     runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.alac-crosscheck == 'true'
@@ -1267,6 +1267,17 @@ jobs:
 
       - name: Cross-check the ALAC fixtures
         run: python3 scripts/fixtures/crosscheck_alac_fixtures.py
+
+      # The analyzer's PCM against alacconvert's, sample for sample (docs/development.md, "Comparing decoded PCM"), FFmpeg's a second column.
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build tests/Encspect.PcmDump --configuration Release
+
+      - name: Compare the decoded PCM with Apple's decoder
+        run: python3 scripts/fixtures/crosscheck_alac_pcm.py
 
   wav-crosscheck:
     name: WAV and AIFF fixtures agree with FFmpeg and MediaInfo

@@ -15,6 +15,9 @@ internal sealed class DecodeSession : IDecodeSession
     private readonly DecodeSetup _setup;
     private readonly List<Pending> _findings = [];
     private readonly int _bytesPerSample;
+
+    // The decoder's IDecoder.WorkPerInputByte, set when it opens.
+    private long _unitsPerByte;
     private IFrameDecoder? _decoder;
     private DecodeStatus _status;
     private DecodeRun.GuardedSink? _sink;
@@ -76,6 +79,7 @@ internal sealed class DecodeSession : IDecodeSession
     {
         try
         {
+            _unitsPerByte = decoder.WorkPerInputByte;
             _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder, WithholdFromDecoder));
             _status = DecodeStatus.Decoded;
         }
@@ -160,6 +164,9 @@ internal sealed class DecodeSession : IDecodeSession
         {
             return false;
         }
+
+        // The unit's bytes earn the session's coding the allowance of its decoder, before the unit is decoded.
+        run.Allow(frame.Bytes.Length, _unitsPerByte);
 
         // The span of the units handed over, lost ones included, which the measurer needs to count a lost first or last unit.
         if (frame.Samples > 0 && frame.FirstSample >= 0)
@@ -470,7 +477,7 @@ internal sealed class DecodeSession : IDecodeSession
         else if (run.IsOutOfBudget)
         {
             _isEnded = true;
-            Add(Severity.Info, "decode.limit", $"Decoding stopped after {FramesDecoded()}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the file's size allows" : string.Empty)}.", null, 1);
+            Add(Severity.Info, "decode.limit", $"Decoding stopped after {FramesDecoded()}: its work passed the budget of {run.Budget.ToString("N0", CultureInfo.InvariantCulture)} work units{(run.Options.MaxWork is null ? " that the stream's coded bytes allow" : string.Empty)}.", null, 1);
         }
 
         if (_isEnded && _status == DecodeStatus.Decoded)

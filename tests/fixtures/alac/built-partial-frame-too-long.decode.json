@@ -1,0 +1,17 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 5904,
+    "isVerified": null,
+    "checksums": []
+  },
+  "pcmSha256": "bdcdb895dfd43680dc5f8f4026a558cb87dd4b6eed9dbf264398bf6fd2289097",
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The alac decoder could not decode the frame at 0x1504: An element states 5000 samples, more than the frame length of 4096 in the cookie."
+    }
+  ]
+}

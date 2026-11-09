@@ -47,7 +47,7 @@ The description does not say how the frame length is rounded, what each CRC-32 c
 
 ## Verification
 
-Three checksums are declared and tallied; none needs decoding, so they are compared in every analysis. The stream stores no checksum over its decoded audio, so the decoder compares none, and it runs only where a front end asks for the samples (the stream's decoding is `NotRequested` otherwise, as for WAV).
+Three checksums are declared and tallied; none needs decoding, so they are compared in every analysis. The stream stores no checksum over its decoded audio, so the decoder declares none: `--verify` alone opens no session and reads no sample (the verification says the decoding was not asked for), as for ALAC and WAV; `--measure` and output decode.
 
 | Checksum | Covers | Counts as covering all of the audio when |
 |---|---|---|

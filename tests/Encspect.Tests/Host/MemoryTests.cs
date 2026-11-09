@@ -1356,6 +1356,24 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The same reading for ALAC, whose frames are one sample each here (the walk lends one frame's buffers and the decoder keeps nothing per frame).
+    [Fact]
+    public void DecodingManyAlacFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(AlacBuilder.SmallFrames(100)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.m4a", AlacBuilder.SmallFrames(fewer), fewer, 1);
+        (long held, long kept) = LastFrameReading("frames.m4a", AlacBuilder.SmallFrames(frames), frames, 1);
+        (_, long plainKept) = LastFrameReading("frames.m4a", AlacBuilder.SmallFrames(frames), frames, 1, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // The measurer holds a frame of overlap, the grids and the counters whatever the length of the stream: the same reading, taken inside the sink's
     // Write of the last frame, grows by nothing per further frame when the stream is measured (docs/design/spectral-analysis.md, "Memory").
     [Fact]

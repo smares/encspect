@@ -87,7 +87,7 @@ AREAS = {
     "alac-crosscheck": {
         "projects": ["Encspect.Formats.Alac"],
         "fixtures": ["alac"],
-        "scripts": ["crosscheck_alac_fixtures.py", "alac_tool.py"],
+        "scripts": ["crosscheck_alac_fixtures.py", "crosscheck_alac_pcm.py", "alac_tool.py", "compare_pcm.py"],
         "globs": ["scripts/fixtures/make_*alac*", "scripts/fixtures/alac_*"],
     },
     "wav-crosscheck": {

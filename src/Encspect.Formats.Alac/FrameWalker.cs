@@ -49,6 +49,10 @@ internal sealed class WalkResult
 
     public long FaultBit { get; set; }
 
+    // The fault is in an element that follows the cookie's channels, all of which were read: the reference decoder stops reading there (ALACDecoder.cpp,
+    // Decode: the loop ends once channelIndex reaches numChannels), so the frame decodes and only the report shows the fault.
+    public bool IsFaultBeyond { get; set; }
+
     public bool HasEnd { get; set; }
 
     // All channels of the cookie were read and the packet ends before an end tag.
@@ -96,6 +100,7 @@ internal sealed class WalkResult
         FaultChannelsBefore = 0;
         FaultTag = 0;
         FaultBit = 0;
+        IsFaultBeyond = false;
         HasEnd = false;
         IsEndMissing = false;
         Walked = 0;
@@ -127,10 +132,19 @@ internal static class FrameWalker
     private const int MeanShift = 9;
     private const uint MeanClamp = 0xFFFF;
 
-    public static void Walk(ReadOnlySpan<byte> data, AlacCookie cookie, WalkResult result, CodingTally tally, List<ElementRecord> kept, ByteStore? store, CancellationToken cancellation)
+    // lent: the buffers a decoding session lent for the frame (StoredLayout); the walk then stores the residuals, the uncompressed samples and the
+    // parameters of the elements the cookie's channels hold, which is all the decoder needs of the coded syntax.
+    public static void Walk(ReadOnlySpan<byte> data, AlacCookie cookie, WalkResult result, CodingTally tally, List<ElementRecord> kept, ByteStore? store, CancellationToken cancellation, in SampleBuffers lent = default)
     {
         result.Reset();
         kept.Clear();
+        bool isStored = !lent.IsEmpty && lent.Channels >= cookie.Channels && lent.Stride > StoredLayout.MetaSlots;
+        SampleBuffers buffers = isStored ? lent : default;
+        for (int channel = 0; isStored && channel < cookie.Channels; channel++)
+        {
+            StoredLayout.Meta(buffers, channel)[StoredLayout.Kind] = (int)StoredKind.None;
+        }
+
         long total = (long)data.Length * 8;
         long position = 0;
         int channels = 0;
@@ -161,7 +175,7 @@ internal static class FrameWalker
             var element = new ElementRecord { Tag = (byte)tag, Start = start, AreReservedBitsZero = true };
             WalkFault fault = tag switch
             {
-                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, frameSamples, channels + (tag == ElementTags.ChannelPair ? 2 : 1) <= cookie.Channels, ref element, store, cancellation),
+                ElementTags.SingleChannel or ElementTags.Lfe or ElementTags.ChannelPair => ReadAudio(data, total, ref position, cookie, frameSamples, channels + (tag == ElementTags.ChannelPair ? 2 : 1) <= cookie.Channels, channels, buffers, ref element, store, cancellation),
                 ElementTags.DataStream => DataStream(data, total, ref position, ref element),
                 ElementTags.Fill => Fill(data, total, ref position, ref element),
                 ElementTags.End => WalkFault.None,
@@ -207,6 +221,7 @@ internal static class FrameWalker
                 // A pair that does not fit the cookie's channels is skipped by the reference decoder (ID_CPE, NoMoreChannels), like any element after the last channel.
                 result.FaultChannelsBefore = tag == ElementTags.ChannelPair && channelsBefore + 2 > cookie.Channels ? Math.Max(channelsBefore, cookie.Channels) : channelsBefore;
                 result.FaultTag = tag;
+                result.IsFaultBeyond = channelsBefore >= cookie.Channels;
                 break;
             }
 
@@ -230,7 +245,7 @@ internal static class FrameWalker
             result.RestEnd = Math.Min(position, total);
         }
 
-        if (result.Fault != WalkFault.None)
+        if (result.Fault != WalkFault.None && !result.IsFaultBeyond)
         {
             result.Flags |= FrameFlags.Unreadable | (result.Fault == WalkFault.Truncated ? FrameFlags.IsTruncated : FrameFlags.None);
         }
@@ -292,7 +307,7 @@ internal static class FrameWalker
     }
 
     // A single channel, LFE or channel pair element (ALACDecoder.cpp, Decode, ID_SCE, ID_LFE and ID_CPE). The caller has read the 3-bit tag.
-    private static WalkFault ReadAudio(ReadOnlySpan<byte> data, long total, ref long position, AlacCookie cookie, uint frameSamples, bool isDecoded, ref ElementRecord element, ByteStore? store, CancellationToken cancellation)
+    private static WalkFault ReadAudio(ReadOnlySpan<byte> data, long total, ref long position, AlacCookie cookie, uint frameSamples, bool isDecoded, int channelIndex, in SampleBuffers lent, ref ElementRecord element, ByteStore? store, CancellationToken cancellation)
     {
         bool isPair = element.Tag == ElementTags.ChannelPair;
         int channels = isPair ? 2 : 1;
@@ -339,6 +354,24 @@ internal static class FrameWalker
 
         element.IsHeaderRead = true;
         long samples = element.Samples;
+
+        // Only the channels the cookie states are decoded (an element past them is walked and nothing more), and only an element that fits the buffers is stored.
+        bool isStored = isDecoded && !lent.IsEmpty;
+        bool fits = isStored && samples <= StoredLayout.Capacity(lent);
+        if (isStored)
+        {
+            for (int k = 0; k < channels; k++)
+            {
+                Span<int> meta = StoredLayout.Meta(lent, channelIndex + k);
+                meta[StoredLayout.Kind] = (int)(!fits ? StoredKind.TooLong : isUncompressed ? StoredKind.Uncompressed : StoredKind.Compressed);
+                meta[StoredLayout.Samples] = (int)Math.Min(samples, int.MaxValue);
+                meta[StoredLayout.Role] = isPair ? k + 1 : 0;
+                meta[StoredLayout.BytesShifted] = 0;
+                meta[StoredLayout.MixBits] = 0;
+                meta[StoredLayout.MixResolution] = 0;
+            }
+        }
+
         if (isUncompressed)
         {
             // A pair's uncompressed samples are the source's width; a single channel's are the width it would have been compressed at.
@@ -348,8 +381,28 @@ internal static class FrameWalker
                 return WalkFault.InvalidHeader;
             }
 
+            long start = position;
             position += samples * bits * channels;
-            return position > total ? WalkFault.Truncated : WalkFault.None;
+            if (position > total)
+            {
+                return WalkFault.Truncated;
+            }
+
+            if (fits)
+            {
+                // The samples of a pair alternate; each is a signed value of bits bits (ALACDecoder.cpp reads them 16 bits at a time and extends the sign).
+                int extend = 32 - bits;
+                for (int k = 0; k < channels; k++)
+                {
+                    Span<int> plane = StoredLayout.Plane(lent, channelIndex + k);
+                    for (int i = 0; i < (int)samples; i++)
+                    {
+                        plane[i] = unchecked((int)(Peek(data, start + (((long)i * channels) + k) * bits, bits) << extend)) >> extend;
+                    }
+                }
+            }
+
+            return WalkFault.None;
         }
 
         if (width is < 1 or > 32)
@@ -373,6 +426,17 @@ internal static class FrameWalker
         element.MixBits = (byte)Peek(data, position, 8);
         element.MixResolution = (sbyte)Peek(data, position + 8, 8);
         position += 16;
+        if (isStored)
+        {
+            for (int k = 0; k < channels; k++)
+            {
+                Span<int> meta = StoredLayout.Meta(lent, channelIndex + k);
+                meta[StoredLayout.BytesShifted] = shifted;
+                meta[StoredLayout.MixBits] = element.MixBits;
+                meta[StoredLayout.MixResolution] = element.MixResolution;
+            }
+        }
+
         for (int channel = 0; channel < channels; channel++)
         {
             if (position + 16 > total)
@@ -396,6 +460,18 @@ internal static class FrameWalker
             {
                 position = total + 1;
                 return WalkFault.Truncated;
+            }
+
+            if (fits)
+            {
+                Span<int> meta = StoredLayout.Meta(lent, channelIndex + channel);
+                meta[StoredLayout.PredictionType] = record.PredictionType;
+                meta[StoredLayout.PredictorShift] = record.PredictorShift;
+                meta[StoredLayout.Order] = record.Order;
+                for (int i = 0; i < record.Order; i++)
+                {
+                    meta[StoredLayout.Coefficients + i] = (short)Peek(data, position + (i * 16L), 16);
+                }
             }
 
             if (store is not null && record.Order > 0)
@@ -422,6 +498,16 @@ internal static class FrameWalker
         }
 
         // The bits the shift moved out of every sample, which the decoder skips here and reads after the residuals.
+        if (fits)
+        {
+            for (int k = 0; k < channels; k++)
+            {
+                Span<int> meta = StoredLayout.Meta(lent, channelIndex + k);
+                meta[StoredLayout.ShiftedAtLow] = unchecked((int)position);
+                meta[StoredLayout.ShiftedAtHigh] = (int)(position >> 32);
+            }
+        }
+
         position += (long)shifted * 8 * samples * channels;
         if (position > total)
         {
@@ -433,7 +519,7 @@ internal static class FrameWalker
         {
             ref ChannelRecord record = ref channel == 0 ? ref element.First : ref element.Second;
             uint weight = (uint)(cookie.Pb * record.WeightFactor / 4);
-            WalkFault fault = Residuals(data, total, ref position, (uint)samples, width, cookie, weight, ref record, cancellation);
+            WalkFault fault = Residuals(data, total, ref position, (uint)samples, width, cookie, weight, ref record, fits ? StoredLayout.Plane(lent, channelIndex + channel)[..(int)samples] : default, cancellation);
             record.ResidualEnd = Math.Min(position, total);
             if (fault != WalkFault.None)
             {
@@ -449,7 +535,7 @@ internal static class FrameWalker
     // dyn_decomp of ag_dec.c: the residuals of a channel, an adaptive Golomb code. Each value has a prefix of ones ended by a zero and a remainder of k
     // bits, where k follows a running mean of the values so far; after a value that leaves the mean small, a run of zeros is coded as one count.
     // The arithmetic wraps on 32 bits as the C code's unsigned arithmetic does.
-    private static WalkFault Residuals(ReadOnlySpan<byte> data, long total, ref long position, uint samples, int maxBits, AlacCookie cookie, uint weight, ref ChannelRecord record, CancellationToken cancellation)
+    private static WalkFault Residuals(ReadOnlySpan<byte> data, long total, ref long position, uint samples, int maxBits, AlacCookie cookie, uint weight, ref ChannelRecord record, Span<int> output, CancellationToken cancellation)
     {
         uint mean = (uint)cookie.Mb;
         uint kb = (uint)cookie.Kb;
@@ -514,6 +600,13 @@ internal static class FrameWalker
                     }
                 }
 
+                if (!output.IsEmpty)
+                {
+                    // The least significant bit is the sign (ag_dec.c: del = ((ndecode + 1) >> 1) * multiplier).
+                    uint decoded = n + isRunMode;
+                    output[(int)count] = (int)(((decoded + 1) >> 1) * (uint)(-(int)(decoded & 1) | 1));
+                }
+
                 count++;
                 mean = (weight * (n + isRunMode)) + mean - ((weight * mean) >> MeanShift);
                 if (n > MeanClamp)
@@ -552,6 +645,11 @@ internal static class FrameWalker
                     {
                         fault = WalkFault.ZeroRun;
                         break;
+                    }
+
+                    if (!output.IsEmpty)
+                    {
+                        output.Slice((int)count, (int)run).Clear();
                     }
 
                     count += run;
@@ -643,7 +741,7 @@ internal static class FrameWalker
     }
 
     // The n bits (1 to 32) at a bit position, most significant first; bits past the end of the data read as zeros.
-    private static uint Peek(ReadOnlySpan<byte> data, long position, int n)
+    internal static uint Peek(ReadOnlySpan<byte> data, long position, int n)
     {
         int at = (int)(position >> 3);
         int shift = (int)(position & 7);

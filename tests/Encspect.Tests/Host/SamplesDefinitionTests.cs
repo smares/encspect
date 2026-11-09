@@ -139,6 +139,13 @@ public class SamplesDefinitionTests
         ["monkeys-audio/built-seek-first-entry-off-by-two.decode.json"] = "frame 2 is flagged cut from the seek table and decodes in full",
         ["monkeys-audio/built-frame-data-bytes-too-small.decode.json"] = "frame 2 ends in a partial word past the descriptor's size, is flagged cut and decodes in full",
         #endregion
+
+        #region ALAC
+        ["alac/built-channels-missing.decode.json"] = "the frame holds elements for fewer channels than the cookie states, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
+        ["alac/built-element-samples-differ.decode.json"] = "the frame's elements state different sample counts, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
+        ["alac/built-partial-frame-too-long.decode.json"] = "an element states more samples than the cookie's frame length, and the decoder does not decode the frame (decode.frame-invalid) though the parser counts its samples",
+        ["alac/built-tuning-kb-zero.decode.json"] = "every compressed frame is unreadable for the cookie's maximum Golomb parameter (alac.tuning-invalid), which the parser does not count as lost samples, and none is decoded",
+        #endregion
     };
 
     [Fact]
