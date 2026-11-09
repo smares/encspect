@@ -53,6 +53,112 @@ public class TtaCodecParserTests
 
     private static (byte[] Header, uint[] Sizes, List<byte[]> Frames) Parts() => TtaBuilder.Parts(File.ReadAllBytes(TtaBuilder.FixturePath(Fixture)));
 
+    private static (Report Report, PcmHashingSink Sink) AnalyzeDecoding(IReadOnlyList<byte[]> frames, Func<Node, CodecConfiguration?> configure)
+    {
+        var sink = new PcmHashingSink();
+        byte[] file = [.. "PKTS"u8, .. frames.SelectMany(f => f)];
+        var container = new Packets([.. frames.Select(f => f.Length)], configure);
+        Report report = TestFiles.Analyze(file, container, options: new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } }, decoders: DefaultParsers.Decoders);
+        return (report, sink);
+    }
+
+    [Fact]
+    public void FramesWithTheHeaderOfTheTrackAreDecodedAsTheFileIs()
+    {
+        (byte[] header, _, List<byte[]> frames) = Parts();
+        using System.Text.Json.JsonDocument manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "tta", "external-16-stereo.expected.json")));
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => Header(node, header));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed");
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_samples").GetInt64(), sink.Samples);
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_pcm_md5").GetString(), sink.Hash());
+        Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
+    }
+
+    // Without the header the container's figures and length stand in: the frames decode to the file's samples, the last one's count chosen by its codes.
+    // 100,000 samples at 44,100 Hz are frames of 46,080, 46,080 and 7,840.
+    [Theory]
+    [InlineData(100_000L)]
+    [InlineData(100_003L)]
+    [InlineData(140_000L)]
+    public void FramesWithoutAHeaderAreDecodedWithTheContainersFiguresAndLength(long length)
+    {
+        (_, _, List<byte[]> frames) = Parts();
+        using System.Text.Json.JsonDocument manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "tta", "external-16-stereo.expected.json")));
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node)
+        {
+            Format = new AudioFormat(0, 2, 44100, 0, 0, 16),
+            DurationSamples = length,
+        });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed");
+        Assert.Equal(manifest.RootElement.GetProperty("decoded_pcm_md5").GetString(), sink.Hash());
+        Assert.Equal(100_000, report.Streams.Single().Verification!.DecodedSamples);
+    }
+
+    // Without a length the codes alone give the last frame's samples, and the stream counts them, decoded or not.
+    [Fact]
+    public void WithoutAHeaderOrALengthTheLastFramesCodesGiveItsSamples()
+    {
+        (_, _, List<byte[]> frames) = Parts();
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node) { Format = new AudioFormat(0, 2, 44100, 0, 0, 16) });
+        Report plain = Analyze(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node) { Format = new AudioFormat(0, 2, 44100, 0, 0, 16) });
+
+        Assert.Equal(100_000, sink.Samples);
+        Assert.Equal(100_000, report.Streams.Single().Samples);
+        Assert.Equal(100_000, plain.Streams.Single().Samples);
+        Assert.Equal(0, plain.Streams.Single().LostSamples);
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "parse.failed" or "tta.last-frame-samples-ambiguous");
+    }
+
+    // Silence codes in a bit each once its parameters fall, so several counts end in the last byte: the fewest without a length, the nearest with one
+    // (with a length past the true count, the largest, which the padding bits put at the true count or up to 7 past it).
+    [Theory]
+    [InlineData(null, -1)]
+    [InlineData(8359L + 5000, 0)]
+    [InlineData(8359L + 5100, 1)]
+    public void ASilentLastFrameTakesTheFewestCountOrTheOneTheLengthPicks(long? length, int expected)
+    {
+        (_, List<byte[]> frames) = TtaEncoder.Encode(8000, 16, [new int[8359 + 5000]]);
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node)
+        {
+            Format = new AudioFormat(0, 1, 8000, 0, 0, 16),
+            DurationSamples = length,
+        });
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.last-frame-samples-ambiguous");
+        Assert.NotNull(finding.Path);
+        long samples = report.Streams.Single().Samples;
+        Assert.Equal(samples, sink.Samples);
+        switch (expected)
+        {
+            case -1:
+                Assert.InRange(samples, 8359 + 5000 - 7, 8359 + 5000);
+                break;
+            case 0:
+                Assert.Equal(8359 + 5000, samples);
+                break;
+            default:
+                Assert.InRange(samples, 8359 + 5000, 8359 + 5000 + 7);
+                break;
+        }
+    }
+
+    [Fact]
+    public void WithoutAHeaderOrAFormatTheTrackIsNotDecoded()
+    {
+        (_, _, List<byte[]> frames) = Parts();
+
+        (Report report, PcmHashingSink sink) = AnalyzeDecoding(frames, node => new CodecConfiguration(new MappedBytes(Array.Empty<byte>(), 1000), node));
+
+        Assert.Contains(report.Findings, f => f.Code == "decode.not-possible");
+        Assert.Equal(0, sink.Declared);
+    }
+
     [Fact]
     public void FramesWithTheHeaderOfTheTrackAreReportedAsTheFileIs()
     {

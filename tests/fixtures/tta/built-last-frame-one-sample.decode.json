@@ -1,0 +1,35 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 1,
+    "isVerified": true,
+    "checksums": [
+      {
+        "name": "header CRC-32",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      },
+      {
+        "name": "seek table CRC-32",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      },
+      {
+        "name": "frame CRC-32",
+        "stored": 3,
+        "checked": 3,
+        "failed": 0
+      }
+    ]
+  },
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 2,
+      "message": "The tta decoder could not decode the frame at 0x26: the data ends inside the frame\u0027s coded audio."
+    }
+  ]
+}

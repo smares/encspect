@@ -173,8 +173,8 @@ public class AudioPanelTests
     }
 
     // The captions of the files the decoding cannot measure: WavPack's DSD decodes to a format the measurements do not take, and a refused
-    // first block says why in the decoder's own words, lowercased after the colon. (TTA has no decoder: its stream says NoDecoder in every
-    // analysis, so the command is not offered and the caption stays "not decoded here".)
+    // first block says why in the decoder's own words, lowercased after the colon. (A stream without a verification, as MPEG audio's, and one that says
+    // NoDecoder are not offered the command, and the caption stays "not decoded here".)
     [AvaloniaTheory]
     [InlineData("external-dsd-64-high.wv", "The audio cannot be decoded: the stream decodes to DSD, which is not measured.")]
     [InlineData("built-dsd-invalid.wv", "The audio cannot be decoded: the first block with audio cannot be decoded: the DSD block has the mode 2, which is not 0, 1 or 3.")]
@@ -190,12 +190,23 @@ public class AudioPanelTests
         window.Close();
     }
 
+    // An MP3 stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
     [AvaloniaFact]
     public void A_stream_without_a_decoder_offers_no_command_and_is_not_decoded()
     {
-        DetailWindow window = Open(Fixtures.Tta("external-11025-stereo.tta"));
+        DetailWindow window = Open(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"));
         Assert.False(window.Model.CanDecodeAudio);
-        Assert.Equal("The audio of this TTA stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
+        Assert.Equal("The audio of this MPEG-1 Layer III stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
+        Assert.Null(window.Model.Report!.Streams.Single().Measurements);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_TTA_stream_offers_the_command_and_is_not_decoded_until_asked()
+    {
+        DetailWindow window = Open(Fixtures.Tta("external-11025-stereo.tta"), decode: false);
+        Assert.True(window.Model.CanDecodeAudio);
+        Assert.True(window.Model.Graphs.SelectedStream!.Caption!.OffersDecode);
         Assert.Null(window.Model.Report!.Streams.Single().Measurements);
         window.Close();
     }

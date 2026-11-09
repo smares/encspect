@@ -19,7 +19,8 @@ For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
   matroska_model.py wrote. MediaInfo 26.01 prints no Encryption field for a Matroska track (File_Mk.cpp fills none; the ContentEncryption elements are only
   named, ATO2), which is compared as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
   tracks is not compared, and the script prints why.
-- ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*).
+- ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*), but the errors listed in check_decode with their reason
+  (the Opus flush of FFmpeg 8.0, and TTA_SHORT_LAST_FRAME), each required exactly as listed so that an entry fails once FFmpeg stops printing it.
 - MediaInfo (26.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
   analyzer's golden report, wherever MediaInfo reports them.
 
@@ -228,6 +229,18 @@ def check_ffprobe(manifest, path, problems):
 
 OPUS_FLUSH = re.compile(r"^\[opus @ [0-9a-fx]+\] Error parsing Opus packet header\.$")
 
+# TTA tracks stored without the header whose last frame is shorter than the frame length: FFmpeg (6.1.1 and 8.0.1) decodes that frame as a whole one and
+# fails on it, so it outputs the frames before it only (the TTA PCM check, crosscheck_tta_pcm.py, lists the same files in FFMPEG_SHORT and compares
+# FFmpeg's samples as that prefix). The analyzer counts the last frame's codes (docs/formats/tta.md, "TTA in Matroska"). Each file must print the error
+# exactly once, so the entry expires if a later FFmpeg decodes the frame.
+TTA_SHORT_LAST_FRAME = {
+    "external-ffmpeg-tta-last-frame-one-sample.mka": "the last frame holds 1 of the 33,436 samples a frame has at 32,000 Hz",
+    "external-mkvmerge-tta-last-frame-one-sample.mka": "the last frame holds 1 of the 33,436 samples a frame has at 32,000 Hz",
+    "external-mkvmerge-tta-mono.mka": "the last frame holds 1 of the 25,077 samples a frame has at 24,000 Hz",
+}
+# FFmpeg 8.0 names the decoder too ("[aist#0:0/tta @ 0x...] [dec:tta @ 0x...] Decoding error: ..."); 6.1 does not.
+TTA_LAST_FRAME_ERROR = re.compile(r"^\[aist#\d+:\d+/tta @ [0-9a-fx]+\](?: \[dec:tta @ [0-9a-fx]+\])? Decoding error: Invalid data found when processing input$")
+
 
 def check_decode(path, problems, opus_tracks=0):
     result = run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a", "-f", "null", "-"], text=True)
@@ -242,6 +255,12 @@ def check_decode(path, problems, opus_tracks=0):
     if len(flushes) != opus_tracks:
         problems.append(f"ffmpeg prints {len(flushes)} Opus flush messages for {opus_tracks} Opus tracks; FFmpeg 8.0.1 prints one for each (opus/parser.c)")
     lines = [l for l in lines if not OPUS_FLUSH.match(l)]
+    short = [l for l in lines if TTA_LAST_FRAME_ERROR.match(l)]
+    expected = 1 if path.name in TTA_SHORT_LAST_FRAME else 0
+    if len(short) != expected:
+        reason = f" ({TTA_SHORT_LAST_FRAME[path.name]})" if expected else ""
+        problems.append(f"ffmpeg prints {len(short)} errors on a short last TTA frame, {expected} expected{reason}")
+    lines = [l for l in lines if not TTA_LAST_FRAME_ERROR.match(l)]
     if result.returncode != 0 or lines:
         problems.append(f"ffmpeg decoding: {lines[:1] or result.returncode}")
 

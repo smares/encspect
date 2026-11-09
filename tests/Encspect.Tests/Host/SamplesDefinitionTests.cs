@@ -215,6 +215,36 @@ public class SamplesDefinitionTests
         ["monkeys-audio/built-seek-first-entry-off.decode.json"] = Reasons.monkeysaudio,
         #endregion
 
+        #region TTA
+        ["tta/built-bits-12.decode.json"] = Reasons.tta,
+        ["tta/built-crc-only-frames.decode.json"] = Reasons.tta,
+        ["tta/built-cut-after-frame.decode.json"] = Reasons.tta,
+        ["tta/built-cut-mid-frame.decode.json"] = Reasons.tta,
+        ["tta/built-frame-crc-fails-every-frame.decode.json"] = Reasons.tta,
+        ["tta/built-frame-crc-fails.decode.json"] = Reasons.tta,
+        ["tta/built-header-crc-fails.decode.json"] = Reasons.tta,
+        ["tta/built-header-samples-too-many.decode.json"] = Reasons.tta,
+        ["tta/built-id3v1-lookalike-in-last-frame.decode.json"] = Reasons.tta,
+        ["tta/built-last-frame-one-sample.decode.json"] = Reasons.tta,
+        ["tta/built-leading-id3v2-trailing-ape.decode.json"] = Reasons.tta,
+        ["tta/built-leading-id3v2.decode.json"] = Reasons.tta,
+        ["tta/built-many-small-frames.decode.json"] = Reasons.tta,
+        ["tta/built-minimal-mono-8.decode.json"] = Reasons.tta,
+        ["tta/built-seek-entry-too-large.decode.json"] = Reasons.tta,
+        ["tta/built-seek-entry-too-small.decode.json"] = Reasons.tta,
+        ["tta/built-seek-table-crc-fails.decode.json"] = Reasons.tta,
+        ["tta/built-seek-table-short-of-data.decode.json"] = Reasons.tta,
+        ["tta/built-seek-tag-between-frames.decode.json"] = Reasons.tta,
+        ["tta/built-seek-tag-inside-stream.decode.json"] = Reasons.tta,
+        ["tta/built-six-channels-24.decode.json"] = Reasons.tta,
+        ["tta/built-three-frames.decode.json"] = Reasons.tta,
+        ["tta/built-trailing-ape-and-id3v1.decode.json"] = Reasons.tta,
+        ["tta/built-trailing-ape.decode.json"] = Reasons.tta,
+        ["tta/built-trailing-id3v1.decode.json"] = Reasons.tta,
+        ["tta/built-trailing-junk.decode.json"] = Reasons.tta,
+        ["tta/built-whole-frames.decode.json"] = Reasons.tta,
+        #endregion
+
         #region TrueHD
         ["truehd/built-parameters-change.decode.json"] = Reasons.truehd,
         ["truehd/built-splice-channel-count.decode.json"] = Reasons.truehd,
@@ -253,6 +283,9 @@ public class SamplesDefinitionTests
 
         public const string monkeysaudio =
             "the decoder stops at or refuses a frame that the parser reads without flagging it (units a decoder refuses for a reason the parser does not check show only in the measurements)";
+
+        public const string tta =
+            "the frames of the hand-built files hold bytes in place of coded samples, so the decoder refuses the frames the parser reads (their CRC-32s hold) and decodes none, or only the ones that happen to read";
 
         public const string truehd =
             "the decoder refuses units that the parser reads without flagging them (a change of the stream's parameters, an odd-length end trimmed from the samples)";

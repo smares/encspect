@@ -206,7 +206,7 @@ public partial class FindingCoverageTests
     [GeneratedRegex("\"(tta\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex TtaCode();
 
-    // Every code the TTA parsers emit is listed by a fixture's manifest or raised by a crafted file of TtaFindingTests or TtaCodecParserTests.
+    // Every code the TTA parsers emit is listed by a fixture's manifest or raised by a crafted file of TtaFindingTests, TtaCodecParserTests or TtaDecoderTests.
     [Fact]
     public void EveryTtaCodeIsAsserted()
     {
@@ -217,7 +217,7 @@ public partial class FindingCoverageTests
         Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
 
         var asserted = new HashSet<string>();
-        foreach (string file in new[] { "Formats/Tta/TtaFindingTests.cs", "Formats/Tta/TtaCodecParserTests.cs" })
+        foreach (string file in new[] { "Formats/Tta/TtaFindingTests.cs", "Formats/Tta/TtaCodecParserTests.cs", "Formats/Tta/TtaDecoderTests.cs" })
         {
             asserted.UnionWith(TtaCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
         }

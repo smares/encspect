@@ -20,6 +20,7 @@ public class DecoderSessionInvariantTests
         ["WavPack hybrid"] = "wavpack",
         ["WavPack lossy"] = "wavpack",
         ["Monkey's Audio"] = "monkeys-audio",
+        ["TTA"] = "tta",
         ["Apple Lossless"] = "alac",
         ["Dolby TrueHD"] = "truehd",
         ["MLP"] = "mlp",

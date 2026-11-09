@@ -73,7 +73,7 @@ public class TtaFixtureTests
         JsonElement verification = manifest.GetProperty("verification");
         if (report.Streams.Count > 0)
         {
-            FlacFixtureTests.CheckVerification(verification.GetProperty("default"), report.Streams.Single().Verification, DecodeStatus.NoDecoder);
+            FlacFixtureTests.CheckVerification(verification.GetProperty("default"), report.Streams.Single().Verification, DecodeStatus.NotRequested);
         }
 
         CheckFindings(manifest.GetProperty("findings"), report.Findings);

@@ -215,7 +215,7 @@ class Stream:
         failed = any(c["failed"] for c in checksums)
         unchecked = any(c["stored"] != c["checked"] for c in checksums)
         verified = False if failed else None if unchecked else True if any(c["coversAllAudio"] and c["checked"] > 0 for c in checksums) else None
-        return {"isVerified": verified, "decoding": "noDecoder", "checksums": checksums}
+        return {"isVerified": verified, "decoding": "notRequested", "checksums": checksums}
 
 
 def manifest(data, start=0, end=None, tags=(), extra=None):

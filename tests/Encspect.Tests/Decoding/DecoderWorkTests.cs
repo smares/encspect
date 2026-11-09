@@ -4,6 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
+using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
@@ -189,6 +190,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("flac", StringComparison.Ordinal) => new FlacDecoder(),
         _ when name.StartsWith("alac", StringComparison.Ordinal) => new Encspect.Formats.Alac.Decoding.AlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
+        _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -199,6 +201,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("flac", StringComparison.Ordinal) => ".flac",
         _ when name.StartsWith("alac", StringComparison.Ordinal) => ".m4a",
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
+        _ when name.StartsWith("tta-matroska", StringComparison.Ordinal) => ".mka",
+        _ when name.StartsWith("tta", StringComparison.Ordinal) => ".tta",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -300,6 +304,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         {
             Add("monkeys-audio-" + label, () => new Case("monkeys-audio-" + label, MonkeysAudioCases.Repeated(file)));
         }
+
+        // TTA: each depth and channel count the fixtures hold, the loudest noise (the longest codes), silence (the cheapest code, one bit a sample) and 24 bits at the
+        // highest rate. Each case repeats the first frame an encoder wrote.
+        foreach ((string label, string file) in new[]
+        {
+            ("16-stereo", "external-16-stereo.tta"),
+            ("16-mono", "external-16-mono.tta"),
+            ("16-loud-noise", "external-libtta-16-loud-noise.tta"),
+            ("16-silent", "external-16-silent.tta"),
+            ("24-stereo", "external-24-stereo.tta"),
+            ("24-mono-192000", "external-192000-mono.tta"),
+            ("8-stereo", "external-8-stereo.tta"),
+            ("16-8-channels", "external-16-8ch.tta"),
+        })
+        {
+            Add("tta-" + label, () => new Case("tta-" + label, TtaCases.Repeated(file)));
+        }
+
+        // TTA in Matroska without the header (as FFmpeg and mkvmerge store it): the parser counts the last frame's codes, the decoder takes the track's figures.
+        Add("tta-matroska-silent-stereo", () => new Case("tta-matroska-silent-stereo", TtaCases.MatroskaSilence(2)));
+        Add("tta-matroska-music-stereo", () => new Case("tta-matroska-music-stereo", TtaCases.Matroska("external-16-stereo.tta")));
 
         // Monkey's Audio before version 3.93, whose decoder is another (Old/UnMACOld.cpp): each bit coding (the Rice coding up to 3.85, from 3.86, with the overflow cap
         // of 3.89, the range coder of 3.90 to 3.92) at the level whose predictor costs the most, and every predictor. Each case repeats the first frame of a fixture, a
@@ -698,6 +723,63 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             long unitsPerFrame = (block * 2 * (16 + 1)) + (16L * (subframes.Length + 14));
             int frames = (int)(target / unitsPerFrame);
             return Stream(block, 2, 16, (long)frames * block, Enumerable.Range(0, frames).Select(number => FlacBuilder.FrameOf(number, block, Rate, 1, 16, subframes)));
+        }
+    }
+
+    // Files of copies of the first frame of a fixture, sized to charge about Target units: a TTA frame decodes by itself, so the copies are a file of as much audio.
+    internal static class TtaCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            (byte[] header, _, List<byte[]> frames) = TtaBuilder.Parts(File.ReadAllBytes(TtaBuilder.FixturePath(fixture)));
+            uint rate = BinaryPrimitives.ReadUInt32LittleEndian(header.AsSpan(10));
+            int channels = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6));
+            int bits = BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(8));
+            long length = TtaBuilder.FrameLength(rate);
+            byte[] Build(int copies) => Unpooled.Join(
+                [TtaBuilder.Header(rate, channels, bits, length * copies), TtaBuilder.Table(Enumerable.Repeat((uint)frames[0].Length, copies)), Unpooled.Join(Enumerable.Repeat(frames[0], copies))]);
+            long perCopy = Math.Max(1, Units(Build(2)) / 2);
+            return Build((int)Math.Clamp(target / perCopy, 2, 1 << 20));
+        }
+
+        // Copies of one frame as the blocks of a Matroska track with no CodecPrivate, one block to a Cluster, sized to charge about Target units.
+        public static byte[] Matroska(string fixture, long target = Target)
+        {
+            (byte[] header, _, List<byte[]> frames) = TtaBuilder.Parts(File.ReadAllBytes(TtaBuilder.FixturePath(fixture)));
+            return MatroskaOf(frames[0], BinaryPrimitives.ReadUInt32LittleEndian(header.AsSpan(10)), BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6)), target);
+        }
+
+        public static byte[] MatroskaSilence(int channels, long target = Target)
+        {
+            int[][] silence = [.. Enumerable.Range(0, channels).Select(_ => new int[46080])];
+            return MatroskaOf(TtaEncoder.Frame(silence, 0, 46080, 2), 44100, channels, target);
+        }
+
+        private static byte[] MatroskaOf(byte[] frame, uint rate, int channels, long target)
+        {
+            byte[] Build(int copies)
+            {
+                byte[] rateBytes = new byte[8];
+                BinaryPrimitives.WriteDoubleBigEndian(rateBytes, rate);
+                byte[] track = MatroskaBuilder.Element(0x1654AE6B, MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1),
+                    MatroskaBuilder.Unsigned(0x83, 2), MatroskaBuilder.Text(0x86, "A_TTA1"),
+                    MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, rateBytes), MatroskaBuilder.Unsigned(0x9F, (ulong)channels), MatroskaBuilder.Unsigned(0x6264, 16))));
+                long frameMilliseconds = TtaBuilder.FrameLength(rate) * 1000 / rate;
+                byte[][] clusters = [.. Enumerable.Range(0, copies).Select(i => MatroskaBuilder.Cluster(i * frameMilliseconds, MatroskaBuilder.SimpleBlock(1, 0, frame)))];
+                return MatroskaBuilder.File([MatroskaBuilder.Info(), track, .. clusters]);
+            }
+
+            long perCopy = Math.Max(1, Units(Build(2), "probe.mka") / 2);
+            return Build((int)Math.Clamp(target / perCopy, 2, 1 << 20));
+        }
+
+        public static long Units(byte[] file, string name = "probe.tta")
+        {
+            var counting = new CountingDecoder(new TtaDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            Report report = analyzer.Analyze(name, new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit" or "decode.frame-invalid");
+            return counting.Units;
         }
     }
 

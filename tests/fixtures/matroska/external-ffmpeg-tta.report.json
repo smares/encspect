@@ -678,6 +678,20 @@
                       "length": 20499
                     },
                     {
+                      "name": "Samples",
+                      "value": 44100,
+                      "unit": "samples",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 1,
+                      "unit": "s",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
                       "name": "Sample Rate",
                       "value": 44100,
                       "unit": "Hz",
@@ -717,6 +731,60 @@
                       "unit": "frames",
                       "offset": 543,
                       "length": 20499
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 163.992,
+                      "unit": "kbps",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "unknown",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Smallest Frame",
+                      "value": 20499,
+                      "unit": "bytes",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Largest Frame",
+                      "value": 20499,
+                      "unit": "bytes",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 163.992,
+                      "unit": "kbps",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 163.992,
+                      "unit": "kbps",
+                      "offset": 543,
+                      "length": 20499
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 543,
+                      "length": 20499,
+                      "children": [
+                        {
+                          "name": "160 to 191 kbps",
+                          "value": "1 frame (100.0%)",
+                          "offset": 543,
+                          "length": 20499
+                        }
+                      ]
                     }
                   ]
                 },
@@ -731,8 +799,8 @@
                     {
                       "name": "Frame",
                       "kind": "Frame",
-                      "value": 20499,
-                      "unit": "bytes",
+                      "value": 44100,
+                      "unit": "samples",
                       "offset": 543,
                       "length": 20499,
                       "children": [
@@ -802,13 +870,13 @@
         ],
         "channelLayoutName": "mono",
         "bitsPerSample": 16,
-        "samples": 46080,
-        "duration": 1.044897959,
-        "averageBitrate": 156.94546877758808,
+        "samples": 44100,
+        "duration": 1,
+        "averageBitrate": 163.992,
         "isVbr": false,
         "playbackGroup": 1,
         "verification": {
-          "decoding": "noDecoder",
+          "decoding": "notRequested",
           "decodedSamples": 0,
           "checksums": [
             {
@@ -823,9 +891,49 @@
         },
         "writer": "FFmpeg (Lavf60.16.100)",
         "writerConfidence": "Low",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              543
+            ],
+            "values": [
+              163.992
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              164
+            ]
+          }
+        ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "tta.last-frame-samples-ambiguous",
+        "message": "The codes of the last frame end in its last byte after any of 44099 to 44100 samples, since codes of a bit fit the padding; the analyzer counts 44100, the nearest to what the container's length leaves.",
+        "offset": 543,
+        "length": 20499,
+        "path": [
+          0,
+          1,
+          5,
+          2,
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

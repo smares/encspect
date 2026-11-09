@@ -16,11 +16,13 @@ The inputs are deterministic signals written by flac_signal.py.
 
 The encoder's output depends on its version, so the files are committed and --manifests-only recomputes the manifests from them without the
 encoders. Each manifest is worked out by tta_model.py from the file (written from the TTA authors' format description apart from the analyzer),
-plus the encoder and its settings. crosscheck_tta_fixtures.py confirms them with ffprobe and MediaInfo.
+plus the encoder and its settings, and the samples a decoder must give back (decoded_samples, decoded_pcm_md5: the input's own, never the analyzer's).
+crosscheck_tta_fixtures.py confirms the manifests with ffprobe and MediaInfo, crosscheck_tta_pcm.py the samples with `tta -d` and FFmpeg.
 
     python3 scripts/fixtures/make_external_tta_fixtures.py [--manifests-only] [name ...]
 """
 
+import hashlib
 import json
 import pathlib
 import shutil
@@ -55,6 +57,8 @@ FIXTURES = {
     "16-stereo-one-frame": (("music", 44100, 2, 16, 5000), []),
     "16-silent": (("silent", 44100, 2, 16, 100000), []),
     "16-loud-noise": (("loud", 22050, 2, 16, 50000), []),
+    # Full-scale noise at 24 bits: the Rice parameters grow to near 24 bits, where libtta's bit cache is narrowest (docs/formats/tta.md, "Not covered").
+    "24-stereo-loud-noise": (("loud", 48000, 2, 24, 30000), ["-sample_fmt", "s32"]),
     "16-stereo-tags": (("music", 44100, 2, 16, 50000), ["-metadata", "title=Fixture title", "-metadata", "artist=Fixture artist", "-metadata", "album=Fixture album"]),
     "16-stereo-bitexact": (("music", 44100, 2, 16, 50000), ["-fflags", "+bitexact", "-flags:a", "+bitexact"]),
 }
@@ -128,6 +132,14 @@ def encode_libtta(name, spec, password, program, work):
     return target, {"tool": tool, "arguments": ["-ep", password] if password else ["-e"], "input": describe(spec)}
 
 
+def canonical(spec):
+    """The samples of the input the encoder was given, in the layout of decoded_pcm_md5 (signed, little-endian, as many whole bytes as the depth needs). The
+    8-bit WAVE format is unsigned, and TTA decodes to values around 0."""
+    kind, rate, channels, bits, count = spec
+    data = data_chunk(sig.wav(kind, rate, channels, count, bits))
+    return bytes((b - 128) & 255 for b in data) if bits == 8 else data
+
+
 def ape_footer(data, end):
     """The APEv2 tag that ends data[:end], as (offset, length), or None: its footer is 32 bytes whose size counts the items and the footer, not the header."""
     if end < 32 or data[end - 32:end - 24] != b"APETAGEX":
@@ -147,7 +159,12 @@ def build_manifest(path, encoder, name):
     tag = ape_footer(data, len(data))
     end = tag[0] if tag else len(data)
     tags = [("APE", tag[0], tag[1])] if tag else []
-    result = m.manifest(data, 0, end, tags, {"encoder": encoder})
+    spec = tuple(encoder["input"][key] for key in ("kind", "rate", "channels", "bits", "samples"))
+    pcm = canonical(spec)
+    # What a decoder must give back: the input's samples (lossless), and for the file written with a password, what the analyzer says it cannot decode.
+    decoded = {"decoded_samples": spec[4], "decoded_pcm_md5": hashlib.md5(pcm).hexdigest(),
+               "decode_findings": [{"code": "decode.not-possible"}] if "-ep" in encoder["arguments"] else []}
+    result = m.manifest(data, 0, end, tags, {"encoder": encoder, **decoded})
     result["findings"] += TAG_FINDINGS.get(name, [])
     return result
 

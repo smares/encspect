@@ -47,6 +47,28 @@ internal sealed class State
     // The header's bytes, which a decoder would take as its configuration.
     public MappedBytes? HeaderBytes { get; set; }
 
+    // A container's figures for a track it stores without the header: its format (the sample rate, channels and bit depth) and its length in samples
+    // (the decoder's setup and the last frame's count), or null.
+    public AudioFormat? ContainerFormat { get; set; }
+
+    public long? ContainerSamples { get; set; }
+
+    // A track without the header whose samples its frames give: every frame but the last the frame length, the last what its codes hold.
+    public bool HasTrackSamples => Header is null && Records.TrackFrames > 0;
+
+    // Sets the samples of a track without the header once its last frame is counted. The frames the data cuts short were counted with the frame length as they came.
+    public void SetTrackSamples(long frameLength, long frames, long lastSamples)
+    {
+        Records.TrackFrameLength = frameLength;
+        Records.TrackFrames = frames;
+        Records.TrackLastSamples = lastSamples;
+        bool isLastWhole = Records.Entries.Count == frames && Records.Entries[(int)frames - 1].IsComplete;
+        Samples += isLastWhole ? ((Frames - 1) * frameLength) + lastSamples : Frames * frameLength;
+    }
+
+    // The decoding session, once started.
+    public IDecodeSession? Session { get; set; }
+
     // What the stream states about the audio, from the header or from the container's own figures.
     public long SampleRate { get; set; }
 

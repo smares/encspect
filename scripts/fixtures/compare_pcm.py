@@ -5,7 +5,7 @@
     python3 scripts/fixtures/compare_pcm.py DUMP.pcm.json --reference FILE --reference-format FORMAT --reference-channels N [options]
 
 DUMP.pcm.json is the manifest tests/Encspect.PcmDump writes next to the analyzer's samples (<name>.s<k>.pcm, interleaved, little-endian). The reference is a raw
-file of interleaved little-endian samples (float32, int16, int24 or int32) at the coded stage: its first sample is at --reference-first-position (default 0),
+file of interleaved little-endian samples (float32, int8, int16, int24 or int32) at the coded stage: its first sample is at --reference-first-position (default 0),
 never at a position a trim has moved. Samples are compared where both sides have a position; the positions that only one side has are listed and left out:
 those the analyzer withheld or lost, those a reference drops or conceals (--exclude FIRST:END, end exclusive), and with --skip-full-scale the samples where
 either side reaches full scale and the reference clips (any 16-bit output).
@@ -41,7 +41,7 @@ FIXED_MAX_LSB = 2.0
 FIXED_RMS_LSB = 1.0
 BAND_TOLERANCE_DB = 0.5
 BAND_FLOOR_DB = -100.0
-FORMATS = {"float32": (4, None), "int16": (2, 16), "int24": (3, 24), "int32": (4, 32)}
+FORMATS = {"float32": (4, None), "int8": (1, 8), "int16": (2, 16), "int24": (3, 24), "int32": (4, 32)}
 
 
 class UsageError(Exception):
@@ -62,8 +62,8 @@ def read_reference(path, fmt, channels):
         values.frombytes(data)
         if sys.byteorder == "big":
             values.byteswap()
-    elif fmt in ("int16", "int32"):
-        values = array.array("h" if fmt == "int16" else "i")
+    elif fmt in ("int8", "int16", "int32"):
+        values = array.array({"int8": "b", "int16": "h", "int32": "i"}[fmt])
         values.frombytes(data)
         if sys.byteorder == "big":
             values.byteswap()
@@ -79,7 +79,7 @@ def read_analyzer(manifest_path, stream):
     entry = next((e for e in entries if e["index"] == stream), None) if stream is not None else (entries[0] if entries else None)
     if entry is None:
         raise UsageError(f"{manifest_path} holds no stream {stream if stream is not None else 0}")
-    fmt = {"float32": "float32", "float64": None, "integer": {16: "int16", 24: "int24", 32: "int32"}.get(entry["bitsPerSample"])}[entry["format"]]
+    fmt = {"float32": "float32", "float64": None, "integer": {8: "int8", 16: "int16", 24: "int24", 32: "int32"}.get(entry["bitsPerSample"])}[entry["format"]]
     if fmt is None:
         raise UsageError(f"stream {entry['index']} writes {entry['format']} samples of {entry['bitsPerSample']} bits, which the script does not read")
     channels = entry["channels"]
