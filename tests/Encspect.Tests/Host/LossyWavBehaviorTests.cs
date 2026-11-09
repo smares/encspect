@@ -108,6 +108,9 @@ public class LossyWavBehaviorTests
     [InlineData("measurement/synthetic-lowbits-silence-8ch-16-in-24.flac")]
     [InlineData("measurement/synthetic-lowbits-alaw-b64-44100.flac")]
     [InlineData("measurement/synthetic-lowbits-other-4096.flac")]
+    [InlineData("wavpack/external-silence-16-in-24-merge-blocks.wv")]
+    [InlineData("wavpack/external-ffmpeg-silence-16-in-24.wv")]
+    [InlineData("matroska/external-mkvmerge-wavpack-silence.mka")]
     [InlineData("measurement/synthetic-lowbits-alaw-b512-44100.flac")]
     [InlineData("measurement/synthetic-lowbits-pad-16-in-24.flac")]
     public void FilesThatAreNotLossyWavsAreNotClaimed(string name)
@@ -153,5 +156,17 @@ public class LossyWavBehaviorTests
         Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith("31 changes of the wasted bits between consecutive blocks at the same place of consecutive block sets, at 31 positions, all on a grid of 512 samples", StringComparison.Ordinal));
         Node wasted = Statistic(report)!;
         Assert.Equal(31, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
+    }
+
+    // A WavPack block whose maximum magnitude is 0 is digital silence: no count, listed apart, and no break in the chain (wavpack and ffmpeg's encoder both write it).
+    [Theory]
+    [InlineData("wavpack/external-silence-16-in-24-merge-blocks.wv")]
+    [InlineData("wavpack/external-ffmpeg-silence-16-in-24.wv")]
+    [InlineData("matroska/external-mkvmerge-wavpack-silence.mka")]
+    public void SilentWavPackBlocksAreListedApart(string name)
+    {
+        Node wasted = Statistic(Analyze(name))!;
+        Assert.Contains(wasted.Children, c => c.Name == "Silent");
+        Assert.True(wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value < 20);
     }
 }

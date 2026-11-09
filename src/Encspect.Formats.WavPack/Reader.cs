@@ -200,7 +200,7 @@ internal static class Reader
         {
             if (!header.IsDsd && (status & BlockStatus.HasWv) != 0)
             {
-                s.Wasted.Add(header.IsInitial || !s.SetOpen ? 0 : s.SetBlocks, header.BlockIndex, s.ZeroBitsOfBlock);
+                s.Wasted.Add(header.IsInitial || !s.SetOpen ? 0 : s.SetBlocks, header.BlockIndex, s.ZeroBitsOfBlock, header.MaxMagnitude == 0 && !header.IsFloat && s.ZeroBitsOfBlock == 0);
             }
 
             TrackSet(s, entry, header, offset, block.Length - wrapper);

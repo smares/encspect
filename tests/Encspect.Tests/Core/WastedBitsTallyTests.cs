@@ -41,7 +41,7 @@ public class WastedBitsTallyTests
         LossyWavPattern? pattern = Frames(512, 60, 4, 6, 5, 7).Pattern(44100);
         Assert.NotNull(pattern);
         Assert.Equal((59L, 512), (pattern.Changes, pattern.Grid));
-        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, at 59 positions, all on a grid of 512 samples", pattern.Evidence("subframes", "subframes of a channel"), StringComparison.Ordinal);
+        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, at 59 positions, all on a grid of 512 samples", pattern.Evidence("subframes", "consecutive subframes of a channel"), StringComparison.Ordinal);
     }
 
     [Theory]

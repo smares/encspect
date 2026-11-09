@@ -137,7 +137,7 @@ public sealed class WastedBitsTally
             return null;
         }
 
-        long all = Units + SilentUnits;
+        long all = Units;
         Node node = statistics.Add(cover("Wasted Bits", NodeValue.Integer(all, wording.Plural, wording.Singular), wording.Statistic, topic));
         for (int bits = 0; bits < _distribution.Length; bits++)
         {
@@ -150,7 +150,7 @@ public sealed class WastedBitsTally
 
         if (SilentUnits > 0)
         {
-            node.Add(cover("Silent", $"{Counted(SilentUnits, wording)} ({Share(SilentUnits, all)})", wording.SilentDescription, topic));
+            node.Add(cover("Silent", Counted(SilentUnits, wording), wording.SilentDescription, topic));
         }
 
         node.Add(cover("Changes", NodeValue.Integer(Changes, "changes", "change"), wording.ChangesDescription, topic));
@@ -175,5 +175,5 @@ public sealed record LossyWavPattern(long Changes, long Moments, int Grid, long 
     // between names what a change is between, as the format counts it ("subframes of a channel").
     public string Evidence(string units, string between) =>
         string.Create(CultureInfo.InvariantCulture,
-            $"{Changes} changes of the wasted bits between consecutive {between}, at {Moments} positions, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} above the stream's smallest count");
+            $"{Changes} changes of the wasted bits between {between}, at {Moments} positions, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} that have a count above the smallest");
 }

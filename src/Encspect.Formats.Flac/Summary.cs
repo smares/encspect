@@ -372,7 +372,7 @@ internal static partial class Summary
         };
     }
 
-    private static readonly WastedBitsWording Wording = new("subframe", "subframes", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "subframes of a channel");
+    private static readonly WastedBitsWording Wording = new("subframe", "subframes", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "consecutive subframes of a channel");
 
     private const string ClaimsTopicChannels = "channel-layouts";
 

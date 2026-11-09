@@ -86,6 +86,7 @@ public sealed class WavPackCodecParser : ICodecParser
         private int _listed;
         private int _member;
         private int _blockZeroBits;
+        private bool _blockHasBitstream;
         private readonly WastedBitsTally _wasted = new();
 
         private static ushort VersionOf(CodecContext context) =>
@@ -283,10 +284,10 @@ public sealed class WavPackCodecParser : ICodecParser
             if (isPlausible)
             {
                 CountSubBlocks(rebuilt, header);
-                if (header.HasAudio && !header.IsDsd)
+                if (header.HasAudio && !header.IsDsd && _blockHasBitstream)
                 {
                     // The packet's place in the stream is the samples of the packets before it (the block index a muxer strips is not in the file).
-                    _wasted.Add(_member++, _samples, _blockZeroBits);
+                    _wasted.Add(_member++, _samples, _blockZeroBits, header.MaxMagnitude == 0 && !header.IsFloat && _blockZeroBits == 0);
                 }
 
                 _hasChecksum |= (header.Flags & BlockHeader.HasChecksumFlag) != 0;
@@ -331,12 +332,14 @@ public sealed class WavPackCodecParser : ICodecParser
             byte int32SentBits = 0;
             byte floatFlags = 0;
             _blockZeroBits = 0;
+            _blockHasBitstream = false;
             int position = BlockHeader.Length;
             bool hasExtra = false;
             bool hasMd5 = false;
             while (BlockContents.TryRead(block, position, out SubBlockSpan sub))
             {
                 hasExtra |= sub.Function == SubBlockIds.WvxBitstream;
+                _blockHasBitstream |= sub.Function == SubBlockIds.WvBitstream;
                 _hasNewConfig |= sub.Function == SubBlockIds.NewConfigBlock;
                 ReadOnlySpan<byte> data = block.Slice(sub.DataStart, sub.DataLength);
                 switch (sub.Function)

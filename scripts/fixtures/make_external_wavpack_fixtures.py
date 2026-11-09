@@ -43,6 +43,7 @@ BEXT = sig.chunk(b"bext", bytes(602))
 # name: (input, wavpack arguments, files); an input is (kind, parameters). files lists what the encoder
 # writes: the main file always, and the correction file when it creates one.
 FIXTURES = {
+    "silence-16-in-24-merge-blocks": (("silence-16-in-24", 44100, 2, 46000), ["--blocksize=512", "--merge-blocks"], ["wv"]),
     # The samples lossyWAV 1.4.2 wrote (standard preset, a noise floor at -100 dBFS: tests/fixtures/flac/external-lossyflac-floor-44k.flac) as a WAVE file without
     # the fact chunk, so the file holds no marker: only the counts of zero bits can name lossyWAV. Blocks of whole multiples of 512 samples, as the lossyWAV
     # fixtures with the marker (docs/formats/wavpack.md, "Wasted Bits").
@@ -123,6 +124,8 @@ FIXTURES = {
 
 # name: (input, files); the encoder is ffmpeg with its defaults, which stamps the "encoder" item.
 FFMPEG_FIXTURES = {
+    # ffmpeg's encoder writes 24-bit input as 32-bit samples with 16 zero bits and no INT32_INFO, and a silent block of 52 bytes; blocks of 512 samples.
+    "ffmpeg-silence-16-in-24": (("silence-16-in-24", 44100, 2, 46000), ["wv"]),
     "ffmpeg-apev2-tag": (("wav", 44100, 2, 16, SHORT), ["wv"]),
     "ffmpeg-16-stereo": (("wav", 44100, 2, 16, SHORT), ["wv"]),
     "ffmpeg-24-stereo": (("wav", 44100, 2, 24, SHORT), ["wv"]),
@@ -143,6 +146,22 @@ def make_input(spec, work):
     elif kind == "lossywav":
         rate, channels, bits, count = p
         data = flac_sig.wav("lossywav-floor-44k", rate, channels, count, bits, None, None)
+        name = "in.wav"
+    elif kind == "silence-16-in-24":
+        # 16-bit noise in 24 bits (8 zero bits in every sample) with a passage of digital silence every 3,600 samples: a silent block has a maximum magnitude of 0
+        # and no zero bits, the counts of the others do not change, and no encoder of lossyWAV's output is involved (the negative case of the claim from behavior).
+        rate, channels, count = p
+        state = 99
+        body = bytearray()
+        for i in range(count):
+            silent = i >= 1000 and (i - 1000) % 3600 < 1000
+            for _ in range(channels):
+                state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+                value = 0 if silent else ((((state >> 8) & 0x1FF) - ((state >> 17) & 0x1FF)) << 8)
+                body += value.to_bytes(3, "little", signed=True)
+        fmt = struct.pack("<HHIIHH", 1, channels, rate, rate * channels * 3, channels * 3, 24)
+        chunks = b"fmt " + struct.pack("<I", len(fmt)) + fmt + b"data" + struct.pack("<I", len(body)) + bytes(body)
+        data = b"RIFF" + struct.pack("<I", 4 + len(chunks)) + b"WAVE" + chunks
         name = "in.wav"
     elif kind == "wav-identical":
         # Stereo with the same samples in both channels, which the encoder codes once as a false stereo block.
@@ -206,17 +225,17 @@ def encode_ffmpeg(name, spec, work):
     source = make_input(spec, work)
     target = work / "ffmpeg.wv"
     target.unlink(missing_ok=True)
-    result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(source), "-c:a", "wavpack", str(target)], capture_output=True, text=True)
+    result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(source), "-c:a", "wavpack", *(["-frame_size", "512"] if "silence" in name else []), str(target)], capture_output=True, text=True)
     if result.returncode != 0 or not target.exists():
         raise SystemExit(f"ffmpeg failed for {name}: {result.stderr}")
     shutil.copy(target, OUT / f"external-{name}.wv")
     # "Ubuntu 24.04" is the provenance of the committed files these tools wrote; the cross-check jobs run Ubuntu 26.04 (tool_versions.py).
-    return {"tool": f"{ffmpeg_version()} (ffmpeg package of Ubuntu 24.04)", "arguments": ["-c:a", "wavpack"], "input": describe(spec)}
+    return {"tool": f"{ffmpeg_version()} (ffmpeg package of Ubuntu 24.04)", "arguments": ["-c:a", "wavpack", *(["-frame_size", "512"] if "silence" in name else [])], "input": describe(spec)}
 
 
 def describe(spec):
     kind, *p = spec
-    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "lossywav": ["rate", "channels", "bits", "samples"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
+    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "lossywav": ["rate", "channels", "bits", "samples"], "silence-16-in-24": ["rate", "channels", "samples"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
              "caf": ["rate", "channels", "samples", "bits", "layout_tag"], "dsf": ["rate", "channels", "bytes_per_channel"]}[kind]
     result = {"kind": kind}
     for key, value in zip(names, p):
