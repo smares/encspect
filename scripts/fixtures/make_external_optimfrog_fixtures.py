@@ -173,7 +173,8 @@ def run(command, cwd, timeout=900):
 
 
 def data_of(wav):
-    return wav[wav.index(b"data") + 8:]
+    at = wav.find(b"data")
+    return wav[at + 8:] if at >= 0 else b""
 
 
 def output_extension(tool):
@@ -242,10 +243,10 @@ def encode(package, case, wav, description, work, fixtures):
         record["runs"][label.replace("-", "_")] = {"command": command, **run(command, trial)}
         back = trial / "back.wav"
         if back.exists():
-            body = data_of(back.read_bytes())
+            is_raw = bool(case.get("raw"))
             record.setdefault("decoded", {})[label] = {"size": len(back.read_bytes()), "sha256": sha256(back.read_bytes()),
                                                          "equals_input": back.read_bytes() == wav,
-                                                         "samples_equal_input": body[:len(data_of(wav))] == data_of(wav) if not case.get("raw") else None}
+                                                         "samples_equal_input": None if is_raw else data_of(back.read_bytes())[:len(data_of(wav))] == data_of(wav)}
     return record
 
 
