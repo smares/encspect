@@ -170,7 +170,7 @@ internal static class Summary
             return;
         }
 
-        Node StreamField(string field) => () => Nodes.Object(r, r.StreamInfoObject!).Children.FirstOrDefault(c => c.Name == field) ?? Nodes.Object(r, r.StreamInfoObject!);
+        Func<Node> StreamField(string field) => () => Nodes.Object(r, r.StreamInfoObject!).Children.FirstOrDefault(c => c.Name == field) ?? Nodes.Object(r, r.StreamInfoObject!);
         if (Layout.CodecName(info.Codec) is null)
         {
             int value = info.Codec;

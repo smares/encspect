@@ -146,6 +146,16 @@ public class CorruptOptimFrogFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The TAK fixtures: the files Takc wrote and the hand-built ones.
+public class CorruptTakFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("tak/", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The TTA fixtures written by FFmpeg and libtta-c.
 public class CorruptTtaFileTests
 {

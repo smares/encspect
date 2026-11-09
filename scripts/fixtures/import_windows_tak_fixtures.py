@@ -101,7 +101,7 @@ def main():
     signals = plan["signals"]
     cases = [c for c in encodes["cases"] if c["status"] == "ok"]
     OUT.mkdir(parents=True, exist_ok=True)
-    for stale in OUT.glob("external-*"):
+    for stale in [*OUT.glob("external-*")]:
         stale.unlink()
     groups = {}
     for case in cases:
@@ -149,7 +149,7 @@ def main():
         }
         target.with_name(name + ".provenance.json").write_text(json.dumps(provenance, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         extra = {"encoder": {"tool": SOURCE, "arguments": case["arguments"], "case": case["name"], "mode": case["mode"], "input": case["input"]["name"] if isinstance(case["input"], dict) else case["input"]}}
-        target.with_suffix("").with_suffix(".expected.json").write_text(json.dumps(tak_model.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        target.with_name(name[:-len(".tak")] + ".expected.json").write_text(json.dumps(tak_model.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         written += 1
     skipped = [c["name"] for c in encodes["cases"] if c["status"] != "ok"]
     print(f"Imported {written} files into {OUT}" + (f"; cases without a file: {', '.join(skipped)}" if skipped else ""))
