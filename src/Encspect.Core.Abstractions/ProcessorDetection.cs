@@ -44,11 +44,11 @@ public static class ProcessorDetection
     }
 
     // The claim of the processor role that a pattern in the coded syntax makes (lossyWAV's counts of wasted bits): low confidence, the evidence as the
-    // description. units is the plural of the unit the counts are of ("subframes", "blocks"); source is the node the claim points to.
-    public static EncoderClaim BehaviorClaim(LossyWavPattern pattern, Node source, string units)
+    // description. wording names the unit the counts are of; source is the node the claim points to.
+    public static EncoderClaim BehaviorClaim(LossyWavPattern pattern, Node source, WastedBitsWording wording)
     {
         ArgumentNullException.ThrowIfNull(pattern);
-        return new EncoderClaim("lossyWAV", source, pattern.Evidence(units), ClaimRole.Processor) { Confidence = Confidence.Low, IsBehavior = true };
+        return new EncoderClaim("lossyWAV", source, pattern.Evidence(wording.Plural, wording.Between), ClaimRole.Processor) { Confidence = Confidence.Low, IsBehavior = true };
     }
 
     // Whether the claim names the software name does: the same text, or a claim from behavior, which cannot know a version, for the software

@@ -176,7 +176,7 @@ public class TrueHdFixtureTests
             string where = $"{name}, the restart header of substream {k} in unit {unit}";
             Node? substream = Substream(entries[unit], k);
             Assert.NotNull(substream);
-            // Past the units the tree details block by block (the fixture of lossyWAV's output has 1,106), the restart header is a child of the substream.
+            // Only the first 512 units keep their bytes and are walked block by block (docs/formats/truehd.md); in a later unit (the fixture of lossyWAV's output has 1,106) the restart header is a direct child of the substream.
             Node header = (substream.Children.FirstOrDefault(c => c.Name == "Block 0") ?? substream).Children.Single(c => c.Name == "Restart Header");
             Assert.True(restart.GetProperty("crc_ok").GetBoolean() == Boolean(header.Children.Single(c => c.Name == "CRC"), "IsValid"), $"{where}: the CRC verdict differs");
             Assert.Equal(restart.GetProperty("lossless").GetInt32(), (int)header.Children.Single(c => c.Name == "Lossless Check").Value!.AsUnsigned()!.Value);

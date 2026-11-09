@@ -15,10 +15,17 @@ public sealed class WastedBitsTally
     private long _firstChange;
     private long _gridOfChanges;
     private bool _hasChange;
+    private long _lastMoment;
     private bool _hasUnit;
 
-    // The units counted, and those with a count above zero.
+    // The units that have a count, and those with a count above zero. A unit whose samples are all zero has none (SilentUnits).
     public long Units { get; private set; }
+
+    // The units of digital silence: they say nothing of the audio around them, so they are listed apart and a channel's previous count stays.
+    public long SilentUnits { get; private set; }
+
+    // The distinct positions at which some channel changes: the gate counts these, so that one passage in many channels is not many.
+    public long Moments { get; private set; }
 
     public long UnitsWithWastedBits => Units - _distribution[0];
 
@@ -28,9 +35,15 @@ public sealed class WastedBitsTally
     public long CountOf(int bits) => (uint)bits < _distribution.Length ? _distribution[bits] : 0;
 
     // Counts one unit of a channel that starts at position (in samples) and states bits wasted bits. Units of the several channels of one frame or
-    // block set share their position; positions are those of the stream, in samples.
-    public void Add(int channel, long position, int bits)
+    // block set share their position; positions are those of the stream, in samples, and units come in stream order (all channels of a position together).
+    public void Add(int channel, long position, int bits, bool isSilent = false)
     {
+        if (isSilent)
+        {
+            SilentUnits++;
+            return;
+        }
+
         bits = Math.Clamp(bits, 0, _distribution.Length - 1);
         if (!_hasUnit)
         {
@@ -53,6 +66,12 @@ public sealed class WastedBitsTally
         if (previous >= 0 && previous != bits)
         {
             Changes++;
+            if (Moments == 0 || position != _lastMoment)
+            {
+                Moments++;
+                _lastMoment = position;
+            }
+
             if (!_hasChange)
             {
                 _hasChange = true;
@@ -85,16 +104,16 @@ public sealed class WastedBitsTally
         _ => 0,
     };
 
-    // The smallest number of changes that can make the pattern; a convention of this analysis, set from the fixtures (design: From behavior).
+    // The smallest number of moments (positions with a change) that can make the pattern; a convention of this analysis, set from the fixtures (design: From behavior).
     public const int MinimumChanges = 20;
 
-    // The pattern lossyWAV's output shows in the coded counts, or null where the stream lacks it: a tested rate, at least 20 changes, the greatest common
+    // The pattern lossyWAV's output shows in the coded counts, or null where the stream lacks it: a tested rate, at least 20 moments, the greatest common
     // divisor of the distances between the changes' positions equal to lossyWAV's block at that rate (so every change lies on its grid, and not all on a
     // coarser one, as a tool with longer blocks would put them), and more than half of the units above the stream's smallest count.
     public LossyWavPattern? Pattern(int sampleRate)
     {
         int block = LossyWavBlock(sampleRate);
-        if (block == 0 || Changes < MinimumChanges || _gridOfChanges != block)
+        if (block == 0 || Moments < MinimumChanges || _gridOfChanges != block)
         {
             return null;
         }
@@ -106,7 +125,7 @@ public sealed class WastedBitsTally
         }
 
         long above = Units - _distribution[smallest];
-        return above * 2 > Units ? new LossyWavPattern(Changes, block, above, Units) : null;
+        return above * 2 > Units ? new LossyWavPattern(Changes, Moments, block, above, Units) : null;
     }
 
     // The statistic: the node with an entry for each count that occurred and the changes, or null where no unit has a wasted bit (a stream without
@@ -118,14 +137,20 @@ public sealed class WastedBitsTally
             return null;
         }
 
-        Node node = statistics.Add(cover("Wasted Bits", NodeValue.Integer(Units, wording.Plural, wording.Singular), wording.Statistic, topic));
+        long all = Units + SilentUnits;
+        Node node = statistics.Add(cover("Wasted Bits", NodeValue.Integer(all, wording.Plural, wording.Singular), wording.Statistic, topic));
         for (int bits = 0; bits < _distribution.Length; bits++)
         {
             long count = _distribution[bits];
             if (count > 0)
             {
-                node.Add(cover($"{bits} {(bits == 1 ? "Bit" : "Bits")}", $"{Counted(count, wording)} ({Share(count, Units)})", wording.Count, topic));
+                node.Add(cover($"{bits} {(bits == 1 ? "Bit" : "Bits")}", $"{Counted(count, wording)} ({Share(count, all)})", wording.Count, topic));
             }
+        }
+
+        if (SilentUnits > 0)
+        {
+            node.Add(cover("Silent", $"{Counted(SilentUnits, wording)} ({Share(SilentUnits, all)})", wording.SilentDescription, topic));
         }
 
         node.Add(cover("Changes", NodeValue.Integer(Changes, "changes", "change"), wording.ChangesDescription, topic));
@@ -141,13 +166,14 @@ public sealed class WastedBitsTally
 }
 
 // The unit a format counts wasted bits in and the descriptions its parser gives the statistic's nodes, which are constants of the format.
-public sealed record WastedBitsWording(string Singular, string Plural, string Statistic, string Count, string ChangesDescription);
+public sealed record WastedBitsWording(string Singular, string Plural, string Statistic, string Count, string ChangesDescription, string SilentDescription, string Between);
 
-// What the counts show of lossyWAV's pattern: the changes, the grid's length in samples that their positions share, and the units above the stream's
-// smallest count.
-public sealed record LossyWavPattern(long Changes, int Grid, long Above, long Units)
+// What the counts show of lossyWAV's pattern: the changes and the positions they fall at, the grid's length in samples that those share, and the units
+// above the stream's smallest count.
+public sealed record LossyWavPattern(long Changes, long Moments, int Grid, long Above, long Units)
 {
-    public string Evidence(string units) =>
+    // between names what a change is between, as the format counts it ("subframes of a channel").
+    public string Evidence(string units, string between) =>
         string.Create(CultureInfo.InvariantCulture,
-            $"{Changes} changes of the wasted bits between consecutive {units} of a channel, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} above the stream's smallest count");
+            $"{Changes} changes of the wasted bits between consecutive {between}, at {Moments} positions, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} above the stream's smallest count");
 }

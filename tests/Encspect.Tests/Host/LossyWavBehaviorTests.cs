@@ -85,7 +85,7 @@ public class LossyWavBehaviorTests
         Node[] nodes = Walk(report.Root).ToArray();
         Node wasted = Statistic(report)!;
         Assert.Equal(changes, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
-        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks of a channel, all on a grid of 512 samples", StringComparison.Ordinal));
+        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith($"{changes} {Pattern} blocks at the same place of consecutive block sets, at {changes} positions, all on a grid of 512 samples", StringComparison.Ordinal));
         Assert.Equal("lossyWAV 1.4.2", Assert.Single(report.Streams).Processor);
     }
 
@@ -104,6 +104,10 @@ public class LossyWavBehaviorTests
     [InlineData("flac/external-16-stereo-l5.flac")]
     [InlineData("flac/external-24-stereo.flac")]
     [InlineData("flac/external-96000-stereo.flac")]
+    [InlineData("measurement/synthetic-lowbits-silence-16-in-24.flac")]
+    [InlineData("measurement/synthetic-lowbits-silence-8ch-16-in-24.flac")]
+    [InlineData("measurement/synthetic-lowbits-alaw-b64-44100.flac")]
+    [InlineData("measurement/synthetic-lowbits-other-4096.flac")]
     [InlineData("measurement/synthetic-lowbits-alaw-b512-44100.flac")]
     [InlineData("measurement/synthetic-lowbits-pad-16-in-24.flac")]
     public void FilesThatAreNotLossyWavsAreNotClaimed(string name)
@@ -121,5 +125,33 @@ public class LossyWavBehaviorTests
         Assert.NotNull(changes);
         Assert.True(changes.Value!.AsInteger()!.Value <= 3);
         Assert.Null(Assert.Single(report.Streams).Processor);
+    }
+
+    // Digital silence has no count: a passage in audio with a constant count of wasted bits is no change, and the gate counts positions, not channels.
+    [Theory]
+    [InlineData("measurement/synthetic-lowbits-silence-16-in-24.flac", 18)]
+    [InlineData("measurement/synthetic-lowbits-silence-8ch-16-in-24.flac", 32)]
+    public void SilentSubframesAreListedApartAndBreakNoChain(string name, int silent)
+    {
+        Report report = Analyze(name);
+        Node wasted = Statistic(report)!;
+        Assert.Equal(0, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
+        Assert.StartsWith($"{silent} subframes", wasted.Children.Single(c => c.Name == "Silent").Value!.ToString(), StringComparison.Ordinal);
+    }
+
+    // The counts alone, with no marker: WavPack blocks of lossyWAV's output with the fact chunk absent, and the same file in Matroska, whose packets keep the
+    // blocks' counts but not their positions (the position is the samples of the packets before).
+    [Theory]
+    [InlineData("wavpack/external-lossywav-floor-44k-merge-blocks.wv")]
+    [InlineData("matroska/external-mkvmerge-wavpack-lossywav.mka")]
+    public void WavPackBlocksNameLossyWavFromTheirCountsAlone(string name)
+    {
+        Report report = Analyze(name);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(("lossyWAV", Confidence.Low), (stream.Processor, stream.ProcessorConfidence));
+        Node[] nodes = Walk(report.Root).ToArray();
+        Assert.Contains(nodes, n => n.Name == "Evidence" && n.Value?.ToString() is { } text && text.StartsWith("31 changes of the wasted bits between consecutive blocks at the same place of consecutive block sets, at 31 positions, all on a grid of 512 samples", StringComparison.Ordinal));
+        Node wasted = Statistic(report)!;
+        Assert.Equal(31, wasted.Children.Single(c => c.Name == "Changes").Value!.AsInteger()!.Value);
     }
 }

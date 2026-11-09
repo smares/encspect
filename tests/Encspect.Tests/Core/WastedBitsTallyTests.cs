@@ -41,7 +41,7 @@ public class WastedBitsTallyTests
         LossyWavPattern? pattern = Frames(512, 60, 4, 6, 5, 7).Pattern(44100);
         Assert.NotNull(pattern);
         Assert.Equal((59L, 512), (pattern.Changes, pattern.Grid));
-        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, all on a grid of 512 samples", pattern.Evidence("subframes"), StringComparison.Ordinal);
+        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, at 59 positions, all on a grid of 512 samples", pattern.Evidence("subframes", "subframes of a channel"), StringComparison.Ordinal);
     }
 
     [Theory]
@@ -120,7 +120,7 @@ public class WastedBitsTallyTests
     {
         var statistics = new Node("Statistics", 0, 10);
         Node Cover(string name, NodeValue? value, string description, string? topic) => new(name, 0, 10, value) { Description = description, Topic = topic };
-        var wording = new WastedBitsWording("block", "blocks", "d", "d", "d");
+        var wording = new WastedBitsWording("block", "blocks", "d", "d", "d", "d", "blocks");
         Assert.Null(Frames(512, 5, 0, 0).AddTo(statistics, Cover, wording, null));
         Assert.Empty(statistics.Children);
 
@@ -128,5 +128,74 @@ public class WastedBitsTallyTests
         Assert.Equal("4 blocks", node.Value!.ToString());
         Assert.Equal(["0 Bits", "1 Bit", "3 Bits", "Changes"], node.Children.Select(c => c.Name));
         Assert.Equal(["1 block (25.0%)", "2 blocks (50.0%)", "1 block (25.0%)", "2 changes"], node.Children.Select(c => c.Value!.ToString()));
+    }
+
+    [Theory]
+    [InlineData(22050, 256)]
+    [InlineData(32000, 256)]
+    [InlineData(44100, 512)]
+    [InlineData(48000, 512)]
+    [InlineData(88200, 1024)]
+    [InlineData(96000, 1024)]
+    [InlineData(176400, 2048)]
+    [InlineData(192000, 2048)]
+    public void EveryTestedRateHasItsBlock(int rate, int block)
+    {
+        Assert.Equal(block, WastedBitsTally.LossyWavBlock(rate));
+        LossyWavPattern? pattern = Frames(block, 60, 4, 6, 5, 7).Pattern(rate);
+        Assert.NotNull(pattern);
+        Assert.Equal(block, pattern.Grid);
+        // The same counts at another rate's block read as a different grid and make no claim.
+        Assert.Null(Frames(block * 2, 60, 4, 6, 5, 7).Pattern(rate));
+    }
+
+    [Theory]
+    [InlineData(8000)]
+    [InlineData(11025)]
+    [InlineData(24000)]
+    [InlineData(384000)]
+    public void OtherRatesHaveNoBlock(int rate) => Assert.Equal(0, WastedBitsTally.LossyWavBlock(rate));
+
+    [Fact]
+    public void TheGateCountsPositionsAndNotTheChangesOfManyChannels()
+    {
+        // 25 channels that change at the same two positions: 50 changes, 2 moments. Units come in stream order, all channels of a position together.
+        var tally = new WastedBitsTally();
+        int[] counts = [4, 6, 4];
+        for (int step = 0; step < counts.Length; step++)
+        {
+            for (int channel = 0; channel < 25; channel++)
+            {
+                tally.Add(channel, step * 512L, counts[step]);
+            }
+        }
+
+        Assert.Equal((50L, 2L), (tally.Changes, tally.Moments));
+        Assert.Null(tally.Pattern(44100));
+    }
+
+    [Fact]
+    public void ASilentUnitHasNoCountAndKeepsTheChannelsPreviousOne()
+    {
+        var tally = new WastedBitsTally();
+        tally.Add(0, 0, 8);
+        tally.Add(0, 512, 0, isSilent: true);
+        tally.Add(0, 1024, 8);
+        tally.Add(0, 1536, 0, isSilent: true);
+        tally.Add(0, 2048, 9);
+        Assert.Equal((3L, 2L, 1L, 1L), (tally.Units, tally.SilentUnits, tally.Changes, tally.Moments));
+        Assert.Equal(0L, tally.CountOf(0));
+    }
+
+    [Fact]
+    public void ChannelsPastTheTrackedOnesAreOnlyInTheDistribution()
+    {
+        var tally = new WastedBitsTally();
+        for (int i = 0; i < 4; i++)
+        {
+            tally.Add(WastedBitsTally.MaxChannels + 6, i * 512L, 4 + i);
+        }
+
+        Assert.Equal((4L, 0L), (tally.Units, tally.Changes));
     }
 }

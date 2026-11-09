@@ -42,7 +42,7 @@ internal static partial class Summary
 
         if (s.Blocks > 0 && Reader.NativeRate(s) is > 0 and <= int.MaxValue && s.Wasted.Pattern((int)Reader.NativeRate(s)) is { } pattern)
         {
-            context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, "blocks"));
+            context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, Wording));
         }
 
         Node? processor = s.Blocks > 0 ? ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name))) : null;
@@ -385,7 +385,7 @@ internal static partial class Summary
         };
     }
 
-    private static readonly WastedBitsWording Wording = new("block", "blocks", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges);
+    internal static readonly WastedBitsWording Wording = new("block", "blocks", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "blocks at the same place of consecutive block sets");
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
 }

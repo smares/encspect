@@ -379,7 +379,7 @@ internal sealed class State
         int detail = -1;
         if (isWalked)
         {
-            Count(facts[..header.Channels], Samples - header.BlockSize);
+            Count(facts[..header.Channels], first);
             ReportResidualLimits(facts[..header.Channels], offset, index);
             if (index < MaxDetailedFrames && Records.Details.Count < MaxDetailedFrames)
             {
@@ -524,7 +524,7 @@ internal sealed class State
         int channel = 0;
         foreach (ref readonly SubframeFacts f in facts)
         {
-            Wasted.Add(channel++, position, f.WastedBits);
+            Wasted.Add(channel++, position, f.WastedBits, f.Type == SubframeType.Constant && f.Constant == 0);
             Subframes++;
             SubframeTypes[(int)f.Type]++;
             if (f.WastedBits > 0)

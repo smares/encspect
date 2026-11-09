@@ -499,6 +499,30 @@ def add_lowbits():
     tiled = [[expand(codes[i % len(codes)]) for i in range(rate)]]
     add("lowbits-alaw-b512-44100", "The A-law fixture expanded to 16 bits, repeated to one second, labeled 44.1 kHz and coded in frames of 512 samples with wasted bits: the counts follow the level, not a block grid, so the behavior claim must not name lossyWAV.",
         tiled, rate, 16, dict(unspecified, levels=spans_built(tiled, rate, 16)), block=512, wasted=True)
+    # Frames of 64 samples put 20 or more changes on a grid of 64, so this file reaches the rule's test of the grid (the frames of 512 above have none).
+    add("lowbits-alaw-b64-44100", "The same audio coded in frames of 64 samples with wasted bits: its changes lie on a grid of 64, not lossyWAV's 512, so the behavior claim must not name lossyWAV.",
+        tiled, rate, 16, dict(unspecified, levels=spans_built(tiled, rate, 16)), block=64, wasted=True)
+
+    # 16-bit audio in 24 bits (8 wasted bits everywhere) with passages of digital silence: libFLAC states 0 wasted bits for a silent subframe, so without the
+    # rule that a silent unit has no count every passage reads as two changes of every channel on frame boundaries.
+    own = Lcg(77)
+
+    def noise(count, channels, passages, scale):
+        quiet = [[0] * count for _ in range(channels)]
+        for c in range(channels):
+            for i in range(count):
+                quiet[c][i] = (int(own.uniform() * scale) - int(own.uniform() * scale)) << 8
+        for start, length in passages:
+            for c in range(channels):
+                quiet[c][start:start + length] = [0] * length
+        return quiet
+
+    stereo = noise(rate, 2, [(1000 + 3600 * k, 1000) for k in range(10)], 400)
+    add("lowbits-silence-16-in-24", "16-bit noise in 24 bits (8 wasted bits) with ten passages of digital silence, coded in frames of 512 with wasted bits: a silent subframe states 0, and has no count in the rule.",
+        stereo, rate, 24, dict(unspecified, levels=spans_built(stereo, rate, 24)), block=512, wasted=True)
+    many = noise(12000, 8, [(2500, 1500), (7000, 1500)], 300)
+    add("lowbits-silence-8ch-16-in-24", "The same in eight channels at 48 kHz with two passages: many channels change at few positions, which the gate of 20 counts as few.",
+        many, 48000, 24, dict(unspecified, levels=spans_built(many, 48000, 24)), block=512, wasted=True)
     gain = 0.9440608762859234
     build("lossywav-gain", "The output of lossyWAV after a gain of -0.5 dB, rounded: the pattern is gone.", [[math.floor(v * gain + 0.5) for v in c] for c in lossy], 24)
     build("lossywav-dither", "The output of lossyWAV (the 24-bit noise-floor fixture) with TPDF dither of one least significant bit: the zeroed bits are gone.",

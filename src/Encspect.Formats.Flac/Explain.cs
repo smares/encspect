@@ -189,9 +189,10 @@ internal static class Explain
     public const string StatAverageOrder = "The average order of the linear predictors.";
     public const string StatHighestOrder = "The highest order of any linear predictor.";
     public const string StatPrecision = "The range of bits per predictor coefficient among the linear predictors.";
-    public const string StatWastedBits = "The number of subframes with each count of wasted bits, and the changes: the subframes whose count differs from the count of the same channel's previous frame. Subframes are counted as coded, so a side channel is counted as the side channel and not as the left or right channel it was made from (the side channel has at least the smaller count of the two, a mid channel one bit fewer).";
+    public const string StatWastedBits = "The number of subframes with each count of wasted bits, and the changes: the subframes whose count differs from the count of the same channel's previous subframe that has one. Subframes are counted as coded, so a side channel is counted as the side channel and not as the left or right channel it was made from (the side channel has at least the smaller count of the two, a mid channel one bit fewer).";
     public const string StatWastedBitsCount = "How many subframes state this count of wasted bits, and their share of all subframes.";
-    public const string StatWastedBitsChanges = "The subframes whose count of wasted bits differs from the count of the same channel's previous frame.";
+    public const string StatWastedBitsSilent = "The subframes of digital silence (a constant subframe of 0), which state no count of wasted bits that says anything about the audio around them; they are left out of the other entries and of the changes.";
+    public const string StatWastedBitsChanges = "The subframes whose count of wasted bits differs from the count of the same channel's previous subframe that has one.";
     public const string StatWasted = "The subframes whose samples all have low bits that are zero.";
     public const string StatPartitionOrders = "How many residuals use each partition order.";
     public const string StatPartitionOrder = "The residuals that use this partition order.";

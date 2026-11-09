@@ -84,6 +84,9 @@ public sealed class WavPackCodecParser : ICodecParser
         private int _rate;
         private bool _isLossy;
         private int _listed;
+        private int _member;
+        private int _blockZeroBits;
+        private readonly WastedBitsTally _wasted = new();
 
         private static ushort VersionOf(CodecContext context) =>
             context.Configuration is { Data.Length: >= 2 } configuration ? BinaryPrimitives.ReadUInt16LittleEndian(configuration.Data.Span) : AssumedVersion;
@@ -98,6 +101,7 @@ public sealed class WavPackCodecParser : ICodecParser
             _isPacketLost = packet.IsCut;
             _isPacketCut = packet.IsCut;
             _setStereo.Clear();
+            _member = 0;
             ReadOnlySpan<byte> data = packet.Span;
             Node? node = _listed < MaxListedPackets ? NewPacketNode(packet, index) : null;
             if (data.Length < 12)
@@ -279,6 +283,12 @@ public sealed class WavPackCodecParser : ICodecParser
             if (isPlausible)
             {
                 CountSubBlocks(rebuilt, header);
+                if (header.HasAudio && !header.IsDsd)
+                {
+                    // The packet's place in the stream is the samples of the packets before it (the block index a muxer strips is not in the file).
+                    _wasted.Add(_member++, _samples, _blockZeroBits);
+                }
+
                 _hasChecksum |= (header.Flags & BlockHeader.HasChecksumFlag) != 0;
                 if (!header.IsMono && _setStereo.Count < State.MaxSetBlocks)
                 {
@@ -320,6 +330,7 @@ public sealed class WavPackCodecParser : ICodecParser
         {
             byte int32SentBits = 0;
             byte floatFlags = 0;
+            _blockZeroBits = 0;
             int position = BlockHeader.Length;
             bool hasExtra = false;
             bool hasMd5 = false;
@@ -344,6 +355,7 @@ public sealed class WavPackCodecParser : ICodecParser
                         break;
                     case SubBlockIds.Int32Info when data.Length == 4:
                         int32SentBits = data[0];
+                        _blockZeroBits = data[1];
                         break;
                     case SubBlockIds.FloatInfo when data.Length == 4:
                         floatFlags = data[0];
@@ -534,6 +546,11 @@ public sealed class WavPackCodecParser : ICodecParser
                 statistics.Add(Stat("Decorrelation Passes", _termsMinimum == _termsMaximum ? NodeValue.Integer(_termsMinimum, "passes", "pass") : $"{_termsMinimum} to {_termsMaximum} passes", Explain.StatPasses, Topics.Decorrelation));
             }
 
+            if (!first.IsDsd)
+            {
+                _wasted.AddTo(statistics, (name, value, description, topic) => Stat(name, value ?? NodeValue.Text(string.Empty), description, topic), Summary.Wording, Topics.WastedBits);
+            }
+
             Node? stereoNode = first.IsDsd ? null : _stereo.AddTo(statistics, (name, value, description, topic) => Stat(name, value ?? NodeValue.Text(string.Empty), description, topic),
                 Explain.StatStereoCoding, Topics.MidSideStereo, "Stereo Block", "Stereo Blocks");
             Node? average = null;
@@ -552,6 +569,17 @@ public sealed class WavPackCodecParser : ICodecParser
                 ? $"The blocks hold {(_hasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
                 : $"The stream version is 0x{_version:X3} and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well", Explain.Evidence));
             context.Parent.Add(encoder);
+            Node? processor = null;
+            if (!first.IsDsd && _rate > 0 && _wasted.Pattern(_rate) is { } pattern)
+            {
+                context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, context.Parent, Summary.Wording));
+                processor = ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Stat(name, value ?? NodeValue.Text(string.Empty), description, ClaimRoles.TopicOf(name)));
+                if (processor is not null)
+                {
+                    context.Parent.Add(processor);
+                }
+            }
+
             context.Parent.Add(statistics);
             List<Series> series = _figures?.Series(average, context.CancellationToken) ?? [];
             context.AddStream(new StreamInfo
@@ -569,6 +597,8 @@ public sealed class WavPackCodecParser : ICodecParser
                 IsVbr = _figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
                 Encoder = encoderName,
                 EncoderConfidence = isFive ? Confidence.Medium : Confidence.Low,
+                Processor = ClaimRoles.Resolved(processor).Name,
+                ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
                 Series = series,
                 CategorySeries = stereoNode is not null && series.Count > 0 && _stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
                 Verification = verification,

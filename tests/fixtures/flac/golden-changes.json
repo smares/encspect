@@ -387,6 +387,18 @@
     {
       "scope": "node",
       "parent": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits"
+      ],
+      "name": "Silent",
+      "goldens": [
+        "tests/fixtures/flac/external-32-opposed.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
         "Ogg",
         "Logical Stream",
         "Statistics"

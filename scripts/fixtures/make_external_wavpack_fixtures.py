@@ -29,6 +29,7 @@ import subprocess
 import sys
 import tempfile
 
+import flac_signal as flac_sig
 import wavpack_model as m
 import wavpack_signal as sig
 
@@ -42,6 +43,10 @@ BEXT = sig.chunk(b"bext", bytes(602))
 # name: (input, wavpack arguments, files); an input is (kind, parameters). files lists what the encoder
 # writes: the main file always, and the correction file when it creates one.
 FIXTURES = {
+    # The samples lossyWAV 1.4.2 wrote (standard preset, a noise floor at -100 dBFS: tests/fixtures/flac/external-lossyflac-floor-44k.flac) as a WAVE file without
+    # the fact chunk, so the file holds no marker: only the counts of zero bits can name lossyWAV. Blocks of whole multiples of 512 samples, as the lossyWAV
+    # fixtures with the marker (docs/formats/wavpack.md, "Wasted Bits").
+    "lossywav-floor-44k-merge-blocks": (("lossywav", 44100, 2, 24, 44223), ["--blocksize=512", "--merge-blocks"], ["wv"]),
     "lossless-16-stereo": (("wav", 44100, 2, 16, SHORT), [], ["wv"]),
     "lossless-16-stereo-blocks": (("wav", 44100, 2, 16, SHORT), ["--blocksize=2048"], ["wv"]),
     "lossless-16-stereo-small-blocks": (("wav", 44100, 2, 16, SHORT), ["--blocksize=1000"], ["wv"]),
@@ -135,6 +140,10 @@ def make_input(spec, work):
         before, after = (rest[1], rest[2]) if len(rest) > 2 else (b"", b"")
         data = sig.wav(rate, channels, count, bits, mask, False, before, after)
         name = "in.wav"
+    elif kind == "lossywav":
+        rate, channels, bits, count = p
+        data = flac_sig.wav("lossywav-floor-44k", rate, channels, count, bits, None, None)
+        name = "in.wav"
     elif kind == "wav-identical":
         # Stereo with the same samples in both channels, which the encoder codes once as a false stereo block.
         rate, bits, count = p
@@ -207,7 +216,7 @@ def encode_ffmpeg(name, spec, work):
 
 def describe(spec):
     kind, *p = spec
-    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
+    names = {"wav": ["rate", "channels", "bits", "samples", "channel_mask"], "lossywav": ["rate", "channels", "bits", "samples"], "wav-identical": ["rate", "bits", "samples"], "wav-extremes": ["rate", "channels", "bits", "samples"], "float": ["rate", "channels", "samples"], "aiff": ["rate", "channels", "samples", "bits"],
              "caf": ["rate", "channels", "samples", "bits", "layout_tag"], "dsf": ["rate", "channels", "bytes_per_channel"]}[kind]
     result = {"kind": kind}
     for key, value in zip(names, p):

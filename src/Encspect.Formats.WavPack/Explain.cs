@@ -305,6 +305,7 @@ internal static class Explain
     public const string StatMidSide = "The stereo blocks coded as mid and side instead of left and right.";
     public const string StatWastedBits = "The number of blocks with each count of zero bits (the count FLAC calls wasted bits: the low bits that are zero in every sample of the unit), and the changes: the blocks whose count differs from the count of the block at the same place in the previous block set. A block's count is for all its channels, the smallest of theirs.";
     public const string StatWastedBitsCount = "How many blocks state this count of zero bits, and their share of all audio blocks.";
+    public const string StatWastedBitsSilent = "Blocks of digital silence, left out of the other entries. WavPack marks none, so this entry is never listed; it is part of the statistic every format shares.";
     public const string StatWastedBitsChanges = "The blocks whose count of zero bits differs from the count of the block at the same place in the previous block set.";
     public const string StatChecksums = "The blocks whose checksum sub-block equals the checksum worked out over the block's bytes.";
     public const string StatChecksumsFailed = "The blocks whose checksum differs from the one worked out, or that say they have one and hold none.";

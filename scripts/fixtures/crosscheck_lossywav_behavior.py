@@ -5,8 +5,7 @@ holds the analyzer's counts of wasted bits to flac's.
     crosscheck_lossywav_behavior.py [--encspect CMD] [--keep DIR]
 
 Needs flac. Takes every FLAC fixture in tests/fixtures/flac and tests/fixtures/measurement that `flac -d` decodes and that is not lossyWAV's output
-(the files named *lossyflac* and *lossywav*), codes it again with `flac -5 -b 512` (the frames of a lossyFLAC file) at its own sample rate, and again
-at 44.1 kHz where the rate is not one of lossyWAV's tested rates (so that the rule is applied to every file), and runs the analyzer on both. Each file must show:
+(the files named *lossyflac* and *lossywav*), codes it again with `flac -5` in frames of its rate's lossyWAV block (the coding that can show the pattern) and in frames of 512, at its own sample rate, and again at 44.1 kHz where the rate is not one of lossyWAV's tested rates (so that the rule is applied to every file), and runs the analyzer on each. Each file must show:
 
 - no Processor node and no processor in the stream: the claim from behavior does not name lossyWAV;
 - at most 3 changes of wasted bits (the Changes entry of Wasted Bits), except in the simulated tools of synthetic-lowbits-other-*, which have theirs by construction;
@@ -28,6 +27,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
 DEFAULT_ENCSPECT = "dotnet " + str(ROOT / "src" / "Encspect.Cli" / "bin" / "Release" / "net10.0" / "encspect.dll")
+BLOCKS = {22050: 256, 32000: 256, 44100: 512, 48000: 512, 88200: 1024, 96000: 1024, 176400: 2048, 192000: 2048}
 TESTED = {22050, 32000, 44100, 48000, 88200, 96000, 176400, 192000}
 
 
@@ -62,6 +62,10 @@ def flac_changes(path):
                 if line.startswith("frame="):
                     channel = 0
                 elif line.startswith("\tsubframe=") and "wasted_bits=" in line:
+                    # A constant subframe of 0 is digital silence: it has no count and leaves the channel's previous one.
+                    if "type=CONSTANT" in line and "value=0" in line.split("type=CONSTANT")[1].split():
+                        channel += 1
+                        continue
                     wasted = int(line.split("wasted_bits=")[1].split()[0])
                     units += 1
                     if channel in last and last[channel] != wasted:
@@ -71,7 +75,7 @@ def flac_changes(path):
         return changes, units
 
 
-def recode(source, work, rate):
+def recode(source, work, rate, block):
     wav = work / "in.wav"
     if subprocess.run(["flac", "-d", "-s", "-f", "-o", str(wav), str(source)], capture_output=True).returncode != 0:
         return None
@@ -82,7 +86,7 @@ def recode(source, work, rate):
         data[at + 4:at + 8] = rate.to_bytes(4, "little")
         wav.write_bytes(data)
     out = work / "out.flac"
-    result = subprocess.run(["flac", "-s", "-f", "-5", "-b", "512", "--lax", "-o", str(out), str(wav)], capture_output=True)
+    result = subprocess.run(["flac", "-s", "-f", "-5", "-b", str(block), "--lax", "-o", str(out), str(wav)], capture_output=True)
     return out if result.returncode == 0 and out.exists() else None
 
 
@@ -96,28 +100,32 @@ def main():
     for source in sources:
         with tempfile.TemporaryDirectory() as directory:
             work = pathlib.Path(directory)
-            for variant in (None, 44100):
-                if variant is not None and rate_of(source) in TESTED:
-                    continue
-                coded = recode(source, work, variant)
-                if coded is None:
-                    break
-                files += variant is None
-                runs += 1
-                found = analyze(arguments.encspect, coded)
-                expected, _ = flac_changes(coded)
-                label = f"{source.name} at {variant or 'its own rate'}"
-                if found["node"] or any(found["processor"]) or found["evidence"]:
-                    problems.append(f"{label}: claimed as {found['processor']}")
-                # A simulated tool that zeroes bits per block has its changes by construction; it must still not be named.
-                if found["changes"] > 3 and not source.name.startswith("synthetic-lowbits-other-"):
-                    problems.append(f"{label}: {found['changes']} changes of wasted bits")
-                if found["changes"] != expected:
-                    problems.append(f"{label}: {found['changes']} changes, but flac lists {expected}")
-                most = max(most, found["changes"])
-                if arguments.keep:
-                    pathlib.Path(arguments.keep).mkdir(parents=True, exist_ok=True)
-                    (pathlib.Path(arguments.keep) / f"{source.stem}-{variant or 'own'}.flac").write_bytes(coded.read_bytes())
+            own = rate_of(source)
+            before = runs
+            # Each file in frames of its rate's lossyWAV block (the coding that can show the pattern) and in frames of 512, at its own rate and, where that
+            # is not one lossyWAV was tested at, labeled 44.1 kHz so that the rule is applied to every file.
+            for variant in (None,) if own in TESTED else (None, 44100):
+                effective = variant or own
+                for block in sorted({BLOCKS.get(effective, 512), 512}):
+                    coded = recode(source, work, variant, block)
+                    if coded is None:
+                        break
+                    runs += 1
+                    found = analyze(arguments.encspect, coded)
+                    expected, _ = flac_changes(coded)
+                    label = f"{source.name} at {variant or 'its own rate'} in frames of {block}"
+                    if found["node"] or any(found["processor"]) or found["evidence"]:
+                        problems.append(f"{label}: claimed as {found['processor']}")
+                    # A simulated tool that zeroes bits per block has its changes by construction; it must still not be named.
+                    if found["changes"] > 3 and not source.name.startswith("synthetic-lowbits-other-"):
+                        problems.append(f"{label}: {found['changes']} changes of wasted bits")
+                    if found["changes"] != expected:
+                        problems.append(f"{label}: {found['changes']} changes, but flac lists {expected}")
+                    most = max(most, found["changes"])
+                    if arguments.keep:
+                        pathlib.Path(arguments.keep).mkdir(parents=True, exist_ok=True)
+                        (pathlib.Path(arguments.keep) / f"{source.stem}-{variant or 'own'}-{block}.flac").write_bytes(coded.read_bytes())
+            files += runs > before
     for provenance in sorted((FIXTURES / "flac").glob("external-lossyflac-*.provenance.json")):
         record = json.loads(provenance.read_text())
         path = provenance.parent / record["file"]
@@ -136,7 +144,10 @@ def main():
 
 def rate_of(path):
     data = path.read_bytes()
-    return int.from_bytes(data[18:21], "big") >> 4
+    at = data.find(b"fLaC")
+    if at < 0:
+        return 0
+    return int.from_bytes(data[at + 18:at + 21], "big") >> 4
 
 
 if __name__ == "__main__":

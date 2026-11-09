@@ -62,7 +62,7 @@ internal static partial class Summary
 
         if (s.Wasted.Pattern(s.Info is { SampleRate: > 0 } streamInfo ? streamInfo.SampleRate : s.FirstRate) is { } pattern)
         {
-            s.Context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, "subframes"));
+            s.Context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, Wording));
         }
 
         Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
@@ -372,7 +372,7 @@ internal static partial class Summary
         };
     }
 
-    private static readonly WastedBitsWording Wording = new("subframe", "subframes", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges);
+    private static readonly WastedBitsWording Wording = new("subframe", "subframes", Explain.StatWastedBits, Explain.StatWastedBitsCount, Explain.StatWastedBitsChanges, Explain.StatWastedBitsSilent, "subframes of a channel");
 
     private const string ClaimsTopicChannels = "channel-layouts";
 
