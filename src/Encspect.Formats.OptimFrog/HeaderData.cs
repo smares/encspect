@@ -118,7 +118,8 @@ internal static class HeaderData
         if (info.Chunks.Count > 0)
         {
             var list = new Node("Chunks", info.Chunks[0].Offset, info.Chunks[^1].Offset + 8 + Math.Min(info.Chunks[^1].Size, Math.Max(0, at + held - info.Chunks[^1].Offset - 8)) - info.Chunks[0].Offset,
-                NodeValue.Integer(info.Chunks.Count, "chunks", "chunk")) { Description = Explain.ChunkList, Topic = Topics.RiffChunks };
+                NodeValue.Integer(info.Chunks.Count, "chunks", "chunk"))
+            { Description = Explain.ChunkList, Topic = Topics.RiffChunks };
             foreach (ChunkEntry entry in info.Chunks)
             {
                 long length = Math.Min(8 + (long)entry.Size, at + held - entry.Offset);
