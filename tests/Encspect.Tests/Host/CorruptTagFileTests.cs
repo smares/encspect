@@ -136,6 +136,16 @@ public class CorruptFlacFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The OptimFROG fixtures written by ofr, off and ofs (the correction files among them are no OptimFROG files and are read as unknown data).
+public class CorruptOptimFrogFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("optimfrog/external-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The TTA fixtures written by FFmpeg and libtta-c.
 public class CorruptTtaFileTests
 {
