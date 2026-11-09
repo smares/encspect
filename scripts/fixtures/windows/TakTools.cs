@@ -52,11 +52,11 @@ namespace Encspect
             using (Process process = new Process())
             {
                 process.StartInfo = start;
-                process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e)
+                process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
                 {
                     if (e.Data != null) { lock (gate) { output.AppendLine(e.Data); } }
                 };
-                process.ErrorDataReceived += delegate(object sender, DataReceivedEventArgs e)
+                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
                 {
                     if (e.Data != null) { lock (gate) { error.AppendLine(e.Data); } }
                 };
