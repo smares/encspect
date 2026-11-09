@@ -14,6 +14,7 @@ using Encspect.Formats.Mpeg;
 using Encspect.Formats.Musepack;
 using Encspect.Formats.Ogg;
 using Encspect.Formats.OptimFrog;
+using Encspect.Formats.Tak;
 using Encspect.Formats.Opus;
 using Encspect.Formats.Speex;
 using Encspect.Formats.TrueHd;
@@ -55,7 +56,7 @@ public static class DefaultParsers
     // consistent frames (SniffResult.Compare; docs/architecture.md, "Ranking"). The order of this list only
     // breaks a tie in all four, which the report names as format.ambiguous, so no format depends on
     // its place here.
-    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MonkeysAudioParser(), new OptimFrogParser(), new TtaParser(), new TrueHdParser(), new MatroskaParser(), new WavParser(), new Wave64Parser(), new AiffParser()];
+    public static IReadOnlyList<IFormatParser> Formats { get; } = [Mpeg, new Mp4Parser(), new RawAacParser(), new OggParser(), new MusepackParser(), new Ac3Parser(), new AsfParser(), new WavPackParser(), new DtsParser(), new DtsHdParser(), new FlacParser(), new MonkeysAudioParser(), new OptimFrogParser(), new TakParser(), new TtaParser(), new TrueHdParser(), new MatroskaParser(), new WavParser(), new Wave64Parser(), new AiffParser()];
 
     // The codecs containers hand their payloads to, by ID: MPEG audio in WAV and MP4, AAC in MP4 and, as ADTS frames, in WAV bursts,
     // Speex in Ogg, Vorbis and Opus in Ogg and Matroska, AC-3, E-AC-3 and DTS in MP4 and Matroska, AAC in Matroska, FLAC in Ogg and Matroska, WavPack, TTA and ALAC in Matroska, ALAC in MP4, Windows Media Audio in ASF, Dolby TrueHD and MLP in Matroska, and in MP4 once its container routes to them.
