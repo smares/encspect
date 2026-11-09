@@ -1,0 +1,39 @@
+name: OptimFROG fixtures
+
+# Runs OptimFROG 5.100 (scripts/fixtures/optimfrog_tool.py: the author's Linux x64 package, pinned by SHA-256, free for personal, non-commercial and
+# commercial use; its static binaries ofr, off and ofs are run as black boxes here and nowhere else) over the project's signals
+# (scripts/fixtures/make_external_optimfrog_fixtures.py): the presets, the modes, several COMP blocks, the sample formats, the HEAD and TAIL
+# variants, off, and DualStream with and without its correction file. It uploads the files with a manifest of the commands, outputs, SHA-256 hashes and
+# reproducibility; scripts/fixtures/import_optimfrog_fixtures.py takes the artifact into tests/fixtures/optimfrog. The design is
+# docs/design/tak-optimfrog-headers.md, "Fixtures".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: generate on ubuntu-26.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Make the files
+        run: python3 scripts/fixtures/make_external_optimfrog_fixtures.py optimfrog-out
+
+      - name: Print the records
+        if: always()
+        continue-on-error: true
+        run: |
+          for f in optimfrog-out/tools/*.txt; do echo "== $f"; head -n 70 "$f"; done
+          ls -la optimfrog-out/fixtures | head -n 120
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: optimfrog-fixtures
+          path: optimfrog-out
+          retention-days: 90
+          if-no-files-found: error
