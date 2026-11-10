@@ -116,7 +116,7 @@ internal sealed class StreamMeasurer
         _isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
         if ((kinds & MeasurementKinds.Levels) != 0)
         {
-            _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample);
+            _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample, format.SampleRate);
         }
 
         _isMeasuringLoudness = (kinds & MeasurementKinds.Loudness) != 0;

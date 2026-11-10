@@ -60,11 +60,11 @@ public static class MeasurementText
 
     public const string DcOffsetDescription = "The mean of each channel's samples as a percentage of full scale and in decibels relative to full scale; the stream's figure is that of the channel with the largest offset.";
 
-    public const string ClippingDescription = "Runs of at least 3 consecutive samples at the same extreme: the most positive or the most negative integer code, or a float at or beyond full scale. Three is a convention of this analysis, not of a specification, and a run ends at a gap.";
+    public const string ClippingDescription = "Runs of at least 3 consecutive samples at the same extreme: the most negative or the most positive code of the bits in use (the declared width less the low bits unused, from 8 bits in use on; a float stream whose samples are all on the 16-bit or the 24-bit grid has the extremes of that grid), otherwise full scale (a float at or beyond it). Three is a convention of this analysis, not of a specification, and a run ends at a gap.";
 
-    public const string DigitalSilenceDescription = "The sample frames in which every channel is exactly 0 and that start the measured samples without a break, and those that end them. A stretch ends at a gap in the decoded blocks.";
+    public const string DigitalSilenceDescription = "Stretches of sample frames in which every channel is exactly 0 and that last at least 10 ms (the rate divided by 100, rounded up, in samples): how many, the samples in them and the longest, and the stretch that starts the measured samples and the one that ends them, which count only from the same length. A stretch ends at a gap in the decoded blocks, and each part must reach the minimum on its own. Ten milliseconds is a convention of this analysis, not of a specification.";
 
-    public const string ZeroSamplesDescription = "All the sample frames in which every channel is exactly 0, wherever they are: the digital silence, and also the zeros of quiet audio and of a sine's zero crossings. It is a count of samples, not a stretch of silence.";
+    public const string ZeroSamplesDescription = "All the sample frames in which every channel is exactly 0, wherever they are: the digital silence, and also the zeros of quiet audio and of a sine's zero crossings, whatever the length of the stretch. It is a count of samples, not a stretch of silence.";
 
     public const string LowBitsUnusedDescription = "The low bits that are 0 in every sample of the stream, found from the OR of all samples, and the largest sample magnitude reached. It is a figure of the samples, not of the file's header.";
 
@@ -221,15 +221,17 @@ public static class MeasurementText
         lines.Add(new MeasurementLine(MeasurementFigure.RmsLevel, "RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
         lines.Add(new MeasurementLine(MeasurementFigure.DcOffset, "DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
 
-        string what = isFloat ? "at or beyond full scale" : "at full scale";
+        string what = levels.ClippingBitsInUse is { } inUse && inUse != levels.BitsPerSample ? $"at the extremes of the {inUse} bits in use" : isFloat ? "at or beyond full scale" : "at full scale";
         string clipping = stream.ClippingRuns == 0
             ? "none"
             : $"{Plural(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Plural(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Plural(c.ClippingRuns, "run", "runs")))}";
         lines.Add(new MeasurementLine(MeasurementFigure.Clipping, "Clipping", clipping, ClippingDescription, ClippingTopic));
 
-        string silence = stream.SilentAtStart == 0 && stream.SilentAtEnd == 0
-            ? "none"
-            : $"{(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end";
+        string silence = levels.MinimumSilentStretch == 0
+            ? "not measured (the stream states no sample rate)"
+            : stream.SilentStretches == 0
+                ? "none"
+                : $"{Plural(stream.SilentStretches, "stretch", "stretches")} of 10 ms or more ({Plural(levels.MinimumSilentStretch, "sample", "samples")}), {Samples(stream.SilentSamples, m.SampleRate)} in all, the longest {Samples(stream.LongestSilentStretch, m.SampleRate)}; {(stream.SilentAtStart == 0 ? "none" : Samples(stream.SilentAtStart, m.SampleRate))} at the start, {(stream.SilentAtEnd == 0 ? "none" : Samples(stream.SilentAtEnd, m.SampleRate))} at the end";
         lines.Add(new MeasurementLine(MeasurementFigure.DigitalSilence, "Digital Silence", silence, DigitalSilenceDescription, DigitalSilenceTopic));
 
         string zeros = $"{Plural(stream.ZeroSamples, "sample", "samples")}{(channels.Any(c => c.ZeroSamples != channels[0].ZeroSamples) ? PerChannel(names, channels.Select(c => Plural(c.ZeroSamples, "sample", "samples"))) : string.Empty)}";
