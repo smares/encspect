@@ -52,6 +52,7 @@ class SettleTests(unittest.TestCase):
         self.assertTrue(line.startswith("::warning "))
         self.assertIn("a.tar.gz", line)
         self.assertIn(WAYBACK, line)
+        self.assertIn("title=Address of a%2Cb%3Ac::", check_sources.warning_line("a,b:c", WAYBACK, "x"))
 
 
 if __name__ == "__main__":

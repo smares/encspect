@@ -381,6 +381,11 @@ public static class MftProbe
 
                     if (createdBuffer < 0)
                     {
+                        if (sample is not null)
+                        {
+                            Marshal.ReleaseComObject(sample);
+                        }
+
                         results.Add(Format.Hr(createdBuffer));
                         errors++;
                         done = true;

@@ -180,7 +180,8 @@ def settle(failures, served, serves_elsewhere):
 
 def warning_line(name, address, problem):
     """A GitHub annotation, so that a Wayback capture that is gone shows on the run summary of a weekly run that passes."""
-    return f"::warning title=Address of {name}::{address} {problem}; another address serves the pinned file, and the Wayback Machine copy is lost"
+    title = f"Address of {name}".replace("%", "%25").replace(",", "%2C").replace(":", "%3A").replace("\r", "%0D").replace("\n", "%0A")
+    return f"::warning title={title}::{address} {problem}; another address serves the pinned file, and the Wayback Machine copy is lost"
 
 
 def main():

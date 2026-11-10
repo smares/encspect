@@ -346,8 +346,16 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
         perror(tsv_path);
         return 2;
     }
+    int continued = 0;
     while (fgets(line, sizeof line, tsv)) {
         Unit u;
+        /* A line longer than the buffer comes in pieces: the rest of it is not a record. */
+        int whole = strchr(line, '\n') != NULL || feof(tsv);
+        if (continued) {
+            continued = !whole;
+            continue;
+        }
+        continued = !whole;
         if (line[0] == 'U' && sscanf(line, "U %ld %ld %ld", &u.offset, &u.declared, &u.received) == 3) {
             if (count == capacity) {
                 capacity = capacity ? capacity * 2 : 1024;

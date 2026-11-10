@@ -615,6 +615,23 @@ class WindowsDriverTests(unittest.TestCase):
         self.assertEqual((2, 1, 1, 1), (record["decodedUnits"], record["noOutputUnits"], record["refusedUnits"], record["errorUnits"]))
         self.assertEqual([], record["silentUnits"])
 
+    def test_a_capped_output_is_no_error_and_a_failure_before_a_retry_is_one(self):
+        capped = unit(1, 1024, output="ok,limit")
+        before_retry = unit(2, 1024, drainedBeforeRetry="0xC00D6D60", inputHresult="0xC00D36B5", retryHresult="0x00000000")
+        self.assertEqual(("decoded", "error"), (driver.windows_unit_result(capped), driver.windows_unit_result(unit(3, 1024, output="ok,0xC00D6D60"))))
+        self.assertEqual("error", driver.windows_unit_result(before_retry))
+        node = transform_node([unit(0, 1024), capped, before_retry], coded=3072, drain=0, runs=[run44(3072)])
+        record = driver.windows_transform_result(node, 3)
+        self.assertEqual(([1], 1, "0xC00D6D60"), (record["cappedUnits"], record["errorUnits"], record["units"][0]["status"]))
+        self.assertEqual("end", record["stoppedBy"])
+
+    def test_a_drain_that_hit_the_cap_leaves_no_total(self):
+        node = transform_node([unit(0, 1024)], coded=1024, drain=64, runs=[run44(1088)])
+        node["drain"]["results"] = "ok,limit"
+        record = driver.windows_transform_result(node, 1)
+        self.assertEqual("limit", record["stoppedBy"])
+        self.assertNotIn("totalSamples", record)
+
     def test_a_unit_that_gives_nothing_after_the_first_output_is_silent_and_one_before_it_is_not(self):
         node = transform_node([unit(0, 0), unit(1, 1024), unit(2, 0), unit(3, 1024)], coded=2048, drain=0, runs=[run44(2048)])
         record = driver.windows_transform_result(node, 4)

@@ -1084,6 +1084,15 @@ SOURCE_READER_RUNS = 3  # the probe reads the file this many times (Program.cs S
 MF_LIST_LIMIT = 64
 
 
+def unit_tokens(u):
+    """The results of the output calls of a unit, those before the retry of a refused input included."""
+    return ((u.get("drainedBeforeRetry") or "") + "," + (u.get("output") or "")).split(",")
+
+
+def unit_failed_hresult(u):
+    return next((t for t in unit_tokens(u) if failed_hresult(t)), None)
+
+
 def windows_unit_result(u):
     """decoded, no output, refused (the input call failed, after the retry), error (the output call failed) or not fed (no byte in the file) for a unit of the transform run."""
     if u.get("fed") is False or u.get("lockFailed"):
@@ -1091,8 +1100,7 @@ def windows_unit_result(u):
     status = u.get("retryHresult") or u.get("inputHresult")
     if failed_hresult(status):
         return "refused"
-    # "limit" is Pull's mark for a unit that still had output after its 64 calls
-    if any(failed_hresult(t) or t == "limit" for t in ((u.get("output") or "") + "," + (u.get("drainedBeforeRetry") or "")).split(",")):
+    if unit_failed_hresult(u) is not None:
         return "error"
     return "decoded" if u.get("frames", 0) > 0 else "no output"
 
@@ -1171,7 +1179,7 @@ def windows_transform_result(node, units_expected):
             if result == "refused":
                 entry["status"] = u.get("retryHresult") or u.get("inputHresult")
             elif result == "error":
-                entry["status"] = next(t for t in u["output"].split(",") if failed_hresult(t))
+                entry["status"] = unit_failed_hresult(u)
             units.append(entry)
     drain = node.get("drain") or {}
     total = node.get("totalSamples", node.get("partialSamples", 0))
@@ -1186,6 +1194,8 @@ def windows_transform_result(node, units_expected):
         "runs": windows_runs(node) if opened else [],
         "unitCount": units_expected,
         "unitsFed": node.get("unitsFed", 0),
+        # the units whose output calls hit the probe's cap of 64: what was left is pulled with the next unit, so the unit's own frames are a lower bound (not an error)
+        "cappedUnits": [u["index"] for u in node.get("units", []) if "limit" in unit_tokens(u)][:MF_LIST_LIMIT],
         "decodedUnits": decoded, "noOutputUnits": nothing, "notFedUnits": not_fed, "refusedUnits": refused, "errorUnits": errors,
         "silentUnits": silent[:MF_LIST_LIMIT],
         "noOutputList": no_output[:MF_LIST_LIMIT],
@@ -1205,6 +1215,9 @@ def windows_transform_result(node, units_expected):
     if stop == "crash":
         result["exit"] = node.get("exitCode")
         result["output"] = (node.get("output") or "")[-400:]
+    if stopped == "end" and opened and "limit" in str(drain.get("results") or "").split(","):
+        result["stoppedBy"] = stopped = "limit"
+        result["notes"] = ["the drain still had output after the probe's cap of 64 output calls"]
     if stopped == "end" and opened:
         if sum(r["samples"] for r in result["runs"]) != total:
             result["stoppedBy"] = stopped = "limit"
