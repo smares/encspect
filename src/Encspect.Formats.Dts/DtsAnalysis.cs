@@ -386,7 +386,7 @@ internal sealed class DtsAnalysis
             LostSamples = stream.Figures.LostSamples,
             Duration = stream.Figures.Duration,
             AverageBitrate = stream.Figures.AverageBitrate,
-            IsVbr = stream.IsVbr,
+            IsVbr = stream.Figures.IsVariable,
             Encoder = encoderName,
             EncoderConfidence = encoderConfidence,
             Writer = writerName,

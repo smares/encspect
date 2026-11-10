@@ -565,7 +565,7 @@ internal sealed class Ac3Analysis
             LostSamples = program.LostSamples,
             Duration = program.Figures.Duration,
             AverageBitrate = program.Figures.AverageBitrate,
-            IsVbr = program.IsVbr,
+            IsVbr = program.Figures.IsVariable,
             HasObjectAudio = program.HasObjectAudio,
             JocObjectCount = program.JocObjectCount,
             Encoder = encoderName,

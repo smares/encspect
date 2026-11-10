@@ -117,6 +117,9 @@ internal sealed class StreamFigures(int sampleRate)
     // The bitrate mode the stream states (true for variable), or null when it states none.
     public bool? StatedVariable { get; set; }
 
+    // The decision "Bitrate Mode" shows, which the stream's IsVbr follows.
+    public bool IsVariable => _distribution.IsVariable(StatedVariable ?? (VariableSignaling > 0 ? true : _fullnessCount > 0 ? false : null));
+
     public double MinimumBitrate { get; private set; } = double.MaxValue;
 
     public double MaximumBitrate { get; private set; }

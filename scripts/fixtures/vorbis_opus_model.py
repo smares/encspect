@@ -472,13 +472,13 @@ def read_setup(packet, channels):
 
 def vorbis_stated_variable(ident):
     """The bitrate mode the identification header's three hints state (Identification.StatedVariable): constant when all three are set and equal,
-    variable when the maximum and the minimum are both set and differ, None otherwise."""
+    variable when a maximum and/or a minimum is set, None otherwise."""
     if len(ident) < 30:
         return None
     maximum, nominal, minimum = struct.unpack_from("<iii", ident, 16)
     if maximum > 0 and nominal > 0 and minimum > 0 and maximum == nominal == minimum:
         return False
-    if maximum > 0 and minimum > 0 and maximum != minimum:
+    if maximum > 0 or minimum > 0:
         return True
     return None
 

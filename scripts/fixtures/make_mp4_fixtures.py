@@ -401,7 +401,7 @@ def layout_variants():
     out.append(("co64-largesize", data, {
         "description": "64-bit chunk offsets (co64) and an mdat box with a 64-bit size (size 1 and largesize), before moov.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-        "streams": [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024)],
+        "streams": [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True)],
         "units": unit_list(offsets[0], samples, 10),
         "fields": {"MP4/mdat/Size": "1 (a 64-bit size follows)", "MP4/mdat/Large Size": f"{next(s for p, o, s in records if p == 'mdat')} bytes",
                    "MP4/moov/trak/mdia/minf/stbl/co64": "3 chunks", ESDS + "/Average Bitrate": "128000 bit/s"},

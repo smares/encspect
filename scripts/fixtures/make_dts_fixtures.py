@@ -285,7 +285,7 @@ def build_damage():
     parts = run(4, "16be", 512, rate=30)
     data = b"".join(parts)
     fixture("rate-code", ".dts", "Four stereo core frames with RATE 30 (variable), which Table 5-7 does not list.", data, rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.rate-code", "RATE is not one of the codes")],
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.rate-code", "RATE is not one of the codes")],
             crosscheck={"ffprobe": True, "decode": True, "libdca": True})
     parts = run(4, "16be", 512, vernum=9, rate=0)
     data = b"".join(parts)
@@ -603,7 +603,7 @@ def build_review():
     # RATE 31, which 5.6 uses for lossless streams; termination frames in every form.
     parts = run(4, "16be", 512, rate=31)
     fixture("rate-lossless", ".dts", "Four stereo core frames with RATE 31, which Table 5-7 does not list and 5.6 uses to select the lossless step-size table.", b"".join(parts), rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.rate-lossless", "RATE is 31")], crosscheck={"ffprobe": True, "decode": True, "libdca": True})
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.rate-lossless", "RATE is 31")], crosscheck={"ffprobe": True, "decode": True, "libdca": True})
     for form, size in (("16be", 512), ("16le", 512), ("14be", 504), ("14le", 504)):
         parts = [core(form, size) for _ in range(3)] + [core(form, size, ftype=0, short=10, nblks=7)]
         label = {"16be": "16-bit words, big endian"}.get(form, FORM_NAMES.get(form))

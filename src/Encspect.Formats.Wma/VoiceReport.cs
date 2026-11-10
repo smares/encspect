@@ -21,8 +21,9 @@ internal static class VoiceReport
         return $"{Count(count, singular, plural)} ({percent.ToString("F1", CultureInfo.InvariantCulture)}%)";
     }
 
-    public static Node Statistics(VoiceStream stream, AudioFormat format, CodecConfiguration? configuration, Node container, out double duration)
+    public static Node Statistics(VoiceStream stream, AudioFormat format, CodecConfiguration? configuration, Node container, out double duration, out bool isVariable)
     {
+        isVariable = false;
         VoiceParameters p = stream.Parameters;
         VoiceTotals t = stream.Totals;
         int rate = format.SampleRate;
@@ -85,6 +86,7 @@ internal static class VoiceReport
                 }
             }
 
+            isVariable = distribution.IsVariable(configuration?.IsVbr);
             distribution.AddTo(node, (name, value, description) => new Node(name, container.Offset, container.Length, value) { Description = description }, "Superframe", "Superframes", configuration?.IsVbr);
         }
 

@@ -140,7 +140,7 @@ public sealed class WmaLosslessParser : ICodecParser
             LostSamples = reader.LostSamples,
             Duration = duration,
             AverageBitrate = duration > 0 ? p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000 : null,
-            IsVbr = configuration.IsVbr ?? false,
+            IsVbr = reader.Distribution.IsVariable(configuration.IsVbr),
             Encoder = detected.Encoder,
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,

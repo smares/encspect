@@ -90,7 +90,7 @@ public sealed class AacCodecParser : ICodecParser
 
         int rate = config?.OutputSampleRate ?? 0;
         int frame = config?.OutputFrameLength ?? 1024;
-        var figures = new StreamFigures(rate);
+        var figures = new StreamFigures(rate) { StatedVariable = context.Configuration?.IsVbr == true ? true : null };
         for (int i = 0; i < log.Units.Count; i++)
         {
             if (i % 4096 == 0)
@@ -235,7 +235,7 @@ public sealed class AacCodecParser : ICodecParser
             LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
-            IsVbr = context.Configuration?.IsVbr ?? false,
+            IsVbr = figures.IsVariable,
             Encoder = encoderName,
             EncoderConfidence = encoderConfidence,
             Writer = writerName,
