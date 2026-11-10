@@ -5,7 +5,7 @@ OptimFROG lossless files (`.ofr`) at header level: the blocks, the main block's 
 Sources:
 
 - The author's specification of the compressed file format, `SDK/Documentation/format.txt` of OptimFROG 5.100 (SDK 1.600), and its `changelog.txt`. The download page is http://losslessaudio.org/Downloads.php.
-- OptimFROG 5.100 for Linux x64 (`ofr`, `off`, `ofs` and the SDK library) as black-box writers of the files in Encspect's tests, and `luckynight.ofr` (OptimFROG 4.509, from samples.ffmpeg.org) walked once for the design.
+- OptimFROG 5.100 for Linux x64 (`ofr`, `off`, `ofs` and the SDK library) as black-box writers of the files in Encspect's tests.
 - Nothing is read from FFmpeg, MediaInfo or any other implementation: FFmpeg has no OptimFROG demuxer and MediaInfoLib 26.01 has no parser for it.
 
 ## What is read
@@ -13,8 +13,8 @@ Sources:
 - The blocks, each a 4-character ID, a 4-byte length and the data (little-endian), in the order of the specification's relation: `['ID3'] 'OFR ' [...] 'HEAD' 'COMP'* 'TAIL' [...] ['MD5 '] ['RECV']`, then an optional APEv2 and ID3v1 tag.
 - The main block: the total number of samples (over all channels: the samples of each channel are this number over the channels), the sample type (`UINT8` to `FLOAT32_24`), the channel configuration (`MONO` or `STEREO_LR`), the sample rate, the encoder ID (version = ID >> 4 plus 4500, written x.xxx, and the build system = ID & 15), the compression byte (mode = byte >> 3, speedup = byte & 7) and, from 5.100, the minimum decoder version (stored less 4500). Bytes after the fields it knows are shown as additional fields and skipped, as the specification asks.
 - `HEAD` and `TAIL`: the stored bytes of the source file's header and footer, named as Monkey's Audio names them ("WAV Header Data", "WAV Terminating Data"). A RIFF, RF64, BW64 or Wave64 header gives its format tag, channels and channel mask by the reader Monkey's Audio shares (`WavHeader` in the core library); the RIFF chunks of the header and the footer are listed, and lossyWAV's `fact` chunk is read with `FactText`. A header that is no WAVE header (`ofr --raw --headersize`, as in `external-raw-headersize.ofr`) is shown as bytes, and so is a footer after such a header (the footer is a list of RIFF chunks only after a RIFF, RF64 or BW64 header).
-- Every `COMP` block: the CRC-32 (the plain IEEE CRC-32 of zlib over the block's data after the CRC field), compared; the samples (values over all channels), the sample type, the channel configuration, the two bytes the specification calls reserved for internal use (shown, never judged), the encoder ID and the compressed data.
-- `MD5 ` (shown, not compared: it covers the decoded audio), `RECV` (shown, not interpreted) and blocks of unknown ID (by ID and length).
+- Every `COMP` block: the CRC-32 (the plain IEEE CRC-32 of zlib over the block's data after the CRC field), compared; the samples (values over all channels), the sample type, the channel configuration, the two bytes the specification calls reserved for internal use (shown; only their low byte is used, as the sign of a DualStream's lossy part, below), the encoder ID and the compressed data.
+- `MD5 ` (shown, not compared: it covers the decoded audio), `RECV` (shown, not interpreted) and blocks of unknown ID (by ID and length). In a correction file every ID but `CORR` is unknown, `HEAD`, `COMP` and `OFR ` included.
 - Tags: an ID3v2 tag before the file, and APEv2, Lyrics3 and ID3v1 tags after the last block are the host's. The file declares its end (`DeclaredEnd`: the end of the last block the walk accepts).
 
 ## The walk
@@ -22,6 +22,7 @@ Sources:
 - A block header is four printable ASCII bytes and a length. The walk never stops on a tag's signature, only on a header that is none (the rule DTS-HD's chunk walk follows, [dtshd.md](dtshd.md)).
 - A block of a known ID whose length runs past the data is cut (`optimfrog.block-cut`): it is read as far as it goes, its CRC-32 is not compared, and it ends the walk.
 - A block of an unknown ID goes on the walk only when it fits and either ends the data or is followed by a block header whose length fits too (`optimfrog.block-unknown`, Info); otherwise the walk stops before it and the bytes are left to the host's search for tags, and are `optimfrog.data-after-blocks` if they are no tag.
+- An unknown block is never accepted if it starts at or runs over the start of a trailing tag that validates structurally (an ID3v1 tag at the end, an APEv2 footer or a Lyrics3 end marker before it): an ID3v1 tag whose title has two characters reads as a header `TAGx` with a length, and the tag is the stronger evidence ([architecture.md](../architecture.md#tag-detection-and-false-positives)).
 - The report keeps at most 1,048,576 blocks one by one (`Records.MaxBlocks`); the rest are counted and their CRC-32s compared (`optimfrog.blocks-limit`).
 
 ## Detection
@@ -35,10 +36,10 @@ Sources:
 
 All from OptimFROG 5.100 (`tests/fixtures/optimfrog`, [development.md](../development.md)); every file was encoded twice and the two files are equal byte for byte.
 
-- **Speedup:** every file stores 4x. The speedup was deprecated in 4.506; `luckynight.ofr` (4.509) stores 4x too.
+- **Speedup:** every file stores 4x. The speedup was deprecated in 4.506.
 - **Mode:** the stored mode does not tell the command line's modes apart ([optimfrog-modes](../../src/Encspect.Host/Topics/optimfrog-modes.md) lists which store the same value). The report names the mode and the speedup as stored and never a preset, which sets options the header does not store.
 - **Blocks** count values over all channels: `--seek normal` gives blocks of 882,000 values, `fast` 441,000, `min` one block for the file.
-- **Float files:** `off` writes the main block's ID as `OFRX` and a block `DETA` after the data blocks, neither defined by the specification. The fields of `OFRX` are those of `OFR ` (the SDK library is expected to read them the same way, which the cross-check compares; it has not run yet), so the analyzer reads it as the main block and shows `DETA` as a block of its own (neither claim of equivalence has been checked against the library until the cross-check job has run green). `off` writes `.ofr` files: it appends the extension to any other name it is given. Both are read without a finding: `OFRX` is the main block `off` writes, and `DETA` is shown as a known, undocumented block. Its `--sampletype FLOAT32_1`, `FLOAT32_16` and `FLOAT32_24` give the same file as no option (sample type 8, `FLOAT32_0`), `--mantissabits` leaves the main block unchanged, and `off` refuses an integer WAVE file.
+- **Float files:** `off` writes the main block's ID as `OFRX` and a block `DETA` after the data blocks, neither defined by the specification. The fields of `OFRX` are those of `OFR ` (the SDK library does not open these files, so the cross-check compares the manifest's channels, sample rate, samples and bits per sample with the recorded input that `off` decoded each file back to, and runs `off --info`, which has to exit with 0), so the analyzer reads it as the main block and shows `DETA` as a block of its own. `off` writes `.ofr` files: it appends the extension to any other name it is given. Both are read without a finding: `OFRX` is the main block `off` writes, and `DETA` is shown as a known, undocumented block. Its `--sampletype FLOAT32_1`, `FLOAT32_16` and `FLOAT32_24` give the same file as no option (sample type 8, `FLOAT32_0`), `--mantissabits` leaves the main block unchanged, and `off` refuses an integer WAVE file.
 - **DualStream:** `ofs` writes the same blocks with a main block that differs from a lossless file's only in the minimum decoder version (4.520; a lossless file stores 4.600, or 4.520 at preset 0) and in the reserved bytes of its data blocks. It writes a correction file (`.ofc`) beside the `.ofs` with `--correction`, a run of `CORR` blocks with a CRC-32 each, and the `.ofs` is the same file with and without it, so its header does not say whether a correction file was written and no `IsCorrectionFileCreated` is reported. The `.ofc` fixtures are named `*-correction-data.ofc` so that their manifests do not take the stem of the `.ofs`.
 
 ## Damage
@@ -55,6 +56,7 @@ All from OptimFROG 5.100 (`tests/fixtures/optimfrog`, [development.md](../develo
 ## Reported
 
 - The sample rate, channels, bits per sample (32 for the float types), samples, duration and average bitrate (the bits of the data blocks, headers included, over the time their samples last).
+- **Units it counts:** the data blocks. The samples are the sum of the sample counts of the data blocks whose fields are held, over all channels, divided by the channels; the main block's total is stated and compared with that sum (`optimfrog.samples-mismatch`), not taken as the count. A data block the data cuts counts and its samples are lost (Lost Samples); a block that has no byte in the file counts nothing.
 - Statistics: Mode, Speedup, Sample Type, Build System, Channel Layout, Blocks, Verified Block Checksums and Failed Block Checksums, the smallest and largest block, Minimum Bitrate and Maximum Bitrate, Bitrate Mode and Bitrate Distribution.
 - Series: Bitrate (per block) and Bitrate Over Time (per second), as TTA draws them.
 - Channel layout: one channel is the center and two are left and right; a nonzero channel mask in the stored WAV header sets the layout where it is there, as in Monkey's Audio.
