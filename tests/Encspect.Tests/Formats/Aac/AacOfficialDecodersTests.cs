@@ -329,7 +329,7 @@ public sealed class AacOfficialDecodersTests(ITestOutputHelper output)
                 : [.. unit.GetProperty("ranges").EnumerateArray().Select(r => (r[0].GetInt64(), r[1].GetInt64()))];
             long offset = unit.GetProperty("offset").ValueKind == JsonValueKind.Null ? -1 : unit.GetProperty("offset").GetInt64();
             bool Holds(Finding f) => IsUnitFinding(f)
-                && (ranges.Count == 0 ? f.Node!.Offset == offset : ranges.Any(r => f.Node!.Offset >= r.Start && f.Node.Offset < r.Start + r.Length));
+                && (ranges.Count == 0 ? f.Node!.Offset == offset : ranges.Any(r => r.Length == 0 ? f.Node!.Offset == r.Start : f.Node!.Offset >= r.Start && f.Node.Offset < r.Start + r.Length));
             string[] expected = [.. unit.GetProperty("findings").EnumerateArray().Select(f => f.GetString()!)];
             // The units Core Audio's converter refuses carry their source; FDK's entries list every unit with a finding, so only those are counted.
             if (!unit.TryGetProperty("source", out _))

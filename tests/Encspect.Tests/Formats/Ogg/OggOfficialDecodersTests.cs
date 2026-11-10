@@ -149,6 +149,7 @@ public sealed class OggOfficialDecodersTests(ITestOutputHelper output)
 
             if (difference.GetProperty("analyzer").ValueKind == JsonValueKind.Null || difference.GetProperty("value").ValueKind == JsonValueKind.Null)
             {
+                Assert.False(kind == "analyzer-differs", $"{name}: the analyzer-differs entry of {id} has no analyzer or decoder figure, so it would hold any later figure");
                 continue;
             }
 

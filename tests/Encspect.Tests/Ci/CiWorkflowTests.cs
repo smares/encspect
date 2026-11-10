@@ -161,6 +161,28 @@ public sealed class CiWorkflowTests
         Assert.DoesNotMatch(@"(?m)^\s*continue-on-error:", text);
     }
 
+    // The composite actions the workflows use are scanned too: the one allowed pattern is setup-dotnet's first attempt, whose second attempt has no continue-on-error and runs
+    // after the first one's failure, so a failure of both fails the job.
+    [Fact]
+    public void NoCompositeActionMayHideAFailingStep()
+    {
+        string actions = Path.Combine(FindRepositoryRoot(), ".github", "actions");
+        foreach (string file in Directory.GetFiles(actions, "action.yml", SearchOption.AllDirectories))
+        {
+            string text = File.ReadAllText(file);
+            int count = Regex.Matches(text, @"(?m)^\s*continue-on-error:").Count;
+            if (count == 0)
+            {
+                continue;
+            }
+
+            Assert.True(
+                Path.GetFileName(Path.GetDirectoryName(file)) == "setup-dotnet" && count == 1
+                && text.Contains("if: steps.first.outcome == 'failure'", StringComparison.Ordinal) && text.Contains("id: first", StringComparison.Ordinal),
+                $"{file} lets a step fail without failing the run");
+        }
+    }
+
     // Every fixture the corrupt-file tests damage is in exactly one of their classes, so none is dropped or run twice
     // when a class is added or a prefix changes.
     [Fact]

@@ -125,7 +125,7 @@ public interface IMFTransform
     [PreserveSig] int ProcessOutput(uint flags, uint count, ref MftOutputDataBuffer buffers, out uint status);
 }
 
-// IMFActivate: the 30 methods of IMFAttributes in vtable order, of which three are called, then its own.
+// IMFActivate: the 30 methods of IMFAttributes in vtable order, of which four are called, then its own.
 [ComImport, Guid("7fee9e9a-4a89-47a6-899c-b6a53a70fb67"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 public interface IMFActivate
 {

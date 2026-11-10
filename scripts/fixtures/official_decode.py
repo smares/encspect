@@ -1091,7 +1091,8 @@ def windows_unit_result(u):
     status = u.get("retryHresult") or u.get("inputHresult")
     if failed_hresult(status):
         return "refused"
-    if any(failed_hresult(t) for t in (u.get("output") or "").split(",")):
+    # "limit" is Pull's mark for a unit that still had output after its 64 calls
+    if any(failed_hresult(t) or t == "limit" for t in ((u.get("output") or "") + "," + (u.get("drainedBeforeRetry") or "")).split(",")):
         return "error"
     return "decoded" if u.get("frames", 0) > 0 else "no output"
 
