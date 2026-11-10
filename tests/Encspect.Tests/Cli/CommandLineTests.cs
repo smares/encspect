@@ -615,7 +615,7 @@ public class CommandLineTests
 
         string[] lines = output.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal(CommandLine.UnreadableFile, code);
-        Assert.Equal("/dev/zero,,0,,,,,,,,,,,,,,,,,,1,0,0,,,,,,,,,,,,,", lines[1]);
+        Assert.Equal("/dev/zero,,0,,,,,,,,,,,,,,,,,,1,0,0,,,,,,,,,,,,,,,", lines[1]);
         Assert.Contains(",MPEG Audio,", lines[2]);
         Assert.StartsWith("/dev/zero: This is a device or kernel file that reports a size of 0 but yields data, not a regular file", errors);
     }
