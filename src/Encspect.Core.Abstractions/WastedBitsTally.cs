@@ -188,5 +188,5 @@ public sealed record LossyWavPattern(long Changes, long Moments, int Grid, long 
     // between names what a change is between, as the format counts it ("subframes of a channel").
     public string Evidence(string units, string between) =>
         string.Create(CultureInfo.InvariantCulture,
-            $"{Changes} changes of the wasted bits between {between}, at {Moments} moments, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} that have a count above the smallest");
+            $"{Changes} changes of the wasted bits between {between}, at {Moments} moments, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the compared {units} above the smallest");
 }

@@ -123,7 +123,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - Metadata: `flac.streaminfo-invalid`, `flac.streaminfo-length`, `flac.streaminfo-misplaced`, `flac.metadata-forbidden-type`, `flac.metadata-no-last-block`, `flac.metadata-truncated`, `flac.metadata-block-repeated`, `flac.metadata-blocks-not-listed`, `flac.padding-not-zero`, `flac.seek-table-length`, `flac.seek-table-unordered`, `flac.seek-table-placeholder`, `flac.cuesheet-invalid`, `flac.cuesheet-lead-out-medium`, `flac.cuesheet-reserved`, `flac.picture-invalid`, `flac.comment-not-read`, `flac.comment-trailing-bytes`.
 - Frames: `flac.header-crc-mismatch`, `flac.crc16-mismatch`, `flac.frame-cut`, `flac.subframe-invalid`, `flac.padding-bits-set`, `flac.partition-order-too-high`, `flac.residual-out-of-range`, `flac.frame-differs-from-streaminfo`, `flac.block-size-out-of-range`, `flac.frame-size-out-of-range`.
 - Decoding: `flac.md5-mismatch`, `decode.frame-too-large` (a guard: a frame the specification allows cannot reach it).
-- Encoder: `flac.encoder-other-format`, `flac.writer-claim-differs`, `flac.writer-other-format`, `flac.riff-fact-text-unrecognized`.
+- Encoder: `flac.encoder-other-format`, `flac.writer-claim-differs`, `flac.writer-other-format`, `flac.riff-fact-text-unrecognized`, `flac.processor-claim-differs` (info: a second `riff` fact text that names other software or another version than the first; the processor is taken from the first).
 - Ogg: `flac.ogg-version`, `flac.ogg-header-count`, `flac.ogg-header-invalid`, `flac.ogg-packet-invalid`, `flac.ogg-packet-trailing`, `flac.ogg-granule-mismatch`.
 
 ## Not covered

@@ -190,7 +190,7 @@ def flac_units(path):
                     starts.append(position)
                     position += sizes[-1]
                     frames.append([])
-                    assignments.append(fields.get("channel_assignment", "INDEPENDENT").upper())
+                    assignments.append(fields["channel_assignment"].upper())
                 elif line.startswith("\tsubframe=") and frames:
                     silent = "type=CONSTANT" in line and "value=0" in line.split("type=CONSTANT")[1].split()
                     frames[-1].append(None if silent else int(line.split("wasted_bits=")[1].split()[0]))

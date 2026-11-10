@@ -270,7 +270,8 @@ internal static class DataChunks
             node.Add(writer);
         }
 
-        Node? processor = ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
+        Node? processor = ProcessorDetection.Detect(context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
+            (claim, text, name) => s.Findings.Add(Severity.Info, "wav.processor-claim-differs", claim.Source, _ => ProcessorDetection.Disagreement(claim, text, name)));
         if (processor is not null)
         {
             node.Add(processor);
