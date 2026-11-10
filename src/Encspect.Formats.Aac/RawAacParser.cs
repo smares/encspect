@@ -992,7 +992,7 @@ public sealed class RawAacParser : IFormatParser
             LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
-            IsVbr = vbr > 0 && vbr == frames,
+            IsVbr = figures.IsVariable,
             Encoder = encoderName,
             EncoderConfidence = encoderConfidence,
             Writer = writerName,

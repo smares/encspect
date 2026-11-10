@@ -130,7 +130,7 @@ public sealed partial class MpegAudioParser
             counts.Add((null, free));
         }
 
-        Add("IsVbr", NodeValue.Boolean(counts.Count > 1), Explain.IsVbr, Topics.BitrateModes);
+        Add("Bitrate Mode", audio == 1 ? "unknown" : counts.Count > 1 ? "variable" : "constant", Explain.BitrateMode, Topics.BitrateModes);
         Add("Average Bitrate", NodeValue.Decimal(RoundHalfEven((Int128)bits * Clock * 10, (Int128)ticks * 1000) / 10.0, 1, "kbps"), Explain.AverageBitrate);
         if (fixedRates.Count > 0)
         {

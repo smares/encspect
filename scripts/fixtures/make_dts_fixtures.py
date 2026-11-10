@@ -185,7 +185,7 @@ def build():
     data = b"".join(parts)
     fixture("x96", ".dts", "Four 3/2 core frames with an X96 extension, which doubles the sampling frequency to 96 kHz.", data, rows(parts),
             [stream("DTS 96/24", 96000, SURROUND_5_1[:5], "3/2", 8 * 512)], [],
-            fields={"DTS/Statistics/Extension Sampling Frequency": "96000 Hz"},
+            fields={"DTS/Statistics/Extension Sample Rate": "96000 Hz"},
             crosscheck={"ffprobe": True, "decode": True, "libdca": True})
     parts = [m.core_frame(size=1024, amode=9, nch=5, ext_id=6, ext=1, extensions=[m.xxch(chsets=((2, 0x180),), core_mask=0x1F)], subs=[30] * 5,
                           vqsub=[31] * 5, joinx=[0] * 5, thuff=[0] * 5, shuff=[6] * 5, bhuff=[5] * 5, sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(5)])
@@ -285,7 +285,7 @@ def build_damage():
     parts = run(4, "16be", 512, rate=30)
     data = b"".join(parts)
     fixture("rate-code", ".dts", "Four stereo core frames with RATE 30 (variable), which Table 5-7 does not list.", data, rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.rate-code", "RATE is not one of the codes")],
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.rate-code", "RATE is not one of the codes")],
             crosscheck={"ffprobe": True, "decode": True, "libdca": True})
     parts = run(4, "16be", 512, vernum=9, rate=0)
     data = b"".join(parts)
@@ -597,13 +597,13 @@ def build_review():
             crosscheck=cc_lossless(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c), so ffprobe reads DTS-HD MA where the analyzer names the stream by LBR first, as ffmpeg's decoder does (dcadec.c), which the stub LBR component does not allow it to confirm"}))
     parts = [unit([dict(five, max_rate=96000)]) for _ in range(3)]
     fixture("exss-lossless-96k", ".dts", "Three units of a 48 kHz core frame and an extension substream whose lossless asset names 96 kHz as its highest sampling frequency.", b"".join(parts), rows(parts),
-            [stream(name, 96000, STEREO, "2/0", 3 * 1024, vbr=True)], [], fields={"DTS/Statistics/Sampling Frequency": "48000 Hz", "DTS/Statistics/Extension Sampling Frequency": "96000 Hz"},
+            [stream(name, 96000, STEREO, "2/0", 3 * 1024, vbr=True)], [], fields={"DTS/Statistics/Core Sample Rate": "48000 Hz", "DTS/Statistics/Extension Sample Rate": "96000 Hz"},
             crosscheck=cc_lossless())
 
     # RATE 31, which 5.6 uses for lossless streams; termination frames in every form.
     parts = run(4, "16be", 512, rate=31)
     fixture("rate-lossless", ".dts", "Four stereo core frames with RATE 31, which Table 5-7 does not list and 5.6 uses to select the lossless step-size table.", b"".join(parts), rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.rate-lossless", "RATE is 31")], crosscheck={"ffprobe": True, "decode": True, "libdca": True})
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.rate-lossless", "RATE is 31")], crosscheck={"ffprobe": True, "decode": True, "libdca": True})
     for form, size in (("16be", 512), ("16le", 512), ("14be", 504), ("14le", 504)):
         parts = [core(form, size) for _ in range(3)] + [core(form, size, ftype=0, short=10, nblks=7)]
         label = {"16be": "16-bit words, big endian"}.get(form, FORM_NAMES.get(form))

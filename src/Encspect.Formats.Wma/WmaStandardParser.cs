@@ -120,7 +120,7 @@ public sealed class WmaStandardParser : ICodecParser
             LostSamples = stream.LostSamples,
             Duration = duration,
             AverageBitrate = averageBitrate,
-            IsVbr = configuration.IsVbr ?? false,
+            IsVbr = stream.Distribution.IsVariable(configuration.IsVbr),
             Encoder = detected.Encoder,
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,

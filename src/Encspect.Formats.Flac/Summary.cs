@@ -243,7 +243,8 @@ internal static partial class Summary
         }
 
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
-        if (info is { TotalSamples: > 0 })
+        // In a container STREAMINFO is the codec's header, not the container's statement of the length: the container adds its own figure.
+        if (info is { TotalSamples: > 0 } && !s.IsContained)
         {
             ContainerLength.AddSamples(statistics, (name, value, description) => cover(name, value, description, null), (long)info.Value.TotalSamples, rate, Explain.StatContainerSamples, Explain.StatContainerDuration);
         }

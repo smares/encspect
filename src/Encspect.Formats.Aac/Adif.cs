@@ -112,7 +112,7 @@ internal static class Adif
         }
 
         config = config with { SbrFound = log.Tally.IsSbrEvident, PsFound = log.Tally.IsPsEvident };
-        var figures = new StreamFigures(config.OutputSampleRate);
+        var figures = new StreamFigures(config.OutputSampleRate) { StatedVariable = header.IsVbr };
         for (int i = 0; i < blocks.Count; i++)
         {
             if (blocks[i].IsRead)
@@ -185,7 +185,7 @@ internal static class Adif
             LostSamples = figures.Lost,
             Duration = figures.Duration,
             AverageBitrate = figures.AverageBitrate,
-            IsVbr = header.IsVbr,
+            IsVbr = figures.IsVariable,
             Encoder = encoderName,
             EncoderConfidence = encoderConfidence,
             Writer = writerName,

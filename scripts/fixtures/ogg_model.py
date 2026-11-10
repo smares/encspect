@@ -395,11 +395,17 @@ def share(count, total, singular, plural_form):
     return f"{plural(count, singular, plural_form)} ({fmt_decimal(count * 100.0 / total, 1)}%)"
 
 
-def distribution(statistics, rates, singular, plural_form):
+def is_variable(rates, stated=None):
+    """Whether the bitrate is variable by the decision of "Bitrate Mode" (BitrateDistribution.IsVariable): the mode the stream states, else
+    whether the units differ in bitrate; stated is True, False or None for none."""
+    return stated if stated is not None else len(rates) > 1 and max(rates) > min(rates)
+
+
+def distribution(statistics, rates, singular, plural_form, stated=None):
     """Bitrate Mode and Bitrate Distribution (BitrateDistribution.cs): ranges of 32 kbps, the last from 32,000 kbps."""
     if not rates:
         return
-    statistics["Bitrate Mode"] = "unknown" if len(rates) == 1 else "variable" if max(rates) > min(rates) else "constant"
+    statistics["Bitrate Mode"] = ("variable" if stated else "constant") if stated is not None else "unknown" if len(rates) == 1 else "variable" if max(rates) > min(rates) else "constant"
     statistics["Bitrate Distribution"] = None
     bins = {}
     for rate in rates:
@@ -499,6 +505,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         trim = max(0, last[0] - delay - last[1])
     samples = min(max(coded - max(0, first_delay or 0) - trim, 0), coded) if has_time else 0
 
+    is_variable_mode = False
     statistics = {"Packets": str(len(packets) - len(set(cuts))), "Frames": str(total_frames)}
     if has_time and packets:
         bitrate = lambda size: size * 8.0 * rate / per_packet / 1000
@@ -510,12 +517,14 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         if lost:
             statistics["Lost Samples"] = plural(lost, "sample", "samples")
         statistics["Duration"] = fmt_decimal(samples / rate, 3) + " s"
-        statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
         if whole_coded and sizes:
             statistics["Average Bitrate"] = fmt_decimal(total_bytes * 8.0 * rate / whole_coded / 1000, 1) + " kbps"
             statistics["Minimum Bitrate"] = fmt_decimal(bitrate(min(sizes)), 1) + " kbps"
             statistics["Maximum Bitrate"] = fmt_decimal(bitrate(max(sizes)), 1) + " kbps"
-            distribution(statistics, [bitrate(size) for size, count in sorted(sizes.items()) for _ in range(count)], "packet", "packets")
+            rates = [bitrate(size) for size, count in sorted(sizes.items()) for _ in range(count)]
+            stated = True if len(header) >= 80 and struct.unpack_from("<i", header, 28 + 32)[0] == 1 else None
+            is_variable_mode = is_variable(rates, stated)
+            distribution(statistics, rates, "packet", "packets", stated)
     if packets:
         statistics["Packet Sizes"] = plural(len(sizes), "size", "sizes")
         for size in sorted(sizes):
@@ -546,7 +555,7 @@ def speex_expectations(header, packets, positions, gaps=(), cuts=()):
         "lost_samples": lost if has_time else 0,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": total_bytes * 8.0 * rate / whole_coded / 1000 if has_time and whole_coded else None,
-        "is_vbr": len(sizes) > 1,
+        "is_vbr": is_variable_mode,
     }
     return {
         "packets": [[offset, len(data)] + ([list(r) for r in ranges] if len(ranges) > 1 else []) for offset, data, ranges in packets],

@@ -68,7 +68,7 @@ def build(api):
 
     def stats(channels, sets, rate, bits, width):
         return {"DTS/Statistics/Lossless Channel Sets": f"{sets} channel set" + ("s" if sets != 1 else ""), "DTS/Statistics/Lossless Channels": f"{channels} channels",
-                "DTS/Statistics/Lossless Sampling Frequency": f"{rate} Hz", "DTS/Statistics/Lossless Source PCM Resolution": f"{bits} bits",
+                "DTS/Statistics/Lossless Sample Rate": f"{rate} Hz", "DTS/Statistics/Lossless Source PCM Resolution": f"{bits} bits",
                 "DTS/Statistics/Lossless Storage Bit Width": f"{width} bits"}
 
     # The layers: 2.0, 5.1 and 7.1 at 48, 96 and 192 kHz, 24 bits; 16 and 20 bits at 48 kHz.
@@ -79,7 +79,7 @@ def build(api):
         wide = dict(max_rate=rate) if rate != 48000 else {}
         size = {48000: 96, 96000: 96, 192000: 128}[rate]
         samples = 4 * 512 * rate // 48000
-        extension = {"Extension Sampling Frequency": f"{rate} Hz"} if rate != 48000 else {}
+        extension = {"Extension Sample Rate": f"{rate} Hz"} if rate != 48000 else {}
         fields = {**stats(2, 1, rate, 24, 24), **{f"DTS/Statistics/{k}": v for k, v in extension.items()}}
         lossless(f"xll-2-0-24bit-{label}", f"Four units of a stereo core frame and a lossless extension of one stereo channel set, 24 bits at {rate} Hz.", {**stereo, **wide},
                  (STEREO, rate, samples), fields=fields, size=size)

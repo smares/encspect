@@ -259,7 +259,6 @@ public sealed partial class VorbisParser
                 }
 
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
-                Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
                 if (_wholeDecoded > 0)
                 {
                     Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
@@ -268,7 +267,9 @@ public sealed partial class VorbisParser
                 (double minimum, double maximum) = BitrateRange();
                 Add("Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add("Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
-                _distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
+                bool? stated = _identification?.StatedVariable;
+                _isVariable = _distribution.IsVariable(stated);
+                _distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets", stated);
             }
 
             Node sizes = Add("Packet Sizes", Count(_sizes.Count, "size", "sizes"), Explain.PacketSizes);
@@ -334,6 +335,9 @@ public sealed partial class VorbisParser
 
         // The bitrate of each whole packet that codes a block, counted as the packets are read.
         private readonly BitrateDistribution _distribution = new();
+
+        // The decision of "Bitrate Mode", which the stream's IsVbr follows.
+        private bool _isVariable;
 
         private Node? AddPackets()
         {

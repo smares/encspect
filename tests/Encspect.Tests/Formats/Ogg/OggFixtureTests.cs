@@ -11,7 +11,7 @@ namespace Encspect.Tests;
 // statistics and the encoder, for Vorbis and Opus the headers, every packet's block or TOC bytes and
 // the statistics (make_vorbis_opus_fixtures.py); the streams the summary reads; and exactly the
 // findings listed.
-public class OggFixtureTests
+public partial class OggFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.OggFixtures();
 
@@ -57,72 +57,6 @@ public class OggFixtureTests
 
         Assert.True(File.Exists(path), $"Missing golden report {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
-    }
-
-    // libvorbis continues its sample count from every page's granule position, so a repeated packet or a jump of the positions in
-    // the middle is not charged to the end trimming (oggdec writes 30,220 and 29,196 samples for these two files). Counted from the
-    // first page, the trims would be 1,524 (capped at the 1,024 the last packet returns, with vorbis.end-trimming-large) and 800.
-    [Theory]
-    [InlineData("ogg/vorbis-packet-repeated.ogg", 30_720, 500, 30_220)]
-    [InlineData("ogg/vorbis-granule-midstream.ogg", 29_696, 500, 29_196)]
-    public void The_end_trimming_is_counted_from_the_latest_granule_position(string name, long decoded, long trim, long samples)
-    {
-        Report report = Fixtures.AnalyzeMpeg(name);
-
-        Assert.Equal(samples, report.Streams.Single().Samples);
-        Assert.Equal($"{decoded} samples", Find(report.Root, "Coded Samples")?.Value?.ToString());
-        Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
-        Assert.Contains(report.Findings, f => f.Code == "vorbis.granule-inconsistent");
-        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
-    }
-
-    // The same, for what libvorbis does not take: a position at the smallest 64-bit value (the count continues from it, so the last
-    // position is beyond it and nothing is trimmed, with no figure that overflows), a position on an empty packet (libvorbis is not
-    // given it and loses its count at the packet after), and an end-of-stream page written twice (it trims at the first and loses
-    // its count at the hole libogg reports for the copy). The samples are those oggdec writes.
-    [Theory]
-    [InlineData("ogg/vorbis-granule-extreme.ogg", 29_696, 0, 29_696)]
-    [InlineData("ogg/vorbis-empty-carrier.ogg", 29_696, 0, 29_696)]
-    [InlineData("ogg/vorbis-end-page-repeated.ogg", 39_936, 500, 39_436)]
-    public void The_end_trimming_follows_the_positions_libvorbis_takes(string name, long decoded, long trim, long samples)
-    {
-        Report report = Fixtures.AnalyzeMpeg(name);
-
-        Assert.Equal(samples, report.Streams.Single().Samples);
-        Assert.Equal($"{decoded} samples", Find(report.Root, "Coded Samples")?.Value?.ToString());
-        Assert.Equal($"{trim} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
-        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.end-trimming-large");
-        Assert.Equal(name.Contains("extreme", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.granule-beyond-packets"));
-    }
-
-    // The same, for the positions libvorbis takes at an end-of-stream page and after it loses its count (block.c, vorbis_synthesis_blockin).
-    // oggdec writes 28,896 for the first two files and 28,172, 28,672 and 25,684 for the third, the fifth and the last (the last trims what the fifth packet returns, 576, not the 128 of the first two blocks); the libvorbis run with the granule
-    // positions writes 29,696 for vorbis-skip-before-first (oggdec 28,672, a reader behavior like the one of vorbis-packet-errors.ogg).
-    [Theory]
-    [InlineData("ogg/vorbis-eos-then-eos.ogg", 0, 800, 0, 28_896)]
-    [InlineData("ogg/vorbis-eos-mid-then-more.ogg", 0, 800, 0, 28_896)]
-    [InlineData("ogg/vorbis-first-extreme.ogg", 1_024, 500, 0, 28_172)]
-    [InlineData("ogg/vorbis-skip-before-first.ogg", 0, 0, 0, 29_696)]
-    [InlineData("ogg/vorbis-skip-then-small.ogg", 0, 0, 1_024, 28_672)]
-    [InlineData("ogg/vorbis-short-start-trim.ogg", 576, 300, 0, 25_684)]
-    public void The_trims_follow_where_libvorbis_counts_from(string name, long start, long end, long gap, long samples)
-    {
-        Report report = Fixtures.AnalyzeMpeg(name);
-
-        Assert.Equal(samples, report.Streams.Single().Samples);
-        Assert.Equal($"{start} samples", Find(report.Root, "Start Trimming")?.Value?.ToString());
-        Assert.Equal($"{end} samples", Find(report.Root, "End Trimming")?.Value?.ToString());
-        Assert.Equal(gap == 0 ? null : $"{gap} samples", Find(report.Root, "Gap Trimming")?.Value?.ToString());
-        Assert.Equal(name.Contains("first-extreme", StringComparison.Ordinal) || name.Contains("short-start-trim", StringComparison.Ordinal), report.Findings.Any(f => f.Code == "vorbis.start-trimming-large"));
-    }
-
-    // The pages after an end-of-stream page follow from the position libvorbis took there, so none disagrees with it.
-    [Fact]
-    public void A_page_after_an_end_of_stream_page_is_compared_with_its_position()
-    {
-        Report report = Fixtures.AnalyzeMpeg("ogg/vorbis-eos-mid-then-more.ogg");
-
-        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.granule-inconsistent");
     }
 
     private static void CheckPages(JsonElement expected, Node pages)
@@ -191,154 +125,6 @@ public class OggFixtureTests
 
             CheckSpeex(speex, node, where);
         }
-    }
-
-    private static void CheckSpeex(JsonElement speex, Node stream, string where)
-    {
-        Node header = stream.Children.Single(c => c.Name == "Speex Header");
-        if (speex.GetProperty("header").ValueKind == JsonValueKind.Object)
-        {
-            foreach (JsonProperty field in speex.GetProperty("header").EnumerateObject())
-            {
-                Assert.True(field.Value.GetString() == Field(header, field.Name), $"{where}: header field {field.Name} is \"{Field(header, field.Name)}\", expected \"{field.Value.GetString()}\"");
-            }
-        }
-
-        if (speex.TryGetProperty("comment", out JsonElement comment))
-        {
-            Node tag = stream.Children.Single(c => c.Kind == NodeKind.Tag);
-            Assert.Equal(comment.GetProperty("vendor").GetString(), Field(tag, "Vendor"));
-            Assert.Equal(comment.GetProperty("comments").EnumerateArray().Select(c => c.GetString()), tag.Children.Where(IsComment).Select(CommentText));
-        }
-
-        Node? packets = stream.Children.SingleOrDefault(c => c.Name == "Audio Packets");
-        JsonElement[] expected = speex.GetProperty("packets").EnumerateArray().ToArray();
-        List<Node> actual = packets is null ? [] : [.. packets.Children];
-        Assert.Equal(expected.Length, actual.Count);
-        JsonElement[] frames = speex.GetProperty("frames").EnumerateArray().ToArray();
-        for (int i = 0; i < expected.Length; i++)
-        {
-            JsonElement[] item = expected[i].EnumerateArray().ToArray();
-            Node packet = actual[i];
-            Assert.Equal(NodeKind.Frame, packet.Kind);
-            Assert.True(item[0].GetInt64() == packet.Offset, $"{where}: packet {i} at {packet.Offset}, expected {item[0].GetInt64()}");
-            IReadOnlyList<ByteRange> ranges = packet.Ranges ?? [new ByteRange(packet.Offset, item[1].GetInt64())];
-            Assert.Equal(item[1].GetInt64(), ranges.Sum(r => r.Length));
-            if (item.Length > 2)
-            {
-                Assert.Equal(item.Skip(2).Select(r => $"{r[0].GetInt64()}+{r[1].GetInt64()}"), ranges.Select(r => $"{r.Offset}+{r.Length}"));
-            }
-            else
-            {
-                Assert.Null(packet.Ranges);
-            }
-
-            Assert.Equal(
-                frames[i].EnumerateArray().Select(f => string.Join(",", f.EnumerateArray().Select(v => v.ValueKind == JsonValueKind.Null ? "-" : v.GetInt32().ToString(CultureInfo.InvariantCulture)))),
-                packet.Children.Where(c => c.Name == "Frame").Select(FrameModes));
-        }
-
-        if (speex.GetProperty("statistics").ValueKind == JsonValueKind.Object)
-        {
-            Node statistics = stream.Children.Single(c => c.Kind == NodeKind.Statistics);
-            foreach (JsonProperty field in speex.GetProperty("statistics").EnumerateObject())
-            {
-                string? value = Fixtures.Resolve(statistics, field.Name).FirstOrDefault()?.Value?.ToString();
-                Assert.True(field.Value.GetString() == value, $"{where}: statistics {field.Name} is \"{value}\", expected \"{field.Value.GetString()}\"");
-            }
-
-            Assert.Equal(speex.GetProperty("statistics").EnumerateObject().Count(), Leaves(statistics).Count());
-        }
-        else
-        {
-            Assert.DoesNotContain(stream.Children, c => c.Kind == NodeKind.Statistics);
-        }
-
-        if (speex.TryGetProperty("encoder", out JsonElement encoder))
-        {
-            Node node = stream.Children.Single(c => c.Name == "Encoder");
-            Assert.Equal(encoder.GetProperty("name").GetString(), node.Value?.ToString());
-            Assert.Equal(encoder.GetProperty("confidence").GetString(), Field(node, "Confidence"));
-        }
-
-        CheckWriter(speex, stream);
-    }
-
-    // Vorbis: the identification header's fields, the comment, the setup header's summary and
-    // groups, every audio packet with its block, the statistics and the encoder.
-    private static void CheckVorbis(JsonElement vorbis, Node stream, string where)
-    {
-        CheckFields(vorbis.GetProperty("header"), stream.Children.Single(c => c.Name == "Identification Header"), where);
-        CheckComment(vorbis, stream);
-        if (vorbis.TryGetProperty("setup", out JsonElement setup))
-        {
-            Node node = stream.Children.Single(c => c.Name == "Setup Header");
-            Assert.Equal(NodeKind.Detail, node.Kind);
-            Assert.True(setup.GetProperty("value").GetString() == node.Value?.ToString(), $"{where}: setup header is \"{node.Value}\"");
-            CheckFields(setup.GetProperty("groups"), node, where);
-        }
-
-        string[] blocks = vorbis.GetProperty("blocks").EnumerateArray().Select(b => b.GetString()!).ToArray();
-        List<Node> packets = CheckPackets(vorbis, stream, where);
-        Assert.Equal(blocks, packets.Select(VorbisBlock));
-        CheckStatistics(vorbis, stream, where);
-        CheckEncoder(vorbis, stream);
-    }
-
-    private static string VorbisBlock(Node packet)
-    {
-        string summary = packet.Value!.ToString()!;
-        return summary switch
-        {
-            "empty" => "empty",
-            _ when summary.EndsWith("not audio", StringComparison.Ordinal) => "not-audio",
-            _ when summary.EndsWith("mode not readable", StringComparison.Ordinal) => "bad-mode",
-            _ when summary.Contains(" block of ", StringComparison.Ordinal) =>
-                (summary.Contains("long block", StringComparison.Ordinal) ? "L" : "S") + summary[(summary.LastIndexOf("mode ", StringComparison.Ordinal) + 5)..],
-            _ => "unread",
-        };
-    }
-
-    // Opus: OpusHead's fields, the comment and the data after it, every audio packet with each
-    // stream's TOC, the statistics and the encoder.
-    private static void CheckOpus(JsonElement opus, Node stream, string where)
-    {
-        if (opus.GetProperty("header").ValueKind == JsonValueKind.Object)
-        {
-            CheckFields(opus.GetProperty("header"), stream.Children.Single(c => c.Name == "Opus Head"), where);
-        }
-
-        CheckComment(opus, stream);
-        Assert.Equal(opus.TryGetProperty("extra", out JsonElement extra) ? extra.GetString() : null, stream.Children.SingleOrDefault(c => c.Name == "Extra Data")?.Value?.ToString());
-        List<Node> packets = CheckPackets(opus, stream, where);
-        JsonElement[] tocs = opus.GetProperty("tocs").EnumerateArray().ToArray();
-        for (int i = 0; i < packets.Count; i++)
-        {
-            Node packet = packets[i];
-            List<Node> parts = packet.Children.Any(c => c.Name.StartsWith("Stream ", StringComparison.Ordinal))
-                ? [.. packet.Children]
-                : [packet];
-            Assert.True(
-                tocs[i].EnumerateArray().Select(t => t.ValueKind == JsonValueKind.Null ? "-" : string.Join(",", t.EnumerateArray().Select(v => v.GetInt32()))).SequenceEqual(parts.Select(OpusToc)),
-                $"{where}: packet {i} has the TOCs {string.Join("; ", parts.Select(OpusToc))}, expected {tocs[i]}");
-        }
-
-        CheckStatistics(opus, stream, where);
-        CheckEncoder(opus, stream);
-    }
-
-    // "config,stereo,code,frames" of one stream's part, "-" without a TOC.
-    private static string OpusToc(Node part)
-    {
-        if (part.Children.FirstOrDefault(c => c.Name == "TOC") is not { } toc)
-        {
-            return "-";
-        }
-
-        string config = Field(toc, "Config")!.Split(':')[0];
-        string stereo = Field(toc, "IsStereo") == "true" ? "1" : "0";
-        string code = Field(toc, "Frame Count Code")!.Split(' ')[0];
-        return $"{config},{stereo},{code},{part.Children.Count(c => c.Name == "Frame")}";
     }
 
     private static void CheckFields(JsonElement expected, Node node, string where)
@@ -442,14 +228,6 @@ public class OggFixtureTests
         node.Children.FirstOrDefault(c => c.Name == "Text") is { } text
             ? text.Value!.ToString()!
             : $"{Field(node, "Field Name")}={Field(node, "Value")}";
-
-    // "nb,wb,uwb,prefix" as the manifest lists a frame, "-" for a layer the frame does not have.
-    private static string FrameModes(Node frame)
-    {
-        string Submode(string layer) => frame.Children.FirstOrDefault(c => c.Name == layer) is { } node ? Field(node, "Submode") ?? "?" : "-";
-        string prefix = frame.Children.FirstOrDefault(c => c.Name == "In-band Data") is { } inBand ? inBand.Value!.AsInteger()!.Value.ToString(CultureInfo.InvariantCulture) : "0";
-        return $"{Submode("Narrowband Layer")},{Submode("Wideband Layer")},{Submode("Ultra-Wideband Layer")},{prefix}";
-    }
 
     private static void CheckStreamInfos(JsonElement expected, IReadOnlyList<StreamInfo> streams)
     {

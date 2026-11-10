@@ -32,6 +32,10 @@ internal sealed partial class FileReader
         int crcIndex = 0;
         long position = dataStart;
         int seen = 0;
+
+        // Registered before the children, so that of the findings of one kind the Cluster's own header comes first; the node ends where the Cluster
+        // finally does, which a Cluster of unknown size learns in the loop.
+        CheckHeaderForm(header, Schema.Find(Schema.Cluster), () => end);
         while (position < end)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
@@ -152,8 +156,6 @@ internal sealed partial class FileReader
             position = childEnd;
         }
 
-        // After the loop: a Cluster of unknown size ends where its last child does, and the finding points at the Cluster's node.
-        CheckHeaderForm(header, Schema.Find(Schema.Cluster), end);
         cluster.DataLength = end - dataStart;
         cluster.ItemCount = records.Items.Count - cluster.FirstItem;
         records.Clusters.Add(cluster);
@@ -190,7 +192,16 @@ internal sealed partial class FileReader
     }
 
     // An Element ID coded longer than it needs to be, or a size coded in more octets than EBMLMaxSizeLength allows.
+    // The common case allocates nothing: only an element with a long ID or size gets a closure.
     private void CheckHeaderForm(ElementHeader child, ElementDefinition? definition, long end)
+    {
+        if (child.IsLongId || child.IsLongSize)
+        {
+            CheckHeaderForm(child, definition, () => end);
+        }
+    }
+
+    private void CheckHeaderForm(ElementHeader child, ElementDefinition? definition, Func<long> endOf)
     {
         if (!child.IsLongId && !child.IsLongSize)
         {
@@ -200,13 +211,13 @@ internal sealed partial class FileReader
         string name = definition?.Name ?? "Unknown Element";
         if (child.IsLongId)
         {
-            _findings.Add(Severity.Info, "matroska.element-id-long", () => new Node(name, child.Offset, end - child.Offset), count =>
+            _findings.Add(Severity.Info, "matroska.element-id-long", () => new Node(name, child.Offset, endOf() - child.Offset), count =>
                 $"{(count == 1 ? "An Element ID is" : $"{count} Element IDs are")} not coded at their shortest length, which RFC 8794 requires (section 5); the first is the {name}'s at 0x{child.Offset:X}.");
         }
 
         if (child.IsLongSize)
         {
-            _findings.Add(Severity.Warning, "matroska.size-too-long", () => new Node(name, child.Offset, end - child.Offset), count =>
+            _findings.Add(Severity.Warning, "matroska.size-too-long", () => new Node(name, child.Offset, endOf() - child.Offset), count =>
                 $"{(count == 1 ? "An Element Data Size is" : $"{count} Element Data Sizes are")} coded in more octets than the EBML Header's EBMLMaxSizeLength allows, which makes the element invalid (RFC 8794, section 11.2.5); the first is the {name}'s at 0x{child.Offset:X}.");
         }
     }

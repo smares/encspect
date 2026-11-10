@@ -742,7 +742,7 @@ def build_coding():
     data = b"".join(f for f, _ in built)
     samples = sum(256 * [1, 2, 3, 6][o["numblkscod"]] for o in six)
     fixture("coding-eac3-blocks", ".eac3", "Six 2/0 frames of 6, 6, 3, 2, 1 and 6 blocks with block switching, rematrixing flags and spectral extension that starts and stops.",
-            data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, samples)], [],
+            data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, samples, vbr=True)], [],
             crosscheck={"ffprobe": True, "decode": True, "skip_insertion": True, "skip_control": False, "skip": {"skip_control": ZERO_ALLOCATION}}, coding=[[coding_unit(48000, [r], True) for _, r in built]])
 
     # E-AC-3 program frames of an independent 2/0 frame and a dependent frame: the blocks of both make the frame's values, a dependent mono

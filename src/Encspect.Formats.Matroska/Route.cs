@@ -212,7 +212,6 @@ internal sealed partial class FileReader
 
         // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_FLAC (the marker and metadata blocks), A_WAVPACK4 (the stream version), A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
-        // FFmpeg uses a CodecPrivate when there is one; Encspect follows the mapping.
         if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" or "flac" or "wavpack" || codecId == "A_AAC"))
         {
             _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
@@ -254,7 +253,7 @@ internal sealed partial class FileReader
         }
 
         // The legacy AAC IDs carry no CodecPrivate ("Initialization: none", draft-ietf-cellar-codec, section 3.4.2): the AudioSpecificConfig is
-        // worked out from the ID and the Audio element following ISO/IEC 14496-3 (FFmpeg's matroskadec.c does the same for the common rates), and mapped to the CodecID that gives its values.
+        // worked out from the ID and the Audio element following ISO/IEC 14496-3, and mapped to the CodecID that gives its values.
         Node? configurationNode = track.CodecPrivateNode;
         if (privateData is null && codec == "aac" && track.CodecIdNode is { } idNode
             && Codecs.LegacyAacConfig(codecId, track.SamplingFrequency, track.OutputSamplingFrequency, track.Channels) is { } synthesized)
@@ -404,9 +403,9 @@ internal sealed partial class FileReader
                 }
             }
 
-            double containerPadding = DiscardOf(segment, track);
-            double containerDelay = track.CodecDelayNode is null ? 0 : track.CodecDelay / 1e9;
-            if (added.Count == 1 && ContainerDuration(segment, track) - containerDelay - containerPadding is > 0 and var length)
+            // The container's own figure: the length its blocks' timestamps give, at the stream's output rate, without the CodecDelay or the DiscardPadding
+            // (those are the codec parsers' trims, which `Samples` has dropped and this figure has not).
+            if (added.Count == 1 && ContainerDuration(segment, track) is > 0 and var length)
             {
                 ContainerLength.AddDuration(node, (name, value, description) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = Topics.Tracks },
                     length, added[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
@@ -604,14 +603,17 @@ internal sealed partial class FileReader
         return blocks is { Count: > 0 } && blocks[^1] == found.Block ? found.Padding / 1e9 : 0;
     }
 
-    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.
+    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last, and the last block's frames at
+    // the average step of a frame (the span over the frames of the blocks before the last, as a laced block holds several frames).
     private static double ContainerDuration(SegmentState segment, TrackInfo track)
     {
         TrackStatistics statistics = track.Statistics;
         double scale = segment.TimestampScale / 1e9;
         double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale : 0;
-        double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
-        return statistics.HasTimes ? span + step : 0;
+        long last = Math.Max(1, statistics.LargestFrames);
+        long before = statistics.Frames - statistics.LargestFrames;
+        double step = statistics.Blocks > 1 && before > 0 ? span / before : (track.DefaultDuration is { } d ? d / 1e9 : 0);
+        return statistics.HasTimes ? span + (step * last) : 0;
     }
 
     // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.

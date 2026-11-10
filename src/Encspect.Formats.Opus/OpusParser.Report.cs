@@ -160,7 +160,6 @@ public sealed partial class OpusParser
             }
 
             Add(node, "Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
-            Add(node, "IsVbr", NodeValue.Boolean(_sizesDiffer), Explain.StatIsVbr, Topics.BitrateModes);
             if (_wholeDecoded > 0)
             {
                 Add(node, "Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeDecoded / 1000, 1, "kbps"), Explain.AverageBitrate);
@@ -172,6 +171,7 @@ public sealed partial class OpusParser
             {
                 Add(node, "Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add(node, "Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
+                _isVariable = distribution.IsVariable();
                 distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
             }
 
@@ -223,7 +223,7 @@ public sealed partial class OpusParser
             {
                 string unit = _records.StreamCount > 1 ? "stream packet" : "packet";
                 string units = unit + "s";
-                Node channels = Add(node, "Stereo Coding", Count(_stereo[1], $"stereo {unit}", $"stereo {units}"), Explain.StereoCoding, Topics.OpusToc);
+                Node channels = Add(node, "Channel Coding", NodeValue.Integer(_stereo[1], $"stereo {units}", $"stereo {unit}"), Explain.StereoCoding, Topics.OpusToc);
                 Add(channels, "Stereo", Share(_stereo[1], _parts, unit, units), Explain.StereoShare);
                 Add(channels, "Mono", Share(_stereo[0], _parts, unit, units), Explain.MonoShare);
                 Node codes = Add(node, "Frame Packing", Count(_codes.Count(c => c > 0), "code", "codes"), Explain.FramePacking, Topics.OpusToc);

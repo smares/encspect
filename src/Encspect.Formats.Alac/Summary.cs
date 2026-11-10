@@ -219,7 +219,7 @@ internal static class Summary
             statistics.Add(cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration, null));
             statistics.Add(cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate, null));
             statistics.Add(cover("Channels", NodeValue.Integer(channels, "channels", "channel"), Explain.StatChannels, null));
-            statistics.Add(cover("Bit Depth", NodeValue.Integer(cookie.BitDepth, "bits", "bit"), Explain.StatBits, null));
+            statistics.Add(cover("Bits Per Sample", NodeValue.Integer(cookie.BitDepth, "bits", "bit"), Explain.StatBits, null));
             statistics.Add(cover("Frame Length", NodeValue.Integer(cookie.FrameLength, "samples", "sample"), Explain.StatFrameLength, Topics.Alac));
         }
 

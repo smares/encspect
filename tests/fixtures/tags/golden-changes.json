@@ -1,0 +1,58 @@
+{
+  "goldens": [
+    "tests/fixtures/tags/"
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "from": "IsVbr",
+      "to": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "MPEG Audio",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MPEG Audio",
+        "Statistics",
+        "IsVbr"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    }
+  ]
+}

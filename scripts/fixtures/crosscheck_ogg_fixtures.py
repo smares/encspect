@@ -27,7 +27,7 @@ For Vorbis and Opus streams (make_vorbis_opus_fixtures.py, make_external_vorbis_
   vendor string and comments.
 - opusinfo: each Opus stream's pre-skip, playback gain, channels, input sample rate, stream and
   coupled counts, vendor string and comments, the playback length, and whether it calls the
-  stream hard CBR, which the manifest's IsVbr must contradict.
+  stream hard CBR, which the manifest's packet sizes must contradict.
 - ffprobe: codec, sample rate (48 kHz for Opus) and channels, the speakers of its channel layout
   where the stream names any (channel_layouts.py), the size of every audio packet, and
   for Opus each packet's duration, the samples its TOC gives (vorbis_opus_model.declared_samples),
@@ -392,8 +392,10 @@ def check_opus(name, manifest, problems, skips):
         for line in wanted:
             if line not in text:
                 problems.append(f"opusinfo does not print {line!r}")
-        if ("(hard-CBR)" in text) == info["is_vbr"]:
-            problems.append(f"opusinfo {'calls' if '(hard-CBR)' in text else 'does not call'} the stream hard CBR, where IsVbr is {info['is_vbr']}")
+        # opusinfo looks at the packet sizes only; isVbr follows the bitrates per packet, which differ with the durations too.
+        sizes_vary = " to " in str(statistics.get("Packet Sizes", ""))
+        if ("(hard-CBR)" in text) == sizes_vary:
+            problems.append(f"opusinfo {'calls' if '(hard-CBR)' in text else 'does not call'} the stream hard CBR, where the packet sizes {'differ' if sizes_vary else 'are all equal'}")
 
     if "ffprobe" not in skips:
         probe = ffprobe(path)

@@ -421,7 +421,8 @@ def check_against_report(audio, general, report, problems):
     # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (asfenc.c), and neither the analyzer nor MediaInfo takes the
     # bit rate mode from a string: an ffmpeg remux's IsVBR is "0" or "1" as text, and MediaInfo states no mode for it.
     if is_vbr is not None and not isinstance(is_vbr, str):
-        parser = "VBR" if stream["isVbr"] else "CBR"
+        # The header's own statement: the stream's isVbr follows the Bitrate Mode decision, which the frames' bitrates may decide against it.
+        parser = "VBR" if is_vbr else "CBR"
         for kind, track in (("audio", audio), ("overall", general)):
             mode = track.get("BitRate_Mode" if kind == "audio" else "OverallBitRate_Mode")
             if mode != parser:

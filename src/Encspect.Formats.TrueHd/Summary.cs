@@ -129,7 +129,7 @@ internal static class Summary
         }
 
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
-        statistics.Add(Cover("Sampling Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
+        statistics.Add(Cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
         statistics.Add(Cover("Channels", NodeValue.Integer(channels, "channels"), Explain.StatChannels, Topics.ChannelLayouts));
         if (layout is not null)
         {

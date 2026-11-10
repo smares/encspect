@@ -491,7 +491,10 @@ MEDIAINFO_READS_OTHERWISE = {
     "truncated-in-skip": dict.fromkeys(["frames", "samples", "duration", "stream size"], COMPLETE_FRAMES),
     "sample-short": {"frames in the sample table": "MediaInfo counts the samples of the sample table, the cut one included (6), where the analyzer leaves the cut frame out of its frame count (5): it is in the samples and the lost samples only"},
     "coding-ac3-core-dependent": dict.fromkeys(["format", "bitrate", "bitrate mode", "samples", "duration", "stream size"], CORE_AND_DEPENDENT),
-    "coding-eac3-blocks": dict.fromkeys(["bitrate", "samples", "duration"], VARYING_BLOCKS),
+    # The six frames are 512 bytes each and hold 6, 6, 3, 2, 1 and 6 blocks (numblkscod, A/52 Annex E 3.1), so each frame lasts a different time and its bitrate runs from
+    # 128 to 768 kbps: variable, as the analyzer says. MediaInfo never sets a mode but CBR for E-AC-3 and sees equal frame sizes.
+    "coding-eac3-blocks": {**dict.fromkeys(["bitrate", "samples", "duration"], VARYING_BLOCKS),
+                           "bitrate mode": VARYING_BLOCKS + "; it calls the stream constant (Streams_Fill, \"CBR\" by default), though the equal frame sizes cover different numbers of blocks"},
     "coding-eac3-dependent": dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; it calls the stream constant (Streams_Fill, \"CBR\" by default)"),
     "coding-eac3-nine-frames": {**dict.fromkeys(["bitrate", "bitrate mode", "samples", "duration", "stream size"], VARYING_BLOCKS + "; " + EIGHTH_DEPENDENT),
                                 "frames": SEPARATE_DEPENDENT},

@@ -83,9 +83,10 @@ public sealed class WmaVoiceParser : ICodecParser
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings);
         Node? statistics = null;
         double seconds = 0;
+        bool isVariable = false;
         if (totals.Packets > 0)
         {
-            statistics = VoiceReport.Statistics(voice, format, config, parent, out seconds);
+            statistics = VoiceReport.Statistics(voice, format, config, parent, out seconds, out isVariable);
             streamNode.Add(statistics);
         }
 
@@ -130,7 +131,7 @@ public sealed class WmaVoiceParser : ICodecParser
             LostSamples = totals.LostSamples,
             Duration = seconds,
             AverageBitrate = seconds > 0 ? totals.PacketBytes * 8.0 / seconds / 1000 : null,
-            IsVbr = config.IsVbr ?? false,
+            IsVbr = isVariable,
             Encoder = detected.Encoder,
             EncoderConfidence = detected.EncoderConfidence,
             Writer = detected.Writer,

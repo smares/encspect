@@ -62,7 +62,7 @@ public class DtsLosslessTests
         Report report = Open(name);
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal((rate, channels, 24), (stream.SampleRate, stream.Channels, stream.BitsPerSample));
-        Assert.Equal(statistic, Field(report, "DTS/Statistics/Lossless Sampling Frequency"));
+        Assert.Equal(statistic, Field(report, "DTS/Statistics/Lossless Sample Rate"));
         Node? frequencyBands = Fixtures.Resolve(report.Root, $"{Xll}/Channel Set 1/Frequency Bands").FirstOrDefault();
         Assert.Equal(bands > 1 ? "2 bands" : null, frequencyBands?.Value?.ToString());
         Assert.NotEqual("(missing)", Field(report, $"{Xll}/Samples per Segment"));

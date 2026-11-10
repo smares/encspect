@@ -24,5 +24,35 @@
         "value"
       ]
     }
+  ],
+  "removed": [
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Container Duration",
+      "goldens": [
+        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
+        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
+        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
+        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Container Samples",
+      "goldens": [
+        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
+        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
+        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
+        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
+      ]
+    }
   ]
 }

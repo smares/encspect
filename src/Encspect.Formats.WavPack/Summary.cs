@@ -7,6 +7,17 @@ namespace Encspect.Formats.WavPack;
 // The stream node, the checks over the whole file, the statistics, the encoder and the stream info.
 internal static partial class Summary
 {
+    // The channel mode of a stream from its channel count and its stereo blocks, shared by the files and the packets of a container.
+    internal static string? ChannelModeOf(int channels, int stereoBlocks, int jointStereoBlocks) => channels switch
+    {
+        1 => "Mono",
+        2 when jointStereoBlocks == stereoBlocks && stereoBlocks > 0 => "Joint stereo (mid/side)",
+        2 when jointStereoBlocks > 0 => "Stereo, mid/side in some blocks",
+        2 => "Stereo",
+        > 2 => "Multichannel",
+        _ => null,
+    };
+
     [GeneratedRegex(@"wavpack|libwavpack", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex WavPackWords();
 
@@ -167,6 +178,13 @@ internal static partial class Summary
         string evidence = isFive
             ? $"The blocks hold {(s.HasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
             : $"The blocks have stream version 0x{first.Header.Version:X3} and neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a file, and another encoder, such as FFmpeg, may have written it";
+        return EncoderNode(name, isFive, evidence, claims, cover, s.Findings);
+    }
+
+    // The Encoder node of a file or of the packets of a container: what the blocks show, then each claim of a tag or the container weighed as
+    // evidence or, where it disagrees, a finding.
+    internal static Node EncoderNode(string name, bool isFive, string evidence, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, string?, Node> cover, FindingCollector findings)
+    {
         Node encoder = cover("Encoder", name, Explain.Encoder, ClaimRoles.EncoderTopic);
         encoder.Add(cover("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow, null));
         encoder.Add(cover("Evidence", evidence, Explain.Evidence, null));
@@ -189,7 +207,7 @@ internal static partial class Summary
             }
             else
             {
-                s.Findings.Add(Severity.Info, "wavpack.encoder-claim-differs", claim.Source, _ =>
+                findings.Add(Severity.Info, "wavpack.encoder-claim-differs", claim.Source, _ =>
                     $"The {claim.Description} names \"{text}\", but the blocks point to {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
             }
         }
@@ -349,15 +367,7 @@ internal static partial class Summary
         s.Leading.Add(statistics);
 
         string codec = isCorrection ? "WavPack correction data" : isHybrid ? "WavPack hybrid" : s.HasLossyBlocks ? "WavPack lossy" : "WavPack lossless";
-        string? channelMode = channels switch
-        {
-            1 => "Mono",
-            2 when s.JointStereoBlocks == s.StereoBlocks && s.StereoBlocks > 0 => "Joint stereo (mid/side)",
-            2 when s.JointStereoBlocks > 0 => "Stereo, mid/side in some blocks",
-            2 => "Stereo",
-            > 2 => "Multichannel",
-            _ => null,
-        };
+        string? channelMode = ChannelModeOf(channels, s.StereoBlocks, s.JointStereoBlocks);
         List<Series> series = s.Figures?.Series(anchor, s.Cancellation) ?? [];
         return new StreamInfo
         {

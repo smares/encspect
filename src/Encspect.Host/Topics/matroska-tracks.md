@@ -2,7 +2,7 @@
 id: matroska-tracks
 title: Tracks, codec IDs and content encodings in Matroska
 related: matroska-container, matroska-content-encryption, matroska-timestamps, matroska-lacing, opus-pre-skip, audio-specific-config, channel-layouts
-references: RFC 9559 sections 5.1.4.1.1 to 5.1.4.1.31; the Matroska codec mapping (draft-ietf-cellar-codec-20, section 3.4); FFmpeg libavformat/matroskadec.c
+references: RFC 9559 sections 5.1.4.1.1 to 5.1.4.1.31; the Matroska codec mapping (draft-ietf-cellar-codec-20, section 3.4)
 ---
 
 **The track.** Each TrackEntry has a TrackNumber, which blocks use to name it, a TrackType (audio is 2, video 1, subtitles 17), a CodecID and, for audio, an Audio element with SamplingFrequency, Channels, BitDepth and, for SBR, an OutputSamplingFrequency.

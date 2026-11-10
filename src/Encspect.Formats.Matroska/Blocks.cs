@@ -61,10 +61,18 @@ internal sealed partial class FileReader
             return AddBlock(records, block, name, cluster.Timestamp);
         }
 
-        if (!TryReadLace(lacing, element.DataOffset + fixedPart, remaining, block.Missing, out int count, out long laceBytes, out string? why))
+        if (!TryReadLace(lacing, element.DataOffset + fixedPart, remaining, block.Missing, out int count, out long laceBytes, out string? why, out bool isHeaderCut))
         {
-            block.Status = BlockStatus.LaceInvalid;
             block.FramesDelta = element.Length + fixedPart;
+
+            // The file ends inside the lacing header of a cut block: the lace is not invalid, and no frame is in the file (the truncation is the element's finding).
+            if (isHeaderCut)
+            {
+                block.Status = BlockStatus.Short;
+                return AddBlock(records, block, name, cluster.Timestamp);
+            }
+
+            block.Status = BlockStatus.LaceInvalid;
             _findings.Add(Severity.Warning, "matroska.lacing-invalid", () => new Node(name, element.Offset, end - element.Offset), n =>
                 $"{(n == 1 ? "A block's" : $"{n} blocks'")} lacing header does not add up (RFC 9559, section 10.3); the first, the {name} at 0x{element.Offset:X} with {LacingName(lacing)} lacing, {why}. Its frames are not read.");
             return AddBlock(records, block, name, cluster.Timestamp);
@@ -202,6 +210,7 @@ internal sealed partial class FileReader
             statistics.FirstOffset = block.FramesOffset;
             statistics.Smallest = timestamp;
             statistics.Largest = timestamp;
+            statistics.LargestFrames = block.Frames;
         }
         else if (timestamp < statistics.Last)
         {
@@ -211,6 +220,11 @@ internal sealed partial class FileReader
 
         statistics.Last = timestamp;
         statistics.Smallest = Math.Min(statistics.Smallest, timestamp);
+        if (timestamp >= statistics.Largest)
+        {
+            statistics.LargestFrames = block.Frames;
+        }
+
         statistics.Largest = Math.Max(statistics.Largest, timestamp);
         statistics.LastEnd = block.End;
     }
@@ -228,6 +242,7 @@ internal sealed partial class FileReader
                 statistics.HasTimes = false;
                 statistics.Smallest = double.MaxValue;
                 statistics.Largest = double.MinValue;
+                statistics.LargestFrames = 0;
                 statistics.Backwards = 0;
                 statistics.FirstBackwards = null;
                 statistics.FirstOffset = -1;
@@ -282,19 +297,25 @@ internal sealed partial class FileReader
     }
 
     // The lacing header (RFC 9559 section 10.3) at position: the number of frames, and each frame's size into _laceSizes, the last
-    // included. laceBytes is how many bytes the header takes. remaining is what the block holds after its fixed fields. False, with the
-    // reason, where the sizes do not add up.
-    private bool TryReadLace(Lacing lacing, long position, long remaining, long missing, out int count, out long laceBytes, out string? why)
+    // included. laceBytes is how many bytes the header takes. remaining is what the block holds after its fixed fields; missing is how many
+    // bytes the block states beyond the file's end, so the sizes of a cut block are checked against remaining + missing and the frames the file
+    // ends inside or before are not a fault of the lace. False, with the reason, where the sizes do not add up; isHeaderCut where the file ends
+    // inside the header of a cut block.
+    private bool TryReadLace(Lacing lacing, long position, long remaining, long missing, out int count, out long laceBytes, out string? why, out bool isHeaderCut)
     {
         _laceSizes.Clear();
         count = 0;
         laceBytes = 0;
         why = null;
+        isHeaderCut = missing > 0;
+        long limit = remaining + missing;
         if (remaining < 1)
         {
             why = "ends before the number of frames";
             return false;
         }
+
+        isHeaderCut = false;
 
         _reader.Position = position;
         count = _reader.ReadByte() + 1;
@@ -322,6 +343,7 @@ internal sealed partial class FileReader
                         if (laceBytes >= remaining)
                         {
                             why = "ends inside the frame sizes";
+                            isHeaderCut = missing > 0;
                             return false;
                         }
 
@@ -335,7 +357,7 @@ internal sealed partial class FileReader
                     }
 
                     total += size;
-                    if (total > remaining - laceBytes)
+                    if (total > limit - laceBytes || total > int.MaxValue)
                     {
                         why = "names frames larger than the block";
                         return false;
@@ -354,6 +376,7 @@ internal sealed partial class FileReader
                         if (laceBytes >= remaining)
                         {
                             why = "ends inside the frame sizes";
+                            isHeaderCut = missing > 0;
                             return false;
                         }
 
@@ -362,6 +385,7 @@ internal sealed partial class FileReader
                         if (width == 0 || laceBytes + width > remaining)
                         {
                             why = width == 0 ? "has a frame size that is no variable-size integer" : "ends inside the frame sizes";
+                            isHeaderCut = width != 0 && missing > 0;
                             return false;
                         }
 
@@ -373,14 +397,14 @@ internal sealed partial class FileReader
 
                         laceBytes += width;
                         long size = i == 0 ? raw : previous + (raw - ((1L << ((7 * width) - 1)) - 1));
-                        if (size < 0 || size > remaining)
+                        if (size < 0 || size > limit || size > int.MaxValue)
                         {
                             why = size < 0 ? "gives a frame a negative size" : "names frames larger than the block";
                             return false;
                         }
 
                         total += size;
-                        if (total > remaining - laceBytes)
+                        if (total > limit - laceBytes || total > int.MaxValue)
                         {
                             why = "names frames larger than the block";
                             return false;
@@ -394,8 +418,8 @@ internal sealed partial class FileReader
                 }
         }
 
-        long last = remaining - laceBytes - total;
-        if (last < 0)
+        long last = limit - laceBytes - total;
+        if (last < 0 || last > int.MaxValue)
         {
             why = "names frames larger than the block";
             return false;

@@ -46,6 +46,14 @@ internal sealed record Identification(uint Version, int Channels, uint Rate, int
             (packet[29] & 1) != 0);
     }
 
+    // The bitrate mode the three hints state (section 4.2.2), or null when they state none: constant when all three are set and equal, variable
+    // when a maximum and/or a minimum is set (the section reads such a stream as VBR within those limits). A nominal alone says nothing about
+    // the packets' variation.
+    public bool? StatedVariable =>
+        BitrateMaximum > 0 && BitrateNominal > 0 && BitrateMinimum > 0 && BitrateMaximum == BitrateNominal && BitrateNominal == BitrateMinimum ? false
+        : BitrateMaximum > 0 || BitrateMinimum > 0 ? true
+        : null;
+
     // Section 4.2.2: the fields are hints, meaningful only when greater than zero.
     public string BitrateHint
     {

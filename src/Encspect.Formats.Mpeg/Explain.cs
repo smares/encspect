@@ -219,7 +219,7 @@ internal static class Explain
     public const string StatFrames = "How many complete audio frames the region has.";
     public const string StatSamples = "Samples per channel in those frames and in a last frame cut by the end of the data or the next frame, which declares its samples all the same.";
     public const string StatDuration = "The playing time of the samples above, a cut frame's included, before any gapless trimming.";
-    public const string IsVbr = "Whether the frames use more than one bitrate. A VBR header alone does not make a file VBR.";
+    public const string BitrateMode = "Whether the bitrate is constant or variable: variable where the frames differ in bitrate, constant where they do not, and unknown for a single frame, since one frame shows no variation. A VBR header alone does not make a file variable.";
     public const string AverageBitrate = "The bits of those frames divided by their playing time.";
     public const string MinimumBitrate = "The lowest bitrate a frame header gives.";
     public const string MaximumBitrate = "The highest bitrate a frame header gives.";

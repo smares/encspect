@@ -237,7 +237,7 @@ public class TypedJsonTests
         Assert.Contains("\"name\": \"Sample Rate\",\n", json);
         Assert.Contains("\"value\": 44100,\n", json);
         Assert.Contains("\"unit\": \"Hz\",\n", json);
-        Assert.Contains("\"name\": \"IsVbr\",\n", json);
+        Assert.Contains("\"name\": \"IsUnsynchronized\",\n", json);
         Assert.Contains("\"value\": false,\n", json);
         Assert.Contains("\"kind\": \"Tag\",\n", json);
         Assert.DoesNotContain("\"value\": \"true\"", json);

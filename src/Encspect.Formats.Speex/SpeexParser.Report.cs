@@ -169,7 +169,6 @@ public sealed partial class SpeexParser
                 }
 
                 Add("Duration", NodeValue.Decimal(samples / (double)Rate, 3, "s"), Explain.Duration);
-                Add("IsVbr", NodeValue.Boolean(_sizes.Count > 1), Explain.StatIsVbr, Topics.BitrateModes);
                 if (_wholeCoded > 0 && _sizes.Count > 0)
                 {
                     Add("Average Bitrate", NodeValue.Decimal(_bytes * 8.0 * Rate / _wholeCoded / 1000, 1, "kbps"), Explain.AverageBitrate);
@@ -181,7 +180,9 @@ public sealed partial class SpeexParser
                         rates.Add(PacketBitrate(size), count);
                     }
 
-                    rates.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
+                    bool? stated = _header?.Vbr == 1 ? true : null;
+                    _isVariable = rates.IsVariable(stated);
+                    rates.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets", stated);
                 }
             }
 

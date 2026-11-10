@@ -61,7 +61,6 @@ internal static class Explain
     public const string EndTrimming = "Samples the packets code beyond the last granule position, which a decoder drops from the end.";
     public const string Samples = "The samples the granule positions give: the stream's length once the delay and the end trimming are dropped.";
     public const string Duration = "The samples over the sample rate, in seconds.";
-    public const string StatIsVbr = "Whether the audio packets differ in size, so the bitrate changes from packet to packet.";
     public const string AverageBitrate = "The bits of the audio packets over the samples they code.";
     public const string MinimumBitrate = "The bitrate of the smallest audio packet.";
     public const string MaximumBitrate = "The bitrate of the largest audio packet.";

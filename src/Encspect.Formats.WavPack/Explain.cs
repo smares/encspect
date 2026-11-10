@@ -29,13 +29,13 @@ internal static class Topics
 internal static class Explain
 {
     public const string Stream = "The blocks of a WavPack file, one after another: each has a 32-byte header and metadata sub-blocks, the last of which is normally the compressed audio (WavPack 4 and 5 binary file/block format, section 1.0).";
-    public const string MatroskaPacket = "One Matroska packet: the samples of its blocks in 4 bytes, then the blocks, each with its flags, its CRC and, unless it is the only block of its set, its size, but without the header the container leaves out (as FFmpeg's matroskadec.c, matroska_parse_wavpack, takes them apart).";
-    public const string PacketSamples = "How many samples each of the packet's blocks counts, which a rebuilt block header takes as its block samples (matroskadec.c matroska_parse_wavpack).";
-    public const string MatroskaBlock = "One block as the container stores it: its flags, its CRC and size and its sub-blocks, without the 32-byte header, which a reader rebuilds with the stream version from the CodecPrivate, a block index and a total of 0 (matroskadec.c matroska_parse_wavpack).";
+    public const string MatroskaPacket = "One Matroska packet: the samples of its blocks in 4 bytes, then the blocks, each with its flags, its CRC and, unless it is the only block of its set, its size, but without the header the container leaves out (Matroska codec mappings, A_WAVPACK4).";
+    public const string PacketSamples = "How many samples each of the packet's blocks counts, which a rebuilt block header takes as its block samples (Matroska codec mappings, A_WAVPACK4).";
+    public const string MatroskaBlock = "One block as the container stores it: its flags, its CRC and size and its sub-blocks, without the 32-byte header (Matroska codec mappings, A_WAVPACK4). Encspect rebuilds a header of its own to read the block: the stream version from the CodecPrivate, a block index and a total of 0; the mapping does not say that any reader must.";
     public const string MatroskaBlockSize = "The size of the block's sub-blocks in bytes; a block that has both the initial and the final flag is the only one of its packet and has no size, since it runs to the packet's end.";
     public const string SubBlocksOfBlock = "The block's sub-blocks, listed without their fields.";
     public const string StatPackets = "How many packets the stream holds.";
-    public const string StreamVersionOfCodecPrivate = "The stream version the CodecPrivate states, which rebuilt block headers take (0x410 where it states none, as FFmpeg assumes).";
+    public const string StreamVersionOfCodecPrivate = "The stream version the CodecPrivate states, which rebuilt block headers take (0x410 where it states none: an assumption, the newest of the versions WavPack's format document lists as valid for decode, 0x402 to 0x410).";
     public const string Block = "One block: a header and the sub-blocks that follow it up to the size the header states. Every block decodes by itself to mono or stereo audio; a multichannel file repeats a set of blocks, one for each stereo pair or single channel (format document, sections 1.0 to 3.0).";
     public const string MetadataBlock = "A block that counts no sample: it carries metadata only, such as a wrapper or a checksum of the audio, and no audio (format document, section 2.0, \"block_samples\").";
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies between the WavPack blocks, which the tag breaks; the analyzer does not read them as blocks.";

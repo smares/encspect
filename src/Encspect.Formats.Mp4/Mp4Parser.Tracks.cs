@@ -145,6 +145,7 @@ public sealed partial class Mp4Parser
         // (the independent substreams of E-AC-3). Streams of one track that follow one another (a configuration change) are not marked: no one
         // number says that they follow each other and play beside the other tracks.
         List<StreamInfo> made = [.. state.Context.Streams.Skip(streams)];
+        track.StreamRate = made.Count == 1 ? made[0].SampleRate : 0;
         bool isTogether = made.Count == 1 || (made.Count > 1 && made[0].PlaybackGroup is not null && made.All(s => s.PlaybackGroup == made[0].PlaybackGroup));
         foreach (StreamInfo stream in made)
         {
@@ -646,11 +647,11 @@ public sealed partial class Mp4Parser
         if (track.MediaDuration is { } mediaUnits && mediaUnits != uint.MaxValue && mediaUnits != ulong.MaxValue && track.Timescale > 0
             && (mediaUnits > 0 || state.Fragments == 0))
         {
-            nodes.Add(Cover("Container Duration", NodeValue.Decimal(mediaUnits / (double)track.Timescale, 3, "s"), Explain.ContainerDuration));
-            if ((track.ReadEntry ?? track.Entries.FirstOrDefault()) is { } entry && entry.SampleRate == track.Timescale && mediaUnits <= long.MaxValue)
-            {
-                nodes.Add(Cover("Container Samples", Units((long)mediaUnits), Explain.ContainerSamples));
-            }
+            // The statement is the media's duration in its timescale; its samples are counted at the stream's output rate, which for HE-AAC is twice the
+            // core rate the timescale usually is, and are the same without the edit list's trims.
+            double rate = track.StreamRate > 0 ? track.StreamRate : (track.ReadEntry ?? track.Entries.FirstOrDefault())?.SampleRate ?? 0;
+            ContainerLength.AddDuration(new Node("Gapless", 0, 0), (name, value, description) => { Node made = Cover(name, value!, description); nodes.Add(made); return made; },
+                mediaUnits / (double)track.Timescale, rate, Explain.ContainerSamples, Explain.ContainerDuration);
         }
 
         ulong total = 0;
