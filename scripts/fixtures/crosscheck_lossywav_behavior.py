@@ -52,7 +52,8 @@ def analyze(encspect, path):
 
 
 def flac_changes(path):
-    """The changes of wasted bits between consecutive frames of each channel, from `flac -a`."""
+    """The changes of wasted bits between consecutive frames of each channel, from `flac -a`. Only a source channel coded as itself is compared (left in
+    left/right and left/side, right in left/right and side/right): a mid or side subframe states the coding's own count."""
     with tempfile.TemporaryDirectory() as work:
         out = pathlib.Path(work) / "a.ana"
         subprocess.run(["flac", "-a", "-s", "-f", "-o", str(out), str(path)], capture_output=True, check=True)
@@ -61,16 +62,19 @@ def flac_changes(path):
             for line in lines:
                 if line.startswith("frame="):
                     channel = 0
+                    assignment = line.split("channel_assignment=")[1].split()[0].upper() if "channel_assignment=" in line else "INDEPENDENT"
                 elif line.startswith("\tsubframe=") and "wasted_bits=" in line:
                     # A constant subframe of 0 is digital silence: it has no count and leaves the channel's previous one.
                     if "type=CONSTANT" in line and "value=0" in line.split("type=CONSTANT")[1].split():
                         channel += 1
                         continue
                     wasted = int(line.split("wasted_bits=")[1].split()[0])
-                    units += 1
-                    if channel in last and last[channel] != wasted:
-                        changes += 1
-                    last[channel] = wasted
+                    is_source = not (assignment.startswith("MID") or (assignment.startswith("LEFT_SIDE") and channel == 1) or (assignment.startswith("RIGHT_SIDE") and channel == 0))
+                    if is_source:
+                        units += 1
+                        if channel in last and last[channel] != wasted:
+                            changes += 1
+                        last[channel] = wasted
                     channel += 1
         return changes, units
 
@@ -96,6 +100,7 @@ def main():
     parser.add_argument("--keep")
     arguments = parser.parse_args()
     problems, files, runs, most = [], 0, 0, 0
+    skipped = 0
     sources = sorted(p for folder in ("flac", "measurement") for p in (FIXTURES / folder).glob("*.flac") if "lossyflac" not in p.name and "lossywav" not in p.name)
     for source in sources:
         with tempfile.TemporaryDirectory() as directory:
@@ -109,7 +114,9 @@ def main():
                 for block in sorted({BLOCKS.get(effective, 512), 512}):
                     coded = recode(source, work, variant, block)
                     if coded is None:
-                        break
+                        skipped += 1
+                        print(f"  skipped: {source.name} at {variant or 'its own rate'} in frames of {block} (flac could not decode or code it again)")
+                        continue
                     runs += 1
                     found = analyze(arguments.encspect, coded)
                     expected, _ = flac_changes(coded)
@@ -136,7 +143,7 @@ def main():
             problems.append(f"{path.name}: the analyzer's claim from behavior is {claimed}, the importer's {record['flacUnits']['claim']}")
         if found["changes"] != expected:
             problems.append(f"{path.name}: {found['changes']} changes, but flac lists {expected}")
-    print(f"{files} files, {runs} codings, at most {most} changes of wasted bits ; {len(problems)} problems")
+    print(f"{files} files, {runs} codings ({skipped} skipped), at most {most} changes of wasted bits ; {len(problems)} problems")
     for problem in problems:
         print(" ", problem)
     sys.exit(1 if problems else 0)

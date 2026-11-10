@@ -223,19 +223,49 @@ def flac_units(data):
     return units_of(stream)
 
 
+TESTED_GRIDS = {22050: 256, 32000: 256, 44100: 512, 48000: 512, 88200: 1024, 96000: 1024, 176400: 2048, 192000: 2048}
+
+
 def units_of(stream):
+    """The distribution of the subframes' wasted bits, and the behavior rule's figures (docs/design/lossywav-detection.md, "FLAC and mid/side"): only a
+    source channel coded as itself is compared with the same channel's previous subframe (left in left/right and left/side, right in left/right and
+    side/right; every channel of a frame of one or three or more channels), a mid or side subframe is in the distribution only, and a constant subframe
+    of 0 is digital silence with no count. `changes` is the older count of every subframe against the one at the same index, which the workflow recorded."""
+    import math
     frames = [f for f in stream.frames if "subframes" in f]
     channels = max(len(f["subframes"]) for f in frames)
-    distribution = {}
-    changes = 0
-    previous = [None] * channels
+    distribution, compared = {}, {}
+    compared_changes = every_change = silent = 0
+    previous, last = [None] * channels, [None] * channels
+    moments, first, divisor = set(), None, 0
+    block = max(f["header"]["block_size"] for f in frames)
     for f in frames:
+        code, start = f["header"]["channel_code"], f["header"]["number"] * (1 if f["header"]["variable"] else block)
         for index, sub in enumerate(f["subframes"]):
-            distribution[sub["wasted"]] = distribution.get(sub["wasted"], 0) + 1
-            if previous[index] is not None and previous[index] != sub["wasted"]:
-                changes += 1
-            previous[index] = sub["wasted"]
-    return {"subframes": sum(len(f["subframes"]) for f in frames), "distribution": dict(sorted(distribution.items())), "changes": changes}
+            if sub["type"] == "constant" and sub.get("constant") == 0:
+                silent += 1
+                continue
+            wasted = sub["wasted"]
+            distribution[wasted] = distribution.get(wasted, 0) + 1
+            if previous[index] is not None and previous[index] != wasted:
+                every_change += 1
+            previous[index] = wasted
+            is_source = not (code == 10 or (code == 8 and index == 1) or (code == 9 and index == 0))
+            if not is_source:
+                continue
+            compared[wasted] = compared.get(wasted, 0) + 1
+            if last[index] is not None and last[index] != wasted:
+                compared_changes += 1
+                moments.add(start)
+                first = start if first is None else first
+                divisor = math.gcd(divisor, abs(start - first))
+            last[index] = wasted
+    rate = frames[0]["header"]["sample_rate"] or stream.info["sample_rate"]
+    above = sum(n for c, n in compared.items() if c > min(compared)) if compared else 0
+    total = sum(compared.values())
+    claim = TESTED_GRIDS.get(rate) is not None and len(moments) >= 20 and divisor == TESTED_GRIDS[rate] and above * 2 > total
+    return {"subframes": sum(distribution.values()) + silent, "distribution": dict(sorted(distribution.items())), "changes": every_change,
+            "silentSubframes": silent, "comparedChanges": compared_changes, "moments": len(moments), "gridOfChanges": divisor, "comparedSubframes": total, "comparedAboveSmallest": above, "claim": claim}
 
 
 def import_coded(artifact, records):
@@ -279,9 +309,12 @@ def import_coded(artifact, records):
             units = flac_units(data)
             recorded = record["flacUnits"]
             units = {**units, "distribution": {str(k): v for k, v in units["distribution"].items()}}
+            # The workflow recorded the older count (`changes`: every subframe against the one at the same index); the figures of the design's rule are the
+            # importer's own, from the committed bytes.
             for key in ("subframes", "distribution", "changes"):
-                if units[key] != recorded[key]:
-                    raise SystemExit(f"{relative}: the wasted bits of the committed bytes ({key}: {units[key]}) differ from the workflow's ({recorded[key]})")
+                mine = units[key]
+                if mine != recorded[key]:
+                    raise SystemExit(f"{relative}: the wasted bits of the committed bytes ({key}: {mine}) differ from the workflow's ({recorded[key]})")
             provenance["flacUnitsFromCommittedBytes"] = units
             stream = flac_model.Stream(data, 0, len(data))
             figures = span_figures(stream)

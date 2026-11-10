@@ -42,6 +42,9 @@ internal sealed class FieldMap
         return ranges.Count <= 1 ? At(ranges.Count == 0 ? bytes.FileStart : ranges[0].Offset) : Of(ranges, bytes.Length);
     }
 
+    // The bytes lie in the file one after another as they are, so a field has an offset of its own.
+    public bool IsExact => _ranges is null && !_isWhole;
+
     private MappedBytes Mapped => _mapped ??= new MappedBytes(new byte[_length], _ranges!);
 
     public Node Bytes(string name, int start, int length, NodeValue? value, string description, string? topic = null, NodeKind kind = NodeKind.Detail) =>

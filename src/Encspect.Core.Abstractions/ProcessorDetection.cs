@@ -14,7 +14,7 @@ public static class ProcessorDetection
 
     // The Processor node, made through cover (which gives each node the extent the parser's other detail nodes have, so the Processor node holds its Evidence), or null where no
     // claim names a processor. The evidence text gives the offset of the bytes that hold the claim.
-    public static Node? Detect(IEnumerable<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover)
+    public static Node? Detect(IEnumerable<EncoderClaim> claims, Func<string, NodeValue?, string, Node> cover, Action<EncoderClaim, string, string>? differs = null)
     {
         ArgumentNullException.ThrowIfNull(claims);
         ArgumentNullException.ThrowIfNull(cover);
@@ -40,8 +40,22 @@ public static class ProcessorDetection
             processor.Add(cover("Evidence", Evidence(claim), EvidenceDescription));
         }
 
+        // A text that names other software (or another version of it) is reported, as the writer role reports its disagreements; a claim from behavior names no version and disagrees with none.
+        if (differs is not null)
+        {
+            string winnerText = $"the processor is taken from {Evidence(winner)}";
+            foreach (EncoderClaim claim in candidates.Where(c => !c.IsBehavior && !Names(c, name)))
+            {
+                differs(claim, claim.Text.Trim(), winnerText);
+            }
+        }
+
         return processor;
     }
+
+    // The finding for a text that names other processor software than the stronger claim does.
+    public static string Disagreement(EncoderClaim claim, string text, string winner) =>
+        $"The {claim.Description} names \"{text}\", but {winner}; other software may have processed the audio again, and kept one of them.";
 
     // The claim of the processor role that a pattern in the coded syntax makes (lossyWAV's counts of wasted bits): low confidence, the evidence as the
     // description. wording names the unit the counts are of; source is the node the claim points to.
