@@ -124,6 +124,8 @@
   ],
   "levels": {
    "bits": 16,
+   "bits_in_use": 16,
+   "minimum_silent_stretch": 80,
    "stream": {
     "sample_peak_tenths": -200,
     "rms_tenths": -290,
@@ -132,9 +134,12 @@
     "clipping_runs": 0,
     "clipped_samples": 0,
     "longest_clipping_run": 0,
-    "silent_at_start": 1,
+    "silent_at_start": 0,
     "silent_at_end": 0,
     "zero_samples": 200,
+    "silent_stretches": 0,
+    "silent_samples": 0,
+    "longest_silent_stretch": 0,
     "low_bits_unused": 0,
     "highest_magnitude": 3277
    },
@@ -150,6 +155,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     },
@@ -164,6 +172,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     },
@@ -178,6 +189,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     },
@@ -192,6 +206,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     },
@@ -203,9 +220,12 @@
      "clipping_runs": 0,
      "clipped_samples": 0,
      "longest_clipping_run": 0,
-     "silent_at_start": 1,
+     "silent_at_start": 0,
      "silent_at_end": 0,
      "zero_samples": 200,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
      "low_bits_unused": 0,
      "highest_magnitude": 3277
     },
@@ -217,9 +237,12 @@
      "clipping_runs": 0,
      "clipped_samples": 0,
      "longest_clipping_run": 0,
-     "silent_at_start": 1,
+     "silent_at_start": 0,
      "silent_at_end": 0,
      "zero_samples": 200,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
      "low_bits_unused": 0,
      "highest_magnitude": 3277
     },
@@ -234,6 +257,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     },
@@ -248,6 +274,9 @@
      "silent_at_start": 6400,
      "silent_at_end": 6400,
      "zero_samples": 6400,
+     "silent_stretches": 1,
+     "silent_samples": 6400,
+     "longest_silent_stretch": 6400,
      "low_bits_unused": null,
      "highest_magnitude": 0
     }

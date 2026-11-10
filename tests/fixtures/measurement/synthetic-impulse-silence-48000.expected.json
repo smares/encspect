@@ -44,6 +44,8 @@
   ],
   "levels": {
    "bits": 16,
+   "bits_in_use": 12,
+   "minimum_silent_stretch": 480,
    "stream": {
     "sample_peak_tenths": -8,
     "rms_tenths": -493,
@@ -55,6 +57,9 @@
     "silent_at_start": 1000,
     "silent_at_end": 70999,
     "zero_samples": 71999,
+    "silent_stretches": 2,
+    "silent_samples": 71999,
+    "longest_silent_stretch": 70999,
     "low_bits_unused": 4,
     "highest_magnitude": 30000
    },
@@ -70,6 +75,9 @@
      "silent_at_start": 1000,
      "silent_at_end": 70999,
      "zero_samples": 71999,
+     "silent_stretches": 2,
+     "silent_samples": 71999,
+     "longest_silent_stretch": 70999,
      "low_bits_unused": 4,
      "highest_magnitude": 30000
     }
