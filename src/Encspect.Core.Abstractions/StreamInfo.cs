@@ -46,8 +46,7 @@ public sealed record StreamInfo
     // The samples per channel that the units counted in Samples declare and the parser could not show to be whole: units cut by the end
     // of the data, units whose syntax breaks, and units that cannot be read until the stream's next sync point
     // (docs/design/samples-definition.md). A figure from the parser, without decoding, at the coded stage, so it is part of the coded
-    // samples and may lie outside the trimmed ones; 0 where there is none, in a protected stream and in one no parser reads. Units are lost when
-    // the data, the next unit or the container cuts them short, when their syntax breaks, or when they cannot be read until the next sync point.
+    // samples and may lie outside the trimmed ones; 0 where there is none, in a protected stream and in one no parser reads.
     public long LostSamples { get; init; }
 
     // Where the stream starts in the granule positions of its container: the first page's position less the samples before it (Ogg Opus and Vorbis'

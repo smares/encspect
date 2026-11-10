@@ -274,10 +274,11 @@ internal sealed class StdStream
 
     public int AnnouncedLastMargin { get; private set; }
 
-    // The valid frames less the first, times the frame length: what FFmpeg's decoder outputs, and the count where the rule does not apply.
+    // The valid frames less the first, plus the lost frames, times the frame length: the count where the rule does not apply. Less the lost frames it is what
+    // FFmpeg's decoder outputs.
     public long FramesCountSamples => (Math.Max(0, ValidFrames - 1) + LostFrames) * Parameters.FrameLength;
 
-    // The declared samples of the lost frames, at the coded stage: each counts a frame length. Zero where the rule applies, which needs no invalid frame.
+    // The declared samples of the lost frames, at the coded stage: each counts a frame length. Under the rule only the frame the last superframe announces and nothing finishes (UnfinishedLast) is lost; off the rule every lost frame counts.
     public long LostSamples => LostFrames * Parameters.FrameLength;
 
     // The valid frames, the lost frames and the frame the last superframe announces where the file holds it whole, times the frame length, before any overlap is taken off.

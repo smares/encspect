@@ -1062,14 +1062,13 @@ internal sealed class WmaPacketReader
     // Reads one frame whose bits are parts, one after another, and records it. startPacket is the packet the frame is listed under. For
     // frames read from a joined buffer of several frames, source holds the parts of the whole buffer and the frame starts at position. A frame
     // past FrameLimit is read and counted but not recorded. isLost: the bits are the end of a frame whose start was lost; they are read as a
-    // frame, as a decoder does, and their samples counted, but they are no frame of the list.
+    // frame, as a decoder does, but they start at no declared frame start, so they are no frame of the list and count nothing.
     private FrameOutcome ReadOne(Bits bits, int start, int limit, int declared, IReadOnlyList<FramePart> parts, List<FramePart>? source = null, int position = 0, bool isLost = false)
     {
         FrameOutcome result = _reader.Read(bits, start, limit, declared, _trace);
         if (isLost)
         {
             _lastFrameNumber = -1;
-            Samples += OutputOf(result);
             return result;
         }
 
