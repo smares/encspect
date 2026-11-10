@@ -152,6 +152,13 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         // The low bits unused per span on audio where every span has a count and most blocks change it (the closing of a span is the costly part).
         data.Add(24, 2, Signal.Zeroed);
         data.Add(16, 1, Signal.Zeroed);
+
+        // The silent stretches (step 6): quiet audio with half its samples 0 in runs of 1 to 440 (a probe lands on a zero every few samples and finds a run that
+        // is no stretch), stretches of exactly 441 alternating with single samples (every probe finds a stretch), and 16-bit audio in 24 bits as a square wave at
+        // 0x7FFF00 and -0x800000 (every piece scans for runs at the extreme of the bits in use).
+        data.Add(16, 2, Signal.QuietZeros);
+        data.Add(16, 1, Signal.Stretches);
+        data.Add(24, 2, Signal.PaddedSquare);
         return data;
     }
 
@@ -270,6 +277,13 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
 
         // Noise whose lowest 3 to 8 bits are zeroed in each block of 512 samples (lossyWAV-like): every span has a count and many change it.
         Zeroed,
+
+        // Samples of 1 and 0 in runs of 1 to 440 zeros (the minimum at 44.1 kHz is 441), then single samples; stretches of exactly 441 zero frames between single samples.
+        QuietZeros,
+        Stretches,
+
+        // A square wave between 2^(bits - 1) - 256 and -2^(bits - 1): the extremes of audio with 8 low bits unused.
+        PaddedSquare,
     }
 
     private const int Length = 1 << 21;
@@ -285,6 +299,9 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
                 Signal.Zeros => new int[Length],
                 Signal.Zeroed => MeasurementSpanTests.Zeroed(1, Length, 512, 1 << (bits - 3), (uint)(c + 1))[0],
                 Signal.Square => [.. Enumerable.Range(0, Length).Select(i => (i / 200) % 2 == 0 ? (1 << (bits - 1)) - 1 : -(1 << (bits - 1)))],
+                Signal.PaddedSquare => [.. Enumerable.Range(0, Length).Select(i => (i / 200) % 2 == 0 ? (1 << (bits - 1)) - 256 : -(1 << (bits - 1)))],
+                Signal.QuietZeros => ZeroRuns(Length, 440, (uint)c + 1),
+                Signal.Stretches => Stretches(Length, 441),
                 _ => Impulse(Length),
             };
         }
@@ -365,6 +382,34 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(kinds is null || (kinds & MeasurementKinds.Spectrum) == 0 || result.Spectrum!.Frames > 0);
         Assert.True(kinds is null || (kinds & MeasurementKinds.Levels) == 0 || result.Levels is not null);
         return (seconds, units, (long)Length * channels * passes);
+    }
+
+    private static int[] ZeroRuns(int length, int longest, uint seed)
+    {
+        var random = new Random((int)seed);
+        int[] values = new int[length];
+        bool isZero = false;
+        for (int i = 0; i < length; isZero = !isZero)
+        {
+            int run = random.Next(1, longest + 1);
+            for (int k = 0; k < run && i < length; k++, i++)
+            {
+                values[i] = isZero ? 0 : 1 + (random.Next(3) - 1) * (i % 2);
+            }
+        }
+
+        return values;
+    }
+
+    private static int[] Stretches(int length, int minimum)
+    {
+        int[] values = new int[length];
+        for (int i = 0; i < length; i += minimum + 1)
+        {
+            values[i] = 7;
+        }
+
+        return values;
     }
 
     private static int[] Impulse(int length)

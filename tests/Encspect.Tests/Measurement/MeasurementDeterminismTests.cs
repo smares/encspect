@@ -47,9 +47,10 @@ public class MeasurementDeterminismTests
     private static string LevelsText(LevelFigures levels)
     {
         var text = new System.Text.StringBuilder();
+        text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{levels.ClippingBitsInUse},{levels.MinimumSilentStretch};");
         foreach (ChannelLevels c in levels.Channels.Prepend(levels.Stream))
         {
-            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{c.SamplePeakTenths},{c.RmsTenths},{c.DcOffsetMicropercent},{c.DcOffsetTenths},{c.ClippingRuns},{c.ClippedSamples},{c.LongestClippingRun},{c.SilentAtStart},{c.SilentAtEnd},{c.ZeroSamples},{c.LowBitsUnused},{c.HighestMagnitude},{c.HasOnly16BitValues},{c.HasOnly24BitValues};");
+            text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{c.SilentStretches},{c.SilentSamples},{c.LongestSilentStretch},{c.SamplePeakTenths},{c.RmsTenths},{c.DcOffsetMicropercent},{c.DcOffsetTenths},{c.ClippingRuns},{c.ClippedSamples},{c.LongestClippingRun},{c.SilentAtStart},{c.SilentAtEnd},{c.ZeroSamples},{c.LowBitsUnused},{c.HighestMagnitude},{c.HasOnly16BitValues},{c.HasOnly24BitValues};");
         }
 
         return Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));
@@ -89,8 +90,25 @@ public class MeasurementDeterminismTests
         measurerFloat.Write(new PcmBlock(0, 40_000, 1, 40_000, floats));
         string float32 = LevelsText(measurerFloat.Result(MeasurementStatus.Complete, null).Levels!);
 
-        string all = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(integers16 + integers24 + float32)));
-        Assert.True(LevelsHash == all, $"LevelsHash = {all} (16 bits {integers16[..8]}, 24 bits {integers24[..8]}, floats {float32[..8]})");
+        // Clipping at the extremes of the bits in use: 16-bit audio in 24-bit samples with runs at both extremes, and floats on the 16-bit grid with runs at both.
+        int[] padded = [.. MeasurementSignals.ToIntegers(MeasurementSignals.Noise(30_000, 10).Select(v => v * 1.2).ToArray(), 16).Select(v => v << 8)];
+        Array.Fill(padded, 0x7FFF00, 500, 30);
+        Array.Fill(padded, -0x800000, 9000, 12);
+        Array.Fill(padded, 0, 12000, 2000);
+        var measurerPadded = new StreamMeasurer(new PcmFormat(48000, 1, 24, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+        measurerPadded.Write(new PcmBlock(0, 30_000, 1, 30_000, padded));
+        string inUse24 = LevelsText(measurerPadded.Result(MeasurementStatus.Complete, null).Levels!);
+
+        float[] grid = [.. MeasurementSignals.Noise(40_000, 11).Select(v => (float)(Math.Floor(v * 0.9 * 32768) / 32768))];
+        Array.Fill(grid, 32767f / 32768f, 700, 20);
+        Array.Fill(grid, -1f, 8000, 5);
+        Array.Fill(grid, 0f, 12000, 1500);
+        var measurerGrid = new StreamMeasurer(new PcmFormat(44100, 1, 32, SampleFormat.Float32), new MeasureOptions { Include = MeasurementKinds.Levels }, CancellationToken.None, _ => true);
+        measurerGrid.Write(new PcmBlock(0, 40_000, 1, 40_000, grid));
+        string grid16 = LevelsText(measurerGrid.Result(MeasurementStatus.Complete, null).Levels!);
+
+        string all = Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(integers16 + integers24 + float32 + inUse24 + grid16)));
+        Assert.True(LevelsHash == all, $"LevelsHash = {all} (16 bits {integers16[..8]}, 24 bits {integers24[..8]}, floats {float32[..8]}, in use {inUse24[..8]}, grid {grid16[..8]})");
     }
 
     // The low bits unused per span of two lossyWAV-like streams (24 bits, three channels with a silent stretch and a gap; 16 bits with its blocks off the
