@@ -204,7 +204,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 ### `--version`
 
-Prints `encspect <version>` and exits with 0, for example `encspect 0.1.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
+Prints `encspect <version>` and exits with 0, for example `encspect 0.2.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
 
 - **Same string everywhere:** it is the `version` in a JSON report's `tool` object and the version the GUI's About window shows.
 - **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
@@ -238,7 +238,7 @@ A JSON report (schema version 1) is an object:
 ```json
 {
   "schemaVersion": 1,
-  "tool": { "name": "encspect", "version": "0.1.0+…" },
+  "tool": { "name": "encspect", "version": "0.2.0+…" },
   "source": "song.mp3",
   "root": { "name": "File", "value": "MPEG Audio", "offset": 0, "length": 4096, "children": [
     { "name": "MPEG Audio", "kind": "Stream", "value": 10, "unit": "frames", "offset": 0, "length": 4096, "children": [ … ] } ] },

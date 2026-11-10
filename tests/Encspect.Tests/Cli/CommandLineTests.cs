@@ -448,7 +448,7 @@ public class CommandLineTests
 
         Assert.Equal(CommandLine.Success, code);
         Assert.Equal("encspect " + ReportJsonWriter.ToolVersion + "\n", output);
-        Assert.StartsWith("encspect 0.1.0", output);
+        Assert.StartsWith("encspect 0.2.0", output);
         Assert.Equal("", errors);
         Assert.Contains("--version", Run("--help").Output);
     }

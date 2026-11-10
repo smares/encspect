@@ -9,7 +9,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-Version 0.1.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
+Version 0.2.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
@@ -53,7 +53,7 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
 - [Plan](docs/plan.md): goals, decisions, the milestones and what is not planned
 - [History](docs/history.md): the phases and gates passed, and what each built
-- [Release notes](docs/releases/0.1.0.md)
+- [Release notes](docs/releases/0.2.0.md)
 
 ## Quick start
 

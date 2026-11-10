@@ -30,7 +30,7 @@ public sealed class AboutTests
         Assert.True(window.IsVisible);
         Assert.Equal("About Encspect", window.Title);
         Assert.Equal("Version " + Version, window.FindControl<TextBlock>("VersionText")!.Text);
-        Assert.StartsWith("Version 0.1.0", window.FindControl<TextBlock>("VersionText")!.Text);
+        Assert.StartsWith("Version 0.2.0", window.FindControl<TextBlock>("VersionText")!.Text);
         Assert.Contains("MIT License", window.FindControl<TextBlock>("CopyrightText")!.Text);
 
         // Choosing it again brings the same window forward.

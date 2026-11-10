@@ -274,7 +274,7 @@ The form "Frame Map" draws every unit of a series (a frame, packet or block; the
 
 - **Where:** on macOS in the application menu, as usual there; on Windows and Linux in the Help menu, the menu bar's last menu.
 - **Shows:** the name, the version, one line on what Encspect does, the copyright and the MIT License.
-- **Version:** the same string as `encspect --version` prints after the program name and as `tool.version` in JSON reports (`0.1.0+<commit>`), read from the same place in the host. It can be selected and copied for a bug report.
+- **Version:** the same string as `encspect --version` prints after the program name and as `tool.version` in JSON reports (`0.2.0+<commit>`), read from the same place in the host. It can be selected and copied for a bug report.
 - **Third-Party Notices:** the button opens a window with the text of [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md): the licenses of Avalonia, Skia, HarfBuzz, ANGLE and the .NET runtime. The text is embedded in the executable, so it is there in a single-file build too and is the same file the download carries next to the executables.
 - **Keyboard:** Esc and Enter close the window; the Close button has the focus when it opens. Tab reaches the notices button and the version.
 - **One window:** choosing About again brings the open window forward.
