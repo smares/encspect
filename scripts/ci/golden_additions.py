@@ -459,7 +459,7 @@ def check_measurement_golden(old, new, change):
             continue
         minimum = None
         if entry.get("below") == "minimumLength":
-            silence = measurement_targets(expected.get("measurements"), ["levels", "digitalSilence"])
+            silence = measurement_targets(new.get("measurements"), ["levels", "digitalSilence"])
             minimum = silence[0].get("minimumLength") if silence else None
         for target, original in zip(after, before):
             for field in entry["fields"]:
