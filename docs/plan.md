@@ -115,10 +115,13 @@ Each milestone is something a user can do that they could not do before. Its ite
 - **The gate:** a milestone ends with the independent reviews of its work ([architecture.md, "Verification"](architecture.md#verification)), their findings fixed, and the push and nightly runs green on every platform.
 - **The release:** a passed gate is tagged `v0.N.0` and released ([development.md, "Releases"](development.md#releases)).
 - **0.1.0** was released after Gate 2; Gate 3 and the work after it lead into 0.2 ([history.md](history.md)).
+- **0.2.0** follows Gate 0.2, passed on 2026-11-10 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.2.0.md](releases/0.2.0.md).
 
 ### 0.2: Lossless complete
 
 Every lossless format with a decoder design is decoded and measured, except WMA Lossless (0.5) and DTS-HD's lossless extension (a follow-up after 0.5). Files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
+
+**Status:** built; the gate passed on 2026-11-10 at a858ea0b, with seven independent reviews and their fixes (#254 to #260).
 
 1. **The lossy groundwork** (#232, merged 2026-11-08): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
 2. **lossyWAV and lossyFLAC detection** (done: PRs #239, #240, #242 and #243), with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).

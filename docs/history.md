@@ -27,6 +27,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
 | 3 (lossless) | FLAC, WAV and AIFF, ALAC, WMA Lossless frames, Monkey's Audio, TTA, Dolby TrueHD and MLP; decoders for the codings that store a checksum over decoded audio | built |
 | Gate 3 | Pipeline green, review findings fixed | passed, 2026-11-01 at 5f054cc |
 | 3, continued | Official-decoder cross-checks (built); lossyWAV and lossyFLAC detection (paused, then made the first item of 0.2) | built, and moved |
+| Gate 0.2 | Pipeline green, review findings fixed | passed, 2026-11-10 at a858ea0b |
 
 - **Release 0.1.0:** a GitHub pre-release after Gate 2 (the project lead, 2026-10-17). It replaced the earlier rule of no public version until development ends.
 - **Phases 4 to 6** were planned as TAK and OptimFROG at header level, more formats, and the sequenced formats. The milestones of the [plan](plan.md#milestones) replaced them on 2026-11-08.
@@ -44,6 +45,11 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
 - **Gate 3** (2026-11-01, 5f054cc): ten independent reviews, each followed by a review of its fixes.
   - Areas: the decoder host; FLAC; WavPack; Monkey's Audio; TrueHD and MLP; TTA and ALAC; WAV and AIFF; WMA Lossless; the measurements; the front ends.
   - Every finding was fixed in #189 to #198, one pull request per area, plus a fuzz finding in WMA superframes (#201).
+- **Gate 0.2** (2026-11-10, a858ea0b): seven independent reviews, each followed by a review of its fixes.
+  - Areas: the decoders; TAK and OptimFROG; lossyWAV; the measurements; the samples; gap waves, routes and front ends; cross-checks and CI.
+  - Every finding was fixed in #254 to #260, one pull request per area.
+  - **The lead's decisions of 2026-11-10:** the stopped decoder rule `noted` for every format, with the cut Ogg file included; the parked cross-check steps split by the trigger that brings each back; Container Samples as the container's own figure; tests mirroring `src`.
+  - Release 0.2.0 follows it.
 - Each gate's push run and nightly run were green on every platform.
 
 ## Phase 1 (v1): MP3
