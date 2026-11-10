@@ -190,12 +190,12 @@ public class MeasurementLevelFiguresTests
             }
         }
 
-        // The sample that ends the bits in use: not in every stream, and runs of the base extreme are put around it.
+        // The sample that ends the bits in use: not in every stream, and runs of the base extreme are put around it. It stays within 16 bits: at most 63 << 9 | 1 << 9.
         if (random.Next(4) != 0)
         {
             int channel = random.Next(channelCount);
             int at = random.Next(5000, length - 5000);
-            data[channel][at] = (random.Next(1, 100) << random.Next(0, baseZeros)) | 1 << random.Next(0, baseZeros);
+            data[channel][at] = (random.Next(1, 64) << random.Next(0, baseZeros)) | 1 << random.Next(0, baseZeros);
             for (int c = 0; c < channelCount; c++)
             {
                 data[c].AsSpan(at - 4, 4).Fill(topAtBase);
