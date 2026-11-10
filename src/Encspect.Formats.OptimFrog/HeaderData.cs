@@ -26,6 +26,8 @@ internal sealed class HeaderInfo
     public Node? FactNode { get; set; }
 }
 
+// Parsers may not reference each other and the format-specific records, topics and finding codes differ from TAK's copy of this reader, so it stays per format;
+// the shared concept (the WAVE header itself) is already in WavHeader.
 // The stored WAV header (HEAD) and terminating data (TAIL), named as Monkey's Audio names them. The format and the fact chunk are read from the header
 // only; both blocks list the RIFF chunks they hold.
 internal static class HeaderData
@@ -33,8 +35,6 @@ internal static class HeaderData
     private const int MaxListed = 64;
 
     private const int MaxFactBytes = 1 << 16;
-
-    private static readonly string[] Riff = ["RIFF", "RF64", "BW64"];
 
     public static HeaderInfo Analyze(State s, ByteReader reader, long at, long held, int blockIndex, bool isHeader, bool isRiffFile)
     {
@@ -67,7 +67,7 @@ internal static class HeaderData
             position += 8 + size + (size & 1);
         }
 
-        if (isHeader && container is not null && Riff.Contains(container is WavHeader.RiffContainer ? "RIFF" : container is WavHeader.Rf64Container ? "RF64" : "BW64"))
+        if (isHeader && container is WavHeader.RiffContainer or WavHeader.Rf64Container or WavHeader.Bw64Container)
         {
             AddFactChunk(s, reader, at, held, info);
         }

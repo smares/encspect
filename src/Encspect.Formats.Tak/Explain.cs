@@ -31,7 +31,7 @@ internal static class Explain
     public const string Profile = "The profile, 0 to 4: the decoder's processing and memory needs. It equals the preset when the encoder's standard settings are used; a Turbo preset with 128 predictors stores the High profile (the SDK's documentation).";
     public const string FrameSizeType = "How the frame length is given: as a time (94, 125, 188 or 250 ms, worked out at the sample rate) or as a number of samples (512 to 16384). Types 10 to 15 are reserved.";
     public const string FrameLength = "The samples of each channel in a frame, worked out from the frame size type and the sample rate (takStream.pas, tak_str_CalcFrameSizeFromType).";
-    public const string SampleCount = "The number of samples of each channel in the whole stream, 35 bits. 0 would mean the value is taken from another place, which TAK does not use.";
+    public const string SampleCount = "The number of samples of each channel in the whole stream, 35 bits. takStream.pas says 0 means the value has to be taken from the meta data stream info.";
     public const string DataType = "The type of the audio data: 0 is PCM, the only one takStream.pas defines.";
     public const string SampleRate = "The sample rate in Hz, stored less 6000 in 18 bits.";
     public const string BitsPerSample = "The bits of each sample, stored less 8 in 5 bits: 8 to 24.";

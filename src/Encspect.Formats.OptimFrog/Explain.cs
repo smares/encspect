@@ -18,10 +18,10 @@ internal static class Explain
     public const string DetaBlock = "A block \"DETA\" that the float encoder `off` 5.100 writes after the data blocks in Encspect's tests (70 bytes, more with --mantissabits 8). format.txt does not define it, and the analyzer does not read it.";
     public const string DetaData = "The data of a DETA block, which the analyzer does not read.";
     public const string CorrBlock = "A correction block of a DualStream correction file: a CRC-32 and correction data that adds to the data block of the same position in the .ofs file. format.txt does not define it; the structure is the one the files of OptimFROG 5.100 in Encspect's tests show.";
-    public const string CorrCrc = "The CRC-32 the block stores, over its data after this field: zlib's CRC-32 in all six correction files of Encspect's tests. The analyzer compares it in every analysis.";
+    public const string CorrCrc = "The CRC-32 the block stores, over its data after this field: zlib's CRC-32 in all five correction files of Encspect's tests. The analyzer compares it in every analysis.";
     public const string CorrData = "The correction data, which only OptimFROG's own library reads.";
     public const string CorrCut = "The bytes of a correction block that the data holds; they end before its CRC-32 does.";
-    public const string LossyStream = "What the file looks like the lossy part of: a DualStream, the pair of a lossy .ofs file and its correction file. The data blocks' two reserved bytes read 0x1101 (stereo) or 0x0901 (mono) in every .ofs file of OptimFROG 5.100 in Encspect's tests and never in a lossless file; the analyzer uses that pattern.";
+    public const string LossyStream = "What the file looks like the lossy part of: a DualStream, the pair of a lossy .ofs file and its correction file. The low byte of the data blocks' two reserved bytes reads 0x01 in every .ofs file of OptimFROG 5.100 in Encspect's tests (0x1101 for stereo, 0x0901 for mono) and never in a lossless file; the analyzer uses that low byte alone, not the high byte.";
     public const string LossyConfidenceLow = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
     public const string LossyConfidenceMedium = "Medium: the pattern of OptimFROG 5.100's files and the file name's extension, .ofs, agree. Pairing the file with its .ofc (0.4) would confirm it.";
     public const string StatIsCorrectionFile = "Whether this file is a correction file: its blocks hold correction data and no audio.";
@@ -47,13 +47,13 @@ internal static class Explain
     public const string AdditionalFields = "Bytes of the main block after the fields this version of the specification defines; format.txt asks a reader to skip fields it does not know.";
 
     public const string CompFieldsCut = "The bytes of a data block that the data holds; they end before the block's 14 bytes of fields do.";
-    public const string BlockCrc = "The CRC-32 the block stores, over its data after this field. The analyzer compares it in every analysis; the files of OptimFROG 4.509 and 5.100 in Encspect's tests use zlib's CRC-32.";
+    public const string BlockCrc = "The CRC-32 the block stores, over its data after this field. The analyzer compares it in every analysis; the files of OptimFROG 5.100 in Encspect's tests use zlib's CRC-32.";
     public const string BlockComputedCrc = "The CRC-32 the analyzer computed over the block's data after the stored CRC-32.";
     public const string BlockIsCrcValid = "Whether the stored CRC-32 of the block equals the one computed.";
     public const string BlockSamples = "The number of samples in the block over all channels, as in the main block (format.txt, section 3).";
     public const string BlockSampleType = "The sample type of the block, which the encoder writes into every block so that each can be decoded alone (format.txt, section 3).";
     public const string BlockChannelConfiguration = "The channel configuration of the block (format.txt, section 3).";
-    public const string BlockReserved = "Two bytes the specification calls reserved for internal use. The analyzer shows them and does not judge them.";
+    public const string BlockReserved = "Two bytes the specification calls reserved for internal use. The analyzer shows them; it uses only the low byte, as the sign of a DualStream's lossy part (see the file's lossy-part claim), and no other pattern of them.";
     public const string BlockEncoderId = "The encoder ID of the block (format.txt, section 3).";
     public const string CompressedData = "The compressed sample data of the block. Only OptimFROG's own library decodes it; the analyzer does not read it.";
 
@@ -80,7 +80,7 @@ internal static class Explain
 
     public const string Statistics = "Figures computed over the blocks of the file.";
     public const string StatBlocks = "The number of data blocks in the file, a block the data cuts short not counted.";
-    public const string StatSamples = "The samples of each channel the main block states: its total over all channels divided by the channels.";
+    public const string StatSamples = "The samples of each channel the data blocks state: the sum of their sample counts over all channels divided by the channels. A block the data cuts counts, and is lost. The main block states a total of its own, which is compared with this one.";
     public const string StatDuration = "The duration of the samples at the sample rate.";
     public const string StatRate = "The sample rate of the audio, from the main block.";
     public const string StatChannels = "The number of channels, from the main block's channel configuration.";

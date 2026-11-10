@@ -40,14 +40,18 @@ internal static class Nodes
         Records r = source.Records;
         BlockRecord b = r.Blocks[index];
         long length = Math.Min(b.End, r.DataEnd) - b.Offset;
-        bool isComp = b.Id == Layout.Comp;
-        return new Node(NameOf(b.Id), b.Offset, length, NodeValue.Integer(length, "bytes", "byte"), () => Children(source, index))
+        uint kind = Kind(b);
+        bool isComp = kind == Layout.Comp;
+        return new Node(NameOf(kind), b.Offset, length, NodeValue.Integer(length, "bytes", "byte"), () => Children(source, index))
         {
             Kind = isComp ? NodeKind.Frame : NodeKind.Detail,
-            Description = DescriptionOf(b.Id),
+            Description = DescriptionOf(kind),
             Topic = Topics.Blocks,
         };
     }
+
+    // A block the walk flagged unknown is shown as one whatever its ID (a data block's ID inside a correction file).
+    private static uint Kind(BlockRecord b) => (b.Status & BlockStatus.Unknown) != 0 ? 0 : b.Id;
 
     public static Node CrcField(Source source, int index) => Block(source, index).Children.First(c => c.Name == "CRC-32");
 
@@ -62,7 +66,7 @@ internal static class Nodes
             new("Block ID", b.Offset, 4, Layout.Text(b.Id)) { Description = Explain.BlockId, Topic = Topics.Blocks },
             new("Block Length", b.Offset + 4, 4, NodeValue.Integer(b.Length, "bytes", "byte")) { Description = Explain.BlockLength, Topic = Topics.Blocks },
         };
-        switch (b.Id)
+        switch (Kind(b))
         {
             case Layout.Main or Layout.MainFloat:
                 AddMain(source, children, at, held, b);
@@ -101,9 +105,9 @@ internal static class Nodes
             default:
                 if (held > 0)
                 {
-                    children.Add(new Node(b.Id == Layout.Recovery ? "Recovery Data" : "Block Data", at, held, NodeValue.Integer(held, "bytes", "byte"))
+                    children.Add(new Node(Kind(b) == Layout.Recovery ? "Recovery Data" : "Block Data", at, held, NodeValue.Integer(held, "bytes", "byte"))
                     {
-                        Description = b.Id == Layout.Recovery ? Explain.RecoveryData : b.Id == Layout.Deta ? Explain.DetaData : Explain.UnknownData,
+                        Description = Kind(b) == Layout.Recovery ? Explain.RecoveryData : Kind(b) == Layout.Deta ? Explain.DetaData : Explain.UnknownData,
                         Topic = Topics.Blocks,
                     });
                 }
