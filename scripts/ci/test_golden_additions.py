@@ -391,6 +391,33 @@ class RepositoryTests(unittest.TestCase):
         self.commit()
         self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
 
+    def test_a_measurement_golden_may_change_fields_only_to_the_stated_value_and_gain_keys_in_arrays(self):
+        def silence(start, with_stretches, per_channel):
+            def group(value):
+                return {"atStart": value, **({"stretches": 0} if with_stretches else {})}
+            return {"digitalSilence": {**group(start), "perChannel": [group(per_channel)]}}
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement(silence(1, False, 1)))
+        self.git("add", "-A")
+        self.git("commit", "-qm", "measurement base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr2")
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement(silence(0, True, 0)))
+        change = {"goldens": ["tests/fixtures/measurement/"],
+                  "added": [{"scope": "measurement", "path": ["levels", "digitalSilence"], "key": "stretches"},
+                            {"scope": "measurement", "path": ["levels", "digitalSilence", "perChannel"], "key": "stretches"}],
+                  "changed": [{"scope": "measurement", "path": ["levels", "digitalSilence"], "fields": ["atStart"], "to": 0},
+                              {"scope": "measurement", "path": ["levels", "digitalSilence", "perChannel"], "fields": ["atStart"], "to": 0}]}
+        self.write("tests/fixtures/measurement/golden-changes.json", change)
+        self.commit()
+        self.git("branch", "-f", "pr", "HEAD")
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 0)
+
+        # A field that changes to another value than the stated one is not covered.
+        self.write("tests/fixtures/measurement/m.measure.json", self.measurement(silence(5, True, 0)))
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
+
     def test_without_a_change_file_the_check_is_not_asked_for(self):
         self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99)])])
         self.commit()
