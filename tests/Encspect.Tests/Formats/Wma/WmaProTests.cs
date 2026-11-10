@@ -25,6 +25,30 @@ public class WmaProTests
         Assert.True(coded <= 66 * 2048L);
     }
 
+    // Bytes of a packet changed so that a frame is invalid: with the length prefix its prefix still says where the next frame starts, so the
+    // frames after it in the packet (and the one it announces into the next packet) are declared and in the file, thrown away unread by the loss;
+    // each counts a frame length and is lost, and the stream keeps the 66 frames of the file.
+    [Theory]
+    [InlineData(12_000)]
+    [InlineData(20_000)]
+    [InlineData(45_000)]
+    public void FramesAfterAnInvalidFrameInItsPacketAreLost(int at)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/external-windows-wma10pro-cbr-stereo-44k-128.wma"));
+        for (int i = 0; i < 6; i++)
+        {
+            data[at + i] ^= 0xA5;
+        }
+
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("damaged.wma", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Contains(report.Findings, f => f.Code == "wma.frame-invalid");
+        Node statistics = WmaStream.Child(stream.Nodes[0], "Statistics");
+        Assert.Equal(66 * 2048L, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.True(stream.LostSamples > 2048);
+        Assert.Equal(0, stream.LostSamples % 2048);
+    }
+
     [Theory]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 132300, 8, 209)]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 132300, 7, 209)]

@@ -574,6 +574,7 @@ internal sealed class WmaPacketReader
                 isError = true;
                 MarkLoss();
                 isTrailerOne = false;
+                CountFramesAfterInvalid(bits, position, end);
                 break;
             }
 
@@ -599,6 +600,31 @@ internal sealed class WmaPacketReader
         }
 
         UnfinishedBits = isTrailerOne && !_isLoss ? tail : 0;
+    }
+
+    // An invalid frame drops the rest of its media object unread. With the length prefix the invalid frame's prefix still says where the next frame
+    // starts, so the frames after it in the packet, and the one its last frame announces into the next packet, are declared and in the file: each
+    // counts a frame length and is lost (docs/design/samples-definition.md, rule 1). position is the end of the invalid frame.
+    private void CountFramesAfterInvalid(Bits bits, int position, int end)
+    {
+        IStreamParameters p = _p;
+        bits.Position = position - 1;
+        bool isFollowed = bits.ReadBit() != 0;
+        while (isFollowed && position < end)
+        {
+            int left = end - position;
+            int declared = left > p.CountWidth ? (int)bits.Peek(p.CountWidth) : 0;
+            DroppedFrames++;
+            Samples += p.FrameLength;
+            if (declared == 0 || declared > left)
+            {
+                break;
+            }
+
+            position += declared;
+            bits.Position = position - 1;
+            isFollowed = bits.ReadBit() != 0;
+        }
     }
 
     // The frames that start in the last packet: no packet follows to supply their last bits, but the saved run holds whole frames and is read
