@@ -123,11 +123,6 @@ internal static class Chunks
         {
             // A lossyWAV fact chunk states no sample length, so none is read from it.
             s.IsFactText = true;
-            if (length > f.Remaining)
-            {
-                throw new EndOfStreamException();
-            }
-
             FactText text = FactText.Read(f.Reader.ReadBytes(head))!;
             f.Reader.Skip(length - head);
             Node node = chunk.Add(text.ToNode(start, length));

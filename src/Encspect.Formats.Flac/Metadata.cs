@@ -207,13 +207,14 @@ internal static class Metadata
             return;
         }
 
-        Node place = map.Bytes("Text", 16, held, null, FactText.TextDescription);
-        if (place.Ranges is not null || FactText.Read(body.Slice(12, held)) is not { } text)
+        if (FactText.Read(body.Slice(12, held)) is not { } text)
         {
             return;
         }
 
-        Node node = data.Add(text.ToNode(place.Offset, held));
+        // Its parts have offsets of their own only where the bytes lie in the file as they are; across Ogg pages or in changed bytes the text is one node.
+        Node place = map.Bytes("Text", 16, held, text.Text, FactText.TextDescription, ClaimRoles.ProcessorTopic);
+        Node node = data.Add(map.IsExact ? text.ToNode(place.Offset, held) : place);
         if (text.ToClaim(node, "fact chunk in a riff application block") is { } claim)
         {
             s.Context.AddEncoderClaim(claim);
