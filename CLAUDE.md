@@ -42,6 +42,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 ## Planning
 
 - Work follows the milestones in [`docs/plan.md`](docs/plan.md). Each milestone ends with a gate (independent reviews, findings fixed, push and nightly runs green on every platform) and a release tag.
+- Before a release pull request merges, an independent review agent that has not written them checks the release notes and the README's format and status lines claim by claim: against the previous release's notes and README (what is really new), against the code, docs and workflows on the release branch (what is true), and against the wording rules; its findings are fixed first.
 - One main item is in progress at a time, plus small fixes. A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Nothing is parked without a decision: every item has a milestone, or sits under "Not planned" with the trigger that would bring it back. A pause the lead asks for keeps the item's place and priority, and the item resumes first.
 - A decoder pull request is done when it also brings its format's entropy-pass figures, coding graphs and the gap items it unlocks.
