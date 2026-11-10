@@ -45,6 +45,8 @@ internal sealed class DecodeSession : IDecodeSession
     private long _trimFirst;
     private long _trimEnd;
     private List<(long First, long Samples, WithholdReason Reason)>? _earlyWithheld;
+    private readonly long[] _earlyOverflow = new long[WithholdReasons.Count];
+    private long _earlyEnd;
 
     private sealed class Pending(Severity severity, string code, string message, Node? node, int count)
     {
@@ -545,6 +547,17 @@ internal sealed class DecodeSession : IDecodeSession
             {
                 early.Add((first, samples, reason));
             }
+            else if (samples > 0 && Enum.IsDefined(reason))
+            {
+                // Past the cap the measurer counts a span at once; so does the session, which forwards the tally with the list.
+                long clipped = Math.Max(first, _earlyEnd);
+                long end = first > long.MaxValue - samples ? long.MaxValue : first + samples;
+                if (clipped < end)
+                {
+                    _earlyOverflow[(int)reason] += end - clipped;
+                    _earlyEnd = end;
+                }
+            }
         }
         else
         {
@@ -585,6 +598,11 @@ internal sealed class DecodeSession : IDecodeSession
             foreach ((long first, long samples, WithholdReason reason) in _earlyWithheld ?? [])
             {
                 measurer.Withhold(first, samples, reason);
+            }
+
+            for (int i = 0; i < _earlyOverflow.Length; i++)
+            {
+                measurer.WithholdPastTheCap(_earlyOverflow[i], (WithholdReason)i);
             }
         }
 

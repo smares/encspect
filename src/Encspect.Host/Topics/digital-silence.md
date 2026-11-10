@@ -15,4 +15,6 @@ The figures are the stretches, the samples in them, the longest, and the stretch
 
 **What you see.** Digital Silence in stretches and, where the rate is known, in seconds. In Encspect's test files, noise that never reaches 0 with 1,000 zeros at the start, 500 in the middle and 2,000 at the end reads 3 stretches of 3,500 samples, the longest 2,000; at 22,050 Hz, stretches of 220 and 221 zero frames read only the second; and at 44.1 kHz, 300 zeros before a gap and 300 after it read no stretch, where 500 before the next gap read one.
 
+**Non-finite samples.** A float sample that is NaN or infinite is counted apart (a finding) and read as 0 here, so a run of them reads as digital silence.
+
 **What it shows.** Where the stream carries no signal in the samples it was decoded to, not whether the silence was in the source or made later.

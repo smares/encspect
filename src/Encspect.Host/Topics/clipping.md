@@ -13,6 +13,6 @@ references: Encspect design, docs/design/spectral-analysis.md (Levels; Step 6)
 
 **What you see.** In Encspect's test files, 16-bit noise shifted left by 8 in 24-bit samples, with runs at 0x7FFF00 and -0x800000, reads 4 runs, 60 samples and a longest of 50 at 16 bits in use; a run at 0x7FFE00 is not counted.
 
-**What is not covered.** G.711 streams are not covered. A lossyWAV stream zeroes a different number of low bits per block; a block with more zeroed bits than the stream's clips below its positive extreme and is not counted there.
+**What is not covered.** G.711 streams are not covered. A float sample that is NaN or infinite is counted apart (a finding) and read as 0, so it is never part of a run, whatever its sign. A lossyWAV stream zeroes a different number of low bits per block; a block with more zeroed bits than the stream's clips below its positive extreme and is not counted there.
 
 **What it shows.** Runs at the limit fit a signal that was limited or cut there, and a full-scale square wave reads the same.
