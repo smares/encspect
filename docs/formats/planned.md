@@ -8,7 +8,7 @@ The order follows how well a format is documented: the better documented, the so
 
 - **TAK and OptimFROG:** what their headers reveal. OptimFROG and TAK are done ([optimfrog.md](optimfrog.md), [tak.md](tak.md)).
 - **Encoder settings:** where a header stores them (OptimFROG's mode and speedup, TAK's preset), they are read and named, once a verifiable source and files the encoders write confirm the fields.
-- **OptimFROG DualStream:** an `.ofs` is named "OptimFROG DualStream", lossy by itself, and a correction file opened alone "OptimFROG correction data", as WavPack's hybrid files and `.wvc` files are; the pair is checked in 0.4 with WavPack's ([tak-optimfrog-headers.md](../design/tak-optimfrog-headers.md#optimfrog-dualstream)).
+- **OptimFROG DualStream:** an `.ofs` is named "OptimFROG" with a claim that it is the lossy part of a DualStream (low confidence from the data blocks' reserved bytes, medium when the file name ends in `.ofs`), and a correction file opened alone "OptimFROG correction data"; the pair is checked in 0.4 with WavPack's ([tak-optimfrog-headers.md](../design/tak-optimfrog-headers.md#optimfrog-dualstream)).
 - **Why no deeper in 0.2:** both are poorly documented. TAK gets a decoder in 0.4 through a clean-room description of FFmpeg's decoder; OptimFROG has no open source for its coding, so no decoder is planned ([plan](../plan.md#not-planned)).
 
 ## After 0.5: more formats

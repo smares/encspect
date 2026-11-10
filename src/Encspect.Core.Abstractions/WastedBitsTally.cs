@@ -11,6 +11,7 @@ public sealed class WastedBitsTally
     public const int MaxChannels = 64;
 
     private readonly long[] _distribution = new long[256];
+    private readonly long[] _compared = new long[256];
     private readonly int[] _previous = new int[MaxChannels];
     private long _firstChange;
     private long _gridOfChanges;
@@ -27,6 +28,10 @@ public sealed class WastedBitsTally
     // The distinct positions at which some channel changes: the gate counts these, so that one passage in many channels is not many.
     public long Moments { get; private set; }
 
+    // The units that take part in the comparison: those of a channel that is coded as itself (not mid or side, whose counts differ from the source
+    // channel's by the coding). The changes and the share of the pattern are taken over these only.
+    public long ComparedUnits { get; private set; }
+
     public long UnitsWithWastedBits => Units - _distribution[0];
 
     // The changes between a unit and the previous unit of the same channel.
@@ -36,7 +41,8 @@ public sealed class WastedBitsTally
 
     // Counts one unit of a channel that starts at position (in samples) and states bits wasted bits. Units of the several channels of one frame or
     // block set share their position; positions are those of the stream, in samples, and units come in stream order (all channels of a position together).
-    public void Add(int channel, long position, int bits, bool isSilent = false)
+    // isCompared is false for a unit that is not a source channel coded as itself (a mid or side subframe): it is in the distribution only.
+    public void Add(int channel, long position, int bits, bool isSilent = false, bool isCompared = true)
     {
         if (isSilent)
         {
@@ -56,6 +62,13 @@ public sealed class WastedBitsTally
 
         Units++;
         _distribution[bits]++;
+        if (!isCompared)
+        {
+            return;
+        }
+
+        ComparedUnits++;
+        _compared[bits]++;
         if ((uint)channel >= MaxChannels)
         {
             return;
@@ -109,7 +122,7 @@ public sealed class WastedBitsTally
 
     // The pattern lossyWAV's output shows in the coded counts, or null where the stream lacks it: a tested rate, at least 20 moments, the greatest common
     // divisor of the distances between the changes' positions equal to lossyWAV's block at that rate (so every change lies on its grid, and not all on a
-    // coarser one, as a tool with longer blocks would put them), and more than half of the units above the stream's smallest count.
+    // coarser one, as a tool with longer blocks would put them), and more than half of the compared units above the stream's smallest count.
     public LossyWavPattern? Pattern(int sampleRate)
     {
         int block = LossyWavBlock(sampleRate);
@@ -119,13 +132,13 @@ public sealed class WastedBitsTally
         }
 
         int smallest = 0;
-        while (_distribution[smallest] == 0)
+        while (_compared[smallest] == 0)
         {
             smallest++;
         }
 
-        long above = Units - _distribution[smallest];
-        return above * 2 > Units ? new LossyWavPattern(Changes, Moments, block, above, Units) : null;
+        long above = ComparedUnits - _compared[smallest];
+        return above * 2 > ComparedUnits ? new LossyWavPattern(Changes, Moments, block, above, ComparedUnits) : null;
     }
 
     // The statistic: the node with an entry for each count that occurred and the changes, or null where no unit has a wasted bit (a stream without
@@ -175,5 +188,5 @@ public sealed record LossyWavPattern(long Changes, long Moments, int Grid, long 
     // between names what a change is between, as the format counts it ("subframes of a channel").
     public string Evidence(string units, string between) =>
         string.Create(CultureInfo.InvariantCulture,
-            $"{Changes} changes of the wasted bits between {between}, at {Moments} positions, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the {units} that have a count above the smallest");
+            $"{Changes} changes of the wasted bits between {between}, at {Moments} moments, all on a grid of {Grid} samples (the greatest common divisor of the distances between them), and {WastedBitsTally.Share(Above, Units)} of the compared {units} above the smallest");
 }

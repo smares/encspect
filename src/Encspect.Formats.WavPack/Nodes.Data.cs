@@ -442,7 +442,7 @@ internal static partial class Nodes
             bool isData = id == "data";
             bool isFormat = id == "fmt ";
             long bodyLength = isData ? 0 : Math.Min((long)size + (size & 1), length - position - 8L);
-            string name = $"{id.TrimEnd()} Chunk";
+            string name = id == "fact" ? "Fact Chunk" : $"{id.TrimEnd()} Chunk";
             var chunk = new Node(name, at + position, 8 + bodyLength) { Description = isFormat ? Explain.FormatChunk : isData ? Explain.DataChunk : Explain.RiffOtherChunk, Topic = Topics.Wrapper };
             chunk.Add(Field(at + position, 4, "ID", id, Explain.ChunkId, Topics.Wrapper));
             chunk.Add(Field(at + position + 4, 4, "Size", NodeValue.Integer(size, "bytes", "byte"), isData ? Explain.DataChunkSize : Explain.ChunkSize, Topics.Wrapper));

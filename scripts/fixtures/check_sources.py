@@ -178,6 +178,12 @@ def settle(failures, served, serves_elsewhere):
     return problems, warnings
 
 
+def warning_line(name, address, problem):
+    """A GitHub annotation, so that a Wayback capture that is gone shows on the run summary of a weekly run that passes."""
+    title = f"Address of {name}".replace("%", "%25").replace(",", "%2C").replace(":", "%3A").replace("\r", "%0D").replace("\n", "%0A")
+    return f"::warning title={title}::{address} {problem}; another address serves the pinned file, and the Wayback Machine copy is lost"
+
+
 def main():
     args = sys.argv[1:]
     if args == ["--list"]:
@@ -247,7 +253,7 @@ def main():
             problems += 1
             print(f"{name}: {address} {problem}")
         for name, _, address, problem in warned:
-            print(f"warning: {name}: {address} {problem}; another address serves the pinned file")
+            print(warning_line(name, address, problem))
     note = f"; {skipped} in the private repository skipped, {downloads.TOKEN} is not set" if skipped else ""
     # LAME's betas, its alpha and 3.99.5 are trees of files in svn, checked by their digests.
     for version, (tag, expected) in old_lame_tool.SVN_TREES.items():

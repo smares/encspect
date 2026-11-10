@@ -35,13 +35,31 @@ public class WastedBitsTallyTests
         Assert.Equal(3L, tally.Changes);
     }
 
+    // A mid subframe states one wasted bit fewer than the left and right of the same audio: frames that switch between mid/side and left/right change
+    // subframe 0's count at frame boundaries without any change of the audio, so mid and side subframes are in the distribution only.
+    [Fact]
+    public void MidAndSideSubframesAreNotComparedWithTheChannelsBeforeThem()
+    {
+        var tally = new WastedBitsTally();
+        for (int frame = 0; frame < 60; frame++)
+        {
+            bool isMidSide = frame % 3 != 0;
+            tally.Add(0, frame * 512L, isMidSide ? 7 : 8, isCompared: !isMidSide);
+            tally.Add(1, frame * 512L, 8, isCompared: !isMidSide);
+        }
+
+        Assert.Equal((0L, 0L, 120L), (tally.Changes, tally.Moments, tally.Units));
+        Assert.Equal(40L, tally.CountOf(7));
+        Assert.Null(tally.Pattern(44100));
+    }
+
     [Fact]
     public void FramesOfTheBlockWithCountsThatChangeEveryFrameShowThePattern()
     {
         LossyWavPattern? pattern = Frames(512, 60, 4, 6, 5, 7).Pattern(44100);
         Assert.NotNull(pattern);
         Assert.Equal((59L, 512), (pattern.Changes, pattern.Grid));
-        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, at 59 positions, all on a grid of 512 samples", pattern.Evidence("subframes", "consecutive subframes of a channel"), StringComparison.Ordinal);
+        Assert.Contains("59 changes of the wasted bits between consecutive subframes of a channel, at 59 moments, all on a grid of 512 samples", pattern.Evidence("subframes", "consecutive subframes of a channel"), StringComparison.Ordinal);
     }
 
     [Theory]

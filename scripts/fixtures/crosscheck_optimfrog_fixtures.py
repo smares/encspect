@@ -51,7 +51,7 @@ assert ctypes.sizeof(Info) == 84 and Info.method.offset == 20 and Info.noPoints.
 
 # Files the 5.100 library does not open in CI (job 129444958413 of PR 249: "the SDK library does not open the file"): the float files `off` writes, whose main block
 # is "OFRX". The reason is an observation, not a cause found in the SDK (its header and documentation say nothing of float files). They are checked with `off --info`
-# instead, and the run fails if the library starts to open one.
+# instead, and the run fails if the library starts to open one. Their fields are compared with the recorded input that `off` decoded each file back to.
 LIBRARY_REFUSES = {
     "external-float-32-md5.ofr": "OFRX main block of `off`",
     "external-float-32.ofr": "OFRX main block of `off`",
@@ -59,9 +59,12 @@ LIBRARY_REFUSES = {
 }
 
 # Files MediaInfo reports an audio track for, with the reason; the run fails if it stops reporting one.
+MEDIAINFO_SHORT_TITLE = ("MediaInfo reads the file as MPEG Audio; the file is the encoder's blocks plus a 128-byte ID3v1 tag with a one- or two-character title, "
+                         "which no other built file shows, and MediaInfo's reason is not known")
 MEDIAINFO_READS = {
-    "built-tag-id3v1-short-title.ofr": "MediaInfo 24.01 and 26.01 read the file as MPEG Audio (Layer 1, 160 kb/s); the file is the encoder's blocks plus a 128-byte ID3v1 tag with a one-character title, "
-                                      "which no other built file shows, and MediaInfo's reason is not known",
+    "built-tag-id3v1-short-title.ofr": "MediaInfo 24.01 and 26.01 read it as MPEG Audio (Layer 1, 160 kb/s). " + MEDIAINFO_SHORT_TITLE,
+    "built-tag-id3v1-title-reads-as-block-end.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
+    "built-tag-id3v1-title-reads-as-block-next.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
 }
 
 
@@ -116,6 +119,17 @@ def main():
             print(f"{path.name}: library refuses ({LIBRARY_REFUSES[path.name]}); off --info exits with {result.returncode}")
             if result.returncode != 0:
                 failures.append(f"{path.name}: off --info exits with {result.returncode}")
+            # The black box for OFRX's fields: `off` decoded the file to the input it was given (provenance "samples_equal_input"; with --mantissabits 8 only the shape is the same), whose rate, channels, sample count and
+            # bits are recorded, and the manifest's fields must be those.
+            provenance = json.loads(path.with_name(path.name + ".provenance.json").read_text(encoding="utf-8"))
+            given = provenance["input"]
+            stream = manifest["stream_info"]
+            if not provenance["decoded"]["decode"]["samples_equal_input"] and "mantissa" not in path.name:
+                failures.append(f"{path.name}: off did not decode the file to its input")
+            for key, expected, actual in (("channels", given["channels"], 1 if main["channel_config"] == 0 else 2), ("sample rate", given["rate"], main["sample_rate"]),
+                                          ("samples", given["samples"], stream["samples"]), ("bits per sample", given["bits"], stream["bits_per_sample"])):
+                if expected != actual:
+                    failures.append(f"{path.name}: {key} is {actual} in the manifest, {expected} in the input `off` decoded the file to")
             checked += 1
             continue
         if info is None:

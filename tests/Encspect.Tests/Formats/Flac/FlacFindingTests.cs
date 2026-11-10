@@ -58,9 +58,19 @@ public class FlacFindingTests
     private static byte[] OneFrameStream(Action<List<bool>> body) =>
         FlacBuilder.Concat(FlacBuilder.Marker, FlacBuilder.Block(0, FlacBuilder.StreamInfo(16, 44100, 1, 16, 16), isLast: true), FlacBuilder.Frame(0, 16, 44100, 1, 16, false, body));
 
+    // An APPLICATION block of FLAC's foreign metadata that holds a WAVE fact chunk with the text.
+    private static byte[] RiffFact(string text)
+    {
+        byte[] body = [.. System.Text.Encoding.ASCII.GetBytes(text), 0, 0];
+        return [.. "riff"u8, .. "fact"u8, (byte)body.Length, 0, 0, 0, .. body];
+    }
+
     private static readonly Dictionary<string, Func<(byte[] File, Analyzer? Analyzer)>> Crafts = new()
     {
         ["flac.riff-fact-text-unrecognized"] = () => (LossyWavFiles.WithoutTimeSeparator("flac/external-lossyflac-b512-foreign.flac"), null),
+        ["flac.processor-claim-differs"] = () => (FlacBuilder.Stream(3, null,
+            FlacBuilder.Block(2, RiffFact("lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard\r\n")),
+            FlacBuilder.Block(2, RiffFact("lossyWAV 9.9.9 @ 08/11/2026 08:37:19, --quality standard\r\n"), isLast: true)), null),
         // Without a tag parser the route has nobody to hand the Vorbis comment to.
         ["flac.comment-not-read"] = () => (FlacBuilder.Stream(3, null, FlacBuilder.Block(4, Comment("vendor"), isLast: true)), new Analyzer([new FlacParser()])),
         ["flac.encoder-other-format"] = () => (FlacBuilder.Stream(3, null, FlacBuilder.Block(4, Comment("reference libFLAC 1.4.3 20230623", "ENCODER=Lavc60.31.102 libmp3lame"), isLast: true)), null),

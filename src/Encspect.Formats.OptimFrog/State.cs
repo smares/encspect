@@ -42,6 +42,11 @@ internal sealed class State
 
     public long CompSamples { get; set; }
 
+    // The samples over all channels that the data blocks state, every block whose fields are held; those of the blocks the data cuts are lost.
+    public long ReadValues { get; set; }
+
+    public long LostValues { get; set; }
+
     public long CrcFailures { get; set; }
 
     public int FirstCrcFailure { get; set; } = -1;

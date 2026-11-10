@@ -103,6 +103,26 @@ public class ChunkCraftedTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
+    [Theory]
+    [InlineData("lossyWAV 9.9.9 @ 08/11/2026 08:37:19, --quality standard", true)]
+    [InlineData("lossyWAV 1.4.2 @ 09/11/2026 09:00:00, --quality extreme", false)]
+    public void ASecondLossyWavTextThatNamesAnotherVersionIsReportedAndOneForTheSameVersionIsNot(string second, bool isDifferent)
+    {
+        byte[] first = [.. "lossyWAV 1.4.2 @ 08/11/2026 08:37:19, --quality standard\r\n"u8, 0, 0];
+        byte[] data = Riff(0, Format(), Chunk("fact", first), Chunk("fact", [.. System.Text.Encoding.ASCII.GetBytes(second), 0, 0]), Chunk("data", new byte[200]));
+        data[4] = (byte)(data.Length - 8);
+        data[5] = (byte)((data.Length - 8) >> 8);
+
+        Report report = Analyze(data, "two.wav");
+
+        Assert.Equal("lossyWAV 1.4.2", Assert.Single(report.Streams).Processor);
+        Assert.Equal(isDifferent ? 1 : 0, report.Findings.Count(f => f.Code == "wav.processor-claim-differs"));
+        if (isDifferent)
+        {
+            Assert.Equal(Severity.Info, report.Findings.Single(f => f.Code == "wav.processor-claim-differs").Severity);
+        }
+    }
+
     [Fact]
     public void ASoftwareChunkAndAnId3TagThatNameOtherWritersAreAConflict()
     {

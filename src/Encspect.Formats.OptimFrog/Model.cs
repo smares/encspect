@@ -189,6 +189,9 @@ internal struct BlockRecord
     public byte ChannelConfiguration;
     public BlockStatus Status;
 
+    // Whether the block's fields were read, its sample count among them (a COMP block that holds its 14 bytes of fields).
+    public bool HasFields;
+
     // Whether the CRC-32 was compared (the block is a whole COMP block).
     public bool HasCrc;
 

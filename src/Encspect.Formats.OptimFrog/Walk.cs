@@ -48,7 +48,77 @@ internal static class Walk
             return false;
         }
 
-        return end == reader.End || (TryReadHeader(reader, end, out _, out uint next) && end + Layout.BlockHeaderLength + next <= reader.End);
+        // A block that starts at or runs over the start of a trailing tag that validates structurally is not a block: the tag is stronger evidence.
+        long tagStart = TrailingTagStart(reader);
+        if (position >= tagStart || end > tagStart)
+        {
+            return false;
+        }
+
+        return end == tagStart || (TryReadHeader(reader, end, out _, out uint next) && end + Layout.BlockHeaderLength + next <= tagStart);
+    }
+
+    // The start of the trailing tags the host looks for (an ID3v1 tag at the end, an APEv2 footer or a Lyrics3 end marker before it) that validate
+    // structurally; the end of the data where there is none.
+    private static long TrailingTagStart(ByteReader reader)
+    {
+        long start = reader.End;
+        Span<byte> bytes = stackalloc byte[32];
+        if (start - reader.Start > 128 + 32)
+        {
+            Read(reader, start - 128, bytes[..3]);
+            if (bytes[..3].SequenceEqual("TAG"u8))
+            {
+                start -= 128;
+            }
+        }
+
+        if (start - reader.Start > 32)
+        {
+            Read(reader, start - 32, bytes);
+            if (bytes[..8].SequenceEqual("APETAGEX"u8))
+            {
+                uint size = BinaryPrimitives.ReadUInt32LittleEndian(bytes[12..]);
+                bool hasHeader = (BinaryPrimitives.ReadUInt32LittleEndian(bytes[20..]) & 0x80000000) != 0;
+                long tagStart = start - size - (hasHeader ? 32 : 0);
+                if (size >= 32 && tagStart >= reader.Start)
+                {
+                    return tagStart;
+                }
+            }
+        }
+
+        if (start - reader.Start > 9 + 6)
+        {
+            Read(reader, start - 9, bytes[..9]);
+            if (bytes[..9].SequenceEqual("LYRICS200"u8))
+            {
+                Read(reader, start - 15, bytes[..6]);
+                long size = 0;
+                foreach (byte b in bytes[..6])
+                {
+                    if (b < (byte)'0' || b > (byte)'9')
+                    {
+                        return start;
+                    }
+
+                    size = size * 10 + (b - '0');
+                }
+
+                if (size >= 11 && start - 15 - size >= reader.Start)
+                {
+                    return start - 15 - size;
+                }
+            }
+        }
+
+        return start;
+    }
+
+    private static void Read(ByteReader reader, long position, Span<byte> into)
+    {
+        reader.Position = position;
+        reader.Read(into);
     }
 
     // The end of the last block the walk accepts, without reading any block's data: where the host looks for trailing tags.
@@ -88,7 +158,7 @@ internal static class Walk
 
             int index = records.Counted < Records.MaxBlocks ? records.Blocks.Count : -1;
             int ordinal = (int)Math.Min(records.Counted, int.MaxValue);
-            int blockRank = Layout.Rank(id);
+            int blockRank = s.IsCorrection ? -1 : Layout.Rank(id);
             if (blockRank >= 0)
             {
                 if (blockRank < rank || (blockRank == rank && blockRank != Layout.Rank(Layout.Comp)))
@@ -100,12 +170,12 @@ internal static class Walk
                     rank = blockRank;
                 }
             }
-            else if (id != Layout.Deta && !(id == Layout.Corr && s.IsCorrection))
+            else if (s.IsCorrection ? id != Layout.Corr : id != Layout.Deta)
             {
                 block.Status |= BlockStatus.Unknown;
             }
 
-            switch (id)
+            switch ((block.Status & BlockStatus.Unknown) != 0 ? 0u : id)
             {
                 case Layout.Main or Layout.MainFloat:
                     ReadMain(s, reader, position, held, length, ref block);
@@ -217,6 +287,7 @@ internal static class Walk
         Span<byte> fields = stackalloc byte[Layout.CompFields];
         reader.Position = position + Layout.BlockHeaderLength;
         reader.Read(fields);
+        block.HasFields = true;
         block.StoredCrc = BinaryPrimitives.ReadUInt32LittleEndian(fields);
         block.Samples = BinaryPrimitives.ReadUInt32LittleEndian(fields[4..]);
         block.SampleType = fields[8];
@@ -325,9 +396,18 @@ internal static class Walk
             return;
         }
 
-        if (block.Id != Layout.Comp)
+        if (block.Id != Layout.Comp || (block.Status & BlockStatus.Unknown) != 0)
         {
             return;
+        }
+
+        if (block.HasFields)
+        {
+            s.ReadValues += block.Samples;
+            if ((block.Status & BlockStatus.Cut) != 0)
+            {
+                s.LostValues += block.Samples;
+            }
         }
 
         if ((block.Status & BlockStatus.Differs) != 0)

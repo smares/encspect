@@ -102,14 +102,14 @@ jobs:
         uses: actions/cache@v6
         with:
           path: build/inst-v2.0.2
-          key: fdk-aac-801f67f-${{ runner.os }}-ubuntu26-gcc15
+          key: fdk-aac-${{ hashFiles('scripts/fixtures/fdk_tool.py') }}-${{ runner.os }}-ubuntu26-gcc15
 
       # The version fdk_tool.py pins (v2.0.2), built from the commit of its tag; the harness is compiled against its own headers. The probe found 2.0.2, 2.0.3 and
       # 3.0.0 identical on every file (open question 6).
       - name: Build FDK AAC 2.0.2 and its harness
         run: |
           set -euo pipefail
-          commit=801f67f671929311e0c9952c5f92d6e147c7b003
+          commit="$(python3 -I -c "import sys; sys.path.insert(0, 'scripts/fixtures'); import fdk_tool; print(fdk_tool.FDK_COMMIT)")"
           if [ ! -d build/inst-v2.0.2/lib ]; then
             git clone -q https://github.com/mstorsjo/fdk-aac build/fdk-v2.0.2
             git -C build/fdk-v2.0.2 checkout -q "$commit"
@@ -125,6 +125,7 @@ jobs:
       # and is not uploaded.
       # fate-suite.ffmpeg.org was slow for hours on 2026-11-02 (one sample took 12 minutes): the retry budget of downloads.py is 20 minutes, so the step has 30.
       - name: Download the AAC samples
+        shell: bash
         timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
@@ -168,6 +169,7 @@ jobs:
 
       # The samples that are pinned by SHA-256 and never committed; one that no address serves is listed and skipped. The folder holds media and is not uploaded.
       - name: Download the AAC samples
+        shell: bash
         timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
@@ -262,6 +264,7 @@ jobs:
 
       # The downloaded samples again (the artifacts hold records, never media), for the analyzer's figures and ffmpeg's column.
       - name: Download the AAC samples
+        shell: bash
         timeout-minutes: 30
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}

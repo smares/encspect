@@ -65,7 +65,8 @@ internal static partial class Summary
             s.Context.AddEncoderClaim(ProcessorDetection.BehaviorClaim(pattern, stream, Wording));
         }
 
-        Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)));
+        Node? processor = ProcessorDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
+            (claim, text, name) => s.Findings.Add(Severity.Info, "flac.processor-claim-differs", claim.Source, _ => ProcessorDetection.Disagreement(claim, text, name)));
         if (processor is not null)
         {
             s.AddLeading(processor);

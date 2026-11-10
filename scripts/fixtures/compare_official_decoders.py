@@ -309,16 +309,19 @@ def compare_ogg(record, analyzer, ffmpeg):
         granule = sum(g or 0 for g in lasts)
         pre_skip = sum(m.get("preSkip", 0) for m in members) if codec == "opus" else 0
         reason = None
+        stopped = False  # the reader, or the direct path that holds its total to the stream, did not reach the end
         total = reader.get("totalSamples")
         bounds = None
         if not reader.get("opened"):
             reason = "the reader did not open the file"
         elif reader["stoppedBy"] != "end":
             reason = "the reader stopped (%s)" % reader["stoppedBy"]
+            stopped = True
         elif total is None:
             reason = "the reader's samples could not be counted"
         elif not direct.get("fedEveryPage"):
             reason = "the direct path did not feed every page (libogg dropped %d bytes, %d bytes left over, %d pages refused)" % (direct.get("skippedBytes") or 0, direct.get("trailingBytes") or 0, direct.get("refusedPages") or 0)
+            stopped = True
         elif coded_total is None:
             reason = "the direct path did not reach the end"
         elif not members or any(g is None for g in lasts):
@@ -337,6 +340,8 @@ def compare_ogg(record, analyzer, ffmpeg):
         }
         if reason:
             figure["noReference"] = reason
+        if stopped:
+            figure["readerStopped"] = reason
         witness = paths.get("directGranule")
         if witness and direct_total(witness) is not None:
             figure["witnesses"]["libvorbis with granule positions"] = direct_total(witness)
@@ -349,6 +354,12 @@ def compare_ogg(record, analyzer, ffmpeg):
         notes.append("no reader run")
 
     return {"figures": figures, "differences": figure_differences(figures), "units": unit_verdicts(direct, analyzer), "notes": notes}
+
+
+def stopped_difference(figure_id, decoder, analyzer, who, why):
+    """A decoder that did not reach the end of the stream gives no figure, whatever it counted so far: `noted`, the same kind and wording for every format and decoder."""
+    return {"figure": figure_id, "decoder": decoder, "value": None, "analyzer": analyzer, "status": "noted", "kind": "decoder-stopped",
+            "reason": "%s did not reach the end of the stream (%s); its partial count is no figure" % (who, why)}
 
 
 def figure_differences(figures):
@@ -369,9 +380,13 @@ def figure_differences(figures):
         if figure.get("refused"):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
-        if r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
+        if figure.get("readerStopped"):
+            differences.append(stopped_difference(figure["id"], figure["readerTool"], a, "the reader (%s)" % figure["readerTool"], figure["readerStopped"]))
+        elif r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
             differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
                                 "kind": "reader-not-accepted", "reason": figure.get("noReference")})
+        if figure.get("ttaStopped") and not figure.get("ttaNoCount") and r is None:
+            differences.append(stopped_difference(figure["id"], "tta -d", a, "tta -d", figure["ttaStopped"]["reason"]))
     return differences
 
 
@@ -1220,7 +1235,8 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
         figures.append({"id": "samples", **base, "refused": "FDK AAC outputs nothing for any of its %d units (%s)" % (direct["unitCount"], ", ".join(codes) if codes else "0x1002, it never has enough bits"),
                         "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg"})
     elif not complete:
-        figures.append({"id": "samples", **base, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
+        figures.append({"id": "samples", **base, "directStopped": aac_stop_reason(direct),
+                        "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
     elif direct.get("heldBack"):
         lost = direct["heldBlocks"] * ((d_runs[-1]["frameSize"] if d_runs else 0) or 0)
         figures.append({"id": "samples", **base, "heldBack": True, "decoderSamples": direct.get("totalSamples"), "heldBytes": direct.get("heldBytes"), "heldBlocks": direct["heldBlocks"],
@@ -1344,6 +1360,8 @@ def aac_differences(figures, direct, codecs, analyzer, units):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": None, "analyzer": a, "status": status, "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"] + "; " + why})
             continue
+        if figure.get("directStopped"):
+            differences.append(stopped_difference(figure["id"], "fdk direct", a, "FDK's direct path", figure["directStopped"]))
         if figure.get("heldBack"):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": figure["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-holds-blocks",
                                 "reason": figure["noReference"]})
@@ -1879,6 +1897,8 @@ def compare_ac3(record, analyzer, ffmpeg):
     elif total is None:
         base["noReference"] = "Core Audio's converter gave no complete total (%s)" % why
         column["converter"] = {"samples": None, "why": why}
+        if why.startswith("stopped by"):
+            differences.append(stopped_difference("samples", "coreaudio converter", a, "Core Audio's converter", why))
         if conv is not None and conv.get("stoppedBy") == "error" and not conv.get("opened") and a:
             setup = conv.get("setup") or {}
             made = ""
@@ -2164,6 +2184,10 @@ def main(argv):
                 write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
         print("comparison-aac.txt: %d files compared, %d not run" % (len(aac_results), len(aac_document["notRun"])))
     ac3 = run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp)
+    if not aac:
+        skipped_section(out, "aac", "no FDK records (the linux job's FDK step did not run or uploaded nothing)", {"coreaudio-aac": len(records.get("coreaudio-aac", {})), "mf-aac": len(records.get("mf-aac", {}))})
+    if not ac3:
+        skipped_section(out, "ac3", "no Core Audio records of the ac3 folder (the macos job did not run or uploaded nothing)", {"coreaudio-ac3": 0})
     if ac3:
         ac3_text, ac3_document, ac3_results, ac3_environment = ac3
         (out / "comparison-ac3.txt").write_text(ac3_text, encoding="utf-8")
@@ -2172,6 +2196,15 @@ def main(argv):
             write_official(pathlib.Path(args.write_official_ac3), FIXTURES / "ac3" / "official-decoders.json", ac3_results, ac3_environment, ffmpeg_version, args.run_id, "ac3")
         print("comparison-ac3.txt: %d files compared, %d not run" % (len(ac3_results), len(ac3_document["notRun"])))
     return 0
+
+
+def skipped_section(out, name, reason, counts):
+    """A section that cannot be built still leaves its file and a warning, so that a missing job shows on the run and the summary step finds the file; the counts name the records of
+    the other platforms that were therefore not compared."""
+    detail = ", ".join("%s %d" % (k, v) for k, v in counts.items())
+    line = "section %s not compared: %s (records present: %s)" % (name, reason, detail)
+    print("::warning::" + line)
+    (out / ("comparison-%s.txt" % name)).write_text("WARNING: " + line + "\n", encoding="utf-8")
 
 
 def summarize(record):

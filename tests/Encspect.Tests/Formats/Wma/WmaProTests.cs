@@ -25,6 +25,67 @@ public class WmaProTests
         Assert.True(coded <= 66 * 2048L);
     }
 
+    // Bytes of a packet changed so that a frame is invalid: with the length prefix its prefix still says where the next frame starts, so the
+    // frames after it in the packet (and the one it announces into the next packet) are declared and in the file, thrown away unread by the loss;
+    // each counts a frame length and is lost, and the stream keeps the 66 frames of the file.
+    [Theory]
+    [InlineData(12_000)]
+    [InlineData(20_000)]
+    [InlineData(45_000)]
+    public void FramesAfterAnInvalidFrameInItsPacketAreLost(int at)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/external-windows-wma10pro-cbr-stereo-44k-128.wma"));
+        for (int i = 0; i < 6; i++)
+        {
+            data[at + i] ^= 0xA5;
+        }
+
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("damaged.wma", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Contains(report.Findings, f => f.Code == "wma.frame-invalid");
+        Node statistics = WmaStream.Child(stream.Nodes[0], "Statistics");
+        Assert.Equal(66 * 2048L, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.True(stream.LostSamples > 2048);
+        Assert.Equal(0, stream.LostSamples % 2048);
+    }
+
+    // The packet before the cut one is declared by its header and walked as every run is, and so are the cut one's bytes from where its header
+    // points (each frame read to find its end, the one the bytes end inside included): their frames count and are lost.
+    [Theory]
+    [InlineData(300, 135_168L, 28_672L)]
+    [InlineData(2_000, 135_168L, 28_672L)]
+    [InlineData(4_500, 126_976L, 20_480L)]
+    public void ACutLastObjectWithoutThePrefixDropsTheRunBeforeItCounted(int cut, long coded, long lost)
+    {
+        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.asf"));
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("cut.asf", new MemoryStream(whole[..^cut]));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Node statistics = WmaStream.Child(stream.Nodes[0], "Statistics");
+        // Nine frames start in the packet before the cut one and the walk of the cut one's bytes (each frame read to find its end, the one the
+        // bytes end inside included) gives the rest (before: 2,048 lost and 53 frames coded).
+        Assert.Equal(coded, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.Equal(lost, stream.LostSamples);
+    }
+
+    // Without the prefix an invalid frame drops the rest of its packet unread: the bits from where the packet's header points are a declared run,
+    // so its frames count and are lost, and no frame of the file goes missing.
+    [Fact]
+    public void AnInvalidFrameWithoutThePrefixLosesTheRestOfItsPacket()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.asf"));
+        for (int i = 0; i < 6; i++)
+        {
+            data[12_000 + i] ^= 0xA5;
+        }
+
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("damaged.asf", new MemoryStream(data));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Contains(report.Findings, f => f.Code == "wma.frame-invalid");
+        Node statistics = WmaStream.Child(stream.Nodes[0], "Statistics");
+        Assert.Equal(66 * 2048L, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.True(stream.LostSamples > 2048);
+    }
+
     [Theory]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 132300, 8, 209)]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 132300, 7, 209)]

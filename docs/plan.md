@@ -106,6 +106,7 @@ The project lead, 2026-11-08:
 - A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Every parked item has a milestone, or sits under [Not planned](#not-planned) with the trigger that would bring it back.
 - A pause the lead asks for keeps the item's place and priority, and the item resumes first.
+- A format's `pending` differences from the official decoders go to the lead with the pull request that commits its `official-decoders.json`; the analyzer changes that follow are their own pull requests, each with its goldens ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md#rollout), step 8). A total that is no reference is `keep`, never `pending`.
 
 ## Milestones
 
@@ -133,7 +134,7 @@ Every lossless format with a decoder design is decoded and measured, except WMA 
    - **Design:** [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md), decided by the lead on 2026-11-09.
    - **OptimFROG (done):** the parser, fixtures and cross-check ([optimfrog.md](formats/optimfrog.md)). The lead decided (2026-11-09): an `.ofc` is detected by its structure (a chain of `CORR` blocks whose CRC-32s hold) and named "OptimFROG correction data"; an `.ofs` is named "OptimFROG" with a low-confidence claim of the lossy part of a DualStream from the data blocks' reserved bytes, raised to medium when the file name ends in `.ofs`; `OFRX` and `DETA` are read as what `off` writes.
    - **TAK (done):** the parser, fixtures and cross-check ([tak.md](formats/tak.md)): the metadata objects with their CRC-24s, the stream info, the encoder info and preset, the stored WAV header and the end the last frame info gives. The frames are not walked (0.4, item 3) and the codec 3 of the 2.1 betas is named without a claim (the lead, 2026-11-09).
-   - **OptimFROG DualStream** is reported as WavPack's hybrid mode is (the lead, 2026-11-09): an `.ofs` is "OptimFROG DualStream", lossy by itself, and a correction file opened alone is "OptimFROG correction data". Finding the correction file beside the `.ofs` and checking the pair waits for 0.4, item 3, with WavPack's `.wvc`.
+   - **OptimFROG DualStream** (the lead, 2026-11-09, as built): an `.ofs` is named "OptimFROG" with a claim that it is the lossy part of a DualStream (low confidence from the data blocks' reserved bytes, medium when the file name ends in `.ofs`), and a correction file opened alone is "OptimFROG correction data". Finding the correction file beside the `.ofs` and checking the pair waits for 0.4, item 3, with WavPack's `.wvc`.
 5. **Two level figures (done)** from step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout), which need no lossy decoder: a minimum length for the stretches that count as silence, and clipping at the extremes of the bits in use (16-bit audio padded to 24 bits tops out at 0x7FFF00, so only its negative runs count today). Design: [Step 6: silence stretches and clipping at the bits in use](design/spectral-analysis.md#step-6-silence-stretches-and-clipping-at-the-bits-in-use), with four decisions for the lead, all taken as recommended (2026-11-10): the minimum of 10 ms applies at the start and end too, clipping counts at the bits in use from 8 bits in use, the CSV gains `Clipping Runs` and `Digital Silence Stretches`, and floats on the 16-bit and 24-bit grids are included. Built as designed: [As built: step 6 levels](design/spectral-analysis.md#as-built-step-6-levels).
 
 ### 0.3: Lossy formats measured
@@ -143,6 +144,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 1. **The decoders,** one pull request each, in the order of [lossy-decoders.md](design/lossy-decoders.md#order): MPEG audio (Layers I, II and III), Vorbis, Opus, AC-3, E-AC-3.
    - **Definition of done** of each: the decoder, its format's entropy-pass figures, its coding graphs and its gap wave 3 items ([lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)). Coding graphs and gap wave 3 are no separate threads.
    - **The patent question** (decision 17 of [lossy-decoders.md](design/lossy-decoders.md#decisions)) is decided before E-AC-3 starts.
+   - **The official-decoder cross-checks of AC-3 and E-AC-3** that rollout steps 5 and 7 left open ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)) come with these decoders: the AC-3 variants (rules in `derive_variants.py`), the downloaded E-AC-3 samples (`eac3-samples.json`), Core Audio's independent substream 1 and dependent substreams (`substreams.eac3`), and the comparison of the PCM.
 2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), each its own change after the decoders above:
    - mid/side spectra and spectral holes, the lossy coders' finer marks, which need lossy streams and fixtures that show each mark;
    - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
@@ -224,6 +226,8 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
   - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
   - Dolby's object audio, and AC-4 and MPEG-H: the design does not cover their decoders, which wait for a design of their own.
+- **AC-3 and E-AC-3 on Windows** (rollout step 7 of [official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)): no Windows image has a decoder for them. Trigger: a Windows runner image ships one.
+- **The official-decoder runs on the Intel and arm64 Windows images** (the Windows column runs on `windows-2025`, x64, only). Trigger: a difference that depends on the build.
 - **An OptimFROG decoder** (the lead, 2026-11-09): the codec is closed and no open implementation exists, not even under the LGPL; its published `format.txt` covers the container only, which is what the header-level parser reads. Reverse-engineering the binaries is neither allowed by its license nor a source that can be checked. Not planned unless its author publishes the coding or an open implementation appears. Until then OptimFROG streams are checked by their block CRC-32s, and a DualStream pair is judged on headers and checksums alone.
 - Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification.
 - The ancient lossless compressors and obsolete vocoders.

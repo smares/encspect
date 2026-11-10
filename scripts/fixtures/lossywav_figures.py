@@ -170,14 +170,16 @@ TESTED_GRIDS = {22050: 256, 32000: 256, 44100: 512, 48000: 512, 88200: 1024, 960
 def flac_units(path):
     """The wasted bits of each subframe of a FLAC file, from `flac -a`, and the design's behavior rule over them (PR 3): a constant subframe of 0 is digital
     silence and has no count; the claim needs a tested rate, 20 moments (frame positions at which some channel's count changes), the greatest common divisor
-    of the distances between the changes' positions equal to lossyWAV's block, and more than half of the counted subframes above the smallest count."""
+    of the distances between the changes' positions equal to lossyWAV's block, and more than half of the counted subframes above the smallest count. Only a
+    source channel coded as itself is compared (left in left/right and left/side, right in left/right and side/right): a mid or side subframe states the
+    coding's own count, so it is in the distribution only."""
     import math
     with tempfile.TemporaryDirectory() as work:
         analysis = pathlib.Path(work) / "a.ana"
         result = subprocess.run(["flac", "-a", "-s", "-f", "-o", str(analysis), str(path)], capture_output=True)
         if result.returncode != 0 or not analysis.exists():
             return {"file": str(path), "error": result.stderr.decode("utf-8", "replace").strip()[-200:]}
-        frames, rate, sizes, starts = [], None, [], []
+        frames, rate, sizes, starts, assignments = [], None, [], [], []
         position = 0
         with analysis.open() as lines:
             for line in lines:
@@ -188,12 +190,13 @@ def flac_units(path):
                     starts.append(position)
                     position += sizes[-1]
                     frames.append([])
+                    assignments.append(fields["channel_assignment"].upper())
                 elif line.startswith("\tsubframe=") and frames:
                     silent = "type=CONSTANT" in line and "value=0" in line.split("type=CONSTANT")[1].split()
                     frames[-1].append(None if silent else int(line.split("wasted_bits=")[1].split()[0]))
     if not frames:
         return {"file": str(path), "error": "no frames"}
-    histogram, changes, moments, silent_units = {}, 0, set(), 0
+    histogram, compared, changes, moments, silent_units = {}, {}, 0, set(), 0
     grid = TESTED_GRIDS.get(rate)
     divisor, first_change = 0, None
     for channel in range(max(len(f) for f in frames)):
@@ -206,16 +209,20 @@ def flac_units(path):
                 silent_units += 1
                 continue
             histogram[count] = histogram.get(count, 0) + 1
+            kind = assignments[index]
+            if kind.startswith("MID") or (kind.startswith("LEFT_SIDE") and channel == 1) or (kind.startswith("RIGHT_SIDE") and channel == 0):
+                continue
+            compared[count] = compared.get(count, 0) + 1
             if last is not None and count != last:
                 changes += 1
                 moments.add(starts[index])
                 first_change = starts[index] if first_change is None else first_change
                 divisor = math.gcd(divisor, abs(starts[index] - first_change))
             last = count
-    smallest = min(histogram)
-    above = sum(n for c, n in histogram.items() if c > smallest)
+    smallest = min(compared) if compared else 0
+    above = sum(n for c, n in compared.items() if c > smallest)
     units = sum(histogram.values())
-    claim = grid is not None and len(moments) >= MIN_CHANGES and divisor == grid and above * 2 > units
+    claim = grid is not None and len(moments) >= MIN_CHANGES and divisor == grid and above * 2 > sum(compared.values())
     return {"file": str(path), "rate": rate, "frameLength": max(sizes), "subframes": units, "silentSubframes": silent_units, "distribution": dict(sorted(histogram.items())),
             "changes": changes, "moments": len(moments), "gridOfChanges": divisor, "subframesAboveSmallest": above, "claim": claim}
 

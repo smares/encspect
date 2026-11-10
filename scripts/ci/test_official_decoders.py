@@ -144,6 +144,36 @@ class ColumnTests(unittest.TestCase):
         self.assertNotIn("noReference", figures[1])
         self.assertEqual([], compare.coreaudio_differences(figures))
 
+    def test_an_ogg_reader_that_did_not_reach_the_end_is_noted_as_stopped_with_no_figure(self):
+        figure = {"id": "samples", "stage": "trimmed", "analyzer": 40960, "reference": None, "referencePath": None, "witnesses": {}, "readerTotal": 26816, "readerTool": "oggdec",
+                  "noReference": "the direct path did not feed every page", "readerStopped": "the direct path did not feed every page"}
+        found = compare.figure_differences([figure])
+        self.assertEqual([("decoder-stopped", "noted", None)], [(d["kind"], d["status"], d["value"]) for d in found])
+        self.assertIn("did not reach the end of the stream (the direct path did not feed every page); its partial count is no figure", found[0]["reason"])
+        # a total outside the range the granule positions allow is still a difference for the lead
+        outside = {k: v for k, v in figure.items() if k != "readerStopped"}
+        self.assertEqual([("reader-not-accepted", "pending")], [(d["kind"], d["status"]) for d in compare.figure_differences([outside])])
+
+    def test_a_tta_reader_that_stopped_is_noted_as_stopped_and_one_with_no_count_keeps_its_kind(self):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 100, "reference": None, "referencePath": None, "witnesses": {},
+                  "ttaStopped": {"reason": "exit status 255, no output file"}}
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in compare.figure_differences([figure])])
+        counted = {**figure, "ttaNoCount": "0 channels", "ttaDataBytes": 0}
+        self.assertEqual([("decoder-gives-no-count", "noted")], [(d["kind"], d["status"]) for d in compare.figure_differences([counted])])
+        fallback = {**figure, "reference": 100, "referencePath": "ffmpeg"}
+        self.assertEqual([], compare.figure_differences([fallback]))
+
+    def test_an_fdk_direct_path_that_did_not_reach_the_end_is_noted_as_stopped(self):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 2048, "reference": None, "referencePath": None, "witnesses": {}, "streams": [0], "lostSamples": 0,
+                  "directStopped": "timeout", "noReference": "the direct path did not reach the end (timeout)"}
+        found = compare.aac_differences([figure], {"units": []}, [], {"streams": [{"index": 0}]}, [])
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in found])
+
+    def test_an_ac3_converter_that_was_stopped_is_noted_as_stopped(self):
+        stopped = {"opened": True, "stoppedBy": "timeout", "runs": [], "units": [], "unitCount": 6, "refusedUnits": 0, "noOutputUnits": 0, "drainFrames": 0}
+        compared = compare.compare_ac3({"paths": {"converter": stopped}, "unitList": {"cutUnits": 0}}, Ac3Tests.analyzer, None)
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in compared["differences"]])
+
     def test_where_both_sources_differ_the_reader_holds_only_the_one_it_applied(self):
         edit = {"id": "samples.editList", "stage": "trimmed", "analyzerFigure": "Samples (Edit List)", "streams": [0], "analyzer": 1000, "reference": None, "referencePath": None,
                 "referenceKind": None, "witnesses": {}}
@@ -614,6 +644,23 @@ class WindowsDriverTests(unittest.TestCase):
         self.assertEqual([("refused", 2, "0xC00D3E8C"), ("error", 4, "0xC00D6D60")], [(u["result"], u["index"], u["status"]) for u in record["units"]])
         self.assertEqual((2, 1, 1, 1), (record["decodedUnits"], record["noOutputUnits"], record["refusedUnits"], record["errorUnits"]))
         self.assertEqual([], record["silentUnits"])
+
+    def test_a_capped_output_is_no_error_and_a_failure_before_a_retry_is_one(self):
+        capped = unit(1, 1024, output="ok,limit")
+        before_retry = unit(2, 1024, drainedBeforeRetry="0xC00D6D60", inputHresult="0xC00D36B5", retryHresult="0x00000000")
+        self.assertEqual(("decoded", "error"), (driver.windows_unit_result(capped), driver.windows_unit_result(unit(3, 1024, output="ok,0xC00D6D60"))))
+        self.assertEqual("error", driver.windows_unit_result(before_retry))
+        node = transform_node([unit(0, 1024), capped, before_retry], coded=3072, drain=0, runs=[run44(3072)])
+        record = driver.windows_transform_result(node, 3)
+        self.assertEqual(([1], 1, "0xC00D6D60"), (record["cappedUnits"], record["errorUnits"], record["units"][0]["status"]))
+        self.assertEqual("end", record["stoppedBy"])
+
+    def test_a_drain_that_hit_the_cap_leaves_no_total(self):
+        node = transform_node([unit(0, 1024)], coded=1024, drain=64, runs=[run44(1088)])
+        node["drain"]["results"] = "ok,limit"
+        record = driver.windows_transform_result(node, 1)
+        self.assertEqual("limit", record["stoppedBy"])
+        self.assertNotIn("totalSamples", record)
 
     def test_a_unit_that_gives_nothing_after_the_first_output_is_silent_and_one_before_it_is_not(self):
         node = transform_node([unit(0, 0), unit(1, 1024), unit(2, 0), unit(3, 1024)], coded=2048, drain=0, runs=[run44(2048)])
