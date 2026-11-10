@@ -71,5 +71,38 @@
       ],
       "key": "longestStretch"
     }
+  ],
+  "changed": [
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "fields": [
+        "atStart",
+        "atEnd"
+      ],
+      "to": 0,
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-tta.measure.json"
+      ]
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "fields": [
+        "atStart",
+        "atEnd"
+      ],
+      "to": 0,
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-tta.measure.json"
+      ]
+    }
   ]
 }
