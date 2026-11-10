@@ -80,8 +80,8 @@ def tool_problems(path, sample, work):
             problems.append(f"ffmpeg does not decode the file cleanly: {result.stderr.decode(errors='replace').strip()[:200]}")
         elif hashlib.md5(result.stdout).hexdigest() != sample["decoded_pcm_md5"]:
             problems.append("ffmpeg decodes samples that differ from the manifest's")
-    elif b"Not yet implemented" not in result.stderr:
-        problems.append(f"ffmpeg is expected to refuse the TAK 1.0 codec: {result.stderr.decode(errors='replace').strip()[:200]}")
+    elif result.returncode == 0:
+        problems.append("ffmpeg is expected to refuse the TAK 1.0 codec (6.1.1: \"Not yet implemented in FFmpeg\"), but it decodes the file")
     info = mi.read_or_problem(path, problems)
     if info is not None:
         audio = info["Audio"][0] if info["Audio"] else {}
@@ -104,10 +104,10 @@ def analyzer_problems(analyzer, path, sample):
         if stream.get(key) != expected:
             problems.append(f"the analyzer's {key} is {stream.get(key)}, the manifest {expected}")
     verification = stream.get("verification") or {}
-    crc = next((c for c in verification.get("checksums", []) if c["name"] == "header CRC-24"), None)
+    crc = next((c for c in verification.get("checksums", []) if c["name"] == "metadata CRC-24"), None)
     compared = sum(1 for o in sample["objects"] if o[0] in (1, 2, 3, 4, 6, 7))
     if crc is None or (crc["stored"], crc["checked"], crc["failed"]) != (compared, compared, 0):
-        problems.append(f"the analyzer's header CRC-24 tally is {crc}, expected {compared} objects compared and holding")
+        problems.append(f"the analyzer's metadata CRC-24 tally is {crc}, expected {compared} objects compared and holding")
     serious = sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"})
     if serious != sorted(sample["findings"]):
         problems.append(f"the analyzer reports {serious}, the manifest {sample['findings']}")

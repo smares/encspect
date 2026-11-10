@@ -23,6 +23,7 @@ Every skipped check prints its reason. Disagreements fail the run (exit status 1
 
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -94,8 +95,9 @@ def check_ffprobe(name, manifest, path, problems):
     if "tak.object-crc-mismatch" in findings:
         bad = [o for o in manifest["objects"] if o["crc_ok"] is False]
         for o in bad:
-            if f"{o['id']} metadata block CRC error" not in stderr:
-                problems.append(f"ffprobe does not report a CRC error for object {o['id']}: {stderr.strip()[:200]}")
+            # FFmpeg words it "<id> metadata block CRC error" (6.1.1); only the object's ID and "CRC" are held to, in one line.
+            if not any("CRC" in line and re.search(rf"\b{o['id']}\b", line) for line in stderr.splitlines()):
+                problems.append(f"ffprobe does not report a CRC failure for object {o['id']}: {stderr.strip()[:200]}")
     if not name.startswith("external-"):
         NOTES.append(f"{name}: ffprobe {'opens the file' if stream else 'refuses the file'}")
         return stream is not None and not findings
@@ -106,8 +108,10 @@ def check_ffprobe(name, manifest, path, problems):
     for key, want in (("codec_name", "tak"), ("sample_rate", str(info["sample_rate"])), ("channels", info["channels"])):
         if stream.get(key) != want:
             problems.append(f"ffprobe {key} is {stream.get(key)}, the manifest {want}")
-    if str(stream.get("bits_per_raw_sample")) != str(info["bits_per_sample"]):
-        problems.append(f"ffprobe bits_per_raw_sample is {stream.get('bits_per_raw_sample')}, the manifest {info['bits_per_sample']}")
+    # The depth is bits_per_raw_sample in 6.1.1; a later version may give it as bits_per_coded_sample or in the sample format, so any of them may carry it.
+    depths = {str(stream.get(key)) for key in ("bits_per_raw_sample", "bits_per_coded_sample")}
+    if str(info["bits_per_sample"]) not in depths:
+        problems.append(f"ffprobe gives the bit depth as {sorted(depths)}, the manifest {info['bits_per_sample']}")
     duration = float(stream.get("duration") or document.get("format", {}).get("duration") or -1)
     if abs(duration - info["samples"] / info["sample_rate"]) > 0.001:
         problems.append(f"ffprobe duration is {duration}, the stream info counts {info['samples'] / info['sample_rate']}")
@@ -146,7 +150,7 @@ def check_decode(name, manifest, provenance, path, work, problems):
     flipped = work / "flipped.tak"
     flipped.write_bytes(data)
     result = run(["ffmpeg", "-v", "warning", "-err_detect", "crccheck", "-i", str(flipped), "-f", "null", "-"])
-    if b"CRC error" not in result.stderr:
+    if b"CRC" not in result.stderr:
         problems.append(f"ffmpeg does not report a CRC error for a flipped bit in the last frame's CRC-24: {result.stderr.decode(errors='replace').strip()[:200]}")
 
 

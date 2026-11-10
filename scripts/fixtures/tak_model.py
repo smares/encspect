@@ -266,8 +266,9 @@ def manifest(data, extra=None):
         rate = stream["sample_rate"]
         result["summary"] = {"codec": stream["codec"], "codec_name": CODECS[stream["codec"]] if stream["codec"] < len(CODECS) else None, "profile": stream["profile"],
                              "frame_length": stream["frame_length"], "sample_rate": rate, "channels": stream["channels"], "bits_per_sample": stream["bits_per_sample"],
-                             "samples": stream["samples"], "encoder": f"TAK {enc['version']}" if enc else "TAK 1.0",
-                             "preset": enc["name"] if enc else f"-p{stream['profile']}"}
+                             "samples": stream["samples"],
+                             "encoder": f"TAK {enc['version']}" if enc else ("TAK 1.0" if stream["codec"] == 0 and not any(o["id"] == 4 for o in objects) else None),
+                             "preset": enc["name"] if enc else f"-p{stream['profile']} (evaluation unknown)"}
     result["findings"] = findings
     if extra:
         result.update(extra)
