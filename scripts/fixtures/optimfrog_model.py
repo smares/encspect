@@ -4,8 +4,7 @@ scripts and, in manifest(), each fixture's manifest.
 
 What the files add to the specification:
 
-- A COMP block's CRC-32 is the plain IEEE (zlib) CRC-32 over the block's data after the CRC field (luckynight.ofr, OptimFROG 4.509; every encoder-written
-  fixture).
+- A COMP block's CRC-32 is the plain IEEE (zlib) CRC-32 over the block's data after the CRC field (every encoder-written fixture, OptimFROG 5.100).
 - The 2-byte field "reserved for internal use" of a COMP block is shown, never judged.
 """
 
@@ -37,11 +36,31 @@ def printable(block_id):
     return all(0x20 <= b < 0x7F for b in block_id)
 
 
+def trailing_tag_start(data, start=0):
+    """Where the trailing tags the host looks for begin, where they validate structurally: an ID3v1 tag at the end, an APEv2 footer or a Lyrics3 v2 end marker
+    before it. The end of the data where there is none."""
+    end = len(data)
+    if end - start > 128 + 32 and data[end - 128:end - 125] == b"TAG":
+        end -= 128
+    if end - start > 32 and data[end - 32:end - 24] == b"APETAGEX":
+        size = struct.unpack_from("<I", data, end - 32 + 12)[0]
+        flags = struct.unpack_from("<I", data, end - 32 + 20)[0]
+        tag = end - size - (32 if flags & 0x80000000 else 0)
+        if size >= 32 and tag >= start:
+            return tag
+    if end - start > 9 + 6 and data[end - 9:end] == b"LYRICS200" and data[end - 15:end - 9].isdigit():
+        size = int(data[end - 15:end - 9])
+        if size >= 11 and end - 15 - size >= start:
+            return end - 15 - size
+    return end
+
+
 def walk(data, start=0):
     """The blocks of data from start as dicts {id, offset, length (of the data), end}, by the analyzer's rule: four printable bytes and a length that ends
     inside the data. Returns (blocks, end) where end is the offset after the last accepted block."""
     blocks = []
     pos = start
+    tag = trailing_tag_start(data, start)
     while pos + 8 <= len(data):
         block_id = data[pos:pos + 4]
         length = struct.unpack_from("<I", data, pos + 4)[0]
@@ -49,8 +68,8 @@ def walk(data, start=0):
             break
         known = block_id in KNOWN_IDS
         end = pos + 8 + length
-        if not known and (end > len(data) or not (end == len(data) or (end + 8 <= len(data) and printable(data[end:end + 4])
-                                                                          and end + 8 + struct.unpack_from("<I", data, end + 4)[0] <= len(data)))):
+        if not known and (end > tag or pos >= tag or not (end == tag or (end + 8 <= len(data) and printable(data[end:end + 4])
+                                                                          and end + 8 + struct.unpack_from("<I", data, end + 4)[0] <= tag))):
             break
         if known and end > len(data):
             # A known block the data cuts short owns the rest of the data and ends the walk.

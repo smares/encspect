@@ -33,8 +33,8 @@ def ape_with_header():
     return header + item + footer
 
 
-def id3v1(title=b"Song", artist=b"Artist"):
-    return b"TAG" + title.ljust(30, b"\0") + artist.ljust(30, b"\0") + bytes(30) + bytes(4) + bytes(30) + b"\xff"
+def id3v1(title=b"Song", artist=b"Artist", comment=b""):
+    return b"TAG" + title.ljust(30, b"\0") + artist.ljust(30, b"\0") + bytes(30) + bytes(4) + comment.ljust(30, b"\0") + b"\xff"
 
 
 def lyrics3():
@@ -73,6 +73,10 @@ FILES = {
     "built-tag-ape-and-id3v1.ofr": (lambda b: b + ape_footer_only() + id3v1(), []),
     "built-tag-lyrics3-and-id3v1.ofr": (lambda b: b + lyrics3() + id3v1(), []),
     "built-tag-id3v1-short-title.ofr": (lambda b: b + id3v1(b"A", b"B"), []),
+    # The tag's first bytes read as a block header "TAGx" whose length is the title's second character: one that ends exactly at the end of the data,
+    # and one (with a comment whose characters read as a header that fits) that does not. The tag is stronger evidence than an unknown block.
+    "built-tag-id3v1-title-reads-as-block-end.ofr": (lambda b: b + id3v1(b"Ax"), []),
+    "built-tag-id3v1-title-reads-as-block-next.ofr": (lambda b: b + id3v1(b"Ab", comment=b"Hello, world!"), []),
     "built-tag-like-bytes-in-data-block.ofr": (with_tag_bytes_in_comp, []),
 }
 

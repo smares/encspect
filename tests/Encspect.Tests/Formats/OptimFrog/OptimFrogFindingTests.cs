@@ -176,6 +176,22 @@ public class OptimFrogFindingTests
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("optimfrog.", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("Ax", "")]
+    [InlineData("Ab", "Hello, world!")]
+    public void AnId3v1TagWhoseTitleReadsAsABlockHeaderIsStillTheTag(string title, string comment)
+    {
+        byte[] tag = Builder.Id3v1(title, "Artist");
+        System.Text.Encoding.ASCII.GetBytes(comment).CopyTo(tag, 97);
+        byte[] file = [.. Builder.Standard(), .. tag];
+
+        Report report = Analyze(file);
+
+        Assert.Equal(Builder.Standard().Length, DeclaredEnd(file));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("optimfrog.", StringComparison.Ordinal) || f.Code == "tag.near-miss");
+        Assert.Contains(report.Root.Children, n => n.Name == "ID3v1");
+    }
+
     [Fact]
     public void AnId3v2TagBeforeTheFileIsTheHostsToo()
     {
@@ -202,6 +218,20 @@ public class OptimFrogFindingTests
         Assert.Equal(0, tally.Checked);
         Assert.Null(report.Streams.Single().Verification!.IsVerified);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
+    }
+
+    [Fact]
+    public void ACutDataBlocksSamplesCountAndAreLost()
+    {
+        byte[] file = Builder.File(Builder.MainBlock(176400), Builder.Head(), Builder.Comp(88200), Builder.Comp(88200, 500));
+
+        StreamInfo whole = Analyze(file).Streams.Single();
+        StreamInfo cut = Analyze(file[..^100]).Streams.Single();
+        StreamInfo missing = Analyze(file[..^(500 + 14 + 8)]).Streams.Single();
+
+        Assert.Equal((88200, 0), (whole.Samples, whole.LostSamples));
+        Assert.Equal((88200, 44100), (cut.Samples, cut.LostSamples));
+        Assert.Equal((44100, 0), (missing.Samples, missing.LostSamples));
     }
 
     [Fact]
@@ -705,7 +735,23 @@ public class OptimFrogFindingTests
         Report report = Analyze(file);
         Finding finding = Single(report, "optimfrog.block-crc-mismatch");
         Assert.Contains("1 more block", finding.Message);
+        Assert.Contains("correction block at 0x0", finding.Message);
         Assert.Equal(false, report.Streams.Single().Verification!.IsVerified);
+    }
+
+    [Theory]
+    [InlineData("HEAD")]
+    [InlineData("COMP")]
+    [InlineData("OFR ")]
+    public void ABlockOfALosslessFilesIdInsideACorrectionFileIsUnknown(string id)
+    {
+        byte[] data = new byte[40];
+        Report report = Analyze(Builder.File(Corr(), Builder.Block(id, data), Corr(seed: 1)));
+
+        Finding finding = Single(report, "optimfrog.block-unknown");
+        Assert.Contains(id.Trim(), finding.Message);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "optimfrog.block-out-of-order" or "optimfrog.block-differs");
+        Assert.Equal(2, report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "block CRC-32").Checked);
     }
 
     [Fact]

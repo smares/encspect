@@ -168,7 +168,7 @@ internal static class Summary
             uint computed = b.ComputedCrc;
             Func<Node> node = index < Records.MaxBlocks ? () => Nodes.CrcField(source, index) : () => stream;
             s.Findings.Add(Severity.Warning, "optimfrog.block-crc-mismatch", node, count =>
-                $"The CRC-32 of the data block at 0x{b.Offset:X} is {stored:x8}, but its data gives {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", s.CrcFailures);
+                $"The CRC-32 of the {(b.Id == Layout.Corr ? "correction block" : "data block")} at 0x{b.Offset:X} is {stored:x8}, but its data gives {computed:x8}{(count > 1 ? $"; {Counts.Of(count - 1, "more block", "more blocks")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", s.CrcFailures);
         }
 
         if (s.UnknownBlocks > 0)
@@ -336,13 +336,19 @@ internal static class Summary
         Node stream = s.Stream;
         var statistics = new Node("Statistics", r.Offset, r.End - r.Offset) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         long rate = m.SampleRate;
-        long samples = m.SamplesPerChannel;
+        long samples = s.ReadValues / m.Channels;
+        long lost = s.LostValues / m.Channels;
         double duration = rate > 0 ? samples / (double)rate : 0;
         uint? mask = source.Headers.Values.Select(h => h.Format?.Mask).FirstOrDefault(v => v is not null);
         IReadOnlyList<Speaker>? layout = LayoutOf(m, mask);
         Node Cover3(string name, NodeValue? value, string description) => cover(name, value, description, null);
         statistics.Add(cover("Blocks", NodeValue.Integer(s.CompBlocks, "blocks", "block"), Explain.StatBlocks, Topics.Blocks));
         statistics.Add(Cover3("Samples", NodeValue.Integer(samples, "samples", "sample"), Explain.StatSamples));
+        if (lost > 0)
+        {
+            statistics.Add(cover("Lost Samples", NodeValue.Integer(lost, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover3("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         if (rate > 0)
         {
@@ -387,6 +393,7 @@ internal static class Summary
             ChannelLayout = layout,
             BitsPerSample = m.BitsPerSample > 0 ? m.BitsPerSample : null,
             Samples = samples,
+            LostSamples = lost,
             Duration = duration,
             AverageBitrate = figures.AverageBitrate,
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,
