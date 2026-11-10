@@ -17,6 +17,6 @@ Every MPEG audio frame states its own bitrate, so a stream can use one bitrate t
 
 **In DTS** RATE states a targeted bitrate; a stream counts as variable when its frame sizes or targeted rates differ, and with the lossless XLL component ([extension substreams](dts-extension-substream)).
 
-**What you see.** IsVbr in the statistics says whether the frames use more than one bitrate, from the frames themselves. A VBR header alone does not make a file VBR: LAME writes an "Info" header into CBR files too. The LAME tag's VBR Method says which mode the encoder was set to, and the bitrate distribution shows how many frames use each bitrate.
+**What you see.** Bitrate Mode in the statistics says whether the frames use more than one bitrate, from the frames themselves. A VBR header alone does not make a file VBR: LAME writes an "Info" header into CBR files too. The LAME tag's VBR Method says which mode the encoder was set to, and the bitrate distribution shows how many frames use each bitrate.
 
 **In TTA** the frames of Encspect's test files differ in length, so the bitrate varies from frame to frame ([TTA](tta-stream)). **In WavPack** hybrid blocks aim at one bitrate ([hybrid mode](wavpack-hybrid-mode)). **In Musepack** SV7 and SV8 frames are as long as their data, so the bitrate always varies ([Musepack subband coding](musepack-subband-coding)).

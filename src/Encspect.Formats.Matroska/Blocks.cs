@@ -210,6 +210,7 @@ internal sealed partial class FileReader
             statistics.FirstOffset = block.FramesOffset;
             statistics.Smallest = timestamp;
             statistics.Largest = timestamp;
+            statistics.LargestFrames = block.Frames;
         }
         else if (timestamp < statistics.Last)
         {
@@ -219,6 +220,11 @@ internal sealed partial class FileReader
 
         statistics.Last = timestamp;
         statistics.Smallest = Math.Min(statistics.Smallest, timestamp);
+        if (timestamp >= statistics.Largest)
+        {
+            statistics.LargestFrames = block.Frames;
+        }
+
         statistics.Largest = Math.Max(statistics.Largest, timestamp);
         statistics.LastEnd = block.End;
     }
@@ -236,6 +242,7 @@ internal sealed partial class FileReader
                 statistics.HasTimes = false;
                 statistics.Smallest = double.MaxValue;
                 statistics.Largest = double.MinValue;
+                statistics.LargestFrames = 0;
                 statistics.Backwards = 0;
                 statistics.FirstBackwards = null;
                 statistics.FirstOffset = -1;

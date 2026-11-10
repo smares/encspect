@@ -171,6 +171,7 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
 ### Counting and the VBR header's claims
 
 - **Which frames:** the Statistics node counts the region's complete audio frames: not a frame holding a VBR header, not a truncated last frame.
+- **Bitrate Mode:** variable where the frames use more than one bitrate (free format counts as its own), constant where they use one, unknown for a single frame. A VBR header alone does not make a file variable. The statistic is the same concept as in the other formats, beside MPEG audio's own Bitrate Distribution by exact bitrate; the stream's `isVbr` follows it.
 - **Clock:** time runs on a clock of 1/14,112,000 s (ffmpeg's time base for MP3, which every MPEG sample rate divides), so frames of different sample rates add up exactly; figures are rounded half to even.
 - **When the coding statistics are counted:** the tallies are counted while the frames are read; the category series add a byte per value, derived at the end from the kept frame records.
 - **A VBR header's counts** are compared with the frames and bytes counted from the header to the end of its stream (the next header or a change of version, layer or sample rate, across gaps and tags).

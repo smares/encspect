@@ -94,7 +94,7 @@ def analyzer_problems(analyzer, path, sample):
                           ("bitsPerSample", sample["bits_per_sample"])):
         if stream.get(key) != expected:
             problems.append(f"the analyzer's {key} is {stream.get(key)}, the manifest {expected}")
-    for name, expected in (("Lossless Channel Sets", sample["channel_sets"]), ("Lossless Channels", sample["channels"]), ("Lossless Sampling Frequency", sample["sample_rate"]),
+    for name, expected in (("Lossless Channel Sets", sample["channel_sets"]), ("Lossless Channels", sample["channels"]), ("Lossless Sample Rate", sample["sample_rate"]),
                            ("Lossless Source PCM Resolution", sample["bits_per_sample"]), ("Lossless Storage Bit Width", sample["storage_width"])):
         if statistic(report, name) != expected:
             problems.append(f"the analyzer's {name} is {statistic(report, name)}, the manifest {expected}")

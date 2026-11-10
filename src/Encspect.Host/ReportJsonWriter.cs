@@ -1069,8 +1069,9 @@ public static class ReportJsonWriter
             WriteSilence(w, "stretches", c.SilentStretches, isSilenceMeasured);
             WriteSilence(w, "samples", c.SilentSamples, isSilenceMeasured);
             WriteSilence(w, "longestStretch", c.LongestSilentStretch, isSilenceMeasured);
-            WriteSilence(w, "atStart", c.SilentAtStart, isSilenceMeasured);
-            WriteSilence(w, "atEnd", c.SilentAtEnd, isSilenceMeasured);
+            // atStart and atEnd stay numbers, as in the schema before the stretch figures, so a reader of them keeps working.
+            w.WriteNumber("atStart", c.SilentAtStart);
+            w.WriteNumber("atEnd", c.SilentAtEnd);
         }, w =>
         {
             if (isSilenceMeasured)

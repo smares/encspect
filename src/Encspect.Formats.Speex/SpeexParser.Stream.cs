@@ -66,6 +66,9 @@ public sealed partial class SpeexParser
 
     private sealed partial class StreamState(CodecContext context)
     {
+        // The decision of "Bitrate Mode", which the stream's IsVbr follows.
+        private bool _isVariable;
+
         private readonly Node _parent = context.Parent;
         private readonly FindingCollector _findings = new();
         private readonly Records _records = new();
@@ -462,7 +465,7 @@ public sealed partial class SpeexParser
                     LostSamples = HasTime ? _lost : 0,
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _wholeCoded > 0 ? _bytes * 8.0 * Rate / _wholeCoded / 1000 : null,
-                    IsVbr = _sizes.Count > 1,
+                    IsVbr = _isVariable,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,

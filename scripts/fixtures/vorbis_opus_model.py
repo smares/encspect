@@ -470,6 +470,19 @@ def read_setup(packet, channels):
     return {"value": value, "groups": groups, "modes": modes, "problems": problems}
 
 
+def vorbis_stated_variable(ident):
+    """The bitrate mode the identification header's three hints state (Identification.StatedVariable): constant when all three are set and equal,
+    variable when the maximum and the minimum are both set and differ, None otherwise."""
+    if len(ident) < 30:
+        return None
+    maximum, nominal, minimum = struct.unpack_from("<iii", ident, 16)
+    if maximum > 0 and nominal > 0 and minimum > 0 and maximum == nominal == minimum:
+        return False
+    if maximum > 0 and minimum > 0 and maximum != minimum:
+        return True
+    return None
+
+
 def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=True, cuts=()):
     """What the analyzer reports for a Vorbis stream's audio packets.
 
@@ -604,6 +617,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
     trim = end_trim
     samples = min(max(decoded - start_trim - trim - gap_trim, 0), decoded) if has_time else 0
 
+    is_variable_mode = False
     statistics = None
     short_count, long_count = block_counts
     block_count = long_count + short_count
@@ -627,7 +641,6 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             if lost_total:
                 statistics["Lost Samples"] = plural(lost_total, "sample", "samples")
             statistics["Duration"] = fmt(samples / rate, 3) + " s"
-            statistics["IsVbr"] = "true" if len(sizes) > 1 else "false"
             total = sum(len(d) for i, (_, d, _) in enumerate(packets) if i not in cuts)
             if whole_decoded:
                 statistics["Average Bitrate"] = fmt(total * 8.0 * rate / whole_decoded / 1000, 1) + " kbps"
@@ -636,7 +649,10 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             if rates:
                 statistics["Minimum Bitrate"] = fmt(min(rates), 1) + " kbps"
                 statistics["Maximum Bitrate"] = fmt(max(rates), 1) + " kbps"
-                m.distribution(statistics, [s * 8.0 * rate / (b1 // 2) / 1000 for s in long_sizes] + [s * 8.0 * rate / (b0 // 2) / 1000 for s in short_sizes], "packet", "packets")
+                packet_rates = [s * 8.0 * rate / (b1 // 2) / 1000 for s in long_sizes] + [s * 8.0 * rate / (b0 // 2) / 1000 for s in short_sizes]
+                stated = vorbis_stated_variable(ident)
+                is_variable_mode = m.is_variable(packet_rates, stated)
+                m.distribution(statistics, packet_rates, "packet", "packets", stated)
         statistics["Packet Sizes"] = plural(len(sizes), "size", "sizes")
         for name, group in (("Long Blocks", long_sizes), ("Short Blocks", short_sizes)):
             if group:
@@ -652,7 +668,7 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
         "lost_samples": lost_total if has_time else 0,
         "duration": samples / rate if has_time else 0,
         "average_bitrate": sum(len(d) for i, (_, d, _) in enumerate(packets) if i not in cuts) * 8.0 * rate / whole_decoded / 1000 if has_time and whole_decoded else None,
-        "is_vbr": len(sizes) > 1,
+        "is_vbr": is_variable_mode,
     }
     return {
         "packets": [[o, len(d)] + ([list(x) for x in ranges] if len(ranges) > 1 else []) for o, d, ranges in packets],
@@ -1004,7 +1020,6 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
         if total_lost:
             statistics["Lost Samples"] = plural(total_lost, "sample", "samples")
         statistics["Duration"] = fmt(samples / 48000, 3) + " s"
-        statistics["IsVbr"] = "true" if varies else "false"
         if whole_decoded:
             statistics["Average Bitrate"] = fmt(sum(sizes) * 8.0 * 48000 / whole_decoded / 1000, 1) + " kbps"
         if bitrates:
@@ -1033,9 +1048,9 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
                 statistics[f"Frame Sizes/{frame_duration(size)}"] = m.share(frame_sizes[size], frames, "frame", "frames")
         if parts:
             unit = "stream packet" if streams > 1 else "packet"
-            statistics["Stereo Coding"] = plural(stereo[1], f"stereo {unit}", f"stereo {unit}s")
-            statistics["Stereo Coding/Stereo"] = m.share(stereo[1], parts, unit, unit + "s")
-            statistics["Stereo Coding/Mono"] = m.share(stereo[0], parts, unit, unit + "s")
+            statistics["Channel Coding"] = plural(stereo[1], f"stereo {unit}", f"stereo {unit}s")
+            statistics["Channel Coding/Stereo"] = m.share(stereo[1], parts, unit, unit + "s")
+            statistics["Channel Coding/Mono"] = m.share(stereo[0], parts, unit, unit + "s")
             statistics["Frame Packing"] = plural(sum(1 for c in codes if c), "code", "codes")
             names = ["Code 0 (one frame)", "Code 1 (two frames of equal size)", "Code 2 (two frames of different sizes)", "Code 3 (any number of frames)"]
             for i, c in enumerate(codes):
@@ -1048,7 +1063,7 @@ def opus_expectations(head, packets, positions, gaps=(), cuts=()):
 
     info = None if len(head) < 19 or not has_head else {
         "codec": "Opus", "sample_rate": 48000, "channels": head[9], "samples": samples, "lost_samples": total_lost, "duration": samples / 48000,
-        "average_bitrate": sum(sizes) * 8.0 * 48000 / whole_decoded / 1000 if whole_decoded else None, "is_vbr": varies,
+        "average_bitrate": sum(sizes) * 8.0 * 48000 / whole_decoded / 1000 if whole_decoded else None, "is_vbr": m.is_variable(bitrates) if packets and bitrates else False,
         "channel_mode": opus_channel_mode(head) if head[9] else None, "channel_layout": opus_speakers(head),
     }
     return {

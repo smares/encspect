@@ -145,7 +145,6 @@ internal static class Explain
     public const string GapTrimming = "Samples a decoder discards at a page whose granule position, after a gap or a refused packet, is below the samples returned since then, at most what the page's last packet returns (libvorbis, vorbis_synthesis_blockin); the Vorbis I specification does not describe it.";
     public const string Samples = "The samples a decoder outputs: the decoded samples less what the start, end and gap trimming drop.";
     public const string Duration = "The samples over the sample rate, in seconds.";
-    public const string StatIsVbr = "Whether the audio packets differ in size, so the bitrate changes from packet to packet.";
     public const string AverageBitrate = "The bits of the audio packets over the samples they return.";
     public const string MinimumBitrate = "The lowest bitrate of an audio packet: its bits over the half block of samples it codes.";
     public const string MaximumBitrate = "The highest bitrate of an audio packet: its bits over the half block of samples it codes.";

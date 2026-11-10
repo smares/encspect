@@ -27,6 +27,10 @@ public sealed class BitrateDistribution
         _bins[bin] = _bins.GetValueOrDefault(bin) + (int)count;
     }
 
+    // Whether the stream's bitrate is variable by the decision "Bitrate Mode" shows: the mode the stream or its container states (isVariable),
+    // else whether the units differ in bitrate. A stream with a single unit, or none, is not variable.
+    public bool IsVariable(bool? stated = null) => stated ?? (Units > 1 && Maximum > Minimum);
+
     // Adds "Bitrate Mode" and "Bitrate Distribution" to statistics, none without a unit; cover makes a node over the stream's bytes, with its
     // description. unitName and unitPlural are the format's unit nouns ("Frame", "Frames"), which the descriptions use. isVariable is the mode the
     // stream or its container states (a nominal bitrate that changes, a variable bitrate flag), or null when it states none; the mode then follows

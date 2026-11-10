@@ -63,11 +63,10 @@ internal static class Explain
     public const string CodedSamples = "The samples at 48 kHz the packets code, each the frames of its TOC times their duration, before the pre-skip and end trimming are dropped.";
     public const string StatPreSkip = "The samples at the start the decoder drops, from the identification header (RFC 7845, section 4.2).";
     public const string StartOffset = "The first audio page's granule position less the samples up to it: 0 for a stream that starts at its beginning, above 0 for one that starts later (RFC 7845, section 4.5).";
-    public const string EndTrimmingContainer = "The samples a decoder drops from the end, as the container states them: the DiscardPadding of the last block that has one (RFC 9559, section 5.1.3.5.7), at 48 kHz, rounded to the nearest sample, halves up, and no more than the packets hold after the pre-skip.";
+    public const string EndTrimmingContainer = "The samples a decoder drops from the end, as the container states them: the DiscardPadding of the track's last block (RFC 9559, section 5.1.3.5.7), at 48 kHz, rounded to the nearest sample, halves up, and no more than the packets hold after the pre-skip.";
     public const string EndTrimming = "Samples the packets code beyond the last granule position, which a decoder drops from the end (RFC 7845, section 4.4).";
     public const string Samples = "The samples at 48 kHz a decoder outputs: the decoded samples less the pre-skip and the end trimming.";
     public const string Duration = "The samples over 48 kHz, in seconds.";
-    public const string StatIsVbr = "Whether the audio packets differ in size. In CBR encoding every packet has the same size; in VBR and constrained VBR they differ.";
     public const string AverageBitrate = "The bits of the audio packets over the samples they code.";
     public const string MinimumBitrate = "The lowest bitrate of an audio packet: its bits over the samples it codes.";
     public const string MaximumBitrate = "The highest bitrate of an audio packet: its bits over the samples it codes.";
@@ -83,7 +82,7 @@ internal static class Explain
     public const string BandwidthShare = "Frames of this bandwidth, and their share of all frames.";
     public const string FrameSizes = "How many frames have each duration (RFC 6716, section 3.1).";
     public const string FrameSizeShare = "Frames of this duration, and their share of all frames.";
-    public const string StereoCoding = "How many packets, per stream in a multistream file, set the TOC's stereo flag.";
+    public const string StereoCoding = "How many packets, per stream in a multistream file, set the TOC's stereo flag; the entries below split the packets into stereo and mono. It is the channel count a packet codes, not the left/right or mid/side coding of other formats (RFC 6716, section 3.1).";
     public const string StereoShare = "Packets whose TOC sets the stereo flag, and their share.";
     public const string MonoShare = "Packets whose TOC leaves the stereo flag clear, and their share.";
     public const string FramePacking = "How many packets use each frame count code (RFC 6716, section 3.2).";

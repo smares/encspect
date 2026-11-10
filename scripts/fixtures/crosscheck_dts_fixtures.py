@@ -81,13 +81,13 @@ def statistic(report, name):
 
 def core_rate(report, fallback):
     """The sampling frequency of the core frames, which libdca reads, from the golden report's statistics; the stream's rate is the highest the extensions state."""
-    statistics = mi.statistics(report["root"], "Sampling Frequency")
-    number = mi.leading_number(str(mi.value(statistics, "Sampling Frequency"))) if statistics else None
+    statistics = mi.statistics(report["root"], "Core Sample Rate")
+    number = mi.leading_number(str(mi.value(statistics, "Core Sample Rate"))) if statistics else None
     return int(number) if number else fallback
 
 
 def extension_rate(manifest):
-    value = manifest["fields"].get("DTS/Statistics/Extension Sampling Frequency")
+    value = manifest["fields"].get("DTS/Statistics/Extension Sample Rate")
     return int(value.split()[0]) if value else None
 
 
@@ -376,7 +376,7 @@ def check_mediainfo(path, tally):
     if sync is not None:
         tally.compare("word size", audio.get("Format_Settings_Mode"), str(mi.leading_number(mi.value(sync, "Word Size"))))
         tally.compare("byte order", audio.get("Format_Settings_Endianness"), "Big" if mi.value(sync, "IsBigEndian") else "Little")
-    extension = mi.leading_number(mi.value(mi.statistics(report["root"], "Extension Sampling Frequency"), "Extension Sampling Frequency"))
+    extension = mi.leading_number(mi.value(mi.statistics(report["root"], "Extension Sample Rate"), "Extension Sample Rate"))
     tally.compare("sampling rate", audio.get("SamplingRate"), str(extension or stream["sampleRate"]))
     tally.compare("channels", audio.get("Channels"), str(stream["channels"]))
     layout = (audio.get("ChannelLayout") or "")

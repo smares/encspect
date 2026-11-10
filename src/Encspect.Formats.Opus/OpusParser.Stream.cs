@@ -132,6 +132,9 @@ public sealed partial class OpusParser
         private int _largest;
         private int _lastSize = -1;
         private bool _sizesDiffer;
+
+        // The decision of "Bitrate Mode", which the stream's IsVbr follows.
+        private bool _isVariable;
         private long _audioStart = -1;
         private long _audioEnd;
 
@@ -625,7 +628,7 @@ public sealed partial class OpusParser
                     StartOffset = _firstOffset,
                     Duration = samples / (double)Rate,
                     AverageBitrate = _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
-                    IsVbr = _sizesDiffer,
+                    IsVbr = _isVariable,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,

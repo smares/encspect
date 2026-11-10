@@ -5,9 +5,10 @@ namespace Encspect.Formats.WavPack;
 
 // WavPack in a container that stores a block without its header, as Matroska does (A_WAVPACK4): a packet holds the samples of its blocks
 // in 4 bytes, then each block's flags and CRC in 4 bytes apiece and, unless the flags make it the only block of its set, the block's size
-// in 4 more, then the block's sub-blocks. The header that is left out is the one FFmpeg rebuilds (libavformat/matroskadec.c
-// matroska_parse_wavpack): the stream version from the CodecPrivate, which is 0x410 when it
-// has none, a block index and a total of 0, and the samples, flags and CRC the packet gives. The rebuilt blocks go to the decoder, which
+// in 4 more, then the block's sub-blocks (the Matroska codec mappings, draft-ietf-cellar-codec, sections 3.4.42 and 4.1; the CodecPrivate is the
+// 16-bit stream version of the block header). The analyzer rebuilds the header that is left out: the stream version from the CodecPrivate, a block
+// index and a total of 0, and the samples, flags and CRC the packet gives. Where the CodecPrivate has no version the analyzer assumes 0x410, the
+// newest of the versions "valid for decode" in WavPack's "4 & 5 Binary File / Block Format"; neither source says what a reader assumes. The rebuilt blocks go to the decoder, which
 // decodes a packet's blocks as a set and compares the CRC of each block's audio with the one the packet stores. The block checksum sub-block
 // cannot be compared: it covers the original header, which the container does not keep.
 public sealed class WavPackCodecParser : ICodecParser
@@ -65,6 +66,8 @@ public sealed class WavPackCodecParser : ICodecParser
         private StreamFigures? _figures;
         private readonly UnitCategoryTally _stereo = new("Stereo Coding", State.StereoCodings, "stereo block", GraphConcept.StereoCoding, isVariable: true);
         private readonly List<byte> _setStereo = [];
+        private int _stereoBlocks;
+        private int _jointStereoBlocks;
         private bool _hasNewConfig;
         private bool _hasLossyBlocks;
         private ConfigValue? _config;
@@ -291,6 +294,12 @@ public sealed class WavPackCodecParser : ICodecParser
                 }
 
                 _hasChecksum |= (header.Flags & BlockHeader.HasChecksumFlag) != 0;
+                if (!header.IsMono)
+                {
+                    _stereoBlocks++;
+                    _jointStereoBlocks += (header.Flags & BlockHeader.JointStereoFlag) != 0 ? 1 : 0;
+                }
+
                 if (!header.IsMono && _setStereo.Count < State.MaxSetBlocks)
                 {
                     _setStereo.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
@@ -566,12 +575,13 @@ public sealed class WavPackCodecParser : ICodecParser
 
             bool isFive = _hasNewConfig || _hasChecksum;
             string encoderName = isFive ? "WavPack 5.0 or later" : "WavPack 4 stream, no WavPack 5 features";
-            Node encoder = Stat("Encoder", encoderName, Explain.Encoder, ClaimRoles.EncoderTopic);
-            encoder.Add(Stat("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow));
-            encoder.Add(Stat("Evidence", isFive
+            string encoderEvidence = isFive
                 ? $"The blocks hold {(_hasNewConfig ? "a new config block" : "a block checksum")}, which libwavpack has written since 5.0; libwavpack reports encoder version 5 for a file with one"
-                : $"The stream version is 0x{_version:X3} and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well", Explain.Evidence));
+                : $"The stream version is 0x{_version:X3} and the blocks hold neither a new config block nor a block checksum, which libwavpack has written since 5.0; libwavpack reports encoder version 4 for such a stream, which other encoders write as well";
+            Node encoder = Summary.EncoderNode(encoderName, isFive, encoderEvidence, ClaimRoles.Encoders(context.EncoderClaims),
+                (name, value, description, topic) => Stat(name, value ?? NodeValue.Text(string.Empty), description, topic), _findings);
             context.Parent.Add(encoder);
+            _findings.Flush(context);
             Node? processor = null;
             if (!first.IsDsd && _rate > 0 && _wasted.Pattern(_rate) is { } pattern)
             {
@@ -591,6 +601,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 Codec = first.IsHybrid ? "WavPack hybrid" : _hasLossyBlocks ? "WavPack lossy" : "WavPack lossless",
                 SampleRate = _rate,
                 Channels = _channels,
+                ChannelMode = Summary.ChannelModeOf(_channels, _stereoBlocks, _jointStereoBlocks),
                 ChannelLayout = ChannelLayouts.FromWaveMask(_channelMask, _channels),
                 BitsPerSample = first.IsDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null,
                 Samples = _samples * (first.IsDsd ? 8 : 1),

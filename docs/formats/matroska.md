@@ -57,7 +57,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
 
 ## Channel layout
 
-- For a routed track the layout is the codec parser's (AAC, AC-3, DTS, Vorbis and Opus each name their speakers in their own order); the Matroska track's `Channels` is compared with it.
+- For a routed track the layout is the codec parser's (AAC, AC-3, DTS, Vorbis, Opus, FLAC, WavPack, ALAC, TTA, Dolby TrueHD and MLP each name their speakers in their own order); the Matroska track's `Channels` is compared with it.
 - A track counted at container level has only its `Channels` count and no layout: Matroska's ChannelPositions element is not in RFC 9559, so no speaker is named.
 
 ## Encoder and writer
@@ -68,7 +68,7 @@ Matroska (`.mka`, `.mkv`) and its subset WebM (`.webm`), built on EBML. One pars
   - mkvmerge writes its libraries in the MuxingApp ("libebml v1.4.5 + libmatroska v1.7.1") and the program in the WritingApp. The library never conflicts with the program that uses it. ffmpeg's muxer is such a library too: matroskaenc.c always writes its version ("Lavf60.16.100") as the MuxingApp and writes the `encoding_tool` metadata, when there is any, as the WritingApp, so a "Lavf" MuxingApp under the WritingApp of other software (HandBrake, say) is the library under it and no conflict (`external-ffmpeg-encoding-tool`, `writer-lavf-under-application`); a tag that holds the same text is not. The codec parsers get the Matroska libraries only when there is no WritingApp (then it names the writer, as "libebml v1.4.5 + libmatroska v1.7.1"); otherwise the Writer node the Matroska parser makes holds it as evidence.
   - A MuxingApp and a WritingApp that name different software are one `matroska.writer-claim-differs` (Info) for the Segment, however many tracks it has. Software known to write another kind of stream (LAME on a PCM or FLAC track) is `matroska.writer-other-format` (Info) for each such stream.
   - AAC, AC-3 and DTS weigh the Segment's claims with the file's, the tags' first (the order the router gives every codec parser). MPEG audio is routed too, but its parser reads only a contiguous payload and analyzes no packets, so its stream is a container-level one, like the unrouted codings below. A contained Vorbis stream weighs them first, then its own comment; a comment naming other software than the container is `vorbis.writer-claim-differs`, and the container's writer is the stream's.
-  - Streams whose parser names none (MPEG audio, PCM, FLAC and the other codings no parser reads, Opus, which has no comment packet in a track) get the Writer from the Matroska parser: a Writer node in the Segment's Info element, whose elements are its evidence (under the stream's node when the Segment has no Info). The claims are weighed in the same order, and a conflict is one finding for the Segment.
+  - Streams whose parser names no writer (MPEG audio, PCM and the other codings no parser reads, and the routed codings whose packets hold no comment, such as Opus, which has no comment packet in a track) get the Writer from the Matroska parser: a Writer node in the Segment's Info element, whose elements are its evidence (under the stream's node when the Segment has no Info). The claims are weighed in the same order, and a conflict is one finding for the Segment.
   - A codec parser's claims stay with its stream: the comment of one track is never weighed for another.
 
 ## Detection

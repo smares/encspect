@@ -342,12 +342,12 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
         if (key.SampleRate > 0)
         {
-            Add("Sampling Frequency", NodeValue.Integer(key.SampleRate, "Hz"), Explain.StatSampleRate, Topics.CoreFrames);
+            Add("Core Sample Rate", NodeValue.Integer(key.SampleRate, "Hz"), Explain.StatSampleRate, Topics.CoreFrames);
         }
 
         if (_extensionRate > key.SampleRate)
         {
-            Add("Extension Sampling Frequency", NodeValue.Integer(_extensionRate, "Hz"), Explain.StatExtensionRate, Topics.CoreExtensions);
+            Add("Extension Sample Rate", NodeValue.Integer(_extensionRate, "Hz"), Explain.StatExtensionRate, Topics.CoreExtensions);
         }
 
         if (_nominal.Count > 0)
@@ -388,7 +388,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         {
             Add("Lossless Channel Sets", NodeValue.Integer(sets.Count, "channel sets", "channel set"), Explain.StatLosslessSets, Topics.Lossless);
             Add("Lossless Channels", NodeValue.Integer(sets.Sum(s => s.Channels), "channels", "channel"), Explain.StatLosslessChannels, Topics.Lossless);
-            Add("Lossless Sampling Frequency", NodeValue.Integer(sets.Max(s => s.SampleRate), "Hz"), Explain.StatLosslessRate, Topics.Lossless);
+            Add("Lossless Sample Rate", NodeValue.Integer(sets.Max(s => s.SampleRate), "Hz"), Explain.StatLosslessRate, Topics.Lossless);
             Add("Lossless Source PCM Resolution", NodeValue.Integer(sets.Max(s => s.Resolution), "bits", "bit"), Explain.StatLosslessResolution, Topics.Lossless);
             Add("Lossless Storage Bit Width", NodeValue.Integer(sets.Max(s => s.StorageWidth), "bits", "bit"), Explain.StatLosslessWidth, Topics.Lossless);
         }

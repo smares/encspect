@@ -752,7 +752,7 @@ public sealed partial class VorbisParser
                     StartOffset = _firstOffset,
                     Duration = HasTime ? samples / (double)Rate : 0,
                     AverageBitrate = HasTime && _wholeDecoded > 0 ? _bytes * 8.0 * Rate / _wholeDecoded / 1000 : null,
-                    IsVbr = _sizes.Count > 1,
+                    IsVbr = _isVariable,
                     Encoder = ClaimRoles.Resolved(encoder).Name,
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,

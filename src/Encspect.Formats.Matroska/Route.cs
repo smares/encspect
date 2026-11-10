@@ -604,14 +604,17 @@ internal sealed partial class FileReader
         return blocks is { Count: > 0 } && blocks[^1] == found.Block ? found.Padding / 1e9 : 0;
     }
 
-    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last and one step more.
+    // The length of a track in seconds from the timestamps of its blocks: the span between the first and the last, and the last block's frames at
+    // the average step of a frame (the span over the frames of the blocks before the last, as a laced block holds several frames).
     private static double ContainerDuration(SegmentState segment, TrackInfo track)
     {
         TrackStatistics statistics = track.Statistics;
         double scale = segment.TimestampScale / 1e9;
         double span = statistics.Blocks > 0 && statistics.HasTimes ? (statistics.Largest - statistics.Smallest) * scale : 0;
-        double step = statistics.Blocks > 1 ? span / (statistics.Blocks - 1) : (track.DefaultDuration is { } d ? d / 1e9 * Math.Max(1, statistics.Frames) : 0);
-        return statistics.HasTimes ? span + step : 0;
+        long last = Math.Max(1, statistics.LargestFrames);
+        long before = statistics.Frames - statistics.LargestFrames;
+        double step = statistics.Blocks > 1 && before > 0 ? span / before : (track.DefaultDuration is { } d ? d / 1e9 : 0);
+        return statistics.HasTimes ? span + (step * last) : 0;
     }
 
     // What the container knows of a stream the codec parser did not report: the TrackEntry's audio settings and the totals of the blocks.

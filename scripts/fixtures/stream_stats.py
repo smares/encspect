@@ -187,7 +187,7 @@ def region_fields(frames, all_frames):
         "Statistics/Frames": str(len(audio)),
         "Statistics/Samples": str(samples),
         "Statistics/Duration": duration_text(ticks + cut_ticks),
-        "Statistics/IsVbr": "true" if len({f.bitrate for f in audio}) > 1 else "false",
+        "Statistics/Bitrate Mode": "unknown" if len(audio) == 1 else "variable" if len({f.bitrate for f in audio}) > 1 else "constant",
         "Statistics/Average Bitrate": kbps_tenths_text(bits, ticks),
     }
     if cut:

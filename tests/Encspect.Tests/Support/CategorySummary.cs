@@ -15,7 +15,7 @@ internal sealed partial class CategorySummary
 
     private CategorySummary(Dictionary<string, Entry> entries) => _entries = entries;
 
-    public static string TablePath { get; } = Path.Combine(Fixtures.FixtureDirectory, "..", "Encspect.Tests", "category-summary.json");
+    public static string TablePath { get; } = Path.Combine(Fixtures.FixtureDirectory, "..", "Encspect.Tests", "Support", "category-summary.json");
 
     public IReadOnlyCollection<string> Names => _entries.Keys;
 

@@ -106,6 +106,9 @@ internal sealed class TrackStatistics
 
     public double Largest { get; set; } = double.MinValue;
 
+    // The frames of the block that has the largest timestamp, which the one step more of the track's length covers.
+    public long LargestFrames { get; set; }
+
     public long Backwards { get; set; }
 
     public Node? FirstBackwards { get; set; }
