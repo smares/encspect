@@ -87,6 +87,33 @@
       "goldens": [
         "tests/fixtures/aac/ffmpeg-mp3.report.json"
       ]
+    },
+    {
+      "path": [
+        "MP4",
+        "moov",
+        "trak",
+        "Gapless",
+        "Container Samples"
+      ],
+      "fields": [
+        "value",
+        "unit"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json"
+      ]
     }
   ]
 }
