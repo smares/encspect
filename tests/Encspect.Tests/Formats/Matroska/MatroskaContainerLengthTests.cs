@@ -32,4 +32,27 @@ public class MatroskaContainerLengthTests
         // The last block's frame is whole in the container's count, though the source ends inside it: up to one ALAC frame of 4,096 samples more.
         Assert.InRange(container, samples - 100, samples + 4096);
     }
+
+    // The container's own figure: the CodecDelay and the DiscardPadding are the codec's trims, which Container Samples does not take off.
+    [Fact]
+    public void ContainerSamplesTakeOffNoCodecTrims()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/external-ffmpeg-encoding-tool.mka");
+
+        long samples = Assert.Single(report.Streams).Samples;
+        long container = ContainerSamples(report.Root) ?? throw new InvalidOperationException("no Container Samples");
+        Assert.True(container > samples + 300, $"Container Samples {container} should keep the pre-skip that Samples {samples} drops");
+    }
+
+    // STREAMINFO in a Matroska track is the codec's header: the FLAC statistics carry no Container Samples beside the container's.
+    [Fact]
+    public void AFlacTrackHasOneContainerSamples()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/external-ffmpeg-flac.mka");
+
+        Assert.Single(Count(report.Root, "Container Samples"));
+    }
+
+    private static IEnumerable<Node> Count(Node node, string name) =>
+        (node.Name == name ? [node] : Enumerable.Empty<Node>()).Concat(node.Children.SelectMany(c => Count(c, name)));
 }

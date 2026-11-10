@@ -176,7 +176,7 @@ One concept has one name in every format that has it ([CLAUDE.md](../CLAUDE.md#c
 | (none) | "Channel Layout" (statistic and stream layout) | TTA |
 | "Mid/Side Blocks" (WavPack only; standard WMA keeps it beside the new tally), "Frames With Mid/Side", "Independent Frames", "Left/Side Frames", "Side/Right Frames", "Mid/Side Frames", "Seekable Subframes with Mid/Side Stereo" | "Stereo Coding" (tally and category series; entries "Left/right stereo", "Mid/side stereo", FLAC also "Left/side stereo" and "Side/right stereo") | WavPack, Musepack SV4 to SV7, FLAC, WMA (standard, Professional, Lossless) |
 | (none) | "Bitrate Mode" and "Bitrate Distribution" (one helper, `BitrateDistribution`) | AAC, AC-3, DTS, Opus, Vorbis, Speex, WMA |
-| (none) | "Container Samples" and "Container Duration" | MP4, Matroska, Ogg, FLAC, WAV, AIFF (WMA had them) |
+| (none) | "Container Samples" and "Container Duration": the container's own stated length at the stream's output sample rate, with no codec trims ([samples definition](design/samples-definition.md#container-length)); FLAC has them in a native file only | MP4, Matroska, Ogg, FLAC, WAV, AIFF (WMA had them) |
 | (none) | "Buffer Fullness" (words per channel, as the encoder states it; its own name beside the computed "Reservoir Fill" in bytes) | AAC (ADTS) |
 | (none) | "Average Reservoir Fill" | MPEG audio |
 | "IsVbr" (statistic) | "Bitrate Mode" (variable, constant or unknown; the stream's `isVbr` follows the same decision, `BitrateDistribution.IsVariable`) | MPEG audio, Opus, Vorbis, Speex |

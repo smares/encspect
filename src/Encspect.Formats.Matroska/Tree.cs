@@ -85,7 +85,7 @@ internal sealed partial class FileReader
         }
 
         // The values of an element the schema does not place where it stands, or under one, are shown and reported but not used: a reader that
-        // follows the schema skips them (mkvinfo: "Known element, but invalid at this position"; FFmpeg's syntax tables list the children of each master).
+        // follows the schema skips them (mkvinfo: "Known element, but invalid at this position").
         bool isPlaced = Schema.IsChildOf(definition, parentDefinition) && _displaced == 0;
         if (definition.Type == ElementType.Master)
         {

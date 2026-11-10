@@ -54,7 +54,7 @@ Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio]
 - **User data lists** may end in a 32-bit zero (QuickTime File Format, "User data list"); it is shown as a terminator, without a warning.
 
 - **The Gapless node** under the trak box holds what the edit list (the first media edit's media time, the presented samples and the padding after them), the roll and pre-roll groups and iTunSMPB say, counted in the media's timescale: the sample rate for AAC LC, and the core's rate as fdkaac writes HE-AAC.
-- **Container Duration** and **Container Samples** under a track's "Gapless" node: the media duration of the mdhd box (ISO/IEC 14496-12, 8.4.2) in seconds, and in samples where the media timescale is the sample rate of the sample entry (nothing for a fragmented file whose mdhd states 0); the tkhd duration and the edit list are other figures.
+- **Container Duration** and **Container Samples** under a track's "Gapless" node: the media duration of the mdhd box (ISO/IEC 14496-12, 8.4.2) in seconds, and in samples at the stream's output sample rate (the timescale of an HE-AAC track is usually the core rate, so its figure is twice the mdhd duration in timescale units; nothing for a fragmented file whose mdhd states 0); the tkhd duration and the edit list are other figures.
 
 ## Limits
 

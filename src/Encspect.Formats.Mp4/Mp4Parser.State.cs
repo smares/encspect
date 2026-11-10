@@ -136,6 +136,9 @@ public sealed partial class Mp4Parser
 
     private sealed class Track(Node box)
     {
+        // The sample rate of the track's stream as the codec parser reports it, 0 where the track has none or several streams.
+        public double StreamRate { get; set; }
+
         public Node Box => box;
 
         public uint? Id { get; set; }
