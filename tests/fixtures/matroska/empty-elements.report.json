@@ -541,12 +541,6 @@
                       "length": 126
                     },
                     {
-                      "name": "IsVbr",
-                      "value": false,
-                      "offset": 168,
-                      "length": 126
-                    },
-                    {
                       "name": "Average Bitrate",
                       "value": 16,
                       "unit": "kbps",
@@ -663,8 +657,9 @@
                       ]
                     },
                     {
-                      "name": "Stereo Coding",
-                      "value": "0 stereo packets",
+                      "name": "Channel Coding",
+                      "value": 0,
+                      "unit": "stereo packets",
                       "offset": 168,
                       "length": 126,
                       "children": [
@@ -854,14 +849,14 @@
                 },
                 {
                   "name": "Container Duration",
-                  "value": 0.0735,
+                  "value": 0.0535,
                   "unit": "s",
                   "offset": 111,
                   "length": 183
                 },
                 {
                   "name": "Container Samples",
-                  "value": 3528,
+                  "value": 2568,
                   "unit": "samples",
                   "offset": 111,
                   "length": 183

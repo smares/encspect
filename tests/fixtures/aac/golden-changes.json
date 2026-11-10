@@ -2,780 +2,19 @@
   "goldens": [
     "tests/fixtures/aac/"
   ],
-  "added": [
+  "renamed": [
     {
-      "scope": "node",
       "parent": [
-        "MP4",
-        "moov",
-        "trak",
-        "Gapless"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-he.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
-        "tests/fixtures/aac/ffmpeg-mp3.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "moov",
-        "trak",
-        "Gapless"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-he.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
-        "tests/fixtures/aac/ffmpeg-mp3.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
+        "MPEG Audio",
         "Statistics"
       ],
-      "name": "Bitrate Mode",
+      "from": "IsVbr",
+      "to": "Bitrate Mode",
       "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-he.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
+        "tests/fixtures/aac/adts/adts-inside-mp3.report.json"
       ]
     },
     {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-he.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "32 to 63 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2.report.json",
-        "tests/fixtures/aac/fdkaac-he.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale-sbr.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/exhale.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.2-he.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-fast.report.json",
-        "tests/fixtures/aac/ffmpeg-ltp.report.json",
-        "tests/fixtures/aac/ffmpeg-main.report.json",
-        "tests/fixtures/aac/ffmpeg-no-tools.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-fast.report.json",
-        "tests/fixtures/aac/ffmpeg-ltp.report.json",
-        "tests/fixtures/aac/ffmpeg-main.report.json",
-        "tests/fixtures/aac/ffmpeg-no-tools.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "0 to 31 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "32 to 63 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-fast.report.json",
-        "tests/fixtures/aac/ffmpeg-ltp.report.json",
-        "tests/fixtures/aac/ffmpeg-main.report.json",
-        "tests/fixtures/aac/ffmpeg-no-tools.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/ffmpeg-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-fast.report.json",
-        "tests/fixtures/aac/ffmpeg-ltp.report.json",
-        "tests/fixtures/aac/ffmpeg-main.report.json",
-        "tests/fixtures/aac/ffmpeg-no-tools.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Minimum Buffer Fullness",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Maximum Buffer Fullness",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Average Buffer Fullness",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Buffer Fullness",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Buffer Fullness Over Time",
-      "goldens": [
-        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/fdkaac-crc-mono.report.json",
-        "tests/fixtures/aac/fdkaac-he-adts.report.json",
-        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "160 to 191 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/fdkaac-lc.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
-        "tests/fixtures/aac/ffmpeg-lc.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "160 to 191 kbps",
-      "goldens": [
-        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json",
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics"
-      ],
-      "name": "Frames Signaling Variable Bitrate",
-      "goldens": [
-        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
-        "tests/fixtures/aac/faac-1.40-adts.report.json",
-        "tests/fixtures/aac/faac-1.50-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
-        "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
-        "tests/fixtures/aac/faac-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-adts.report.json",
-        "tests/fixtures/aac/ffmpeg-fast.report.json",
-        "tests/fixtures/aac/ffmpeg-ltp.report.json",
-        "tests/fixtures/aac/ffmpeg-main.report.json",
-        "tests/fixtures/aac/ffmpeg-no-tools.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "moov",
-        "trak"
-      ],
-      "name": "Gapless",
-      "goldens": [
-        "tests/fixtures/aac/faac-1.31.1.report.json",
-        "tests/fixtures/aac/faac-1.40.report.json",
-        "tests/fixtures/aac/faac-1.50.report.json",
-        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
-        "tests/fixtures/aac/faac.report.json",
-        "tests/fixtures/aac/mp4box-mux.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "224 to 255 kbps",
-      "goldens": [
-        "tests/fixtures/aac/faac-2.2-adts.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "224 to 255 kbps",
-      "goldens": [
-        "tests/fixtures/aac/faac-2.2-tags.report.json",
-        "tests/fixtures/aac/faac-2.2.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "64 to 95 kbps",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "96 to 127 kbps",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "128 to 159 kbps",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "192 to 223 kbps",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "512 to 543 kbps",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json"
-      ]
-    },
-    {
-      "scope": "node",
       "parent": [
         "MP4",
         "mdat",
@@ -783,7 +22,68 @@
         "MPEG Audio",
         "Statistics"
       ],
-      "name": "Average Reservoir Fill",
+      "from": "IsVbr",
+      "to": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "MPEG Audio",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/adts-inside-mp3.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MPEG Audio",
+        "Statistics",
+        "IsVbr"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/adts-inside-mp3.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics",
+        "IsVbr"
+      ],
+      "fields": [
+        "value"
+      ],
       "goldens": [
         "tests/fixtures/aac/ffmpeg-mp3.report.json"
       ]

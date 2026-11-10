@@ -704,12 +704,6 @@
                       "length": 222
                     },
                     {
-                      "name": "IsVbr",
-                      "value": false,
-                      "offset": 225,
-                      "length": 222
-                    },
-                    {
                       "name": "Average Bitrate",
                       "value": 16,
                       "unit": "kbps",
@@ -826,8 +820,9 @@
                       ]
                     },
                     {
-                      "name": "Stereo Coding",
-                      "value": "0 stereo packets",
+                      "name": "Channel Coding",
+                      "value": 0,
+                      "unit": "stereo packets",
                       "offset": 225,
                       "length": 222,
                       "children": [

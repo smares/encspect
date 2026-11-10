@@ -1,70 +1,140 @@
 {
   "goldens": [
-    "tests/fixtures/wav/lossywav-standard.report.json",
-    "tests/fixtures/wav/lossywav-standard.lwcdf.report.json",
-    "tests/fixtures/wav/lossywav-standard-chunks.report.json"
+    "tests/fixtures/wav/"
   ],
-  "added": [
+  "renamed": [
     {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Fact Chunk",
-        "Text"
-      ],
-      "name": "Version"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Fact Chunk",
-        "Text"
-      ],
-      "name": "Date and Time"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Fact Chunk",
-        "Text"
-      ],
-      "name": "Settings"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk"
-      ],
-      "name": "Processor"
-    },
-    {
-      "scope": "node",
       "parent": [
         "RIFF",
         "Data Chunk",
-        "Processor"
+        "DTS",
+        "Statistics"
       ],
-      "name": "Confidence"
+      "from": "Sampling Frequency",
+      "to": "Core Sample Rate",
+      "goldens": [
+        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
+        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
+        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
+        "tests/fixtures/wav/external-dts-in-wav.report.json",
+        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
+      ]
     },
     {
-      "scope": "node",
       "parent": [
         "RIFF",
         "Data Chunk",
-        "Processor"
+        "MPEG Audio",
+        "Statistics"
       ],
-      "name": "Evidence"
+      "from": "IsVbr",
+      "to": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
+        "tests/fixtures/wav/external-mp2-in-wav.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
     },
     {
-      "scope": "stream",
-      "key": "processor"
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Sampling Frequency",
+      "to": "Core Sample Rate",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
+      ]
     },
     {
-      "scope": "stream",
-      "key": "processorConfidence"
+      "parent": [
+        "Wave64",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "from": "IsVbr",
+      "to": "Bitrate Mode",
+      "goldens": [
+        "tests/fixtures/wav/built-w64-mp2.report.json",
+        "tests/fixtures/wav/external-w64-mp2.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
+        "tests/fixtures/wav/external-mp2-in-wav.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "IsVbr"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
+        "tests/fixtures/wav/external-mp2-in-wav.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Wave64",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-w64-mp2.report.json",
+        "tests/fixtures/wav/external-w64-mp2.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Wave64",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "IsVbr"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-w64-mp2.report.json",
+        "tests/fixtures/wav/external-w64-mp2.report.json"
+      ]
     }
   ]
 }
