@@ -457,7 +457,18 @@ internal sealed class WmaPacketReader
         long frames = 0;
         if (!p.HasLengthPrefix)
         {
-            frames = position < packetBits ? 1 : 0;
+            // Each frame's end is found by reading it; the one the bytes end inside counts too.
+            var cut = new Bits(_packetBuffer, packetBits);
+            while (position < packetBits)
+            {
+                FrameOutcome probe = _probe.Read(cut, position, packetBits, 0, _trace);
+                frames++;
+                position += Math.Max(probe.Bits, 1);
+                if (!probe.IsValid || !probe.Trailer)
+                {
+                    break;
+                }
+            }
         }
         else
         {
@@ -615,7 +626,17 @@ internal sealed class WmaPacketReader
             int left = end - position;
             int declared = left > p.CountWidth ? (int)bits.Peek(p.CountWidth) : 0;
             DroppedFrames++;
-            Samples += p.FrameLength;
+            if (_isLossless)
+            {
+                // A Lossless frame counts its length less its end trim, which the frame states.
+                FrameOutcome probe = _probe.Read(bits, position, declared > 0 && declared <= left ? position + declared : end, declared, _trace);
+                Samples += Math.Max(0, p.FrameLength - probe.TrimEnd);
+            }
+            else
+            {
+                Samples += p.FrameLength;
+            }
+
             if (declared == 0 || declared > left)
             {
                 break;
@@ -738,6 +759,7 @@ internal sealed class WmaPacketReader
                 {
                     isError = true;
                     MarkLoss();
+                    CountUnreadRun(joined, position, total);
                     break;
                 }
 
@@ -751,9 +773,14 @@ internal sealed class WmaPacketReader
         ClearSaved();
         int position2 = payloadStart + count;
         int tail = Math.Max(0, end - position2);
-        if (!isError && tail > 0)
+        if (tail > 0)
         {
             Save(packet, position2, tail, true);
+            if (isError)
+            {
+                // The packet's own frames start where its header points and are in the file; the loss throws them away unread.
+                DropSaved();
+            }
         }
     }
 
@@ -981,6 +1008,23 @@ internal sealed class WmaPacketReader
         }
 
         ClearSaved();
+    }
+
+    // The frames of a run after an invalid frame, thrown away unread: each is read to find its end and counts a frame length, as in a dropped run.
+    private void CountUnreadRun(Bits joined, int position, int total)
+    {
+        while (position < total)
+        {
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            FrameOutcome result = _probe.Read(joined, position, total, 0, _trace);
+            DroppedFrames++;
+            Samples += _p.FrameLength;
+            position += Math.Max(result.Bits, 1);
+            if (!result.IsValid || !result.Trailer)
+            {
+                break;
+            }
+        }
     }
 
     private void CountDropped()

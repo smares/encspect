@@ -228,6 +228,15 @@ public class WmaLosslessPacketTests
         Assert.Equal(2 * 1948, PrefixSamples(0, 0));
     }
 
+    // An invalid frame with the length prefix drops the rest of its packet; the frame after it counts its length less its end trim (100), as every
+    // Lossless frame does, not a whole frame.
+    [Fact]
+    public void ADroppedLosslessFrameAfterAnInvalidOneCountsLessItsEndTrim()
+    {
+        Assert.Equal(2 * 1948, PrefixSamples(5, 0));
+        Assert.Equal(3 * 1948, PrefixSamples(5, 0, 0));
+    }
+
     private static long PrefixSamples(params int[] deltas)
     {
         const int blockAlignment = 200;
@@ -398,6 +407,12 @@ public class WmaLosslessPacketTests
         for (long b = 0; b < body.Count; b++)
         {
             w.PutBit(body.Bit(b));
+        }
+
+        // A frame that ends short of its stated length leaves the rest of it as padding, so the next frame starts where the prefix says.
+        for (int i = 0; i < delta; i++)
+        {
+            w.PutBit(false);
         }
 
         w.PutBit(false);
