@@ -144,12 +144,35 @@ class ColumnTests(unittest.TestCase):
         self.assertNotIn("noReference", figures[1])
         self.assertEqual([], compare.coreaudio_differences(figures))
 
-    def test_a_reader_total_that_is_no_reference_is_keep_and_never_pending(self):
+    def test_an_ogg_reader_that_did_not_reach_the_end_is_noted_as_stopped_with_no_figure(self):
         figure = {"id": "samples", "stage": "trimmed", "analyzer": 40960, "reference": None, "referencePath": None, "witnesses": {}, "readerTotal": 26816, "readerTool": "oggdec",
-                  "noReference": "the direct path did not feed every page"}
+                  "noReference": "the direct path did not feed every page", "readerStopped": "the direct path did not feed every page"}
         found = compare.figure_differences([figure])
-        self.assertEqual([("reader-not-accepted", "keep")], [(d["kind"], d["status"]) for d in found])
-        self.assertEqual([], compare.figure_differences([{**figure, "readerTotal": 40960}]))
+        self.assertEqual([("decoder-stopped", "noted", None)], [(d["kind"], d["status"], d["value"]) for d in found])
+        self.assertIn("did not reach the end of the stream (the direct path did not feed every page); its partial count is no figure", found[0]["reason"])
+        # a total outside the range the granule positions allow is still a difference for the lead
+        outside = {k: v for k, v in figure.items() if k != "readerStopped"}
+        self.assertEqual([("reader-not-accepted", "pending")], [(d["kind"], d["status"]) for d in compare.figure_differences([outside])])
+
+    def test_a_tta_reader_that_stopped_is_noted_as_stopped_and_one_with_no_count_keeps_its_kind(self):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 100, "reference": None, "referencePath": None, "witnesses": {},
+                  "ttaStopped": {"reason": "exit status 255, no output file"}}
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in compare.figure_differences([figure])])
+        counted = {**figure, "ttaNoCount": "0 channels", "ttaDataBytes": 0}
+        self.assertEqual([("decoder-gives-no-count", "noted")], [(d["kind"], d["status"]) for d in compare.figure_differences([counted])])
+        fallback = {**figure, "reference": 100, "referencePath": "ffmpeg"}
+        self.assertEqual([], compare.figure_differences([fallback]))
+
+    def test_an_fdk_direct_path_that_did_not_reach_the_end_is_noted_as_stopped(self):
+        figure = {"id": "samples", "stage": "coded", "analyzer": 2048, "reference": None, "referencePath": None, "witnesses": {}, "streams": [0], "lostSamples": 0,
+                  "directStopped": "timeout", "noReference": "the direct path did not reach the end (timeout)"}
+        found = compare.aac_differences([figure], {"units": []}, [], {"streams": [{"index": 0}]}, [])
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in found])
+
+    def test_an_ac3_converter_that_was_stopped_is_noted_as_stopped(self):
+        stopped = {"opened": True, "stoppedBy": "timeout", "runs": [], "units": [], "unitCount": 6, "refusedUnits": 0, "noOutputUnits": 0, "drainFrames": 0}
+        compared = compare.compare_ac3({"paths": {"converter": stopped}, "unitList": {"cutUnits": 0}}, Ac3Tests.analyzer, None)
+        self.assertEqual([("decoder-stopped", "noted")], [(d["kind"], d["status"]) for d in compared["differences"]])
 
     def test_where_both_sources_differ_the_reader_holds_only_the_one_it_applied(self):
         edit = {"id": "samples.editList", "stage": "trimmed", "analyzerFigure": "Samples (Edit List)", "streams": [0], "analyzer": 1000, "reference": None, "referencePath": None,

@@ -309,16 +309,19 @@ def compare_ogg(record, analyzer, ffmpeg):
         granule = sum(g or 0 for g in lasts)
         pre_skip = sum(m.get("preSkip", 0) for m in members) if codec == "opus" else 0
         reason = None
+        stopped = False  # the reader, or the direct path that holds its total to the stream, did not reach the end
         total = reader.get("totalSamples")
         bounds = None
         if not reader.get("opened"):
             reason = "the reader did not open the file"
         elif reader["stoppedBy"] != "end":
             reason = "the reader stopped (%s)" % reader["stoppedBy"]
+            stopped = True
         elif total is None:
             reason = "the reader's samples could not be counted"
         elif not direct.get("fedEveryPage"):
             reason = "the direct path did not feed every page (libogg dropped %d bytes, %d bytes left over, %d pages refused)" % (direct.get("skippedBytes") or 0, direct.get("trailingBytes") or 0, direct.get("refusedPages") or 0)
+            stopped = True
         elif coded_total is None:
             reason = "the direct path did not reach the end"
         elif not members or any(g is None for g in lasts):
@@ -337,6 +340,8 @@ def compare_ogg(record, analyzer, ffmpeg):
         }
         if reason:
             figure["noReference"] = reason
+        if stopped:
+            figure["readerStopped"] = reason
         witness = paths.get("directGranule")
         if witness and direct_total(witness) is not None:
             figure["witnesses"]["libvorbis with granule positions"] = direct_total(witness)
@@ -349,6 +354,12 @@ def compare_ogg(record, analyzer, ffmpeg):
         notes.append("no reader run")
 
     return {"figures": figures, "differences": figure_differences(figures), "units": unit_verdicts(direct, analyzer), "notes": notes}
+
+
+def stopped_difference(figure_id, decoder, analyzer, who, why):
+    """A decoder that did not reach the end of the stream gives no figure, whatever it counted so far: `noted`, the same kind and wording for every format and decoder."""
+    return {"figure": figure_id, "decoder": decoder, "value": None, "analyzer": analyzer, "status": "noted", "kind": "decoder-stopped",
+            "reason": "%s did not reach the end of the stream (%s); its partial count is no figure" % (who, why)}
 
 
 def figure_differences(figures):
@@ -369,10 +380,13 @@ def figure_differences(figures):
         if figure.get("refused"):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
-        if r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
-            # A total that is no reference leaves the analyzer's figure: `keep` for every format (decided 2026-11-02, and 2026-11-10 for Ogg's vorbis-cut-last-packet.ogg), never `pending`.
-            differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "keep",
+        if figure.get("readerStopped"):
+            differences.append(stopped_difference(figure["id"], figure["readerTool"], a, "the reader (%s)" % figure["readerTool"], figure["readerStopped"]))
+        elif r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
+            differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
                                 "kind": "reader-not-accepted", "reason": figure.get("noReference")})
+        if figure.get("ttaStopped") and not figure.get("ttaNoCount") and r is None:
+            differences.append(stopped_difference(figure["id"], "tta -d", a, "tta -d", figure["ttaStopped"]["reason"]))
     return differences
 
 
@@ -1221,7 +1235,8 @@ def compare_aac(record, analyzer, ffmpeg, coreaudio=None):
         figures.append({"id": "samples", **base, "refused": "FDK AAC outputs nothing for any of its %d units (%s)" % (direct["unitCount"], ", ".join(codes) if codes else "0x1002, it never has enough bits"),
                         "noReference": "FDK refuses the stream; the next decoders of the rule are the reference (Core Audio's converter, then Media Foundation's transform), else ffmpeg"})
     elif not complete:
-        figures.append({"id": "samples", **base, "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
+        figures.append({"id": "samples", **base, "directStopped": aac_stop_reason(direct),
+                        "noReference": "the direct path did not reach the end (%s); its partial count is %s" % (aac_stop_reason(direct), show(direct.get("partialSamples")))})
     elif direct.get("heldBack"):
         lost = direct["heldBlocks"] * ((d_runs[-1]["frameSize"] if d_runs else 0) or 0)
         figures.append({"id": "samples", **base, "heldBack": True, "decoderSamples": direct.get("totalSamples"), "heldBytes": direct.get("heldBytes"), "heldBlocks": direct["heldBlocks"],
@@ -1345,6 +1360,8 @@ def aac_differences(figures, direct, codecs, analyzer, units):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": None, "analyzer": a, "status": status, "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"] + "; " + why})
             continue
+        if figure.get("directStopped"):
+            differences.append(stopped_difference(figure["id"], "fdk direct", a, "FDK's direct path", figure["directStopped"]))
         if figure.get("heldBack"):
             differences.append({"figure": figure["id"], "decoder": "fdk direct", "value": figure["decoderSamples"], "analyzer": a, "status": "noted", "kind": "decoder-holds-blocks",
                                 "reason": figure["noReference"]})
@@ -1880,6 +1897,8 @@ def compare_ac3(record, analyzer, ffmpeg):
     elif total is None:
         base["noReference"] = "Core Audio's converter gave no complete total (%s)" % why
         column["converter"] = {"samples": None, "why": why}
+        if why.startswith("stopped by"):
+            differences.append(stopped_difference("samples", "coreaudio converter", a, "Core Audio's converter", why))
         if conv is not None and conv.get("stoppedBy") == "error" and not conv.get("opened") and a:
             setup = conv.get("setup") or {}
             made = ""
