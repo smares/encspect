@@ -1,4 +1,6 @@
 using Encspect.Core;
+using Encspect.Host;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Tests.Measurement;
 
@@ -234,10 +236,10 @@ public class MeasurementLevelFiguresTests
         // Half the samples are 0 in runs of 1 to 20 (rate 8,000 Hz: the minimum is 80).
         var random = new Random(15);
         int[] samples = new int[60000];
-        for (int i = 0; i < samples.Length;)
+        bool isZero = false;
+        for (int i = 0; i < samples.Length; isZero = !isZero)
         {
             int run = random.Next(1, 21);
-            bool isZero = random.Next(2) == 0;
             for (int k = 0; k < run && i < samples.Length; k++, i++)
             {
                 samples[i] = isZero ? 0 : 1;
