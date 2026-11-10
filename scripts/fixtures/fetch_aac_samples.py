@@ -49,7 +49,7 @@ def main(argv):
                 missing.append("%s (%s)" % (sample["file"], str(error)[:80]))
     print("fetched %d files into %s" % (sum(1 for p in target.iterdir() if p.is_file()), target))
     for line in missing:
-        print("not fetched: " + line)
+        print("::warning::not fetched: " + line)
     return 0
 
 

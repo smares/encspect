@@ -2164,6 +2164,10 @@ def main(argv):
                 write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
         print("comparison-aac.txt: %d files compared, %d not run" % (len(aac_results), len(aac_document["notRun"])))
     ac3 = run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp)
+    if not aac:
+        skipped_section(out, "aac", "no FDK records (the linux job's FDK step did not run or uploaded nothing)", {"coreaudio-aac": len(records.get("coreaudio-aac", {})), "mf-aac": len(records.get("mf-aac", {}))})
+    if not ac3:
+        skipped_section(out, "ac3", "no Core Audio records of the ac3 folder (the macos job did not run or uploaded nothing)", {"coreaudio-ac3": 0})
     if ac3:
         ac3_text, ac3_document, ac3_results, ac3_environment = ac3
         (out / "comparison-ac3.txt").write_text(ac3_text, encoding="utf-8")
@@ -2172,6 +2176,15 @@ def main(argv):
             write_official(pathlib.Path(args.write_official_ac3), FIXTURES / "ac3" / "official-decoders.json", ac3_results, ac3_environment, ffmpeg_version, args.run_id, "ac3")
         print("comparison-ac3.txt: %d files compared, %d not run" % (len(ac3_results), len(ac3_document["notRun"])))
     return 0
+
+
+def skipped_section(out, name, reason, counts):
+    """A section that cannot be built still leaves its file and a warning, so that a missing job shows on the run and the summary step finds the file; the counts name the records of
+    the other platforms that were therefore not compared."""
+    detail = ", ".join("%s %d" % (k, v) for k, v in counts.items())
+    line = "section %s not compared: %s (records present: %s)" % (name, reason, detail)
+    print("::warning::" + line)
+    (out / ("comparison-%s.txt" % name)).write_text("WARNING: " + line + "\n", encoding="utf-8")
 
 
 def summarize(record):
