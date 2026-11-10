@@ -637,9 +637,16 @@ internal sealed class WmaPacketReader
         _framesInCall = 0;
         _isReturnedInCall = false;
         int total = _savedBits;
-        if (_isLoss || Skipped > 0 || total == 0)
+        if (Skipped > 0 || total == 0)
         {
             ClearSaved();
+            return;
+        }
+
+        if (_isLoss)
+        {
+            // A short last packet leaves the run before it unread, but its frames start where a header points and are in the file.
+            DropSaved();
             return;
         }
 

@@ -49,6 +49,24 @@ public class WmaProTests
         Assert.Equal(0, stream.LostSamples % 2048);
     }
 
+    // The packet before the cut one is declared by its header and walked as every run is, so the frames that start in it count and are lost
+    // when the file ends in a media object shorter than the block alignment.
+    [Theory]
+    [InlineData(300)]
+    [InlineData(2_000)]
+    [InlineData(4_500)]
+    public void ACutLastObjectWithoutThePrefixDropsTheRunBeforeItCounted(int cut)
+    {
+        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.asf"));
+        Report report = Encspect.Host.Analyzer.CreateDefault().Analyze("cut.asf", new MemoryStream(whole[..^cut]));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Node statistics = WmaStream.Child(stream.Nodes[0], "Statistics");
+        // Nine frames start in the packet before the cut one and the cut one declares one more; the others of its frames cannot be told apart
+        // without the length prefix. All ten are lost (before: 2,048 lost and 53 frames coded).
+        Assert.Equal(62 * 2048L, WmaStream.Child(statistics, "Coded Samples").Value!.AsInteger());
+        Assert.Equal(10 * 2048L, stream.LostSamples);
+    }
+
     [Theory]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128.wma", 10, 66, 132300, 8, 209)]
     [InlineData("asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.wma", 10, 66, 132300, 7, 209)]
