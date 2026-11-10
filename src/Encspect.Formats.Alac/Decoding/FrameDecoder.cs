@@ -99,9 +99,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         FrameWalker.Walk(data, _cookie, _walk, _tally, _kept, null, _context.CancellationToken, buffers);
         CodingRecorder.Clear(_tally);
         _kept.Clear();
+        // A fault past the cookie's last channel is one the reference decoder never reaches, as in the parser's walk.
         return _walk.Fault switch
         {
             WalkFault.None => buffers,
+            _ when _walk.IsFaultBeyond => buffers,
             WalkFault.Truncated => throw new EndOfStreamException(),
             WalkFault.UnknownElement => throw new InvalidDataException("The frame has an element for which ALAC defines no syntax"),
             WalkFault.InvalidHeader => throw new InvalidDataException("An element states a header the decoder cannot use"),

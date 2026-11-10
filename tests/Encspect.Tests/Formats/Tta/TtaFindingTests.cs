@@ -239,6 +239,27 @@ public class TtaFindingTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
     }
 
+    // The description computes the frame length in unsigned 32 bits: the product wraps from 2^24 Hz.
+    [Theory]
+    [InlineData(8000L, 8359L)]
+    [InlineData(16_777_215L, 17_530_477L)]
+    [InlineData(16_777_216L, 0L)]
+    [InlineData(16_777_216L + 8000, 8359L)]
+    public void TheFrameLengthIsComputedInUnsigned32Bits(long rate, long expected)
+    {
+        Assert.Equal(expected, TtaHeader.FrameLengthOf(rate));
+    }
+
+    [Fact]
+    public void AHeaderWhoseRateLeavesNoFrameLengthIsNoFailure()
+    {
+        byte[] stream = [.. TtaBuilder.Header(16_777_216, 2, 16, 1000), .. TtaBuilder.Frame(10)];
+
+        Report report = Analyze(stream);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
     [Fact]
     public void TheNumberOfFramesFollowsFromTheTruncatedFrameLength()
     {

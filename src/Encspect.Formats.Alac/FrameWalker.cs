@@ -266,17 +266,21 @@ internal static class FrameWalker
     // places of the oddities.
     private static void CountAudio(WalkResult result, AlacCookie cookie, in ElementRecord element, int index, ref int channels)
     {
-        if (!result.HasSamples)
+        // The reference decoder's loop ends at the cookie's last channel, so only the elements within it give the frame's samples.
+        if (channels + ElementTags.Channels(element.Tag) <= cookie.Channels)
         {
-            result.HasSamples = true;
-            result.FirstSamples = element.Samples;
-        }
-        else if (element.Samples != result.FirstSamples && result.DifferingElement < 0)
-        {
-            result.DifferingElement = index;
-        }
+            if (!result.HasSamples)
+            {
+                result.HasSamples = true;
+                result.FirstSamples = element.Samples;
+            }
+            else if (element.Samples != result.FirstSamples && result.DifferingElement < 0)
+            {
+                result.DifferingElement = index;
+            }
 
-        result.Samples = element.Samples;
+            result.Samples = element.Samples;
+        }
 
         if (element.IsPartial)
         {

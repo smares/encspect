@@ -51,7 +51,7 @@ internal static class TtaBuilder
         return bytes;
     }
 
-    public static long FrameLength(uint rate) => rate * 256L / 245;
+    public static long FrameLength(uint rate) => unchecked(rate * 256u) / 245;
 
     public static long FrameCount(uint rate, long samples) => (samples + FrameLength(rate) - 1) / FrameLength(rate);
 

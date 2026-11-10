@@ -64,7 +64,12 @@ public sealed class TtaDecoder : IDecoder
             throw new InvalidDataException($"The container states {format.BitsPerSample} bits per sample; the decoder takes 1 to 24");
         }
 
-        if (format.Channels is < 1 or > ushort.MaxValue || format.SampleRate <= 0)
+        if (format.Channels > ushort.MaxValue)
+        {
+            throw new InvalidDataException($"The container states {format.Channels} channels; the decoder takes 1 to {ushort.MaxValue}");
+        }
+
+        if (format.Channels < 1 || format.SampleRate <= 0)
         {
             throw new InvalidDataException("The container states no channels or no sample rate for the stream");
         }
