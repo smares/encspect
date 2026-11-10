@@ -1277,6 +1277,9 @@ Status: draft for the lead (milestone 0.2, item 5 of [plan.md](../plan.md#02-los
 
 ### Decisions for the lead
 
+The lead took all four recommendations on 2026-11-10: (L1) one definition, the minimum applies at the start and end too; (L2) 10 ms, and clipping at the bits in use from 8 bits in use; (L3) the two CSV columns; (L4) floats in the same change.
+
+
 - **L1. The start and end under the minimum.** (a) Recommended: one definition, so a leading or trailing run shorter than 10 ms reads none (the 24 goldens' "1 sample" go); the exact count of leading zeros is lost below 10 ms. (b) Keep the start and end exact and apply the minimum only to the stretches: more detail at the edges, but "digital silence" then means two things.
 - **L2. The minimum and the floor.** Recommended: 10 ms, and clipping at the bits in use only from 8 bits in use. Alternatives: 1 ms or 100 ms (see above); a floor of 4 bits in use, which would admit extremes 1.2 dB below full scale.
 - **L3. CSV columns.** Recommended: add `Clipping Runs` and `Digital Silence Stretches` after `Sample Peak (dBFS)`, for scans of a library. Alternative: no CSV change in this item.
