@@ -1,232 +1,75 @@
 {
   "goldens": [
-    "tests/fixtures/tta/",
-    "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+    "tests/fixtures/tta/"
   ],
+  "reason": "Item 5 of milestone 0.2 (docs/design/spectral-analysis.md, Step 6): digital silence counts stretches of at least 10 ms, so levels.digitalSilence gains minimumLength, stretches, samples and longestStretch (for the stream and each channel) and levels.clipping gains bitsInUse; the stretch at the start or the end that is shorter than the minimum now reads 0 (a sine starting at phase 0 had 1 sample).",
   "added": [
     {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Samples",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Duration",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Average Bitrate",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Smallest Frame",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Largest Frame",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Minimum Bitrate",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Maximum Bitrate",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Bitrate Distribution",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "256 to 287 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "832 to 863 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "1184 to 1215 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Bitrate Distribution"
-      ],
-      "name": "160 to 191 kbps",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "tta.last-frame-samples-ambiguous",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    }
-  ],
-  "changed": [
-    {
-      "scope": "stream",
-      "fields": [
-        "verification"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "averageBitrate",
-        "isVbr",
-        "series"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    },
-    {
+      "scope": "measurement",
       "path": [
-        "Matroska",
-        "Track 1 Frames",
-        "Frames",
-        "Frame"
+        "levels",
+        "clipping"
       ],
-      "fields": [
-        "value",
-        "unit"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
-      ]
-    }
-  ],
-  "bitrate": [
+      "key": "bitsInUse"
+    },
     {
-      "goldens": [
-        "tests/fixtures/matroska/external-mkvmerge-tta.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-tta.report.json"
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
       ],
-      "reason": "a TTA track without the header now counts its samples from its frames and its last frame's codes, not from the container's timing, so its duration and average bitrate are the frames' own"
+      "key": "minimumLength"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "stretches"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "samples"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "longestStretch"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "stretches"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "samples"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "longestStretch"
     }
   ]
 }
