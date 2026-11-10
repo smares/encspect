@@ -2,6 +2,29 @@
   "goldens": [
     "tests/fixtures/flac/"
   ],
+  "changed": [
+    {
+      "path": [
+        "FLAC",
+        "Processor",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "FLAC",
+        "Statistics",
+        "Wasted Bits",
+        "Changes"
+      ],
+      "fields": [
+        "value"
+      ]
+    }
+  ],
   "removed": [
     {
       "parent": [

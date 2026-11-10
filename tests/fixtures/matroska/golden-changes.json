@@ -2,229 +2,18 @@
   "goldens": [
     "tests/fixtures/matroska/"
   ],
-  "renamed": [
-    {
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/absurd-sizes.report.json",
-        "tests/fixtures/matroska/audio-differs.report.json",
-        "tests/fixtures/matroska/block-group-damaged.report.json",
-        "tests/fixtures/matroska/block-groups.report.json",
-        "tests/fixtures/matroska/cluster-timestamps.report.json",
-        "tests/fixtures/matroska/crc-cut-at-end.report.json",
-        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
-        "tests/fixtures/matroska/crc-damaged.report.json",
-        "tests/fixtures/matroska/crc-misplaced.report.json",
-        "tests/fixtures/matroska/crc-valid.report.json",
-        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
-        "tests/fixtures/matroska/cut-at-segment.report.json",
-        "tests/fixtures/matroska/deep-nesting.report.json",
-        "tests/fixtures/matroska/eight-octet-id.report.json",
-        "tests/fixtures/matroska/elements-unknown-void.report.json",
-        "tests/fixtures/matroska/empty-elements.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
-        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
-        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/encryption-ignored.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
-        "tests/fixtures/matroska/header-fields.report.json",
-        "tests/fixtures/matroska/header-limits-large.report.json",
-        "tests/fixtures/matroska/header-max-id-length-2.report.json",
-        "tests/fixtures/matroska/header-no-doctype.report.json",
-        "tests/fixtures/matroska/header-stripping.report.json",
-        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
-        "tests/fixtures/matroska/invalid-headers.report.json",
-        "tests/fixtures/matroska/lacing-invalid.report.json",
-        "tests/fixtures/matroska/lacing-modes.report.json",
-        "tests/fixtures/matroska/lacing-not-allowed.report.json",
-        "tests/fixtures/matroska/lacing-single.report.json",
-        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
-        "tests/fixtures/matroska/live-ape-binary.report.json",
-        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
-        "tests/fixtures/matroska/live-ape-footer-only.report.json",
-        "tests/fixtures/matroska/live-ape-id3v1.report.json",
-        "tests/fixtures/matroska/live-ape-large.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
-        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
-        "tests/fixtures/matroska/live-id3v1.report.json",
-        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-element.report.json",
-        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
-        "tests/fixtures/matroska/misplaced-elements.report.json",
-        "tests/fixtures/matroska/opus-minimal.report.json",
-        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-        "tests/fixtures/matroska/private-stripped.report.json",
-        "tests/fixtures/matroska/registry-elements.report.json",
-        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
-        "tests/fixtures/matroska/seek-and-cues.report.json",
-        "tests/fixtures/matroska/segment-crc-truncated.report.json",
-        "tests/fixtures/matroska/segment-info.report.json",
-        "tests/fixtures/matroska/short-blocks.report.json",
-        "tests/fixtures/matroska/size-length.report.json",
-        "tests/fixtures/matroska/size-past-parent.report.json",
-        "tests/fixtures/matroska/string-null.report.json",
-        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
-        "tests/fixtures/matroska/text-and-values.report.json",
-        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
-        "tests/fixtures/matroska/timestamps-backwards.report.json",
-        "tests/fixtures/matroska/trailing-data.report.json",
-        "tests/fixtures/matroska/truncated-cluster.report.json",
-        "tests/fixtures/matroska/truncated-header.report.json",
-        "tests/fixtures/matroska/truncated-seek-cues.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/unknown-size-clusters.report.json",
-        "tests/fixtures/matroska/unknown-size-live.report.json",
-        "tests/fixtures/matroska/unknown-track.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json",
-        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
-        "tests/fixtures/matroska/writer-lavf.report.json",
-        "tests/fixtures/matroska/writer-mkvmerge.report.json",
-        "tests/fixtures/matroska/zlib-compressed.report.json",
-        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "from": "Bit Depth",
-      "to": "Bits Per Sample",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-alac.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "DTS",
-        "Statistics"
-      ],
-      "from": "Sampling Frequency",
-      "to": "Core Sample Rate",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "MLP",
-        "Statistics"
-      ],
-      "from": "Sampling Rate",
-      "to": "Sample Rate",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mlp-51.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mlp-51.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Dolby TrueHD",
-        "Statistics"
-      ],
-      "from": "Sampling Rate",
-      "to": "Sample Rate",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-truehd-50.report.json",
-        "tests/fixtures/matroska/truehd-cut.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-        "tests/fixtures/matroska/two-audio-tracks.report.json",
-        "tests/fixtures/matroska/video-and-audio.report.json",
-        "tests/fixtures/matroska/writer-apps-differ.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Segment 1 Track 1 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Matroska",
-        "Segment 2 Track 1 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/two-segments.report.json",
-        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-        "tests/fixtures/matroska/writer-two-segments.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "WebM",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "from": "Stereo Coding",
-      "to": "Channel Coding",
-      "goldens": [
-        "tests/fixtures/matroska/webm.report.json"
-      ]
-    }
-  ],
   "changed": [
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "Processor",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
     {
       "path": [
         "Matroska",
@@ -1056,6 +845,228 @@
         "tests/fixtures/matroska/external-mkvmerge-mp3.report.json",
         "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
         "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json"
+      ]
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/absurd-sizes.report.json",
+        "tests/fixtures/matroska/audio-differs.report.json",
+        "tests/fixtures/matroska/block-group-damaged.report.json",
+        "tests/fixtures/matroska/block-groups.report.json",
+        "tests/fixtures/matroska/cluster-timestamps.report.json",
+        "tests/fixtures/matroska/crc-cut-at-end.report.json",
+        "tests/fixtures/matroska/crc-cut-by-parent.report.json",
+        "tests/fixtures/matroska/crc-damaged.report.json",
+        "tests/fixtures/matroska/crc-misplaced.report.json",
+        "tests/fixtures/matroska/crc-valid.report.json",
+        "tests/fixtures/matroska/cut-at-segment-seeks.report.json",
+        "tests/fixtures/matroska/cut-at-segment.report.json",
+        "tests/fixtures/matroska/deep-nesting.report.json",
+        "tests/fixtures/matroska/eight-octet-id.report.json",
+        "tests/fixtures/matroska/elements-unknown-void.report.json",
+        "tests/fixtures/matroska/empty-elements.report.json",
+        "tests/fixtures/matroska/encryption-algorithm-default.report.json",
+        "tests/fixtures/matroska/encryption-algorithm-none.report.json",
+        "tests/fixtures/matroska/encryption-covers-nothing.report.json",
+        "tests/fixtures/matroska/encryption-ignored.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-live.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-opus-ambisonics.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
+        "tests/fixtures/matroska/five-byte-id-in-block-group.report.json",
+        "tests/fixtures/matroska/header-fields.report.json",
+        "tests/fixtures/matroska/header-limits-large.report.json",
+        "tests/fixtures/matroska/header-max-id-length-2.report.json",
+        "tests/fixtures/matroska/header-no-doctype.report.json",
+        "tests/fixtures/matroska/header-stripping.report.json",
+        "tests/fixtures/matroska/hidden-encryption-covers-nothing.report.json",
+        "tests/fixtures/matroska/invalid-headers.report.json",
+        "tests/fixtures/matroska/lacing-invalid.report.json",
+        "tests/fixtures/matroska/lacing-modes.report.json",
+        "tests/fixtures/matroska/lacing-not-allowed.report.json",
+        "tests/fixtures/matroska/lacing-single.report.json",
+        "tests/fixtures/matroska/lacing-zero-size-frame.report.json",
+        "tests/fixtures/matroska/live-ape-binary.report.json",
+        "tests/fixtures/matroska/live-ape-footer-damaged-key.report.json",
+        "tests/fixtures/matroska/live-ape-footer-only.report.json",
+        "tests/fixtures/matroska/live-ape-id3v1.report.json",
+        "tests/fixtures/matroska/live-ape-large.report.json",
+        "tests/fixtures/matroska/live-false-ape-footer-block.report.json",
+        "tests/fixtures/matroska/live-false-ape-footer-info.report.json",
+        "tests/fixtures/matroska/live-id3v1.report.json",
+        "tests/fixtures/matroska/live-truncated-unknown-element.report.json",
+        "tests/fixtures/matroska/live-unknown-element.report.json",
+        "tests/fixtures/matroska/live-unknown-tag-signature.report.json",
+        "tests/fixtures/matroska/misplaced-elements.report.json",
+        "tests/fixtures/matroska/opus-minimal.report.json",
+        "tests/fixtures/matroska/opus-stereo-clusters.report.json",
+        "tests/fixtures/matroska/private-stripped.report.json",
+        "tests/fixtures/matroska/registry-elements.report.json",
+        "tests/fixtures/matroska/seek-and-cues-wrong.report.json",
+        "tests/fixtures/matroska/seek-and-cues.report.json",
+        "tests/fixtures/matroska/segment-crc-truncated.report.json",
+        "tests/fixtures/matroska/segment-info.report.json",
+        "tests/fixtures/matroska/short-blocks.report.json",
+        "tests/fixtures/matroska/size-length.report.json",
+        "tests/fixtures/matroska/size-past-parent.report.json",
+        "tests/fixtures/matroska/string-null.report.json",
+        "tests/fixtures/matroska/tags-chapters-attachments.report.json",
+        "tests/fixtures/matroska/text-and-values.report.json",
+        "tests/fixtures/matroska/timestamp-scale-zero.report.json",
+        "tests/fixtures/matroska/timestamps-backwards.report.json",
+        "tests/fixtures/matroska/trailing-data.report.json",
+        "tests/fixtures/matroska/truncated-cluster.report.json",
+        "tests/fixtures/matroska/truncated-header.report.json",
+        "tests/fixtures/matroska/truncated-seek-cues.report.json",
+        "tests/fixtures/matroska/two-audio-tracks.report.json",
+        "tests/fixtures/matroska/unknown-size-clusters.report.json",
+        "tests/fixtures/matroska/unknown-size-live.report.json",
+        "tests/fixtures/matroska/unknown-track.report.json",
+        "tests/fixtures/matroska/writer-apps-differ.report.json",
+        "tests/fixtures/matroska/writer-lavf-under-application.report.json",
+        "tests/fixtures/matroska/writer-lavf.report.json",
+        "tests/fixtures/matroska/writer-mkvmerge.report.json",
+        "tests/fixtures/matroska/zlib-compressed.report.json",
+        "tests/fixtures/matroska/zlib-frames-damaged.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "from": "Bit Depth",
+      "to": "Bits Per Sample",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-alac.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "DTS",
+        "Statistics"
+      ],
+      "from": "Sampling Frequency",
+      "to": "Core Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-dts-51.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-dts.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "MLP",
+        "Statistics"
+      ],
+      "from": "Sampling Rate",
+      "to": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mlp-51.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mlp-51.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "WebM",
+        "Track 1 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 1 Frames",
+        "Dolby TrueHD",
+        "Statistics"
+      ],
+      "from": "Sampling Rate",
+      "to": "Sample Rate",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-truehd.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-truehd-50.report.json",
+        "tests/fixtures/matroska/truehd-cut.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Track 2 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-video.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
+        "tests/fixtures/matroska/two-audio-tracks.report.json",
+        "tests/fixtures/matroska/video-and-audio.report.json",
+        "tests/fixtures/matroska/writer-apps-differ.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Segment 1 Track 1 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/two-segments.report.json",
+        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
+        "tests/fixtures/matroska/writer-two-segments.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Segment 2 Track 1 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/two-segments.report.json",
+        "tests/fixtures/matroska/unknown-size-then-segment.report.json",
+        "tests/fixtures/matroska/writer-two-segments.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "WebM",
+        "Track 2 Frames",
+        "Statistics"
+      ],
+      "from": "Stereo Coding",
+      "to": "Channel Coding",
+      "goldens": [
+        "tests/fixtures/matroska/webm.report.json"
       ]
     }
   ],
