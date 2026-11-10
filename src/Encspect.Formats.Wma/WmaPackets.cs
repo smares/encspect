@@ -457,7 +457,18 @@ internal sealed class WmaPacketReader
         long frames = 0;
         if (!p.HasLengthPrefix)
         {
-            frames = position < packetBits ? 1 : 0;
+            // Each frame's end is found by reading it; the one the bytes end inside counts too.
+            var cut = new Bits(_packetBuffer, packetBits);
+            while (position < packetBits)
+            {
+                FrameOutcome probe = _probe.Read(cut, position, packetBits, 0, _trace);
+                frames++;
+                position += Math.Max(probe.Bits, 1);
+                if (!probe.IsValid || !probe.Trailer)
+                {
+                    break;
+                }
+            }
         }
         else
         {
@@ -574,6 +585,7 @@ internal sealed class WmaPacketReader
                 isError = true;
                 MarkLoss();
                 isTrailerOne = false;
+                CountFramesAfterInvalid(bits, position, end);
                 break;
             }
 
@@ -601,6 +613,41 @@ internal sealed class WmaPacketReader
         UnfinishedBits = isTrailerOne && !_isLoss ? tail : 0;
     }
 
+    // An invalid frame drops the rest of its media object unread. With the length prefix the invalid frame's prefix still says where the next frame
+    // starts, so the frames after it in the packet, and the one its last frame announces into the next packet, are declared and in the file: each
+    // counts a frame length and is lost (docs/design/samples-definition.md, rule 1). position is the end of the invalid frame.
+    private void CountFramesAfterInvalid(Bits bits, int position, int end)
+    {
+        IStreamParameters p = _p;
+        bits.Position = position - 1;
+        bool isFollowed = bits.ReadBit() != 0;
+        while (isFollowed && position < end)
+        {
+            int left = end - position;
+            int declared = left > p.CountWidth ? (int)bits.Peek(p.CountWidth) : 0;
+            DroppedFrames++;
+            if (_isLossless)
+            {
+                // A Lossless frame counts its length less its end trim, which the frame states.
+                FrameOutcome probe = _probe.Read(bits, position, declared > 0 && declared <= left ? position + declared : end, declared, _trace);
+                Samples += Math.Max(0, p.FrameLength - probe.TrimEnd);
+            }
+            else
+            {
+                Samples += p.FrameLength;
+            }
+
+            if (declared == 0 || declared > left)
+            {
+                break;
+            }
+
+            position += declared;
+            bits.Position = position - 1;
+            isFollowed = bits.ReadBit() != 0;
+        }
+    }
+
     // The frames that start in the last packet: no packet follows to supply their last bits, but the saved run holds whole frames and is read
     // as every other run is (docs/design/wma-pro-format.md, "Frames without the length prefix"). A run is dropped where a loss is pending or a
     // packet was skipped (its last frame goes on in a packet nobody read). A frame the run cannot finish, which includes the zero padding after a frame
@@ -611,9 +658,16 @@ internal sealed class WmaPacketReader
         _framesInCall = 0;
         _isReturnedInCall = false;
         int total = _savedBits;
-        if (_isLoss || Skipped > 0 || total == 0)
+        if (Skipped > 0 || total == 0)
         {
             ClearSaved();
+            return;
+        }
+
+        if (_isLoss)
+        {
+            // A short last packet leaves the run before it unread, but its frames start where a header points and are in the file.
+            DropSaved();
             return;
         }
 
@@ -705,6 +759,7 @@ internal sealed class WmaPacketReader
                 {
                     isError = true;
                     MarkLoss();
+                    CountUnreadRun(joined, position, total);
                     break;
                 }
 
@@ -718,9 +773,14 @@ internal sealed class WmaPacketReader
         ClearSaved();
         int position2 = payloadStart + count;
         int tail = Math.Max(0, end - position2);
-        if (!isError && tail > 0)
+        if (tail > 0)
         {
             Save(packet, position2, tail, true);
+            if (isError)
+            {
+                // The packet's own frames start where its header points and are in the file; the loss throws them away unread.
+                DropSaved();
+            }
         }
     }
 
@@ -950,6 +1010,23 @@ internal sealed class WmaPacketReader
         ClearSaved();
     }
 
+    // The frames of a run after an invalid frame, thrown away unread: each is read to find its end and counts a frame length, as in a dropped run.
+    private void CountUnreadRun(Bits joined, int position, int total)
+    {
+        while (position < total)
+        {
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            FrameOutcome result = _probe.Read(joined, position, total, 0, _trace);
+            DroppedFrames++;
+            Samples += _p.FrameLength;
+            position += Math.Max(result.Bits, 1);
+            if (!result.IsValid || !result.Trailer)
+            {
+                break;
+            }
+        }
+    }
+
     private void CountDropped()
     {
         int total = _savedBits;
@@ -1029,14 +1106,13 @@ internal sealed class WmaPacketReader
     // Reads one frame whose bits are parts, one after another, and records it. startPacket is the packet the frame is listed under. For
     // frames read from a joined buffer of several frames, source holds the parts of the whole buffer and the frame starts at position. A frame
     // past FrameLimit is read and counted but not recorded. isLost: the bits are the end of a frame whose start was lost; they are read as a
-    // frame, as a decoder does, and their samples counted, but they are no frame of the list.
+    // frame, as a decoder does, but they start at no declared frame start, so they are no frame of the list and count nothing.
     private FrameOutcome ReadOne(Bits bits, int start, int limit, int declared, IReadOnlyList<FramePart> parts, List<FramePart>? source = null, int position = 0, bool isLost = false)
     {
         FrameOutcome result = _reader.Read(bits, start, limit, declared, _trace);
         if (isLost)
         {
             _lastFrameNumber = -1;
-            Samples += OutputOf(result);
             return result;
         }
 
