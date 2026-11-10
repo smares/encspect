@@ -89,6 +89,9 @@ FFMPEG_FIXTURES = {
     "ffmpeg-left-side": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-ch_mode", "left_side"], "flac"),
     "ffmpeg-right-side": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-ch_mode", "right_side"], "flac"),
     "ffmpeg-mid-side": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-ch_mode", "mid_side"], "flac"),
+    # 16-bit audio in 24 bits (8 wasted bits) in frames of 512 with some frames mid/side: a mid subframe states one wasted bit fewer than left and right, which the
+    # behavior claim for lossyWAV must not read as a change (docs/design/lossywav-detection.md, False positives).
+    "ffmpeg-16-in-24-mid-side-b512": (("music", 44100, 2, 24, 132300, {"shift": 8}), ["-c:a", "flac", "-sample_fmt", "s32", "-bits_per_raw_sample", "24", "-frame_size", "512"], "flac"),
     "ffmpeg-level0-fixed": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-compression_level", "0"], "flac"),
     "ffmpeg-pipe": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac"], "pipe"),
     "ogg-ffmpeg-16-stereo": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-f", "ogg"], "ogg"),

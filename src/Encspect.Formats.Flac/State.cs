@@ -379,7 +379,7 @@ internal sealed class State
         int detail = -1;
         if (isWalked)
         {
-            Count(facts[..header.Channels], first);
+            Count(facts[..header.Channels], first, header.Assignment);
             ReportResidualLimits(facts[..header.Channels], offset, index);
             if (index < MaxDetailedFrames && Records.Details.Count < MaxDetailedFrames)
             {
@@ -519,12 +519,20 @@ internal sealed class State
         }
     }
 
-    private void Count(ReadOnlySpan<SubframeFacts> facts, long position)
+    private void Count(ReadOnlySpan<SubframeFacts> facts, long position, ChannelAssignment assignment)
     {
         int channel = 0;
         foreach (ref readonly SubframeFacts f in facts)
         {
-            Wasted.Add(channel++, position, f.WastedBits, f.Type == SubframeType.Constant && f.Constant == 0);
+            // Mid and side subframes carry the coding's own count, so only a channel coded as itself is compared with the same channel's previous subframe.
+            bool isSource = assignment switch
+            {
+                ChannelAssignment.LeftSide => channel == 0,
+                ChannelAssignment.SideRight => channel == 1,
+                ChannelAssignment.MidSide => false,
+                _ => true,
+            };
+            Wasted.Add(channel++, position, f.WastedBits, f.Type == SubframeType.Constant && f.Constant == 0, isSource);
             Subframes++;
             SubframeTypes[(int)f.Type]++;
             if (f.WastedBits > 0)
