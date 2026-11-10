@@ -221,7 +221,7 @@ public static class MeasurementText
         lines.Add(new MeasurementLine(MeasurementFigure.RmsLevel, "RMS Level", $"{Tenths(stream.RmsTenths)} dBFS{PerChannel(names, channels.Select(c => Tenths(c.RmsTenths)))}", RmsDescription, LevelsTopic));
         lines.Add(new MeasurementLine(MeasurementFigure.DcOffset, "DC Offset", $"{Percent(stream.DcOffsetMicropercent)}% of full scale ({Tenths(stream.DcOffsetTenths)} dBFS{PerChannelInside(names, channels.Select(c => Percent(c.DcOffsetMicropercent) + "%"))})", DcOffsetDescription, DcOffsetTopic));
 
-        string what = levels.ClippingBitsInUse is { } inUse && inUse != levels.BitsPerSample ? $"at the extremes of the {inUse} bits in use" : isFloat ? "at or beyond full scale" : "at full scale";
+        string what = levels.ClippingBitsInUse is { } inUse && inUse != levels.BitsPerSample ? (isFloat ? $"at the extremes of the {inUse}-bit grid" : $"at the extremes of the {inUse} bits in use") : isFloat ? "at or beyond full scale" : "at full scale";
         string clipping = stream.ClippingRuns == 0
             ? "none"
             : $"{Plural(stream.ClippingRuns, "run", "runs")} of {MeasurementLimits.MinimumClippingRun} or more samples {what}, {Plural(stream.ClippedSamples, "sample", "samples")}, the longest {Grouped(stream.LongestClippingRun)}{PerChannel(names, channels.Select(c => Plural(c.ClippingRuns, "run", "runs")))}";

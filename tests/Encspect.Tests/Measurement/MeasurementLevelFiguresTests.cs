@@ -150,6 +150,131 @@ public class MeasurementLevelFiguresTests
         }
     }
 
+    // Streams whose bits in use fall mid-stream (one sample with fewer trailing zeros at a random place and channel, or none), cut by random gaps and blocks:
+    // every channel's runs at the extreme of the final bits in use (with the floor), and the stretches of the stream and of each channel, against a naive count.
+    [Theory]
+    [InlineData(1, 1, 8)]
+    [InlineData(1, 2, 8)]
+    [InlineData(2, 3, 8)]
+    [InlineData(2, 4, 10)]
+    [InlineData(3, 5, 8)]
+    [InlineData(3, 6, 10)]
+    [InlineData(2, 7, 8)]
+    [InlineData(2, 8, 8)]
+    [InlineData(2, 9, 10)]
+    [InlineData(3, 10, 8)]
+    public void RandomStreamsWhoseBitsInUseFallAndHaveGapsGiveTheNaiveCounts(int channelCount, int seed, int baseZeros)
+    {
+        var random = new Random(seed);
+        const int minimum = 8;
+        const int length = 60000;
+        int[][] data = new int[channelCount][];
+        int topAtBase = 32768 - (1 << baseZeros);
+        for (int c = 0; c < channelCount; c++)
+        {
+            data[c] = new int[length];
+            for (int i = 0; i < length;)
+            {
+                int run = random.Next(1, 3 * minimum);
+                int kind = random.Next(6);
+                for (int k = 0; k < run && i < length; k++, i++)
+                {
+                    data[c][i] = kind switch
+                    {
+                        0 or 1 => 0,
+                        2 => topAtBase,
+                        3 => -32768,
+                        _ => random.Next(-3, 4) << baseZeros,
+                    };
+                }
+            }
+        }
+
+        // The sample that ends the bits in use: not in every stream, and runs of the base extreme are put around it.
+        if (random.Next(4) != 0)
+        {
+            int channel = random.Next(channelCount);
+            int at = random.Next(5000, length - 5000);
+            data[channel][at] = (random.Next(1, 100) << random.Next(0, baseZeros)) | 1 << random.Next(0, baseZeros);
+            for (int c = 0; c < channelCount; c++)
+            {
+                data[c].AsSpan(at - 4, 4).Fill(topAtBase);
+                data[c].AsSpan(at + 1, 5).Fill(topAtBase);
+            }
+        }
+
+        var cuts = new List<int> { 0 };
+        for (int cut = random.Next(2000, 9000); cut < length; cut += random.Next(2000, 9000))
+        {
+            cuts.Add(cut);
+        }
+
+        cuts.Add(length);
+        long position = 0;
+        var segments = new List<(long Position, int[][] Channels)>();
+        for (int i = 0; i + 1 < cuts.Count; i++)
+        {
+            segments.Add((position, [.. data.Select(d => d[cuts[i]..cuts[i + 1]])]));
+            position += cuts[i + 1] - cuts[i] + (i % 2 == 0 ? random.Next(5, 50) : 0);
+        }
+
+        int or = 0;
+        foreach (int[] channel in data)
+        {
+            foreach (int v in channel)
+            {
+                or |= v;
+            }
+        }
+
+        int zeros = or == 0 ? 32 : System.Numerics.BitOperations.TrailingZeroCount(or);
+        int shift = 16 - zeros >= MeasurementLimits.MinimumBitsInUse ? zeros : 0;
+        int high = 32768 - (1 << shift);
+        foreach (int blockSize in new[] { 777, 16384, 5 * 16384 })
+        {
+            LevelFigures levels = MeasurementLevelsTests.Run(16, blockSize, new MeasureOptions { Include = MeasurementKinds.Levels }, 800, [.. segments]).Levels!;
+
+            Assert.Equal(16 - shift, levels.ClippingBitsInUse);
+            for (int c = 0; c < channelCount; c++)
+            {
+                long runs = 0, clipped = 0, longest = 0;
+                foreach ((_, int[][] part) in segments)
+                {
+                    (long r, long k, long l) = NaiveRuns(part[c], high, -32768);
+                    runs += r;
+                    clipped += k;
+                    longest = Math.Max(longest, l);
+                }
+
+                ChannelLevels got = levels.Channels[c];
+                Assert.Equal((runs, clipped, longest), (got.ClippingRuns, got.ClippedSamples, got.LongestClippingRun));
+                (long st, long sa, long lo, long start, long end) = NaiveSegments([.. segments.Select(p => new[] { p.Channels[c] })], minimum);
+                Assert.Equal((st, sa, lo, start, end), (got.SilentStretches, got.SilentSamples, got.LongestSilentStretch, got.SilentAtStart, got.SilentAtEnd));
+            }
+
+            (long jointStretches, long jointSamples, long jointLongest, long jointStart, long jointEnd) = NaiveSegments([.. segments.Select(p => p.Channels)], minimum);
+            ChannelLevels stream = levels.Stream;
+            Assert.Equal((jointStretches, jointSamples, jointLongest, jointStart, jointEnd), (stream.SilentStretches, stream.SilentSamples, stream.LongestSilentStretch, stream.SilentAtStart, stream.SilentAtEnd));
+        }
+    }
+
+    // The stretches of zero frames of the segments between gaps: none crosses a gap, the start is the first segment's leading stretch and the end the last one's trailing.
+    private static (long Stretches, long Samples, long Longest, long Start, long End) NaiveSegments(int[][][] segments, int minimum)
+    {
+        long stretches = 0, samples = 0, longest = 0, start = 0, end = 0;
+        for (int s = 0; s < segments.Length; s++)
+        {
+            (long st, long sa, long lo, long first, long last) = NaiveStretches(segments[s], minimum);
+            stretches += st;
+            samples += sa;
+            longest = Math.Max(longest, lo);
+            start = s == 0 ? first : start;
+            end = s == segments.Length - 1 ? last : end;
+        }
+
+        return (stretches, samples, longest, start, end);
+    }
+
     private static (long Stretches, long Samples, long Longest, long Start, long End) NaiveStretches(int[][] data, int minimum)
     {
         int length = data[0].Length;

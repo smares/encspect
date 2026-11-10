@@ -7,7 +7,7 @@ references: Encspect design, docs/design/spectral-analysis.md (Levels; Step 6)
 
 **The problem.** Digital silence is audio in which the samples are exactly 0. It differs from quiet audio, which has noise or dither and never reads exactly 0.
 
-**How it works.** The analyzer finds the sample frames in which every measured channel is 0 and counts the stretches of them that last at least 10 ms: the sample rate divided by 100, rounded up (441 samples at 44.1 kHz, 80 at 8 kHz). Ten milliseconds is a convention of this analysis, not of a specification. A tone that reaches one least significant bit rounds to 0 only around its zero crossings, for far less than 10 ms from 20 Hz up.
+**How it works.** The analyzer finds the sample frames in which every measured channel is 0 and counts the stretches of them that last at least 10 ms: the sample rate divided by 100, rounded up (441 samples at 44.1 kHz, 80 at 8 kHz). Ten milliseconds is a convention of this analysis, not of a specification. A tone that reaches one least significant bit rounds to 0 only around its zero crossings: for about 8 ms at 20 Hz, and for less above.
 
 The figures are the stretches, the samples in them, the longest, and the stretch at the start and the one at the end, which follow the same rule: a leading or trailing run shorter than the minimum reads none. Zero Samples counts all zero frames wherever they are, with no minimum, so it includes the zeros of quiet audio and a sine's zero crossings; it less the samples in stretches is the zeros that are not silence. The report keeps the figures for each channel. A stream that states no sample rate has no 10 ms, and its stretch figures are not measured.
 
