@@ -104,12 +104,26 @@ public sealed class TtaCodecParser : ICodecParser
             return;
         }
 
+        if (s.Channels > ushort.MaxValue)
+        {
+            int stated = s.Channels;
+            s.Findings.Add(Severity.Warning, "tta.channels-beyond-limit", () => s.Stream, _ =>
+                $"The container states {stated} channels for the track, more than the 65,535 a TTA stream can hold; the last frame's samples are not counted and the track is not decoded.");
+            return;
+        }
+
         long frameLength = TtaHeader.FrameLengthOf(s.SampleRate);
+        if (frameLength == 0)
+        {
+            return;
+        }
+
         int maxSamples = (int)Math.Min(frameLength, int.MaxValue);
         int index = frames - 1;
         long fromLength = s.ContainerSamples is { } total ? Math.Clamp(total - (index * frameLength), 1, frameLength) : frameLength;
         long count = fromLength;
-        if (entry.IsComplete)
+        // Every sample time takes at least a bit for each channel, so with more channels than the coded bits none fits and no state is allocated.
+        if (entry.IsComplete && s.Channels <= 8L * (packet.Span.Length - 4))
         {
             (int First, int Last)? counts;
             try

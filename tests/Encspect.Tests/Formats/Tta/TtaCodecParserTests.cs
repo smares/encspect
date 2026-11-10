@@ -321,6 +321,23 @@ public class TtaCodecParserTests
         Assert.True(stream.AverageBitrate > 10);
     }
 
+    // A headerless track's Channels element is the container's figure, up to int.MaxValue: the parser allocates nothing for it (fuzz/ has the same
+    // files, whose peak memory MemoryTests measures).
+    [Theory]
+    [InlineData("matroska-tta-track-channels-2-pow-26.bin", 1 << 26)]
+    [InlineData("matroska-tta-track-channels-2-pow-31-minus-1.bin", int.MaxValue)]
+    public void ATrackWithMoreChannelsThanTtaHoldsIsRefusedAsAFinding(string name, int channels)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name));
+        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(data));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tta.channels-beyond-limit");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains(channels.ToString(System.Globalization.CultureInfo.InvariantCulture), finding.Message, StringComparison.Ordinal);
+        Assert.NotNull(finding.Path);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
+
     [Fact]
     public void APacketShorterThanACrcIsAFinding()
     {
