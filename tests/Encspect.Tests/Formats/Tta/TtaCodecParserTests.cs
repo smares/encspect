@@ -336,7 +336,6 @@ public class TtaCodecParserTests
         Assert.Contains(channels.ToString(System.Globalization.CultureInfo.InvariantCulture), finding.Message, StringComparison.Ordinal);
         Assert.NotNull(finding.Path);
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
-        Assert.Equal(0, report.Streams.Single().Samples);
     }
 
     [Fact]

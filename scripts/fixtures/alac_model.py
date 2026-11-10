@@ -595,9 +595,10 @@ def walk_frame(data, cookie_):
                     if num_samples > cookie_samples and out["too_long"] is None:
                         out["too_long"] = index
                 element["samples"] = num_samples
-                if previous is not None and previous != num_samples and out["differing"] is None:
-                    out["differing"] = index
-                previous = num_samples
+                if not stopped:
+                    if previous is not None and previous != num_samples and out["differing"] is None:
+                        out["differing"] = index
+                    previous = num_samples
                 element["header_read"] = True
                 out["channels"] += used
                 if not stopped:
