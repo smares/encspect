@@ -360,7 +360,7 @@ public class MeasurementDeterminismTests
         "BitDecrement", "ReciprocalEstimate", "ReciprocalSqrtEstimate", "MultiplyAddEstimate",
     ];
 
-    private static readonly HashSet<string> ArithmeticTypes = ["System.Math", "System.MathF", "System.Double", "System.Single", "System.Half", "System.Numerics.Complex"];
+    private static readonly HashSet<string> ArithmeticTypes = ["System.Math", "System.MathF", "System.Double", "System.Single", "System.Half", "System.Numerics.Complex", "System.Runtime.InteropServices.NFloat"];
 
     private static bool DefinesArithmetic(string parent) =>
         ArithmeticTypes.Contains(parent)
@@ -460,7 +460,7 @@ public class MeasurementDeterminismTests
     {
         public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
 
-        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => string.Empty;
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => OwnerOf(reader, reader.GetTypeDefinition(handle));
 
         public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => TypeName(md, handle);
 
@@ -485,6 +485,115 @@ public class MeasurementDeterminismTests
         public string GetGenericMethodParameter(object? genericContext, int index) => string.Empty;
 
         public string GetGenericTypeParameter(object? genericContext, int index) => string.Empty;
+    }
+
+    private static string OwnerOf(MetadataReader md, TypeDefinition type)
+    {
+        while (!type.GetDeclaringType().IsNil)
+        {
+            type = md.GetTypeDefinition(type.GetDeclaringType());
+        }
+
+        return md.GetString(type.Namespace) + "." + md.GetString(type.Name);
+    }
+
+    // The scope and, transitively, every other type of the assembly that the scope's methods reach: a method call (a lossy decoder reaching a
+    // helper in <project>.Decoding.Lossless), a method of a generic type instance of the assembly (Ring<float>.Push), and an interface call, which
+    // reaches every type of the assembly that implements the interface (an interface of the assembly or one of Encspect's other assemblies).
+    // Calls into other assemblies are scanned as their own scope.
+    internal static Func<string, bool> WithCalledTypes(Assembly assembly, Func<string, bool> inScope)
+    {
+        using FileStream file = File.OpenRead(assembly.Location);
+        using var pe = new PEReader(file);
+        MetadataReader md = pe.GetMetadataReader();
+        var names = new NameProvider(md);
+        var included = new HashSet<string>();
+        var calledInterfaces = new HashSet<string>();
+        var implemented = new Dictionary<string, List<string>>();
+        foreach (TypeDefinitionHandle handle in md.TypeDefinitions)
+        {
+            TypeDefinition type = md.GetTypeDefinition(handle);
+            foreach (InterfaceImplementationHandle implementation in type.GetInterfaceImplementations())
+            {
+                EntityHandle contract = md.GetInterfaceImplementation(implementation).Interface;
+                string name = contract.Kind switch
+                {
+                    HandleKind.TypeDefinition => OwnerOf(md, md.GetTypeDefinition((TypeDefinitionHandle)contract)),
+                    HandleKind.TypeReference => TypeName(md, (TypeReferenceHandle)contract),
+                    HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)contract).DecodeSignature(names, null),
+                    _ => string.Empty,
+                };
+                if (!implemented.TryGetValue(name, out List<string>? owners))
+                {
+                    implemented[name] = owners = [];
+                }
+
+                owners.Add(OwnerOf(md, type));
+            }
+        }
+
+        for (bool grew = true; grew;)
+        {
+            grew = false;
+            foreach (TypeDefinitionHandle handle in md.TypeDefinitions)
+            {
+                TypeDefinition type = md.GetTypeDefinition(handle);
+                string owner = OwnerOf(md, type);
+                if (!(inScope(owner) || included.Contains(owner)))
+                {
+                    continue;
+                }
+
+                foreach (MethodDefinitionHandle methodHandle in type.GetMethods())
+                {
+                    MethodDefinition method = md.GetMethodDefinition(methodHandle);
+                    if (method.RelativeVirtualAddress == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (EntityHandle token in BoundaryScanner.TokensIn(pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!, md.GetString(method.Name)))
+                    {
+                        EntityHandle target = token.Kind == HandleKind.MethodSpecification ? md.GetMethodSpecification((MethodSpecificationHandle)token).Method : token;
+                        string? called = null;
+                        string? contract = null;
+                        if (target.Kind == HandleKind.MethodDefinition)
+                        {
+                            TypeDefinition declaring = md.GetTypeDefinition(md.GetMethodDefinition((MethodDefinitionHandle)target).GetDeclaringType());
+                            called = OwnerOf(md, declaring);
+                            contract = (declaring.Attributes & System.Reflection.TypeAttributes.Interface) != 0 ? called : null;
+                        }
+                        else if (target.Kind == HandleKind.MemberReference)
+                        {
+                            MemberReference member = md.GetMemberReference((MemberReferenceHandle)target);
+                            string parent = member.Parent.Kind switch
+                            {
+                                HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(names, null),
+                                HandleKind.TypeReference => TypeName(md, (TypeReferenceHandle)member.Parent),
+                                _ => string.Empty,
+                            };
+                            called = member.Parent.Kind == HandleKind.TypeSpecification ? parent : null;
+                            contract = parent.StartsWith("Encspect.", StringComparison.Ordinal) ? parent : null;
+                        }
+
+                        if (called is not null)
+                        {
+                            grew |= included.Add(called) && md.TypeDefinitions.Any(t => OwnerOf(md, md.GetTypeDefinition(t)) == called);
+                        }
+
+                        if (contract is not null && calledInterfaces.Add(contract) && implemented.TryGetValue(contract, out List<string>? owners))
+                        {
+                            foreach (string implementation in owners)
+                            {
+                                grew |= included.Add(implementation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return owner => inScope(owner) || included.Contains(owner);
     }
 
     internal static IReadOnlyList<string> BannedCalls(Assembly assembly, Func<string, bool> inScope)
@@ -550,7 +659,8 @@ public class MeasurementDeterminismTests
     public void TheMeasurementCodeCallsNoLibraryMathNoFusedOrNativeOrEstimateOperationAndNoFloatingPointReduction()
     {
         Assembly host = typeof(FftPlan).Assembly;
-        IReadOnlyList<string> found = BannedCalls(host, owner => owner.StartsWith("Encspect.Host.Measurement.", StringComparison.Ordinal) || owner == "Encspect.Host.MeasurementText");
+        Func<string, bool> scope = owner => owner.StartsWith("Encspect.Host.Measurement.", StringComparison.Ordinal) || owner == "Encspect.Host.MeasurementText";
+        IReadOnlyList<string> found = BannedCalls(host, WithCalledTypes(host, scope));
         Assert.Empty(found);
 
         // The scan reads something: the measurement namespace has methods that call Math.Sqrt-like members and the like.
@@ -579,10 +689,30 @@ public class MeasurementDeterminismTests
         {
             Assembly assembly = Assembly.Load(name);
             Assert.NotEmpty(assembly.GetTypes());
-            found.AddRange(BannedCalls(assembly, IsLossy).Select(f => $"{name}: {f}"));
+            found.AddRange(BannedCalls(assembly, WithCalledTypes(assembly, IsLossy)).Select(f => $"{name}: {f}"));
         }
 
+        // The core code those assemblies and the measurements call (readers, mapped bytes, the shared lists), whole (DetMath included).
+        found.AddRange(BannedCalls(typeof(DetMath).Assembly, _ => true).Select(f => $"Encspect.Core.Abstractions: {f}"));
+
         Assert.True(found.Count == 0, string.Join('\n', found));
+    }
+
+    [Fact]
+    public void TheScanFollowsCallsIntoHelpersOutsideItsScope()
+    {
+        Assembly tests = typeof(MeasurementDeterminismTests).Assembly;
+        Func<string, bool> scope = owner => owner == "Encspect.Tests.Measurement.TransitiveCaller";
+        Assert.Empty(BannedCalls(tests, scope));
+        Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, scope)), f => f.EndsWith("Math.Cos", StringComparison.Ordinal));
+
+        Func<string, bool> generic = owner => owner == "Encspect.Tests.Measurement.TransitiveGenericCaller";
+        Assert.Empty(BannedCalls(tests, generic));
+        Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, generic)), f => f.EndsWith("Math.Sin", StringComparison.Ordinal));
+
+        Func<string, bool> viaInterface = owner => owner == "Encspect.Tests.Measurement.TransitiveInterfaceCaller";
+        Assert.Empty(BannedCalls(tests, viaInterface));
+        Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, viaInterface)), f => f.EndsWith("Math.Tan", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -599,7 +729,7 @@ public class MeasurementDeterminismTests
     {
         IReadOnlyList<string> found = BannedCalls(typeof(MeasurementDeterminismTests).Assembly, owner => owner == "Encspect.Tests.Measurement.BannedSamples");
 
-        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse41.DotProduct", "Sse3.HorizontalAdd", "Avx.HorizontalAdd", "Arm64.AddPairwise", "Arm64.AddAcross", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
+        foreach (string call in new[] { "Math.FusedMultiplyAdd", "Math.Sin", "Math.Pow", "Math.Log10", "Vector128.ConvertToInt64Native", "Vector128.MaxNative", "Vector128.FusedMultiplyAdd", "Math.ReciprocalEstimate", "NFloat.Sin", "Double.FusedMultiplyAdd", "Double.MultiplyAddEstimate", "Double.ReciprocalEstimate", "Double.Sin", "Double.Log10", "Double.Exp", "Double.Pow", "Single.Cos", "Single.Hypot", "Fma.MultiplyAdd", "Fma.MultiplyAddScalar", "Fma.MultiplySubtract", "Sse.Reciprocal", "Sse41.DotProduct", "Sse3.HorizontalAdd", "Avx.HorizontalAdd", "Arm64.AddPairwise", "Arm64.AddAcross", "Sse.ReciprocalSqrt", "AdvSimd.FusedMultiplyAdd", "AdvSimd.ReciprocalEstimate", "Vector3.Length", "Vector2.Distance", "Vector128.Sin", "Vector128.Cos", "Vector128.SinCos", "Vector128.Exp", "Vector128.Log", "Vector128.Log2", "Vector128.Hypot", "Vector128.Lerp", "Complex.Exp", "Complex..ctor", "ArrayPool`1.get_Shared", "Enumerable.Sum", "Vector128.Sum", "Vector128.Dot", "System.Numerics.Vector`1.op_Addition", "System.Numerics.Vector`1..ctor" })
         {
             Assert.Contains(found, f => f.EndsWith(call, StringComparison.Ordinal));
         }
@@ -640,12 +770,48 @@ public class MeasurementDeterminismTests
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }
 
+// A caller in scope and the helper it calls, which is out of scope until the closure follows the call; never run.
+internal static class TransitiveCaller
+{
+    public static double Call(double x) => TransitiveCallee.Helper(x);
+}
+
+internal static class TransitiveCallee
+{
+    public static double Helper(double x) => Math.Cos(x);
+}
+
+internal sealed class TransitiveGeneric<T>
+{
+    public double Helper(double x) => Math.Sin(x);
+}
+
+internal static class TransitiveGenericCaller
+{
+    public static double Call(double x) => new TransitiveGeneric<float>().Helper(x);
+}
+
+internal interface ITransitiveContract
+{
+    double Run(double x);
+}
+
+internal sealed class TransitiveImplementation : ITransitiveContract
+{
+    public double Run(double x) => Math.Tan(x);
+}
+
+internal static class TransitiveInterfaceCaller
+{
+    public static double Call(ITransitiveContract contract, double x) => contract.Run(x);
+}
+
 // Calls the tests' negative control finds; never run.
 internal static class BannedSamples
 {
     public static double Banned(double x, System.Runtime.Intrinsics.Vector128<double> v, System.Runtime.Intrinsics.Vector128<double> w, double[] values)
     {
-        double sum = Math.FusedMultiplyAdd(x, x, x) + Math.Sin(x) + Math.Pow(x, x) + Math.Log10(x) + Math.ReciprocalEstimate(x) + values.Sum();
+        double sum = (double)System.Runtime.InteropServices.NFloat.Sin(new System.Runtime.InteropServices.NFloat(x)) + Math.FusedMultiplyAdd(x, x, x) + Math.Sin(x) + Math.Pow(x, x) + Math.Log10(x) + Math.ReciprocalEstimate(x) + values.Sum();
         sum += System.Runtime.Intrinsics.Vector128.ConvertToInt64Native(v)[0];
         sum += System.Runtime.Intrinsics.Vector128.MaxNative(v, w)[0];
         sum += System.Runtime.Intrinsics.Vector128.FusedMultiplyAdd(v, w, v)[0];

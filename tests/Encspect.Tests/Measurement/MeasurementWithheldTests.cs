@@ -144,6 +144,36 @@ public class MeasurementWithheldTests
     }
 
     [Fact]
+    public void SpansPastTheCapThatLieInNoJumpAreNotWithheldAndDoNotShrinkALaterJumpsLostSamples()
+    {
+        StreamMeasurer measurer = Measurer();
+        Write(measurer, 0, 1000);
+        for (int i = 0; i < StreamMeasurer.MaxPendingSpans + 76; i++)
+        {
+            measurer.Withhold(1000 + i, 1, i % 2 == 0 ? WithholdReason.AfterGap : WithholdReason.EmptyFrame);
+        }
+
+        Write(measurer, 1000, 1200);
+        Write(measurer, 3000, 100);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2300L, 800L, 0L, 1), (m.Samples, m.LostSamples, m.WithheldSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void SpansPastTheCapOfTheSessionAreCountedAtOnceInTheLeadingRegion()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.WithholdPastTheCap(76, WithholdReason.AfterGap);
+        Write(measurer, 100, 100);
+        measurer.SetCodedRange(0, 200);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal(76L, m.LeadingWithheldSamples);
+        Assert.Equal(76L, m.WithheldByReason.AfterGap);
+    }
+
+    [Fact]
     public void OverflowedSpansBeforeTheFirstBlockStayInTheLeadingRegion()
     {
         StreamMeasurer measurer = Measurer();
@@ -231,6 +261,53 @@ public class MeasurementWithheldTests
         Assert.Equal(50L, m.WithheldByReason[WithholdReason.AfterGap]);
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed");
         Assert.Equal(250L, Assert.Single(report.Streams).Verification!.DecodedSamples);
+    }
+
+    // Spans withheld before the output is declared, past the cap of the list: the session counts them once, a span that overlaps what was counted adds nothing.
+    private sealed class EarlyWithholdingDecoder : IDecoder
+    {
+        public string Id => "test";
+
+        public IFrameDecoder Open(DecodeContext context) => new Frames(context);
+
+        private sealed class Frames(DecodeContext context) : IFrameDecoder
+        {
+            private IPcmSink? _sink;
+
+            public int Decode(in CodedFrame frame)
+            {
+                context.AddWork(DecodeRouteTests.Charge(context.Setup, frame.Samples));
+                if (frame.FirstSample == 0)
+                {
+                    for (int i = 0; i < StreamMeasurer.MaxPendingSpans + 76; i++)
+                    {
+                        context.Withhold(i, 1, i % 2 == 0 ? WithholdReason.AfterGap : WithholdReason.EmptyFrame);
+                    }
+
+                    context.Withhold(1050, 50, WithholdReason.AfterGap);
+                    return 0;
+                }
+
+                _sink ??= context.DeclareOutput(new PcmFormat(44100, 1, 16, SampleFormat.Integer));
+                _sink.Write(new PcmBlock(frame.FirstSample, frame.Samples, 1, frame.Samples, new int[frame.Samples]));
+                return frame.Samples;
+            }
+
+            public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
+        }
+    }
+
+    [Fact]
+    public void SpansPastTheCapBeforeTheOutputIsDeclaredAreCountedOnceBySessionAndMeasurer()
+    {
+        var parser = new DecodeRouteTests.FrameParser { Frames = 2, IsLossy = true, Shape = (i, f) => i == 1 ? f with { FirstSample = 1100 } : f };
+        Report report = new Analyzer([], [parser], [], [new EarlyWithholdingDecoder()])
+            .Analyze("sample.bin", new MemoryStream(new byte[64]), new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+
+        StreamMeasurements m = Assert.Single(report.Streams).Measurements!;
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed");
+        Assert.Equal((1100L, 0L), (m.WithheldSamples, m.LostSamples));
+        Assert.Equal(new WithheldCounts(550, 550, 0, 0), m.WithheldByReason);
     }
 
     [Fact]

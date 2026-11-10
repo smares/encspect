@@ -28,6 +28,10 @@ internal sealed class StreamMeasurer
 
     private static readonly int[] TruePeakWeights = [4, 30, 38];
 
+    // The work per block and measured channel besides the per-sample work, in the decoders' unit: the fixed cost of a piece (the scans, the
+    // branches, the call into each measurement) that a block of 1 to 16 samples would otherwise cost without being charged.
+    internal const int BlockUnitsPerChannel = 700;
+
     private const double SmallestSample = 1e-30;
 
     private const double LargestSample = 1024.0;
@@ -283,7 +287,8 @@ internal sealed class StreamMeasurer
     public bool IsStarted => _hasStarted;
 
     // The most spans of withheld output kept between two blocks; contiguous spans of one reason merge, so only a decoder that
-    // alternates reasons or leaves gaps between its spans reaches it. Past it a span is counted at once, as if it lay in a jump.
+    // alternates reasons or leaves gaps between its spans reaches it. Past it a span is counted at once, as if it lay in a jump. A span may arrive before the block it lies in; one past the cap that lies in a later jump than the next
+    // block is taken back at that block and counts as lost there (it takes more than 1,024 spans between two blocks).
     public const int MaxPendingSpans = 1024;
 
     private readonly record struct Span(long First, long End, WithholdReason Reason);
@@ -319,9 +324,7 @@ internal sealed class StreamMeasurer
             }
             else
             {
-                _withheld[(int)reason] += end - first;
-                _overflow += end - first;
-                _overflowBy[(int)reason] += end - first;
+                WithholdPastTheCap(end - first, reason);
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -329,6 +332,20 @@ internal sealed class StreamMeasurer
             Failure = ex;
             _isStopped = true;
         }
+    }
+
+    // Output the session withheld before the declaration of the output and could not list (past MaxPendingSpans): counted at once, as the
+    // measurer counts the spans it cannot keep.
+    public void WithholdPastTheCap(long samples, WithholdReason reason)
+    {
+        if (_isStopped || samples <= 0 || !Enum.IsDefined(reason))
+        {
+            return;
+        }
+
+        _withheld[(int)reason] += samples;
+        _overflow += samples;
+        _overflowBy[(int)reason] += samples;
     }
 
     // The sink's side: the range the stream's syntax trims to (IDecodeSession.Trim). The part of a block before the start, once the
@@ -442,6 +459,17 @@ internal sealed class StreamMeasurer
         {
             RecordJump(_received, block.Position);
         }
+        else if (_overflow > 0)
+        {
+            // Spans past the cap that lie in no jump were counted as withheld at once; they are output the block carries, so take them back.
+            for (int i = 0; i < _withheld.Length; i++)
+            {
+                _withheld[i] = Math.Max(0, _withheld[i] - _overflowBy[i]);
+            }
+
+            _overflow = 0;
+            Array.Clear(_overflowBy);
+        }
 
         if (keep == 0 && block.Length > 0)
         {
@@ -482,7 +510,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)]))))
+        if (!_charge(((long)_measured * BlockUnitsPerChannel) + ((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)])))))
         {
             IsLimited = true;
             _isStopped = true;
