@@ -11,7 +11,7 @@ public class MeasurementLevelsTests
     private static readonly MeasureOptions LevelsOnly = new() { Include = MeasurementKinds.Levels };
 
     // Measures segments of integer samples; each segment starts at its position, a gap lies between segments that do not touch.
-    private static StreamMeasurements Run(int bits, int blockSize, MeasureOptions options, int rate, params (long Position, int[][] Channels)[] segments)
+    internal static StreamMeasurements Run(int bits, int blockSize, MeasureOptions options, int rate, params (long Position, int[][] Channels)[] segments)
     {
         int channels = segments[0].Channels.Length;
         var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer);
@@ -35,9 +35,9 @@ public class MeasurementLevelsTests
         return measurer.Result(MeasurementStatus.Complete, null);
     }
 
-    private static LevelFigures Levels(int bits, int[][] channels, int blockSize = 4096) => Run(bits, blockSize, LevelsOnly, 44100, (0, channels)).Levels!;
+    internal static LevelFigures Levels(int bits, int[][] channels, int blockSize = 4096, int rate = 44100) => Run(bits, blockSize, LevelsOnly, rate, (0, channels)).Levels!;
 
-    private static LevelFigures Floats(float[][] channels, int blockSize = 4096, SampleFormat format = SampleFormat.Float32, MeasureOptions? options = null, int rate = 44100)
+    internal static LevelFigures Floats(float[][] channels, int blockSize = 4096, SampleFormat format = SampleFormat.Float32, MeasureOptions? options = null, int rate = 44100)
     {
         var pcm = new PcmFormat(rate, channels.Length, 32, format);
         var measurer = new StreamMeasurer(pcm, options ?? LevelsOnly, CancellationToken.None, _ => true);
@@ -190,7 +190,7 @@ public class MeasurementLevelsTests
 
         // The silent stretch at the end is the one after the gap's last sample; the one before the gap does not join it.
         int[] silenceBeforeAndAfter = [.. new int[10], 7, 7, .. new int[10]];
-        StreamMeasurements gap = Run(16, 4, LevelsOnly, 44100, (0, [silenceBeforeAndAfter[..12]]), (100, [silenceBeforeAndAfter[12..]]));
+        StreamMeasurements gap = Run(16, 4, LevelsOnly, 1000, (0, [silenceBeforeAndAfter[..12]]), (100, [silenceBeforeAndAfter[12..]]));
         Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.ZeroSamples));
         Assert.Equal(1, gap.Gaps);
     }
@@ -212,11 +212,18 @@ public class MeasurementLevelsTests
     public void ASilentStretchDoesNotJoinAcrossAGap()
     {
         // Both stretches end at the gap: the leading one is closed there, and the trailing one starts again after it.
-        LevelFigures levels = Run(16, 2, LevelsOnly, 44100, (0, [[0, 0, 0]]), (50, [[0, 0, 5]])).Levels!;
+        // At 300 Hz the minimum is 3 samples.
+        LevelFigures levels = Run(16, 2, LevelsOnly, 300, (0, [[0, 0, 0]]), (50, [[0, 0, 5]])).Levels!;
         Assert.Equal((3, 0, 5), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
+        Assert.Equal((1, 3), (levels.Stream.SilentStretches, levels.Stream.SilentSamples));
 
-        levels = Run(16, 2, LevelsOnly, 44100, (0, [[5, 0, 0]]), (50, [[0, 0, 0]])).Levels!;
+        levels = Run(16, 2, LevelsOnly, 300, (0, [[5, 0, 0]]), (50, [[0, 0, 0]])).Levels!;
         Assert.Equal((0, 3, 5), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
+        Assert.Equal((1, 3), (levels.Stream.SilentStretches, levels.Stream.SilentSamples));
+
+        // Each part must reach the minimum on its own: 2 + 2 zeros are no stretch of 3 where the gap lies between them.
+        levels = Run(16, 2, LevelsOnly, 300, (0, [[5, 0, 0]]), (50, [[0, 0, 5]])).Levels!;
+        Assert.Equal((0, 0, 4, 0), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples, levels.Stream.SilentStretches));
     }
 
     [Theory]
@@ -242,8 +249,8 @@ public class MeasurementLevelsTests
         int[][] endsWithSignal = [[0, 0, 5], [0, 0, 5]];
         int[][] startsWithSignal = [[5, 0, 0], [5, 0, 0]];
 
-        LevelFigures leading = Run(16, 2, LevelsOnly, 44100, (0, zeros), (50, endsWithSignal)).Levels!;
-        LevelFigures trailing = Run(16, 2, LevelsOnly, 44100, (0, startsWithSignal), (50, zeros)).Levels!;
+        LevelFigures leading = Run(16, 2, LevelsOnly, 300, (0, zeros), (50, endsWithSignal)).Levels!;
+        LevelFigures trailing = Run(16, 2, LevelsOnly, 300, (0, startsWithSignal), (50, zeros)).Levels!;
 
         Assert.Equal((3, 0, 5), (leading.Stream.SilentAtStart, leading.Stream.SilentAtEnd, leading.Stream.ZeroSamples));
         Assert.Equal((0, 3, 5), (trailing.Stream.SilentAtStart, trailing.Stream.SilentAtEnd, trailing.Stream.ZeroSamples));
@@ -297,7 +304,7 @@ public class MeasurementLevelsTests
     [Fact]
     public void AStreamThatIsSilentBeforeAGapHasItsLeadingStretchClosedThere()
     {
-        StreamMeasurements gap = Run(16, 4, LevelsOnly, 44100, (0, [new int[10]]), (50, [new int[10]]));
+        StreamMeasurements gap = Run(16, 4, LevelsOnly, 1000, (0, [new int[10]]), (50, [new int[10]]));
 
         Assert.Equal((10, 10, 20), (gap.Levels!.Stream.SilentAtStart, gap.Levels.Stream.SilentAtEnd, gap.Levels.Stream.ZeroSamples));
     }
@@ -345,10 +352,14 @@ public class MeasurementLevelsTests
     [Fact]
     public void TheLevelsDoNotNeedASampleRate()
     {
-        StreamMeasurements m = Run(16, 100, LevelsOnly, 0, (0, [[1, 2, 3, 4, 5]]));
+        StreamMeasurements m = Run(16, 100, LevelsOnly, 0, (0, [[0, 0, 0, 4, 5, 0, 0]]));
 
         Assert.NotNull(m.Levels);
-        Assert.Equal(5, m.Samples);
+        Assert.Equal(7, m.Samples);
+
+        // Without a rate there is no 10 ms: the stretch figures are not measured and the zero samples still are.
+        Assert.Equal(0, m.Levels.MinimumSilentStretch);
+        Assert.Equal((0, 0, 0, 0, 0, 5), (m.Levels.Stream.SilentStretches, m.Levels.Stream.SilentSamples, m.Levels.Stream.LongestSilentStretch, m.Levels.Stream.SilentAtStart, m.Levels.Stream.SilentAtEnd, m.Levels.Stream.ZeroSamples));
     }
 
     [Fact]
@@ -370,7 +381,7 @@ public class MeasurementLevelsTests
     {
         int[] a = [.. new int[300], .. Enumerable.Repeat(9, 700)];
         int[] b = [.. new int[100], .. Enumerable.Repeat(9, 800), .. new int[100]];
-        LevelFigures levels = Levels(16, [a, b]);
+        LevelFigures levels = Levels(16, [a, b], rate: 10000);
 
         Assert.Equal((100, 0, 100), (levels.Stream.SilentAtStart, levels.Stream.SilentAtEnd, levels.Stream.ZeroSamples));
         Assert.Equal((300, 0, 300), (levels.Channels[0].SilentAtStart, levels.Channels[0].SilentAtEnd, levels.Channels[0].ZeroSamples));
