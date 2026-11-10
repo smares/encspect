@@ -2,15 +2,17 @@
 id: clipping
 title: Clipping runs
 related: levels, digital-silence, bit-depth-usage
-references: Encspect design, docs/design/spectral-analysis.md (Levels)
+references: Encspect design, docs/design/spectral-analysis.md (Levels; Step 6)
 ---
 
-**The problem.** A format holds samples only up to its largest and smallest code. A signal that would go beyond them is cut off at that limit, and the samples stay at the limit for as long as the signal would have been beyond it.
+**The problem.** A format holds samples only up to its largest and smallest code. A signal beyond them is cut off, and the samples stay at the limit for as long as it would have been beyond it.
 
-**How it works.** The analyzer counts runs of consecutive samples that sit at the same extreme: the most positive or the most negative integer code, or, for floats, at or beyond full scale. A run counts from three samples on. Three is a convention of this analysis, not of any specification: a single sample at the limit can be a peak that touches it, and two can be a coincidence. The figures are the number of runs, the samples in them and the longest. A run ends at a gap in the decoded blocks, and runs of opposite extremes side by side are two runs of their own.
+**How it works.** The analyzer counts runs of consecutive samples at the same extreme. A run counts from three samples on, a convention of this analysis and not of a specification: one sample can be a peak that touches the limit, and two a coincidence. The figures are the runs, the samples in them and the longest; a run ends at a gap.
 
-**What you see.** Clipping in the report and the clipping object in JSON. In Encspect's test files, a square wave that alternates every 50 samples between +32,767 and -32,768 reads 100 runs of 50 over 5,000 samples, and noise with one run of 100 samples, five of 3 to 5 samples, and runs of 1 and 2 samples that are not counted reads 6 runs, 118 samples and a longest of 100.
+**The extremes of the bits in use.** The most negative code, -2^(B - 1), has every low bit 0, so it is the same however many low bits are unused. The most positive code is 2^(B - 1) less 2^k when k low bits are never set ([bit-depth usage](bit-depth-usage)): 16-bit audio in 24-bit samples tops out at 0x7FFF00. The analyzer counts at the extremes of the bits in use, the declared width less the stream's Low Bits Unused, so both signs count; a positive run counted earlier is dropped when later samples show fewer bits in use. This holds from 8 bits in use on; with fewer, the zeros come more often from the signal than from padding. Floats whose samples are all 16-bit or all 24-bit values use the extremes of that grid, 1 - 2^-15 or 1 - 2^-23, and -1.0; other floats count at or beyond full scale.
 
-**Low bits unused.** The limits are those of the declared bits. Audio with low bits unused is asymmetric: 16-bit audio stored in 24-bit samples tops out at 0x7FFF00, never at the largest code 0x7FFFFF, so only runs at the most negative code count.
+**What you see.** The Clipping line and the clipping object in JSON, with the bits in use. In Encspect's test files, 16-bit noise shifted left by 8 in 24-bit samples, with runs at 0x7FFF00 and -0x800000, reads 4 runs, 60 samples and a longest of 50 at 16 bits in use; a run at 0x7FFE00 is not counted.
 
-**What it shows.** Runs at the limit are consistent with a signal that was limited or cut at that level, and a legitimate full-scale square wave reads the same. The figure does not say where the cut was made or by what, and a signal cut before a later gain change leaves no run at the limit.
+**What is not covered.** A lossyWAV stream zeroes a different number of low bits per block; a block with more zeroed bits than the stream's clips below its positive extreme and is not counted there. G.711 streams decode to table codes, and their clipping is not covered.
+
+**What it shows.** Runs at the limit fit a signal that was limited or cut there, and a full-scale square wave reads the same. The figure does not say where or by what.
