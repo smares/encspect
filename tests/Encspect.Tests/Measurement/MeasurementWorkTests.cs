@@ -268,6 +268,32 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(ratio <= Factor);
     }
 
+    // Blocks of 1, 4 and 16 samples (the smallest FLAC frame is 16): the fixed charge per block and measured channel
+    // (StreamMeasurer.BlockUnitsPerChannel) keeps the time per unit within the same bound as for blocks of 4,096.
+    public static TheoryData<MeasurementKinds, int, int> SmallBlockCases()
+    {
+        var data = new TheoryData<MeasurementKinds, int, int>();
+        foreach (int block in new[] { 1, 4, 16 })
+        {
+            foreach (int channels in new[] { 1, 2 })
+            {
+                data.Add(MeasurementKinds.Levels, block, channels);
+                data.Add(MeasurementSets.All, block, channels);
+            }
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(SmallBlockCases))]
+    public void ABlockOfAFewSamplesTakesAtMostTwiceTheFlacReferencesTimePerUnit(MeasurementKinds kinds, int block, int channels)
+    {
+        (double ratio, double perUnit, double perSample) = Compare(44100, channels, Signal.Noise, kinds, block: block);
+        output.WriteLine($"{kinds}, blocks of {block}, {channels} channel(s): {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor, $"Blocks of {block} samples take {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. The charge per block is too low.");
+    }
+
     public enum Signal
     {
         Noise,
@@ -310,7 +336,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     }
 
     // The median of the rounds' ratios of the case's time per unit to the reference's of the same round, and the median time per unit and per sample.
-    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal, MeasurementKinds? kinds = null, int bits = 16)
+    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal, MeasurementKinds? kinds = null, int bits = 16, int block = 4096)
     {
         int[][] data = Data(channels, signal, bits);
         DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
@@ -320,7 +346,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         double warmSeconds = 0;
         for (int warm = 0; warm < 3; warm++)
         {
-            warmSeconds = RunOnce(rate, channels, data, kinds, bits).Seconds;
+            warmSeconds = RunOnce(rate, channels, data, kinds, bits, block: block).Seconds;
         }
 
         // A run of a few milliseconds (the levels) is decided by one scheduler hiccup or a collection, so each timed run covers the signal as
@@ -333,7 +359,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int round = 0; round < Rounds; round++)
         {
             double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits, passes);
+            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits, passes, block);
             double perUnit = seconds * 1e9 / units;
             ratios.Add(perUnit / reference);
             perUnits.Add(perUnit);
@@ -350,7 +376,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         return sorted[sorted.Length / 2];
     }
 
-    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16, int passes = 1)
+    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16, int passes = 1, int block = 4096)
     {
         long units = 0;
         var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer);
@@ -359,18 +385,18 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
             units += u;
             return true;
         });
-        int[] planar = new int[channels * 4096];
+        int[] planar = new int[channels * block];
         long start = Stopwatch.GetTimestamp();
         for (int pass = 0; pass < passes; pass++)
         {
-            for (int at = 0; at < Length; at += 4096)
+            for (int at = 0; at < Length; at += block)
             {
                 for (int c = 0; c < channels; c++)
                 {
-                    data[c].AsSpan(at, 4096).CopyTo(planar.AsSpan(c * 4096, 4096));
+                    data[c].AsSpan(at, block).CopyTo(planar.AsSpan(c * block, block));
                 }
 
-                measurer.Write(new PcmBlock((long)pass * Length + at, 4096, channels, 4096, planar));
+                measurer.Write(new PcmBlock((long)pass * Length + at, block, channels, block, planar));
             }
         }
 

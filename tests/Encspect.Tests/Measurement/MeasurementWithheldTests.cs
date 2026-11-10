@@ -144,6 +144,36 @@ public class MeasurementWithheldTests
     }
 
     [Fact]
+    public void SpansPastTheCapThatLieInNoJumpAreNotWithheldAndDoNotShrinkALaterJumpsLostSamples()
+    {
+        StreamMeasurer measurer = Measurer();
+        Write(measurer, 0, 1000);
+        for (int i = 0; i < StreamMeasurer.MaxPendingSpans + 76; i++)
+        {
+            measurer.Withhold(1000 + i, 1, i % 2 == 0 ? WithholdReason.AfterGap : WithholdReason.EmptyFrame);
+        }
+
+        Write(measurer, 1000, 1200);
+        Write(measurer, 3000, 100);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2300L, 800L, 0L, 1), (m.Samples, m.LostSamples, m.WithheldSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void SpansPastTheCapOfTheSessionAreCountedAtOnceInTheLeadingRegion()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.WithholdPastTheCap(76, WithholdReason.AfterGap);
+        Write(measurer, 100, 100);
+        measurer.SetCodedRange(0, 200);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal(76L, m.LeadingWithheldSamples);
+        Assert.Equal(76L, m.WithheldByReason.AfterGap);
+    }
+
+    [Fact]
     public void OverflowedSpansBeforeTheFirstBlockStayInTheLeadingRegion()
     {
         StreamMeasurer measurer = Measurer();
