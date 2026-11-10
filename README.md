@@ -11,31 +11,38 @@ Think EncSpot, but modern and with many more formats.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-main-dark.png">
-  <img src="docs/images/readme-main-light.png" alt="Encspect's main window with a folder tree and a list of twelve audio files with format, codec, bitrate and encoder columns" width="800">
+  <img src="docs/images/readme-main-light.png" alt="Encspect's main window with a folder tree and a list of sixteen audio files with format, codec, bitrate, encoder and findings columns" width="800">
 </picture>
 
 The main window: folders, a list of analyzed files and their summary columns.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-detail-dark.png">
-  <img src="docs/images/readme-detail-light.png" alt="Encspect's detail window with the structure tree of an MP3 file, a hex view and a selected frame header field" width="800">
+  <img src="docs/images/readme-detail-light.png" alt="Encspect's detail window with three findings of an MP3 file, the structure tree and the hex view of the selected frame" width="800">
 </picture>
 
-The detail window: the structure tree down to a header field, the same bytes in the hex view and the field's bits.
+The detail window: a file's findings, each pointing to the bytes it was read from in the structure tree and the hex view.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-frame-map-dark.png">
-  <img src="docs/images/readme-frame-map-light.png" alt="The Frame Map of an MP3 file with one square per frame colored by block type and a hover caption" width="800">
+  <img src="docs/images/readme-frame-map-light.png" alt="The Frame Map of a one-minute MP3 file with one square per frame colored by block type" width="800">
 </picture>
 
-The Frame Map: one square per frame, here the block types of every granule, with a short-block frame hovered.
+The Frame Map: one square per frame, here the block types of every granule of a minute of joint stereo audio.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-spectrogram-dark.png">
-  <img src="docs/images/readme-spectrogram-light.png" alt="The spectrogram of a decoded FLAC file with a dashed line at its spectral cutoff of 16,796 Hz" width="800">
+  <img src="docs/images/readme-spectrogram-light.png" alt="The spectrogram of a decoded WAV file with a dashed line at its spectral cutoff of 16,150 Hz" width="800">
 </picture>
 
-The Audio panels: the spectrogram of a decoded file with its spectral cutoff marked.
+The Audio panels: the spectrogram of a decoded file with its spectral cutoff marked at 16,150 Hz.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-waveform-dark.png">
+  <img src="docs/images/readme-waveform-light.png" alt="The waveform of a decoded stereo WAV file with a lane for the front left and the front right channel" width="800">
+</picture>
+
+The waveform of the same file, one lane per channel.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-coding-summary-dark.png">
