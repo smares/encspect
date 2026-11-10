@@ -26,9 +26,12 @@ make_external_measurement_fixtures.py):
   are, of any length), the digital silence (it has no figure for it) and the stream figure of the sample peak (Overall peak is the highest
   channel's, which is checked as the maximum).
 - FFmpeg's silencedetect with a tolerance of one least significant bit (it compares an integer threshold, so exact zero needs more than 1.5e-5 and
-  the file's samples of magnitude 1 may join a stretch): every stretch of 442 samples or more it prints for a file of up to 16 bits and up to 10 s
-  (it prints six digits) lies between the stretch of exact zeros and the stretch of samples of magnitude 1 or less that the decoded samples have,
-  in every channel at once, which checks the digital silence's positions and lengths where they are long.
+  the file's samples of magnitude 1 may join a stretch) and d=0.01, the analyzer's minimum of 10 ms (the manifest's minimum_silent_stretch, the
+  rate divided by 100 rounded up): every stretch of the decoded samples that is exactly 0 in every channel and lasts more than the minimum (a stretch
+  of exactly the minimum can be 0.01 s to the digit, and silencedetect may or may not print it) is inside a stretch it prints, and every stretch it
+  prints lies inside a stretch of samples of magnitude 1 or less, for a file of up to 16 bits and up to 10 s (it prints six digits). The stretches of
+  exact zeros of at least the minimum are also counted, summed and measured against the manifest's silent_stretches, silent_samples and
+  longest_silent_stretch, which checks the digital silence's positions and lengths and the figures the model works out.
 - The PCM files (the WAV, Wave64 and AIFF twins and the fixtures only WAV can hold, step 3 of the rollout): FFmpeg decodes them to the MD5 of the canonical layout
   that pcm_model.py gives (the samples of the 16-bit twins, the floats, the NaN and the samples of 1e300 included); a twin's samples are also the FLAC
   file's, which MeasurementPcmTests holds the analyzer to. The header of 65,535 channels is skipped: FFmpeg refuses more channels than it has layouts for.
@@ -75,7 +78,7 @@ DIRECTORY = ROOT / "tests" / "fixtures" / "measurement"
 # low, where BS.1770-5 equation 7 (the model, the analyzer) gates each block on its own. Their integrated loudness is not compared.
 HISTOGRAM_GATED = {"synthetic-loudness-gate-straddle-8000"}
 
-GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps", "synthetic-loudness-gap-8000"}
+GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps", "synthetic-levels-silence-stretches-gaps", "synthetic-loudness-gap-8000"}
 
 
 def run(arguments):
@@ -182,8 +185,8 @@ def check_astats(path, expected, info, found):
     return compared
 
 
-def silence_runs(pcm_channels, threshold):
-    """The stretches (start, length) of at least 442 samples in which every channel's samples have a magnitude of at most threshold."""
+def silence_runs(pcm_channels, threshold, minimum):
+    """The stretches (start, length) of at least minimum samples in which every channel's samples have a magnitude of at most threshold."""
     runs, start = [], None
     for i in range(len(pcm_channels[0])):
         quiet = all(abs(c[i]) <= threshold for c in pcm_channels)
@@ -194,12 +197,15 @@ def silence_runs(pcm_channels, threshold):
             start = None
     if start is not None:
         runs.append((start, len(pcm_channels[0]) - start))
-    return [r for r in runs if r[1] >= 442]
+    return [r for r in runs if r[1] >= minimum]
 
 
-def check_silence(path, stream, info, found):
-    """silencedetect's stretches against the decoded samples' stretches of exact zeros (inside) and of magnitude 1 or less (outside)."""
+def check_silence(path, stream, info, expected, found):
+    """silencedetect's stretches against the decoded samples' stretches of exact zeros (inside) and of magnitude 1 or less (outside), and the stretches
+    of exact zeros of at least 10 ms against the manifest's figures. Gap fixtures are not passed here: silencedetect follows the timestamps."""
     rate = info["sample_rate"]
+    levels = expected["model"]["levels"]
+    minimum = levels["minimum_silent_stretch"]
     samples = [[] for _ in range(info["channels"])]
     for frame in stream.frames:
         if "channels" in frame:
@@ -220,10 +226,14 @@ def check_silence(path, stream, info, found):
         found.append(f"silencedetect printed {len(starts)} starts and {len(ends)} ends")
         return
     detected = [(round(a * rate), round(b * rate)) for a, b in zip(starts, ends)]
-    inner, outer = silence_runs(samples, 0), silence_runs(samples, 1)
+    inner, outer = silence_runs(samples, 0, minimum), silence_runs(samples, 1, minimum)
+    stream_figures = levels["stream"]
+    counted = (len(inner), sum(n for _, n in inner), max((n for _, n in inner), default=0))
+    if counted != (stream_figures["silent_stretches"], stream_figures["silent_samples"], stream_figures["longest_silent_stretch"]):
+        found.append(f"the decoded samples have {counted} stretches, samples and longest of exact zeros of {minimum} samples or more, the manifest {(stream_figures['silent_stretches'], stream_figures['silent_samples'], stream_figures['longest_silent_stretch'])}")
     for run_start, length in inner:
         end = run_start + length
-        if not any(a - 1 <= run_start and end <= b + 1 for a, b in detected):
+        if length > minimum and not any(a - 1 <= run_start and end <= b + 1 for a, b in detected):
             found.append(f"silencedetect finds no stretch around the exact zeros {run_start} to {end}")
     for a, b in detected:
         if not any(s - 1 <= a and b <= s + n + 1 for s, n in outer):
@@ -442,7 +452,7 @@ def main():
             if path.stem in GAPS and path.stem.startswith("synthetic-levels-"):
                 skipped.append(f"{path.stem}: silencedetect (it follows the timestamps and counts a gap in the frame numbers as silence, so its stretches cross the gaps the levels keep apart)")
             elif path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
-                check_silence(path, stream, info, found)
+                check_silence(path, stream, info, expected, found)
             probe = run(["ffprobe", "-v", "error", "-show_streams", "-of", "json", str(path)])
             streams = json.loads(probe.stdout or b"{}").get("streams", [])
             if not streams:

@@ -11,6 +11,8 @@ references: Encspect design, docs/design/spectral-analysis.md (Levels); RFC 9639
 
 For floating-point samples, which have no integer bits, two figures say whether every sample is a whole multiple of 2^-15, or of 2^-23, within [-1, 1): the grids of 16-bit and 24-bit integer audio. They are figures of the samples, not labels, and a sample of exactly +1.0 is outside the range.
 
+**Bits in use.** The declared width less Low Bits Unused is the bits in use. [Clipping](clipping) is counted at the extremes of the bits in use, from 8 bits in use on, and for floats on the 16-bit or 24-bit grid at the extremes of that grid.
+
 **What you see.** In Encspect's test files, 16-bit noise stored as 24-bit samples shifted left by 8 bits reads 8 of 24 low bits unused, and a second channel shifted by 12 reads 12.
 
 **Coded counterpart.** FLAC stores a count of wasted bits for each subframe ([wasted bits](wasted-bits)); this figure is counted over the decoded samples of the whole stream and does not depend on how a file was coded.

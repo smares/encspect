@@ -8,8 +8,14 @@ namespace Encspect.Host.Measurement;
 // bit-depth usage of each measured channel, kept as exact integers where the samples are integers. The sum of squares and the sum are
 // 128-bit: a block's squares are added in a 64-bit partial that is folded into the UInt128 before it can overflow (32-bit samples square to 2^62,
 // so the fold comes every few samples, and 24-bit samples every 2^18). Floats are summed in double in a fixed order, after the stream
-// measurer has replaced non-finite samples and clamped huge ones. A run, a silent stretch and a leading stretch end at a gap. The figures depend only
+// measurer has replaced non-finite samples and clamped huge ones. A run and a silent stretch end at a gap. The figures depend only
 // on the samples and their positions, never on how a decoder cuts blocks.
+//
+// Digital silence is a stretch of at least MinimumStretch sample frames (10 ms at the stream's rate) that are 0 in every measured channel, the stretches at the
+// start and the end included. Clipping is counted at the extremes of the bits in use (docs/design/spectral-analysis.md, "Step 6"): the stream's final Low Bits
+// Unused is known only at the end, so the meter counts positive runs at the extreme of the running OR's trailing zeros and drops the positive runs counted so
+// far whenever that extreme moves. Nothing is missed: a sample at the final positive extreme has the final trailing zeros itself, and its own piece's OR is
+// in the running OR before the piece is scanned, so the extreme in force is already the final one. The negative extreme -2^(B - 1) is the same at every shift.
 //
 // Integers also get the low bits unused per span (docs/design/lossywav-detection.md, "The measurement"): spans of 32 samples of a channel on the grid
 // of 32 stream positions, each with its count of low bits that are 0 in all its samples and its magnitude, kept as integers. A silent span has no
@@ -32,6 +38,12 @@ internal sealed class LevelsMeter
     private readonly int _low;
     private readonly int _chunk;
     private SilenceState _joint;
+    private readonly int _minimumStretch;
+    private int _orOfStream;
+    private int _shift;
+    private int _extreme;
+    private bool _only16 = true;
+    private bool _only24 = true;
     private int[] _any = [];
     private int[] _flags = [];
 
@@ -57,7 +69,7 @@ internal sealed class LevelsMeter
     private long _times;
     private long _equalTimes;
 
-    public LevelsMeter(int channels, SampleFormat format, int bitsPerSample)
+    public LevelsMeter(int channels, SampleFormat format, int bitsPerSample, int sampleRate)
     {
         _channels = new ChannelState[channels];
         for (int c = 0; c < channels; c++)
@@ -77,6 +89,10 @@ internal sealed class LevelsMeter
         _moved = _isFloat ? [] : new byte[(MaxPiece / SpanLength) + 4];
         _high = _bits >= 32 ? int.MaxValue : (1 << (_bits - 1)) - 1;
         _low = _bits >= 32 ? int.MinValue : -(1 << (_bits - 1));
+        _extreme = _high;
+
+        // 10 ms in samples, rounded up; 0 for a stream that states no rate, whose stretches are not measured.
+        _minimumStretch = sampleRate > 0 ? (int)Math.Min(((long)sampleRate + 99) / 100, int.MaxValue) : 0;
 
         // The most squares a 64-bit partial can hold: (2^(2 bits - 2)) per square, 2^64 - 1 in all. From 31 bits on the fold would come
         // every few samples, so each square goes into the 128-bit sum on its own.
@@ -86,7 +102,7 @@ internal sealed class LevelsMeter
     // The bytes the working state needs beyond the per-channel records, for the memory bound.
     public static long EstimateBytes(int channels, SampleFormat format, bool isMeasuringSpectrum)
     {
-        long bytes = 256L * channels;
+        long bytes = (384L * channels) + 128;
         if (format == SampleFormat.Integer)
         {
             // The distribution and the phase counters of the spans, and the codes of one piece's spans for the channels' agreement.
@@ -118,6 +134,8 @@ internal sealed class LevelsMeter
         state.Count += samples.Length;
         state.Sum += sum;
         state.Or |= bits;
+        _orOfStream |= bits;
+        MoveExtreme();
         long peak = Math.Max(high, -(long)low);
         if (peak > state.PeakMagnitude)
         {
@@ -127,7 +145,7 @@ internal sealed class LevelsMeter
         // A decoder that does not clamp (FLAC's restore on a corrupt frame) can write a sample beyond the declared bits, which would wrap the
         // 64-bit partial sum sized from them: such a piece goes into the 128-bit sum square by square.
         state.SumSquares += Squares(samples, high > _high || low < _low);
-        if (high >= _high || low <= _low)
+        if (high >= _extreme || low <= _low)
         {
             ScanClipping(state, samples);
         }
@@ -136,7 +154,7 @@ internal sealed class LevelsMeter
             state.EndRun();
         }
 
-        state.Silence.Add(samples);
+        state.Silence.Add(samples, _minimumStretch);
         AddSpans(channel, state, samples);
         Combine(channel, samples);
     }
@@ -158,11 +176,17 @@ internal sealed class LevelsMeter
         double squares = state.SumSquaresDouble;
         bool only16 = state.Only16;
         bool only24 = state.Only24;
+        bool grid16 = _only16;
+        bool grid24 = _only24;
+        double extreme = FloatExtreme(grid16, grid24);
         long runLength = state.RunLength;
         int runSign = state.RunSign;
-        long runs = 0;
-        long clipped = 0;
-        long longest = 0;
+        long positiveRuns = 0;
+        long positiveClipped = 0;
+        long positiveLongest = 0;
+        long negativeRuns = 0;
+        long negativeClipped = 0;
+        long negativeLongest = 0;
         for (int i = 0; i < samples.Length; i++)
         {
             double v = samples[i];
@@ -200,7 +224,26 @@ internal sealed class LevelsMeter
                 }
             }
 
-            int sign = v >= 1.0 ? 1 : v <= -1.0 ? -1 : 0;
+            // The stream's grid only falls. When it does, the extreme moves up and the positive runs counted so far were at a value that is no longer one
+            // (before the fall every sample was below the new extreme, so none is missed); the sample itself is classified with the new extreme.
+            if ((grid16 && !only16) || (grid24 && !only24))
+            {
+                grid16 &= only16;
+                grid24 &= only24;
+                state.AddRuns(1, positiveRuns, positiveClipped, positiveLongest);
+                state.AddRuns(-1, negativeRuns, negativeClipped, negativeLongest);
+                positiveRuns = positiveClipped = positiveLongest = negativeRuns = negativeClipped = negativeLongest = 0;
+                state.RunLength = runLength;
+                state.RunSign = runSign;
+                _only16 = grid16;
+                _only24 = grid24;
+                DropPositiveRuns();
+                runLength = state.RunLength;
+                runSign = state.RunSign;
+                extreme = FloatExtreme(grid16, grid24);
+            }
+
+            int sign = v >= extreme ? 1 : v <= -1.0 ? -1 : 0;
             if (sign != 0 && sign == runSign)
             {
                 runLength++;
@@ -209,9 +252,18 @@ internal sealed class LevelsMeter
             {
                 if (runLength >= MeasurementLimits.MinimumClippingRun)
                 {
-                    runs++;
-                    clipped += runLength;
-                    longest = runLength > longest ? runLength : longest;
+                    if (runSign > 0)
+                    {
+                        positiveRuns++;
+                        positiveClipped += runLength;
+                        positiveLongest = runLength > positiveLongest ? runLength : positiveLongest;
+                    }
+                    else
+                    {
+                        negativeRuns++;
+                        negativeClipped += runLength;
+                        negativeLongest = runLength > negativeLongest ? runLength : negativeLongest;
+                    }
                 }
 
                 runSign = sign;
@@ -219,7 +271,8 @@ internal sealed class LevelsMeter
             }
         }
 
-        state.AddRuns(runs, clipped, longest);
+        state.AddRuns(1, positiveRuns, positiveClipped, positiveLongest);
+        state.AddRuns(-1, negativeRuns, negativeClipped, negativeLongest);
         state.Count += samples.Length;
         state.Low = low;
         state.High = high;
@@ -229,7 +282,7 @@ internal sealed class LevelsMeter
         state.Only24 = only24;
         state.RunLength = runLength;
         state.RunSign = runSign;
-        state.Silence.Add(flags);
+        state.Silence.Add(flags, _minimumStretch);
         Combine(channel, flags);
     }
 
@@ -238,7 +291,7 @@ internal sealed class LevelsMeter
     {
         if (_channels.Length > 1)
         {
-            _joint.Add(_any.AsSpan(0, length));
+            _joint.Add(_any.AsSpan(0, length), _minimumStretch);
         }
 
         if (_isFloat)
@@ -288,11 +341,11 @@ internal sealed class LevelsMeter
         foreach (ChannelState state in _channels)
         {
             state.EndRun();
-            state.Silence.Gap();
+            state.Silence.Gap(_minimumStretch);
             state.LastCount = -1;
         }
 
-        _joint.Gap();
+        _joint.Gap(_minimumStretch);
         if (!_isFloat)
         {
             CloseOpenSpans();
@@ -532,10 +585,13 @@ internal sealed class LevelsMeter
     {
         long runLength = state.RunLength;
         int runSign = state.RunSign;
-        long runs = 0;
-        long clipped = 0;
-        long longest = 0;
-        int high = _high;
+        long positiveRuns = 0;
+        long positiveClipped = 0;
+        long positiveLongest = 0;
+        long negativeRuns = 0;
+        long negativeClipped = 0;
+        long negativeLongest = 0;
+        int high = _extreme;
         int low = _low;
 
         // The code the open run is made of (meaningless while runLength is 0): inside a run the loop only compares one value and counts.
@@ -564,9 +620,18 @@ internal sealed class LevelsMeter
 
                 if (runLength >= MeasurementLimits.MinimumClippingRun)
                 {
-                    runs++;
-                    clipped += runLength;
-                    longest = runLength > longest ? runLength : longest;
+                    if (runSign > 0)
+                    {
+                        positiveRuns++;
+                        positiveClipped += runLength;
+                        positiveLongest = runLength > positiveLongest ? runLength : positiveLongest;
+                    }
+                    else
+                    {
+                        negativeRuns++;
+                        negativeClipped += runLength;
+                        negativeLongest = runLength > negativeLongest ? runLength : negativeLongest;
+                    }
                 }
 
                 runLength = 0;
@@ -586,10 +651,38 @@ internal sealed class LevelsMeter
             }
         }
 
-        state.AddRuns(runs, clipped, longest);
+        state.AddRuns(1, positiveRuns, positiveClipped, positiveLongest);
+        state.AddRuns(-1, negativeRuns, negativeClipped, negativeLongest);
         state.RunLength = runLength;
         state.RunSign = runSign;
     }
+
+    // The positive extreme of the bits in use follows the running OR of the stream: its trailing zeros are the low bits unused so far, taken from MinimumBitsInUse
+    // bits in use on. Runs counted at the extreme that has just moved are dropped, in every channel.
+    private void MoveExtreme()
+    {
+        int zeros = BitOperations.TrailingZeroCount(_orOfStream);
+        int shift = _bits - zeros >= MeasurementLimits.MinimumBitsInUse ? zeros : 0;
+        if (shift == _shift)
+        {
+            return;
+        }
+
+        _shift = shift;
+        _extreme = (int)((1L << (_bits - 1)) - (1L << shift));
+        DropPositiveRuns();
+    }
+
+    private void DropPositiveRuns()
+    {
+        foreach (ChannelState state in _channels)
+        {
+            state.DropPositiveRuns();
+        }
+    }
+
+    // The smallest float that is at the positive extreme of the grid the stream's samples are all on so far: 1 - 2^-15, 1 - 2^-23, or full scale where they are on neither.
+    private static double FloatExtreme(bool isOn16, bool isOn24) => isOn16 ? 1.0 - (1.0 / 32768.0) : isOn24 ? 1.0 - (1.0 / 8388608.0) : 1.0;
 
     // The figures. Called once, when the stream has ended; null where no sample was measured.
     public LevelFigures? Build()
@@ -604,10 +697,10 @@ internal sealed class LevelsMeter
         foreach (ChannelState state in _channels)
         {
             state.EndRun();
-            channels.Add(_isFloat ? FloatLevels(state) : IntegerLevels(state));
+            channels.Add(_isFloat ? FloatLevels(state, _minimumStretch) : IntegerLevels(state));
         }
 
-        SilenceState joint = _channels.Length == 1 ? _channels[0].Silence : _joint;
+        SilenceState joint = (_channels.Length == 1 ? _channels[0].Silence : _joint).Complete(_minimumStretch);
         int rms = _isFloat ? RmsOfFloats() : RmsOfIntegers(count);
         int orBits = 0;
         long highest = 0;
@@ -648,6 +741,9 @@ internal sealed class LevelsMeter
             ClippingRuns = runs,
             ClippedSamples = clipped,
             LongestClippingRun = longest,
+            SilentStretches = joint.Stretches,
+            SilentSamples = joint.Samples,
+            LongestSilentStretch = joint.Longest,
             SilentAtStart = joint.Leading,
             SilentAtEnd = joint.Trailing,
             ZeroSamples = joint.Total,
@@ -656,7 +752,7 @@ internal sealed class LevelsMeter
             HasOnly16BitValues = only16,
             HasOnly24BitValues = only24,
         };
-        return new LevelFigures { Format = _format, BitsPerSample = _isFloat ? 0 : _bits, Stream = stream, Channels = channels, Spans = _isFloat ? null : BuildSpans(orBits) };
+        return new LevelFigures { Format = _format, BitsPerSample = _isFloat ? 0 : _bits, Stream = stream, Channels = channels, Spans = _isFloat ? null : BuildSpans(orBits), ClippingBitsInUse = _isFloat ? (only16 ? 16 : only24 ? 24 : null) : _bits - _shift, MinimumSilentStretch = _minimumStretch };
     }
 
     private LowBitsSpanFigures? BuildSpans(int orBits)
@@ -758,6 +854,7 @@ internal sealed class LevelsMeter
 
     private ChannelLevels IntegerLevels(ChannelState state)
     {
+        SilenceState silence = state.Silence.Complete(_minimumStretch);
         double fullScale = DetMath.PowerOfTwo(_bits - 1);
         long fullScaleCode = 1L << (_bits - 1);
         UInt128 magnitude = state.Sum < 0 ? (UInt128)(-state.Sum) : (UInt128)state.Sum;
@@ -776,17 +873,21 @@ internal sealed class LevelsMeter
             ClippingRuns = state.Runs,
             ClippedSamples = state.Clipped,
             LongestClippingRun = state.Longest,
-            SilentAtStart = state.Silence.Leading,
-            SilentAtEnd = state.Silence.Trailing,
-            ZeroSamples = state.Silence.Total,
+            SilentStretches = silence.Stretches,
+            SilentSamples = silence.Samples,
+            LongestSilentStretch = silence.Longest,
+            SilentAtStart = silence.Leading,
+            SilentAtEnd = silence.Trailing,
+            ZeroSamples = silence.Total,
             LowBitsUnused = state.Or != 0 ? BitOperations.TrailingZeroCount(state.Or) : null,
             HighestMagnitude = state.PeakMagnitude,
         };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static ChannelLevels FloatLevels(ChannelState state)
+    private static ChannelLevels FloatLevels(ChannelState state, int minimumStretch)
     {
+        SilenceState silence = state.Silence.Complete(minimumStretch);
         double peak = Math.Max(state.High, -state.Low);
         double mean = state.SumDouble / state.Count;
         double magnitude = Math.Abs(mean);
@@ -800,9 +901,12 @@ internal sealed class LevelsMeter
             ClippingRuns = state.Runs,
             ClippedSamples = state.Clipped,
             LongestClippingRun = state.Longest,
-            SilentAtStart = state.Silence.Leading,
-            SilentAtEnd = state.Silence.Trailing,
-            ZeroSamples = state.Silence.Total,
+            SilentStretches = silence.Stretches,
+            SilentSamples = silence.Samples,
+            LongestSilentStretch = silence.Longest,
+            SilentAtStart = silence.Leading,
+            SilentAtEnd = silence.Trailing,
+            ZeroSamples = silence.Total,
             HasOnly16BitValues = state.Only16,
             HasOnly24BitValues = state.Only24,
         };
@@ -858,9 +962,12 @@ internal sealed class LevelsMeter
         public bool Only24 = true;
         public long RunLength;
         public int RunSign;
-        public long Runs;
-        public long Clipped;
-        public long Longest;
+        public long PositiveRuns;
+        public long PositiveClipped;
+        public long PositiveLongest;
+        public long NegativeRuns;
+        public long NegativeClipped;
+        public long NegativeLongest;
         public SilenceState Silence;
 
         // The span in progress: the OR of its samples and of their magnitudes (v for v >= 0, -v - 1 for v < 0), and the count of the last span that
@@ -869,13 +976,26 @@ internal sealed class LevelsMeter
         public int SpanMagnitude;
         public int LastCount = -1;
 
-        public void AddRuns(long runs, long clipped, long longest)
+        public long Runs => PositiveRuns + NegativeRuns;
+
+        public long Clipped => PositiveClipped + NegativeClipped;
+
+        public long Longest => Math.Max(PositiveLongest, NegativeLongest);
+
+        // The counters are kept per sign: the positive extreme moves with the bits in use, the negative one does not.
+        public void AddRuns(int sign, long runs, long clipped, long longest)
         {
-            Runs += runs;
-            Clipped += clipped;
-            if (longest > Longest)
+            if (sign > 0)
             {
-                Longest = longest;
+                PositiveRuns += runs;
+                PositiveClipped += clipped;
+                PositiveLongest = Math.Max(PositiveLongest, longest);
+            }
+            else
+            {
+                NegativeRuns += runs;
+                NegativeClipped += clipped;
+                NegativeLongest = Math.Max(NegativeLongest, longest);
             }
         }
 
@@ -884,53 +1004,138 @@ internal sealed class LevelsMeter
         {
             if (RunLength >= MeasurementLimits.MinimumClippingRun)
             {
-                AddRuns(1, RunLength, RunLength);
+                AddRuns(RunSign, 1, RunLength, RunLength);
             }
 
             RunLength = 0;
             RunSign = 0;
         }
+
+        // The positive extreme has moved: the positive runs counted so far, and the one that is open, were at a code that is no longer an extreme.
+        public void DropPositiveRuns()
+        {
+            PositiveRuns = 0;
+            PositiveClipped = 0;
+            PositiveLongest = 0;
+            if (RunSign > 0)
+            {
+                RunLength = 0;
+                RunSign = 0;
+            }
+        }
     }
 
-    // Stretches of samples that are exactly 0 (flags that are 0 for a float), as a struct whose methods change it in place.
+    // Stretches of samples that are exactly 0 (flags that are 0 for a float), as a struct whose methods change it in place. A stretch counts as digital
+    // silence from the minimum on (0 turns the stretch figures off: only the zero samples are counted). The stretch open at the end of what has been added is
+    // carried in _open and counted when a sample that is not 0 or a gap ends it, or by Complete at the end.
     private struct SilenceState
     {
         private bool _isLeadingClosed;
+        private long _open;
 
         public long Leading;
         public long Trailing;
         public long Total;
+        public long Stretches;
+        public long Samples;
+        public long Longest;
 
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public void Add(ReadOnlySpan<int> values)
+        public void Add(ReadOnlySpan<int> values, int minimum)
         {
             int first = values.IndexOfAnyExcept(0);
             if (first < 0)
             {
                 Total += values.Length;
-                Trailing += values.Length;
-                if (!_isLeadingClosed)
-                {
-                    Leading += values.Length;
-                }
-
+                _open += values.Length;
                 return;
             }
 
-            if (!_isLeadingClosed)
+            Total += values.Count(0);
+            if (minimum > 0)
             {
-                Leading += first;
-                _isLeadingClosed = true;
+                long run = _open + first;
+                if (run >= minimum)
+                {
+                    Count(run);
+                }
+
+                if (!_isLeadingClosed)
+                {
+                    Leading = run >= minimum ? run : 0;
+                }
+
+                // Inside the piece a run of at least m samples covers a multiple of m, so only every m-th sample is read; where it is 0 the run around it is
+                // found with two searches.
+                int last = values.LastIndexOfAnyExcept(0);
+                if (last - first > minimum)
+                {
+                    CountInside(values, first, last, minimum);
+                }
+
+                _open = values.Length - 1 - last;
             }
 
-            Trailing = values.Length - 1 - values.LastIndexOfAnyExcept(0);
-            Total += values.Count(0);
+            _isLeadingClosed = true;
         }
 
-        public void Gap()
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private void CountInside(ReadOnlySpan<int> values, int first, int last, int minimum)
         {
+            long at = ((first / (long)minimum) + 1) * minimum;
+            while (at < last)
+            {
+                int p = (int)at;
+                if (values[p] != 0)
+                {
+                    at += minimum;
+                    continue;
+                }
+
+                int start = values[..p].LastIndexOfAnyExcept(0) + 1;
+                int end = p + values[p..].IndexOfAnyExcept(0);
+                if (end - start >= minimum)
+                {
+                    Count(end - start);
+                }
+
+                at = (((long)end + minimum - 1) / minimum) * minimum;
+            }
+        }
+
+        private void Count(long length)
+        {
+            Stretches++;
+            Samples += length;
+            Longest = length > Longest ? length : Longest;
+        }
+
+        public void Gap(int minimum)
+        {
+            if (minimum > 0)
+            {
+                if (_open >= minimum)
+                {
+                    Count(_open);
+                }
+
+                if (!_isLeadingClosed)
+                {
+                    Leading = _open >= minimum ? _open : 0;
+                }
+            }
+
             _isLeadingClosed = true;
-            Trailing = 0;
+            _open = 0;
+        }
+
+        // The state with the stretch that is open at the end counted, as a copy: Build can be called again.
+        public readonly SilenceState Complete(int minimum)
+        {
+            SilenceState done = this;
+            done.Trailing = minimum > 0 && _open >= minimum ? _open : 0;
+            done.Gap(minimum);
+            return done;
         }
     }
 }

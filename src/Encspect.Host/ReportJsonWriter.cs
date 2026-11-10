@@ -1051,12 +1051,37 @@ public static class ReportJsonWriter
             w.WriteNumber("runs", c.ClippingRuns);
             w.WriteNumber("samples", c.ClippedSamples);
             w.WriteNumber("longestRun", c.LongestClippingRun);
-        }, w => w.WriteNumber("minimumRunLength", MeasurementLimits.MinimumClippingRun));
+        }, w =>
+        {
+            w.WriteNumber("minimumRunLength", MeasurementLimits.MinimumClippingRun);
+            if (levels.ClippingBitsInUse is { } bitsInUse)
+            {
+                w.WriteNumber("bitsInUse", bitsInUse);
+            }
+            else
+            {
+                w.WriteNull("bitsInUse");
+            }
+        });
+        bool isSilenceMeasured = levels.MinimumSilentStretch > 0;
         WriteGroup(writer, "digitalSilence", levels, explain ? MeasurementText.DigitalSilenceDescription : null, MeasurementText.DigitalSilenceTopic, (w, c) =>
         {
-            w.WriteNumber("atStart", c.SilentAtStart);
-            w.WriteNumber("atEnd", c.SilentAtEnd);
-        }, null);
+            WriteSilence(w, "stretches", c.SilentStretches, isSilenceMeasured);
+            WriteSilence(w, "samples", c.SilentSamples, isSilenceMeasured);
+            WriteSilence(w, "longestStretch", c.LongestSilentStretch, isSilenceMeasured);
+            WriteSilence(w, "atStart", c.SilentAtStart, isSilenceMeasured);
+            WriteSilence(w, "atEnd", c.SilentAtEnd, isSilenceMeasured);
+        }, w =>
+        {
+            if (isSilenceMeasured)
+            {
+                w.WriteNumber("minimumLength", levels.MinimumSilentStretch);
+            }
+            else
+            {
+                w.WriteNull("minimumLength");
+            }
+        });
         WriteFigure(writer, "zeroSamples", "samples", c => writer.WriteNumberValue(c.ZeroSamples), levels, explain ? MeasurementText.ZeroSamplesDescription : null, MeasurementText.DigitalSilenceTopic);
         WriteGroup(writer, "bitDepth", levels, explain ? (levels.Format == SampleFormat.Integer ? MeasurementText.LowBitsUnusedDescription : MeasurementText.HasOnly16BitValuesDescription + " " + MeasurementText.HasOnly24BitValuesDescription) : null, MeasurementText.BitDepthUsageTopic, (w, c) =>
         {
@@ -1200,6 +1225,19 @@ public static class ReportJsonWriter
         }
 
         writer.WriteEndObject();
+    }
+
+    // A silence figure is null for a stream with no sample rate, whose 10 ms are not known.
+    private static void WriteSilence(Utf8JsonWriter writer, string name, long value, bool isMeasured)
+    {
+        if (isMeasured)
+        {
+            writer.WriteNumber(name, value);
+        }
+        else
+        {
+            writer.WriteNull(name);
+        }
     }
 
     private static byte[] LittleEndian(ReadOnlySpan<short> values)

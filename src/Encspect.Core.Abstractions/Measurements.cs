@@ -139,6 +139,10 @@ public static class MeasurementLimits
     // The shortest run of consecutive samples at an extreme that counts as clipping. A convention of the design, not a specification's.
     public const int MinimumClippingRun = 3;
 
+    // The fewest bits in use at which the extremes of the bits in use replace those of the declared width: with fewer, the low bits that are 0 come from the
+    // signal more often than from padding, and the positive extreme would be far from full scale.
+    public const int MinimumBitsInUse = 8;
+
     // The lowest sample rate loudness is measured at: the K-weighting derived for other rates drifts from the 48 kHz response by 0.5 dB at
     // 8,000 Hz and is unstable below 3,364 Hz.
     public const int MinimumLoudnessRate = 8000;
@@ -168,6 +172,14 @@ public sealed record LevelFigures
 
     // Integers only (null for floats, and where no span was measured): the low bits unused over spans of 32 samples.
     public LowBitsSpanFigures? Spans { get; init; }
+
+    // The bits whose extremes the clipping runs are counted at (the clipping topic): for integers the declared width, or the bits in use (the width less the
+    // stream's Low Bits Unused) from MinimumBitsInUse bits on; for floats 16 or 24 where every sample is on that grid, null otherwise (full scale, at or beyond).
+    public int? ClippingBitsInUse { get; init; }
+
+    // The shortest stretch of sample frames that counts as digital silence, in samples (10 ms at the stream's rate, rounded up), or 0 where the stream states
+    // no sample rate and the stretch figures are not measured.
+    public int MinimumSilentStretch { get; init; }
 }
 
 // The low bits that are 0 in every sample of a span of 32 consecutive samples of one channel (the low-bits-per-span topic), counted over the
@@ -241,9 +253,17 @@ public sealed record ChannelLevels
 
     public long LongestClippingRun { get; init; }
 
-    // Sample frames that are exactly 0 in every channel (for a channel, samples that are 0): in the stretch that starts the measured samples
-    // and in the one that ends them (the digital silence), and in all, wherever they are (the zero samples, which include a sine's zero crossings
-    // and the zeros of quiet audio). When every sample is 0 the three are equal. A stretch ends at a gap.
+    // Sample frames that are exactly 0 in every channel (for a channel, samples that are 0). Digital silence is a stretch of them that lasts at least
+    // MinimumSilentStretch samples: the stretches (how many, the samples in them and the longest, those at the start and the end included), and the one that
+    // starts the measured samples and the one that ends them (0 where shorter than the minimum). The zero samples are all of them, wherever they are, which
+    // include a sine's zero crossings and the zeros of quiet audio. When every sample is 0 and the stream is long enough the first two are equal to the
+    // zero samples. A stretch ends at a gap, and each part must reach the minimum on its own. All are 0 where the minimum is not measured.
+    public long SilentStretches { get; init; }
+
+    public long SilentSamples { get; init; }
+
+    public long LongestSilentStretch { get; init; }
+
     public long SilentAtStart { get; init; }
 
     public long SilentAtEnd { get; init; }

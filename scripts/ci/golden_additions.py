@@ -39,8 +39,11 @@ every child of that name. A change file:
     }
 
 A measurement golden (tests/fixtures/measurement/*.measure.json, the JSON object {"measurements": ..., "findings": ...} that MeasurementFixtureTests writes) is
-compared the same way, with one kind of entry: {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"} under "added" takes the key out of the object
-at the path under "measurements"; the rest must equal the old golden.
+compared the same way, with two kinds of entry: {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"} under "added" takes the key out of the object
+at the path under "measurements" (a step that names an array goes into each of its elements, so "perChannel" reaches every channel), and
+{"scope": "measurement", "path": ["levels", "digitalSilence"], "fields": ["atStart", "atEnd"], "to": 0, "goldens": [...]} under "changed" lets those fields
+differ from the old golden, but only to the value "to" (an unchanged field is fine), and with "below": "minimumLength" only where the old value was under the golden's
+levels.digitalSilence.minimumLength; the rest must equal the old golden.
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
 where the old report has a node of the old name under the parent; where it has none, the node of the new name is an addition and the
@@ -330,6 +333,11 @@ def validate(change):
         "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name"), "measurement": ("path", "key")},
         "removed": {"finding": ("code",), "node": ("parent", "name")},
     }
+    for entry in change.get("changed", []):
+        if entry.get("scope") == "measurement":
+            for field in ("path", "fields", "to"):
+                if field not in entry:
+                    raise ChangeError(f"changed: an entry with the scope measurement needs {field}: {json.dumps(entry)}")
     for key, scopes in needs.items():
         for entry in change.get(key, []):
             scope = entry.get("scope", "node")
@@ -418,21 +426,48 @@ def check_golden(old, new, change):
     return problems
 
 
+def measurement_targets(root, steps):
+    """The objects at a path of a measurement golden: a step that names an array goes into each of its elements."""
+    nodes = [root]
+    for step in steps:
+        found = []
+        for node in nodes:
+            child = node.get(step) if isinstance(node, dict) else None
+            found += [c for c in child if isinstance(c, dict)] if isinstance(child, list) else [child] if isinstance(child, dict) else []
+        nodes = found
+    return nodes
+
+
 def check_measurement_golden(old, new, change):
-    """The problems of one measurement golden: what the change adds (keys under "measurements") taken out of the new golden, the rest must equal the old."""
+    """The problems of one measurement golden: what the change adds (keys under "measurements") taken out of the new golden, and the fields it lets change
+    set back to the old value where the new one is the stated one; the rest must equal the old."""
     try:
         validate(change)
     except ChangeError as error:
         return [str(error)]
     expected = copy.deepcopy(new)
     for entry in change.get("added", []):
+        if entry.get("scope") == "measurement":
+            for target in measurement_targets(expected.get("measurements"), entry["path"]):
+                target.pop(entry["key"], None)
+    for entry in change.get("changed", []):
         if entry.get("scope") != "measurement":
             continue
-        where = expected.get("measurements")
-        for step in entry["path"]:
-            where = where.get(step) if isinstance(where, dict) else None
-        if isinstance(where, dict):
-            where.pop(entry["key"], None)
+        after = measurement_targets(expected.get("measurements"), entry["path"])
+        before = measurement_targets(old.get("measurements"), entry["path"])
+        if len(after) != len(before):
+            continue
+        minimum = None
+        if entry.get("below") == "minimumLength":
+            silence = measurement_targets(new.get("measurements"), ["levels", "digitalSilence"])
+            minimum = silence[0].get("minimumLength") if silence else None
+        for target, original in zip(after, before):
+            for field in entry["fields"]:
+                if field in target and field in original and target[field] == entry["to"]:
+                    # With "below", the old value must be under the golden's own minimum length: a real stretch may not vanish.
+                    if entry.get("below") == "minimumLength" and not (isinstance(minimum, int) and original[field] < minimum):
+                        continue
+                    target[field] = original[field]
     return differences(old, expected)
 
 

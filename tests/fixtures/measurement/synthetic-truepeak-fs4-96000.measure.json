@@ -103,6 +103,7 @@
       },
       "clipping": {
         "minimumRunLength": 3,
+        "bitsInUse": 15,
         "runs": 0,
         "samples": 0,
         "longestRun": 0,
@@ -120,14 +121,24 @@
         ]
       },
       "digitalSilence": {
+        "minimumLength": 960,
+        "stretches": 0,
+        "samples": 0,
+        "longestStretch": 0,
         "atStart": 0,
         "atEnd": 0,
         "perChannel": [
           {
+            "stretches": 0,
+            "samples": 0,
+            "longestStretch": 0,
             "atStart": 0,
             "atEnd": 0
           },
           {
+            "stretches": 1,
+            "samples": 14400,
+            "longestStretch": 14400,
             "atStart": 14400,
             "atEnd": 14400
           }

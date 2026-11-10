@@ -169,6 +169,7 @@ The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspe
 - IEC 61937 bursts of MPEG audio, ATRAC, WMA Professional, MAT and the other codings that have no codec parser here (the stream is named and sized, not analyzed), bursts under the `-0cea-` sub-format GUIDs of Microsoft's list, and bursts in samples that are not 16-bit stereo (24-bit carriers, HBR formats over several channels).
 - The `CHAN`-style channel descriptions of other containers, and the contents of `levl`, `link`, `dbmd`, `qlty` and `r64m`.
 - A check of the samples: WAVE stores no checksum, so a file is verified by nothing but its headers.
+- Clipping at the extremes of the bits in use for audio in which lossyWAV zeroed a different number of low bits in each block: the stream's bits in use are those of the block with the fewest zeroed bits, so a block with more clips below the stream's positive extreme and is not counted there. Whether lossyWAV keeps a clipped input at the block's largest code is unverified (see the `clipping` article). A-law and µ-law streams decode to table codes, and their clipping is not covered.
 - sox was not used for the cross-check: FFmpeg writes the fixtures and ffprobe and MediaInfo read them (sox is not installed on the development machines).
 
 ## Wave64

@@ -36,6 +36,7 @@ real transform with its split step, so the two agree up to rounding (about 1e-12
 """
 
 import decimal
+import itertools
 import json
 import math
 import re
@@ -235,20 +236,37 @@ def tz(value):
     return (value & -value).bit_length() - 1
 
 
-def silence_of(segments):
-    """(start, end, total) of the zero flags of the segments between gaps: the start is the zeros before the first non-zero sample of the first
-    segment, the end the zeros after the last non-zero sample of the last, and the total all zeros; no stretch crosses a gap."""
-    first, last = segments[0], segments[-1]
-    return (next((i for i, z in enumerate(first) if not z), len(first)),
-            next((i for i, z in enumerate(reversed(last)) if not z), len(last)),
-            sum(sum(seg) for seg in segments))
+def silence_of(segments, minimum):
+    """The digital silence of the zero flags of the segments between gaps (no stretch crosses a gap): a stretch is a maximal run of zero flags of at
+    least minimum samples (None: the stream states no rate, nothing is measured but the total). Returns (start, end, total, stretches, samples, longest):
+    the stretch that begins the first segment and the one that ends the last (0 where shorter than the minimum), all zero flags, and the stretches
+    with the samples in them and the longest. Worked out from the runs of each segment, with no running state."""
+    runs = [[(z, len(list(g))) for z, g in itertools.groupby(seg)] for seg in segments]
+    total = sum(sum(seg) for seg in segments)
+    if minimum is None:
+        return 0, 0, total, 0, 0, 0
+    long_runs = [n for segment in runs for z, n in segment if z and n >= minimum]
+    first, last = runs[0][0], runs[-1][-1]
+    start = first[1] if first[0] and first[1] >= minimum else 0
+    end = last[1] if last[0] and last[1] >= minimum else 0
+    return start, end, total, len(long_runs), sum(long_runs), max(long_runs, default=0)
 
 
-def levels_of(runs, channels, bits):
+def levels_of(runs, channels, bits, rate):
     """The levels of integer samples. runs: the segments of the stream in order, each a list of channel lists (the samples between two gaps).
-    Returns the stream's figures and each channel's."""
+    Returns the stream's figures and each channel's. Clipping is counted at the extremes of the bits in use: -2^(bits - 1), and 2^(bits - 1) less
+    2^k for the k low bits that are 0 in every sample of every channel, from 8 bits in use on (the stream's OR is taken first, so there is no running
+    state to get wrong). Digital silence is a stretch of zero frames of at least 10 ms: ceil(rate / 100) samples."""
     full = 1 << (bits - 1)
-    high, low = full - 1, -full
+    stream_or = 0
+    for seg in runs:
+        for channel in seg:
+            for v in channel:
+                stream_or |= v
+    unused = tz(stream_or) if stream_or else 0
+    shift = unused if bits - unused >= 8 and stream_or else 0
+    high, low = full - (1 << shift), -full
+    minimum = (rate + 99) // 100 if rate > 0 else None
     count = sum(len(seg[0]) for seg in runs)
 
     def sums(c):
@@ -271,7 +289,7 @@ def levels_of(runs, channels, bits):
                     clip_runs += 1 if length == 3 else 0
                     longest = max(longest, length)
         return dict(total=sum(flat), squares=sum(v * v for v in flat), bit_or=bit_or, peak=max((abs(v) for v in flat), default=0),
-                    runs=clip_runs, clipped=clipped, longest=longest, silence=silence_of([[v == 0 for v in seg] for seg in segs]))
+                    runs=clip_runs, clipped=clipped, longest=longest, silence=silence_of([[v == 0 for v in seg] for seg in segs], minimum))
 
     def figures(f):
         denominator = count * full
@@ -286,12 +304,13 @@ def levels_of(runs, channels, bits):
             "dc_tenths": tenths_of_ratio(decimal.Decimal(abs(f["total"])) / (count * full)),
             "clipping_runs": f["runs"], "clipped_samples": f["clipped"], "longest_clipping_run": f["longest"],
             "silent_at_start": f["silence"][0], "silent_at_end": f["silence"][1], "zero_samples": f["silence"][2],
+            "silent_stretches": f["silence"][3], "silent_samples": f["silence"][4], "longest_silent_stretch": f["silence"][5],
             "low_bits_unused": tz(f["bit_or"]) if f["bit_or"] else None, "highest_magnitude": f["peak"],
         }
 
     per = [sums(c) for c in range(channels)]
     result = [figures(f) for f in per]
-    joint = silence_of([[all(seg[c][i] == 0 for c in range(channels)) for i in range(len(seg[0]))] for seg in runs])
+    joint = silence_of([[all(seg[c][i] == 0 for c in range(channels)) for i in range(len(seg[0]))] for seg in runs], minimum)
     squares = sum(f["squares"] for f in per)
     bit_or = 0
     for f in per:
@@ -304,9 +323,10 @@ def levels_of(runs, channels, bits):
         "clipping_runs": sum(r["clipping_runs"] for r in result), "clipped_samples": sum(r["clipped_samples"] for r in result),
         "longest_clipping_run": max(r["longest_clipping_run"] for r in result),
         "silent_at_start": joint[0], "silent_at_end": joint[1], "zero_samples": joint[2],
+        "silent_stretches": joint[3], "silent_samples": joint[4], "longest_silent_stretch": joint[5],
         "low_bits_unused": tz(bit_or) if bit_or else None, "highest_magnitude": max(f["peak"] for f in per),
     }
-    return {"bits": bits, "stream": stream, "channels": result}
+    return {"bits": bits, "bits_in_use": bits - shift, "minimum_silent_stretch": minimum, "stream": stream, "channels": result}
 
 
 # ---- Loudness and true peak (step 5) ----
@@ -612,6 +632,6 @@ def measure(data, layout=None):
     return {
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
-        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits),
+        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

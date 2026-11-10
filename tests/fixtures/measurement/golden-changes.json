@@ -1,7 +1,169 @@
 {
-  "goldens": ["tests/fixtures/measurement/"],
-  "reason": "lossyWAV PR 2 adds levels.lowBitsPerSpan to every integer stream; its grid counts moments (span positions with a change), by the lead's amendment of decision 6 of 2026-11-08, so the moments and moments on grid are part of the new object.",
+  "goldens": [
+    "tests/fixtures/measurement/",
+    "tests/fixtures/alac/",
+    "tests/fixtures/tta/",
+    "tests/fixtures/matroska/"
+  ],
+  "reason": "Item 5 of milestone 0.2 (docs/design/spectral-analysis.md, Step 6): digital silence counts stretches of at least 10 ms, so levels.digitalSilence gains minimumLength, stretches, samples and longestStretch (for the stream and each channel) and levels.clipping gains bitsInUse; the stretch at the start or the end that is shorter than the minimum now reads 0 (a sine starting at phase 0 had 1 sample); the same figures are added to the ALAC, TTA and Matroska measurement goldens, which this one file covers (the change files of earlier pull requests in those folders stay as they were).",
   "added": [
-    {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"}
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "clipping"
+      ],
+      "key": "bitsInUse"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "minimumLength"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "stretches"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "samples"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "key": "longestStretch"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "stretches"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "samples"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "key": "longestStretch"
+    }
+  ],
+  "changed": [
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence"
+      ],
+      "fields": [
+        "atStart",
+        "atEnd"
+      ],
+      "to": 0,
+      "goldens": [
+        "tests/fixtures/alac/built-stereo-16-spikes.measure.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.measure.json",
+        "tests/fixtures/measurement/lossy-lame-b32-22050.measure.json",
+        "tests/fixtures/measurement/synthetic-levels-sine-full-scale.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-5-1-lfe-only-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-5-1-surround-pair-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-7-1-rear-pair-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gap-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gate-straddle-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gates-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-range-gates-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-range-steps-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-sine-mono-48000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-steps-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-lossywav-fade-end.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-other-4096.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-truncated-14-dither.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-loudness-above-30.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-non-finite.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-sine.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float64-huge.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float64-sine.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-24-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-32-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-8-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-between-bins.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-bin-center.measure.json",
+        "tests/fixtures/measurement/synthetic-sweep.measure.json",
+        "tests/fixtures/measurement/synthetic-truepeak-fs4-44100.measure.json"
+      ],
+      "below": "minimumLength"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "levels",
+        "digitalSilence",
+        "perChannel"
+      ],
+      "fields": [
+        "atStart",
+        "atEnd"
+      ],
+      "to": 0,
+      "goldens": [
+        "tests/fixtures/alac/built-stereo-16-spikes.measure.json",
+        "tests/fixtures/matroska/external-ffmpeg-tta.measure.json",
+        "tests/fixtures/measurement/lossy-lame-b32-22050.measure.json",
+        "tests/fixtures/measurement/synthetic-levels-sine-full-scale.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-5-1-lfe-only-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-5-1-surround-pair-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-7-1-rear-pair-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gap-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gate-straddle-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-gates-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-range-gates-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-range-steps-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-sine-mono-48000.measure.json",
+        "tests/fixtures/measurement/synthetic-loudness-steps-8000.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-lossywav-fade-end.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-other-4096.measure.json",
+        "tests/fixtures/measurement/synthetic-lowbits-truncated-14-dither.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-loudness-above-30.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-non-finite.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float32-sine.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float64-huge.measure.json",
+        "tests/fixtures/measurement/synthetic-pcm-float64-sine.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-24-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-32-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-8-bits.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-between-bins.measure.json",
+        "tests/fixtures/measurement/synthetic-sine-bin-center.measure.json",
+        "tests/fixtures/measurement/synthetic-sweep.measure.json",
+        "tests/fixtures/measurement/synthetic-truepeak-fs4-44100.measure.json"
+      ],
+      "below": "minimumLength"
+    }
   ]
 }

@@ -60,6 +60,12 @@ public sealed record ReportSummary(
     // measurements found one (a stream whose samples are all 0 has none); null otherwise.
     public int? SamplePeakTenths { get; init; }
 
+    // The clipping runs and the digital silence stretches of the first audio stream, where measurements have levels (the stretches are null for a stream
+    // that states no sample rate).
+    public long? ClippingRuns { get; init; }
+
+    public long? SilentStretches { get; init; }
+
     // The changes of Low Bits Unused between spans of the first audio stream (integers only, where measurements have them), and the grid of the
     // changes in samples, null where none is found.
     public long? LowBitsChanges { get; init; }
@@ -142,6 +148,8 @@ public sealed record ReportSummary(
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
+            ClippingRuns = first?.Measurements?.Levels?.Stream.ClippingRuns,
+            SilentStretches = first?.Measurements?.Levels is { MinimumSilentStretch: > 0 } silence ? silence.Stream.SilentStretches : null,
             LowBitsChanges = first?.Measurements?.Levels?.Spans?.Changes,
             LowBitsGrid = first?.Measurements?.Levels?.Spans is { Grid: > 0 } spans ? spans.Grid : null,
             TruePeakTenths = first?.Measurements?.TruePeak is { NotMeasured: null, StreamTenths: var truePeak } && truePeak != MeasurementLimits.NoLevel ? truePeak : null,
