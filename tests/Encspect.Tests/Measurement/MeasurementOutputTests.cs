@@ -167,8 +167,9 @@ public class MeasurementOutputTests
         int peak = Array.IndexOf(header, "Sample Peak (dBFS)");
         Assert.Equal(new[] { "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Clipping Runs", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Digital Silence Stretches", "Changes of Low Bits Unused", "Grid of the Changes (samples)" }, header[peak..]);
         Assert.Equal("-8.7", row[peak]);
-        Assert.Matches(@"^\d+$", row[peak + 1]);
-        Assert.Matches(@"^\d+$", row[peak + 2]);
+        Assert.Equal("-8.6", row[peak + 1]);
+        Assert.Matches(@"^\d+$", row[Array.IndexOf(header, "Clipping Runs")]);
+        Assert.Matches(@"^\d+$", row[Array.IndexOf(header, "Digital Silence Stretches")]);
         Assert.False(double.IsNaN(double.Parse(row[peak], System.Globalization.CultureInfo.InvariantCulture)));
 
         using FileStream stream = File.OpenRead(path);
