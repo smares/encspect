@@ -34,7 +34,9 @@ internal readonly record struct TtaHeader(int AudioFormat, int Channels, int Bit
     // truncation is what the seek tables of the files written by FFmpeg 6.1.1 and libtta-c 2.3 show, with a frame of 33,436 samples at 32,000 Hz).
     public long FrameLength => FrameLengthOf(SampleRate);
 
-    public static long FrameLengthOf(long sampleRate) => sampleRate * 256 / 245;
+    // Computed in unsigned 32 bits, as the description states (docs/design/tta-format.md, "Frame length"): the product wraps for rates of 2^24 Hz and up, which only a
+    // crafted header states, and can leave 0, the length the table's size is undefined for.
+    public static long FrameLengthOf(long sampleRate) => unchecked((uint)sampleRate * 256u) / 245u;
 
     // The seek table has one entry for each frame; 0 where the rate leaves the frame length undefined.
     public long FrameCount => FrameLength == 0 ? 0 : (Samples + FrameLength - 1) / FrameLength;

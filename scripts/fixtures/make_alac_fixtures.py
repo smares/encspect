@@ -326,6 +326,10 @@ def build():
     unknown_after = custom(after_pair, lambda w: w.write(m.CCE, 3), lambda w: w.write(0, 13))
     damaged("element-unknown-after-channels", "The second packet holds the channel pair element of the cookie's two channels, then a coupling channel element (tag 2) and no end tag: Apple's decoder has stopped reading by then and decodes the frame.",
             [packets[0], unknown_after, packets[2]])
+    one_sample = [[part[0][0]]]
+    samples_after = custom(after_pair, lambda w: m.write_audio(w, m.SCE, 1, one_sample, 16, 4096, parameters=MONO), m.write_end)
+    damaged("element-samples-after-channels", "The second packet holds the channel pair element of the cookie's two channels, then a single channel element that states 1 sample: Apple's decoder has stopped reading by then, so the frame has "
+            "the pair's 4,096 samples.", [packets[0], samples_after, packets[2]])
     overrun_after = custom(after_pair, lambda w: m.write_audio(w, m.SCE, 0, mono, 16, 4096, parameters=MONO))[:-200]
     damaged("frame-overrun-after-channels", "The second packet holds the channel pair element of the cookie's two channels, then a single channel element that the packet is cut 200 bytes short inside: Apple's decoder never reads it and decodes the frame.",
             [packets[0], overrun_after, packets[2]])

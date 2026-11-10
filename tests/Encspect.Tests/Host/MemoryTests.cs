@@ -1592,6 +1592,20 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     // Frames of constant subframes, the smallest there are: 4,096 samples of two channels in 14 bytes.
     private static byte[] FlacFrames(int count) => FlacBuilder.Stream(count);
 
+    // A headerless Matroska TTA track whose Channels element states 2^26 channels: nothing is allocated for them (the parser once took 40 bytes for each).
+    [Fact]
+    public void ATtaTrackWithManyChannelsAllocatesNothingForThem()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "matroska-tta-track-channels-2-pow-26.bin"));
+
+        (Report report, _, long peak) = Measure("channels.mka", data);
+
+        output.WriteLine($"{peak} bytes peak");
+        Assert.Contains(report.Findings, f => f.Code == "tta.channels-beyond-limit");
+        Assert.True(peak < 16_000_000, $"The live heap grew by {peak} bytes.");
+        GC.KeepAlive(report);
+    }
+
     // A TTA stream keeps a 24-byte entry per frame and 16 bytes of its bitrate graph (and its per-second figures while they are built); its
     // nodes are built in blocks of 1,024 when read. The frames here are 4 bytes each, the CRC-32 alone, the fewest a file can hold per frame.
     // linux-x64 measures 56 bytes kept and 80 at the peak per frame; the bounds are about twice that.
