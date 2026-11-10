@@ -144,6 +144,13 @@ class ColumnTests(unittest.TestCase):
         self.assertNotIn("noReference", figures[1])
         self.assertEqual([], compare.coreaudio_differences(figures))
 
+    def test_a_reader_total_that_is_no_reference_is_keep_and_never_pending(self):
+        figure = {"id": "samples", "stage": "trimmed", "analyzer": 40960, "reference": None, "referencePath": None, "witnesses": {}, "readerTotal": 26816, "readerTool": "oggdec",
+                  "noReference": "the direct path did not feed every page"}
+        found = compare.figure_differences([figure])
+        self.assertEqual([("reader-not-accepted", "keep")], [(d["kind"], d["status"]) for d in found])
+        self.assertEqual([], compare.figure_differences([{**figure, "readerTotal": 40960}]))
+
     def test_where_both_sources_differ_the_reader_holds_only_the_one_it_applied(self):
         edit = {"id": "samples.editList", "stage": "trimmed", "analyzerFigure": "Samples (Edit List)", "streams": [0], "analyzer": 1000, "reference": None, "referencePath": None,
                 "referenceKind": None, "witnesses": {}}

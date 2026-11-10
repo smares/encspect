@@ -2685,10 +2685,11 @@
      "decoder": "oggdec",
      "value": 26816,
      "analyzer": 40960,
-     "status": "pending",
+     "status": "keep",
      "kind": "reader-not-accepted",
      "reason": "the direct path did not feed every page (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)",
-     "statusSource": "rule"
+     "note": "oggdec writes 26,816 samples against the analyzer's 40,960, and the direct path left 699 bytes, so the reader's total is no reference. The analyzer's count stays, as for opus-cut-last-packet.opus and the cut last frame of TTA: a total that is no reference gives keep (rule of 2026-11-02, applied to this file by the project lead on 2026-11-10).",
+     "statusSource": "reviewed"
     }
    ],
    "units": []

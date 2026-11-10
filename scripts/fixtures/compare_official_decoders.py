@@ -370,7 +370,8 @@ def figure_differences(figures):
             differences.append({"figure": figure["id"], "decoder": "direct", "value": None, "analyzer": a, "status": "pending" if a else "noted", "kind": "decoder-refuses-stream",
                                 "reason": figure["refused"]})
         if r is None and figure.get("readerTotal") is not None and figure["readerTotal"] != a:
-            differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "pending",
+            # A total that is no reference leaves the analyzer's figure: `keep` for every format (decided 2026-11-02, and 2026-11-10 for Ogg's vorbis-cut-last-packet.ogg), never `pending`.
+            differences.append({"figure": figure["id"], "decoder": figure["readerTool"], "value": figure["readerTotal"], "analyzer": a, "status": "keep",
                                 "kind": "reader-not-accepted", "reason": figure.get("noReference")})
     return differences
 

@@ -106,6 +106,7 @@ The project lead, 2026-11-08:
 - A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Every parked item has a milestone, or sits under [Not planned](#not-planned) with the trigger that would bring it back.
 - A pause the lead asks for keeps the item's place and priority, and the item resumes first.
+- A format's `pending` differences from the official decoders go to the lead with the pull request that commits its `official-decoders.json`; the analyzer changes that follow are their own pull requests, each with its goldens ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md#rollout), step 8). A total that is no reference is `keep`, never `pending`.
 
 ## Milestones
 
@@ -143,6 +144,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 1. **The decoders,** one pull request each, in the order of [lossy-decoders.md](design/lossy-decoders.md#order): MPEG audio (Layers I, II and III), Vorbis, Opus, AC-3, E-AC-3.
    - **Definition of done** of each: the decoder, its format's entropy-pass figures, its coding graphs and its gap wave 3 items ([lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)). Coding graphs and gap wave 3 are no separate threads.
    - **The patent question** (decision 17 of [lossy-decoders.md](design/lossy-decoders.md#decisions)) is decided before E-AC-3 starts.
+   - **The official-decoder cross-checks of AC-3 and E-AC-3** that rollout steps 5 and 7 left open ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)) come with these decoders: the AC-3 variants (rules in `derive_variants.py`), the downloaded E-AC-3 samples (`eac3-samples.json`), Core Audio's independent substream 1 and dependent substreams (`substreams.eac3`), and the comparison of the PCM.
 2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), each its own change after the decoders above:
    - mid/side spectra and spectral holes, the lossy coders' finer marks, which need lossy streams and fixtures that show each mark;
    - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
@@ -224,6 +226,8 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
   - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
   - Dolby's object audio, and AC-4 and MPEG-H: the design does not cover their decoders, which wait for a design of their own.
+- **AC-3 and E-AC-3 on Windows** (rollout step 7 of [official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)): no Windows image has a decoder for them. Trigger: a Windows runner image ships one.
+- **The official-decoder runs on the Intel and arm64 Windows images** (the Windows column runs on `windows-2025`, x64, only). Trigger: a difference that depends on the build.
 - **An OptimFROG decoder** (the lead, 2026-11-09): the codec is closed and no open implementation exists, not even under the LGPL; its published `format.txt` covers the container only, which is what the header-level parser reads. Reverse-engineering the binaries is neither allowed by its license nor a source that can be checked. Not planned unless its author publishes the coding or an open implementation appears. Until then OptimFROG streams are checked by their block CRC-32s, and a DualStream pair is judged on headers and checksums alone.
 - Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification.
 - The ancient lossless compressors and obsolete vocoders.
