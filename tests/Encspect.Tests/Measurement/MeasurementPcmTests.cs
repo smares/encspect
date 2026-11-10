@@ -162,6 +162,20 @@ public class MeasurementPcmTests
         Assert.False(m.Levels.Stream.HasOnly16BitValues);
     }
 
+    // Floats that hold 16-bit or 24-bit values clip at the extremes of that grid (construction.levels): the largest value of the grid and -1.0, not a value below it.
+    [Theory]
+    [InlineData("synthetic-pcm-float32-16-bit-grid.wav", 16, 2, 7)]
+    [InlineData("synthetic-pcm-float32-24-bit-grid.wav", 24, 2, 8)]
+    public void FloatsOnAGridClipAtTheGridsExtremes(string file, int bitsInUse, long runs, long clipped)
+    {
+        LevelFigures levels = Analyze(file, new MeasureOptions()).Streams.Single().Measurements!.Levels!;
+
+        Assert.Equal(bitsInUse, levels.ClippingBitsInUse);
+        Assert.Equal((runs, clipped), (levels.Stream.ClippingRuns, levels.Stream.ClippedSamples));
+        Assert.True(levels.Stream.HasOnly24BitValues);
+        Assert.Equal(bitsInUse == 16, levels.Stream.HasOnly16BitValues);
+    }
+
     // The relative gate lies above +30 LUFS, where the first version's histograms ended: the quiet tone is dropped and the loud one reads its own level.
     [Fact]
     public void ARelativeGateAbove30LufsDropsTheQuietToneAndReadsTheLoudOne()

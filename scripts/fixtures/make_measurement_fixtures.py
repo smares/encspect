@@ -781,6 +781,20 @@ def wav_only():
     loud = [251.0 * math.sin(2 * math.pi * ((125 * i) % 8000) / 8000) for i in range(16000)] + [56.0 * math.sin(2 * math.pi * ((125 * i) % 8000) / 8000) for i in range(12000)]
     items.append(("pcm-float32-loudness-above-30", "A mono sine of 125 Hz at 8 kHz as 32-bit floats: 2 s at amplitude 251 (+48 dBFS) and 1.5 s at amplitude 56: the quiet tone is below the relative gate, which lies above +30 LUFS.",
                   float_wav([loud], 8000, 32), {"samples": 28000, "float_values": True, "loudness": {"integrated_above": 40}}))
+    # Floats that hold 16-bit and 24-bit values clip at the extremes of that grid (docs/design/spectral-analysis.md, "Step 6").
+    def grid_sine(count, steps, amplitude, period=441):
+        return [math.floor(amplitude * steps * math.sin(2 * math.pi * (i % period) / period) + 0.5) / steps for i in range(count)]
+    top16, top24 = 32767 / 32768, 8388607 / 8388608
+    on16 = grid_sine(8192, 32768, 0.5)
+    for start, length, value in ((100, 4, top16), (300, 3, -1.0), (500, 2, top16), (700, 3, 32766 / 32768)):
+        on16[start:start + length] = [value] * length
+    items.append(("pcm-float32-16-bit-grid", "A sine of amplitude 0.5 as 32-bit floats that are all whole multiples of 2^-15, with runs of 4 and 2 at 32767/32768 (the largest 16-bit value, so one run), 3 at -1.0 and 3 at 32766/32768 (not an extreme): "
+                  "the extremes are those of the 16-bit grid, so 2 runs.", float_wav([on16], rate, 32), {"samples": 8192, "float_values": True, "levels": {"clipping_runs": 2, "clipped_samples": 7, "bits_in_use": 16}}))
+    on24 = grid_sine(8192, 8388608, 0.25)
+    for start, length, value in ((100, 5, top24), (300, 3, -1.0), (500, 4, top16), (700, 2, top24)):
+        on24[start:start + length] = [value] * length
+    items.append(("pcm-float32-24-bit-grid", "A sine of amplitude 0.25 as 32-bit floats that are all whole multiples of 2^-23 and not all of 2^-15, with a run of 5 and one of 2 at 8388607/8388608 (one run), 3 at -1.0 and 4 at 32767/32768 (a 16-bit value, not "
+                  "an extreme of the 24-bit grid): the extremes are those of the 24-bit grid, so 2 runs.", float_wav([on24], rate, 32), {"samples": 8192, "float_values": True, "levels": {"clipping_runs": 2, "clipped_samples": 8, "bits_in_use": 24}}))
     # Channels: the first 32 are measured.
     many = [[((c * 997 + i * 31) % 2001) - 1000 for i in range(1024)] for c in range(33)]
     items.append(("pcm-channels-33", "33 channels of 1,024 samples without a channel mask: 32 are measured.", wav_file(many, rate, 16), {"channels": 33, "measured": 32}))

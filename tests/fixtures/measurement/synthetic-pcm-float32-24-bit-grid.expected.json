@@ -1,0 +1,13 @@
+{
+ "description": "A sine of amplitude 0.25 as 32-bit floats that are all whole multiples of 2^-23 and not all of 2^-15, with a run of 5 and one of 2 at 8388607/8388608 (one run), 3 at -1.0 and 4 at 32767/32768 (a 16-bit value, not an extreme of the 24-bit grid): the extremes are those of the 24-bit grid, so 2 runs.",
+ "length": 32836,
+ "construction": {
+  "samples": 8192,
+  "float_values": true,
+  "levels": {
+   "clipping_runs": 2,
+   "clipped_samples": 8,
+   "bits_in_use": 24
+  }
+ }
+}
