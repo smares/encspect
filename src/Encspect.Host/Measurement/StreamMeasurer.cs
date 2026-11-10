@@ -30,7 +30,7 @@ internal sealed class StreamMeasurer
 
     // The work per block and measured channel besides the per-sample work, in the decoders' unit: the fixed cost of a piece (the scans, the
     // branches, the call into each measurement) that a block of 1 to 16 samples would otherwise cost without being charged.
-    internal const int BlockUnitsPerChannel = 500;
+    internal const int BlockUnitsPerChannel = 700;
 
     private const double SmallestSample = 1e-30;
 
