@@ -996,6 +996,34 @@
     {
       "scope": "stream",
       "fields": [
+        "isVbr"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/aac-delay.report.json",
+        "tests/fixtures/matroska/aac-legacy-explicit-rate.report.json",
+        "tests/fixtures/matroska/aac-legacy-lc.report.json",
+        "tests/fixtures/matroska/aac-legacy-ltp.report.json",
+        "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
+        "tests/fixtures/matroska/aac-legacy-sbr-core-rate.report.json",
+        "tests/fixtures/matroska/aac-legacy-sbr.report.json",
+        "tests/fixtures/matroska/aac-legacy-ssr.report.json",
+        "tests/fixtures/matroska/aac-legacy-stray-codec-private.report.json",
+        "tests/fixtures/matroska/aac-private-stripped.report.json",
+        "tests/fixtures/matroska/aac-private-zlib.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
+        "tests/fixtures/matroska/writer-lavc-id.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
         "channelMode"
       ],
       "goldens": [

@@ -90,6 +90,20 @@
     },
     {
       "path": [
+        "ADIF",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value",
+        "unit"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/adif.report.json"
+      ]
+    },
+    {
+      "path": [
         "MP4",
         "moov",
         "trak",
@@ -113,6 +127,44 @@
         "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
         "tests/fixtures/aac/fdkaac-he-v2.report.json",
         "tests/fixtures/aac/fdkaac-he.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "isVbr"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/apple-aace-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-aacl-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
+        "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/exhale-sbr.report.json",
+        "tests/fixtures/aac/exhale.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-mono.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-mono-faststart.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json"
       ]
     }
   ]

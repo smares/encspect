@@ -67,6 +67,32 @@
     {
       "path": [
         "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value",
+        "unit"
+      ],
+      "goldens": [
+        "tests/fixtures/mp4/eld-ld-sbr-1.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-13.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-2.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-3.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-4.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-5.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-6.report.json",
+        "tests/fixtures/mp4/eld-ld-sbr-7.report.json",
+        "tests/fixtures/mp4/rate-1-hz.report.json",
+        "tests/fixtures/mp4/usac-reserved-rate.report.json"
+      ]
+    },
+    {
+      "path": [
+        "MP4",
         "moov",
         "trak",
         "Gapless",
@@ -89,6 +115,15 @@
         "tests/fixtures/mp4/ps-signaled-absent.report.json",
         "tests/fixtures/mp4/ps-signaled-over-stereo-core.report.json",
         "tests/fixtures/mp4/rate-1-hz.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "isVbr"
+      ],
+      "goldens": [
+        "tests/fixtures/mp4/co64-largesize.report.json"
       ]
     }
   ]

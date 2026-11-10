@@ -311,5 +311,120 @@
         "tests/fixtures/dts/mp4-sample-not-frame.report.json"
       ]
     }
+  ],
+  "changed": [
+    {
+      "path": [
+        "STRMDATA",
+        "DTS",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value",
+        "unit"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/dtshd-all-chunks.report.json",
+        "tests/fixtures/dts/dtshd-cbr.report.json",
+        "tests/fixtures/dts/dtshd-chunk-misaligned.report.json",
+        "tests/fixtures/dts/dtshd-chunk-size-too-small.report.json",
+        "tests/fixtures/dts/dtshd-id3v1-five-char-title.report.json",
+        "tests/fixtures/dts/dtshd-id3v1-six-char-title.report.json",
+        "tests/fixtures/dts/dtshd-lossless.report.json",
+        "tests/fixtures/dts/dtshd-metadata-differs.report.json",
+        "tests/fixtures/dts/dtshd-reserved-values.report.json",
+        "tests/fixtures/dts/dtshd-stream-size-wrong.report.json",
+        "tests/fixtures/dts/dtshd-stream-truncated.report.json",
+        "tests/fixtures/dts/dtshd-table-size.report.json",
+        "tests/fixtures/dts/dtshd-trailing-data.report.json",
+        "tests/fixtures/dts/dtshd-unknown-chunk.report.json",
+        "tests/fixtures/dts/dtshd-x.report.json"
+      ]
+    },
+    {
+      "path": [
+        "DTS",
+        "Statistics",
+        "Bitrate Mode"
+      ],
+      "fields": [
+        "value",
+        "unit"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/exss-assets-overrun.report.json",
+        "tests/fixtures/dts/exss-bad-component-sync.report.json",
+        "tests/fixtures/dts/exss-bad-crc.report.json",
+        "tests/fixtures/dts/exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/exss-descriptor-overrun.report.json",
+        "tests/fixtures/dts/exss-lbr-and-xll.report.json",
+        "tests/fixtures/dts/exss-lossless-96k.report.json",
+        "tests/fixtures/dts/exss-lossless.report.json",
+        "tests/fixtures/dts/exss-overrun.report.json",
+        "tests/fixtures/dts/exss-padded.report.json",
+        "tests/fixtures/dts/exss-remapping-without-mask.report.json",
+        "tests/fixtures/dts/exss-sizes-overrun.report.json",
+        "tests/fixtures/dts/exss-two-assets.report.json",
+        "tests/fixtures/dts/exss-wide-header.report.json",
+        "tests/fixtures/dts/le16-exss-assets-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-bad-component-sync.report.json",
+        "tests/fixtures/dts/le16-exss-bad-crc.report.json",
+        "tests/fixtures/dts/le16-exss-component-header-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-descriptor-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-lossless.report.json",
+        "tests/fixtures/dts/le16-exss-sizes-overrun.report.json",
+        "tests/fixtures/dts/le16-exss-two-assets.report.json",
+        "tests/fixtures/dts/xll-2-0-16bit-48k.report.json",
+        "tests/fixtures/dts/xll-2-0-20bit-48k.report.json",
+        "tests/fixtures/dts/xll-2-0-24bit-192k.report.json",
+        "tests/fixtures/dts/xll-2-0-24bit-48k.report.json",
+        "tests/fixtures/dts/xll-2-0-24bit-96k.report.json",
+        "tests/fixtures/dts/xll-5-1-24bit-192k.report.json",
+        "tests/fixtures/dts/xll-5-1-24bit-48k.report.json",
+        "tests/fixtures/dts/xll-5-1-24bit-96k.report.json",
+        "tests/fixtures/dts/xll-7-1-24bit-48k.report.json",
+        "tests/fixtures/dts/xll-7-1-24bit-96k.report.json",
+        "tests/fixtures/dts/xll-7-1-hierarchy-after-rejected-set.report.json",
+        "tests/fixtures/dts/xll-downmix-type-7.report.json",
+        "tests/fixtures/dts/xll-frame-size.report.json",
+        "tests/fixtures/dts/xll-future-version.report.json",
+        "tests/fixtures/dts/xll-header-padding.report.json",
+        "tests/fixtures/dts/xll-interpolated.report.json",
+        "tests/fixtures/dts/xll-lt-rt.report.json",
+        "tests/fixtures/dts/xll-mask-count.report.json",
+        "tests/fixtures/dts/xll-navigation-bad-crc.report.json",
+        "tests/fixtures/dts/xll-navigation-overrun.report.json",
+        "tests/fixtures/dts/xll-no-mask.report.json",
+        "tests/fixtures/dts/xll-replacement-set.report.json",
+        "tests/fixtures/dts/xll-resolution-over-width.report.json",
+        "tests/fixtures/dts/xll-scalable-lsbs.report.json",
+        "tests/fixtures/dts/xll-set-bad-crc.report.json",
+        "tests/fixtures/dts/xll-set-header-overrun.report.json",
+        "tests/fixtures/dts/xll-set-size.report.json",
+        "tests/fixtures/dts/xll-x-downmix-type-7.report.json",
+        "tests/fixtures/dts/xll-x-imax-d1.report.json",
+        "tests/fixtures/dts/xll-x-imax.report.json",
+        "tests/fixtures/dts/xll-x-interpolated.report.json",
+        "tests/fixtures/dts/xll-x-navigation-bad-crc.report.json",
+        "tests/fixtures/dts/xll-x-no-mask.report.json",
+        "tests/fixtures/dts/xll-x-no-segment-samples.report.json",
+        "tests/fixtures/dts/xll-x-other-word.report.json",
+        "tests/fixtures/dts/xll-x-rejected-set.report.json",
+        "tests/fixtures/dts/xll-x-segment-samples.report.json",
+        "tests/fixtures/dts/xll-x-storage-width-18.report.json",
+        "tests/fixtures/dts/xll-x.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "isVbr"
+      ],
+      "goldens": [
+        "tests/fixtures/dts/rate-code.report.json",
+        "tests/fixtures/dts/rate-lossless.report.json"
+      ]
+    }
   ]
 }

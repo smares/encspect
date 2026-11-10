@@ -135,6 +135,16 @@
         "tests/fixtures/wav/built-w64-mp2.report.json",
         "tests/fixtures/wav/external-w64-mp2.report.json"
       ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "isVbr"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
+      ]
     }
   ]
 }
