@@ -53,7 +53,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
-| TTA | not planned | routed | not planned | not planned | not planned | yes | no |
+| TTA | not planned | routed | not planned | not planned | not planned | yes | yes |
 | OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
 | TAK | not planned | not planned | not planned | not planned | not planned | yes | no |
 | Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |

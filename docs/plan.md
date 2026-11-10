@@ -115,10 +115,13 @@ Each milestone is something a user can do that they could not do before. Its ite
 - **The gate:** a milestone ends with the independent reviews of its work ([architecture.md, "Verification"](architecture.md#verification)), their findings fixed, and the push and nightly runs green on every platform.
 - **The release:** a passed gate is tagged `v0.N.0` and released ([development.md, "Releases"](development.md#releases)).
 - **0.1.0** was released after Gate 2; Gate 3 and the work after it lead into 0.2 ([history.md](history.md)).
+- **0.2.0** follows Gate 0.2, passed on 2026-11-10 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.2.0.md](releases/0.2.0.md).
 
 ### 0.2: Lossless complete
 
 Every lossless format with a decoder design is decoded and measured, except WMA Lossless (0.5) and DTS-HD's lossless extension (a follow-up after 0.5). Files that lossyWAV processed are recognized, and TAK and OptimFROG files are named.
+
+**Status:** built; the gate passed on 2026-11-10 at a858ea0b, with seven independent reviews and their fixes (#254 to #260).
 
 1. **The lossy groundwork** (#232, merged 2026-11-08): determinism (`DetMath`, the scan and its fixes), withheld output in the contract and the measurer, and the PCM comparison tools; step 0 of the [lossy decoders' rollout](design/lossy-decoders.md#rollout).
 2. **lossyWAV and lossyFLAC detection** (done: PRs #239, #240, #242 and #243), with priority. It was paused only to save tokens and was never meant to be postponed (the lead, 2026-11-08).
@@ -163,6 +166,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - Matroska header stripping for AAC, AC-3, DTS and MPEG audio (mkvmerge writes it): a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
 3. **The small separate items:** WavPack 1 to 3; finding the correction file that belongs to a WavPack `.wv` (`.wvc`) or an OptimFROG DualStream `.ofs` (`.ofc`), with host access to a companion file (found by base name and extension, `x.wv` to `x.wvc` and `x.ofs` to `x.ofc`, beside the input; an input with no folder, a stream or standard input, reports the pair as unchecked), checking the pair against each other and reporting it as lossless only when the correction file is there and consistent, in the same words for both (for OptimFROG on headers and checksums alone, since it has no decoder; [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#optimfrog-dualstream), the lead, 2026-11-09); the TAK frame walk (the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats; decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)); ASF script command and marker contents.
 4. **The coding graphs of formats whose data the parsers already read,** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
+   - With them, TrueHD's "Stereo Coding" from the matrix parameters of the substream blocks, which the parser already reads: a tally and its category series under the name, unit and axis of the other formats' "Stereo Coding" (the lead, 2026-11-10; [lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)).
 5. **A guess at the FLAC compression level** (the lead, 2026-11-08). The frames do not store the level, but each libFLAC level picks a typical block size, maximum predictor order and partition order.
    - Named as the encoder's settings with a confidence, as LAME's presets are, from reference files of each level, across libFLAC versions, and of FFmpeg's encoder, whose defaults differ.
    - Levels that share their settings are named together, never one of them by chance.

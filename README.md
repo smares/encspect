@@ -9,7 +9,7 @@ Think EncSpot, but modern and with many more formats.
 
 ## Status
 
-Version 0.1.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
+Version 0.2.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
@@ -24,10 +24,10 @@ Formats read so far ([details](docs/formats/README.md)):
 - WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, with an optional decode that verifies the CRCs and the MD5 of the audio
 - FLAC (`.flac`, and in Ogg), with an optional decode that verifies the MD5 of the audio
 - Monkey's Audio (`.ape`), with an optional decode of files of versions 3.80 to 3.99 and 4.11 that verifies the CRC or checksum of every frame
-- TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames
-- OptimFROG (`.ofr`) at header level: its blocks, stored WAV header and encoder settings, verified by the CRC-32 of every data block
+- TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames, and decoded for `--measure` (audio format 1)
+- OptimFROG (`.ofr`, `.ofs`, `.ofc`) at header level: its blocks, stored WAV header and encoder settings, verified by the CRC-32 of every data block
 - TAK (`.tak`) at header level: its metadata objects with their CRC-24s, stream info, encoder preset and stored WAV header
-- Apple Lossless (ALAC) frame by frame in MP4 and M4A and in Matroska, with its elements, filters and residual codes walked and no decoder
+- Apple Lossless (ALAC) frame by frame in MP4 and M4A and in Matroska, with its elements, filters and residual codes walked, and decoded for `--measure` (ALAC stores no checksum to verify)
 - Dolby TrueHD and MLP (`.thd`, `.mlp`), with an optional decode that verifies the lossless checks of the audio
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio (versions 1 and 2, Professional, Lossless and Voice frame by frame)
 - WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level (PCM, floating-point, A-law and mu-law samples are decoded for `--measure`), and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples
@@ -37,9 +37,9 @@ Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis com
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
-Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, TTA, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS, DC offset, clipping, digital silence, bit depth), the loudness (integrated, range, maxima; ITU-R BS.1770 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
+Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, Dolby TrueHD and MLP, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Phases 2 and 3, the lossy and the lossless formats with the lossless decoders, are done, and so are the measurements and the cross-checks against the formats' official decoders. Next: 0.2, lossless complete, then the lossy decoders ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
+Version 0.2 completes the lossless formats with their decoders and the measurements. Next: 0.3, the first lossy decoders (MPEG audio, Vorbis, Opus, AC-3 and E-AC-3), so lossy files are measured too ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 
@@ -53,7 +53,7 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
 - [Plan](docs/plan.md): goals, decisions, the milestones and what is not planned
 - [History](docs/history.md): the phases and gates passed, and what each built
-- [Release notes](docs/releases/0.1.0.md)
+- [Release notes](docs/releases/0.2.0.md)
 
 ## Quick start
 
