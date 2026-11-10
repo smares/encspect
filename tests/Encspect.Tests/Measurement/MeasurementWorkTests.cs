@@ -268,12 +268,12 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(ratio <= Factor);
     }
 
-    // Blocks of 1, 4 and 16 samples (the smallest FLAC frame is 16): the fixed charge per block and measured channel
+    // Blocks of 1, 4, 16 and 64 samples (the smallest FLAC frame is 16; 64 is where the time per unit peaked): the fixed charge per block and measured channel
     // (StreamMeasurer.BlockUnitsPerChannel) keeps the time per unit within the same bound as for blocks of 4,096.
     public static TheoryData<MeasurementKinds, int, int> SmallBlockCases()
     {
         var data = new TheoryData<MeasurementKinds, int, int>();
-        foreach (int block in new[] { 1, 4, 16 })
+        foreach (int block in new[] { 1, 4, 16, 64 })
         {
             foreach (int channels in new[] { 1, 2 })
             {

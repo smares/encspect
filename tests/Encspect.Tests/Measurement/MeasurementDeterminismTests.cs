@@ -460,7 +460,7 @@ public class MeasurementDeterminismTests
     {
         public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
 
-        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => string.Empty;
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind) => OwnerOf(reader, reader.GetTypeDefinition(handle));
 
         public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind) => TypeName(md, handle);
 
@@ -497,21 +497,49 @@ public class MeasurementDeterminismTests
         return md.GetString(type.Namespace) + "." + md.GetString(type.Name);
     }
 
-    // The scope and, transitively, every other type of the assembly that the scope's methods call (a lossy decoder reaching a helper in
-    // <project>.Decoding.Lossless); calls into other assemblies are scanned as their own scope.
+    // The scope and, transitively, every other type of the assembly that the scope's methods reach: a method call (a lossy decoder reaching a
+    // helper in <project>.Decoding.Lossless), a method of a generic type instance of the assembly (Ring<float>.Push), and an interface call, which
+    // reaches every type of the assembly that implements the interface (an interface of the assembly or one of Encspect's other assemblies).
+    // Calls into other assemblies are scanned as their own scope.
     internal static Func<string, bool> WithCalledTypes(Assembly assembly, Func<string, bool> inScope)
     {
         using FileStream file = File.OpenRead(assembly.Location);
         using var pe = new PEReader(file);
         MetadataReader md = pe.GetMetadataReader();
+        var names = new NameProvider(md);
         var included = new HashSet<string>();
+        var calledInterfaces = new HashSet<string>();
+        var implemented = new Dictionary<string, List<string>>();
+        foreach (TypeDefinitionHandle handle in md.TypeDefinitions)
+        {
+            TypeDefinition type = md.GetTypeDefinition(handle);
+            foreach (InterfaceImplementationHandle implementation in type.GetInterfaceImplementations())
+            {
+                EntityHandle contract = md.GetInterfaceImplementation(implementation).Interface;
+                string name = contract.Kind switch
+                {
+                    HandleKind.TypeDefinition => OwnerOf(md, md.GetTypeDefinition((TypeDefinitionHandle)contract)),
+                    HandleKind.TypeReference => TypeName(md, (TypeReferenceHandle)contract),
+                    HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)contract).DecodeSignature(names, null),
+                    _ => string.Empty,
+                };
+                if (!implemented.TryGetValue(name, out List<string>? owners))
+                {
+                    implemented[name] = owners = [];
+                }
+
+                owners.Add(OwnerOf(md, type));
+            }
+        }
+
         for (bool grew = true; grew;)
         {
             grew = false;
             foreach (TypeDefinitionHandle handle in md.TypeDefinitions)
             {
                 TypeDefinition type = md.GetTypeDefinition(handle);
-                if (!(inScope(OwnerOf(md, type)) || included.Contains(OwnerOf(md, type))))
+                string owner = OwnerOf(md, type);
+                if (!(inScope(owner) || included.Contains(owner)))
                 {
                     continue;
                 }
@@ -527,9 +555,38 @@ public class MeasurementDeterminismTests
                     foreach (EntityHandle token in BoundaryScanner.TokensIn(pe.GetMethodBody(method.RelativeVirtualAddress).GetILBytes()!, md.GetString(method.Name)))
                     {
                         EntityHandle target = token.Kind == HandleKind.MethodSpecification ? md.GetMethodSpecification((MethodSpecificationHandle)token).Method : token;
+                        string? called = null;
+                        string? contract = null;
                         if (target.Kind == HandleKind.MethodDefinition)
                         {
-                            grew |= included.Add(OwnerOf(md, md.GetTypeDefinition(md.GetMethodDefinition((MethodDefinitionHandle)target).GetDeclaringType())));
+                            TypeDefinition declaring = md.GetTypeDefinition(md.GetMethodDefinition((MethodDefinitionHandle)target).GetDeclaringType());
+                            called = OwnerOf(md, declaring);
+                            contract = (declaring.Attributes & System.Reflection.TypeAttributes.Interface) != 0 ? called : null;
+                        }
+                        else if (target.Kind == HandleKind.MemberReference)
+                        {
+                            MemberReference member = md.GetMemberReference((MemberReferenceHandle)target);
+                            string parent = member.Parent.Kind switch
+                            {
+                                HandleKind.TypeSpecification => md.GetTypeSpecification((TypeSpecificationHandle)member.Parent).DecodeSignature(names, null),
+                                HandleKind.TypeReference => TypeName(md, (TypeReferenceHandle)member.Parent),
+                                _ => string.Empty,
+                            };
+                            called = member.Parent.Kind == HandleKind.TypeSpecification ? parent : null;
+                            contract = parent.StartsWith("Encspect.", StringComparison.Ordinal) ? parent : null;
+                        }
+
+                        if (called is not null)
+                        {
+                            grew |= included.Add(called) && md.TypeDefinitions.Any(t => OwnerOf(md, md.GetTypeDefinition(t)) == called);
+                        }
+
+                        if (contract is not null && calledInterfaces.Add(contract) && implemented.TryGetValue(contract, out List<string>? owners))
+                        {
+                            foreach (string implementation in owners)
+                            {
+                                grew |= included.Add(implementation);
+                            }
                         }
                     }
                 }
@@ -602,7 +659,8 @@ public class MeasurementDeterminismTests
     public void TheMeasurementCodeCallsNoLibraryMathNoFusedOrNativeOrEstimateOperationAndNoFloatingPointReduction()
     {
         Assembly host = typeof(FftPlan).Assembly;
-        IReadOnlyList<string> found = BannedCalls(host, owner => owner.StartsWith("Encspect.Host.Measurement.", StringComparison.Ordinal) || owner == "Encspect.Host.MeasurementText");
+        Func<string, bool> scope = owner => owner.StartsWith("Encspect.Host.Measurement.", StringComparison.Ordinal) || owner == "Encspect.Host.MeasurementText";
+        IReadOnlyList<string> found = BannedCalls(host, WithCalledTypes(host, scope));
         Assert.Empty(found);
 
         // The scan reads something: the measurement namespace has methods that call Math.Sqrt-like members and the like.
@@ -647,6 +705,14 @@ public class MeasurementDeterminismTests
         Func<string, bool> scope = owner => owner == "Encspect.Tests.Measurement.TransitiveCaller";
         Assert.Empty(BannedCalls(tests, scope));
         Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, scope)), f => f.EndsWith("Math.Cos", StringComparison.Ordinal));
+
+        Func<string, bool> generic = owner => owner == "Encspect.Tests.Measurement.TransitiveGenericCaller";
+        Assert.Empty(BannedCalls(tests, generic));
+        Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, generic)), f => f.EndsWith("Math.Sin", StringComparison.Ordinal));
+
+        Func<string, bool> viaInterface = owner => owner == "Encspect.Tests.Measurement.TransitiveInterfaceCaller";
+        Assert.Empty(BannedCalls(tests, viaInterface));
+        Assert.Contains(BannedCalls(tests, WithCalledTypes(tests, viaInterface)), f => f.EndsWith("Math.Tan", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -713,6 +779,31 @@ internal static class TransitiveCaller
 internal static class TransitiveCallee
 {
     public static double Helper(double x) => Math.Cos(x);
+}
+
+internal sealed class TransitiveGeneric<T>
+{
+    public double Helper(double x) => Math.Sin(x);
+}
+
+internal static class TransitiveGenericCaller
+{
+    public static double Call(double x) => new TransitiveGeneric<float>().Helper(x);
+}
+
+internal interface ITransitiveContract
+{
+    double Run(double x);
+}
+
+internal sealed class TransitiveImplementation : ITransitiveContract
+{
+    public double Run(double x) => Math.Tan(x);
+}
+
+internal static class TransitiveInterfaceCaller
+{
+    public static double Call(ITransitiveContract contract, double x) => contract.Run(x);
 }
 
 // Calls the tests' negative control finds; never run.

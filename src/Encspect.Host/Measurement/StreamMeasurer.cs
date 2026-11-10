@@ -287,7 +287,8 @@ internal sealed class StreamMeasurer
     public bool IsStarted => _hasStarted;
 
     // The most spans of withheld output kept between two blocks; contiguous spans of one reason merge, so only a decoder that
-    // alternates reasons or leaves gaps between its spans reaches it. Past it a span is counted at once, as if it lay in a jump.
+    // alternates reasons or leaves gaps between its spans reaches it. Past it a span is counted at once, as if it lay in a jump. A span may arrive before the block it lies in; one past the cap that lies in a later jump than the next
+    // block is taken back at that block and counts as lost there (it takes more than 1,024 spans between two blocks).
     public const int MaxPendingSpans = 1024;
 
     private readonly record struct Span(long First, long End, WithholdReason Reason);
