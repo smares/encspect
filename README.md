@@ -7,6 +7,43 @@ A cross-platform GUI and CLI tool that reports everything technically knowable a
 
 Think EncSpot, but modern and with many more formats.
 
+## Screenshots
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-main-dark.png">
+  <img src="docs/images/readme-main-light.png" alt="Encspect's main window with a folder tree and a list of twelve audio files with format, codec, bitrate and encoder columns" width="800">
+</picture>
+
+The main window: folders, a list of analyzed files and their summary columns.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-detail-dark.png">
+  <img src="docs/images/readme-detail-light.png" alt="Encspect's detail window with the structure tree of an MP3 file, a hex view and a selected frame header field" width="800">
+</picture>
+
+The detail window: the structure tree down to a header field, the same bytes in the hex view and the field's bits.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-frame-map-dark.png">
+  <img src="docs/images/readme-frame-map-light.png" alt="The Frame Map of an MP3 file with one square per frame colored by block type and a hover caption" width="800">
+</picture>
+
+The Frame Map: one square per frame, here the block types of every granule, with a short-block frame hovered.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-spectrogram-dark.png">
+  <img src="docs/images/readme-spectrogram-light.png" alt="The spectrogram of a decoded FLAC file with a dashed line at its spectral cutoff of 16,796 Hz" width="800">
+</picture>
+
+The Audio panels: the spectrogram of a decoded file with its spectral cutoff marked.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-coding-summary-dark.png">
+  <img src="docs/images/readme-coding-summary-light.png" alt="The Coding Summary of an MP3 file with bars for channel modes, joint stereo modes, block sizes and block usage" width="800">
+</picture>
+
+The Coding Summary: the count and share of channel modes, stereo coding, block types and block sizes.
+
 ## Status
 
 Version 0.2.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
