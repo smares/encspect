@@ -263,10 +263,9 @@ internal static class Summary
         Records r = s.Records;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, Math.Max(0, end - start), value) { Description = description, Topic = topic };
 
-        Node? encoder = null;
-        if (r.Stream is not null)
+        Node? encoder = r.Stream is not null ? EncoderNode(r, Cover) : null;
+        if (encoder is not null)
         {
-            encoder = EncoderNode(r, Cover);
             s.Leading.Add(encoder);
         }
 
@@ -321,7 +320,8 @@ internal static class Summary
         double duration = rate > 0 ? info.Samples / (double)rate : 0;
         uint? mask = r.WaveDataObject?.WavHeader?.Format?.Mask;
         IReadOnlyList<Speaker>? layout = LayoutOf(info, mask);
-        string preset = r.HasEncoderInfo ? Layout.PresetName(r.Preset, r.Evaluation) : $"-p{info.Profile}";
+        // Without an encoder info object the evaluation level is unknown (the SDK tells applications to show it so), so the profile does not read as a standard-evaluation preset.
+        string preset = r.HasEncoderInfo ? Layout.PresetName(r.Preset, r.Evaluation) : $"-p{info.Profile} (evaluation unknown)";
         statistics.Add(Cover("Codec", Layout.CodecName(info.Codec) ?? $"undefined ({info.Codec})", Explain.StatCodec));
         statistics.Add(Cover("Profile", NodeValue.Integer(info.Profile), Explain.StatProfile, Topics.Presets));
         statistics.Add(Cover("Preset", preset, Explain.StatPreset, Topics.Presets));
@@ -373,21 +373,37 @@ internal static class Summary
         });
     }
 
-    private static Node EncoderNode(Records r, Func<string, NodeValue?, string, string?, Node> cover)
+    // The encoder from the encoder info object; a file of TAK 1.0 has none, and only a stream of codec 0 with no such object at all is named TAK 1.0, from the SDK's rule. An object that
+    // is there but whose size breaks the layout names nothing, and one whose CRC-24 fails names its version with medium confidence.
+    private static Node? EncoderNode(Records r, Func<string, NodeValue?, string, string?, Node> cover)
     {
         if (r.HasEncoderInfo)
         {
             int v = r.EncoderVersion;
             string version = $"{(v >> 16) & 255}.{(v >> 8) & 255}.{v & 255}";
-            Node high = cover("Encoder", $"TAK {version}", Explain.Encoder, ClaimRoles.EncoderTopic);
-            high.Add(cover("Confidence", "High", Explain.ConfidenceHigh, null));
-            high.Add(cover("Evidence", $"The encoder info object states version {version}", Explain.Evidence, null));
-            return high;
+            Node node = cover("Encoder", $"TAK {version}", Explain.Encoder, ClaimRoles.EncoderTopic);
+            if (r.EncoderInfoObject!.IsCrcValid)
+            {
+                node.Add(cover("Confidence", "High", Explain.ConfidenceHigh, null));
+                node.Add(cover("Evidence", $"The encoder info object states version {version}", Explain.Evidence, null));
+            }
+            else
+            {
+                node.Add(cover("Confidence", "Medium", Explain.ConfidenceDamaged, null));
+                node.Add(cover("Evidence", $"The encoder info object states version {version}, but its CRC-24 fails, so the bytes may be damaged", Explain.Evidence, null));
+            }
+
+            return node;
+        }
+
+        if (r.Objects.Any(o => o.Id == Layout.EncoderInfo) || r.Stream is not { Codec: 0 })
+        {
+            return null;
         }
 
         Node medium = cover("Encoder", "TAK 1.0", Explain.Encoder, ClaimRoles.EncoderTopic);
         medium.Add(cover("Confidence", "Medium", Explain.ConfidenceMedium, null));
-        medium.Add(cover("Evidence", "The file has no encoder info object, which the SDK's decoder reads as version 1.0.0; the stream info is the only evidence", Explain.Evidence, null));
+        medium.Add(cover("Evidence", "The stream info states codec 0 and the file has no encoder info object, which the SDK's decoder reads as version 1.0.0; the version is inferred from a missing object", Explain.Evidence, null));
         return medium;
     }
 }

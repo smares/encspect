@@ -71,13 +71,14 @@ internal static class Explain
 
     public const string Encoder = "The program that wrote the file, as the encoder info object shows it, with the evidence and the confidence in it.";
     public const string ConfidenceHigh = "High: the encoder info object states the version of the encoder that wrote the file.";
-    public const string ConfidenceMedium = "Medium: the version is inferred from a missing object, not stated: the SDK's decoder takes version 1.0.0 for a file without an encoder info object.";
+    public const string ConfidenceMedium = "Medium: the version is inferred from a missing object, not stated: the SDK says a stream of codec 0 is TAK 1.0, and its decoder takes version 1.0.0 for a file without an encoder info object.";
+    public const string ConfidenceDamaged = "Medium: the encoder info object states the version, but its CRC-24 fails, so the bytes may be damaged.";
     public const string Evidence = "Something in the file that points to the encoder.";
 
     public const string Statistics = "Figures computed over the metadata of the file.";
     public const string StatCodec = "The codec from the stream info.";
     public const string StatProfile = "The profile from the stream info: the decoder's processing and memory needs (the SDK's documentation).";
-    public const string StatPreset = "The preset as Takc writes it: -p and the level, then e for the evaluation Extra or m for Max. Without an encoder info object it is the profile with the evaluation unknown.";
+    public const string StatPreset = "The preset as Takc writes it: -p and the level, then e for the evaluation Extra or m for Max. Without an encoder info object it is the profile with the evaluation shown as unknown.";
     public const string StatFrameLength = "The samples of each channel in a frame, from the stream info.";
     public const string StatSamples = "The samples of each channel the stream info states.";
     public const string StatDuration = "The duration of the samples at the sample rate.";

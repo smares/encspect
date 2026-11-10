@@ -214,7 +214,7 @@ public class TakFixtureTests
     {
         Assert.Equal(DecodeStatus.NoDecoder, verification.Decoding);
         JsonElement checksums = manifest.GetProperty("checksums");
-        ChecksumTally tally = verification.Checksums.Single(c => c.Name == "header CRC-24");
+        ChecksumTally tally = verification.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal(checksums.GetProperty("compared").GetInt64(), tally.Stored);
         Assert.Equal(checksums.GetProperty("compared").GetInt64(), tally.Checked);
         Assert.Equal(checksums.GetProperty("failed").GetInt64(), tally.Failed);

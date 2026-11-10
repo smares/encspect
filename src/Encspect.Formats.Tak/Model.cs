@@ -5,7 +5,7 @@ namespace Encspect.Formats.Tak;
 // The names of the checksums the stream declares, as the decoder's results would find them.
 internal static class ChecksumNames
 {
-    public const string ObjectCrc24 = "header CRC-24";
+    public const string ObjectCrc24 = "metadata CRC-24";
     public const string FrameHeaderCrc24 = "frame header CRC-24";
     public const string FrameDataCrc24 = "frame data CRC-24";
     public const string Md5 = "MD5";

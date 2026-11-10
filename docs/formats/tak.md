@@ -20,7 +20,7 @@ Sources:
 
 ## Where the files depart from takStream.pas
 
-The files win. Each departure holds in every file Takc wrote and in both real files, and a test asserts it over all of them.
+The files win. Each departure holds in every file Takc wrote, and a test asserts it over all of them; both real files show the first three, and only the pipe-encoded files have a padding object.
 
 - **An object's size counts its CRC-24.** takStream.pas says the size covers the data without the CRC. The stream info of `lostchord-tak_2_2_0.tak` states 13 bytes: 10 of data and the 3-byte CRC-24.
 - **Wave data has one CRC-24, at the end,** over the two 3-byte sizes and the header and footer bytes (53 = 6 + 44 + 3). takStream.pas puts a CRC-24 right after the sizes. MediaInfo's reader reads the same order.
@@ -48,20 +48,20 @@ The files win. Each departure holds in every file Takc wrote and in both real fi
 ## Reported
 
 - The sample rate, channels, bits per sample, samples, duration and average bitrate (the audio data's bytes over the duration).
-- Statistics: Codec, Profile, Preset (as Takc prints it: "-p2", "-p3e", "-p4m"; without the encoder info object it is the profile with the evaluation unknown), Frame Length, Channel Layout, and "Verified Header Checksums" and "Failed Header Checksums" over the metadata objects (the unit "Header", as Musepack SV8 names the CRC of its stream header).
+- Statistics: Codec, Profile, Preset (as Takc prints it: "-p2", "-p3e", "-p4m"; without the encoder info object it reads "-p2 (evaluation unknown)"), Frame Length, Channel Layout, and "Verified Header Checksums" and "Failed Header Checksums" over the metadata objects (the unit "Header", as Musepack SV8 names the CRC of its stream header).
 - Channel layout, in the words of TTA and Monkey's Audio: the speaker assignment of the stream info where it has one; else the nonzero channel mask of the stored WAV header; else one channel is center and two are left and right; more have no layout.
-- Encoder "TAK 2.3.3" (high confidence) from the encoder info object. A file without the object is "TAK 1.0" with medium confidence and the stream info as evidence: the SDK's decoder takes 1.0.0 for such a file, and the version is inferred from a missing object, not stated. Processor lossyWAV from a `fact` chunk in the wave data, high confidence, as for the other formats that keep a WAV header. Codec 3 is named and makes no claim of its own: nothing checkable says whether the beta picked it itself or because the user asked.
+- Encoder "TAK 2.3.3" (high confidence) from the encoder info object. A stream of codec 0 with no encoder info object at all is "TAK 1.0" with medium confidence and the stream info as evidence: the SDK says codec 0 is TAK 1.0 and its decoder takes 1.0.0 for such a file, and the version is inferred from a missing object, not stated. An encoder info object whose CRC-24 fails still names its version, with medium confidence and the failing CRC-24 in the evidence; one whose size breaks the layout, or a stream of another codec without the object, names no encoder. Processor lossyWAV from a `fact` chunk in the wave data, high confidence, as for the other formats that keep a WAV header. Codec 3 is named and makes no claim of its own: nothing checkable says whether the beta picked it itself or because the user asked.
 - Values takStream.pas does not define are Info findings (`tak.value-undefined`): a codec not listed, a data type other than 0, a bits per sample code above 16, a sample rate above 262,144 Hz, valid bits over the bits per sample, an evaluation of 3, a speaker code of 19 to 63. A reserved frame size type (10 to 15) is `tak.frame-size-type-reserved`, and a frame size that does not fit the rate (a time type of more than 16,384 samples, a size type of more than 250 ms) is `tak.frame-size-invalid`.
 - The stored WAV header: `tak.wav-header-damaged`, `tak.wav-channels-differ`, `tak.channel-mask-mismatch`, `tak.header-fact-text-unrecognized`; the writer claims of tags: `tak.writer-claim-differs`. Data that does not begin with the stream ID, when the parser is forced: `tak.no-signature`.
 - A CRC-24 that fails is `tak.object-crc-mismatch` (once, with a count); an object whose size breaks its layout is `tak.object-size-invalid`.
 
 ## Verification
 
-Four checksums are declared; no decoder exists in 0.2, so the host reports that no decoder handles the coding.
+Four checksums are declared (the metadata CRC-24 is the one the statistic "Verified Header Checksums" counts); no decoder exists in 0.2, so the host reports that no decoder handles the coding.
 
 | Checksum | Covers | Compared |
 |---|---|---|
-| header CRC-24 | a metadata object's data | yes, every object that has one |
+| metadata CRC-24 | a metadata object's data | yes, every object that has one |
 | frame header CRC-24 | a frame's header | no: the frames are not walked |
 | frame data CRC-24 | a frame's coded data | no: the frames are not walked |
 | MD5 | the raw audio | never: it needs a decoder |

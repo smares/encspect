@@ -46,7 +46,7 @@ public class TakFindingTests
         Assert.Equal(Confidence.High, stream.EncoderConfidence);
         Assert.Null(stream.Verification!.IsVerified);
         Assert.Equal(DecodeStatus.NoDecoder, stream.Verification.Decoding);
-        ChecksumTally header = stream.Verification.Checksums.Single(c => c.Name == "header CRC-24");
+        ChecksumTally header = stream.Verification.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal((4, 4, 0), (header.Stored, header.Checked, header.Failed));
         // One frame header CRC-24 and one frame data CRC-24 for each frame the stream info's samples and frame length call for: 44,100 samples in frames of 5512.
         Assert.Equal(9, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Stored);
@@ -234,13 +234,34 @@ public class TakFindingTests
     [Fact]
     public void ASeekTableIsShownAndItsCrcCompared()
     {
-        Report report = Analyze(WithObjects(Builder.StreamInfo(), Builder.SeekTable(), Builder.WaveData()));
+        Report report = Analyze(WithObjects(Builder.StreamInfo(codec: 0), Builder.SeekTable(), Builder.WaveData()));
 
         Assert.Empty(report.Findings);
         Node table = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Seek Table Object");
         Assert.True(table.Children.Single(c => c.Name == "IsCrc24Valid").Value?.AsBoolean());
         Assert.Equal("TAK 1.0", report.Streams.Single().Encoder);
         Assert.Equal(Confidence.Medium, report.Streams.Single().EncoderConfidence);
+    }
+
+    [Fact]
+    public void AnEncoderIsClaimedOnlyWhereTheObjectOrTheCodecSupportsIt()
+    {
+        // No encoder info object and a codec other than 0: nothing says the version, and the preset reads as an unknown evaluation.
+        Report none = Analyze(WithObjects(Builder.StreamInfo(), Builder.WaveData()));
+        Assert.Null(none.Streams.Single().Encoder);
+        Node statistics = none.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Statistics");
+        Assert.Equal("-p2 (evaluation unknown)", statistics.Children.Single(c => c.Name == "Preset").Value?.ToString());
+
+        // An encoder info object whose size breaks the layout names nothing either.
+        Assert.Null(Analyze(Builder.Standard(encoderInfo: Builder.Object(4, [3, 3, 2, 2, 0]))).Streams.Single().Encoder);
+
+        // A failing CRC-24 lowers the claim and says why.
+        StreamInfo damaged = Analyze(Builder.Standard(encoderInfo: Builder.EncoderInfo(crc: 0x010203))).Streams.Single();
+        Assert.Equal("TAK 2.3.3", damaged.Encoder);
+        Assert.Equal(Confidence.Medium, damaged.EncoderConfidence);
+        Report report = Analyze(Builder.Standard(encoderInfo: Builder.EncoderInfo(crc: 0x010203)));
+        Node encoder = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Encoder");
+        Assert.Contains("CRC-24 fails", encoder.Children.Single(c => c.Name == "Evidence").Value?.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -251,7 +272,7 @@ public class TakFindingTests
         Assert.Empty(report.Findings);
         Node padding = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Padding Object");
         Assert.DoesNotContain(padding.Children, c => c.Name == "CRC-24");
-        Assert.Equal(4, report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "header CRC-24").Checked);
+        Assert.Equal(4, report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "metadata CRC-24").Checked);
     }
 
     [Fact]
@@ -311,7 +332,7 @@ public class TakFindingTests
         Finding finding = Single(report, "tak.object-crc-mismatch");
         Assert.Equal("CRC-24", finding.Node?.Name);
         Assert.Single(report.Findings, f => f.Severity >= Severity.Warning);
-        ChecksumTally tally = report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "header CRC-24");
+        ChecksumTally tally = report.Streams.Single().Verification!.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal(1, tally.Failed);
         Assert.False(report.Streams.Single().Verification!.IsVerified);
         Node statistics = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Statistics");

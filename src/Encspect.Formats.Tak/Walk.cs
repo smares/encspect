@@ -5,7 +5,7 @@ namespace Encspect.Formats.Tak;
 
 // The walk over the metadata objects (takStream.pas, "MetaData"): after the stream ID each object is a header of 4 bytes (a 7-bit ID, a reserved bit, a 24-bit size), the data and
 // the CRC-24 that ends it, which the size counts; the End object (ID 0) has neither. The walk ends at the End object, or, where it is missing, at the first frame: a frame's sync word
-// 0xA0FF is stored as the bytes FF A0, which read as an object header give ID 127 with the reserved bit set and a size of 0xA0, so a frame is tested first, and only a header whose
+// 0xA0FF is stored as the bytes FF A0, which read as an object header give ID 127 with the reserved bit set and a size made of the 24 bits after that byte (A0 and the next two bytes), so a frame is tested first, and only a header whose
 // CRC-24 holds counts. It never stops on a signature alone.
 internal static class Walk
 {

@@ -121,13 +121,13 @@
               "children": [
                 {
                   "name": "Confidence",
-                  "value": "High",
+                  "value": "Medium",
                   "offset": 0,
                   "length": 10974
                 },
                 {
                   "name": "Evidence",
-                  "value": "The encoder info object states version 2.3.3",
+                  "value": "The encoder info object states version 2.3.3, but its CRC-24 fails, so the bytes may be damaged",
                   "offset": 0,
                   "length": 10974
                 }
@@ -651,7 +651,7 @@
           "decodedSamples": 0,
           "checksums": [
             {
-              "name": "header CRC-24",
+              "name": "metadata CRC-24",
               "covers": "header",
               "coversAllAudio": false,
               "stored": 4,
@@ -677,7 +677,7 @@
           ]
         },
         "encoder": "TAK 2.3.3",
-        "encoderConfidence": "High",
+        "encoderConfidence": "Medium",
         "series": []
       }
     ],
