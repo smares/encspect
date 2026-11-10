@@ -204,7 +204,7 @@ The session lends the parser its sample buffers ([decoders.md](decoders.md#the-s
 
 - **DTS's stereo coding** is not in the table: [dts.md](../formats/dts.md) already reports the core's "Stereo Coding" from the header flags.
   - What it leaves open is the stereo coding of the extensions' channels, which comes with the extension decoders this design leaves out.
-- **TrueHD's stereo coding** does not wait for a lossy decoder. Its decoder exists and reads the matrix parameters with the parser's code, so the figure needs only a tally in the parser.
+- **TrueHD's stereo coding** does not wait for a lossy decoder. Its decoder exists and reads the matrix parameters with the parser's code, so the figure needs only a tally in the parser; it is planned with the coding graphs of 0.4, item 4 ([plan.md](../plan.md#04-free-decoders-and-routes-complete)).
 - Each figure keeps the name, unit and axis of the series it joins ([CLAUDE.md](../../CLAUDE.md)), and each format's doc moves the line from "not covered yet" to what is read.
 
 ## Output and determinism
