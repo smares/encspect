@@ -59,9 +59,12 @@ LIBRARY_REFUSES = {
 }
 
 # Files MediaInfo reports an audio track for, with the reason; the run fails if it stops reporting one.
+MEDIAINFO_SHORT_TITLE = ("MediaInfo reads the file as MPEG Audio; the file is the encoder's blocks plus a 128-byte ID3v1 tag with a one- or two-character title, "
+                         "which no other built file shows, and MediaInfo's reason is not known")
 MEDIAINFO_READS = {
-    "built-tag-id3v1-short-title.ofr": "MediaInfo 24.01 and 26.01 read the file as MPEG Audio (Layer 1, 160 kb/s); the file is the encoder's blocks plus a 128-byte ID3v1 tag with a one-character title, "
-                                      "which no other built file shows, and MediaInfo's reason is not known",
+    "built-tag-id3v1-short-title.ofr": "MediaInfo 24.01 and 26.01 read it as MPEG Audio (Layer 1, 160 kb/s). " + MEDIAINFO_SHORT_TITLE,
+    "built-tag-id3v1-title-reads-as-block-end.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
+    "built-tag-id3v1-title-reads-as-block-next.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
 }
 
 
