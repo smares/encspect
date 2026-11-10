@@ -416,6 +416,72 @@ def add_levels():
         [wide], rate, 32, dict(unspecified, levels={"stream": {"sample_peak_tenths": 0, "clipping_runs": 64, "clipped_samples": 4096, "longest_clipping_run": 96, "highest_magnitude": 2147483648}}), verbatim=True)
 
 
+    add_level_figures(rate, unspecified)
+
+
+def add_level_figures(rate, unspecified):
+    """The fixtures of the silence stretches and of clipping at the bits in use (docs/design/spectral-analysis.md, "Step 6")."""
+    # Clipping at the extremes of the bits in use: 16-bit audio in 24-bit samples tops out at 0x7FFF00, which is its extreme; 0x7FFE00 is not.
+    top16, bottom = 0x7FFF00, -0x800000
+    left = [v << 8 for v in small_noise(8192, 21, 20000)]
+    left[100:103] = [top16] * 3
+    left[4080:4130] = [top16] * 50
+    left[300:304] = [bottom] * 4
+    left[500:502] = [top16] * 2
+    left[600:603] = [0x7FFE00] * 3
+    right = [v << 8 for v in small_noise(8192, 22, 20000)]
+    right[2000:2003] = [top16] * 3
+    add("levels-clipping-16-in-24", "24-bit stereo made of 16-bit noise shifted left by 8, so that its extremes are 0x7FFF00 and -0x800000. Left: runs of 3 and 50 at 0x7FFF00 (the 50 across the block boundary at 4,096) and 4 at -0x800000, "
+        "a run of 2 at 0x7FFF00 and one of 3 at 0x7FFE00 (neither counts). Right: a run of 3 at 0x7FFF00. Both signs count at the 16 bits in use.",
+        [left, right], rate, 24, dict(unspecified, levels={"stream": {"clipping_runs": 4, "clipped_samples": 60, "longest_clipping_run": 50, "low_bits_unused": 8},
+                                                           "channels": [{"clipping_runs": 3, "clipped_samples": 57, "longest_clipping_run": 50}, {"clipping_runs": 1, "clipped_samples": 3, "longest_clipping_run": 3}]}), wasted=True)
+
+    # The bits in use fall within the stream, and the runs counted at the extremes of the earlier ones are dropped.
+    def falls(final):
+        audio = [v << 8 for v in small_noise(3000, 23, 20000)] + [v << 4 for v in small_noise(3000, 24, 200000)]
+        audio[200:205] = [top16] * 5
+        audio[210:214] = [bottom] * 4
+        audio[3500:3505] = [0x7FFFF0] * 5
+        audio[3600:3603] = [bottom] * 3
+        if final == 24:
+            audio[5000] |= 1
+        return audio
+    add("levels-clipping-bits-in-use-falls", "24-bit mono: 16-bit noise shifted left by 8 with a run of 5 at 0x7FFF00 and one of 4 at -0x800000, then 20-bit noise shifted left by 4 with a run of 5 at 0x7FFFF0 and one of 3 at -0x800000, "
+        "then one odd sample: the bits in use end at 24, so neither positive run is at an extreme and only the negative ones count.", [falls(24)], rate, 24,
+        dict(unspecified, levels={"stream": {"clipping_runs": 2, "clipped_samples": 7, "longest_clipping_run": 4, "low_bits_unused": 0}}))
+    add("levels-clipping-20-in-24", "The same without the odd sample: the bits in use end at 20, so only the run at 0x7FFFF0 counts at the positive end (and both negative runs).", [falls(20)], rate, 24,
+        dict(unspecified, levels={"stream": {"clipping_runs": 3, "clipped_samples": 12, "longest_clipping_run": 5, "low_bits_unused": 4}}), wasted=True)
+
+    # Digital silence of at least 10 ms: 221 samples at 22,050 Hz.
+    rate22 = 22050
+
+    def music(length, seed, frequency, amplitude):
+        return [v if v != 0 else 1 for v in (math.floor(amplitude * (0.6 + 0.4 * math.sin(2 * math.pi * i / 3000)) * math.sin(2 * math.pi * frequency * i / rate22) + 0.5) for i in range(length))]
+
+    def quiet(length, frequency):
+        """A sine of amplitude 1.4 rounded without dither: it reads 0 near each zero crossing, about 25 samples at a time, which is under the minimum. The ends are not 0."""
+        out = [math.floor(1.4 * math.sin(2 * math.pi * frequency * i / rate22) + 0.5) for i in range(length)]
+        out[0], out[-1] = 2, 2
+        return out
+
+    zeros = lambda n: [0] * n
+    left = zeros(1) + music(5000, 1, 440, 3000) + zeros(220) + music(3000, 2, 440, 3000) + zeros(221) + quiet(4000, 100) + zeros(2000) + music(2000, 3, 440, 3000) + zeros(1000)
+    right = zeros(1) + music(5000, 4, 660, 3000) + zeros(220) + music(3000, 5, 660, 3000) + zeros(221) + quiet(4000, 130) + music(2000, 6, 660, 3000) + music(2000, 7, 660, 3000) + zeros(1000)
+    add("levels-silence-stretches", "22,050 Hz stereo (the minimum is 221 samples): tones with an envelope, one zero frame at the start (under the minimum), stretches of 220 and 221 zero frames (only the second counts), "
+        "a passage of a sine rounded without dither whose zero crossings make runs of about 25 zeros, a stretch of 2,000 zeros in the left channel only, and 1,000 zero frames at the end.",
+        [left, right], rate22, 16, dict(unspecified, levels={"stream": {"silent_stretches": 2, "silent_samples": 1221, "longest_silent_stretch": 1000, "silent_at_start": 0, "silent_at_end": 1000},
+                                                             "channels": [{"silent_stretches": 3, "silent_samples": 3221, "longest_silent_stretch": 2000, "silent_at_start": 0, "silent_at_end": 1000},
+                                                                          {"silent_stretches": 2, "silent_samples": 1221, "longest_silent_stretch": 1000, "silent_at_start": 0, "silent_at_end": 1000}]}))
+
+    gapped = small_noise(8192, 25, 299, nonzero=True)
+    gapped[1748:2048] = zeros(300)
+    gapped[3072:3372] = zeros(300)
+    gapped[4620:5120] = zeros(500)
+    add("levels-silence-stretches-gaps", "44.1 kHz noise in blocks of 1,024 with the third and the sixth removed: 300 zero frames end the block before the first gap and 300 start the block after it (two parts under the minimum of 441: no stretch), "
+        "500 end the block before the second gap (a stretch).", [gapped], rate, 16,
+        dict(unspecified, levels={"stream": {"silent_stretches": 1, "silent_samples": 500, "longest_silent_stretch": 500, "silent_at_start": 0, "silent_at_end": 0, "zero_samples": 1100}}), block=1024, drop=(2, 5))
+
+
 def decoded_flac(relative):
     """The samples of a committed FLAC fixture (path under tests/fixtures), one list a channel."""
     stream = m.Stream((ROOT / "tests" / "fixtures" / relative).read_bytes())
@@ -633,7 +699,8 @@ def add_loudness():
 WAV_TWINS = ["sine-bin-center", "sine-8-bits", "sine-24-bits", "sine-32-bits", "lines-16000-44100", "lines-16000-then-silence", "lines-3200-8000", "lines-8000-22050",
              "lines-20000-192000", "white-2000", "short-1000-samples", "surround-5-1-wideband-lfe", "levels-sine-full-scale",
              "levels-most-negative-8-bits", "levels-square-full-scale", "levels-dc-offset", "levels-clipping-runs", "levels-silence-positions", "levels-silence-stereo",
-             "levels-low-bits-24-in-16", "levels-silent", "levels-full-scale-32-bits"]
+             "levels-low-bits-24-in-16", "levels-silent", "levels-full-scale-32-bits", "levels-clipping-16-in-24", "levels-clipping-bits-in-use-falls",
+             "levels-clipping-20-in-24", "levels-silence-stretches"]
 
 # The WAVE channel mask of a channel count that has a layout (KSAUDIO_SPEAKER_5POINT1): front left and right, center, LFE, back left and right.
 MASKS = {6: 0x3F}

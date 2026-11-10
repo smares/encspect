@@ -87,6 +87,8 @@ public class MeasurementFixtureTests
         JsonElement levels = model.GetProperty("levels");
         Assert.Equal(levels.GetProperty("bits").GetInt32(), m.Levels!.BitsPerSample);
         Assert.Equal(SampleFormat.Integer, m.Levels.Format);
+        Assert.Equal(levels.GetProperty("bits_in_use").GetInt32(), m.Levels.ClippingBitsInUse);
+        Assert.Equal(levels.GetProperty("minimum_silent_stretch").GetInt32(), m.Levels.MinimumSilentStretch);
         AssertLevels(levels.GetProperty("stream"), m.Levels.Stream, $"{name} stream");
         int channelIndex = 0;
         foreach (JsonElement channel in levels.GetProperty("channels").EnumerateArray())
@@ -316,6 +318,9 @@ public class MeasurementFixtureTests
         Exact("clipping_runs", actual.ClippingRuns);
         Exact("clipped_samples", actual.ClippedSamples);
         Exact("longest_clipping_run", actual.LongestClippingRun);
+        Exact("silent_stretches", actual.SilentStretches);
+        Exact("silent_samples", actual.SilentSamples);
+        Exact("longest_silent_stretch", actual.LongestSilentStretch);
         Exact("silent_at_start", actual.SilentAtStart);
         Exact("silent_at_end", actual.SilentAtEnd);
         Exact("zero_samples", actual.ZeroSamples);
@@ -379,6 +384,9 @@ public class MeasurementFixtureTests
                 "clipping_runs" => actual.ClippingRuns,
                 "clipped_samples" => actual.ClippedSamples,
                 "longest_clipping_run" => actual.LongestClippingRun,
+                "silent_stretches" => actual.SilentStretches,
+                "silent_samples" => actual.SilentSamples,
+                "longest_silent_stretch" => actual.LongestSilentStretch,
                 "silent_at_start" => actual.SilentAtStart,
                 "silent_at_end" => actual.SilentAtEnd,
                 "zero_samples" => actual.ZeroSamples,
