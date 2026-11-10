@@ -215,7 +215,7 @@ public class MeasurementLevelFiguresTests
         for (int i = 0; i + 1 < cuts.Count; i++)
         {
             segments.Add((position, [.. data.Select(d => d[cuts[i]..cuts[i + 1]])]));
-            position += cuts[i + 1] - cuts[i] + (i % 2 == 0 ? random.Next(5, 50) : 0);
+            position += cuts[i + 1] - cuts[i] + random.Next(5, 50);
         }
 
         int or = 0;
