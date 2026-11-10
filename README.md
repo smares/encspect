@@ -26,6 +26,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - Monkey's Audio (`.ape`), with an optional decode of files of versions 3.80 to 3.99 and 4.11 that verifies the CRC or checksum of every frame
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames
 - OptimFROG (`.ofr`) at header level: its blocks, stored WAV header and encoder settings, verified by the CRC-32 of every data block
+- TAK (`.tak`) at header level: its metadata objects with their CRC-24s, stream info, encoder preset and stored WAV header
 - Apple Lossless (ALAC) frame by frame in MP4 and M4A and in Matroska, with its elements, filters and residual codes walked and no decoder
 - Dolby TrueHD and MLP (`.thd`, `.mlp`), with an optional decode that verifies the lossless checks of the audio
 - ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio (versions 1 and 2, Professional, Lossless and Voice frame by frame)

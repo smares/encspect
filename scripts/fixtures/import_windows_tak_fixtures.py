@@ -10,7 +10,7 @@ pinned in tak_tool.py and never committed); every case was encoded twice and `re
 byte. This script never runs an encoder.
 
 For each case that wrote a file and whose decoded audio equals the input, it copies the file to `external-<case>.tak` and writes
-`<name>.tak.provenance.json`: the request (arguments, how the input reached Takc), the input's signal and SHA-256, the output's size and
+`<name>.tak.provenance.json` and `<name>.expected.json` (tak_model.py's reading of the committed bytes): the request (arguments, how the input reached Takc), the input's signal and SHA-256, the output's size and
 SHA-256, whether it is reproducible, Takc's `-fi` output, the decoding check, what the SDK library reports (the stream info with the profile that `-fi`
 does not print, the encoder info, the wave data sizes and the MD5), the runner and the tools. Cases that wrote the same bytes are committed
 once (a preset before an option, then the shortest name) and the others are listed as `identicalCases`. The settings Takc was asked for
@@ -25,6 +25,7 @@ import re
 import shutil
 import sys
 
+import tak_model
 import tak_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -100,7 +101,7 @@ def main():
     signals = plan["signals"]
     cases = [c for c in encodes["cases"] if c["status"] == "ok"]
     OUT.mkdir(parents=True, exist_ok=True)
-    for stale in OUT.glob("external-*"):
+    for stale in [*OUT.glob("external-*")]:
         stale.unlink()
     groups = {}
     for case in cases:
@@ -147,6 +148,8 @@ def main():
             "identicalCases": identical,
         }
         target.with_name(name + ".provenance.json").write_text(json.dumps(provenance, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        extra = {"encoder": {"tool": SOURCE, "arguments": case["arguments"], "case": case["name"], "mode": case["mode"], "input": case["input"]["name"] if isinstance(case["input"], dict) else case["input"]}}
+        target.with_name(name[:-len(".tak")] + ".expected.json").write_text(json.dumps(tak_model.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         written += 1
     skipped = [c["name"] for c in encodes["cases"] if c["status"] != "ok"]
     print(f"Imported {written} files into {OUT}" + (f"; cases without a file: {', '.join(skipped)}" if skipped else ""))

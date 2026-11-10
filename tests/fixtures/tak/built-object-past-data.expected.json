@@ -1,0 +1,100 @@
+{
+ "length": 10974,
+ "start": 0,
+ "objects": [
+  {
+   "id": 1,
+   "offset": 4,
+   "reserved": 0,
+   "size": 13,
+   "end": 21,
+   "crc_ok": true,
+   "crc": 14171344
+  },
+  {
+   "id": 7,
+   "offset": 21,
+   "reserved": 0,
+   "size": 11,
+   "end": 36,
+   "crc_ok": true,
+   "crc": 10642937
+  },
+  {
+   "id": 4,
+   "offset": 36,
+   "reserved": 0,
+   "size": 7,
+   "end": 47,
+   "crc_ok": true,
+   "crc": 15261466
+  },
+  {
+   "id": 3,
+   "offset": 47,
+   "reserved": 0,
+   "size": 1000000,
+   "end": 1000051,
+   "crc_ok": null,
+   "cut": true
+  }
+ ],
+ "audio_start": null,
+ "stream_info_first": true,
+ "stream_info": {
+  "codec": 2,
+  "profile": 2,
+  "frame_size_type": 1,
+  "samples": 11024,
+  "data_type": 0,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "channels": 2,
+  "has_extension": false,
+  "frame_length": 5512,
+  "frame_size_valid": true
+ },
+ "encoder_info": {
+  "version": "2.3.3",
+  "preset": 2,
+  "evaluation": 0,
+  "name": "-p2"
+ },
+ "wave_data": null,
+ "md5": null,
+ "last_frame": {
+  "position": 4116,
+  "size": 6750,
+  "end": null,
+  "crc_ok": true
+ },
+ "checksums": {
+  "compared": 3,
+  "failed": 0
+ },
+ "first_frame": null,
+ "end": 10974,
+ "declared_end": 10974,
+ "summary": {
+  "codec": 2,
+  "codec_name": "Integer 24 bit (TAK 2.0)",
+  "profile": 2,
+  "frame_length": 5512,
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits_per_sample": 16,
+  "samples": 11024,
+  "encoder": "TAK 2.3.3",
+  "preset": "-p2"
+ },
+ "findings": [
+  {
+   "code": "tak.metadata-cut"
+  }
+ ],
+ "built": {
+  "from": "external-preset-p2.tak",
+  "script": "scripts/fixtures/make_tak_fixtures.py",
+  "change": "the wave data object states 1,000,000 bytes"
+ }
+}

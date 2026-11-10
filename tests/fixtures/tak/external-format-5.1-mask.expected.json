@@ -1,0 +1,130 @@
+{
+ "length": 34755,
+ "start": 0,
+ "objects": [
+  {
+   "id": 1,
+   "offset": 4,
+   "reserved": 0,
+   "size": 19,
+   "end": 27,
+   "crc_ok": true,
+   "crc": 13462357
+  },
+  {
+   "id": 7,
+   "offset": 27,
+   "reserved": 0,
+   "size": 11,
+   "end": 42,
+   "crc_ok": true,
+   "crc": 8021939
+  },
+  {
+   "id": 4,
+   "offset": 42,
+   "reserved": 0,
+   "size": 7,
+   "end": 53,
+   "crc_ok": true,
+   "crc": 15261466
+  },
+  {
+   "id": 3,
+   "offset": 53,
+   "reserved": 0,
+   "size": 77,
+   "end": 134,
+   "crc_ok": true,
+   "crc": 8220731
+  },
+  {
+   "id": 0,
+   "offset": 134,
+   "reserved": 0,
+   "size": 0,
+   "end": 138,
+   "crc_ok": null
+  }
+ ],
+ "audio_start": 138,
+ "stream_info_first": true,
+ "stream_info": {
+  "codec": 4,
+  "profile": 2,
+  "frame_size_type": 1,
+  "samples": 12000,
+  "data_type": 0,
+  "sample_rate": 48000,
+  "bits_per_sample": 16,
+  "channels": 6,
+  "has_extension": true,
+  "valid_bits": 16,
+  "speakers": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "frame_length": 6000,
+  "frame_size_valid": true
+ },
+ "encoder_info": {
+  "version": "2.3.3",
+  "preset": 2,
+  "evaluation": 0,
+  "name": "-p2"
+ },
+ "wave_data": {
+  "header_size": 68,
+  "footer_size": 0,
+  "size_fits": true,
+  "header_chunks": [
+   "fmt ",
+   "data"
+  ],
+  "footer_chunks": []
+ },
+ "md5": null,
+ "last_frame": {
+  "position": 17052,
+  "size": 17565,
+  "end": 34755,
+  "crc_ok": true
+ },
+ "checksums": {
+  "compared": 4,
+  "failed": 0
+ },
+ "first_frame": {
+  "info": true,
+  "last": false,
+  "length": 24
+ },
+ "end": 34755,
+ "declared_end": 34755,
+ "summary": {
+  "codec": 4,
+  "codec_name": "Integer 24 bit MC (TAK 2.2)",
+  "profile": 2,
+  "frame_length": 6000,
+  "sample_rate": 48000,
+  "channels": 6,
+  "bits_per_sample": 16,
+  "samples": 12000,
+  "encoder": "TAK 2.3.3",
+  "preset": "-p2"
+ },
+ "findings": [],
+ "encoder": {
+  "tool": "TAK 2.3.3 (Takc.exe), http://www.thbeck.de/Tak/Tak.html",
+  "arguments": [
+   "-p2"
+  ],
+  "case": "format-5.1-mask",
+  "mode": "file",
+  "input": "surround-5.1-mask"
+ }
+}

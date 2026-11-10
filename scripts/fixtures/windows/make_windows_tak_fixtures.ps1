@@ -165,7 +165,26 @@ foreach ($case in $plan.cases) {
         foreach ($target in @($output, $second)) {
             if ($case.mode -eq 'pipe') {
                 $arguments = @('-e') + @($case.arguments) + @('-overwrite', '-', $target)
-                $run = Invoke-Tool $takc $arguments $source $work
+                $run = $null
+                # Takc answered "Wave file not supported" to the bytes written to its standard input from .NET (run 42719141357), so the input is redirected
+                # from the file first (run 42719547527 used it); the other ways follow if it fails, and the record names the one that worked.
+                foreach ($method in @('redirect', 'stdin', 'type')) {
+                    Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
+                    if ($method -eq 'stdin') {
+                        $run = Invoke-Tool $takc $arguments $source $work
+                    }
+                    else {
+                        $takcLine = (@($takc) + $arguments | ForEach-Object { Quote-Argument $_ }) -join ' '
+                        $shell = if ($method -eq 'redirect') { '"' + $takcLine + ' < ' + (Quote-Argument $source) + '"' } else { '"type ' + (Quote-Argument $source) + ' | ' + $takcLine + '"' }
+                        Write-Host ('> cmd.exe /s /c ' + $shell)
+                        $run = [Encspect.TakRun]::Run($env:ComSpec, '/s /c ' + $shell, '', $work, 300000)
+                        if ($run.Stdout) { Write-Host $run.Stdout.TrimEnd() }
+                        if ($run.Stderr) { Write-Host ('stderr: ' + $run.Stderr.TrimEnd()) }
+                        Write-Host ('exit ' + $run.ExitCode)
+                    }
+                    if (Test-File $target) { break }
+                }
+                if (-not $record.Contains('pipeMethod')) { $record['pipeMethod'] = $method }
             }
             else {
                 $arguments = @('-e') + @($case.arguments) + @('-overwrite', $source, $target)

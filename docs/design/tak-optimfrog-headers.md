@@ -26,6 +26,7 @@ The files win wherever they and takStream.pas disagree. Each departure is stated
 - **An object's size counts its CRC.** takStream.pas says the 24-bit size covers "the Data (excluding header and Crc)". In `lostchord-tak_2_2_0.tak` the stream info states 13 bytes (10 of data and the 3-byte CRC-24, at offset 4), last frame info 11 (8 and 3, offset 21), encoder info 7 (4 and 3, offset 36), and each CRC-24 holds over the size less 3 bytes. MediaInfo's `Header_Parse` takes the element as the stated size and reads the CRC inside it (`Skip_L3("crc")`).
 - **Wave data has one CRC, at the end.** takStream.pas puts a CRC right after the 6 size bytes (`tak_str_SimpleWaveDataSize`). The files hold the header size (3 bytes), the footer size (3), the header bytes, the footer bytes and one CRC-24 over all of them: 53 = 6 + 44 + 3 in both lostchord files. MediaInfo's `WAVEMETADATA` reads the same order.
 - **The End object** (ID 0) is a header with size 0 and no CRC, in both files.
+- **The padding object** (ID 5) has no CRC-24 either: its size counts only its bytes, all zero (`-wm46` pipe encoding of a 44-byte header leaves a padding object of size 2; `-wm1024` one of 980 bytes; run 42719547527). Found by the fixtures of PR 3; the parser follows it.
 - **How the fixtures prove it:** every metadata CRC-24 of every Takc-written fixture and both real files must hold under this reading (a test, not only the goldens), and the SDK library opens every fixture without `tak_res_ssd_MetaDataDamaged`. A further departure that a fixture shows is added here with its evidence before the parser follows it.
 
 ### OptimFROG
@@ -202,7 +203,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 
 ## Docs and articles
 
-- `docs/formats/tak.md` and [`docs/formats/optimfrog.md`](../formats/optimfrog.md) in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
+- [`docs/formats/tak.md`](../formats/tak.md) and [`docs/formats/optimfrog.md`](../formats/optimfrog.md) in the usual sections; their lines in the formats index and the README; [planned.md](../formats/planned.md) and the plan updated when each lands.
 - Articles in `src/Encspect.Host/Topics`: `tak-metadata` (the objects and their CRC-24), `tak-presets` (preset, evaluation and profile), `optimfrog-blocks`, `optimfrog-modes` (mode, speedup and the presets that select each mode). The `lossywav` article gains the two formats.
 - [development.md](../development.md): the fixture sections, the tools, the pinned sources, and the "Header" checksum line for TAK in the table of names. OptimFROG's package address stays in `optimfrog_tool.py` only; the docs and the provenance link the download page, as its author asks.
 - [architecture.md](../architecture.md): the two formats in the detection table (classes 100, 80 and 70), and TAK and OptimFROG among the parsers that read lossyWAV's `fact` text through `FactText`.
@@ -247,6 +248,15 @@ What the fixtures of PR 2 (OptimFROG 5.100, run 42672985679) show, and what the 
 - **The correction file (as found):** an `.ofc` starts with `CORR`, not `OFR `. It is a run of `CORR` blocks (the same 4-byte ID and 4-byte length as the `.ofr` blocks), one for each data block of its `.ofs`, whose first 4 data bytes are the IEEE CRC-32 of the rest of the block's data in all six fixtures. Nothing else of its layout is known. Its detection classes, if it is to be matched, come to the lead as an amendment to this design.
 - **DualStream files (as found):** an `.ofs` has the main block of a lossless file (same encoder ID, same compression byte, speedup 4x) and differs in two places only: the minimum decoder version is 4.520 (a lossless file stores 4.600, or 4.520 at preset 0), and the two bytes of every data block that the specification calls reserved read 0x1101 (stereo) or 0x0901 (mono) where a lossless file's read 0x1042, 0x10C2, 0x1041, 0x0841 or 0x0842 and so on. The header does not record whether a correction file was written: an `.ofs` is the same file with and without `--correction`. A lossy-by-itself reading would rest on those undocumented bytes. The quiet sine fixtures (`ofs-blocks-*`) decode exactly even without the `.ofc`.
 - **Not in the design (as found):** `off` writes the main block as `OFRX` and a block `DETA` (70 bytes; 18,624 with `--mantissabits 8`) after the data blocks, and its files are `.ofr`. The parser reads `OFRX` as the main block and shows `DETA` as a block of its own, without findings; see [optimfrog.md](../formats/optimfrog.md).
+
+### What the TAK fixtures show
+
+Run 42719547527 of `tak-fixtures.yml` (Takc 2.3.3 on `windows-2025`; the first run, 42719141357, is described in [development.md](../development.md#tak-fixtures-from-takc)). All 35 cases wrote a file that `Takc -d` decodes to its input and a second encode equal byte for byte.
+
+- Every metadata CRC-24 of every file holds under the reading of the departures above, and the SDK library opens each file without `tak_res_ssd_MetaDataDamaged`.
+- No decision is needed: every field the design names is there (the stream info with the extension for six channels, the encoder info, the wave data, the last frame info, the MD5 with `-md5`), and the last frame info ends the audio where the file ends. The one new fact is the padding object above.
+- Takc 2.3.3 writes no seek table; the order is stream info, last frame info, encoder info, MD5 (with `-md5`), wave data, padding (pipe encoding), End.
+- The frame size types seen are 1 (125 ms), 3 (250 ms), 4 (4096), 5 (8192, also at 96 and 192 kHz at -p2), 7, 8 and 9 (512, 1024, 2048); types 0, 2 and 6 never occur in the files.
 
 ## Pull requests, in order
 

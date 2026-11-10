@@ -87,6 +87,13 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("scripts/fixtures/crosscheck_optimfrog_fixtures.py"), {"optimfrog-crosscheck", "fixtures"})
         self.assertNotIn("optimfrog-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
+    def test_tak_parser_scripts_and_fixtures_belong_to_the_tak_job(self):
+        for path in ("src/Encspect.Formats.Tak/TakParser.cs", "tests/fixtures/tak/a.tak", "scripts/fixtures/tak_model.py", "scripts/fixtures/make_tak_fixtures.py",
+                     "scripts/fixtures/tak_tool.py", "scripts/fixtures/import_windows_tak_fixtures.py", "scripts/fixtures/windows/make_windows_tak_fixtures.ps1",
+                     "scripts/fixtures/windows/TakTools.cs", "tests/conformance/tak-samples.json"):
+            self.assertIn("tak-crosscheck", run(path), path)
+        self.assertNotIn("tak-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
+
     def test_wav_and_aiff_parsers_scripts_and_fixtures_belong_to_the_wav_job(self):
         for path in ("src/Encspect.Formats.Wav/WavParser.cs", "src/Encspect.Formats.Aiff/AiffParser.cs", "tests/fixtures/wav/a.wav", "tests/fixtures/aiff/a.aiff",
                      "scripts/fixtures/wav_model.py", "scripts/fixtures/aiff_model.py", "scripts/fixtures/pcm_model.py", "scripts/fixtures/make_wav_fixtures.py",

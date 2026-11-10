@@ -94,8 +94,10 @@ def cases():
     add("format-5.1-mask", "surround-5.1-mask", ["-p2"])
     add("format-6ch-nomask", "surround-6ch-nomask", ["-p2"],
         optional="Takc may refuse six channels without a channel mask; the record then says what it printed")
-    for limit in (512, 1024, 2048, 4096, 8192, 16384):
+    for limit in (512, 1024, 2048, 4096, 8192):
         add(f"fsl-{limit}", "cd-16-stereo", ["-p2", f"-fsl{limit}"])
+    # Takc 2.3.3 refuses -fsl16384 at -p2 ("FrameSizeLimit too high for preset", run 42719141357).
+    add("fsl-16384", "cd-16-stereo", ["-p4", "-fsl16384"], optional="the highest preset may be the only one that takes a limit of 16384")
     add("md5", "cd-16-stereo", ["-p2", "-md5"])
     add("wm0", "cd-16-stereo", ["-p2", "-wm0"])
     add("wave-chunks", "cd-16-stereo-chunks", ["-p2"])

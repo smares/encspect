@@ -63,6 +63,7 @@ jobs:
       monkeys-audio-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.monkeys-audio-crosscheck }}
       tta-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tta-crosscheck }}
       optimfrog-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.optimfrog-crosscheck }}
+      tak-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.tak-crosscheck }}
       alac-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.alac-crosscheck }}
       asf-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.asf-crosscheck }}
       ac3-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.ac3-crosscheck }}
@@ -1269,6 +1270,28 @@ jobs:
       - name: Cross-check the OptimFROG fixtures
         run: python3 scripts/fixtures/crosscheck_optimfrog_fixtures.py
 
+  tak-crosscheck:
+    name: TAK fixtures agree with Takc's records, FFmpeg and MediaInfo
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.tak-crosscheck == 'true'
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # The records of the Windows run (tests/fixtures/tak/*.provenance.json) are compared with the manifests; ffprobe, ffmpeg and MediaInfo read the files as black
+      # boxes. Takc.exe and the TAK library never run here (tak-fixtures.yml runs them on Windows).
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Cross-check the TAK fixtures
+        run: python3 scripts/fixtures/crosscheck_tak_fixtures.py
+
   alac-crosscheck:
     name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder, and the decoded PCM with Apple's
     runs-on: ubuntu-26.04
@@ -1747,6 +1770,7 @@ jobs:
       - monkeys-audio-crosscheck
       - tta-crosscheck
       - optimfrog-crosscheck
+      - tak-crosscheck
       - alac-crosscheck
       - asf-crosscheck
       - ac3-crosscheck

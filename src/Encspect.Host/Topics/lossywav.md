@@ -13,7 +13,7 @@ references: lossyWAV 1.4.2 (Encspect's test files were written by its POSIX port
 
 - In the WAV file lossyWAV writes; with `--stdout` it writes no chunk, but the RIFF size still counts it.
 - In FLAC only with `--keep-foreign-metadata`, in `riff` application blocks.
-- In WavPack's wrapper, in Monkey's Audio's header data and in the HEAD block of an OptimFROG file.
+- In WavPack's wrapper, in Monkey's Audio's header data, in the HEAD block of an OptimFROG file and in the wave data of a TAK file.
 
 **The pattern in the samples.** In Encspect's test files (lossyWAV 1.4.2; the standard preset, and portable at 48 and 96 kHz) the count of zeroed bits changes on a grid of the lossyWAV block: 256 samples at 22.05 and 32 kHz, 512 at 44.1 and 48 kHz, 1,024 at 88.2 and 96 kHz, 2,048 at 176.4 and 192 kHz.
 
