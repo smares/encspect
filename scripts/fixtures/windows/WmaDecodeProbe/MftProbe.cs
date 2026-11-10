@@ -365,14 +365,33 @@ public static class MftProbe
         {
             long frames = 0;
             var results = new List<string>();
+            bool done = false;
             for (int n = 0; n < 64; n++)
             {
                 var buffer = new MftOutputDataBuffer { StreamId = 0 };
                 IntPtr own = IntPtr.Zero;
                 if (!provides)
                 {
-                    Native.MFCreateSample(out var sample);
-                    Native.MFCreateMemoryBuffer(Math.Max(outInfo.Size, 65536u), out var mb);
+                    IMFMediaBuffer mb = null!;
+                    int createdBuffer = Native.MFCreateSample(out var sample);
+                    if (createdBuffer >= 0)
+                    {
+                        createdBuffer = Native.MFCreateMemoryBuffer(Math.Max(outInfo.Size, 65536u), out mb);
+                    }
+
+                    if (createdBuffer < 0)
+                    {
+                        if (sample is not null)
+                        {
+                            Marshal.ReleaseComObject(sample);
+                        }
+
+                        results.Add(Format.Hr(createdBuffer));
+                        errors++;
+                        done = true;
+                        break;
+                    }
+
                     sample.AddBuffer(mb);
                     own = Marshal.GetIUnknownForObject(sample);
                     buffer.Sample = own;
@@ -385,6 +404,7 @@ public static class MftProbe
                 {
                     if (result == NeedMoreInput)
                     {
+                        done = true;
                         break;
                     }
 
@@ -399,6 +419,7 @@ public static class MftProbe
                     {
                         results.Add(Format.Hr(result));
                         errors++;
+                        done = true;
                         break;
                     }
 
@@ -446,6 +467,11 @@ public static class MftProbe
                         Marshal.Release(buffer.Sample);
                     }
                 }
+            }
+
+            if (!done)
+            {
+                results.Add("limit");
             }
 
             return (frames, string.Join(",", results));
@@ -552,7 +578,7 @@ public static class MftProbe
         set("errorCount", errors);
         set("totalsByOutputFormat", byFormat);
         // The complete total only for a stream fed to its end and drained; a loop that stopped early leaves partialSamples.
-        if (stopped == "end")
+        if (stopped == "end" && !drainText.Split(',').Contains("limit"))
         {
             set("codedSamples", total);
             set("totalSamples", total + drained);

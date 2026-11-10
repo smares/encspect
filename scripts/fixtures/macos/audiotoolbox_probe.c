@@ -303,13 +303,29 @@ static int hexbytes(const char *text, unsigned char *out, int max) {
     return n;
 }
 
+/* The size of a descriptor in the expandable encoding of ISO/IEC 14496-1 8.3.3: seven bits per byte, the high bit set on all but the last. */
+static unsigned char *put_size(unsigned char *p, unsigned long size) {
+    int bytes = size < 0x80 ? 1 : size < 0x4000 ? 2 : size < 0x200000 ? 3 : 4;
+    for (int i = bytes - 1; i >= 0; i--) {
+        *p++ = (unsigned char)(((size >> (7 * i)) & 0x7F) | (i ? 0x80 : 0));
+    }
+    return p;
+}
+
+static int size_bytes(unsigned long size) {
+    return size < 0x80 ? 1 : size < 0x4000 ? 2 : size < 0x200000 ? 3 : 4;
+}
+
 /* An esds payload: ES_Descriptor { DecoderConfigDescriptor { DecoderSpecificInfo }, SLConfigDescriptor }. */
 static unsigned char *build_esds(const unsigned char *config, int config_length, UInt32 *size) {
-    unsigned char *cookie = calloc(1, (size_t)config_length + 26);
+    unsigned long specific = 1 + size_bytes(config_length) + config_length;
+    unsigned long decoder = 13 + specific;
+    unsigned long es = 3 + 1 + size_bytes(decoder) + decoder + 3;
+    unsigned char *cookie = calloc(1, es + 1 + 4);
     unsigned char *p = cookie;
-    *p++ = 3; *p++ = (unsigned char)(config_length + 23); *p++ = 0; *p++ = 0; *p++ = 0;
-    *p++ = 4; *p++ = (unsigned char)(config_length + 15); *p++ = 0x40; *p++ = 0x15; p += 3; p += 8;
-    *p++ = 5; *p++ = (unsigned char)config_length;
+    *p++ = 3; p = put_size(p, es); *p++ = 0; *p++ = 0; *p++ = 0;
+    *p++ = 4; p = put_size(p, decoder); *p++ = 0x40; *p++ = 0x15; p += 3; p += 8;
+    *p++ = 5; p = put_size(p, (unsigned long)config_length);
     memcpy(p, config, config_length);
     p += config_length;
     *p++ = 6; *p++ = 1; *p++ = 2;
@@ -330,8 +346,16 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
         perror(tsv_path);
         return 2;
     }
+    int continued = 0;
     while (fgets(line, sizeof line, tsv)) {
         Unit u;
+        /* A line longer than the buffer comes in pieces: the rest of it is not a record. */
+        int whole = strchr(line, '\n') != NULL || feof(tsv);
+        if (continued) {
+            continued = !whole;
+            continue;
+        }
+        continued = !whole;
         if (line[0] == 'U' && sscanf(line, "U %ld %ld %ld", &u.offset, &u.declared, &u.received) == 3) {
             if (count == capacity) {
                 capacity = capacity ? capacity * 2 : 1024;
@@ -346,6 +370,9 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
         } else if (line[0] == 'C') {
             line[strcspn(line, "\r\n")] = 0;
             config_length = hexbytes(line + 2, config, sizeof config);
+            if (strlen(line + 2) > 2 * sizeof config) {
+                fprintf(stderr, "%s: the configuration is longer than %zu bytes and is cut\n", tsv_path, sizeof config);
+            }
         } else if (line[0] == 'H') {
             sscanf(line, "H %d %d %d", &adts_profile, &adts_sfi, &adts_channels);
         }

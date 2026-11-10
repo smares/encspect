@@ -47,6 +47,13 @@ class SettleTests(unittest.TestCase):
         problems, warnings = check_sources.settle(failures, {("a.tar.gz", "d")}, never)
         self.assertEqual((problems, warnings), ([], failures))
 
+    def test_a_warning_is_an_annotation_that_names_the_file_and_address(self):
+        line = check_sources.warning_line("a.tar.gz", WAYBACK, "does not serve it: 404")
+        self.assertTrue(line.startswith("::warning "))
+        self.assertIn("a.tar.gz", line)
+        self.assertIn(WAYBACK, line)
+        self.assertIn("title=Address of a%2Cb%3Ac::", check_sources.warning_line("a,b:c", WAYBACK, "x"))
+
 
 if __name__ == "__main__":
     unittest.main()

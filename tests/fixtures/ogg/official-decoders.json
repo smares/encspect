@@ -2683,11 +2683,11 @@
     {
      "figure": "samples",
      "decoder": "oggdec",
-     "value": 26816,
+     "value": null,
      "analyzer": 40960,
-     "status": "pending",
-     "kind": "reader-not-accepted",
-     "reason": "the direct path did not feed every page (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)",
+     "status": "noted",
+     "kind": "decoder-stopped",
+     "reason": "the reader (oggdec) did not reach the end of the stream (the direct path did not feed every page (libogg dropped 0 bytes, 699 bytes left over, 0 pages refused)); its partial count is no figure",
      "statusSource": "rule"
     }
    ],
