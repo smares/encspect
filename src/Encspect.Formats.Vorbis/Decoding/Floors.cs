@@ -5,7 +5,7 @@ namespace Encspect.Formats.Vorbis.Decoding;
 
 // The floor curves (Vorbis I specification, sections 6.2.3 and 7.2.4), multiplied into the channel's spectrum. Floor 1 follows libvorbis 1.3.7 (lib/floor1.c
 // floor1_inverse2, render_line, BSD-3-Clause, Copyright (c) 2002-2020 Xiph.Org Foundation; the notice is in THIRD-PARTY-NOTICES.md); floor 0 computes the curve of
-// lib/lsp.c vorbis_lsp_to_curve with exact functions in double (DetMath) where libvorbis interpolates tables, so a floor 0 stream differs from libvorbis by the tables' error.
+// lib/lsp.c vorbis_lsp_to_curve, the exact version libvorbis compiles, in double with DetMath; the gain's exponent is limited to the range of a float.
 internal static class Floors
 {
     // floor1_inverse2: the line between each pair of used posts in the order of their positions, as the integer steps of render_line, each scaling the spectrum by the amplitude
@@ -84,6 +84,7 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
     private readonly Dictionary<int, int[]> _maps = [];
 
     // The coefficients (the entries' vectors, each vector's values offset by the last value of the one before) and the curve over half samples, multiplied into the spectrum.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Apply(ReadOnlySpan<int> packet, Span<float> spectrum, int half)
     {
         int amplitudeRaw = packet[1];
@@ -94,7 +95,8 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
         double amplitude = (float)(amplitudeRaw / maximum * model.AmplitudeOffset);
         float[] book = vectors[bookNumber];
         int width = dimensions[bookNumber];
-        var coefficients = new double[order + width + 1];
+        double[] coefficients = _coefficients ??= new double[order + width + 1];
+        Array.Clear(coefficients);
         int count = 0;
         for (int e = 0; e < entries && count < order; e++)
         {
@@ -119,41 +121,42 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
 
         int[] map = MapFor(half);
         double wdel = Math.PI / model.BarkMapSize;
-        var cosines = new double[order];
+        double[] cosines = _cosines ??= new double[order];
         for (int i = 0; i < order; i++)
         {
-            cosines[i] = DetMath.Cos(Math.Clamp(coefficients[i], 0, Math.PI));
+            cosines[i] = 2 * DetMath.Cos(Math.Clamp(coefficients[i], 0, Math.PI));
         }
 
+        // vorbis_lsp_to_curve as libvorbis 1.3.7 compiles it (lsp.c leaves FLOAT_LOOKUP and INT_LOOKUP undefined): the exact version, whose gain is not clamped above 0 dB.
         int index = 0;
         while (index < half)
         {
             int k = map[index];
-            double p = 0.7071067812;
-            double q = 0.7071067812;
-            double w = DetMath.Cos(wdel * k);
-            int pairs = order >> 1;
-            for (int c = 0; c < pairs; c++)
+            double p = 0.5;
+            double q = 0.5;
+            double w = 2 * DetMath.Cos(wdel * k);
+            int j = 1;
+            for (; j < order; j += 2)
             {
-                q *= cosines[2 * c] - w;
-                p *= cosines[(2 * c) + 1] - w;
+                q *= w - cosines[j - 1];
+                p *= w - cosines[j];
             }
 
-            if ((order & 1) != 0)
+            if (j == order)
             {
-                q *= cosines[order - 1] - w;
+                q *= w - cosines[j - 1];
+                p *= p * (4.0 - (w * w));
                 q *= q;
-                p *= p * (1.0 - (w * w));
             }
             else
             {
-                q *= q * (1.0 + w);
-                p *= p * (1.0 - w);
+                p *= p * (2.0 - w);
+                q *= q * (2.0 + w);
             }
 
-            double sum = p + q;
-            double db = (amplitude / Math.Sqrt(Math.Max(sum, 1e-300) * DetMath.PowerOfTwo(order))) - model.AmplitudeOffset;
-            float value = db >= 0 ? 1f : db <= -140 ? 0f : (float)DetMath.Exp(0.11512925 * db);
+            // The exponent is limited where a float would overflow (a gain is clamped to the range of its representation).
+            double exponent = Math.Clamp(((amplitude / Math.Sqrt(Math.Max(p + q, 1e-300))) - model.AmplitudeOffset) * 0.11512925, -87.0, 87.0);
+            float value = (float)DetMath.Exp(exponent);
             spectrum[index] *= value;
             while (++index < half && map[index] == k)
             {
@@ -161,6 +164,9 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
             }
         }
     }
+
+    private double[]? _cosines;
+    private double[]? _coefficients;
 
     // floor0_map_lazy_init: the Bark number of each spectrum line, a line past the Nyquist frequency's number held at the last.
     private int[] MapFor(int half)

@@ -49,7 +49,7 @@ public sealed partial class VorbisParser
 
             if (isDecoding)
             {
-                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, IsUnreadable = lent.IsEmpty, FollowsGap = _pendingGap });
+                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, FollowsGap = _pendingGap });
             }
 
             _pendingGap = false;
@@ -64,6 +64,7 @@ public sealed partial class VorbisParser
             var configuration = new byte[_identificationBytes!.Length + _setupBytes!.Length];
             _identificationBytes.CopyTo(configuration, 0);
             _setupBytes.CopyTo(configuration, _identificationBytes.Length);
+            SetupModel.Share(configuration, _model!);
             return context.StartDecoding(CodecId, new DecodeSetup
             {
                 Stream = _parent,

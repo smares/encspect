@@ -32,7 +32,8 @@ public sealed class VorbisDecoder : IDecoder
             throw new InvalidDataException("The identification header is not one a Vorbis decoder accepts");
         }
 
-        SetupModel? setup = SetupModel.Read(bytes[Identification.Length..], identification.Channels, context.CancellationToken)
+        System.Runtime.InteropServices.MemoryMarshal.TryGetArray(configuration.Data, out ArraySegment<byte> segment);
+        SetupModel? setup = (segment.Array is { } array ? SetupModel.SharedFor(array) : null) ?? SetupModel.Read(bytes[Identification.Length..], identification.Channels, context.CancellationToken)
             ?? throw new InvalidDataException("The setup header is not one a Vorbis decoder accepts");
         return new FrameDecoder(context, identification, setup);
     }

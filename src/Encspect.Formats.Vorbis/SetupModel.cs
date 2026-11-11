@@ -124,6 +124,10 @@ internal sealed class SetupModel
 {
     private const long EntryBudget = 1L << 22;
 
+    // The entries a setup header may state per byte it takes (and 4,096 besides): an ordered codebook states millions of entries in a few bytes, which libvorbis accepts and which
+    // would cost the analyzer more than the file's size allows (docs/design/lossy-decoders.md, "As built: Vorbis").
+    private const long EntriesPerByte = 64;
+
     public required Codebook[] Books { get; init; }
 
     public required Floor0Model?[] Floor0 { get; init; }
@@ -145,6 +149,14 @@ internal sealed class SetupModel
 
     // Reads the setup header packet (type 5, "vorbis", and the bits) for a stream of that many channels, or returns null where libvorbis refuses it. A
     // setup of more than 4 Mi codebook entries in all is refused too, to bound the memory a stream can ask for (libvorbis accepts up to 8 Mi in each of 256 books).
+    // The models the parser built, by the configuration array it handed the session, so that the decoder opened for that session takes the same model instead of reading the
+    // header again (a configuration is one identification header and one setup packet).
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<byte[], SetupModel> Models = [];
+
+    public static void Share(byte[] configuration, SetupModel model) => Models.AddOrUpdate(configuration, model);
+
+    public static SetupModel? SharedFor(byte[] configuration) => Models.TryGetValue(configuration, out SetupModel? model) ? model : null;
+
     public static SetupModel? Read(ReadOnlySpan<byte> packet, int channels, CancellationToken cancellationToken)
     {
         if (packet.Length < 8 || packet[0] != 5 || !packet.Slice(1, 6).SequenceEqual("vorbis"u8) || channels < 1)
@@ -153,6 +165,7 @@ internal sealed class SetupModel
         }
 
         var bits = new PacketBits(packet[7..]);
+        long budget = Math.Min(EntryBudget, 4096 + (EntriesPerByte * packet.Length));
         long bookCount = bits.Read(8) + 1;
         if (bookCount < 1)
         {
@@ -164,18 +177,13 @@ internal sealed class SetupModel
         for (int i = 0; i < books.Length; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Codebook? book = Codebook.Read(ref bits, cancellationToken);
+            Codebook? book = Codebook.Read(ref bits, budget - entries, cancellationToken);
             if (book is null)
             {
                 return null;
             }
 
             entries += book.EntryCount;
-            if (entries > EntryBudget)
-            {
-                return null;
-            }
-
             books[i] = book;
         }
 
@@ -620,10 +628,28 @@ internal sealed class SetupModel
             SecondStages = cascade,
             PartBooks = partBooks,
             Stages = stages,
-            StageMask = cascade.Aggregate(0, (mask, c) => mask | c),
+            StageMask = StageMaskOf(partBooks, books),
             PartitionValues = (int)partitionValues,
             DecodeMap = map,
         };
+    }
+
+    // The passes some classification has a book with entries in: the others read nothing after the class words.
+    private static int StageMaskOf(int[][] partBooks, Codebook[] books)
+    {
+        int mask = 0;
+        foreach (int[] row in partBooks)
+        {
+            for (int stage = 0; stage < row.Length; stage++)
+            {
+                if (row[stage] >= 0 && books[row[stage]].UsedEntries > 0)
+                {
+                    mask |= 1 << stage;
+                }
+            }
+        }
+
+        return mask;
     }
 
     private static MappingModel? ReadMapping(ref PacketBits bits, int channels, int floors, int residues)

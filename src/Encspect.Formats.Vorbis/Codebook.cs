@@ -49,7 +49,7 @@ internal sealed class Codebook
 
     // Reads one codebook (section 3.2.1) at the bits' position, or returns null where libvorbis refuses it: the sync pattern, a book of more than 24 bits
     // of ilog(dimensions) + ilog(entries), codeword lengths that are not a complete prefix code, a lookup type other than 0 to 2, or the end of the packet.
-    public static Codebook? Read(ref PacketBits bits, CancellationToken cancellationToken)
+    public static Codebook? Read(ref PacketBits bits, long entryBudget, CancellationToken cancellationToken)
     {
         if (bits.Read(24) != 0x564342)
         {
@@ -58,7 +58,7 @@ internal sealed class Codebook
 
         long dimensions = bits.Read(16);
         long entries = bits.Read(24);
-        if (dimensions < 0 || entries < 0 || ILog(dimensions) + ILog(entries) > 24)
+        if (dimensions < 0 || entries < 0 || ILog(dimensions) + ILog(entries) > 24 || entries > entryBudget)
         {
             return null;
         }
@@ -173,7 +173,7 @@ internal sealed class Codebook
             book.Multiplicands = multiplicands;
         }
 
-        return book.Build(lengths) ? book : null;
+        return book.Validate(lengths) ? book : null;
     }
 
     // lookup1_values (section 9.2.3): the largest r with r^dimensions not above entries.
@@ -194,7 +194,10 @@ internal sealed class Codebook
     }
 
     // _make_words and vorbis_book_init_decode: assigns the codewords, refuses an overpopulated or incomplete code and builds the decoding tables.
-    private bool Build(byte[] lengths)
+    // The codewords the lengths give, kept for BuildTables (the sorted arrays and the fast table are built when a packet first decodes with the book).
+    private uint[]? _words;
+
+    private bool Validate(byte[] lengths)
     {
         int used = 0;
         foreach (byte length in lengths)
@@ -218,6 +221,16 @@ internal sealed class Codebook
             return false;
         }
 
+        _words = words;
+        return true;
+    }
+
+    private void BuildTables()
+    {
+        byte[] lengths = Lengths;
+        uint[] words = _words!;
+        int used = UsedEntries;
+        _words = null;
         // The codewords as the packet holds them, least significant bit first, and left justified by reversing them over 32 bits for the sort.
         var left = new uint[used];
         for (int i = 0; i < used; i++)
@@ -258,7 +271,7 @@ internal sealed class Codebook
             // A single entry of length 1 decodes from either bit value (libvorbis's one-bit table).
             _fastBits = 1;
             _fast = [(1u << 24) | (uint)_entries[0], (1u << 24) | (uint)_entries[0]];
-            return true;
+            return;
         }
 
         _fastBits = Math.Min(FastBits, _maxLength);
@@ -279,7 +292,7 @@ internal sealed class Codebook
             }
         }
 
-        return true;
+        return;
     }
 
     private static uint[]? MakeWords(byte[] lengths, int count)
@@ -383,6 +396,11 @@ internal sealed class Codebook
         if (UsedEntries == 0)
         {
             return -1;
+        }
+
+        if (_fast.Length == 0)
+        {
+            BuildTables();
         }
 
         long remaining = bits.Remaining;

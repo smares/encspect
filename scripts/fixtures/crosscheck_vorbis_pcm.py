@@ -29,6 +29,7 @@ Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 import argparse
 import array
 import json
+import math
 import random
 import pathlib
 import shlex
@@ -55,15 +56,26 @@ EXPECTED = {
     "vorbis-end-page-repeated.ogg": {"analyzer": [], "reference": [[29696, 30720]]},
 }
 
-# Fixtures a reference decodes differently, by reference ("libvorbis" or "ffmpeg"), with what is known. An entry is a pending item for the lead, not an explanation: the bound
-# is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
-EXPLAINED = {
+# Open differences: a fixture a reference decodes differently, by reference ("libvorbis" or "ffmpeg"), with what is known. Not an explanation and not a pass: the line prints
+# "OPEN", the exit status stays 0 only for the bound problem listed here (any other problem on the file still fails), and the lead decides (docs/design/lossy-decoders.md,
+# "The PCM cross-checks"). libvorbis stays the reference.
+PENDING = {
     "external-ffmpeg-vorbis.ogg": {
-        "ffmpeg": "FFmpeg's native Vorbis decoder decodes this stream, which FFmpeg's own native encoder wrote, differently from libvorbis and the analyzer (largest difference "
-                  "0.286 of full scale, RMS 0.0564 over the file); on the 14 other fixtures with audio from libvorbis and its derivatives it agrees with both to 1.5e-7. The "
-                  "cause is not established, and the analyzer keeps libvorbis, the reference"
+        "ffmpeg": "FFmpeg 6.1.1's native Vorbis decoder differs from libvorbis and the analyzer on this stream, which FFmpeg's own native encoder wrote (largest difference 0.286 of "
+                  "full scale, RMS 0.056). Black-box facts: channel 0 is bit-identical in all three decoders and the whole difference is in channel 1 (the stream has one coupling "
+                  "step, so a stage after the inverse coupling that touches channel 1 alone, such as its floor curve, is the lead); against the encoder's input signal FFmpeg's decoder "
+                  "reaches 15.1 dB SNR on this file and libvorbis 10.8 dB, while on external-ffmpeg-libvorbis.ogg both reach 33 dB; on the 14 other fixtures with libvorbis audio all "
+                  "three agree to 1.5e-7. The cause is not established"
     },
 }
+
+# Hand-built streams that broke the walk or the decoder (scripts/fixtures/make_vorbis_stress_fixtures.py), decoded by both and compared with the fixtures' own bounds.
+STRESS = ["vorbis-residue-book-without-dimensions.bin", "vorbis-two-mappings-different-muxes.bin"]
+
+# A setup with a floor 0 on one channel. libvorbis's floor 0 gain is not clamped and overflows to infinity near the roots of the envelope, where the analyzer limits the exponent
+# to a float's range: the samples where either side is not finite are set to 0 on both sides, the rest are compared relative to their peak.
+FLOOR0 = "vorbis-setup-rich.ogg"
+FLOOR0_FILES = 3
 
 
 RANDOMIZED = ["external-oggenc-q5.ogg", "external-oggenc-mono.ogg", "external-oggenc-51.ogg", "external-ffmpeg-vorbis.ogg", "external-oggenc-q10.ogg", "external-oggenc-q0.ogg"]
@@ -147,6 +159,44 @@ def compare(manifest, reference, channels, label, extra=()):
     return result, problems
 
 
+def check_file(args, binary, base, path, kind):
+    """Decodes path with the analyzer and libvorbis and compares them (kind "stress": the bounds of the fixtures; "relative": 10^-5 of the peak); returns 1 for a failure."""
+    name = path.name
+    dump = base / f"dump-{name}"
+    subprocess.run(shlex.split(args.pcmdump) + [str(dump), str(path)], capture_output=True)
+    manifest = dump / f"0000-{name}.pcm.json"
+    reference = vorbis_tool.decode_pcm(binary, path, base / "check.f32")
+    streams = json.loads(manifest.read_text())["streams"] if manifest.exists() else []
+    if reference is None or len(streams) != 1:
+        print(f"FAIL {name}: libvorbis or the analyzer does not decode the stream")
+        return 1
+    extra = []
+    if kind == "floor0":
+        reference_file = base / "check.f32"
+        values = array.array("f")
+        values.frombytes(reference_file.read_bytes())
+        analyzer_file = dump / streams[0]["pcm"]
+        mine = array.array("f")
+        mine.frombytes(analyzer_file.read_bytes())
+        for i, value in enumerate(values):
+            if not math.isfinite(value) or (i < len(mine) and not math.isfinite(mine[i])):
+                values[i] = 0.0
+                mine[i] = 0.0
+        reference_file.write_bytes(values.tobytes())
+        analyzer_file.write_bytes(mine.tobytes())
+        kind = "relative"
+    if kind == "relative":
+        values = array.array("f")
+        values.frombytes((base / "check.f32").read_bytes())
+        peak = max(abs(v) for v in values) or 1.0
+        extra = ["--max-abs", str(max(peak * RELATIVE_MAX, 2.0 ** -14)), "--rms", str(max(peak * RELATIVE_RMS, 2.0 ** -15 / math.sqrt(12.0)))]
+    outcome, found = compare(manifest, (base / "check.f32").read_bytes(), reference[1]["channels"], "libvorbis", extra)
+    if outcome is not None and outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]:
+        found = found or [f"libvorbis: positions only one side has: {outcome}"]
+    print(("FAIL " if found else "ok   ") + name + ("; " + "; ".join(found) if found else f" ({kind})"))
+    return 1 if found else 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("files", nargs="*", type=pathlib.Path)
@@ -160,6 +210,7 @@ def main(argv=None):
         return 2
     binary = vorbis_tool.build_pcm()
     failed = compared = 0
+    opened = []
     with tempfile.TemporaryDirectory() as temporary:
         base = args.keep or pathlib.Path(temporary)
         base.mkdir(parents=True, exist_ok=True)
@@ -208,16 +259,17 @@ def main(argv=None):
                             if outcome is not None and outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]:
                                 notes.append(f"ffmpeg: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
             note = "; ".join(notes)
-            for name, reason in EXPLAINED.get(path.name, {}).items():
-                listed = [p for p in problems if p.startswith(name + ":")]
+            for name, reason in PENDING.get(path.name, {}).items():
+                listed = [p for p in problems if p.startswith(name + ": outside the bound")]
                 if listed:
                     problems = [p for p in problems if p not in listed]
-                    note = (note + "; " if note else "") + f"{name} listed: {reason}"
+                    opened.append(path.name)
+                    note = (note + "; " if note else "") + f"{name} OPEN: {reason}"
             if problems:
                 failed += 1
                 print(f"FAIL {path.name}: " + "; ".join(problems))
             else:
-                print(f"ok   {path.name}" + (f" ({note})" if note else ""))
+                print(("OPEN " if path.name in opened else "ok   ") + f"{path.name}" + (f" ({note})" if note else ""))
         for source in RANDOMIZED:
             for seed in SEEDS:
                 name = f"random-{pathlib.Path(source).stem}-{seed}.ogg"
@@ -245,7 +297,17 @@ def main(argv=None):
                     print(f"FAIL {name}: " + "; ".join(found))
                 else:
                     print(f"ok   {name} (peak {peak:.3g})")
-    print(f"{compared} files compared with libvorbis, {failed} failed")
+        for name in STRESS:
+            path = base / (pathlib.Path(name).stem + ".ogg")
+            path.write_bytes((FIXTURES / "fuzz" / name).read_bytes())
+            failed += check_file(args, binary, base, path, "stress")
+            compared += 1
+        for seed in range(FLOOR0_FILES):
+            path = base / f"random-floor0-{seed}.ogg"
+            randomized(FIXTURES / "ogg" / FLOOR0, seed, path)
+            failed += check_file(args, binary, base, path, "floor0")
+            compared += 1
+    print(f"{compared} files compared with libvorbis, {failed} failed, {len(opened)} open")
     return 1 if failed else 0
 
 

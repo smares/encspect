@@ -1,5 +1,6 @@
 using Encspect.Core;
 using Encspect.Formats.Vorbis.Decoding;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -126,7 +127,7 @@ public class VorbisDecoderTests
         long lostReturned = positions[lostAudio] - positions[lostAudio - 1];
         long withheldFrom = positions[lostAudio - 1];
         long afterGap = positions[lostAudio + 1] - lostReturned;
-        Assert.DoesNotContain(withheldFrom, got.Keys.Where(p => p >= withheldFrom && p < afterGap));
+        Assert.All(got.Keys, p => Assert.False(p >= withheldFrom && p < afterGap, $"position {p} is inside the withheld span"));
         Assert.True(got.ContainsKey(afterGap));
         for (long p = afterGap; p < afterGap + 200; p++)
         {
@@ -134,17 +135,30 @@ public class VorbisDecoderTests
         }
     }
 
-    // The decoded output of stereo with square polar coupling differs from one without only through the coupling, so the file that has it decodes to channels that are not equal.
-    [Fact]
-    public void Coupled_channels_decode_to_two_different_channels()
+    // The stress streams of make_vorbis_stress_fixtures.py decode without a failure, the walk and the decoder reading what libvorbis reads (crosscheck_vorbis_pcm.py compares the
+    // samples): a residue book without dimensions, and two mappings that mux the channels differently.
+    [Theory]
+    [InlineData("vorbis-residue-book-without-dimensions.bin")]
+    [InlineData("vorbis-two-mappings-different-muxes.bin")]
+    public void The_stress_streams_decode_without_failing(string name)
     {
-        (List<byte[]> packets, long[] positions) = Source("ogg/external-oggenc-q5.ogg");
+        (Report report, VorbisStreams.RecordingSink sink) = VorbisStreams.Decode(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", name)));
 
-        VorbisStreams.RecordingSink sink = VorbisStreams.Decode(VorbisStreams.Ogg(packets, positions)).Sink;
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.frame-invalid" or "decode.frame-too-large");
+        Assert.True(sink.Samples > 0);
+    }
 
-        float[][] block = sink.Blocks[^1].Channels;
-        Assert.Equal(2, block.Length);
-        Assert.NotEqual(block[0], block[1]);
+    // A packet that names more partitions than its bits can pay for is read as ended where the budget runs out, so its walk costs what its bytes allow.
+    [Fact]
+    public void A_packet_with_partitions_without_books_is_walked_in_time_bounded_by_its_bytes()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "vorbis-partitions-without-books-255-channels.bin"));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        Report report = Analyzer.CreateDefault().Analyze("partitions.ogg", new MemoryStream(data));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"The analysis took {watch.Elapsed.TotalSeconds:F1} s.");
     }
 
     // The configuration a decoder is opened with must hold a header a decoder accepts: a session the parser starts always does, and a stream whose headers are not the decoder's

@@ -3,6 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Vorbis.Decoding;
 
+// Follows libvorbis 1.3.7 (lib/mapping0.c mapping0_inverse, lib/codebook.c vorbis_book_decode*_add, lib/block.c vorbis_synthesis_blockin; BSD-3-Clause, Copyright (c) 2002-2020
+// Xiph.Org Foundation; the notice is in THIRD-PARTY-NOTICES.md).
 // The decoding state of one Vorbis stream: per channel the right half of the previous block (the overlap), and the setup's vectors, windows and transforms.
 internal sealed class FrameDecoder : IFrameDecoder
 {
@@ -33,9 +35,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int _stride;
     private readonly int[] _floorAt;
     private readonly bool[] _nonzero;
-    private readonly int[][] _bundles;
+    private readonly int[][][] _bundles;
     private int _previousSize;
     private IPcmSink? _sink;
+    private bool _lostBefore;
 
     public FrameDecoder(DecodeContext context, Identification identification, SetupModel setup)
     {
@@ -58,7 +61,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         _raw = new float[large];
         _floorAt = new int[_channels];
         _nonzero = new bool[_channels];
-        _bundles = new int[256][];
+        _bundles = new int[setup.Mappings.Length][][];
         _transforms[0] = new InverseMdct(identification.Blocksize0, TransformScale);
         _transforms[1] = identification.Blocksize1 == identification.Blocksize0 ? _transforms[0] : new InverseMdct(identification.Blocksize1, TransformScale);
         _slopes = new float[2][];
@@ -130,7 +133,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         SampleBuffers lent = _context.LentBuffers;
         if (!frame.IsWalked || lent.IsEmpty)
         {
-            throw new InvalidDataException("The packet was not walked into the lent buffers");
+            // The host lends at most 2^24 ints and this packet's records could need more: it is not decoded, and the one after it follows a loss.
+            _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The packet at 0x{frame.Bytes.FileStart:X} could hold more values than the host lends buffers for, so it is not decoded.");
+            _previousSize = -1;
+            _lostBefore = true;
+            return 0;
         }
 
         ReadOnlySpan<int> packet = lent.Narrow;
@@ -139,8 +146,10 @@ internal sealed class FrameDecoder : IFrameDecoder
         bool isLong = (flags & LentLayout.FlagLong) != 0;
         int size = _blockSizes[isLong ? 1 : 0];
         int half = size / 2;
-        long returned = frame.FollowsGap || _previousSize < 0 ? frame.Samples : (_previousSize / 4) + (size / 4);
-        if (!frame.FollowsGap && returned != frame.Samples)
+        bool follows = frame.FollowsGap || _lostBefore;
+        _lostBefore = false;
+        long returned = follows || _previousSize < 0 ? frame.Samples : (_previousSize / 4) + (size / 4);
+        if (!follows && returned != frame.Samples)
         {
             throw new InvalidDataException("The samples the parser counts for the packet are not those its block and the one before it return");
         }
@@ -148,11 +157,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         _context.CancellationToken.ThrowIfCancellationRequested();
         Charge(packet, mode, size, frame.Samples);
         MappingModel mapping = _setup.Mappings[_setup.ModeMapping[mode]];
-        Reconstruct(packet, mapping, half);
+        Reconstruct(packet, _setup.ModeMapping[mode], mapping, half);
 
         // The overlap: the previous block's right half and this block's left half over the samples between the two centers.
         int count = 0;
-        bool isOutput = _previousSize >= 0 && !frame.FollowsGap && frame.Samples > 0;
+        bool isOutput = _previousSize >= 0 && !follows && frame.Samples > 0;
         int previousHalf = _previousSize / 2;
         if (isOutput)
         {
@@ -171,7 +180,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _previousSize = size;
-        if (frame.FollowsGap && frame.Samples > 0)
+        if (follows && frame.Samples > 0)
         {
             _context.Withhold(frame.FirstSample, frame.Samples, WithholdReason.AfterGap);
         }
@@ -198,15 +207,21 @@ internal sealed class FrameDecoder : IFrameDecoder
         long units = DecodeWork.ForSample(4) * samples * _channels;
         int at = LentLayout.Floors;
         int coded = 0;
+        long floor0 = 0;
         for (int ch = 0; ch < _channels; ch++)
         {
             int kind = packet[at];
             at += FloorSize(packet, at, mapping, ch);
             coded += kind != LentLayout.FloorUnused ? 1 : 0;
+            if (kind == LentLayout.FloorZero)
+            {
+                // The curve of a floor 0 costs about its order in products and a few cosines and an exponential for each coefficient, not the 2 units of a floor 1 line.
+                floor0 += (long)half * (_setup.Floor0[mapping.FloorOfSubmap[mapping.ChannelMux[ch]]]!.Order + 8);
+            }
         }
 
         units += (long)half * ((coded * (FloorUnits + ResidueUnits + transformUnits)) + (_channels * OverlapUnits) + (mapping.CouplingMagnitude.Length * 2 * CouplingUnits));
-        _context.AddWork(units);
+        _context.AddWork(units + floor0);
     }
 
     // The ints the floor of channel ch takes from at, as the walk stored it.
@@ -225,7 +240,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // mapping0_inverse after the floors: the residue vectors into the spectrum, the inverse coupling and the floor curves.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void Reconstruct(ReadOnlySpan<int> packet, MappingModel mapping, int half)
+    private void Reconstruct(ReadOnlySpan<int> packet, int mappingIndex, MappingModel mapping, int half)
     {
         int at = LentLayout.Floors;
         for (int ch = 0; ch < _channels; ch++)
@@ -266,7 +281,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                     AddSequential(_spectrum[channel], offset, residue.Grouping, book.Dimensions, vectors, list);
                     break;
                 default:
-                    AddBundle(mapping, submap, offset, residue.Grouping, book.Dimensions, vectors, list);
+                    AddBundle(mappingIndex, mapping, submap, offset, residue.Grouping, book.Dimensions, vectors, list);
                     break;
             }
 
@@ -329,9 +344,10 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // Residue type 2 (vorbis_book_decodevv_add): the vectors' values in turn to the channels of the submap, from the position offset / channels.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void AddBundle(MappingModel mapping, int submap, int offset, int size, int dimensions, float[] vectors, ReadOnlySpan<int> entries)
+    private void AddBundle(int mappingIndex, MappingModel mapping, int submap, int offset, int size, int dimensions, float[] vectors, ReadOnlySpan<int> entries)
     {
-        int[] bundle = _bundles[submap] ??= BundleOf(mapping, submap);
+        int[][] ofMapping = _bundles[mappingIndex] ??= new int[mapping.Submaps][];
+        int[] bundle = ofMapping[submap] ??= BundleOf(mapping, submap);
         int channels = bundle.Length;
         int index = offset / channels;
         int end = (offset + size) / channels;

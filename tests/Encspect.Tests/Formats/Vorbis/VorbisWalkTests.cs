@@ -18,7 +18,7 @@ public class VorbisWalkTests
         bits.Put(0, 4);
         byte[] data = bits.Bytes();
         var reader = new PacketBits(data);
-        return Codebook.Read(ref reader, CancellationToken.None);
+        return Codebook.Read(ref reader, 1 << 20, CancellationToken.None);
     }
 
     private static int Decode(Codebook book, params int[] codeBits)

@@ -220,6 +220,12 @@ def residue_end(setup, residue, reader, n, count, rows):
                     bdims, bentries, btree, used = setup.books[book]
                     if used == 0:
                         continue
+                    if bdims == 0:
+                        if kind != 0:
+                            while btree.decode(reader) is not None:
+                                pass
+                            return coded
+                        continue
                     offset = begin + i * size
                     if kind == 0:
                         wanted = size // bdims
@@ -234,7 +240,7 @@ def residue_end(setup, residue, reader, n, count, rows):
                             break
                         read += 1
                     if read and (read == wanted or kind != 0):
-                        coded = max(coded, -(-(offset + size) // count) if kind == 2 else offset + size)
+                        coded = max(coded, (offset + size) // count if kind == 2 else offset + size)
                     if read < wanted:
                         return coded
                 i += 1

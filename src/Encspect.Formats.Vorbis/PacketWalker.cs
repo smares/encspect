@@ -48,6 +48,10 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     // anything), so that a stream whose packets are cheap in bytes and dear in visits is canceled between packets (VorbisParser.Decoding.cs).
     public long Visits { get; set; }
 
+    // The partition visits one packet may still make: 1,024 and 16 for each bit of the packet. A class word of one bit can name 65,535 partitions and eight passes visit each,
+    // so the work a packet costs is bounded by what its bits pay for; a packet that outruns it is read as ended there (libvorbis would go on).
+    private long _budget;
+
     // The classifications of the partitions read so far, a row of the residue's decode map for each class word; kept between packets (a walker serves one stream on one thread).
     private int[][] _classRows = [];
 
@@ -118,7 +122,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                 if (stage < residue.PartBooks[cls].Length && residue.PartBooks[cls][stage] >= 0)
                 {
                     int dimensions = Math.Max(1, setup.Books[residue.PartBooks[cls][stage]].Dimensions);
-                    per = Math.Max(per, LentLayout.RecordHeader + ((residue.Grouping + dimensions - 1) / dimensions) + bundleChannels);
+                    per = Math.Max(per, LentLayout.RecordHeader + ((residue.Grouping + dimensions - 1) / dimensions) + (residue.Type == 2 ? bundleChannels : 0));
                 }
             }
 
@@ -161,6 +165,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
         MappingModel mapping = setup.Mappings[setup.ModeMapping[mode]];
         int channels = setup.Channels;
         bool stores = !dest.IsEmpty;
+        _budget = 1024 + (16L * packet.Length * 8);
         int count = LentLayout.Floors;
         if (stores)
         {
@@ -479,6 +484,12 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                 for (int k = 0; k < perWord && i < partitions; k++, i++)
                 {
                     Visits += used.Length;
+                    _budget -= used.Length;
+                    if (_budget < 0)
+                    {
+                        return coded;
+                    }
+
                     for (int j = 0; j < used.Length; j++)
                     {
                         int cls = classes[(j * words) + l][k];
@@ -492,6 +503,21 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                         int offset = residue.Begin + (i * spp);
                         if (book.UsedEntries == 0)
                         {
+                            continue;
+                        }
+
+                        if (book.Dimensions == 0)
+                        {
+                            // vorbis_book_decodev_add of a book without dimensions reads codewords until the packet ends and adds nothing (type 0's n / dim is a division by zero in libvorbis: nothing is read).
+                            if (residue.Type != 0)
+                            {
+                                while (book.Decode(ref bits) != -1 && bits.Remaining > 0)
+                                {
+                                }
+
+                                return coded;
+                            }
+
                             continue;
                         }
 
@@ -594,6 +620,11 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                 for (int k = 0; k < perWord && i < partitions; k++, i++)
                 {
                     Visits++;
+                    if (--_budget < 0)
+                    {
+                        return coded;
+                    }
+
                     int cls = classes[l][k];
                     if ((residue.SecondStages[cls] & (1 << stage)) == 0)
                     {
@@ -605,6 +636,15 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                     if (book.UsedEntries == 0)
                     {
                         continue;
+                    }
+
+                    if (book.Dimensions == 0)
+                    {
+                        while (book.Decode(ref bits) != -1 && bits.Remaining > 0)
+                        {
+                        }
+
+                        return coded;
                     }
 
                     int offset = (i * spp) + residue.Begin;
@@ -646,7 +686,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                             dest[header + 4] = read;
                         }
 
-                        coded = Math.Max(coded, (offset + spp + channels - 1) / channels);
+                        coded = Math.Max(coded, (offset + spp) / channels);
                     }
 
                     if (read < entries)

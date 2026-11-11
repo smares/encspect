@@ -120,6 +120,7 @@ public sealed partial class VorbisParser
         // The entropy pass and the decoding (docs/design/lossy-decoders.md): the setup header's model and the walker over it exist where libvorbis would accept both headers;
         // the session starts at the first audio packet with the two headers as its configuration.
         private PacketWalker? _walker;
+        private SetupModel? _model;
         private byte[]? _identificationBytes;
         private byte[]? _setupBytes;
         private long _setupOffset;
@@ -487,6 +488,7 @@ public sealed partial class VorbisParser
             if (_identificationBytes is not null && _isCommentAccepted && !packet.IsCut && _setup.Problems.All(p => p.Severity != Severity.Warning)
                 && SetupModel.Read(packet.Span, _identification!.Channels, context.CancellationToken) is { } model)
             {
+                _model = model;
                 _walker = new PacketWalker(model, _identification.Blocksize0, _identification.Blocksize1);
                 _setupBytes = packet.Span.ToArray();
                 _setupOffset = packet.FileStart;
