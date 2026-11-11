@@ -44,6 +44,9 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 {
     private readonly int[][] _bounds = BuildBounds(setup, blockSize0, blockSize1);
 
+    // The classifications of the partitions read so far, a row of the residue's decode map for each class word; kept between packets (a walker serves one stream on one thread).
+    private int[][] _classRows = [];
+
     // The most ints a packet of this mode can store, for the buffer the session lends.
     public int MaxInts(int mode) => _bounds[mode][0];
 
@@ -415,6 +418,16 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
         return 0;
     }
 
+    private int[][] ClassRows(int count)
+    {
+        if (_classRows.Length < count)
+        {
+            _classRows = new int[Math.Max(count, _classRows.Length * 2)][];
+        }
+
+        return _classRows;
+    }
+
     // _01inverse (residue types 0 and 1): the class words of every used channel, then the passes over the partitions. Returns the end of the highest partition coded.
     private int ReadResidue01(ref PacketBits bits, ResidueModel residue, int n, scoped ReadOnlySpan<int> used, int submap, Span<int> dest, ref int count, bool stores)
     {
@@ -431,11 +444,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 
         int partitions = span / spp;
         int words = (partitions + perWord - 1) / perWord;
-        var classes = new int[used.Length][][];
-        for (int j = 0; j < classes.Length; j++)
-        {
-            classes[j] = new int[words][];
-        }
+        int[][] classes = ClassRows(used.Length * words);
 
         for (int stage = 0; stage < residue.Stages; stage++)
         {
@@ -451,7 +460,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                             return coded;
                         }
 
-                        classes[j][l] = residue.DecodeMap[temp];
+                        classes[(j * words) + l] = residue.DecodeMap[temp];
                     }
                 }
 
@@ -459,7 +468,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                 {
                     for (int j = 0; j < used.Length; j++)
                     {
-                        int cls = classes[j][l][k];
+                        int cls = classes[(j * words) + l][k];
                         if ((residue.SecondStages[cls] & (1 << stage)) == 0)
                         {
                             continue;
@@ -547,7 +556,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 
         int partitions = span / spp;
         int words = (partitions + perWord - 1) / perWord;
-        var classes = new int[words][];
+        int[][] classes = ClassRows(words);
         for (int stage = 0; stage < residue.Stages; stage++)
         {
             for (int i = 0, l = 0; i < partitions; l++)

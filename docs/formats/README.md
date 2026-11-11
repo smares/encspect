@@ -47,7 +47,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | MPEG audio | routed where its samples lie in one stretch; else packets, not analyzed (planned: FFmpeg) | packets, not analyzed (planned: FFmpeg, mkvmerge) | not planned | planned | routed, by the format tag or the sub-format GUID; IEC 61937 bursts planned (FFmpeg's spdif muxer) | yes | no |
 | AC-3, E-AC-3 | routed | routed | not planned | planned (AC-3) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | no |
 | DTS | routed | routed | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
-| Vorbis | not planned | routed | routed | not planned | not planned | no | no |
+| Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | planned (FFmpeg) | routed | routed | not planned | not planned | no | no |
 | Speex | not planned | not planned | routed | not planned | not planned | no | no |
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
@@ -82,7 +82,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Stereo Coding, Coded Bandwidth |
 | AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform and enhanced coupling not read (0.3); the audio blocks at the reduced rates not read (not planned) | no (0.3) | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
 | DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
-| Vorbis | floors and residues not read (0.3) | no (0.3) | Block Sizes |
+| Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |
 | Opus | SILK and CELT not read (0.3) | no (0.3) | Coded Bandwidth, from the TOC bytes (CELT's graphs: 0.3; the other TOC graphs: 0.4) |
 | Speex | the coded frame data not read (0.4) | no (0.4) | none |
 | Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | Stereo Coding (SV4 to SV7) |

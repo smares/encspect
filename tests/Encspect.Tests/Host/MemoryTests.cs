@@ -1996,9 +1996,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         return [.. data];
     }
 
-    // A Vorbis stream keeps an 8-byte record per packet and its per-packet series (16 bytes, whose
-    // x values are also the packets' offsets), plus its share of the page records: 26 bytes in all
-    // on linux-x64, and a peak of 26 to 27. The bounds leave about twice that, and for the peak
+    // A Vorbis stream keeps an 8-byte record per packet, 2 bytes for the end of its highest coded residue partition and its per-packet series (16 bytes, whose
+    // x values are also the packets' offsets, and 8 for the coded bandwidth, with the same x values), plus its share of the page records: 36 bytes in all
+    // on linux-x64, and a peak of 36 to 37. The bounds leave about twice that, and for the peak
     // room for macOS on arm64, where the Speex peak measured more than twice linux-x64's.
     [Fact]
     public void ManyVorbisPacketsStayCompact()
@@ -2028,6 +2028,44 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(kept < packets * 60L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
         GC.KeepAlive(report);
+    }
+
+    // The decoding of a Vorbis file holds one block's spectrum, overlap and output per channel and the setup's vectors, so what it holds does not grow with the packets. Measured as the
+    // MPEG test above does, at 50,000 and 200,000 packets of silence (one byte each, a long block of 1,024 samples).
+    [Fact]
+    public void DecodingManyVorbisPacketsHoldsNothingPerPacket()
+    {
+        const int fewer = 50_000;
+        const int packets = 200_000;
+        static byte[] Silence(int count)
+        {
+            byte[] identification = new byte[30];
+            "\u0001vorbis"u8.CopyTo(identification);
+            identification[11] = 1;
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(identification.AsSpan(12), 44100);
+            identification[28] = 0xB8;
+            identification[29] = 1;
+            byte[] comment = [0x03, .. "vorbis"u8, .. OggBuilder.VorbisComment("Encspect"), 0x01];
+            var builder = new OggBuilder().Page(5, 0, 2, identification).Page(5, 0, 0, comment, MinimalVorbisSetup);
+            byte[] block = [0x0E];
+            for (int done = 0; done < count; done += 250)
+            {
+                builder.Page(5, (done + 249) * 1024L, done + 250 == count ? (byte)4 : (byte)0, [.. Enumerable.Repeat(block, 250)]);
+            }
+
+            return builder.Bytes;
+        }
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Silence(500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("packets.ogg", Silence(fewer), fewer, 1024);
+        (long held, long kept) = LastFrameReading("packets.ogg", Silence(packets), packets, 1024);
+        (_, long plainKept) = LastFrameReading("packets.ogg", Silence(packets), packets, 1024, isDecoding: false);
+
+        double heldPerPacket = (held - fewerHeld) / (double)(packets - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last packet: {fewerHeld} at {fewer} packets and {held} at {packets} ({Hundredths(heldPerPacket)} per further packet)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)packets:F2} bytes more per packet.");
+        Assert.True(heldPerPacket < DecodingFrameBound, $"Decoding held {heldPerPacket:F2} more bytes per further packet at the last packet than the analysis ends with. {RuntimeSettings()}");
     }
 
     // An Opus stream keeps a 24-byte record per stream of each packet, 2 bytes per frame and its
