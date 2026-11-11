@@ -55,7 +55,7 @@ LIBMPC = ("libmpc_0.1~r495.orig.tar.gz", "5182d7a30eec1b338cafc9c1706d663a6c8dc2
           ["https://deb.debian.org/debian/pool/main/libm/libmpc/libmpc_0.1~r495.orig.tar.gz"])
 LIBMPCDEC_126 = ("libmpcdec-1.2.6.tar.bz2", "4bd54929a80850754f27b568d7891e1e3e1b8d2f208d371f27d1fda09e6f12a8",
                  ["https://files.musepack.net/source/libmpcdec-1.2.6.tar.bz2"])
-PORTABLE = ("mpc.zip", "5490e2fbf9a7f766a6eb85747e601f30c6178f03ddc1cee26f33ab08074a0f48", [downloads.private("decoders/mpc.zip")])
+PORTABLE = ("mpc.zip", "5490e2fbf9a7f766a6eb85747e601f30c6178f03ddc1cee26f33ab08074a0f48", [downloads.private("mirrors/tools/decoders/mpc.zip")])
 PORTABLE_LIBRARY = ["mpc_dec.cpp", "streaminfo.cpp", "huffsv46.cpp", "huffsv7.cpp", "bitstream.cpp", "synth_filter.cpp", "requant.cpp", "idtag.cpp"]
 PORTABLE_HEADERS = ["mpc_dec.h", "mpc_math.h", "requant.h", "stdafx.h", "streaminfo.h"]
 HERE = pathlib.Path(__file__).resolve().parent
