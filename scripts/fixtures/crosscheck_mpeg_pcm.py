@@ -48,9 +48,18 @@ EXPLAINED = {
                    "minimp3, FFmpeg 8 and the analyzer decode the second granule's overlap three ways (0.9, 0.4 and 0.8 of full scale apart in the next frame)"
     },
     "external-xing-mpeg2.mp3": {
-        "ffmpeg": "pending: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) "
-                  "FFmpeg 8's mp3float and mp3 decoders (which agree with each other), mpg123 1.32 and minimp3 (which the analyzer follows) all differ from one another by up to "
-                  "0.024 of full scale; the cause is not established"
+        "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) "
+                  "FFmpeg 8's mp3float and mp3 decoders (which agree with each other), mpg123 1.32 and minimp3 (which the analyzer follows) differ pairwise by up to 0.024 of full scale; "
+                  "the analyzer keeps minimp3, the reference it follows operation by operation"
+    },
+    "side-info-mono.mp3": {
+        "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
+    },
+    "side-info-long-blocks.mp3": {
+        "minimp3": "minimp3 interpolates the line sample above index 128 of the Huffman tables differently from the analyzer at the last bit of 16-bit rounding (largest 0.0001 of full scale)"
+    },
+    "reservoir-across-gap.mp3": {
+        "ffmpeg": "FFmpeg conceals the frames after the gap with audio built from the missing main data; the analyzer withholds them (a gap is never concealed audio)"
     },
 }
 
@@ -89,7 +98,7 @@ def mixed_variant(source, directory, binary):
 
 def default_files():
     skip = ("external-mp3pro", "ape-", "id3")
-    return [p for p in sorted(FIXTURES.glob("mpeg/*.mp3")) + sorted(FIXTURES.glob("mpeg/*.mp2")) + sorted(FIXTURES.glob("mpeg/*.mp1")) if not p.name.startswith(skip)]
+    return [p for p in sorted(FIXTURES.glob("mpeg/**/*.mp3")) + sorted(FIXTURES.glob("mpeg/**/*.mp2")) + sorted(FIXTURES.glob("mpeg/**/*.mp1")) if not p.name.startswith(skip)]
 
 
 def is_header_frame(data, offset, length):
@@ -131,6 +140,45 @@ def minimp3_reference(binary, path, work):
         cursor += count
         position += frame["samples"]
     return bytes(out), channels, skipped, decoded[0]["layer"]
+
+
+def report_codes(path):
+    """The finding codes of the fixture's committed report; empty for a file without one (the built mixed-block variants)."""
+    reports = list(path.parent.glob(path.stem + ".report.json"))
+    if not reports:
+        return set()
+    codes = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            if "code" in node and "severity" in node:
+                codes.add(node["code"])
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    walk(json.loads(reports[0].read_text()))
+    return codes
+
+
+def position_problems(path, outcome, layer):
+    """Positions that only the reference has are the frames the analyzer does not decode (a truncated, cut or header frame) or withholds after a gap: whole frames,
+    each optionally followed by the withheld 1,056 samples (Layer III) or 480 (Layers I and II). A file without a finding has none."""
+    if path.name.startswith("mixed-"):
+        return []
+    frame = 384 if layer == 1 else 1152
+    withheld = 480 if layer in (1, 2) else 1056
+    codes = report_codes(path) - {"mpeg.music-crc-not-verified", "mpeg.vbr-byte-count-mismatch"}
+    problems = []
+    for first, end in outcome["notComparedOnlyInReference"]:
+        length = end - first
+        if not codes:
+            problems.append(f"minimp3 decodes {length} samples at {first} that the analyzer does not output, and the file has no finding")
+        elif length % frame not in (0, withheld % frame):
+            problems.append(f"minimp3 decodes {length} samples at {first} that the analyzer does not output: not whole frames, with or without {withheld} withheld")
+    return problems
 
 
 def ffmpeg_reference(ffmpeg, path, layer):
@@ -209,6 +257,7 @@ def main(argv=None):
                         only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]
                         if only:
                             notes.append(f"minimp3: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
+                        problems += position_problems(path, outcome, layer)
             # FFmpeg and minimp3 do not treat mixed blocks alike (they differ by up to 1.5 of full scale on these files), so only minimp3 is the reference for them.
             second = None if path.name.startswith("mixed-") else ffmpeg_reference(args.ffmpeg, path, layer)
             if path.name.startswith("mixed-"):

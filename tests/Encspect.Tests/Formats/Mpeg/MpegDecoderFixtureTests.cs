@@ -18,9 +18,9 @@ public class MpegDecoderFixtureTests
         {
             var data = new TheoryData<string>();
             string directory = Path.Combine(Fixtures.FixtureDirectory, "mpeg");
-            foreach (string file in Directory.EnumerateFiles(directory).Where(f => Extensions.Contains(Path.GetExtension(f), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
+            foreach (string file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Where(f => Extensions.Contains(Path.GetExtension(f), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
             {
-                data.Add("mpeg/" + Path.GetFileName(file));
+                data.Add("mpeg/" + Path.GetRelativePath(directory, file).Replace('\\', '/'));
             }
 
             return data;
