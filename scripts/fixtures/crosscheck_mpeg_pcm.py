@@ -44,9 +44,9 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
 EXPLAINED = {
     "external-xing-mpeg2.mp3": {
-        "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) "
-                  "FFmpeg 8's mp3float and mp3 decoders (which agree with each other), mpg123 1.32 and minimp3 (which the analyzer follows) differ pairwise by up to 0.024 of full scale; "
-                  "the analyzer keeps minimp3, the reference it follows operation by operation"
+        "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) the largest "
+                  "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
+                  "mpg123; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
     "side-info-mono.mp3": {
         "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
@@ -56,7 +56,8 @@ EXPLAINED = {
                    "the second channel's first granule from the previous values and reads 6 bits of them instead of 41, so its Huffman data start 35 bits earlier than the specification places them"
     },
     "reservoir-across-gap.mp3": {
-        "ffmpeg": "FFmpeg conceals the frames after the gap with audio built from the missing main data; the analyzer withholds them (a gap is never concealed audio)"
+        "ffmpeg": "after the 40 bytes of junk (less than a frame) the analyzer withholds 1,056 samples and decodes the frames whose main data reach back across the junk, as minimp3 does; "
+                  "FFmpeg's output differs from theirs in positions that both output (largest 11.4 of full scale, RMS 0.97 against the analyzer); the cause is not established"
     },
 }
 
@@ -136,45 +137,52 @@ def minimp3_reference(binary, path, work):
         out += raw[cursor:cursor + count]
         cursor += count
         position += frame["samples"]
-    return bytes(out), channels, skipped, decoded[0]["layer"]
+    return bytes(out), channels, skipped, decoded[0]["layer"], decoded[0]["hz"]
 
 
-def report_codes(path):
-    """The finding codes of the fixture's committed report; empty for a file without one (the built mixed-block variants)."""
-    reports = list(path.parent.glob(path.stem + ".report.json"))
-    if not reports:
-        return set()
-    codes = set()
+# The positions only minimp3 outputs, which the analyzer does not, in the fixtures that have them: the frames it does not decode (a truncated or cut frame, a VBR header
+# frame) and the output it withholds after a gap or an unavailable frame. Pinned, so that a change in what is withheld fails here, B2's return (nothing withheld after an
+# unavailable frame) included; each span is also held to the rules: whole frames, then at most the withheld span (1,056 samples in Layer III, 480 in Layers I and II).
+ONLY_IN_MINIMP3 = {
+    "damaged-bitrate.mp3": [[3456, 4608]],
+    "external-blade080-stereo.mp3": [[69120, 73632], [87552, 88704]],
+    "external-blade082-stereo.mp3": [[87552, 88704]],
+    "external-shine-joint.mp3": [[87552, 88704]],
+    "external-shine-music.mp3": [[87552, 88704]],
+    "main-data-overflow.mp3": [[2304, 4512]],
+    "reservoir-across-gap.mp3": [[4608, 5664]],
+    "reservoir-before-stream-later.mp3": [[1152, 3360]],
+    "reservoir-cut-start.mp3": [[0, 2208]],
+    "reservoir-splice.mp3": [[4608, 6816]],
+    "side-info-invalid.mp3": [[1152, 3360], [3456, 5664]],
+    "sync-inside-header.mp3": [[5760, 6912]],
+    "truncated-last-frame.mp3": [[5760, 6912]],
+    "lame-joined-other-version.mp3": [[11520, 12672]],
+    "lame-mid-stream.mp3": [[11520, 12672]],
+    "lame-truncated-last-frame.mp3": [[8064, 9216]],
+    "main-data-before-header-frame.mp3": [[0, 2208]],
+    "main-data-in-header-frame.mp3": [[0, 2208]],
+}
 
-    def walk(node):
-        if isinstance(node, dict):
-            if "code" in node and "severity" in node:
-                codes.add(node["code"])
-            for value in node.values():
-                walk(value)
-        elif isinstance(node, list):
-            for value in node:
-                walk(value)
 
-    walk(json.loads(reports[0].read_text()))
-    return codes
+def frame_samples(layer, hz):
+    """Samples of a frame: 384 in Layer I, 1,152 in Layer II, and in Layer III 1,152 (MPEG-1) or 576 (MPEG-2 and 2.5, whose rates are below 32 kHz)."""
+    return 384 if layer == 1 else 576 if layer == 3 and hz < 32000 else 1152
 
 
-def position_problems(path, outcome, layer):
-    """Positions that only the reference has are the frames the analyzer does not decode (a truncated, cut or header frame) or withholds after a gap: whole frames,
-    each optionally followed by the withheld 1,056 samples (Layer III) or 480 (Layers I and II). A file without a finding has none."""
+def position_problems(path, outcome, layer, hz):
     if path.name.startswith("mixed-"):
         return []
-    frame = 384 if layer == 1 else 1152
+    frame = frame_samples(layer, hz)
     withheld = 480 if layer in (1, 2) else 1056
-    codes = report_codes(path) - {"mpeg.music-crc-not-verified", "mpeg.vbr-byte-count-mismatch"}
     problems = []
-    for first, end in outcome["notComparedOnlyInReference"]:
+    spans = outcome["notComparedOnlyInReference"]
+    for first, end in spans:
         length = end - first
-        if not codes:
-            problems.append(f"minimp3 decodes {length} samples at {first} that the analyzer does not output, and the file has no finding")
-        elif length % frame not in (0, withheld % frame):
-            problems.append(f"minimp3 decodes {length} samples at {first} that the analyzer does not output: not whole frames, with or without {withheld} withheld")
+        if length % frame not in (0, withheld % frame) or length < min(frame, withheld):
+            problems.append(f"minimp3 decodes {length} samples at {first} that the analyzer does not output: not whole frames of {frame} with or without {withheld} withheld")
+    if spans != ONLY_IN_MINIMP3.get(path.name, []):
+        problems.append(f"minimp3 decodes the positions {spans} that the analyzer does not output, expected {ONLY_IN_MINIMP3.get(path.name, [])}")
     return problems
 
 
@@ -243,7 +251,7 @@ def main(argv=None):
             if reference is None:
                 notes.append("minimp3 decodes no frames or changes its channels")
             else:
-                raw, channels, skipped, _ = reference
+                raw, channels, skipped, _, _ = reference
                 if streams[0]["channels"] != channels:
                     problems.append(f"the analyzer decoded {streams[0]['channels']} channels, minimp3 {channels}")
                 else:
@@ -254,7 +262,7 @@ def main(argv=None):
                         only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]
                         if only:
                             notes.append(f"minimp3: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
-                        problems += position_problems(path, outcome, layer)
+                        problems += position_problems(path, outcome, layer, reference[4])
             # FFmpeg and minimp3 do not treat mixed blocks alike (they differ by up to 1.5 of full scale on these files), so only minimp3 is the reference for them.
             second = None if path.name.startswith("mixed-") else ffmpeg_reference(args.ffmpeg, path, layer)
             if path.name.startswith("mixed-"):
