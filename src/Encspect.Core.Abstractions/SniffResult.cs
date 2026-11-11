@@ -29,7 +29,7 @@ public readonly record struct SniffResult(int Class, long Offset = 0, int Frames
 
     // The class of a match its own parser distrusts, a chain that is probably another format's bytes
     // (MPEG audio's free-format chain that is not credible, or a protected chain none of whose CRCs
-    // holds). It ranks below every other format's chain and is not an alternative to a better match.
+    // holds). It never identifies a file: the host leaves it out of the ranking, and names it in a finding where nothing else matches.
     public const int WeakClass = 30;
 
     public static SniffResult None => default;

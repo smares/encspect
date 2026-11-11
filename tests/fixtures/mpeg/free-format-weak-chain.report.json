@@ -1,0 +1,47 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "free-format-weak-chain.mp3",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 10000,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 10000
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 10000,
+        "path": [
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "format.weak-candidate",
+        "message": "MPEG Audio found a possible chain of 6 frames at 0xFA0 (free format), which is too weak to take the file for that format: other data can make it, and so can a damaged stream. Forcing the format reads it anyway.",
+        "offset": 0,
+        "length": 10000,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
