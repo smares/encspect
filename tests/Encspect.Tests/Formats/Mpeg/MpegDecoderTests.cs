@@ -40,7 +40,16 @@ public class MpegDecoderTests
     {
         public List<(long Position, int Length, float[] Samples)> Blocks { get; } = [];
 
-        public void Write(PcmBlock block) => Blocks.Add((block.Position, block.Length, block.Floats[..block.Length].ToArray()));
+        public void Write(PcmBlock block)
+        {
+            var samples = new float[block.Channels * block.Length];
+            for (int c = 0; c < block.Channels; c++)
+            {
+                block.Floats.Slice(c * block.Stride, block.Length).CopyTo(samples.AsSpan(c * block.Length));
+            }
+
+            Blocks.Add((block.Position, block.Length, samples));
+        }
 
         public void End(long samples)
         {
@@ -85,17 +94,18 @@ public class MpegDecoderTests
     }
 
     [Fact]
-    public void AFrameWhoseMainDataBeginBeforeTheStreamIsWithheldWholeAndTheNextOnesStartClean()
+    public void AFrameWhoseMainDataBeginBeforeTheStreamIsWithheldWholeAndTheNextOneLikeAfterAGap()
     {
         (Report report, CollectingSink sink) = Decode(Stream(10, mainDataBeginOfFirst: 5));
 
         StreamMeasurements m = Assert.Single(report.Streams).Measurements!;
 
-        Assert.Equal(FrameSamples, m.WithheldSamples);
+        // The first frame is withheld whole; the output after it depends on what it would have left, so the next frame is withheld like after a gap.
+        Assert.Equal(FrameSamples + 576 + 480, m.WithheldSamples);
         Assert.Equal(FrameSamples, m.WithheldByReason.MainDataUnavailable);
-        Assert.Equal(0, m.WithheldByReason.AfterGap);
-        Assert.Equal(9, sink.Blocks.Count);
-        Assert.Equal(FrameSamples, sink.Blocks[0].Position);
+        Assert.Equal(576 + 480, m.WithheldByReason.AfterGap);
+        Assert.Equal(8, sink.Blocks.Count);
+        Assert.Equal((2 * FrameSamples) + 480, sink.Blocks[0].Position);
         Assert.Equal(0, m.LostSamples);
     }
 
@@ -147,5 +157,121 @@ public class MpegDecoderTests
         Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg.huffman-overrun");
         Assert.Equal(6, finding.Count);
         Assert.Equal(Severity.Warning, finding.Severity);
+    }
+
+    // ---- Damage to real audio: what is written after the withheld span equals what the intact file decodes to (docs/design/lossy-decoders.md, "Withheld output") ----
+
+    private const string Music = "mpeg/external-lame-stereo-music.mp3";
+
+    private static byte[] MusicBytes() => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, Music));
+
+    // The offsets of the audio frames of a file and the frame length at each.
+    private static long[] FrameOffsets(byte[] data)
+    {
+        Report report = Analyzer.CreateDefault().Analyze("music.mp3", new MemoryStream(data));
+        return [.. report.Streams[0].Series.First(s => s.Name == "Bitrate").X.ToArray().Select(x => (long)x)];
+    }
+
+    // The samples a decode writes, by position, with which positions were written.
+    private static (float[][] Samples, bool[] Written, StreamMeasurements Measurements) Written(byte[] data)
+    {
+        (Report report, CollectingSink sink) = Decode(data);
+        long end = sink.Blocks.Max(b => b.Position + b.Length);
+        float[][] samples = [new float[end], new float[end]];
+        bool[] written = new bool[end];
+        foreach ((long position, int length, float[] values) in sink.Blocks)
+        {
+            for (int c = 0; c < 2; c++)
+            {
+                Array.Copy(values, c * length, samples[c], position, length);
+            }
+
+            Array.Fill(written, true, (int)position, length);
+        }
+
+        return (samples, written, report.Streams[0].Measurements!);
+    }
+
+    private static void AssertEqualsIntact(float[][] intact, (float[][] Samples, bool[] Written, StreamMeasurements Measurements) damaged, long positionShift, long shiftFrom = long.MaxValue, long laterShift = 0)
+    {
+        int compared = 0;
+        for (int p = 0; p < damaged.Written.Length; p++)
+        {
+            if (!damaged.Written[p])
+            {
+                continue;
+            }
+
+            for (int c = 0; c < 2; c++)
+            {
+                Assert.True(intact[c][p + (p >= shiftFrom ? laterShift : positionShift)] == damaged.Samples[c][p], $"position {p} channel {c}: {damaged.Samples[c][p]}, the intact file has {intact[c][p + (p >= shiftFrom ? laterShift : positionShift)]}");
+            }
+
+            compared++;
+        }
+
+        Assert.True(compared > 100_000, $"only {compared} samples were compared");
+    }
+
+    [Fact]
+    public void ATrackSplitFromAContinuousStreamDecodesExactlyAfterTheWithheldSpan()
+    {
+        byte[] data = MusicBytes();
+        long[] offsets = FrameOffsets(data);
+        (float[][] intact, _, _) = Written(data);
+
+        // Frame 100 on: its main data and those of the frames after it begin in frames the file no longer has.
+        (float[][] Samples, bool[] Written, StreamMeasurements Measurements) damaged = Written(data[(int)offsets[100]..]);
+
+        AssertEqualsIntact(intact, damaged, 100 * 1152);
+        Assert.True(damaged.Measurements.WithheldByReason.MainDataUnavailable > 0);
+        Assert.Equal(576 + 480, damaged.Measurements.WithheldByReason.AfterGap);
+    }
+
+    [Fact]
+    public void AFrameCutByTheNextWithholdsTheFramesWhoseMainDataLieInIt()
+    {
+        byte[] data = MusicBytes();
+        long[] offsets = FrameOffsets(data);
+        (float[][] intact, _, _) = Written(data);
+
+        // The last 100 bytes of frame 100 are gone, and the frames after it reach back into them.
+        byte[] damagedData = [.. data[..(int)(offsets[101] - 100)], .. data[(int)offsets[101]..]];
+        (float[][] Samples, bool[] Written, StreamMeasurements Measurements) damaged = Written(damagedData);
+
+        AssertEqualsIntact(intact, damaged, 0);
+        Assert.True(damaged.Measurements.WithheldByReason.MainDataUnavailable > 0);
+    }
+
+    [Fact]
+    public void AFrameWhoseHeaderIsDestroyedWithholdsTheFramesWhoseMainDataReachBackAcrossIt()
+    {
+        byte[] data = MusicBytes();
+        long[] offsets = FrameOffsets(data);
+        (float[][] intact, _, _) = Written(data);
+
+        // The sync bytes of frame 100 are zero: its bytes are junk of a frame's size, and the audio after it counts from where the frame before ends.
+        byte[] damagedData = (byte[])data.Clone();
+        damagedData[offsets[100]] = 0;
+        damagedData[offsets[100] + 1] = 0;
+        (float[][] Samples, bool[] Written, StreamMeasurements Measurements) damaged = Written(damagedData);
+
+        AssertEqualsIntact(intact, damaged, 0, shiftFrom: 100 * 1152, laterShift: 1152);
+        Assert.True(damaged.Measurements.WithheldByReason.MainDataUnavailable > 0);
+    }
+
+    [Fact]
+    public void JunkTooSmallToHoldAFrameLeavesTheAudioAfterItExact()
+    {
+        byte[] data = MusicBytes();
+        long[] offsets = FrameOffsets(data);
+        (float[][] intact, _, _) = Written(data);
+
+        byte[] damagedData = [.. data[..(int)offsets[100]], .. Enumerable.Repeat((byte)0x55, 10), .. data[(int)offsets[100]..]];
+        (float[][] Samples, bool[] Written, StreamMeasurements Measurements) damaged = Written(damagedData);
+
+        AssertEqualsIntact(intact, damaged, 0);
+        Assert.Equal(0, damaged.Measurements.WithheldByReason.MainDataUnavailable);
+        Assert.Equal(576 + 480, damaged.Measurements.WithheldByReason.AfterGap);
     }
 }

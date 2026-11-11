@@ -91,7 +91,7 @@ public sealed partial class MpegAudioParser
             Span<byte> frame = _frame.AsSpan(0, isDecoding || header.Layer != 3 ? length : Math.Min(length, 6 + Layer3SideInfo.Size(header)));
             if (header.Layer == 3)
             {
-                bool isAvailable = placement is { Problem: MainDataProblem.None or MainDataProblem.AcrossGap, Overflows: false };
+                bool isAvailable = placement is { Problem: MainDataProblem.None or MainDataProblem.AcrossGap, Overflows: false, IsLost: false };
                 Span<int> planes = default;
                 int stride = LentLayout.PerChannel;
                 int channels = header.IsMono ? 1 : 2;

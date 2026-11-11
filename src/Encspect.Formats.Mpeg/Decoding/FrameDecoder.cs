@@ -88,13 +88,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         _context.AddWork(checked((DecodeWork.ForSample(4) + (isLayer3 ? Layer3StageUnits : Layer12StageUnits)) * samples * _channels));
         if (unavailable != 0)
         {
-            // The frame's main data are not available: nothing is decoded. At the start of a stream the state stays the start's; mid-stream it is lost.
+            // The frame's main data are not available: nothing is decoded, and the output after it depends on state it would have left, also at the start of a stream
+            // (a track split from a continuous stream), so the next frame that decodes withholds the first granule and the history.
             _context.Withhold(frame.FirstSample, samples, WithholdReason.MainDataUnavailable);
-            if (_state != State.Fresh)
-            {
-                Reset();
-                _state = State.Lost;
-            }
+            Reset();
+            _state = State.Lost;
 
             return 0;
         }

@@ -341,7 +341,7 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
 - **Gaps and withheld output:**
   - A frame cut by the end of the data or by the next frame, or whose side information breaks, is not decoded and counts as lost; the frame after it, and the frame after a stretch of junk, start from an empty state.
   - After such a gap the output that depends on the lost state is withheld, not played: 1,056 samples of Layer III (the first granule and 480 of the next, the overlap and the synthesis history) and 480 of Layers I and II (the history), reason "after a gap".
-  - A Layer III frame whose main data are not available (a track split from a continuous stream, damage) is withheld whole, reason "main data not available". At the start of a stream the next frame starts from the empty state with nothing withheld; mid-stream it is withheld like after a gap.
+  - A Layer III frame whose main data are not available (a track split from a continuous stream, a frame cut by the next, junk that could have held a frame) is withheld whole, reason "main data not available", and the next frame that decodes is withheld like after a gap, also at the start of a stream.
 - **Accuracy:** the output agrees with minimp3's float output and with FFmpeg's float decoders within the bounds of [development.md](../development.md#mpeg-audio-decoding); neither is claimed bit-exact.
 - **Cost:** 2,048 work units are allowed per byte of the file. A frame charges 22 units per sample of each channel plus the stages (Layer III 41, Layers I and II 29).
 

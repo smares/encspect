@@ -18,7 +18,8 @@ internal enum MainDataProblem
     InHeaderFrame,
 }
 
-internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, MainDataProblem Problem, bool Overflows);
+// IsLost: some of the frame's main data lie in bytes that are gone (the missing part of a cut frame) or behind junk big enough to have held a frame, so a decoder cannot have them.
+internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, MainDataProblem Problem, bool Overflows, bool IsLost = false);
 
 // The Layer III bit reservoir (ISO/IEC 11172-3 2.4.2.7, main_data_begin): main data runs
 // through the data of consecutive frames of one stream, the bytes after each frame's side
@@ -45,6 +46,8 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
     private long _previousEnd;
     private long? _frameEnd;
     private bool _gapPending;
+    private long _junk;
+    private int _lastLost;
 
     public void Reset()
     {
@@ -54,10 +57,15 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
         _previousEnd = 0;
         _frameEnd = null;
         _gapPending = false;
+        _junk = 0;
+        _lastLost = 0;
     }
 
+    // Junk between frames (a stretch where sync was lost): it adds no byte to the stream, but a decoder cannot tell whether a frame was in it.
+    public void NoteJunk(long length) => _junk += length;
+
     public MainDataPlacement Add(MpegHeader header, int owner, long frameOffset, long frameEnd, long dataOffset, int dataLength,
-        int mainDataBegin, int mainDataLength, bool truncated, bool isHeaderFrame = false)
+        int mainDataBegin, int mainDataLength, bool truncated, bool isHeaderFrame = false, int lostBytes = 0, int minimumFrameBytes = int.MaxValue)
     {
         if (_stream is not { } stream || !stream.IsSameStream(header))
         {
@@ -66,19 +74,21 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
         }
 
         long start = _position;
-        long end = start + dataLength;
-        long reservoir = start - _previousEnd;
+        long end = start + dataLength + lostBytes;
+        // The missing part of a cut frame is no free reservoir: the figure counts as if the stream had never held it.
+        long reservoir = Math.Max(0, start - _previousEnd - _lastLost);
         long begin = start - mainDataBegin;
         long mainEnd = begin + mainDataLength;
         bool gapBefore = _gapPending || (_frameEnd is { } previousFrameEnd && previousFrameEnd != frameOffset);
         int earlierAreas = _recent.Count;
         if (dataLength > 0)
         {
-            _recent.Add(new Area(start, dataLength, dataOffset, isHeaderFrame, gapBefore));
+            _recent.Add(new Area(start, dataLength, dataOffset, isHeaderFrame, gapBefore, _junk));
         }
 
         _gapPending = dataLength == 0 && gapBefore;
         _frameEnd = frameEnd;
+        _lastLost = lostBytes;
 
         MainDataProblem problem = MainDataProblem.None;
         if (begin < 0)
@@ -100,6 +110,7 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
 
         long ownStart = Math.Max(Math.Max(begin, _previousEnd), 0);
         long ownEnd = Math.Min(mainEnd, end);
+        bool isLost = IsLost(begin, start, earlierAreas, _junk, minimumFrameBytes);
         int earlier = 0;
         foreach (Area area in _recent)
         {
@@ -116,7 +127,38 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
         _position = end;
         _recent.RemoveAll(a => a.Start + a.Length <= _position - Reach);
 
-        return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated);
+        _junk = dataLength == 0 ? _junk : 0;
+        return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated, isLost);
+    }
+
+    // Whether the bytes from begin to start are not all there: the stream positions between the kept areas are the missing parts of cut frames, and junk of at least a
+    // smallest frame in between could have held a frame.
+    private bool IsLost(long begin, long start, int earlierAreas, long currentJunk, int minimumFrameBytes)
+    {
+        if (begin >= start || begin < 0)
+        {
+            return false;
+        }
+
+        long covered = 0;
+        long junk = currentJunk;
+        for (int j = earlierAreas - 1; j >= 0; j--)
+        {
+            Area area = _recent[j];
+            if (area.Start + area.Length > begin)
+            {
+                covered += Math.Min(start, area.Start + area.Length) - Math.Max(begin, area.Start);
+            }
+
+            if (area.Start <= begin)
+            {
+                break;
+            }
+
+            junk += area.JunkBefore;
+        }
+
+        return covered < start - begin || junk >= minimumFrameBytes;
     }
 
     // Whether main data starting at stream position begin lies in a frame before a gap: the gap
@@ -146,5 +188,5 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
 
     // A frame's data in the reservoir's byte stream and in the file, and whether a gap or a tag
     // lies between it and the frame before it.
-    private readonly record struct Area(long Start, int Length, long FileOffset, bool IsHeaderFrame, bool HasGapBefore);
+    private readonly record struct Area(long Start, int Length, long FileOffset, bool IsHeaderFrame, bool HasGapBefore, long JunkBefore);
 }

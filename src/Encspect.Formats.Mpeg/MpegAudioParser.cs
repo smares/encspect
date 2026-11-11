@@ -330,6 +330,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             var gap = Entry.Gap(gapStart, gapEnd - gapStart);
             build.Frames.Add(gap);
             state.Feed.PendingGap = true;
+            state.Reservoir.NoteJunk(gap.Length);
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
             {
@@ -396,7 +397,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             CheckSideInfo(info, position, sideInfoOffset, length, findings);
             long dataOffset = sideInfoOffset + sideInfo.Length;
             placement = state.Reservoir.Add(header, index, position, position + available, dataOffset,
-                (int)(position + available - dataOffset), info.MainDataBegin.Value, info.MainDataLength, available < length);
+                (int)(position + available - dataOffset), info.MainDataBegin.Value, info.MainDataLength, available < length,
+                lostBytes: (int)(length - available), minimumFrameBytes: header.IsFreeFormat ? length : new MpegHeader((header.Raw & ~0xF000u) | 0x1000u).FrameLength());
             frame = frame with
             {
                 Data = build.Store.Add(sideInfo),
