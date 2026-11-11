@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Vorbis;
@@ -376,6 +377,7 @@ internal sealed class Codebook
     }
 
     // The entry number of the next codeword, or -1 where no whole codeword remains in the packet (which ends it, as libvorbis does).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Decode(ref PacketBits bits)
     {
         if (UsedEntries == 0)

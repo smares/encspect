@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 
 namespace Encspect.Formats.Vorbis;
 
@@ -23,6 +24,7 @@ internal ref struct PacketBits
     public readonly long Remaining => _length - _position;
 
     // The next count bits, 0 to 32, without taking them; zeros stand for bits past the end.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public readonly uint Peek(int count)
     {
         long bytePosition = _position >> 3;
@@ -47,6 +49,7 @@ internal ref struct PacketBits
     public void Advance(int count) => _position += count;
 
     // Takes count bits (0 to 32), or ends the packet and gives -1 where fewer remain or count is out of range.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public long Read(int count)
     {
         if ((uint)count > 32 || count > _length - _position)

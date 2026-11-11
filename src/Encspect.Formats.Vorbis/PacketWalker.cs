@@ -268,6 +268,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     }
 
     // floor1_inverse1: the amplitude of the first two posts, then the other posts by partition, each wrapped around its prediction from the posts before it.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private bool ReadFloor1(ref PacketBits bits, Floor1Model floor, scoped Span<int> fit)
     {
         if (bits.Read(1) != 1)
@@ -367,6 +368,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     }
 
     // floor0_inverse1: the amplitude, the book number and the entries of the book that give the order's coefficients. Returns the ints written (0 where the floor is unused).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int ReadFloor0(ref PacketBits bits, Floor0Model floor, Span<int> dest, int at, bool stores)
     {
         long amplitude = bits.Read(floor.AmplitudeBits);
@@ -433,6 +435,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     }
 
     // _01inverse (residue types 0 and 1): the class words of every used channel, then the passes over the partitions. Returns the end of the highest partition coded.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int ReadResidue01(ref PacketBits bits, ResidueModel residue, int n, scoped ReadOnlySpan<int> used, int submap, Span<int> dest, ref int count, bool stores)
     {
         Codebook phrase = setup.Books[residue.ClassBook];
@@ -551,6 +554,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     }
 
     // res2_inverse (residue type 2): one vector of the bundle's channels interleaved. Returns the end of the highest partition coded, in coefficients of one channel.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int ReadResidue2(ref PacketBits bits, ResidueModel residue, int n, int channels, int submap, Span<int> dest, ref int count, bool stores)
     {
         Codebook phrase = setup.Books[residue.ClassBook];
