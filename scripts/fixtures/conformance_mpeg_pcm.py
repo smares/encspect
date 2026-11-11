@@ -45,7 +45,7 @@ def fetch(manifest, stream, cache):
     cache.mkdir(parents=True, exist_ok=True)
     archive = cache / f"{stream['name']}.tar.gz"
     url = manifest["source"] + archive.name
-    downloads.fetch([url, downloads.archived(url, manifest["archive_year"]), downloads.private(f"conformance/mpeg2-audio/{archive.name}")], stream["archive_sha256"], archive)
+    downloads.fetch([url, downloads.archived(url, manifest["archive_year"]), downloads.private(f"mirrors/conformance/mpeg2-audio/{archive.name}")], stream["archive_sha256"], archive)
     target = cache / stream["name"]
     if not (target / "done").exists():
         with tarfile.open(archive) as tar:

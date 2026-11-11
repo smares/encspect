@@ -33,7 +33,7 @@ BUILDS = {
     "3.90.3": dict(
         archive="lame3.90.3_lame3.90.3.rar",
         sha256="5927ec1e9bab261ab61b1659765a6a9903f89b46b9c6c4e4ddd6977d3d8019b0",
-        addresses=[downloads.private("encoders/lame3.90.3_lame3.90.3.rar")],
+        addresses=[downloads.private("mirrors/tools/encoders/lame3.90.3_lame3.90.3.rar")],
         banner="LAME version 3.90.3 MMX"),
 }
 

@@ -23,7 +23,7 @@ import downloads
 NAME = "OptimFROG_Linux_x64_5100.zip"
 SHA256 = "d45079f8121918acda221c062943facca9bddb8680e5055508add077d69751f4"
 ORIGINAL = "http://losslessaudio.org/Downloads/A1C0/5100/Linux/OptimFROG_Linux_x64_5100.zip"
-ADDRESSES = [ORIGINAL, downloads.archived(ORIGINAL, "20220813"), downloads.private("encoders/" + NAME)]
+ADDRESSES = [ORIGINAL, downloads.archived(ORIGINAL, "20220813"), downloads.private("mirrors/tools/encoders/" + NAME)]
 VERSION = "5.100"
 DOWNLOAD_PAGE = "http://losslessaudio.org/Downloads.php"
 

@@ -36,7 +36,7 @@ NAME = f"lossywav-for-posix-{COMMIT[:12]}"
 WINDOWS = {
     "archive": "lossyWAV_v1.4.2.zip",
     "sha256": "d5c1a9e17c9569b8fd30c28254c4ff7a7a7213783c7a55f448003cd3e720ffb1",
-    "addresses": [downloads.private("lossywav/lossyWAV_v1.4.2.zip")],
+    "addresses": [downloads.private("mirrors/tools/lossywav/lossyWAV_v1.4.2.zip")],
     "exe": "bin/64-Bit/lossyWAV.exe",
 }
 
