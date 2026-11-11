@@ -749,7 +749,7 @@ def lame_version_differs():
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
-        if not path.name.endswith(".report.json"):
+        if not path.name.endswith((".report.json", ".decode.json")):
             path.unlink()
     names = set()
     for build in FIXTURES:
