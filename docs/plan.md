@@ -181,6 +181,12 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - So the clean-room split applies, as for TrueHD and TTA: one agent reads it and writes a description without code, another implements from that description.
    - The TAK SDK's decoder library on the Windows runner is the black-box reference for the PCM cross-check, with FFmpeg as a second column.
 8. **`A_MS/ACM` in Matroska,** routed by the WAVEFORMATEX format tag, once a real file from a muxer that writes it is found and committed as a fixture (the lead, 2026-11-07).
+9. **The coding's class on the coding line** (the lead, 2026-11-11). Each stream states whether its coding is lossless, lossy or hybrid: a property of the coding, never of the audio's history.
+   - **The classes,** set by each parser for every format: lossless for linear and floating-point PCM and the lossless codecs; lossy for A-law and mu-law (ITU-T G.711 rounds 13- or 14-bit samples to 8 bits), the ADPCM codings and the perceptual codecs; a WavPack hybrid or OptimFROG DualStream file lossless only with its correction file (item 3), lossy without it, which `StreamVerification.IsLossy` then follows.
+   - **lossyWAV:** a file it processed keeps the class of its coding, with the processor claim beside it.
+   - **Worded with the basis:** "lossless coding", not "lossless"; and "Verified" says what it covers (the decoded audio matches the stored checksum), which tells nothing about where the audio came from.
+   - **The figures beside it:** the spectral cutoff, the low bits unused and the processor claim stand next to the coding line in the text report and the GUI, so the evidence about a file's history is where a reader looks first.
+   - **An article** on what the coding class and these figures can and cannot show about a file's history, linked from the coding line. No figure becomes a verdict (the non-goals).
 
 ### 0.5: AAC and WMA
 
