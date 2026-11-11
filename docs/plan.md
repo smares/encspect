@@ -193,6 +193,9 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **What is read:** the box's fields as a tag (title, artist, album and the rest, user fields such as `-meta-user`, the encoder's `cdec` command line), the covers `-write-nd-covers` puts there, and Nero's metadata per chapter, which iTunes metadata cannot hold.
    - **Sources:** no specification is known. The layout is read from files neroAacTag 1.5.4.0 wrote, with neroAacTag's own listings (`-list-meta`, `-list-covers`, `-list-chapters`) as the cross-check; nothing of Nero's code is read or decompiled.
    - **Fixtures:** the lead's four neroAacTag files and their log (a cover in both formats, non-ASCII text that neroAacTag stores as question marks, three chapters with their own titles, a user field), committed when the item starts; a field that disagrees with the iTunes metadata beside it is a finding.
+11. **"Show Only Audio" in the GUI's file list** (the lead, 2026-11-11): a switch that hides the files in which Encspect found no audio, by the detected format and never by the file name, as `--only-format` does on the command line.
+   - The files stay analyzed and listed in the summary cache; the switch only filters the view, and the list says how many files it hides.
+   - File names never decide what is read: a list of extensions to scan would hide the mislabeled files Encspect is meant to find.
 
 ### 0.5: AAC and WMA
 

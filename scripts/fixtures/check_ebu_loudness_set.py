@@ -27,7 +27,7 @@ import zipfile
 import downloads
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-URLS = [downloads.private("loudness/ebu-loudness-test-setv05.zip")]
+URLS = [downloads.private("mirrors/reference/loudness/ebu-loudness-test-setv05.zip")]
 SHA256 = "9cc500b4df83f7c21855c74dce795ef5209a752bf884253ae57d0ce512efb062"
 
 # (file name pattern, figure, expected value, tolerance up, tolerance down). Figures: I, LRA, M, S (maxima) and TP. Patterns are matched against the lower-case

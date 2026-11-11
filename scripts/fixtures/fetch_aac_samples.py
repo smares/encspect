@@ -27,7 +27,7 @@ ROOT = HERE.parents[1]
 def addresses(sample, kind):
     found = [sample["url"]]
     if kind == "usac":
-        found.append(downloads.private(f"usac/{urllib.parse.quote(sample['file'])}"))
+        found.append(downloads.private(f"mirrors/samples/usac/{urllib.parse.quote(sample['file'])}"))
     return found
 
 

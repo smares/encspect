@@ -43,7 +43,7 @@ MANIFEST = ROOT / "tests" / "conformance" / "usac-samples.json"
 def addresses(sample):
     """The sample's own address, then the private repository's copy (the Wayback Machine could not be
     reached when the samples were pinned)."""
-    return [sample["url"], downloads.private(f"usac/{urllib.parse.quote(sample['file'])}")]
+    return [sample["url"], downloads.private(f"mirrors/samples/usac/{urllib.parse.quote(sample['file'])}")]
 
 
 def fetch(manifest, cache):

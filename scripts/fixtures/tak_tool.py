@@ -29,7 +29,7 @@ NAME = "TAK_2.3.3.zip"
 SHA256 = "40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a"
 SIZE = 1765343
 ORIGINAL = "http://www.thbeck.de/Download/TAK_2.3.3.zip"
-ADDRESSES = [ORIGINAL, downloads.archived(ORIGINAL, "20261014"), downloads.private("encoders/" + NAME)]
+ADDRESSES = [ORIGINAL, downloads.archived(ORIGINAL, "20261014"), downloads.private("mirrors/tools/encoders/" + NAME)]
 VERSION = "2.3.3"
 AUTHOR_PAGE = "http://www.thbeck.de/Tak/Tak.html"
 
