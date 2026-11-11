@@ -2,148 +2,104 @@
   "goldens": [
     "tests/fixtures/wav/"
   ],
-  "renamed": [
+  "added": [
     {
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "DTS",
-        "Statistics"
-      ],
-      "from": "Sampling Frequency",
-      "to": "Core Sample Rate",
-      "goldens": [
-        "tests/fixtures/wav/built-dts-format-tag-0008.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-14le.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-16be.report.json",
-        "tests/fixtures/wav/built-dts-in-pcm-after-silence.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-fmt-tag-0008.report.json",
-        "tests/fixtures/wav/built-iec61937-dts-type-i.report.json",
-        "tests/fixtures/wav/external-dts-in-wav.report.json",
-        "tests/fixtures/wav/external-iec61937-dts-stereo-768k.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "from": "IsVbr",
-      "to": "Bitrate Mode",
+      "scope": "stream",
+      "key": "verification",
       "goldens": [
         "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
+        "tests/fixtures/wav/built-w64-mp2.report.json",
         "tests/fixtures/wav/external-mp2-in-wav.report.json",
         "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "DTS",
-        "Statistics"
-      ],
-      "from": "Sampling Frequency",
-      "to": "Core Sample Rate",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-dts-in-pcm-14le.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Wave64",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "from": "IsVbr",
-      "to": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/wav/built-w64-mp2.report.json",
-        "tests/fixtures/wav/external-w64-mp2.report.json"
-      ]
-    }
-  ],
-  "changed": [
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "Bitrate Mode"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
-        "tests/fixtures/wav/external-mp2-in-wav.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "path": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "IsVbr"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
-        "tests/fixtures/wav/external-mp2-in-wav.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Wave64",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "Bitrate Mode"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-w64-mp2.report.json",
-        "tests/fixtures/wav/external-w64-mp2.report.json"
-      ]
-    },
-    {
-      "path": [
-        "Wave64",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "IsVbr"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/wav/built-w64-mp2.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json",
         "tests/fixtures/wav/external-w64-mp2.report.json"
       ]
     },
     {
       "scope": "stream",
-      "fields": [
-        "isVbr"
-      ],
+      "array": "series",
+      "name": "Coded Bandwidth",
       "goldens": [
-        "tests/fixtures/wav/built-iec61937-aac.report.json",
-        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
+        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
       ]
     }
   ]
