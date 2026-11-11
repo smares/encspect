@@ -94,6 +94,9 @@ internal sealed class ResidueModel
     // The most passes any classification uses: ilog of its largest cascade.
     public int Stages { get; init; }
 
+    // The passes some classification has a book in; the others read nothing after the class words and are not visited.
+    public int StageMask { get; init; }
+
     // partitions ^ dimensions of the class book: the class words that name a combination.
     public int PartitionValues { get; init; }
 
@@ -617,6 +620,7 @@ internal sealed class SetupModel
             SecondStages = cascade,
             PartBooks = partBooks,
             Stages = stages,
+            StageMask = cascade.Aggregate(0, (mask, c) => mask | c),
             PartitionValues = (int)partitionValues,
             DecodeMap = map,
         };

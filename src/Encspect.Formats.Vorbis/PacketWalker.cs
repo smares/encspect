@@ -44,6 +44,10 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 {
     private readonly int[][] _bounds = BuildBounds(setup, blockSize0, blockSize1);
 
+    // The partition visits the walk has made since the parser last took the count (each stage over each partition of each channel, whether or not the partition reads
+    // anything), so that a stream whose packets are cheap in bytes and dear in visits is canceled between packets (VorbisParser.Decoding.cs).
+    public long Visits { get; set; }
+
     // The classifications of the partitions read so far, a row of the residue's decode map for each class word; kept between packets (a walker serves one stream on one thread).
     private int[][] _classRows = [];
 
@@ -448,6 +452,11 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 
         for (int stage = 0; stage < residue.Stages; stage++)
         {
+            if (stage != 0 && (residue.StageMask & (1 << stage)) == 0)
+            {
+                continue;
+            }
+
             for (int i = 0, l = 0; i < partitions; l++)
             {
                 if (stage == 0)
@@ -466,6 +475,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 
                 for (int k = 0; k < perWord && i < partitions; k++, i++)
                 {
+                    Visits += used.Length;
                     for (int j = 0; j < used.Length; j++)
                     {
                         int cls = classes[(j * words) + l][k];
@@ -559,6 +569,11 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
         int[][] classes = ClassRows(words);
         for (int stage = 0; stage < residue.Stages; stage++)
         {
+            if (stage != 0 && (residue.StageMask & (1 << stage)) == 0)
+            {
+                continue;
+            }
+
             for (int i = 0, l = 0; i < partitions; l++)
             {
                 if (stage == 0)
@@ -574,6 +589,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
 
                 for (int k = 0; k < perWord && i < partitions; k++, i++)
                 {
+                    Visits++;
                     int cls = classes[l][k];
                     if ((residue.SecondStages[cls] & (1 << stage)) == 0)
                     {

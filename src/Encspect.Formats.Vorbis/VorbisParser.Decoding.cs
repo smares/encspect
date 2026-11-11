@@ -41,6 +41,12 @@ public sealed partial class VorbisParser
             UpdateTrim(session);
             SampleBuffers lent = isDecoding ? session.Lend(_walker.MaxInts(record.Mode), 1) : default;
             WalkFacts facts = _walker.Walk(packet.Span, lent.IsEmpty ? default : lent.Narrow);
+            if (_walker.Visits > 1 << 20)
+            {
+                _walker.Visits = 0;
+                context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             if (isDecoding)
             {
                 session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, IsUnreadable = lent.IsEmpty, FollowsGap = _pendingGap });
