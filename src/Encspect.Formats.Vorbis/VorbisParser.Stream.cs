@@ -125,6 +125,7 @@ public sealed partial class VorbisParser
         private long _setupOffset;
         private IDecodeSession? _session;
         private bool _pendingGap;
+        private bool _isCommentAccepted;
         private (long First, long End)? _trim;
         private bool _endSeen;
         private readonly SortedDictionary<int, long> _bandwidths = [];
@@ -261,7 +262,7 @@ public sealed partial class VorbisParser
                 return;
             }
 
-            if (id.IsUsable && id.HasFraming && id.Channels > 0 && id.Rate is > 0 and <= int.MaxValue && !packet.IsCut)
+            if (id.IsUsable && id.HasFraming && id.Channels > 0 && id.Rate is > 0 and <= int.MaxValue && !packet.IsCut && IsHeader(packet, 1))
             {
                 _identificationBytes = packet.Span[..Identification.Length].ToArray();
             }
@@ -328,6 +329,7 @@ public sealed partial class VorbisParser
         private void AddComment(MappedBytes packet)
         {
             _hasComment = true;
+            _isCommentAccepted = !packet.IsCut && CommentAccepted(packet.Span);
             Node prefix = Node.FromMapped("Comment Header", packet, 0, 7, "\\x03vorbis", description: Explain.CommentPrefix);
             _parent.Add(prefix);
             if (packet.IsCut)
@@ -366,6 +368,44 @@ public sealed partial class VorbisParser
                 _findings.Add(Severity.Warning, "vorbis.framing-missing", _comment ?? prefix, _ =>
                     "The comment header ends without its framing bit; libvorbis 1.3.7 refuses the header.");
             }
+        }
+
+        // What libvorbis 1.3.7 checks when it unpacks the comment header (lib/info.c, _vorbis_unpack_comment): the lengths of the vendor string and of each comment lie inside the
+        // packet, and a framing bit follows. A header it refuses is one it cannot decode the stream after.
+        private static bool CommentAccepted(ReadOnlySpan<byte> packet)
+        {
+            if (packet.Length < 7 + 8)
+            {
+                return false;
+            }
+
+            var bits = new PacketBits(packet[7..]);
+            long storage = packet.Length - 7;
+            long vendor = bits.Read(32);
+            if (vendor < 0 || vendor > storage - 8)
+            {
+                return false;
+            }
+
+            bits.Advance((int)(vendor * 8));
+            long comments = bits.Read(32);
+            if (comments < 0 || comments > ((storage - (bits.Position / 8)) >> 2))
+            {
+                return false;
+            }
+
+            for (long i = 0; i < comments; i++)
+            {
+                long length = bits.Read(32);
+                if (length < 0 || length > storage - (bits.Position / 8))
+                {
+                    return false;
+                }
+
+                bits.Advance((int)(length * 8));
+            }
+
+            return bits.Read(1) == 1;
         }
 
         // The length of the comment header's comment from its own layout (Vorbis I, section 5.2.1: the vendor string and the user comments, each with
@@ -444,7 +484,7 @@ public sealed partial class VorbisParser
             }
 
             // A setup libvorbis refuses (a warning of the walk) is not decoded; one it accepts gives the walker the packets are read with.
-            if (_identificationBytes is not null && !packet.IsCut && _setup.Problems.All(p => p.Severity != Severity.Warning)
+            if (_identificationBytes is not null && _isCommentAccepted && !packet.IsCut && _setup.Problems.All(p => p.Severity != Severity.Warning)
                 && SetupModel.Read(packet.Span, _identification!.Channels, context.CancellationToken) is { } model)
             {
                 _walker = new PacketWalker(model, _identification.Blocksize0, _identification.Blocksize1);

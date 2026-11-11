@@ -8,7 +8,8 @@ namespace Encspect.Formats.Vorbis;
 // parser reads, between the prefix "\x03vorbis" and a framing bit) and the setup header, then the
 // audio packets. The setup header is walked far enough to know each mode's block size, so every
 // audio packet's mode gives its block, and the overlap of consecutive blocks gives the samples it
-// returns; the granule positions are checked against them. The audio itself is not decoded.
+// returns; the granule positions are checked against them. Every packet's floors and residues are walked too (PacketWalker), which gives the coded bandwidth and, where
+// a front end asks for the samples, fills the buffers the Vorbis decoder (Decoding) reconstructs the audio from.
 public sealed partial class VorbisParser : ICodecParser
 {
     public const string CodecId = "vorbis";
