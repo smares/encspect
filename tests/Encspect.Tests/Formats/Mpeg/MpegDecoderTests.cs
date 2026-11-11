@@ -98,4 +98,54 @@ public class MpegDecoderTests
         Assert.Equal(FrameSamples, sink.Blocks[0].Position);
         Assert.Equal(0, m.LostSamples);
     }
+
+    // A frame whose first granule codes ten pairs of the Huffman table 1 (a bit each) in 4 bits of part2_3_length.
+    private static byte[] OverrunFrame()
+    {
+        byte[] frame = Frame();
+        var bits = new List<bool>();
+        void Write(int value, int count)
+        {
+            for (int i = count - 1; i >= 0; i--)
+            {
+                bits.Add(((value >> i) & 1) != 0);
+            }
+        }
+
+        Write(0, 8);
+        Write(0, 1);
+        Write(4, 12);
+        Write(10, 9);
+        Write(100, 8);
+        Write(0, 9);
+        Write(0, 1);
+        Write(1, 5);
+        Write(0, 10);
+        Write(15, 4);
+        Write(0, 3);
+        Write(0, 1);
+        Write(0, 1);
+        for (int i = 0; i < bits.Count; i++)
+        {
+            if (bits[i])
+            {
+                frame[4 + (i / 8)] |= (byte)(0x80 >> (i % 8));
+            }
+        }
+
+        Array.Fill(frame, (byte)0xFF, 4 + 9, FrameLength - 13);
+        return frame;
+    }
+
+    [Fact]
+    public void HuffmanDataThatRunsPastItsPartLengthIsReportedOnceWithTheCountOfFrames()
+    {
+        byte[] data = [.. Enumerable.Range(0, 6).SelectMany(_ => OverrunFrame())];
+
+        Report report = Analyzer.CreateDefault().Analyze("overrun.mp3", new MemoryStream(data));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg.huffman-overrun");
+        Assert.Equal(6, finding.Count);
+        Assert.Equal(Severity.Warning, finding.Severity);
+    }
 }
