@@ -971,6 +971,10 @@ jobs:
       - name: Check the generated Vorbis tables
         run: python3 scripts/fixtures/vorbis_tables.py --check
 
+      # The stress streams of the Vorbis review equal what the script writes.
+      - name: Check the Vorbis stress fixtures
+        run: python3 scripts/fixtures/make_vorbis_stress_fixtures.py --check
+
       # The analyzer's decoded samples equal libvorbis's and FFmpeg's within the bounds of docs/development.md ("Vorbis decoding"), fixture by fixture.
       - name: Compare the decoded PCM of the Vorbis fixtures
         run: python3 scripts/fixtures/crosscheck_vorbis_pcm.py
