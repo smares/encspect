@@ -141,6 +141,18 @@ public class MpegCodingSeriesTests
         Assert.Equal(unit, bandwidth.Values.Length);
     }
 
+    // minimp3's Huffman loop decodes the last pair of a band table that a quadruple starts on (lines 574 and 575 of a granule whose count1 region begins at an even
+    // pair: the first granule of the frame at 1040 here, which minimp3 codes up to line 576); crosscheck_mpeg_bandwidth.py compares every fixture.
+    [Fact]
+    public void A_granule_whose_last_quadruple_starts_at_line_574_codes_the_whole_band()
+    {
+        Report report = Fixtures.AnalyzeMpeg("mpeg/external-fhg-mono-cbr.mp3");
+        Series bandwidth = report.Streams[0].Series.First(s => s.Name == "Coded Bandwidth");
+        int index = bandwidth.X.Span.IndexOf(1040);
+
+        Assert.Equal(22050, bandwidth.Values.Span[index]);
+    }
+
     // Layer III's coded bandwidth comes from the entropy pass, which the nodes cannot state, so it is held to what the side information bounds: a frame codes at least
     // the lines of the big-values region of every granule and channel that has no short blocks (twice big_values), in the upper edge in whole hertz, and at most the
     // whole band up to half the sample rate. The frames the entropy pass did not walk (no main data) have no point.

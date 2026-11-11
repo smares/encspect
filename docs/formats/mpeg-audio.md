@@ -347,6 +347,6 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
 
 ## Not yet covered
 
-- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels. ISO/IEC 13818-3 is not at hand.
+- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels, and the stream's measurements say in their reason that only those were measured. ISO/IEC 13818-3 is not at hand.
 - Layer II samples and Layer III Huffman values are not shown as nodes; the report holds figures from them (Coded Bandwidth), not the values.
 - Layer III intensity stereo bounds (where the right channel's zero region begins) are not reported.

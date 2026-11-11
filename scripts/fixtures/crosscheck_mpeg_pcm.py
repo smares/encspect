@@ -56,7 +56,8 @@ EXPLAINED = {
         "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
     },
     "side-info-long-blocks.mp3": {
-        "minimp3": "minimp3 interpolates the line sample above index 128 of the Huffman tables differently from the analyzer at the last bit of 16-bit rounding (largest 0.0001 of full scale)"
+        "minimp3": "the private bits of this hand-built stereo stream are 111, which minimp3 reads as scfsi bits of the first granule (as in side-info-mono.mp3): it takes the scalefactors of "
+                   "the second channel's first granule from the previous values and reads 6 bits of them instead of 41, so its Huffman data start 35 bits earlier than the specification places them"
     },
     "reservoir-across-gap.mp3": {
         "ffmpeg": "FFmpeg conceals the frames after the gap with audio built from the missing main data; the analyzer withholds them (a gap is never concealed audio)"

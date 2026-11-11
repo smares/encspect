@@ -44,12 +44,6 @@ public sealed partial class MpegAudioParser
             (Session, StreamStart, StreamNode, Position, PendingGap) = (null, index, node, 0, false);
         }
 
-        public void SetSession(IDecodeSession session)
-        {
-            Session = session;
-            Sessions[StreamStart] = session;
-        }
-
         // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked) and the granules and channels whose
         // Huffman data ran past their part2_3_length.
         public (int CodedLines, int Overruns) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)

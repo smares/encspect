@@ -292,10 +292,16 @@ public sealed class Analyzer
             options.CancellationToken.ThrowIfCancellationRequested();
         }
 
-        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = decodeRun?.RecordFor(s.Nodes) ?? s.Measurements }).ToList();
+        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = WithChannelReason(s, decodeRun?.RecordFor(s.Nodes) ?? s.Measurements) }).ToList();
         progress?.Report(reader.Length);
         return new Report(source, root, ordered, streams, detection);
     }
+
+    // A decoder may output fewer channels than the stream declares (the base stereo of an MPEG-2 multichannel stream); the measurement says so.
+    private static StreamMeasurements? WithChannelReason(StreamInfo stream, StreamMeasurements? record) =>
+        record is { Reason: null, Channels: > 0, Status: not MeasurementStatus.Failed } && record.Channels < stream.Channels
+            ? record with { Reason = $"the decoder outputs {Counts.Of(record.Channels, "channel", "channels")} of the stream's {stream.Channels}, and only those were measured" }
+            : record;
 
     // Progress only grows: the format parser's reads may already have reached the end of the file,
     // which the analysis reports again when it is done.

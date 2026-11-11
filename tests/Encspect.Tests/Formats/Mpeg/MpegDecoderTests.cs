@@ -65,6 +65,20 @@ public class MpegDecoderTests
     }
 
     [Fact]
+    public void AMultichannelStreamMeasuredAsItsBaseStereoSaysSo()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "layer2", "mc-3-2-lfe.mp2");
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        using FileStream file = File.OpenRead(path);
+        Report report = Analyzer.CreateDefault().Analyze("mc-3-2-lfe.mp2", file, options);
+
+        StreamMeasurements m = Assert.Single(report.Streams).Measurements!;
+
+        Assert.Equal(2, m.Channels);
+        Assert.Equal("the decoder outputs 2 channels of the stream's 6, and only those were measured", m.Reason);
+    }
+
+    [Fact]
     public void SilentFramesDecodeToExactZerosAtEveryPosition()
     {
         (Report report, CollectingSink sink) = Decode(Stream(20));

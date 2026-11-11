@@ -318,7 +318,8 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
 
 - The 35 ISO/IEC 13818-4 streams are 22 MPEG-1 Layer II streams with the multichannel extension, 10 MPEG-2 Layer II, one each of MPEG-1 Layer I, MPEG-1 Layer III and MPEG-2 Layer I. Their reference output is 16-bit PCM per channel (`test01_l.pcm`: 66,816 bytes, 29 frames of 1,152 samples of 2 bytes).
 - **The 22 multichannel streams are left out of the comparison.** Their reference is the dematrixed L, R, C, Ls, Rs and LFE (`test01.txt`: matrix 3, 3/2), while the decoder outputs the base channels. Rebuilding those from the reference channels needs 13818-3's matrix coefficients, which are not at hand.
-- **So the conformance comparison covers 13 streams:** 10 MPEG-2 Layer II, 2 Layer I and a single Layer III stream, MPEG-1.
+- **`test22`, the MPEG-1 Layer I stream with an extension, is left out too:** its archive holds only the dematrixed channels, not the base stereo.
+- **So the conformance comparison covers 12 streams:** 10 MPEG-2 Layer II, the MPEG-2 Layer I stream and the single MPEG-1 Layer III stream with an extension (`test23`, whose base stereo is `test23.pcm`).
 - **ISO/IEC 14496-26's DVD1** holds 37 Layer III streams (`compressedMpeg12/add-opt/l3_*.mpg`), whose names suggest MPEG-1, MPEG-2 and MPEG-2.5 (**unverified**). The folder is informative by its `README_audio.txt`, and no Layer III reference output was found in DVD1's `referencesWav` (DVD2 and DVD3 were not searched).
 - **References for MPEG-2 and MPEG-2.5 Layer III,** and for Layer III beyond the one stream:
   - minimp3 with float output: the decoder follows it closely, so it catches porting errors but not an error the two share;
@@ -621,7 +622,7 @@ The steps follow [Order](#order); each is one pull request for the decoder, with
 1. **MPEG audio:**
    - the parser: the Layer III walk and the Layer I and II samples, Coded Bandwidth for Layer III, the checksum declarations of decision 2;
    - the decoder, following minimp3;
-   - the checks: the 13 comparable 13818-4 streams against their reference PCM; minimp3, mpg123 and FFmpeg as cross-checks.
+   - the checks: the 12 comparable 13818-4 streams against their reference PCM; minimp3, mpg123 and FFmpeg as cross-checks.
 2. **Vorbis:** floors and residues in the parser with Coded Bandwidth; the decoder; libvorbis and FFmpeg.
 3. **Opus:**
    - the parser: the range decoder and the SILK and CELT syntax, with CELT's block switching and stereo coding;

@@ -124,6 +124,7 @@ internal static class Layer3Kernels
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void IntensityBand(Span<float> left, Span<float> right, int count, float kl, float kr)
     {
         for (int i = 0; i < count; i++)
@@ -134,6 +135,7 @@ internal static class Layer3Kernels
     }
 
     // The highest band of each window (index modulo 3) in which the right channel has a nonzero pair (minimp3's L3_stereo_top_band).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void TopBands(ReadOnlySpan<float> right, ReadOnlySpan<byte> widths, int bandCount, Span<int> maxBand)
     {
         maxBand[0] = maxBand[1] = maxBand[2] = -1;
@@ -261,6 +263,7 @@ internal static class Layer3Kernels
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Dct3Of9(Span<float> y)
     {
         float s0 = y[0];
@@ -346,6 +349,7 @@ internal static class Layer3Kernels
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Idct3(float x0, float x1, float x2, Span<float> dst)
     {
         float m1 = x1 * 0.86602540f;
@@ -355,6 +359,7 @@ internal static class Layer3Kernels
         dst[2] = a1 - m1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Imdct12(ReadOnlySpan<float> x, int xo, Span<float> dst, int dstOffset, Span<float> overlap, int overlapOffset)
     {
         ReadOnlySpan<float> twiddle = SynthesisTables.Twiddle3;

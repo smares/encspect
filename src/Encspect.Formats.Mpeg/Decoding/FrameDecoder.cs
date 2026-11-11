@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Mpeg.Decoding;
@@ -183,6 +184,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 }
 
                 Layer3Kernels.Antialias(channelLines, antialiasBands);
+                // After a mono stretch the right channel's overlap is the one the last stereo frame left, as in minimp3, which the PCM cross-check follows.
                 Layer3Kernels.ImdctGranule(channelLines, _overlap.AsSpan(ch * 9 * 32, 9 * 32), gr.BlockType, longBands);
                 Layer3Kernels.ChangeSign(channelLines);
             }
@@ -226,6 +228,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // Writes the frame's samples to the sink as planar floats at the stream's channel count, leaving out the span after a gap (Withhold). Returns the samples written.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int Write(in CodedFrame frame, int samples, int frameChannels)
     {
         int withheld = Math.Min(_withheldLeft, samples);
@@ -305,5 +308,6 @@ internal static class Layer12Dequantizer
     private static float Divide(float value, int divisor) => value / divisor;
 
     // ba: the quantizer (2 to 19), index: the scalefactor index 0 to 63.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static float Scale(int ba, int index) => Dequantizer[Math.Clamp((ba * 3) - 6 + (index % 3), 0, Dequantizer.Length - 1)] * (1 << 21 >> (index / 3));
 }

@@ -75,6 +75,7 @@ internal ref struct FastBits
 
     public readonly int Position => (_next * 8) - _count;
 
+    // count is 1 to 32: 0 would shift by 64, which C# masks to 0, and return the whole cache.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly uint Peek(int count) => (uint)(_cache >> (64 - count));
 
@@ -490,7 +491,7 @@ internal static class Layer3Syntax
         ReadOnlySpan<byte> count1 = gr.Count1Table != 0 ? Layer3Tables.Count1Table1 : Layer3Tables.Count1Table0;
         // np counts pairs of lines left in the band the quadruples are in; the quadruple loop starts in the band the big-values loop ended in.
         int remaining = 1 - pairsLeft;
-        for (; dst + 4 <= 576; dst += 4)
+        for (; dst < 576; dst += 4)
         {
             bits.Fill();
             int leaf = count1[(int)bits.Peek(4)];
@@ -525,6 +526,13 @@ internal static class Layer3Syntax
                     dst += 2;
                     break;
                 }
+            }
+
+            if (dst + 4 > 576)
+            {
+                // The band table ends at line 576, so the second pair of a quadruple that starts at line 574 has no band: minimp3's reload stops there.
+                dst += 2;
+                break;
             }
 
             Quad(ref bits, values, dst, leaf, 2);

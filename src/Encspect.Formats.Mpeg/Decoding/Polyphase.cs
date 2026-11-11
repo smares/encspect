@@ -97,6 +97,7 @@ internal static class Polyphase
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Pair(Span<float> pcm, int offset, int channels, ReadOnlySpan<float> z, int zo)
     {
         float a = (z[zo + (14 * 64)] - z[zo]) * 29;
