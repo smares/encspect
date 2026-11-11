@@ -37,7 +37,7 @@ AREAS = {
         "projects": ["Encspect.Formats.Mpeg", "Encspect.Tags.Id3", "Encspect.Tags.Ape", "Encspect.Tags.Lyrics3"],
         "fixtures": ["mpeg", "tags"],
         "scripts": ["crosscheck_mpeg_fixtures.py", "conformance_mpeg_audio.py", "check_mp3pro_samples.py", "crosscheck_mpeg_pcm.py", "conformance_mpeg_pcm.py", "compare_pcm.py",
-                    "mpeg_tables.py", "minimp3_tool.py"],
+                    "mpeg_tables.py", "minimp3_tool.py", "crosscheck_mpeg_bandwidth.py", "minimp3_coded.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/*.php", "scripts/fixtures/make_*mpeg*", "scripts/fixtures/make_layer*",
                   "scripts/fixtures/make_vbr*", "scripts/fixtures/make_stats*", "scripts/fixtures/make_*tag*", "scripts/fixtures/stream_stats.py",
                   "tests/conformance/mpeg2-audio.json", "tests/conformance/mp3pro-samples.json", "third_party/**"],
