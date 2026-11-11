@@ -265,6 +265,34 @@
                   ]
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 417,
+                  "length": 17098,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 417,
+                      "length": 17098
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 417,
+                      "length": 17098
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 417,
+                      "length": 17098
+                    }
+                  ]
+                },
+                {
                   "name": "Ancillary Data",
                   "value": 15658,
                   "unit": "bytes",
@@ -25285,6 +25313,21 @@
         "duration": 1.0448979591836736,
         "averageBitrate": 130.9065625,
         "isVbr": true,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "encoder": "LAME 3.100",
         "encoderConfidence": "High",
         "series": [
@@ -25516,6 +25559,112 @@
             "values": [
               381,
               511
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              417,
+              834,
+              1251,
+              1668,
+              2085,
+              2502,
+              2919,
+              3336,
+              3753,
+              4170,
+              4587,
+              5004,
+              5421,
+              5838,
+              6255,
+              6672,
+              7089,
+              7506,
+              7923,
+              8340,
+              8757,
+              9174,
+              9591,
+              10008,
+              10425,
+              10842,
+              11259,
+              11676,
+              12093,
+              12510,
+              12927,
+              13344,
+              13761,
+              14178,
+              14595,
+              15012,
+              15429,
+              15846,
+              16263,
+              16889
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              0,
+              0
             ]
           }
         ],

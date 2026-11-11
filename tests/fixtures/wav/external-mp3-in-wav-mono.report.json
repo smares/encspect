@@ -503,6 +503,34 @@
                           ]
                         },
                         {
+                          "name": "Coded Bandwidth",
+                          "offset": 104,
+                          "length": 1881,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 9149,
+                              "unit": "Hz",
+                              "offset": 104,
+                              "length": 1881
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 9455,
+                              "unit": "Hz",
+                              "offset": 104,
+                              "length": 1881
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 9991,
+                              "unit": "Hz",
+                              "offset": 104,
+                              "length": 1881
+                            }
+                          ]
+                        },
+                        {
                           "name": "Ancillary Data",
                           "value": 441,
                           "unit": "bytes",
@@ -3755,6 +3783,21 @@
         "duration": 0.313469387755102,
         "averageBitrate": 48.0046875,
         "isVbr": false,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "encoder": "LAME 3.100",
         "encoderConfidence": "Low",
         "writer": "FFmpeg (Lavf60.16.100)",
@@ -3872,6 +3915,54 @@
             ],
             "values": [
               161
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              104,
+              260,
+              417,
+              574,
+              731,
+              887,
+              1044,
+              1201,
+              1358,
+              1514,
+              1671,
+              1828
+            ],
+            "values": [
+              9149,
+              9991,
+              9226,
+              9455,
+              9570,
+              9455,
+              9188,
+              9455,
+              9532,
+              9685,
+              9991,
+              9838
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              9991
             ]
           }
         ],

@@ -208,6 +208,34 @@
                   ]
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 20020,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 20020
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 20020
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 20020
+                    }
+                  ]
+                },
+                {
                   "name": "Ancillary Data",
                   "value": 18580,
                   "unit": "bytes",
@@ -24429,6 +24457,21 @@
         "duration": 1.0448979591836736,
         "averageBitrate": 153.278125,
         "isVbr": false,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",
@@ -24640,6 +24683,112 @@
             "values": [
               453,
               464
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              500,
+              1001,
+              1501,
+              2002,
+              2502,
+              3003,
+              3503,
+              4004,
+              4504,
+              5005,
+              5505,
+              6006,
+              6506,
+              7007,
+              7507,
+              8008,
+              8508,
+              9009,
+              9509,
+              10010,
+              10510,
+              11011,
+              11511,
+              12012,
+              12512,
+              13013,
+              13513,
+              14014,
+              14514,
+              15015,
+              15515,
+              16016,
+              16516,
+              17017,
+              17517,
+              18018,
+              18518,
+              19019,
+              19519
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              0,
+              0
             ]
           }
         ],

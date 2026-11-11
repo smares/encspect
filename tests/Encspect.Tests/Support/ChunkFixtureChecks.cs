@@ -231,6 +231,14 @@ internal static class ChunkFixtureChecks
         JsonElement stream = manifest.GetProperty("stream");
         if (stream.ValueKind != JsonValueKind.Object || !stream.TryGetProperty("pcm", out JsonElement pcm))
         {
+            // MPEG audio in a WAVE file is decoded by the MPEG audio decoder, whose verification declares only the frame CRC-16, a header checksum (lossy stream).
+            if (report.Streams.Any(s => s.Verification is { IsLossy: true }))
+            {
+                Assert.True(sink.Samples > 0);
+                Assert.All(report.Streams, s => Assert.True(s.Verification!.IsLossy));
+                return;
+            }
+
             Assert.Equal(0, sink.Samples);
             Assert.All(report.Streams, s => Assert.Null(s.Verification));
             return;

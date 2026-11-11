@@ -640,6 +640,34 @@
                   ]
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 527,
+                  "length": 8777,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 527,
+                      "length": 8777
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 16308,
+                      "unit": "Hz",
+                      "offset": 527,
+                      "length": 8777
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 22050,
+                      "unit": "Hz",
+                      "offset": 527,
+                      "length": 8777
+                    }
+                  ]
+                },
+                {
                   "name": "Channel Bit Share",
                   "offset": 527,
                   "length": 8777,
@@ -14489,6 +14517,21 @@
         "duration": 0.5485714285714286,
         "averageBitrate": 127.99791666666667,
         "isVbr": false,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
         "encoder": "LAME 3.100",
         "encoderConfidence": "High",
         "series": [
@@ -14640,6 +14683,72 @@
             ],
             "values": [
               349
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              527,
+              944,
+              1362,
+              1780,
+              2198,
+              2616,
+              3034,
+              3452,
+              3870,
+              4288,
+              4706,
+              5124,
+              5542,
+              5960,
+              6378,
+              6796,
+              7214,
+              7632,
+              8050,
+              8468,
+              8886
+            ],
+            "values": [
+              13858,
+              16308,
+              16538,
+              15925,
+              16231,
+              16461,
+              16231,
+              16308,
+              16002,
+              16308,
+              16461,
+              16308,
+              16538,
+              16538,
+              16384,
+              16538,
+              16461,
+              16614,
+              16384,
+              22050,
+              0
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              22050
             ]
           },
           {

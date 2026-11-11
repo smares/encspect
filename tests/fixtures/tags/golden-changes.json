@@ -2,33 +2,10 @@
   "goldens": [
     "tests/fixtures/tags/"
   ],
-  "renamed": [
+  "added": [
     {
-      "parent": [
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "from": "IsVbr",
-      "to": "Bitrate Mode",
-      "goldens": [
-        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
-        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
-        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
-        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
-        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
-      ]
-    }
-  ],
-  "changed": [
-    {
-      "path": [
-        "MPEG Audio",
-        "Statistics",
-        "Bitrate Mode"
-      ],
-      "fields": [
-        "value"
-      ],
+      "scope": "stream",
+      "key": "verification",
       "goldens": [
         "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
         "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
@@ -38,14 +15,90 @@
       ]
     },
     {
-      "path": [
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
         "MPEG Audio",
         "Statistics",
-        "IsVbr"
+        "Coded Bandwidth"
       ],
-      "fields": [
-        "value"
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
       ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
+        "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-apev2-id3v1.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v23.report.json",
+        "tests/fixtures/tags/external-mutagen-id3v24-id3v1.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
       "goldens": [
         "tests/fixtures/tags/external-ffmpeg-id3v23-id3v1.report.json",
         "tests/fixtures/tags/external-ffmpeg-id3v24-id3v1.report.json",

@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 public class DecoderSessionInvariantTests
 {
     // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac"];
+    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)
@@ -24,6 +24,15 @@ public class DecoderSessionInvariantTests
         ["Apple Lossless"] = "alac",
         ["Dolby TrueHD"] = "truehd",
         ["MLP"] = "mlp",
+        ["MPEG-1 Layer I"] = "mpeg-audio",
+        ["MPEG-1 Layer II"] = "mpeg-audio",
+        ["MPEG-1 Layer III"] = "mpeg-audio",
+        ["MPEG-2 Layer I"] = "mpeg-audio",
+        ["MPEG-2 Layer II"] = "mpeg-audio",
+        ["MPEG-2 Layer III"] = "mpeg-audio",
+        ["MPEG-2.5 Layer I"] = "mpeg-audio",
+        ["MPEG-2.5 Layer II"] = "mpeg-audio",
+        ["MPEG-2.5 Layer III"] = "mpeg-audio",
         ["PCM"] = "pcm",
         ["PCM (floating-point)"] = "pcm",
         [CodecNames.ALaw] = "pcm",
@@ -47,6 +56,7 @@ public class DecoderSessionInvariantTests
         ["wav/built-wavl-list-without-fact.wav"] = NotDescribable,
         ["wav/built-wavl-list.wav"] = NotDescribable,
         ["wav/built-zero-bits.wav"] = NotDescribable,
+        ["wav/external-iec61937-mp2-lsf-24000.wav"] = "MPEG audio in IEC 61937 bursts reaches the MPEG audio parser as packets, which it does not analyze (mpeg.packets-not-analyzed), so the stream is the container's own",
         ["alac/built-cookie-missing-mka.mka"] = "the track has no CodecPrivate, so the stream is the container's own and the codec parser reads no frame (alac.cookie-missing)",
         ["aiff/built-chunk-id-invalid.aiff"] = NotDescribable,
         ["aiff/built-chunk-limit.aiff"] = NotDescribable,

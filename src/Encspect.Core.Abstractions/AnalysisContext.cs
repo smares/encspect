@@ -10,12 +10,16 @@ public abstract class AnalysisContext
     private readonly List<StreamInfo> _streams = [];
     private readonly List<EncoderClaim> _encoderClaims;
     private readonly IParserRouter? _router;
+    private readonly AnalysisContext? _decodingOwner;
 
-    private protected AnalysisContext(CancellationToken cancellationToken, IReadOnlyList<EncoderClaim>? encoderClaims, IParserRouter? router)
+    // decodingOwner: the context whose decoding sessions the sessions of this one are, where a parser runs another over a payload of its own (MPEG audio in a container):
+    // the sessions then belong to the owner, which the host ends them through, and they route as the owner's do.
+    private protected AnalysisContext(CancellationToken cancellationToken, IReadOnlyList<EncoderClaim>? encoderClaims, IParserRouter? router, AnalysisContext? decodingOwner = null)
     {
         CancellationToken = cancellationToken;
         _encoderClaims = [.. encoderClaims ?? []];
-        _router = router;
+        _router = router ?? decodingOwner?._router;
+        _decodingOwner = decodingOwner;
     }
 
     // Reads check it already; loops that only compute, over every frame or packet, check it every
@@ -157,7 +161,7 @@ public abstract class AnalysisContext
         ArgumentException.ThrowIfNullOrEmpty(codecId);
         ArgumentNullException.ThrowIfNull(setup);
 
-        return _router?.StartDecoding(this, codecId, setup) ?? new UnroutedSession(setup);
+        return _router?.StartDecoding(_decodingOwner ?? this, codecId, setup) ?? new UnroutedSession(setup);
     }
 
     // The session of a context without a router (a parser run by itself): no decoder exists to decode anything.

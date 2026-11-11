@@ -139,7 +139,7 @@ def split_by_tag():
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
-        if not path.name.endswith(".report.json") and path.name != "golden-changes.json":
+        if not path.name.endswith((".report.json", ".decode.json")) and path.name != "golden-changes.json":
             path.unlink()
     names = set()
     for build in FIXTURES:

@@ -61,6 +61,21 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(self.check(report(OLD_STATS), new, change), [])
         self.assertTrue(self.check(report(OLD_STATS), new, {"added": change["added"][:1]}))
 
+    def test_an_added_series_can_name_the_streams_it_applies_to(self):
+        # A file of two streams, the first of which gains the series and the second had it before.
+        old = report(OLD_STATS, streams=[
+            {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}]},
+            {"nodes": [[1]], "codec": "MPEG-1 Layer II", "series": [{"name": "Bitrate"}, {"name": "Coded Bandwidth"}]},
+        ])
+        new = report(OLD_STATS, streams=[
+            {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}, {"name": "Coded Bandwidth"}]},
+            {"nodes": [[1]], "codec": "MPEG-1 Layer II", "series": [{"name": "Bitrate"}, {"name": "Coded Bandwidth"}]},
+        ])
+        everywhere = {"added": [{"scope": "stream", "array": "series", "name": "Coded Bandwidth"}]}
+        first = {"added": [{"scope": "stream", "array": "series", "name": "Coded Bandwidth", "streams": [0]}]}
+        self.assertTrue(self.check(old, new, everywhere))
+        self.assertEqual(self.check(old, new, first), [])
+
     def test_a_renamed_series_is_given_its_old_name_back_where_the_old_stream_has_it(self):
         old = report(OLD_STATS)
         old["streams"][0]["categorySeries"] = [{"name": "Window Sequences"}, {"name": "Block Sizes", "groupOf": "Window Sequences"}]

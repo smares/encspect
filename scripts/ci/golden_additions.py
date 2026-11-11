@@ -18,7 +18,7 @@ every child of that name. A change file:
     {
       "goldens": ["tests/fixtures/mpeg/", "tests/fixtures/mp4/some.report.json"],   # files or folders it covers
       "added":   [{"scope": "stream", "key": "categorySeries"},                      # a key of every stream
-                  {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array
+                  {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array; "streams": [0] limits it to those streams
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
                   {"scope": "finding", "code": "speex.granule-beyond-packets"},          # a finding the golden gains; one the old report has stays
@@ -102,7 +102,10 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
         if scope == "report":
             report.pop(entry["key"], None)
         elif scope == "stream":
-            for stream in report.get("streams", []):
+            for index, stream in enumerate(report.get("streams", [])):
+                # An entry may name the streams it applies to (a file of two codings, one of which had the figure before).
+                if "streams" in entry and index not in entry["streams"]:
+                    continue
                 if "array" not in entry:
                     stream.pop(entry["key"], None)
                 elif "key" in entry:

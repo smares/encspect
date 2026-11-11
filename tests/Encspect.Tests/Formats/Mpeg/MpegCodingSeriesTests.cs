@@ -106,7 +106,8 @@ public class MpegCodingSeriesTests
     public void The_coded_bandwidth_of_every_frame_equals_what_its_allocation_nodes_state(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
-        if (report.Streams.Count != 1 || report.Streams[0].Series.FirstOrDefault(s => s.Name == "Coded Bandwidth") is not { } bandwidth)
+        if (report.Streams.Count != 1 || report.Streams[0].Series.FirstOrDefault(s => s.Name == "Coded Bandwidth") is not { } bandwidth
+            || report.Streams[0].Codec.EndsWith("III", StringComparison.Ordinal))
         {
             return;
         }
@@ -138,6 +139,66 @@ public class MpegCodingSeriesTests
         }
 
         Assert.Equal(unit, bandwidth.Values.Length);
+    }
+
+    // minimp3's Huffman loop decodes the last pair of a band table that a quadruple starts on (lines 574 and 575 of a granule whose count1 region begins at an even
+    // pair: the first granule of the frame at 1040 here, which minimp3 codes up to line 576); crosscheck_mpeg_bandwidth.py compares every fixture.
+    [Fact]
+    public void A_granule_whose_last_quadruple_starts_at_line_574_codes_the_whole_band()
+    {
+        Report report = Fixtures.AnalyzeMpeg("mpeg/external-fhg-mono-cbr.mp3");
+        Series bandwidth = report.Streams[0].Series.First(s => s.Name == "Coded Bandwidth");
+        int index = bandwidth.X.Span.IndexOf(1040);
+
+        Assert.Equal(22050, bandwidth.Values.Span[index]);
+    }
+
+    // Layer III's coded bandwidth comes from the entropy pass, which the nodes cannot state, so it is held to what the side information bounds: a frame codes at least
+    // the lines of the big-values region of every granule and channel that has no short blocks (twice big_values), in the upper edge in whole hertz, and at most the
+    // whole band up to half the sample rate. The frames the entropy pass did not walk (no main data) have no point.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void The_coded_bandwidth_of_every_layer_III_frame_lies_between_what_its_side_information_bounds(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        if (report.Streams.Count != 1 || report.Streams[0].Series.FirstOrDefault(s => s.Name == "Coded Bandwidth") is not { } bandwidth
+            || !report.Streams[0].Codec.EndsWith("III", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var values = new Dictionary<double, double>();
+        for (int i = 0; i < bandwidth.X.Length; i++)
+        {
+            values[bandwidth.X.Span[i]] = bandwidth.Values.Span[i];
+        }
+
+        int checkedFrames = 0;
+        foreach (Node frame in AudioFrames(report.Streams[0]))
+        {
+            if (!values.TryGetValue(frame.Offset, out double hertz))
+            {
+                continue;
+            }
+
+            int rate = int.Parse(Field(frame, "Header/Sample Rate")!.Split(' ')[0], System.Globalization.CultureInfo.InvariantCulture);
+            Node[] channels = [.. Fixtures.Resolve(frame, "Side Info").FirstOrDefault()?.Children.Where(g => g.Name.StartsWith("Granule", StringComparison.Ordinal)).SelectMany(g => g.Children) ?? []];
+            int lines = 0;
+            foreach (Node channel in channels)
+            {
+                if (channel.Children.FirstOrDefault(c => c.Name == "Block Type")?.Value?.ToString() != "Short" && channel.Children.FirstOrDefault(c => c.Name == "Big Values")?.Value is { } big)
+                {
+                    lines = Math.Max(lines, 2 * int.Parse(big.ToString()!, System.Globalization.CultureInfo.InvariantCulture));
+                }
+            }
+
+            double least = Math.Round(lines * rate / 1152.0, MidpointRounding.ToEven);
+            Assert.True(hertz >= least, $"{name}, frame at {frame.Offset}: {hertz} Hz, but its big-values regions code up to {least} Hz");
+            Assert.True(hertz <= rate / 2.0, $"{name}, frame at {frame.Offset}: {hertz} Hz is above half the sample rate");
+            checkedFrames++;
+        }
+
+        Assert.Equal(values.Count, checkedFrames);
     }
 
     // Layer III's channel bit share follows from the part2_3_length nodes: the first channel's bits over both channels', in tenths of a percent.
@@ -287,7 +348,13 @@ public class MpegCodingSeriesTests
         // The first frame of the stream has no bits (part2_3_length 0 in every granule), so it has no point.
         Assert.Equal(bitrate.X.Length - 1, share.X.Length);
         Assert.All(share.X.ToArray(), x => Assert.Contains(x, bitrate.X.ToArray()));
-        Assert.DoesNotContain(stream.Series, s => s.Name.StartsWith("Coded Bandwidth", StringComparison.Ordinal));
+        Assert.Equal(["Coded Bandwidth", "Coded Bandwidth Over Time"], stream.Series.Where(s => s.Name.StartsWith("Coded Bandwidth", StringComparison.Ordinal)).Select(s => s.Name));
+        Assert.All(stream.Series.Where(s => s.Name.StartsWith("Coded Bandwidth", StringComparison.Ordinal)), s =>
+        {
+            Assert.Equal(GraphConcept.CodedBandwidth, s.Concept);
+            Assert.Equal("Coded Bandwidth", s.Quantity);
+            Assert.Equal("Hz", s.Unit);
+        });
     }
 
     [Fact]

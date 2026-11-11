@@ -105,8 +105,8 @@ public class AudioPanelTests
     [AvaloniaFact]
     public void A_stream_the_analysis_does_not_decode_says_so_with_the_codec_and_never_that_no_decoder_exists()
     {
-        // MPEG audio has no decoder; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
-        foreach ((string path, string codec) in new[] { (Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "MPEG-1 Layer III"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
+        // AC-3 has no decoder; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
+        foreach ((string path, string codec) in new[] { (Fixtures.Ac3("annex-d.ac3"), "AC-3"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
         {
             DetailWindow window = Open(path, decode: false);
             AudioCaption caption = window.Model.Graphs.SelectedStream!.Caption!;
@@ -153,6 +153,7 @@ public class AudioPanelTests
         Assert.Equal("Decoding failed, so the audio has no figures.", Caption(Stream(null, DecodeStatus.Failed)));
         Assert.Equal("Decoding stopped before any audio was measured.", Caption(Stream(null, DecodeStatus.Stopped)));
         Assert.Null(Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete }, DecodeStatus.Decoded)));
+        Assert.Equal("The decoder outputs 2 channels of the stream's 6, and only those were measured.", Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete, Reason = "the decoder outputs 2 channels of the stream's 6, and only those were measured" }, DecodeStatus.Decoded)));
         Assert.Null(AudioPanels.CaptionFor(Stream(null, null) with { Kind = StreamKind.Video }));
         Assert.Equal("The audio of this stream is not decoded here.", AudioPanels.NotDecodedHere(string.Empty));
 
@@ -190,21 +191,23 @@ public class AudioPanelTests
         window.Close();
     }
 
-    // An MP3 stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
+    // An AC-3 stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
     [AvaloniaFact]
     public void A_stream_without_a_decoder_offers_no_command_and_is_not_decoded()
     {
-        DetailWindow window = Open(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"));
+        DetailWindow window = Open(Fixtures.Ac3("annex-d.ac3"));
         Assert.False(window.Model.CanDecodeAudio);
-        Assert.Equal("The audio of this MPEG-1 Layer III stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
+        Assert.Equal("The audio of this AC-3 stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
         Assert.Null(window.Model.Report!.Streams.Single().Measurements);
         window.Close();
     }
 
-    [AvaloniaFact]
-    public void A_TTA_stream_offers_the_command_and_is_not_decoded_until_asked()
+    [AvaloniaTheory]
+    [InlineData("tta", "external-11025-stereo.tta")]
+    [InlineData("mpeg", "external-lame-cbr128-joint.mp3")]
+    public void A_stream_with_a_decoder_offers_the_command_and_is_not_decoded_until_asked(string folder, string name)
     {
-        DetailWindow window = Open(Fixtures.Tta("external-11025-stereo.tta"), decode: false);
+        DetailWindow window = Open(folder == "tta" ? Fixtures.Tta(name) : Fixtures.Mpeg(name), decode: false);
         Assert.True(window.Model.CanDecodeAudio);
         Assert.True(window.Model.Graphs.SelectedStream!.Caption!.OffersDecode);
         Assert.Null(window.Model.Report!.Streams.Single().Measurements);

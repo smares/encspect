@@ -33,3 +33,21 @@ def side_info(binary, path):
 def _run(binary, path):
     result = subprocess.run([str(binary), str(path)], capture_output=True, text=True, check=True)
     return [json.loads(line) for line in result.stdout.splitlines()]
+
+
+PCM_SOURCE = pathlib.Path(__file__).resolve().parent / "minimp3_pcm.c"
+
+
+def build_pcm():
+    """Compiles minimp3_pcm.c (the float decoder of the PCM cross-check) into a temporary directory; no fused multiply-add, so a build for any processor gives the same
+    floats as the analyzer's decoder, which never fuses."""
+    directory = pathlib.Path(tempfile.mkdtemp(prefix="minimp3-"))
+    binary = directory / "minimp3_pcm"
+    subprocess.run(["cc", "-O1", "-ffp-contract=off", "-I", str(HEADERS), "-o", str(binary), str(PCM_SOURCE), "-lm"], check=True)
+    return binary
+
+
+def decode_pcm(binary, path, output):
+    """Decodes path with minimp3 to the file output (interleaved float32) and returns its frames, one dict each."""
+    result = subprocess.run([str(binary), str(path), str(output)], capture_output=True, text=True, check=True)
+    return [json.loads(line) for line in result.stdout.splitlines()]

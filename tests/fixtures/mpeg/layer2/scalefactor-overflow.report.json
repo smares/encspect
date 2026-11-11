@@ -1005,6 +1005,22 @@
         "duration": 0.288,
         "averageBitrate": 8,
         "isVbr": false,
+        "verification": {
+          "isVerified": false,
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 6,
+              "checked": 6,
+              "failed": 1
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",

@@ -2,128 +2,93 @@
   "goldens": [
     "tests/fixtures/mp4/"
   ],
-  "renamed": [
+  "added": [
     {
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Statistics"
-      ],
-      "from": "Bit Depth",
-      "to": "Bits Per Sample",
-      "goldens": [
-        "tests/fixtures/mp4/ffmpeg-cenc-alac.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "from": "IsVbr",
-      "to": "Bitrate Mode",
+      "scope": "stream",
+      "key": "verification",
       "goldens": [
         "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    }
-  ],
-  "changed": [
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "Bitrate Mode"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "IsVbr"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "AAC",
-        "Statistics",
-        "Bitrate Mode"
-      ],
-      "fields": [
-        "value",
-        "unit"
-      ],
-      "goldens": [
-        "tests/fixtures/mp4/eld-ld-sbr-1.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-13.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-2.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-3.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-4.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-5.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-6.report.json",
-        "tests/fixtures/mp4/eld-ld-sbr-7.report.json",
-        "tests/fixtures/mp4/rate-1-hz.report.json",
-        "tests/fixtures/mp4/usac-reserved-rate.report.json"
-      ]
-    },
-    {
-      "path": [
-        "MP4",
-        "moov",
-        "trak",
-        "Gapless",
-        "Container Samples"
-      ],
-      "fields": [
-        "value",
-        "unit"
-      ],
-      "goldens": [
-        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
-        "tests/fixtures/mp4/he-aac-backward.report.json",
-        "tests/fixtures/mp4/he-aac-hierarchical.report.json",
-        "tests/fixtures/mp4/he-aac-mono.report.json",
-        "tests/fixtures/mp4/he-aac-v2-backward.report.json",
-        "tests/fixtures/mp4/he-aac-v2-hierarchical.report.json",
-        "tests/fixtures/mp4/implicit-ps.report.json",
-        "tests/fixtures/mp4/implicit-sbr.report.json",
-        "tests/fixtures/mp4/ps-in-channel-pair.report.json",
-        "tests/fixtures/mp4/ps-signaled-absent.report.json",
-        "tests/fixtures/mp4/ps-signaled-over-stereo-core.report.json",
-        "tests/fixtures/mp4/rate-1-hz.report.json"
       ]
     },
     {
       "scope": "stream",
-      "fields": [
-        "isVbr"
-      ],
+      "array": "series",
+      "name": "Coded Bandwidth",
       "goldens": [
-        "tests/fixtures/mp4/co64-largesize.report.json"
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/mp4/mp3-in-mp4.report.json"
       ]
     }
   ]

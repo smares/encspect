@@ -317,17 +317,18 @@ public class CategoryGraphTests
                 ("Block Switching", "Block Sizes"),
                 ("Block Switching", "Window Sequences"),
                 ("Block Switching", "Channel Streams"),
+                ("Coded Bandwidth", "Coded Bandwidth"),
                 ("Bit Distribution", "Bitrate"),
                 ("Bit Distribution", "Reservoir Fill"),
                 ("Bit Distribution", "Channel Bit Share"),
                 ("Other", "Submodes"),
             ],
             graphs.Choices.Select(c => (c.Heading, c.Title)));
-        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Bit Distribution", "Other", "Audio"], graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Coded Bandwidth", "Bit Distribution", "Other", "Audio"], graphs.ChoiceGroups.Select(g => g.Heading));
 
         // A file without category series has the bitrate headings only, and no heading without an entry but the Audio heading, which has its caption.
         graphs.Load(CategoryTestData.Analyzer(_ => [], _ => []).AnalyzeFile(Fixtures.Stats("vbr-seconds.mp3")));
-        Assert.Equal(["Bit Distribution", "Audio"], graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Coded Bandwidth", "Bit Distribution", "Audio"], graphs.ChoiceGroups.Select(g => g.Heading));
     }
 
     [Fact]

@@ -12,6 +12,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
 - **TAK's takStream.pas:** the header of `Sdk/Source/takStream.pas` of TAK 2.3.3 (its copyright and its license, "Do with it, whatever you want", with the request that a modified version says it is not an official release), extracted from `TAK_2.3.3.zip`, the archive `scripts/fixtures/tak_tool.py` pins by SHA-256 (`40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/tak-stream.txt`. The module itself is not committed.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
+- **minimp3:** the dedication at the top of `minimp3.h` (CC0 1.0), copied into `scripts/release/licenses/minimp3.txt`; the source is vendored in `third_party/minimp3` at commit `ea99364f`.
 - **matplotlib colormaps:** the license comment at the top of `colormaps.py` of BIDS/colormap, the file the GUI's color ramp for the spectrogram (the 256 entries of `magma`, `src/Encspect.Gui/Views/MagmaRamp.cs`) is taken from, pinned by its SHA-256 (`b7478d10e2ccfdb22128867e137f16f55b687e9c225065e91bcbd6bb9e6c0352`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/matplotlib-colormaps.txt`.
 - **Package files:** the `LICENSE` and `THIRD-PARTY-NOTICES` files in the restored packages of ANGLE, SkiaSharp and HarfBuzzSharp.
 - **.NET runtime:** `LICENSE.TXT` and `THIRD-PARTY-NOTICES.TXT` of the `Microsoft.NETCore.App.Runtime` package, version 10.0.13.
@@ -38,13 +39,14 @@ Each license text below is copied from a file, never written by hand (the attrib
 | libspeex 1.2.1: the code of Encspect's Speex parser derived from it (the walk over a packet's frames: the narrowband decoder's reading of the submodes, the skip of wideband layers, the in-band handling) and the tables of bits per submode | 1.2.1 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources, and its reading of the frame headers of stream versions 4 to 7 | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
+| minimp3 (commit ea99364f): the Layer III Huffman tables, scalefactor band tables and polyphase window of Encspect's MPEG audio decoder (format data), and the decoder's stages and the entropy pass, which follow its code operation by operation | ea99364f | CC0 1.0 (public domain dedication) | both builds, all platforms |
 | TAK's `takStream.pas` (TAK 2.3.3): the reading of the container in Encspect's TAK parser (the metadata objects and their layout, the stream info's bit layout, the CRC-24, the frame header and the frame size types). Encspect's reader is not an official release of TAK | 2.3.3 (module version 2.2.0) | "Do with it, whatever you want", with conditions | both builds, all platforms |
 | The Matroska element registry (`ebml_matroska.xml`): the default values of the elements and the descriptions of the elements RFC 9559 does not list, in `src/Encspect.Formats.Matroska/Elements.cs` (format data) | commit 1a943ead9bb4 | CC BY 4.0 | both builds, all platforms |
 | matplotlib's "magma" colormap, from BIDS/colormap: the 256 colors of the GUI's spectrogram ramp (format data) | colormaps.py, SHA-256 b7478d10 | CC0 1.0 (public domain dedication), with a request for credit | GUI |
 
 The command line tool contains the NativeAOT build of the .NET runtime and the library code of the runtime pack, and Encspect's own code. The packages it is compiled and linked from (`Microsoft.NETCore.App.Runtime.NativeAOT` and `runtime.<rid>.Microsoft.DotNet.ILCompiler`, which holds the native runtime libraries) carry a `THIRD-PARTY-NOTICES.TXT` byte-identical to the runtime pack's, so the .NET runtime row above covers them. On Linux it also links a few objects of the Ubuntu 18.04 sysroot it is built against (found in the binary's symbols and its `.comment` section): glibc's start files `crt1.o`, `crti.o` and `crtn.o` and the `__libc_csu_init`, `__libc_csu_fini` and `atexit` pieces of `libc_nonshared.a`, under glibc's license (LGPL 2.1 or later) with the linking exception glibc gives these start-up objects, which does not make the program a work covered by the LGPL; and GCC 7's `crtbegin.o` and `crtend.o`, under GPL 3 or later with the GCC Runtime Library Exception 3.1. None of `libgcc.a` is linked in. The program loads the system's C library at run time.
 
-The sources in `third_party/` (minimp3, getID3, EncSpot, mp3guessenc) are test tools for the cross-checks. No project references them, and they are in neither build.
+The sources in `third_party/` (minimp3, getID3, EncSpot, mp3guessenc) are test tools for the cross-checks. No project references them, and they are in neither build; the MPEG audio decoder follows minimp3's code (below).
 
 ## MIT License: Avalonia, Avalonia.Native, Avalonia.Wayland and the other Avalonia packages
 
@@ -3282,6 +3284,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+```
+
+## minimp3: the MPEG audio decoder
+
+The MPEG audio decoder (`src/Encspect.Formats.Mpeg/Decoding`) and the Layer III entropy pass (`Layer3Syntax.cs`, `Layer12Syntax.cs`) follow minimp3 (https://github.com/lieff/minimp3, commit `ea99364f`, vendored in `third_party/minimp3`): the requantization, stereo processing, antialias, inverse transform and polyphase synthesis stages operation by operation in single precision, and the tables (`Layer3Tables.Data.cs`, `Decoding/SynthesisTables.cs`, generated by `scripts/fixtures/mpeg_tables.py`) as format data. Its authors dedicated it to the public domain under CC0 1.0, which asks for nothing; it is named here so that the source is on record.
+
+```
+minimp3 (https://github.com/lieff/minimp3), commit ea99364f, third_party/minimp3/minimp3.h:
+
+    To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide.
+    This software is distributed without any warranty.
+    See <http://creativecommons.org/publicdomain/zero/1.0/>.
 ```
 
 ## matplotlib colormaps: the spectrogram's color ramp

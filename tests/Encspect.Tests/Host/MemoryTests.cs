@@ -49,9 +49,10 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
         // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 23 bytes,
         // channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4 and channel bit share 16 (a value and its own x); block
-        // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'.
+        // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'. The coded bandwidth
+        // of the entropy pass adds 8 bytes (its values; its x values are the bitrate series' too), so the numeric series keep 16.
         StreamInfo stream = Assert.Single(report.Streams);
-        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 8);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 16);
         output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
         GC.KeepAlive(report);
     }
@@ -1839,6 +1840,36 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         (long fewerHeld, long fewerKept) = LastFrameReading("frames.tta", Silence(fewer), fewer, 1);
         (long held, long kept) = LastFrameReading("frames.tta", Silence(frames), frames, 1);
         (_, long plainKept) = LastFrameReading("frames.tta", Silence(frames), frames, 1, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
+    // The decoding of an MPEG audio file holds one frame's bytes and its main data, the buffers of a granule and the state of the filterbank, so what it holds does not grow
+    // with the frames. Measured as the TTA test above does, at 50,000 and 200,000 frames of silence in the smallest Layer III frames there are: MPEG-2.5 at 8 kHz, 72 bytes
+    // and 576 samples each.
+    [Fact]
+    public void DecodingManyMpegFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        static byte[] Silence(int count)
+        {
+            byte[] frame = new byte[72];
+            frame[0] = 0xFF;
+            frame[1] = 0xE3;
+            frame[2] = 0x18;
+            frame[3] = 0xC0;
+            return Unpooled.Repeat(frame, count);
+        }
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Silence(100)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.mp3", Silence(fewer), fewer, 576);
+        (long held, long kept) = LastFrameReading("frames.mp3", Silence(frames), frames, 576);
+        (_, long plainKept) = LastFrameReading("frames.mp3", Silence(frames), frames, 576, isDecoding: false);
 
         double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
         output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");

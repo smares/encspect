@@ -724,6 +724,31 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/conformance_mpeg_audio.py .cache/conformance
 
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The generated tables equal what mpeg_tables.py writes from the minimp3 in third_party.
+      - name: Check the generated MPEG audio tables
+        run: python3 scripts/fixtures/mpeg_tables.py --check
+
+      # The analyzer's decoded samples equal minimp3's and FFmpeg's within the bounds of docs/development.md ("MPEG audio decoding"), fixture by fixture.
+      - name: Compare the decoded PCM of the MPEG fixtures
+        run: python3 scripts/fixtures/crosscheck_mpeg_pcm.py
+
+      # Layer III Coded Bandwidth per frame equals what minimp3's Huffman loop decodes, apart from the differences the script lists.
+      - name: Compare the Coded Bandwidth of the MPEG fixtures
+        run: python3 -I scripts/fixtures/crosscheck_mpeg_bandwidth.py
+
+      # ISO/IEC 13818-4's reference output of the conformance streams the decoder covers, within 1 LSB of 16 bits (full accuracy for the 24-bit one).
+      - name: Compare the decoded PCM of the conformance streams
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/conformance_mpeg_pcm.py .cache/conformance
+
       # The mp3PRO samples are commercial music, so they are fetched and checked against their SHA-256
       # rather than committed. The download cache keeps the ones a public address served.
       - name: Check the mp3PRO manifest against the samples
