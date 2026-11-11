@@ -224,6 +224,13 @@ internal static class Layer3Kernels
         for (int band = 0; band + 2 < widths.Length && widths[band] != 0; band += 3)
         {
             int length = widths[band];
+
+            // The 8 kHz row of minimp3's mixed band table does not add up to the lines past the long subbands; what it would read beyond them is left as it is.
+            if (src + (3 * length) > lines.Length)
+            {
+                break;
+            }
+
             for (int i = 0; i < length; i++, src++)
             {
                 scratch[dst++] = lines[src];

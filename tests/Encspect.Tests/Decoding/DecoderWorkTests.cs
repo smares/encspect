@@ -4,6 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
+using Encspect.Formats.Mpeg.Decoding;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
@@ -191,6 +192,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("alac", StringComparison.Ordinal) => new Encspect.Formats.Alac.Decoding.AlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
+        _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -203,6 +205,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
         _ when name.StartsWith("tta-matroska", StringComparison.Ordinal) => ".mka",
         _ when name.StartsWith("tta", StringComparison.Ordinal) => ".tta",
+        _ when name.StartsWith("mpeg-layer2", StringComparison.Ordinal) => ".mp2",
+        _ when name.StartsWith("mpeg-layer1", StringComparison.Ordinal) => ".mp1",
+        _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -320,6 +325,25 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("tta-" + label, () => new Case("tta-" + label, TtaCases.Repeated(file)));
+        }
+
+        // MPEG audio: the shapes of the worst frames the stages cost (short blocks with intensity stereo at the smallest frames, one granule in MPEG-2 and 2.5, free format,
+        // Layers I and II) and silence. Each case repeats the whole file of an encoder, which continues as one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("layer3-stereo-music", "external-lame-stereo-music.mp3"),
+            ("layer3-joint-music", "external-lame-joint-music.mp3"),
+            ("layer3-short-blocks", "external-blade-stereo.mp3"),
+            ("layer3-intensity-and-mid-side-mpeg2", "external-xing-mpeg2.mp3"),
+            ("layer3-mpeg2-mono", "external-lame-mpeg2-mono.mp3"),
+            ("layer3-mpeg25-mono", "external-lame-mpeg25-mono.mp3"),
+            ("layer3-free-format", "external-lame-free-format.mp3"),
+            ("layer3-silent", "external-shine-silence.mp3"),
+            ("layer2-stereo", "external-twolame-music.mp2"),
+            ("layer1-stereo", "external-xing-layer1.mp1"),
+        })
+        {
+            Add("mpeg-" + label, () => new Case("mpeg-" + label, MpegCases.Repeated(file)));
         }
 
         // TTA in Matroska without the header (as FFmpeg and mkvmerge store it): the parser counts the last frame's codes, the decoder takes the track's figures.
@@ -784,6 +808,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     }
 
     // Files of copies of one frame of a fixture, sized to charge about Target units: a frame decodes by itself, so the copies are a file of as much audio.
+    // The bytes of an MPEG audio fixture repeated until the decoding charges about Target units.
+    internal static class MpegCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", fixture));
+            long perCopy = Math.Max(1, Units(one));
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return Unpooled.Repeat(one, copies);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new MpegDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.mp3", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
     internal static class MonkeysAudioCases
     {
         public static byte[] Repeated(string fixture, long target = Target, int frame = 0, ushort? level = null)

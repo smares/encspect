@@ -1782,7 +1782,7 @@ public class DecodeRouteTests
     [Fact]
     public void ADefaultAnalyzerSaysSoWhenDecodingIsAskedForAndNoDecoderHasTheCodec()
     {
-        Assert.Equal(["flac", "wavpack", "monkeys-audio", "alac", "tta", "truehd", "mlp", "pcm"], DefaultParsers.Decoders.Select(d => d.Id));
+        Assert.Equal(["flac", "wavpack", "monkeys-audio", "alac", "tta", "truehd", "mlp", "pcm", "mpeg-audio"], DefaultParsers.Decoders.Select(d => d.Id));
         Report report = Analyze(new FrameParser(), DefaultParsers.Decoders, Verify);
         Assert.Contains(report.Findings, f => f.Code == "decode.no-decoder");
     }

@@ -1846,6 +1846,36 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The decoding of an MPEG audio file holds one frame's bytes and its main data, the buffers of a granule and the state of the filterbank, so what it holds does not grow
+    // with the frames. Measured as the TTA test above does, at 50,000 and 200,000 frames of silence in the smallest Layer III frames there are: MPEG-2.5 at 8 kHz, 72 bytes
+    // and 576 samples each.
+    [Fact]
+    public void DecodingManyMpegFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        static byte[] Silence(int count)
+        {
+            byte[] frame = new byte[72];
+            frame[0] = 0xFF;
+            frame[1] = 0xE3;
+            frame[2] = 0x18;
+            frame[3] = 0xC0;
+            return Unpooled.Repeat(frame, count);
+        }
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Silence(100)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.mp3", Silence(fewer), fewer, 576);
+        (long held, long kept) = LastFrameReading("frames.mp3", Silence(frames), frames, 576);
+        (_, long plainKept) = LastFrameReading("frames.mp3", Silence(frames), frames, 576, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     private const long MonkeysAudioKeptBound = 140;
 
     private const long MonkeysAudioPeakBound = 140;

@@ -148,9 +148,8 @@ public class GraphTests
         Assert.Equal(["Per Frame", "Over Time", "Frame Map"], reservoir.Forms.Select(f => f.Title));
         Assert.Same(graphs.Choices[0], graphs.Selected);
         Assert.True(graphs.Choices[0].IsSelected);
-        // The Audio heading has no panel and says the audio is not decoded here, with the codec's name, and offers no command.
-        Assert.Equal("The audio of this MPEG-1 Layer III stream is not decoded here.", graphs.SelectedStream!.Caption!.Text);
-        Assert.False(graphs.SelectedStream.Caption.OffersDecode);
+        // The Audio heading has no panel until the audio is decoded, and offers the command.
+        Assert.True(graphs.SelectedStream!.Caption!.OffersDecode);
 
         // The choice holds for the next file that has a graph of that title.
         graphs.Selected = reservoir;
