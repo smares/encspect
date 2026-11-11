@@ -43,10 +43,6 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # Fixtures a reference decodes differently, by reference ("minimp3" or "ffmpeg"), with what is known. An entry is a pending item for the lead, not an explanation: the
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
 EXPLAINED = {
-    "mixed-external-helix-r11-mono.mp3": {
-        "minimp3": "the only 32 kHz file with short blocks, Helix r11, whose granules state scalefactors longer than part2_3_length (mpeg.scalefactors-exceed-granule); with the mixed flag set "
-                   "minimp3, FFmpeg 8 and the analyzer decode the second granule's overlap three ways (0.9, 0.4 and 0.8 of full scale apart in the next frame)"
-    },
     "external-xing-mpeg2.mp3": {
         "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) "
                   "FFmpeg 8's mp3float and mp3 decoders (which agree with each other), mpg123 1.32 and minimp3 (which the analyzer follows) differ pairwise by up to 0.024 of full scale; "

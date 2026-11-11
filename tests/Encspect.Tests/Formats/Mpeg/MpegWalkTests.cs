@@ -34,7 +34,7 @@ public class MpegWalkTests
 
     // An MPEG-1 mono Layer III frame at 44,100 Hz and 128 kbps (417 bytes) whose first granule has the given part2_3_length and big_values, the Huffman table 1 and no
     // scalefactors, and whose second granule is empty.
-    private static byte[] MonoFrame(int part23Length, int bigValues)
+    internal static byte[] MonoFrame(int part23Length, int bigValues)
     {
         var bits = new BitWriter();
         bits.Write(0xFFFB, 16);

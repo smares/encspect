@@ -32,9 +32,10 @@ internal sealed class Layer3Walker
 
     // frame starts at the header; mainData holds the frame's main data from main_data_begin bytes before its own data (the reservoir's tail, then the frame's bytes after
     // the side information). planes is the session's lent buffer (Narrow, with its stride) or empty where nothing is decoded: the walk then fills scratch and keeps only
-    // its facts. Returns what the walk found; the Unreadable and PartsExceedData problems leave the planes as far as they got.
+    // its facts. claimedBytes is how much of mainData the placement covers (the rest, bytes of the frame after them, is what a granule whose values overrun reads on into, as in
+    // minimp3); -1 where all of it. Returns what the walk found; the Unreadable and PartsExceedData problems leave the planes as far as they got.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public WalkFacts Walk(MpegHeader header, ReadOnlySpan<byte> frame, ReadOnlySpan<byte> mainData, Span<int> planes, int stride)
+    public WalkFacts Walk(MpegHeader header, ReadOnlySpan<byte> frame, ReadOnlySpan<byte> mainData, Span<int> planes, int stride, int claimedBytes = -1)
     {
         var facts = new WalkFacts();
         int mainDataBegin = Layer3Syntax.ReadSideInfo(frame, header, _granules, out int count, out int partsTotal);
@@ -52,7 +53,7 @@ internal sealed class Layer3Walker
 
         int channels = header.IsMono ? 1 : 2;
         bool isIntensity = header.ChannelModeBits == 1 && (header.ModeExtension & 1) != 0;
-        if (partsTotal > mainData.Length * 8)
+        if (partsTotal > (claimedBytes >= 0 ? claimedBytes : mainData.Length) * 8)
         {
             facts.Problems |= WalkProblems.PartsExceedData;
         }

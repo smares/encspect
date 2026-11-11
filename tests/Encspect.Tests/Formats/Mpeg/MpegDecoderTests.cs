@@ -64,6 +64,26 @@ public class MpegDecoderTests
         return (report, sink);
     }
 
+    // A granule whose Huffman values run past its part2_3_length reads on into the bytes that follow in the frame, as minimp3 does, not into zeros: here 20 pairs of table 1
+    // against 8 bits of part2_3_length, and every byte of the frame is 0xFF, which table 1 reads as pairs of zeros (zero bits would read as pairs of ones).
+    [Fact]
+    public void HuffmanValuesThatRunPastTheirGranuleReadTheBytesOfTheFrameThatFollow()
+    {
+        var data = new List<byte>();
+        for (int i = 0; i < 4; i++)
+        {
+            byte[] frame = MpegWalkTests.MonoFrame(part23Length: 8, bigValues: 20);
+            Array.Fill(frame, (byte)0xFF, 21, frame.Length - 21);
+            data.AddRange(frame);
+        }
+
+        (Report report, CollectingSink sink) = Decode([.. data]);
+
+        Assert.Contains(report.Findings, f => f.Code == "mpeg.huffman-overrun");
+        Assert.Equal(4, sink.Blocks.Count);
+        Assert.All(sink.Blocks, b => Assert.All(b.Samples, s => Assert.Equal(0f, s)));
+    }
+
     [Fact]
     public void AMultichannelStreamMeasuredAsItsBaseStereoSaysSo()
     {

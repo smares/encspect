@@ -105,8 +105,8 @@ public sealed partial class MpegAudioParser
                 WalkFacts facts = default;
                 if (isAvailable)
                 {
-                    ReadOnlySpan<byte> mainData = GatherMainData(state, runsBefore, frame, header);
-                    facts = _walker.Walk(header, frame, mainData, planes, stride);
+                    ReadOnlySpan<byte> mainData = GatherMainData(state, runsBefore, position, length, out int claimed);
+                    facts = _walker.Walk(header, frame, mainData, planes, stride, claimed);
                 }
                 else
                 {
@@ -161,9 +161,9 @@ public sealed partial class MpegAudioParser
             return (codedLines, overruns);
         }
 
-        // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer.
+        // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer (claimed bytes), then the bytes of the frame after the last run.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
-        private ReadOnlySpan<byte> GatherMainData(StreamState state, int runsBefore, ReadOnlySpan<byte> frame, MpegHeader header)
+        private ReadOnlySpan<byte> GatherMainData(StreamState state, int runsBefore, long position, int length, out int claimed)
         {
             int total = 0;
             ChunkedList<MainDataRun> runs = state.Build.Runs;
@@ -173,6 +173,19 @@ public sealed partial class MpegAudioParser
                 int count = Math.Min(run.Length, _mainData.Length - total);
                 state.Blocks.ReadInto(run.Offset, _mainData.AsSpan(total, count));
                 total += count;
+            }
+
+            claimed = total;
+            if (runs.Count > runsBefore)
+            {
+                MainDataRun last = runs[runs.Count - 1];
+                long end = last.Offset + last.Length;
+                int extra = (int)Math.Min(position + length - end, _mainData.Length - total);
+                if (extra > 0)
+                {
+                    state.Blocks.ReadInto(end, _mainData.AsSpan(total, extra));
+                    total += extra;
+                }
             }
 
             return _mainData.AsSpan(0, total);
