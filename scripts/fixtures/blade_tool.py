@@ -40,7 +40,7 @@ RELEASES = {
     # The Wayback Machine answers 404 for this capture now and then (2026-11-08), so the private repository keeps a copy.
     "0.92.0": dict(archive="bladeenc-0.92.0-src-stable.tar.gz", url=SITE, timestamp="20010611205504",
                    sha256="41a9330b6d753ecd6165fbafc2504d6f797db9f8cac9cb2de7b272c93306618b",
-                   private="encoders/bladeenc-0.92.0-src-stable.tar.gz"),
+                   private="mirrors/tools/encoders/bladeenc-0.92.0-src-stable.tar.gz"),
     "0.92.7": dict(archive="bladeenc-0.92.7-src-stable.tar.gz", url=SITE, timestamp="20060715004958",
                    sha256="d45c4e94084a592c5b824463a44695819450cf0963364f3e2978a856c2330f99"),
     "0.93.6": dict(archive="bladeenc-0.93.7-src-unstable-2.tar.gz", url=SITE, timestamp="20010612055911",

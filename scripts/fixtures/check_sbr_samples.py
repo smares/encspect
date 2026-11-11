@@ -40,7 +40,7 @@ MANIFEST = ROOT / "tests" / "conformance" / "sbr-samples.json"
 
 def addresses(sample):
     """The sample's own address on FFmpeg's FATE server, then the private repository's copy."""
-    return [sample["url"], downloads.private(f"sbr/{urllib.parse.quote(sample['file'])}")]
+    return [sample["url"], downloads.private(f"mirrors/samples/sbr/{urllib.parse.quote(sample['file'])}")]
 
 
 def fetch(manifest, cache):
