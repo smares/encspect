@@ -23,6 +23,8 @@ Layer II and III fixtures are checked whatever their "crosscheck" value:
 - "channel_layout" per stream: where ffprobe reads the frames ("crosscheck": true), it finds the
   channels of the first frame: the layout's, or two for the stereo base of a multichannel stream.
 - "mp3guessenc_multichannel": the multichannel parameters mp3guessenc prints.
+- An encoder-written stream with "multichannel" in its "encoder" settings (mctoolame and Philips' encoder): mctoolamed decodes it with no multichannel CRC error and
+  no multilingual channel into "decoded_channels" channels, not all silent.
 - "side_info" per frame: minimp3 reads exactly these values (minimp3_side_info.c), or rejects the
   frame where the manifest says it does. Its reservoir before each frame must match, except where
   minimp3 resets or discards it: after a gap, after a frame it rejects, and after a frame whose
@@ -107,9 +109,11 @@ import struct
 import subprocess
 import sys
 
+import downloads
 import encspot_tool
 import getid3_tool
 import guessenc_tool
+import mctoolame_tool
 import mctoolamed_tool
 import mediainfo_tool as mi
 import minimp3_tool
@@ -1272,6 +1276,14 @@ def check(path, manifest, tools):
             base = 1 if last_mode == "Mono" else 2
         if int(ffprobe_stream(path)["channels"]) != base:
             problems.append(f"ffprobe finds {ffprobe_stream(path)['channels']} channels, the manifest's last frame implies {base}")
+    multichannel = manifest.get("encoder", {}).get("multichannel")
+    if multichannel:
+        # An encoder-written multichannel stream: the decoder derived from the ISO software decodes it, with every multichannel CRC holding, into the channels the
+        # encoder was given, none silent (a tone in each).
+        errors, silent, channels, multilingual = mctoolamed_tool.decode_all(decoder, path)
+        if errors or silent or multilingual or channels != multichannel["decoded_channels"]:
+            problems.append(f"mctoolamed reports {errors} multichannel CRC errors, silent {silent}, {multilingual} multilingual channels and writes {channels} channels, "
+                            f"the manifest says {multichannel['decoded_channels']}")
     if "mp3guessenc_multichannel" in manifest and guessenc_multichannel(path) != manifest["mp3guessenc_multichannel"]:
         problems.append(f"mp3guessenc reports {guessenc_multichannel(path)}, the manifest {manifest['mp3guessenc_multichannel']}")
     if manifest.get("frames") and "side_info" in manifest["frames"][0]:
@@ -1650,6 +1662,26 @@ def check_mediainfo(path, tally):
 COMPARED = {"mp3guessenc": collections.Counter(), "EncSpot": collections.Counter(), "EncSpot block types, per granule": collections.Counter()}
 
 
+def check_site_sample(decoder):
+    """mctoolame's own sample (mctoolame.sourceforge.net, 2003, five channels, 3/2 without an LFE channel at 192 kbps), which has no license and is
+    therefore fetched at its SHA-256 and not committed: mctoolamed decodes its five channels without a multichannel CRC error, mp3guessenc reads the
+    configuration 3/2, and ffprobe finds 383 base frames of 626 and 627 bytes."""
+    path = pathlib.Path(__file__).resolve().parents[2] / ".cache" / "mctoolame" / "test.aiff-mpeg1-192.mp2"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    downloads.fetch(mctoolame_tool.SAMPLE_ADDRESSES, mctoolame_tool.SAMPLE_SHA256, path)
+    problems = []
+    errors, silent, channels, multilingual = mctoolamed_tool.decode_all(decoder, path)
+    if errors or silent or multilingual or channels != 5:
+        problems.append(f"mctoolamed reports {errors} multichannel CRC errors, silent {silent}, {multilingual} multilingual channels and writes {channels} channels")
+    expected = {"extension": "no", "lfe": "no", "channels": "3", "ml": "0", "config": "3/2"}
+    if guessenc_multichannel(path) != expected:
+        problems.append(f"mp3guessenc reports {guessenc_multichannel(path)}, expected {expected}")
+    sizes = sorted({length for _, length in ffprobe_packets(path)})
+    if len(ffprobe_packets(path)) != 383 or sizes != [626, 627]:
+        problems.append(f"ffprobe finds {len(ffprobe_packets(path))} packets of {sizes} bytes, expected 383 of 626 and 627")
+    return problems
+
+
 def main():
     failed = 0
     checked = 0
@@ -1676,6 +1708,9 @@ def main():
     for problem in tally.unused():
         failed += 1
         print(problem)
+    for problem in check_site_sample(tools[1]):
+        failed += 1
+        print(f"test.aiff-mpeg1-192.mp2: {problem}")
     tally.print()
     for tool, counts in COMPARED.items():
         for how, count in sorted(counts.items(), key=lambda c: (-c[1], c[0])):

@@ -319,6 +319,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   - 0.80 and 0.81 drain an overflowing bit reservoir into ancillary data mid-stream, as the ISO dist10 encoder does, and mp3guessenc does not name them either.
 - **Fraunhofer's encoders** use scalefactor scaling and short blocks but never scfsi (MPEG-1 only, since MPEG-2 has no scfsi).
 - **TwoLAME and Xing** both write scalefactor index 63 into Layer II, which names them together.
+- **mctoolame** (01a, the ISO software's multichannel encoder) is not named: none of its fourteen test streams uses scalefactor index 63, so the rule above does not apply, and the stream has no tag or text in ancillary data. What its streams do show is the multichannel extension, which the analyzer reads and verifies by its CRC (`layer2/external-mctoolame-*`).
 - **mp3guessenc** agrees on every Layer III encode of these encoders. Its rules for encoders that cannot be run here (older releases) are not used, since on encoders that can, it names Shine "Xing" and Helix "Lame".
 - **Silence** gives an encoder nothing to decide, so its traits do not show there, and a silent stream may match another encoder's habits.
 

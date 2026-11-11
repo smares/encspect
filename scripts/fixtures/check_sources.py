@@ -48,6 +48,7 @@ import libtta_tool
 import lossywav_tool
 import make_lossywav_fixtures
 import matroska_specs
+import mctoolame_tool
 import mctoolamed_tool
 import monkeys_audio_tool
 import optimfrog_tool
@@ -93,6 +94,9 @@ def sources():
     for sample in tak["samples"]:
         yield sample["file"], sample["sha256"], check_tak_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
+    yield "mctoolame-01a.tgz", mctoolame_tool.SHA256, mctoolame_tool.ADDRESSES
+    yield "toolame-02a.tar.gz", mctoolame_tool.TABLES_SHA256, mctoolame_tool.TABLES_ADDRESSES
+    yield "test.aiff-mpeg1-192.mp2", mctoolame_tool.SAMPLE_SHA256, mctoolame_tool.SAMPLE_ADDRESSES
     yield a52_trace_tool.ARCHIVE, a52_trace_tool.SHA256, a52_trace_tool.ADDRESSES
     yield "mp3sconsv15.zip", fhg_tool.SHA256, fhg_tool.ADDRESSES
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
