@@ -123,7 +123,7 @@ public sealed partial class MpegAudioParser
         switch (frame.DataKind)
         {
             case FrameData.SideInfo:
-                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header);
+                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header, frame.CodedLines);
             case FrameData.Layer1:
                 return FrameFigures.Layer1(build.Store.Span(frame.Data, frame.DataLength), header);
             case FrameData.Layer2:
@@ -169,6 +169,8 @@ public sealed partial class MpegAudioParser
                     _blocks = new("Block Usage", BlockCategories, "granule and channel", granules * _channels, names, concept: GraphConcept.BlockSwitching);
                     _blockCodes = new byte[granules * _channels];
                 }
+
+                _bandwidth = new Numeric(count, offsets);
             }
             else
             {

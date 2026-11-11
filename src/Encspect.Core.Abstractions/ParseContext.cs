@@ -3,8 +3,8 @@ namespace Encspect.Core;
 public sealed class ParseContext : AnalysisContext
 {
     public ParseContext(ByteReader reader, Node root, IReadOnlyList<Node>? embeddedTags = null, IReadOnlyList<EncoderClaim>? encoderClaims = null,
-        IParserRouter? router = null)
-        : base((reader ?? throw new ArgumentNullException(nameof(reader))).CancellationToken, encoderClaims, router)
+        IParserRouter? router = null, AnalysisContext? decodingOwner = null)
+        : base((reader ?? throw new ArgumentNullException(nameof(reader))).CancellationToken, encoderClaims, router, decodingOwner)
     {
         ArgumentNullException.ThrowIfNull(root);
 

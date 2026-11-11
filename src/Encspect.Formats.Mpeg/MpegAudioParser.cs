@@ -22,7 +22,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     public string Name => "MPEG Audio";
 
-    public string Id => "mpeg-audio";
+    public string Id => CodecId;
+
+    // The codec ID of the parser and of its decoder.
+    internal const string CodecId = "mpeg-audio";
 
     // A chain of frames anywhere in the first MiB is class 90, with where it starts and how many of its
     // frames are whole and pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4; unprotected frames
@@ -106,7 +109,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         var blocks = new BlockReader(context.Reader);
         var findings = new FindingCollector();
         var build = new BuildContext();
-        var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs), [], [], context.CancellationToken);
+        var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
 
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
@@ -153,7 +156,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             return;
         }
 
-        var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims);
+        var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims, decodingOwner: context);
         try
         {
             Parse(inner);
@@ -326,6 +329,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             var gap = Entry.Gap(gapStart, gapEnd - gapStart);
             build.Frames.Add(gap);
+            state.Feed.PendingGap = true;
             long length = gap.Length;
             if (leading && !trailing && gapEnd < end)
             {
@@ -359,6 +363,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         bool isComplete = available == length;
         int stored = -1;
         int computed = -1;
+        int runsBefore = build.Runs.Count;
 
         if (header.IsProtected && available >= 6)
         {
@@ -442,6 +447,23 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         else if (layer1 is not null)
         {
             frame = frame with { Data = build.Store.Add(layer1), DataKind = FrameData.Layer1, DataLength = layer1.Length };
+        }
+
+        // The streams are the runs AddStreams makes of the frames: a frame starts one where it is not of the stream the frame before it is.
+        DecodeFeed feed = state.Feed;
+        if (feed.Previous is not { } previousHeader || !header.IsSameStream(previousHeader))
+        {
+            feed.StartStream(index, region.Node);
+        }
+
+        feed.Previous = header;
+        if (vbr is null && !feed.IsLimited)
+        {
+            int codedLines = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
+            if (codedLines >= 0)
+            {
+                frame = frame with { CodedLines = codedLines };
+            }
         }
 
         build.Frames.Add(frame);
@@ -1443,6 +1465,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         private readonly ushort _mainDataLength;
         private readonly ushort _earlier;
         private readonly ushort _reservoirFill;
+        private readonly ushort _codedLines;
         private readonly byte _flags;
 
         public Entry(long offset, long length, uint header)
@@ -1504,6 +1527,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         public int ReservoirFill { get => _reservoirFill; init => _reservoirFill = (ushort)value; }
 
+        // The lines of a Layer III frame's granules that the entropy pass found coded, in the 576-line scale of the highest of them, or -1 where it did not walk the frame.
+        public int CodedLines { get => _codedLines - 1; init => _codedLines = (ushort)(value + 1); }
+
         public bool HasSideInfo => DataKind == FrameData.SideInfo;
 
         public bool IsVbrHeader => DataKind == FrameData.VbrHeader;
@@ -1525,6 +1551,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         // The frames recorded so far, gaps not counted.
         public int FrameCount { get; set; }
+
+        // The parse's context, for the decoding sessions, and what feeding the decoder keeps.
+        public ParseContext? Context { get; set; }
+
+        public DecodeFeed Feed { get; } = new();
 
         // The frames each VBR header describes, by the header frame's index.
         public Dictionary<int, Coverage> Coverages { get; } = [];

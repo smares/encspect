@@ -1,7 +1,7 @@
 ---
 id: huffman-coding
 title: Huffman coding of the spectrum
-related: granules-and-frames, global-gain, scalefactors, bit-reservoir
+related: granules-and-frames, global-gain, scalefactors, bit-reservoir, coded-bandwidth, lossy-decoding
 references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4, Annex B
 ---
 
@@ -15,4 +15,4 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4, Annex B
 
 **The region split.** The big values region is split again into up to three parts, and each part picks one of the Huffman tables of the standard with table_select, since low and high frequencies have different statistics. region0_count and region1_count give where the parts end, in scalefactor bands. Tables for large values add extra bits (linbits) for values above 15.
 
-**How long.** part2_3_length gives the bits of a granule's scalefactors and Huffman code together, so the decoder knows where the next granule's data starts. All of it is part of the main data, which may lie in earlier frames ([bit reservoir](bit-reservoir)). The analyzer reads these fields from the side information; it does not decode the Huffman data itself.
+**How long.** part2_3_length gives the bits of a granule's scalefactors and Huffman code together, so the decoder knows where the next granule's data starts. All of it is part of the main data, which may lie in earlier frames ([bit reservoir](bit-reservoir)). The analyzer reads these fields from the side information and decodes the Huffman data itself, in every analysis: the lines of each granule and channel that the big values and count1 regions code give the file's [coded bandwidth](coded-bandwidth), and a granule whose codes run past its part2_3_length is reported. The values are what a decoder requantizes ([lossy decoding](lossy-decoding)).

@@ -76,6 +76,9 @@ public sealed partial class MpegAudioParser
         int audio = 0;
         bool hasTwoChannels = false;
         bool hasJointStereo = false;
+        long crcsStored = 0;
+        long crcsChecked = 0;
+        long crcsFailed = 0;
         var regions = new List<RegionState>();
         int region = RegionOf(state, start);
         for (int i = start; i < end; i++)
@@ -95,6 +98,16 @@ public sealed partial class MpegAudioParser
             if (regions.Count == 0 || regions[^1] != state.Regions[region])
             {
                 regions.Add(state.Regions[region]);
+            }
+
+            if (frame.Crc >= 0)
+            {
+                crcsStored++;
+                if (frame.ComputedCrc >= 0)
+                {
+                    crcsChecked++;
+                    crcsFailed += frame.ComputedCrc != frame.Crc ? 1 : 0;
+                }
             }
 
             if (IsCut(frame))
@@ -145,6 +158,9 @@ public sealed partial class MpegAudioParser
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
+            Verification = state.Feed.Sessions.TryGetValue(start, out IDecodeSession? session)
+                ? session.Finish([new ChecksumTally { Name = FrameCrc, Covers = ChecksumCoverage.Header, Stored = crcsStored, Checked = crcsChecked, Failed = crcsFailed }])
+                : null,
         };
     }
 

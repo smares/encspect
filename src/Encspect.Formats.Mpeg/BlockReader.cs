@@ -72,6 +72,22 @@ internal sealed class BlockReader(ByteReader reader)
         return -1;
     }
 
+    // Fills destination with the bytes from offset on; those past the end of the reader are zeros.
+    public void ReadInto(long offset, Span<byte> destination)
+    {
+        int done = 0;
+        while (done < destination.Length && offset + done < reader.End)
+        {
+            ByteAt(offset + done);
+            int start = (int)(offset + done - _blockStart);
+            int length = Math.Min(destination.Length - done, _block.Length - start);
+            _block.AsSpan(start, length).CopyTo(destination[done..]);
+            done += length;
+        }
+
+        destination[done..].Clear();
+    }
+
     public byte[] Read(long offset, int count)
     {
         var data = new byte[count];
