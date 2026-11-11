@@ -136,7 +136,6 @@
         "tests/fixtures/mpeg/free-format-to-fixed.report.json",
         "tests/fixtures/mpeg/id3v22-tss-names-encoder.report.json",
         "tests/fixtures/mpeg/id3v24-tsse-ffmpeg.report.json",
-        "tests/fixtures/mpeg/layer-change.report.json",
         "tests/fixtures/mpeg/layer3/ancillary-streams-apart.report.json",
         "tests/fixtures/mpeg/layer3/free-format-no-main-data.report.json",
         "tests/fixtures/mpeg/layer3/main-data-overflow.report.json",
@@ -202,7 +201,6 @@
         "tests/fixtures/mpeg/stats/xing-claims-fewer.report.json",
         "tests/fixtures/mpeg/stats/xing-claims-more.report.json",
         "tests/fixtures/mpeg/stats/xing-counts-own-frame.report.json",
-        "tests/fixtures/mpeg/stream-change-after-gap.report.json",
         "tests/fixtures/mpeg/streams-limited.report.json",
         "tests/fixtures/mpeg/sync-inside-header.report.json",
         "tests/fixtures/mpeg/sync-lost.report.json",
@@ -258,6 +256,18 @@
         "tests/fixtures/mpeg/vbr/xing-frames-only.report.json",
         "tests/fixtures/mpeg/vbr/xing-toc-decreasing.report.json",
         "tests/fixtures/mpeg/vbr/xing-truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/mpeg/layer-change.report.json",
+        "tests/fixtures/mpeg/stream-change-after-gap.report.json"
+      ],
+      "streams": [
+        0
       ]
     },
     {
@@ -389,7 +399,6 @@
         "tests/fixtures/mpeg/free-format-to-fixed.report.json",
         "tests/fixtures/mpeg/id3v22-tss-names-encoder.report.json",
         "tests/fixtures/mpeg/id3v24-tsse-ffmpeg.report.json",
-        "tests/fixtures/mpeg/layer-change.report.json",
         "tests/fixtures/mpeg/layer3/ancillary-streams-apart.report.json",
         "tests/fixtures/mpeg/layer3/free-format-no-main-data.report.json",
         "tests/fixtures/mpeg/layer3/main-data-overflow.report.json",
@@ -455,7 +464,6 @@
         "tests/fixtures/mpeg/stats/xing-claims-fewer.report.json",
         "tests/fixtures/mpeg/stats/xing-claims-more.report.json",
         "tests/fixtures/mpeg/stats/xing-counts-own-frame.report.json",
-        "tests/fixtures/mpeg/stream-change-after-gap.report.json",
         "tests/fixtures/mpeg/streams-limited.report.json",
         "tests/fixtures/mpeg/sync-inside-header.report.json",
         "tests/fixtures/mpeg/sync-lost.report.json",
@@ -511,6 +519,18 @@
         "tests/fixtures/mpeg/vbr/xing-frames-only.report.json",
         "tests/fixtures/mpeg/vbr/xing-toc-decreasing.report.json",
         "tests/fixtures/mpeg/vbr/xing-truncated.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/mpeg/layer-change.report.json",
+        "tests/fixtures/mpeg/stream-change-after-gap.report.json"
+      ],
+      "streams": [
+        0
       ]
     },
     {
