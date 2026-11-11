@@ -459,10 +459,17 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         feed.Previous = header;
         if (vbr is null && !feed.IsLimited)
         {
-            int codedLines = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
+            (int codedLines, int overruns) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
             if (codedLines >= 0)
             {
                 frame = frame with { CodedLines = codedLines };
+            }
+
+            if (overruns > 0)
+            {
+                long at = position;
+                findings.Add(Severity.Warning, "mpeg.huffman-overrun", FindingNode(frame), count =>
+                    $"{Frames(count, "has", "have")} Huffman-coded values that run past the part2_3_length of their granule, the first at 0x{at:X}.");
             }
         }
 

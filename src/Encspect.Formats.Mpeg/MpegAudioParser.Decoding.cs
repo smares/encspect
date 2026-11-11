@@ -50,8 +50,9 @@ public sealed partial class MpegAudioParser
             Sessions[StreamStart] = session;
         }
 
-        // One audio frame of the current stream. Returns the coded lines of a walked Layer III frame, or -1.
-        public int Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
+        // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked) and the granules and channels whose
+        // Huffman data ran past their part2_3_length.
+        public (int CodedLines, int Overruns) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
         {
             if (Session is null)
             {
@@ -74,6 +75,7 @@ public sealed partial class MpegAudioParser
             long first0 = Position;
             Position += samples;
             int codedLines = -1;
+            int overruns = 0;
             if (!isComplete || length > _frame.Length)
             {
                 if (isDecoding)
@@ -82,7 +84,7 @@ public sealed partial class MpegAudioParser
                 }
 
                 PendingGap = false;
-                return codedLines;
+                return (codedLines, overruns);
             }
 
             // Without a decoder a Layer III frame is read as far as its side information; the main data come through the reservoir's runs.
@@ -128,6 +130,7 @@ public sealed partial class MpegAudioParser
                 if (isAvailable && !isUnreadable)
                 {
                     codedLines = facts.CodedLines;
+                    overruns = facts.Overruns;
                 }
 
                 if (isDecoding)
@@ -161,7 +164,7 @@ public sealed partial class MpegAudioParser
             }
 
             PendingGap = false;
-            return codedLines;
+            return (codedLines, overruns);
         }
 
         // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer.

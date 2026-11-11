@@ -9,7 +9,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
   - The header's **Bitrate** stays "free", the value the header holds.
   - A **Computed Bitrate** node under the frame (not under the header, since it is no header field) shows the frame's bytes, padding included, times 8, over the duration of its samples, in kbps to two decimals (`399.96 kbps`: 1306 bytes at 44100 Hz and 1152 samples). The JSON report holds the unrounded value; the text report and GUI show two decimals.
   - It is the value of the stream's "Bitrate" series at that frame, from the same function. Frames with a fixed bitrate have no such node, and neither has a truncated frame, whose length is not the frame's.
-- **Layer III:** the side information of every granule and the bit reservoir. Each frame's bytes are split into its own main data, other frames' main data and ancillary data.
+- **Layer III:** the side information of every granule and the bit reservoir. Each frame's bytes are split into its own main data, other frames' main data and ancillary data. The scalefactors and the Huffman-coded values of every complete frame are decoded in every analysis (see "Layer III entropy pass").
 - **Layer II:** the bit allocation, scfsi and scalefactors, and the MPEG-2 multichannel extension in the ancillary data.
   - **Dynamic crosstalk in 3/1 and 2/2:** which base channel a copied channel takes its allocation from has two readings in cases the ISO conformance streams do not decide: the base channel on the copied channel's side (the description's rule), or the one `dyn_cross_LR` names (the behavior observed of the ISO reference software). The analyzer reads a frame the first way and, only where its multichannel CRC then fails and holds the second way, the second. The "Base Channel Source" node under "Dynamic Crosstalk Modes" says which was used, and a CRC mismatch that the other reading resolves is not reported. The cases are listed in [`docs/design/mpeg-clean-room-rules.md`](../design/mpeg-clean-room-rules.md), section 1.
 - **VBR headers:** Xing, Info, LAME and VBRI. The LAME tag's CRC and its music CRC are verified.
@@ -113,6 +113,13 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 - **VBRI** (Fraunhofer): version, delay, quality, byte and frame counts and the seek table, 36 bytes into the frame in every mode. Warnings: a version other than 1, which ffmpeg ignores, and a seek table entry size outside 1 to 4 bytes, which leaves the table unread.
 - **A VBR header in the middle of a stream,** after any earlier frame of it, across gaps and tags, is a warning: files were probably joined, so the first header's counts and TOC cover only part of the stream, and players that only look at the first frame play the second as a frame of silence.
 
+### Layer III entropy pass
+
+- **What is read:** the scalefactors of each granule and channel (with scfsi, and the MPEG-2 partitions of intensity stereo), and the Huffman-coded values of the big-values and count1 regions with the tables of ISO/IEC 11172-3 Annex B. The tables, the scalefactor band widths and the polyphase window come from minimp3 as format data (`scripts/fixtures/mpeg_tables.py`, `--check` in CI), which names each table's source ([development.md](../development.md#mpeg-audio-decoding)).
+- **In every analysis:** the walk runs while the frames are read, with or without a decoder, because it gives Coded Bandwidth. It needs a frame's main data, which `BitReservoir` places: the bytes of the frame's own data and those of earlier frames it reaches back to. A frame whose main data are not available (`mpeg.main-data-before-stream`, `mpeg.main-data-overlap`, `mpeg.main-data-in-vbr-header-frame`, `mpeg.main-data-overflow`) is not walked and has no coded bandwidth.
+- **What it finds:** a granule whose Huffman-coded values run past its part2_3_length, which no stuffing explains, is one warning, `mpeg.huffman-overrun`, with a count; the frame is still decoded. Side information that breaks (more than 288 big_values pairs, the reserved block type, part2_3_length beyond the data) makes the frame unreadable: a decoder is not given it.
+- **Layers I and II:** the sample codes are read only where a decoder asks for them, since they give no figure.
+
 ## Detection
 
 - Sniffing gives class 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data. It reports where the chain starts, its frames (up to 16) and how many of them pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4).
@@ -141,7 +148,9 @@ Each MPEG Audio region reports:
   - the share of granules with scalefactor scaling;
   - whether padding, scfsi and scalefactor scaling are used;
   - the ancillary data with its share, data rate and smallest and largest amount per frame;
-- **Coded Bandwidth** (Layers I and II): the lowest, most common and highest of the frames' coded bandwidths, the upper edge of the highest subband with a bit allocation other than 0 in either channel, in whole hertz. It is read from the allocation, a bound the data states; it is not the encoder's lowpass and not a measurement of decoded audio. Layer III states no such bound in its side information, so it has none;
+- **Coded Bandwidth:** the lowest, most common and highest of the frames' coded bandwidths, in whole hertz. It is a bound the coded data states, not a measurement of decoded audio and not the encoder's lowpass setting:
+  - Layers I and II: the upper edge of the highest subband with a bit allocation other than 0 in either channel, read from the allocation.
+  - Layer III: the upper edge of the highest frequency line that the big-values and count1 regions of a granule and channel code, over the frame's granules and channels, from the entropy pass. The count1 region is read a quadruple of lines at a time, so the edge is known to four lines (153 Hz at 44,100 Hz). A short block has three windows of 192 lines, and a line takes its frequency from the band it lies in. A frame the entropy pass did not walk (its main data are not available, or its side information breaks) has no value.
 - **Channel Bit Share** (stereo, joint stereo and dual channel frames of all layers): the lowest, overall and highest share of the first channel in a frame's audio bits.
   - Layer III counts part2_3_length of every granule and channel (the scalefactors and the Huffman-coded values), not the header, the side information or the padding.
   - Layers I and II count each channel's allocation, scalefactor selection information (scfsi, Layer II), scalefactors and samples. Above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total; the scfsi and the scalefactors stay per channel.
@@ -161,7 +170,7 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
   - "Block Usage" (the value of each granule and channel: granule 1 channel 1, granule 1 channel 2, granule 2 channel 1, ..., one granule in MPEG-2 and 2.5; the second channel of a mono frame has no value) and "Block Sizes", its grouping, under "Block Switching".
   - The series of a stream that a tag splits are over the stream, the tally's over each region; `CategorySummaryTests` sums them per group of regions and streams that overlap.
   - A series exists where its tally node does: a file without joint stereo frames has no "Joint Stereo Modes".
-- the **numeric series** "Coded Bandwidth" (Hz, Layers I and II, `codedBandwidth`) and "Channel Bit Share" (percent, stereo, joint stereo and dual channel frames, `bitDistribution`), each per frame and per second ("Coded Bandwidth Over Time" is each second's highest, "Channel Bit Share Over Time" bits over bits of the frames that start in it), anchored to the statistics nodes of the same names. A frame without a value (a mono frame in a stream that changes mode, a frame whose bits are all 0, a Layer I or II frame whose allocation does not fit) has no point, so such a series has its own x values; a mono stream has no share.
+- the **numeric series** "Coded Bandwidth" (Hz, all layers, `codedBandwidth`) and "Channel Bit Share" (percent, stereo, joint stereo and dual channel frames, `bitDistribution`), each per frame and per second ("Coded Bandwidth Over Time" is each second's highest, "Channel Bit Share Over Time" bits over bits of the frames that start in it), anchored to the statistics nodes of the same names. A frame without a value (a mono frame in a stream that changes mode, a frame whose bits are all 0, a Layer I or II frame whose allocation does not fit) has no point, so such a series has its own x values; a mono stream has no share.
 
 - **The tools' own labels** for these figures: mp3guessenc's "stereo mode frame count" is "Joint Stereo Modes" in Layer III, its "size distr" the frame sizes under each bitrate, its "Max reservoir" the largest main_data_begin;
   - EncSpot's "Av.
@@ -321,7 +330,23 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 - ffmpeg writes its own version (`Lavf60.16.100`) whatever encoder it used, so that text is a claim of the writer role, also in an APEv2 item or the LAME tag ffmpeg writes: it is shown as the writer "FFmpeg (Lavf60.16.100)", never as evidence of the encoder.
 - A claim of the encoder role that names another encoder than the stream points to is an info finding on the tag frame, not a change of encoder.
 
+## Decoding
+
+The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `third_party/minimp3`) operation by operation, in single precision, and covers Layers I, II and III of MPEG-1, MPEG-2 and MPEG-2.5, free format included. It runs where a front end asks for the samples (`--measure`, `Output`): the stream stores no checksum over its audio, so decoding alone would compare nothing.
+
+- **The split:** the parser's entropy pass reads every coded bit into the buffers the session lends, per channel and granule: the 576 quantized values, the scalefactors and the intensity stereo positions of Layer III, the sample codes of Layers I and II. The decoder reads the side information again from the frame's bytes and adds requantization, mid/side and intensity stereo, reordering of short blocks, the antialias butterflies, the inverse transforms with overlap and the polyphase synthesis.
+- **Output:** planar floats at full scale 1.0, unclipped and undithered, at the stream's sample rate and channel count, untrimmed from the first audio frame. A Xing, Info or VBRI header frame holds no audio and is no position. The powers (x^(4/3), 2^(x/4)) come from `DetMath`; the stages use no fused multiply-add and sum in one fixed order, so the output is the same on every platform.
+- **Channels:** a mono frame in a stereo stream goes to both channels and a stereo frame in a mono stream is averaged (decision 13 of the design). MPEG-2 Layer II multichannel streams decode their stereo base only.
+- **Verification:** the frame CRC-16 is declared as a header checksum (it covers no sample): streams that store it read "unknown (frame CRC-16 n of n)", the others "unknown (the stream stores no checksum)", and a stream with a failed CRC reads "no".
+- **Gaps and withheld output:**
+  - A frame cut by the end of the data or by the next frame, or whose side information breaks, is not decoded and counts as lost; the frame after it, and the frame after a stretch of junk, start from an empty state.
+  - After such a gap the output that depends on the lost state is withheld, not played: 1,056 samples of Layer III (the first granule and 480 of the next, the overlap and the synthesis history) and 480 of Layers I and II (the history), reason "after a gap".
+  - A Layer III frame whose main data are not available (a track split from a continuous stream, damage) is withheld whole, reason "main data not available". At the start of a stream the next frame starts from the empty state with nothing withheld; mid-stream it is withheld like after a gap.
+- **Accuracy:** the output agrees with minimp3's float output and with FFmpeg's float decoders within the bounds of [development.md](../development.md#mpeg-audio-decoding); neither is claimed bit-exact.
+- **Cost:** 2,048 work units are allowed per byte of the file. A frame charges 22 units per sample of each channel plus the stages (Layer III 41, Layers I and II 29).
+
 ## Not yet covered
 
-- Coded Bandwidth for Layer III: where the coded spectrum ends lies after the big-values region, in the count1 quadruples, and its extent follows only from decoding the Huffman-coded values of the big-values region with the 34 tables of ISO/IEC 11172-3 Annex B, which the analyzer does not carry. Side information alone gives no honest bound (big_values bounds only the big-values region), so no figure is reported; it comes with a Layer III decoder.
-- Layer III scalefactors and Huffman spectral data, and Layer II samples (planned: entropy pass, MP3 first).
+- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels. ISO/IEC 13818-3 is not at hand.
+- Layer II samples and Layer III Huffman values are not shown as nodes; the report holds figures from them (Coded Bandwidth), not the values.
+- Layer III intensity stereo bounds (where the right channel's zero region begins) are not reported.
