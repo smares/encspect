@@ -19,6 +19,7 @@ import struct
 import make_ogg_fixtures as hand
 import ogg_model as m
 import vorbis_opus_model as v
+import vorbis_walk as w
 
 VENDOR = b"Encspect fixture"
 
@@ -49,7 +50,12 @@ def expect_vorbis(entry, data, packets, page_ends, s):
     audio = packets[first_audio:]
     gaps = [i - first_audio for i, p in enumerate(packets) if p["gap"] and i >= first_audio]
     cuts = [i - first_audio for i, p in enumerate(packets) if p["cut"] and i >= first_audio]
-    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts=cuts)
+    # The coded bandwidth is read where libvorbis would accept both headers: the setup header raises no finding but an info, and the identification header is one it decodes.
+    hertz = None
+    if setup and not [c for c in setup["problems"] if c != "vorbis.header-extra-data"] and len(ident) >= 30 and ident[11] > 0 and ident[12:16] != bytes(4) and ident[29] & 1 and \
+            int.from_bytes(ident[7:11], "little") == 0 and 6 <= ident[28] & 15 <= ident[28] >> 4 <= 13 and int.from_bytes(ident[12:16], "little") <= 2 ** 31 - 1:
+        hertz = w.hertz(ident, packets[2]["data"], [p["data"] for p in audio])
+    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts=cuts, hertz=hertz)
     vorbis.update({"packets": result["packets"], "blocks": result["blocks"], "statistics": result["statistics"]})
     if s.get("encoder"):
         vorbis["encoder"] = s["encoder"]

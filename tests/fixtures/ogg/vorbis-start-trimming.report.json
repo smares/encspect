@@ -936,6 +936,34 @@
                           "length": 112
                         }
                       ]
+                    },
+                    {
+                      "name": "Coded Bandwidth",
+                      "offset": 214,
+                      "length": 112,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 214,
+                          "length": 112
+                        },
+                        {
+                          "name": "Most Common",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 214,
+                          "length": 112
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 214,
+                          "length": 112
+                        }
+                      ]
                     }
                   ]
                 },
@@ -3659,6 +3687,90 @@
             ],
             "values": [
               0.3
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              214,
+              215,
+              253,
+              254,
+              255,
+              256,
+              257,
+              258,
+              259,
+              260,
+              261,
+              262,
+              308,
+              309,
+              310,
+              311,
+              312,
+              313,
+              314,
+              315,
+              316,
+              317,
+              318,
+              319,
+              320,
+              321,
+              322,
+              323,
+              324,
+              325
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              0
             ]
           }
         ],
