@@ -91,6 +91,7 @@ import helix_tool
 import mctoolame_tool
 import minimp3_tool
 import old_lame_tool
+import philips_mc_tool
 import stream_stats
 import vbr_tags
 import xing_tool
@@ -489,6 +490,60 @@ FIXTURES = [
     ("layer2/external-mctoolame-5-1-music", ".mp2", 44100, 6, ["mctoolame", "-L"],
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
           multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
+    ("layer2/external-philips-5-1", ".mp2", 48000, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-44100", ".mp2", 44100, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-32000", ".mp2", 32000, 6, ["pub_enc", "-L", "-b", "192"],
+     dict(version="1", layer=2, sample_rate=32000, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-256", ".mp2", 48000, 6, ["pub_enc", "-L", "-b", "256"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=256, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-0", ".mp2", 48000, 5, ["pub_enc", "-C", "320"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=False, decoded_channels=5))),
+    ("layer2/external-philips-4-1", ".mp2", 48000, 5, ["pub_enc", "-C", "310", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=True, decoded_channels=5))),
+    ("layer2/external-philips-4-0", ".mp2", 48000, 4, ["pub_enc", "-C", "310"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-philips-2-2", ".mp2", 48000, 4, ["pub_enc", "-C", "220"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/2", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-philips-2-1", ".mp2", 48000, 3, ["pub_enc", "-C", "210"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/1", has_lfe=False, decoded_channels=3))),
+    ("layer2/external-philips-2-0-lfe", ".mp2", 48000, 3, ["pub_enc", "-C", "200", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/0", has_lfe=True, decoded_channels=3))),
+    ("layer2/external-philips-5-1-dual", ".mp2", 48000, 6, ["pub_enc", "-L", "-m", "d"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Dual channel", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-flags", ".mp2", 48000, 6, ["pub_enc", "-L", "-e", "-c", "-o", "-d", "5"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), protected=True, copyright=True, original=True, emphasis="50/15 µs")),
+    ("layer2/external-philips-5-1-matrix", ".mp2", 48000, 6, ["pub_enc", "-L", "-x", "3"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-crosstalk", ".mp2", 48000, 6, ["pub_enc", "-L", "-y", "1"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-prediction", ".mp2", 48000, 6, ["pub_enc", "-L", "-P"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-phantom", ".mp2", 48000, 6, ["pub_enc", "-L", "-w"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-psychoacoustic-3", ".mp2", 48000, 6, ["pub_enc", "-L", "-p", "3"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-music", ".mp2", 48000, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
 ]
 
 
@@ -807,7 +862,7 @@ def detected_encoder(command, tag, settings, rows, path):
                 and ancillary[0] == last_frame_ancillary(path, ffprobe_packets(path))):
             return {"name": "BladeEnc", "confidence": "Low"}
         return None
-    if command[0] == "mctoolame":
+    if command[0] in ("mctoolame", "pub_enc"):
         return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "shineenc":
         return {"name": "Shine", "confidence": "Low"}
@@ -964,6 +1019,9 @@ def encode(command, source, path, temp):
     if command[0] == "gogo":
         gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
         return
+    if command[0] == "pub_enc":
+        philips_mc_tool.encode(PHILIPS_ENCODER[0], command[1:], source, path)
+        return
     if command[0] == "mctoolame":
         mctoolame_tool.encode(MCTOOLAME_ENCODER[0], command[1:], source, path)
         return
@@ -1049,6 +1107,7 @@ XING_ENCODER = []
 BLADE_ENCODERS = {}
 GOGO_ENCODER = []
 MCTOOLAME_ENCODER = []
+PHILIPS_ENCODER = []
 OLD_LAME = {}
 WIN_LAME = {}
 
@@ -1086,6 +1145,8 @@ def main(names):
             BLADE_ENCODERS[version] = blade_tool.build(version)
     if "gogo" in heads:
         GOGO_ENCODER.append(gogo_tool.fetch())
+    if "pub_enc" in heads:
+        PHILIPS_ENCODER.append(philips_mc_tool.fetch())
     if "mctoolame" in heads:
         MCTOOLAME_ENCODER.append(mctoolame_tool.build())
     for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):

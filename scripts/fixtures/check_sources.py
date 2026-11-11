@@ -52,6 +52,7 @@ import mctoolame_tool
 import mctoolamed_tool
 import monkeys_audio_tool
 import optimfrog_tool
+import philips_mc_tool
 import musepack_tool
 import old_lame_tool
 import speex_tool
@@ -94,6 +95,7 @@ def sources():
     for sample in tak["samples"]:
         yield sample["file"], sample["sha256"], check_tak_samples.addresses(sample)
     yield "mctoolamed-01a.tgz", mctoolamed_tool.SHA256, mctoolamed_tool.ADDRESSES
+    yield philips_mc_tool.ARCHIVE, philips_mc_tool.SHA256, philips_mc_tool.ADDRESSES
     yield "mctoolame-01a.tgz", mctoolame_tool.SHA256, mctoolame_tool.ADDRESSES
     yield "toolame-02a.tar.gz", mctoolame_tool.TABLES_SHA256, mctoolame_tool.TABLES_ADDRESSES
     yield "test.aiff-mpeg1-192.mp2", mctoolame_tool.SAMPLE_SHA256, mctoolame_tool.SAMPLE_ADDRESSES
