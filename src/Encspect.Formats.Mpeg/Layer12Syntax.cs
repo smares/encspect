@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Mpeg;
 
 // The allocation and scalefactor syntax of Layers I and II in the form the entropy pass and the decoder read it (minimp3's L12_read_scale_info,
@@ -43,6 +45,7 @@ internal sealed class Layer12Scale
     private static readonly (int Offset, int Width, int Bands)[] LayerTwoMpeg1LowRate = [(44, 4, 2), (44, 3, 10)];
 
     // Reads the allocation and scalefactors of the frame (frame starts at the header). Returns false where the data ends inside them.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public bool Read(MpegHeader header, ReadOnlySpan<byte> frame)
     {
         var bits = new BitSource(frame) { Position = 32 + (header.IsProtected ? 16 : 0) };
@@ -145,6 +148,7 @@ internal sealed class Layer12Scale
     // Reads the sample codes of the frame into planes (one per channel, PerChannel entries each) as the signed integers minimp3 turns into floats: the code minus
     // half its range, or for a grouped quantizer the digit minus the middle level. The layout of a plane is (part * 32 + subband) * 12 + time slot, with one part in Layer I
     // and three in Layer II. Subbands above the intensity stereo bound repeat in the second channel. Returns false where the samples run past the frame.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public bool ReadSamples(MpegHeader header, ReadOnlySpan<byte> frame, Span<int> planes, int stride)
     {
         var bits = new BitSource(frame) { Position = SampleStart };

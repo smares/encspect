@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Mpeg;
 
 // How the walk of a frame lays what it reads into the buffers a session lends (IDecodeSession.Lend): one plane per channel of PerChannel integers. A Layer III plane
@@ -31,6 +33,7 @@ internal sealed class Layer3Walker
     // frame starts at the header; mainData holds the frame's main data from main_data_begin bytes before its own data (the reservoir's tail, then the frame's bytes after
     // the side information). planes is the session's lent buffer (Narrow, with its stride) or empty where nothing is decoded: the walk then fills scratch and keeps only
     // its facts. Returns what the walk found; the Unreadable and PartsExceedData problems leave the planes as far as they got.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public WalkFacts Walk(MpegHeader header, ReadOnlySpan<byte> frame, ReadOnlySpan<byte> mainData, Span<int> planes, int stride)
     {
         var facts = new WalkFacts();
@@ -66,6 +69,9 @@ internal sealed class Layer3Walker
             values.Clear();
             int limit = bits.Position + gr.Part23Length;
             Layer3Syntax.ReadScalefactors(ref bits, header, gr, channel, isIntensity, _scalefactors[channel], _positions[channel]);
+
+            // Scalefactors that already exceed part2_3_length are the side information's fault (mpeg.scalefactors-exceed-granule), not the Huffman data's.
+            bool scalefactorsFit = bits.Position <= limit;
             for (int i = 0; i < LentLayout.Scalefactors; i++)
             {
                 block[LentLayout.ScalefactorOffset + i] = _scalefactors[channel][i];
@@ -73,7 +79,7 @@ internal sealed class Layer3Walker
             }
 
             int coded = Layer3Syntax.ReadSpectrum(ref bits, gr, values, limit, out bool isOverrun);
-            if (isOverrun)
+            if (isOverrun && scalefactorsFit)
             {
                 facts.Problems |= WalkProblems.HuffmanOverrun;
                 facts.Overruns++;

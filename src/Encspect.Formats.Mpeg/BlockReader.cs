@@ -73,6 +73,7 @@ internal sealed class BlockReader(ByteReader reader)
     }
 
     // Fills destination with the bytes from offset on; those past the end of the reader are zeros.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     public void ReadInto(long offset, Span<byte> destination)
     {
         int done = 0;

@@ -168,6 +168,7 @@ public sealed partial class MpegAudioParser
         }
 
         // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
         private ReadOnlySpan<byte> GatherMainData(StreamState state, int runsBefore, ReadOnlySpan<byte> frame, MpegHeader header)
         {
             int total = 0;

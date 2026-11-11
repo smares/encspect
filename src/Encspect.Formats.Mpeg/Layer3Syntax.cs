@@ -14,6 +14,8 @@ internal ref struct BitSource(ReadOnlySpan<byte> data)
 
     public readonly int Limit => _limit;
 
+    public readonly ReadOnlySpan<byte> Data => _data;
+
     public uint Read(int count)
     {
         int start = Position;
@@ -47,6 +49,73 @@ internal ref struct BitSource(ReadOnlySpan<byte> data)
         }
 
         return count == 0 ? 0 : (uint)((window << (start & 7)) >> (64 - count));
+    }
+}
+
+// A bit reader for the Huffman codes: a 64-bit cache refilled a word at a time, so a code takes a shift and a mask. Bits past the end of the data are zeros and count as read,
+// which is how a granule that runs past its data shows (Position). Peek takes at most 32 bits.
+internal ref struct FastBits
+{
+    private readonly ReadOnlySpan<byte> _data;
+    private ulong _cache;
+    private int _count;
+    private int _next;
+
+    public FastBits(ReadOnlySpan<byte> data, int bitPosition)
+    {
+        _data = data;
+        _next = bitPosition >> 3;
+        _cache = 0;
+        _count = 0;
+        Refill();
+        int skip = bitPosition & 7;
+        _cache <<= skip;
+        _count -= skip;
+    }
+
+    public readonly int Position => (_next * 8) - _count;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly uint Peek(int count) => (uint)(_cache >> (64 - count));
+
+    // Fills the cache to at least 56 bits, enough for a pair of values with their escapes and signs (at most 19 + 2 * 14 bits) or a quadruple, which are then read without checks.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Fill()
+    {
+        if (_count < 56)
+        {
+            Refill();
+        }
+    }
+
+    // Consumes bits the caller has made sure are in the cache.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Skip(int count)
+    {
+        _cache <<= count;
+        _count -= count;
+    }
+
+    // Fills the cache with whole bytes up to at least 56 bits. A partial byte loaded below the counted bits is the next byte's true top, so loading it again ORs in the same bits.
+    private void Refill()
+    {
+        if (_next >= 0 && _next + 8 <= _data.Length)
+        {
+            ulong word = BinaryPrimitives.ReadUInt64BigEndian(_data.Slice(_next, 8));
+            _cache |= word >> _count;
+            int bytes = (64 - _count) >> 3;
+            _next += bytes;
+            _count += bytes << 3;
+            return;
+        }
+
+        while (_count <= 56)
+        {
+            ulong value = _next >= 0 && _next < _data.Length ? _data[_next] : 0u;
+            _cache |= value << (56 - _count);
+            _next++;
+            _count += 8;
+        }
     }
 }
 
@@ -140,6 +209,7 @@ internal static class Layer3Syntax
 
     // Reads the side information that follows the header and the CRC. frame starts at the header. Returns main_data_begin, or -1 where the side information
     // breaks (the frame cannot be decoded). granules receives granule 0 channel 0, granule 0 channel 1, granule 1 channel 0 ... and count how many.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static int ReadSideInfo(ReadOnlySpan<byte> frame, MpegHeader header, Span<GranuleSyntax> granules, out int count, out int partsTotal)
     {
         var bits = new BitSource(frame) { Position = 32 + (header.IsProtected ? 16 : 0) };
@@ -272,6 +342,7 @@ internal static class Layer3Syntax
     // Reads the scalefactors of one granule and channel (minimp3's L3_read_scalefactors and the partition choice of L3_decode_scalefactors) into
     // scalefactors (the values as coded) and positions (the same, with the intensity stereo illegal value marked 255 as minimp3 keeps it), which
     // carry over to the next granule through scfsi. Both are 40 bytes: the bands and three zeros.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadScalefactors(ref BitSource bits, MpegHeader header, in GranuleSyntax gr, int channel, bool isIntensityStereo, Span<byte> scalefactors, Span<byte> positions)
     {
         int partitionRow = (gr.ShortBandCount != 0 ? 1 : 0) + (gr.LongBandCount == 0 ? 1 : 0);
@@ -347,8 +418,10 @@ internal static class Layer3Syntax
     // Reads the Huffman-coded values of one granule and channel into values (576 entries, zero outside what the regions code), following
     // minimp3's L3_huffman. limit is the bit position where the granule's part2_3_length ends. Returns the number of lines the big-values and
     // count1 regions code, in the order the data comes in.
-    public static int ReadSpectrum(ref BitSource bits, in GranuleSyntax gr, Span<int> values, int limit, out bool isOverrun)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static int ReadSpectrum(ref BitSource source, in GranuleSyntax gr, Span<int> values, int limit, out bool isOverrun)
     {
+        var bits = new FastBits(source.Data, source.Position);
         ReadOnlySpan<byte> bands = Bands(gr);
         ReadOnlySpan<short> codebooks = Layer3Tables.Codebooks;
         int band = 0;
@@ -375,6 +448,7 @@ internal static class Layer3Syntax
                 int pairs = Math.Min(pairsLeft, np);
                 while (pairs-- > 0)
                 {
+                    bits.Fill();
                     int width = 5;
                     int leaf = codebook[(int)bits.Peek(width)];
                     while (leaf < 0)
@@ -385,21 +459,28 @@ internal static class Layer3Syntax
                     }
 
                     bits.Skip(leaf >> 8);
-                    for (int j = 0; j < 2; j++, dst++, leaf >>= 4)
+                    int first = leaf & 0x0F;
+                    int second = (leaf >> 4) & 0x0F;
+                    if (linbits != 0 && first == 15)
                     {
-                        int magnitude = leaf & 0x0F;
-                        if (linbits != 0 && magnitude == 15)
-                        {
-                            magnitude += (int)bits.Peek(linbits);
-                            bits.Skip(linbits);
-                        }
-
-                        if (magnitude != 0)
-                        {
-                            values[dst] = bits.Peek(1) != 0 ? -magnitude : magnitude;
-                            bits.Skip(1);
-                        }
+                        first += (int)bits.Peek(linbits);
+                        bits.Skip(linbits);
                     }
+
+                    // The sign follows a nonzero magnitude: it is applied without a branch, since the values of a noisy spectrum are as likely zero as not.
+                    int negative = -(int)bits.Peek(1);
+                    values[dst] = (first ^ negative) - negative;
+                    bits.Skip((int)((uint)(first | -first) >> 31));
+                    if (linbits != 0 && second == 15)
+                    {
+                        second += (int)bits.Peek(linbits);
+                        bits.Skip(linbits);
+                    }
+
+                    negative = -(int)bits.Peek(1);
+                    values[dst + 1] = (second ^ negative) - negative;
+                    bits.Skip((int)((uint)(second | -second) >> 31));
+                    dst += 2;
                 }
             }
             while ((pairsLeft -= np) > 0 && --bandCount >= 0);
@@ -411,6 +492,7 @@ internal static class Layer3Syntax
         int remaining = 1 - pairsLeft;
         for (; dst + 4 <= 576; dst += 4)
         {
+            bits.Fill();
             int leaf = count1[(int)bits.Peek(4)];
             if ((leaf & 8) == 0)
             {
@@ -449,16 +531,15 @@ internal static class Layer3Syntax
             Quad(ref bits, values, dst, leaf, 3);
         }
 
-        bits.Position = limit;
+        source.Position = limit;
         return dst;
     }
 
-    private static void Quad(ref BitSource bits, Span<int> values, int dst, int leaf, int index)
+    private static void Quad(ref FastBits bits, Span<int> values, int dst, int leaf, int index)
     {
-        if ((leaf & (128 >> index)) != 0)
-        {
-            values[dst + index] = bits.Peek(1) != 0 ? -1 : 1;
-            bits.Skip(1);
-        }
+        int present = (leaf >> (7 - index)) & 1;
+        int negative = -(int)bits.Peek(1);
+        values[dst + index] = ((1 ^ negative) - negative) & -present;
+        bits.Skip(present);
     }
 }
