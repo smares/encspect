@@ -566,7 +566,8 @@ public static class AudioPanels
 
         return m.Status switch
         {
-            MeasurementStatus.Complete => null,
+            // A complete measurement has a reason only where the decoder outputs fewer channels than the stream has.
+            MeasurementStatus.Complete => m.Reason is { Length: > 0 } note ? new AudioCaption($"{char.ToUpperInvariant(note[0])}{note[1..].TrimEnd('.')}.", false) : null,
             MeasurementStatus.NotPossible => new AudioCaption(Cannot(m.Reason ?? "the stream cannot be measured"), false),
             MeasurementStatus.Failed => new AudioCaption("The measuring failed, so the audio has no figures.", false),
             MeasurementStatus.FormatChanged => new AudioCaption("Measuring stopped where the format of the decoded blocks changed; the figures cover what came before.", false),

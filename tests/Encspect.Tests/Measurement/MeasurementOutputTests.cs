@@ -20,6 +20,15 @@ public class MeasurementOutputTests
     }
 
     [Fact]
+    public void AMultichannelStreamMeasuredAsItsBaseStereoSaysSoInTheText()
+    {
+        (int code, string output, _) = Run("--measure", "--hide", "frames,tags", Path.Combine(Fixtures.FixtureDirectory, "mpeg", "layer2", "mc-3-2-lfe.mp2"));
+
+        Assert.Equal(CommandLine.Success, code);
+        Assert.Matches(@"Measured: [\d.]+ s \(lossy stream\) of 2 channels; the decoder outputs 2 channels of the stream's 6, and only those were measured", output);
+    }
+
+    [Fact]
     public void MeasureWritesTheMeasuredLinesAfterTheVerifiedLine()
     {
         (int code, string output, _) = Run("--measure", "--hide", "frames,tags", Brickwall);
