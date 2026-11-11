@@ -756,7 +756,7 @@ Bytes added per unit to what the report keeps now, against the bounds `MemoryTes
 
 | Stream | Added per unit | Kept today (plan, `MemoryTests`) | Bound in `MemoryTests` (kept, peak) |
 | --- | --- | --- | --- |
-| MPEG-1 Layer III stereo | 23 bytes: channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4, channel bit share 16; block sizes is a grouping | about 130 bytes per frame | 250, 350 |
+| MPEG-1 Layer III stereo | 31 bytes: channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4, channel bit share 16, coded bandwidth 8 (the entropy pass, with the MPEG decoder; its x values are the bitrate series'); block sizes is a grouping | about 145 bytes per frame (kept 145, peak 148 measured) | 250, 350 |
 | MPEG Layer II stereo | 27 bytes: channel modes 1, stereo coding 1, intensity stereo bounds 1, coded bandwidth 8, channel bit share 16 | as above | 250, 350 |
 | AAC stereo | 13 bytes: window sequences 2 and its count byte, stereo coding 1 and its count byte, coded bandwidth 8 (all recorded while reading) | 91 to 116 bytes per access unit | 220, 250 per frame (ADTS); 110, 180 per sample (MP4) |
 | AC-3 2/0, 6 blocks | 26 bytes: block switching, coupling, rematrixing 6 each, coded bandwidth 8; fixed layout, no count byte | 70 bytes per mono frame, measured on a 1/0 fixture | 220, 300 |

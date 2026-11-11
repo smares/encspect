@@ -49,9 +49,10 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
         // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 23 bytes,
         // channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4 and channel bit share 16 (a value and its own x); block
-        // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'.
+        // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'. The coded bandwidth
+        // of the entropy pass adds 8 bytes (its values; its x values are the bitrate series' too), so the numeric series keep 16.
         StreamInfo stream = Assert.Single(report.Streams);
-        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 8);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 16);
         output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
         GC.KeepAlive(report);
     }
