@@ -19,6 +19,16 @@
           <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#E0E0E0" />
           <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="#D0D0D0" />
           <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="#C0C0C0" />
+          <!-- A selected row in every list is the ListBox's (the detail tree and the findings): the accent at the strength of
+               SystemControlHighlightListAccentLow (0.4 light, 0.6 dark), and of Medium under the pointer (0.6, 0.8), focused or not. The folder tree's items and the
+               file list's rows would take the stronger Fluent values, which read dark under black text. -->
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{DynamicResource SystemAccentColor}" Opacity="0.4" />
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{DynamicResource SystemAccentColor}" Opacity="0.6" />
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="{DynamicResource SystemAccentColor}" Opacity="0.7" />
+          <x:Double x:Key="DataGridRowSelectedBackgroundOpacity">0.4</x:Double>
+          <x:Double x:Key="DataGridRowSelectedUnfocusedBackgroundOpacity">0.4</x:Double>
+          <x:Double x:Key="DataGridRowSelectedHoveredBackgroundOpacity">0.6</x:Double>
+          <x:Double x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundOpacity">0.6</x:Double>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
           <SolidColorBrush x:Key="ErrorBrush" Color="#FF99A4" />
@@ -36,6 +46,16 @@
           <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="#3A3A3A" />
           <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="#4A4A4A" />
           <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="#5A5A5A" />
+          <!-- A selected row in every list is the ListBox's (the detail tree and the findings): the accent at the strength of
+               SystemControlHighlightListAccentLow (0.4 light, 0.6 dark), and of Medium under the pointer (0.6, 0.8), focused or not. The folder tree's items and the
+               file list's rows would take the stronger Fluent values, which read dark under black text. -->
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="{DynamicResource SystemAccentColor}" Opacity="0.6" />
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="{DynamicResource SystemAccentColor}" Opacity="0.8" />
+          <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="{DynamicResource SystemAccentColor}" Opacity="0.9" />
+          <x:Double x:Key="DataGridRowSelectedBackgroundOpacity">0.6</x:Double>
+          <x:Double x:Key="DataGridRowSelectedUnfocusedBackgroundOpacity">0.6</x:Double>
+          <x:Double x:Key="DataGridRowSelectedHoveredBackgroundOpacity">0.8</x:Double>
+          <x:Double x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundOpacity">0.8</x:Double>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>

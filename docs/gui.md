@@ -289,6 +289,10 @@ The form "Frame Map" draws every unit of a series (a frame, packet or block; the
   - A trailing ellipsis (…) marks a command that asks for more input.
   - `CapitalizationTests` walks the menus, buttons, checkboxes and tabs of the main and detail windows.
 - Light and dark mode, the accent color and the UI font follow the system.
+- **Selected rows:** a selected row or item is drawn the same in the file list, the folder tree, the detail tree and the findings list, in light and dark mode, with the focus in or out of the list:
+  - the accent color at 40% over the surface in light mode and 60% in dark mode (the ListBox's), and at 60% and 80% under the pointer;
+  - set once in `Styles.axaml` for the folder tree's items and the file list's rows, which Fluent draws stronger by default, so black text read poorly on them;
+  - `RowSelectionTests` renders a ListBox, a TreeView and a DataGrid in each state, holds that they draw the same pixels, and holds the text on them to at least 4.5:1 (11.96 and 8.77:1 in light mode, 9.36 and 6.42:1 in dark mode, for the selected row and the one under the pointer, with the default accent).
 - The file dialogs are the system's (on Linux, the desktop portal's; see "Linux: X11 and Wayland").
 - On macOS the menus are in the menu bar; the About item is in the application menu.
 - Linux runs on X11 by default, which on a Wayland desktop means XWayland. Native Wayland is experimental and opt-in. See "Linux: X11 and Wayland".
