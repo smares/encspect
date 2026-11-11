@@ -839,19 +839,39 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             }
 
             long perCopy = Math.Max(1, Units(Build(packets, 1)));
-            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+
+            // At most about 400,000 packets, whatever they cost: a silent stream reaches its figure with the work the budget's floor covers and the packets it can hold.
+            int copies = (int)Math.Clamp(Math.Min(target / perCopy, 400_000 / Math.Max(1, packets.Count - 3)), 2, 1 << 20);
             return Build(packets, copies);
         }
 
         private static byte[] Build(List<byte[]> packets, int copies)
         {
-            var all = new List<byte[]>(packets.Take(3));
+            var builder = new OggBuilder().Page(1, 0, 2, packets[0]).Page(1, 0, 0, packets[1], packets[2]);
+            var page = new List<byte[]>();
+            int segments = 0;
+            long total = (long)copies * (packets.Count - 3);
+            long done = 0;
             for (int copy = 0; copy < copies; copy++)
             {
-                all.AddRange(packets.Skip(3));
+                foreach (byte[] packet in packets.Skip(3))
+                {
+                    int needed = (packet.Length / 255) + 1;
+                    if (segments + needed > 250)
+                    {
+                        builder.Page(1, -1, 0, [.. page]);
+                        page.Clear();
+                        segments = 0;
+                    }
+
+                    page.Add(packet);
+                    segments += needed;
+                    done++;
+                }
             }
 
-            return VorbisStreams.Ogg(all, new long[all.Count - 3]);
+            builder.Page(1, -1, 4, [.. page]);
+            return builder.Bytes;
         }
 
         public static long Units(byte[] file)
