@@ -156,6 +156,10 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - mid/side spectra and spectral holes, the lossy coders' finer marks, which need lossy streams and fixtures that show each mark;
    - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
    - The step's other items have places of their own: the two level figures and the TTA decoder are in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
+3. **Encoder-written MPEG fixtures and a survey of old encoders** (the lead, 2026-11-11, started at once beside the decoders):
+   - **mctoolame,** the multichannel Layer II encoder (2003) whose decoder mctoolamed already cross-checks the multichannel extension: built in CI and run as a black box, so the MPEG-2 multichannel fixtures include files a real encoder wrote, not only hand-built frames. The project site's real 5-channel stream states no license and is fetched in CI at a pinned hash, not committed.
+   - **LAME before 3.90** (Rarewares' Windows builds of 3.20 to 3.89, under Wine, the releases that change what a stream shows) **and 3.95 to 3.98.4** (built from source as `old_lame_tool.py` builds the others), for the encoder detection of old rips.
+   - **A survey** of the encoders Rarewares keeps against what Encspect covers, with their licenses, ranked by value and feasibility; it ends in a list for the lead, not in code.
 
 ### 0.4: Free decoders and routes complete
 
@@ -198,6 +202,10 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
 11. **"Show Only Audio" in the GUI's file list** (the lead, 2026-11-11): a switch that hides the files in which Encspect found no audio, by the detected format and never by the file name, as `--only-format` does on the command line.
    - The files stay analyzed and listed in the summary cache; the switch only filters the view, and the list says how many files it hides.
    - File names never decide what is read: a list of extensions to scan would hide the mislabeled files Encspect is meant to find.
+12. **The sample kit's files as fixtures** (the lead, 2026-11-11). The encodes received through the private sample kit (Nero Burning ROM's MP3, mp3PRO and AAC, neroAacEnc 1.0.0.2 to 1.5.4, qaac with Core Audio, iTunes' AAC and MP3 encoders, Winamp's Fraunhofer AAC, aacPlus and Vorbis encoders, Windows 10's Media Foundation encoders) come from synthetic sources, so the audio carries no copyright.
+   - **A selection per encoder,** the files that show something the fixtures lack (a profile, mode, rate, header or tag), not every bitrate; the kit holds about 85 MB, most of it Media Foundation's lossless files.
+   - **Imported by a script** like `import_macos_aac_fixtures.py`, with a manifest, a golden report and the cross-checks of each format, and a provenance record of encoder, version and settings; the contributor's logs and machine details stay private.
+   - **Nero's files included:** Nero's license limits how the software is used, not the files it writes.
 
 ### 0.5: AAC and WMA
 
