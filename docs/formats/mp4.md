@@ -95,7 +95,7 @@ The © atoms of `udta` in `moov` and `trak` are international text (QuickTime Fi
 - **Limits:** at most 1,000 items of an atom, and 10,000 of the whole file, are shown as nodes; the rest are counted in a "More Text Items" node. Atoms in boxes past the node budget build no item nodes at all; their items are only walked for the findings and the first text.
 - **Writer:** the first text of `©swr` and `©too` is a claim about the writer (see "Encoder detection"); an item list's `©too` adds one for each text data atom.
 - **MediaInfo** reads a movie's `©nam` as a version, flags and one UTF-8 text to the end of the atom, so it matches the analyzer only for an atom of one item; its other fields in `udta` are compared (title, artist, album, encoding application).
-- **Not covered:** the atoms of `udta` that are not international text (`name`, `tnam`, `tagc`, `LOOP`, `WLOC` and the like) are shown as boxes and not read.
+- **Not covered:** the atoms of `udta` that are not international text (`name`, `tnam`, `tagc`, `LOOP`, `WLOC` and the like) are shown as boxes and not read. Nero's `tags` box, neroAacTag's own tag format beside the iTunes metadata, is shown as a box and not read; reading it is planned ([plan.md](../plan.md), 0.4).
 
 ## Protected tracks
 
