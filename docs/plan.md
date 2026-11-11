@@ -189,6 +189,10 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **Worded with the basis:** "lossless coding", not "lossless"; and "Verified" says what it covers (the decoded audio matches the stored checksum), which tells nothing about where the audio came from.
    - **The figures beside it:** the spectral cutoff, the low bits unused and the processor claim stand next to the coding line in the text report and the GUI, so the evidence about a file's history is where a reader looks first.
    - **An article** on what the coding class and these figures can and cannot show about a file's history, linked from the coding line. No figure becomes a verdict (the non-goals).
+10. **Nero's `tags` box in MP4** (the lead, 2026-11-11). neroAacTag writes its tags twice: as iTunes metadata, which the MP4 parser reads, and in a `tags` box of its own in `moov/udta`, which the parser shows as an unknown box.
+   - **What is read:** the box's fields as a tag (title, artist, album and the rest, user fields such as `-meta-user`, the encoder's `cdec` command line), the covers `-write-nd-covers` puts there, and Nero's metadata per chapter, which iTunes metadata cannot hold.
+   - **Sources:** no specification is known. The layout is read from files neroAacTag 1.5.4.0 wrote, with neroAacTag's own listings (`-list-meta`, `-list-covers`, `-list-chapters`) as the cross-check; nothing of Nero's code is read or decompiled.
+   - **Fixtures:** the lead's four neroAacTag files and their log (a cover in both formats, non-ASCII text that neroAacTag stores as question marks, three chapters with their own titles, a user field), committed when the item starts; a field that disagrees with the iTunes metadata beside it is a finding.
 
 ### 0.5: AAC and WMA
 
