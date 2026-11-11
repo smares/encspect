@@ -43,6 +43,10 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # Fixtures a reference decodes differently, by reference ("minimp3" or "ffmpeg"), with what is known. An entry is a pending item for the lead, not an explanation: the
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
 EXPLAINED = {
+    "mixed-external-helix-r11-mono.mp3": {
+        "minimp3": "the only 32 kHz file with short blocks, Helix r11, whose granules state scalefactors longer than part2_3_length (mpeg.scalefactors-exceed-granule); with the mixed flag set "
+                   "minimp3, FFmpeg 8 and the analyzer decode the second granule's overlap three ways (0.9, 0.4 and 0.8 of full scale apart in the next frame)"
+    },
     "external-xing-mpeg2.mp3": {
         "ffmpeg": "pending: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) "
                   "FFmpeg 8's mp3float and mp3 decoders (which agree with each other), mpg123 1.32 and minimp3 (which the analyzer follows) all differ from one another by up to "
@@ -51,6 +55,36 @@ EXPLAINED = {
 }
 
 MAGICS = (b"Xing", b"Info", b"VBRI")
+
+
+# Fixtures that make mixed blocks, which no encoder writes: the short granules of these files with mixed_block_flag set (ISO/IEC 11172-3 2.4.2.7), one for each MPEG-1
+# sample rate row of the band tables, written next to the dumps. minimp3 and the analyzer must agree on them.
+MIXED_SOURCES = ["external-helix-r11-mono.mp3", "external-blade-stereo.mp3", "external-fhg-music-cbr.mp3", "external-fhg-mono-cbr.mp3"]
+
+
+def mixed_variant(source, directory, binary):
+    """Writes the source with mixed_block_flag set on every short granule of an MPEG-1 Layer III file; returns the path, or None where the file has none."""
+    data = bytearray(source.read_bytes())
+    frames = minimp3_tool.decode_pcm(binary, source, directory / "mixed-probe.f32")
+    changed = 0
+    for frame in frames:
+        base = frame["offset"]
+        header = data[base:base + 4]
+        if frame["layer"] != 3 or (header[1] >> 3) & 3 != 3:
+            continue
+        channels = 1 if (header[3] >> 6) == 3 else 2
+        start = (4 + (0 if header[1] & 1 else 2)) * 8 + 9 + (5 if channels == 1 else 3) + 4 * channels
+        for index in range(2 * channels):
+            at = start + index * 59 + 33
+            bit = lambda n: (data[base + (at + n) // 8] >> (7 - (at + n) % 8)) & 1
+            if bit(0) and (bit(1) << 1 | bit(2)) == 2:
+                data[base + (at + 3) // 8] |= 0x80 >> ((at + 3) % 8)
+                changed += 1
+    if not changed:
+        return None
+    target = directory / ("mixed-" + source.name)
+    target.write_bytes(data)
+    return target
 
 
 def default_files():
@@ -137,6 +171,9 @@ def main(argv=None):
         return 2
     binary = minimp3_tool.build_pcm()
     failed = compared = 0
+    mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
+    if not args.files:
+        files = files + [m for name in MIXED_SOURCES if (m := mixed_variant(FIXTURES / "mpeg" / name, mixed_directory, binary))]
     with tempfile.TemporaryDirectory() as temporary:
         base = args.keep or pathlib.Path(temporary)
         base.mkdir(parents=True, exist_ok=True)
@@ -172,8 +209,11 @@ def main(argv=None):
                         only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]
                         if only:
                             notes.append(f"minimp3: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
-            second = ffmpeg_reference(args.ffmpeg, path, layer)
-            if second is None:
+            # FFmpeg and minimp3 do not treat mixed blocks alike (they differ by up to 1.5 of full scale on these files), so only minimp3 is the reference for them.
+            second = None if path.name.startswith("mixed-") else ffmpeg_reference(args.ffmpeg, path, layer)
+            if path.name.startswith("mixed-"):
+                notes.append("mixed blocks: minimp3 alone is the reference")
+            elif second is None:
                 notes.append("ffmpeg decodes nothing")
             else:
                 outcome, found = compare(manifest, second, streams[0]["channels"], "ffmpeg")

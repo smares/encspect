@@ -3298,7 +3298,7 @@ minimp3 (https://github.com/lieff/minimp3), commit ea99364f, third_party/minimp3
     See <http://creativecommons.org/publicdomain/zero/1.0/>.
 ```
 
-
+## matplotlib colormaps: the spectrogram's color ramp
 
 The 256 colors of the GUI's spectrogram (`src/Encspect.Gui/Views/MagmaRamp.cs`) are the entries of the "magma" colormap that Nathaniel J. Smith and Stefan van der Walt made for matplotlib (Eric Firing joined them for "viridis"), from `colormaps.py` of github.com/BIDS/colormap. The file releases the colormaps under the CC0 license (a public domain dedication) and asks for credit, which is given here. The license comment at the top of the file:
 

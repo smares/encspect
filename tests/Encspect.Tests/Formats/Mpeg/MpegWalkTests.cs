@@ -156,4 +156,27 @@ public class MpegWalkTests
         Assert.Equal(3 * 5, Layer3Walker.Top(granule, 13));
         Assert.Equal(576, Layer3Walker.Top(granule, 576));
     }
+
+    // Every row of every band table covers the 576 lines of a granule, and the mixed table has a row of 40 entries for each of the eight sample rate rows
+    // (minimp3's rows hold 36 to 40 initializers, which C pads with zeros; a table written without the padding shifted every row after the first).
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void EveryBandTableRowCovers576Lines(int kindNumber)
+    {
+        var kind = (BandKind)kindNumber;
+        for (int row = 0; row < 8; row++)
+        {
+            var granule = new GranuleSyntax { Bands = kind, BandRow = row, LongBandCount = kind == BandKind.Short ? 0 : kind == BandKind.Mixed ? 6 : 22, ShortBandCount = kind == BandKind.Long ? 0 : 30 };
+            ReadOnlySpan<byte> widths = Layer3Syntax.BandWidths(granule);
+            int sum = 0;
+            for (int i = 0; i < widths.Length && widths[i] != 0; i++)
+            {
+                sum += widths[i];
+            }
+
+            Assert.True(sum == 576, $"{kind} row {row} covers {sum} lines");
+        }
+    }
 }

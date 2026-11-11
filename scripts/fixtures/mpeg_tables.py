@@ -40,6 +40,18 @@ def array(text, name):
     return [token.strip() for token in body.replace("\n", " ").split(",") if token.strip()]
 
 
+def padded_rows(text, name, width):
+    """The rows of a C array of arrays, each padded with zeros to width as C does for the initializers a row leaves out (minimp3's mixed band rows hold 36 to 40)."""
+    match = re.search(r"\b" + re.escape(name) + r"\s*(\[[^\]]*\])+\s*=\s*\{(.*?)\n    \};", text, flags=re.S)
+    if match is None:
+        raise SystemExit(f"{name} not found in {SOURCE}")
+    out = []
+    for inner in re.findall(r"\{([^{}]*)\}", match.group(2)):
+        row = [t.strip() for t in inner.split(",") if t.strip()]
+        out += row + ["0"] * (width - len(row))
+    return out
+
+
 def rows(values, width):
     for start in range(0, len(values), width):
         yield values[start:start + width]
@@ -78,7 +90,7 @@ def parser_file(text):
     out.append("")
     out.append(emit_ints("ShortBands", array(text, "g_scf_short"), "byte", "The short-block bands, each width three times (one per window), 40 entries a row.", 40))
     out.append("")
-    out.append(emit_ints("MixedBands", array(text, "g_scf_mixed"), "byte", "The mixed-block bands: the long bands below the switch point, then the short ones, 40 entries a row.", 40))
+    out.append(emit_ints("MixedBands", padded_rows(text, "g_scf_mixed", 40), "byte", "The mixed-block bands: the long bands below the switch point, then the short ones, 40 entries a row.", 40))
     out.append("")
     out.append(emit_ints("Partitions", array(text, "g_scf_partitions"), "byte", "The scalefactor band partitions of MPEG-2 and 2.5 (ISO/IEC 13818-3 Table nr_of_sfb_block), 28 entries a row.", 28))
     out.append("")
