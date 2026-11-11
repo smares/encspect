@@ -78,6 +78,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 | Gaps, not concealment | A frame a decoder cannot decode is a gap, never concealed audio (#208) | The lead's rule, recorded with the official-decoder cross-checks ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)) | 2026-11-01 |
 | Withheld output after a gap | Output that depends on state a lost frame took with it is reset and withheld, not measured; withheld and trimmed samples are counted apart from lost ones | [lossy-decoders.md](design/lossy-decoders.md), decisions 4 and 8 | 2026-11-08 |
 | Nothing is bought | No paid specification, such as ISO/IEC 14496-3 | The formats with a free specification or permissively licensed code come first; AAC and WMA follow on clean-room or free sources ([lossy-decoders.md](design/lossy-decoders.md)) | 2026-11-07 |
+| Encoder output as fixtures | What an encoder writes is committed as a fixture unless the encoder's own license text forbids it. Encoders licensed for evaluation only, leaked code and licenses that forbid it are run by hand and nothing they write is kept, or the files stay in the private repository | The rule the Rarewares tools (Fraunhofer's mp3sEncoder, gogo, Helix) were already handled by | 2026-11-11 |
 | Routes | Containers route only the codec and container combinations that writers in the wild produce | Routing what nobody writes costs code and fixtures for no file; see below | 2026-11-07 |
 | Lossy decoders | The design of [lossy-decoders.md](design/lossy-decoders.md), every recommendation as listed | Each decoder brings its format's entropy pass, so the figures that need it come with the decoder | 2026-11-08 |
 | Patents | No format waits for advice; before the HE-AAC, USAC, E-AC-3 and WMA Professional decoders, the lead decides whether they ship as source only or stay out of the release binaries (decision 17 of [lossy-decoders.md](design/lossy-decoders.md)) | The decoders exist for analysis only, and users are responsible for the laws where they live | 2026-11-08 |
@@ -156,6 +157,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - The step's other items have places of their own: the two level figures and the TTA decoder are in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
 3. **Encoder-written MPEG fixtures and a survey of old encoders** (the lead, 2026-11-11, started at once beside the decoders):
    - **mctoolame,** the multichannel Layer II encoder (2003) whose decoder mctoolamed already cross-checks the multichannel extension: built in CI and run as a black box, so the MPEG-2 multichannel fixtures include files a real encoder wrote, not only hand-built frames. The project site's real 5-channel stream states no license and is fetched in CI at a pinned hash, not committed.
+   - **Philips' multichannel MP2 encoder 2.5** (1999, Rarewares' Windows build, under Wine): a second encoder-written source of MPEG-2 multichannel Layer II beside mctoolame.
    - **LAME before 3.90** (Rarewares' Windows builds of 3.20 to 3.89, under Wine, the releases that change what a stream shows) **and 3.95 to 3.98.4** (built from source as `old_lame_tool.py` builds the others), for the encoder detection of old rips.
    - **A survey** of the encoders Rarewares keeps against what Encspect covers, with their licenses, ranked by value and feasibility; it ends in a list for the lead, not in code.
 
@@ -170,7 +172,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - Matroska: PCM (FFmpeg, mkvmerge);
    - ASF: MP3 and AC-3 (the lead, 2026-11-07);
    - Matroska header stripping for AAC, AC-3, DTS and MPEG audio (mkvmerge writes it): a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.
-3. **The small separate items:** WavPack 1 to 3; finding the correction file that belongs to a WavPack `.wv` (`.wvc`) or an OptimFROG DualStream `.ofs` (`.ofc`), with host access to a companion file (found by base name and extension, `x.wv` to `x.wvc` and `x.ofs` to `x.ofc`, beside the input; an input with no folder, a stream or standard input, reports the pair as unchecked), checking the pair against each other and reporting it as lossless only when the correction file is there and consistent, in the same words for both (for OptimFROG on headers and checksums alone, since it has no decoder; [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#optimfrog-dualstream), the lead, 2026-11-09); the TAK frame walk (the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats; decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)); ASF script command and marker contents.
+3. **The small separate items:** WavPack 1 to 3, with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31); finding the correction file that belongs to a WavPack `.wv` (`.wvc`) or an OptimFROG DualStream `.ofs` (`.ofc`), with host access to a companion file (found by base name and extension, `x.wv` to `x.wvc` and `x.ofs` to `x.ofc`, beside the input; an input with no folder, a stream or standard input, reports the pair as unchecked), checking the pair against each other and reporting it as lossless only when the correction file is there and consistent, in the same words for both (for OptimFROG on headers and checksums alone, since it has no decoder; [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#optimfrog-dualstream), the lead, 2026-11-09); the TAK frame walk (the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats; decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)); ASF script command and marker contents.
 4. **The coding graphs of formats whose data the parsers already read,** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
    - With them, TrueHD's "Stereo Coding" from the matrix parameters of the substream blocks, which the parser already reads: a tally and its category series under the name, unit and axis of the other formats' "Stereo Coding" (the lead, 2026-11-10; [lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)).
 5. **A guess at the FLAC compression level** (the lead, 2026-11-08). The frames do not store the level, but each libFLAC level picks a typical block size, maximum predictor order and partition order.
@@ -204,6 +206,11 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **A selection per encoder,** the files that show something the fixtures lack (a profile, mode, rate, header or tag), not every bitrate; the kit holds about 85 MB, most of it Media Foundation's lossless files.
    - **Imported by a script** like `import_macos_aac_fixtures.py`, with a manifest, a golden report and the cross-checks of each format, and a provenance record of encoder, version and settings; the contributor's logs and machine details stay private.
    - **Nero's files included:** Nero's license limits how the software is used, not the files it writes.
+13. **Old AAC and MP3 encoders under Wine** (the lead, 2026-11-11, from the [Rarewares survey](#03-lossy-formats-measured)), for the encoder detection of real files of their time, each archive pinned by SHA-256:
+   - **PsyTEL AACenc 2.x,** the common AAC encoder of 2001 to 2003 (ADTS output);
+   - **Fraunhofer's MP3 ACM codecs** (l3codeca 1.9, l3codecp 3.3 and 3.4) driven by nyaochi's acmenc, the source of most Fraunhofer-written MP3s in the wild;
+   - **Plugger 0.4, 8hz-MP3 0.2b and M3E 0.99a,** the small encoders whose names EncSpot-style rules already use, as ground truth for those rules.
+   - **Fastencc 1.02** is built on code leaked from Fraunhofer, so it is run by hand and nothing it writes is kept; its known stereo coding bug is described from that run only.
 
 ### 0.5: AAC and WMA
 
@@ -234,6 +241,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 9. MPEG-4 ALS
 10. Shorten
 11. The formats whose only detailed public source is FFmpeg, clean-room: OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser
+12. mp3HD, the lossless extension of MP3 (the lead, 2026-11-11)
 
 - **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
 
