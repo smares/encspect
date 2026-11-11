@@ -41,17 +41,17 @@ namespace Encspect.Tests;
 // good, so it never runs inside a test: an assembly that loads later is only queued, and the next SharedPoolGuard registers it before
 // its test's first reading. A pool still unknown (a generic instantiation such as a tuple, or a type of an assembly loaded during the
 // test) cannot be sized: its drops are listed, with where its first array was allocated, and SharedPoolGuard fails the test during
-// which one happened. So does a drop from an ID that two element sizes share (2 of 14,416 IDs in one run): which of the two pools is in
-// use is known only to a private field of the runtime, so a pool in use whose ID collides fails each test during which it drops an array.
+// which one happened. An ID that several element sizes share (IDs are GetHashCode of the pool: 2 of 14,416 collided in one run) is sized
+// by the largest of them (PoolElementSizes): which of the pools is in use is known only to a private field of the runtime, so a drop
+// from it is bounded, never undercounted, and counted in the readings like any other, not failed.
 internal sealed class PoolAccounting : EventListener
 {
-    private const int Ambiguous = -1;
     private const int RecentCount = 4096;
     private const int HighPressure = 2;
 
     private static readonly Lazy<PoolAccounting> Instance = new(() => new PoolAccounting());
 
-    private readonly ConcurrentDictionary<int, int> _elementSizes = new();
+    private readonly PoolElementSizes _elementSizes = new();
     private readonly ConcurrentDictionary<int, string> _origins = new();
     private readonly ConcurrentQueue<string> _unknownDrops = new();
     private readonly ConcurrentQueue<Assembly> _loaded = new();
@@ -161,8 +161,7 @@ internal sealed class PoolAccounting : EventListener
     {
         if (Bytes(pool, length) is not { } bytes)
         {
-            string kind = _elementSizes.TryGetValue(pool, out int size) && size == Ambiguous ? "two element sizes share its ID" : "its element type is not known";
-            _unknownDrops.Enqueue($"pool {pool} ({kind}) dropped an array of {length} elements; its first array was allocated {(_origins.TryGetValue(pool, out string? origin) ? origin : "before the accounting started")}");
+            _unknownDrops.Enqueue($"pool {pool} (its element type is not known) dropped an array of {length} elements; its first array was allocated {(_origins.TryGetValue(pool, out string? origin) ? origin : "before the accounting started")}");
             return;
         }
 
@@ -184,9 +183,7 @@ internal sealed class PoolAccounting : EventListener
         Interlocked.Add(ref _dropped, bytes);
     }
 
-    // The bytes an array of the pool takes on the heap (its header and elements, rounded to a pointer), or null for a pool not sized.
-    private long? Bytes(int poolId, int length) =>
-        _elementSizes.TryGetValue(poolId, out int size) && size != Ambiguous ? ((3L * IntPtr.Size) + ((long)size * length) + IntPtr.Size - 1) / IntPtr.Size * IntPtr.Size : null;
+    private long? Bytes(int poolId, int length) => _elementSizes.Bytes(poolId, length);
 
     // A failure is recorded for the guard to report, so that one assembly cannot fail the accounting (and with it every memory test).
     private void TryRegister(Assembly assembly)
@@ -224,7 +221,7 @@ internal sealed class PoolAccounting : EventListener
             {
                 object pool = typeof(ArrayPool<>).MakeGenericType(type).GetProperty(nameof(ArrayPool<byte>.Shared))!.GetValue(null)!;
                 int size = type.IsValueType ? (int)typeof(Unsafe).GetMethod(nameof(Unsafe.SizeOf))!.MakeGenericMethod(type).Invoke(null, null)! : IntPtr.Size;
-                _elementSizes.AddOrUpdate(pool.GetHashCode(), size, (_, known) => known == size ? known : Ambiguous);
+                _elementSizes.Add(pool.GetHashCode(), size);
             }
             catch (Exception ex) when (ex is ArgumentException or TypeLoadException or NotSupportedException or TargetInvocationException)
             {
@@ -270,4 +267,17 @@ internal sealed class PoolAccounting : EventListener
             }
         }
     }
+}
+
+// The element size of each registered pool ID. IDs are hash codes and can collide; an ID keeps the largest size registered under it, so the
+// bytes of a drop from it are a bound and never less than the array's.
+internal sealed class PoolElementSizes
+{
+    private readonly ConcurrentDictionary<int, int> _sizes = new();
+
+    public void Add(int poolId, int elementSize) => _sizes.AddOrUpdate(poolId, elementSize, (_, known) => Math.Max(known, elementSize));
+
+    // The bytes an array of the pool takes on the heap (its header and elements, rounded to a pointer), or null for a pool not registered.
+    public long? Bytes(int poolId, int length) =>
+        _sizes.TryGetValue(poolId, out int size) ? ((3L * IntPtr.Size) + ((long)size * length) + IntPtr.Size - 1) / IntPtr.Size * IntPtr.Size : null;
 }
