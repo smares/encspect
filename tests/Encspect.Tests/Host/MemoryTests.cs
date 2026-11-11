@@ -2058,9 +2058,10 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
 
         Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Silence(500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
 
-        (long fewerHeld, long fewerKept) = LastFrameReading("packets.ogg", Silence(fewer), fewer, 1024);
-        (long held, long kept) = LastFrameReading("packets.ogg", Silence(packets), packets, 1024);
-        (_, long plainKept) = LastFrameReading("packets.ogg", Silence(packets), packets, 1024, isDecoding: false);
+        // The first packet of a stream returns no samples, so a block is written for each of the others.
+        (long fewerHeld, long fewerKept) = LastFrameReading("packets.ogg", Silence(fewer), fewer - 1, 1024);
+        (long held, long kept) = LastFrameReading("packets.ogg", Silence(packets), packets - 1, 1024);
+        (_, long plainKept) = LastFrameReading("packets.ogg", Silence(packets), packets - 1, 1024, isDecoding: false);
 
         double heldPerPacket = (held - fewerHeld) / (double)(packets - fewer);
         output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last packet: {fewerHeld} at {fewer} packets and {held} at {packets} ({Hundredths(heldPerPacket)} per further packet)");
