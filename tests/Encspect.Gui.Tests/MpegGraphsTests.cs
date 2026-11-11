@@ -52,6 +52,7 @@ public class MpegGraphsTests
                 ("Stereo Coding", "Joint Stereo Modes"),
                 ("Block Switching", "Block Usage"),
                 ("Block Switching", "Block Sizes"),
+                ("Coded Bandwidth", "Coded Bandwidth"),
                 ("Bit Distribution", "Bitrate"),
                 ("Bit Distribution", "Reservoir Fill"),
                 ("Bit Distribution", "Channel Bit Share"),

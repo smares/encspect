@@ -140,7 +140,7 @@ public class GraphTests
         Assert.True(graphs.HasGraphs);
         Assert.False(graphs.HasStreamChoice);
         // MPEG audio's coding series come first, under the headings of their concepts, then the bitrate and the bit reservoir fill.
-        Assert.Equal(["Coding Summary", "Stereo Coding", "Joint Stereo Modes", "Block Usage", "Block Sizes", "Bitrate", "Reservoir Fill", "Channel Modes"],
+        Assert.Equal(["Coding Summary", "Stereo Coding", "Joint Stereo Modes", "Block Usage", "Block Sizes", "Coded Bandwidth", "Bitrate", "Reservoir Fill", "Channel Modes"],
             graphs.Choices.Select(c => c.Title));
         GraphChoice bitrate = graphs.Choices.Single(c => c.Title == "Bitrate");
         GraphChoice reservoir = graphs.Choices.Single(c => c.Title == "Reservoir Fill");
