@@ -41,6 +41,9 @@ public sealed partial class VorbisParser
 
         public ChunkedList<PacketRecord> Packets { get; } = new();
 
+        // Per audio packet, the end of the highest residue partition it codes in coefficients (NoBandwidth for a packet without a block, or a cut one).
+        public ChunkedList<ushort> CodedEnds { get; } = new();
+
         // Packets that span pages, by index: their file ranges.
         public Dictionary<int, ByteRange[]> Ranges { get; } = [];
 
@@ -113,6 +116,18 @@ public sealed partial class VorbisParser
         // A container that holds the headers apart (CodecContext.Configuration, Matroska's CodecPrivate) and hands them over as the first
         // packets has no Ogg pages, so nothing is said of where they lie on a page.
         private readonly bool _isContained = context.Configuration is not null;
+
+        // The entropy pass and the decoding (docs/design/lossy-decoders.md): the setup header's model and the walker over it exist where libvorbis would accept both headers;
+        // the session starts at the first audio packet with the two headers as its configuration.
+        private PacketWalker? _walker;
+        private byte[]? _identificationBytes;
+        private byte[]? _setupBytes;
+        private long _setupOffset;
+        private IDecodeSession? _session;
+        private bool _pendingGap;
+        private (long First, long End)? _trim;
+        private bool _endSeen;
+        private readonly SortedDictionary<int, long> _bandwidths = [];
 
         private Identification? _identification;
         private Node? _identificationNode;
@@ -244,6 +259,11 @@ public sealed partial class VorbisParser
                 _findings.Add(Severity.Warning, "vorbis.header-short", node, _ =>
                     $"The identification header holds {Count(packet.Length, "byte", "bytes")}, fewer than its {Identification.Length}; decoders refuse the stream, and its audio packets are only counted.");
                 return;
+            }
+
+            if (id.IsUsable && id.HasFraming && id.Channels > 0 && id.Rate is > 0 and <= int.MaxValue && !packet.IsCut)
+            {
+                _identificationBytes = packet.Span[..Identification.Length].ToArray();
             }
 
             _identificationNode = _parent.Add(id.ToNode(packet));
@@ -422,6 +442,15 @@ public sealed partial class VorbisParser
             {
                 _records.ModeBits = _setup.ModeBits;
             }
+
+            // A setup libvorbis refuses (a warning of the walk) is not decoded; one it accepts gives the walker the packets are read with.
+            if (_identificationBytes is not null && !packet.IsCut && _setup.Problems.All(p => p.Severity != Severity.Warning)
+                && SetupModel.Read(packet.Span, _identification!.Channels, context.CancellationToken) is { } model)
+            {
+                _walker = new PacketWalker(model, _identification.Blocksize0, _identification.Blocksize1);
+                _setupBytes = packet.Span.ToArray();
+                _setupOffset = packet.FileStart;
+            }
         }
 
         private void AddAudio(MappedBytes packet)
@@ -439,6 +468,7 @@ public sealed partial class VorbisParser
             }
 
             _packets++;
+            _pendingGap |= packet.FollowsGap;
 
             // The sizes and bitrates cover the packets the container hands over whole, as the other formats' do: a cut packet counts in the samples only.
             if (packet.IsCut)
@@ -477,8 +507,11 @@ public sealed partial class VorbisParser
                     // libvorbis is given a granule position only with a packet it accepts as audio, so a position on an empty, a
                     // not-audio or an invalid packet is not taken.
                     TrackPosition(packet);
-                    break;
+                    Walk(packet, index, record);
+                    return;
             }
+
+            _records.CodedEnds.Add(NoBandwidth);
         }
 
         // Section 4.3.1: the packet type bit, the mode number in ilog(modes - 1) bits, and for a
@@ -629,6 +662,7 @@ public sealed partial class VorbisParser
             }
 
             bool isEnd = packet.IsEndOfStream;
+            _endSeen |= isEnd;
 
             // libvorbis loses its count at a gap and at the packet after a refused one, and counts again from the first block after it
             // (the first block of the stream is the same case). The first position taken is then measured by those samples.
@@ -726,6 +760,8 @@ public sealed partial class VorbisParser
                 return;
             }
 
+            StreamVerification? verification = _session?.Finish([]);
+
             CheckPackets();
             long startTrim = StartTrimming();
             long trim = EndTrimming();
@@ -759,6 +795,7 @@ public sealed partial class VorbisParser
                     WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
                     Series = built.Series,
                     CategorySeries = built.Categories,
+                    Verification = verification,
                 });
             }
 
@@ -788,7 +825,7 @@ public sealed partial class VorbisParser
 
         // A first granule position below the samples returned discards samples at the start, at
         // most what the first two blocks return (section A.2); a larger one starts the stream later.
-        private long StartTrimming()
+        private long StartTrimming(bool report = true)
         {
             if (_firstOffset is not { } offset || offset == 0)
             {
@@ -799,7 +836,7 @@ public sealed partial class VorbisParser
 
             // Section A.2: with a start offset, the second audio packet ends its page, so a decoder
             // adjusts positions before it returns samples.
-            if (_firstPositionPacket != 1)
+            if (_firstPositionPacket != 1 && report)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-page-layout", field, _ =>
                     $"The first audio page with a granule position ends after audio packet {_firstPositionPacket + 1}, where a stream that does not start at sample 0 ends it after the second (section A.2); decoders may report wrong positions at the start.");
@@ -807,8 +844,12 @@ public sealed partial class VorbisParser
 
             if (offset > 0)
             {
-                _findings.Add(Severity.Info, "vorbis.start-offset", field, _ =>
-                    $"The first granule position, {Count(offset, "sample", "samples")} beyond what the packets before it return, starts the stream at a later time, as in a stream cut from a longer one (section A.2).");
+                if (report)
+                {
+                    _findings.Add(Severity.Info, "vorbis.start-offset", field, _ =>
+                        $"The first granule position, {Count(offset, "sample", "samples")} beyond what the packets before it return, starts the stream at a later time, as in a stream cut from a longer one (section A.2).");
+                }
+
                 return 0;
             }
 
@@ -823,7 +864,7 @@ public sealed partial class VorbisParser
 
             long trim = Math.Min(Math.Min(-discarded, _firstPositionReturned), _decoded);
             long limit = _firstReturned + _secondReturned;
-            if (-discarded > limit)
+            if (-discarded > limit && report)
             {
                 _findings.Add(Severity.Warning, "vorbis.start-trimming-large", field, _ =>
                     $"The first granule position discards {Samples(-discarded)} at the start, more than the {limit} the first two audio packets return, which the Vorbis I specification allows at most (section A.2); the packet that carries the position returns {_firstPositionReturned}, and the start trimming is taken as {trim}.");

@@ -9,6 +9,8 @@ internal static class Topics
     public const string GranulePosition = "granule-position";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
+    public const string CodedBandwidth = "coded-bandwidth";
+    public const string FloorsAndResidues = "vorbis-floors-and-residues";
 }
 
 // What each Vorbis node is. Constants only, shared by every node of their kind, from the Vorbis I
@@ -128,7 +130,7 @@ internal static class Explain
     public const string ModeNumber = "The mode the packet uses, which sets its block size (mode_number, section 4.3.1).";
     public const string PreviousWindowFlag = "Whether the previous block is long, which shapes the left half of this long block's window (previous_window_flag, section 4.3.1).";
     public const string NextWindowFlag = "Whether the next block is long, which shapes the right half of this long block's window (next_window_flag, section 4.3.1).";
-    public const string AudioData = "The floors and residues of the packet's channels, which the analyzer does not decode (sections 4.3.2 to 4.3.4).";
+    public const string AudioData = "The floors and residues of the packet's channels (sections 4.3.2 to 4.3.4), which the analyzer reads for its coded bandwidth and, where it decodes the audio, for the samples.";
     public const string UnreadData = "The rest of a packet the analyzer could not read as a block: not audio, or its mode undefined or cut short.";
 
     public const string Statistics = "Figures over the stream's audio packets, from their blocks and the granule positions.";
@@ -157,11 +159,17 @@ internal static class Explain
     public const string Confidence = "How sure the naming is: high for a vendor string a libvorbis, aoTuV or Lancer release is known to write, medium for an unknown string of their form or an encoder's name in a field other software may write.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
     public const string CutCommentData = "The bytes of the comment header that the file holds. The container cuts the header (its finding says where), so it is not read as a comment.";
+    public const string CodedBandwidth = "The upper edge of the highest coefficient that a residue partition of an audio packet codes in any channel (Vorbis I, section 8.6.2), found by reading the packet's floors and residues. A partition counts where a pass reads a codebook entry for it. It is a bound the coded data states, not the encoder's lowpass setting and not a measurement of decoded audio.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any packet that codes a block.";
+    public const string BandwidthMostCommon = "The coded bandwidth most packets have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any packet that codes a block.";
 }
 
 internal static class SeriesText
 {
     public const string BlockSizes = "The size of the block each audio packet codes, long or short, as the tally of Block Sizes counts them; a packet that codes no block has none.";
     public const string Bitrate = "The bitrate of each audio packet: its bits over the half block of samples it codes, 0 for a packet that codes no block.";
+    public const string CodedBandwidth = "The coded bandwidth of each audio packet in whole hertz: the upper edge of the highest coefficient that a residue partition of the packet codes in any channel (Vorbis I, section 8.6.2), found by reading its floors and residues. A partition counts where a pass reads a codebook entry for it. It is the bound the packet's own data states, read without reconstructing audio; a band below it may still be quiet, and it is not the encoder's lowpass setting. A packet that codes no block, or that the container cut, has none.";
+    public const string CodedBandwidthOverTime = "The highest coded bandwidth of the packets whose blocks start in each second of audio.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets whose blocks start in it over the samples those blocks code.";
 }
