@@ -46,7 +46,7 @@ internal ref struct BitSource(ReadOnlySpan<byte> data)
             }
         }
 
-        return (uint)((window << (start & 7)) >> (64 - count));
+        return count == 0 ? 0 : (uint)((window << (start & 7)) >> (64 - count));
     }
 }
 

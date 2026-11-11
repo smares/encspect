@@ -61,11 +61,12 @@ def minimp3_reference(binary, path, work):
     """(raw bytes of the floats at the analyzer's positions, channels, skipped position ranges), or None where minimp3 decodes nothing."""
     target = work / "minimp3.f32"
     frames = minimp3_tool.decode_pcm(binary, path, target)
-    if not frames:
+    decoded = [f for f in frames if f["samples"]]
+    if not decoded:
         return None
     data = path.read_bytes()
     raw = target.read_bytes()
-    channels = frames[0]["channels"]
+    channels = decoded[0]["channels"]
     out = bytearray()
     skipped = []
     position = 0
@@ -75,11 +76,13 @@ def minimp3_reference(binary, path, work):
         if number == 0 and frame["samples"] and is_header_frame(data, frame["offset"], frame["bytes"]):
             cursor += count
             continue
-        if frame["channels"] != channels:
+        if frame["samples"] and frame["channels"] != channels:
             return None
         if frame["samples"] == 0:
             # A frame minimp3 skips is zeros here, and its positions are left out of the comparison.
             nominal = 384 if frame["layer"] == 1 else 576 if frame["layer"] == 3 and frame["hz"] < 32000 else 1152
+            if frame["channels"] == 0:
+                continue
             out += bytes(nominal * channels * 4)
             skipped.append((position, position + nominal))
             position += nominal
@@ -87,11 +90,14 @@ def minimp3_reference(binary, path, work):
         out += raw[cursor:cursor + count]
         cursor += count
         position += frame["samples"]
-    return bytes(out), channels, skipped
+    return bytes(out), channels, skipped, decoded[0]["layer"]
 
 
-def ffmpeg_reference(ffmpeg, path):
-    result = subprocess.run([ffmpeg, "-v", "error", "-nostdin", "-flags2", "+skip_manual", "-i", str(path), "-f", "f32le", "-acodec", "pcm_f32le", "-"], capture_output=True)
+def ffmpeg_reference(ffmpeg, path, layer):
+    # The float decoder of the layer: FFmpeg's default decoders of Layers I and II are fixed-point and round to 16 bits.
+    decoder = {1: "mp1float", 2: "mp2float", 3: "mp3float"}.get(layer)
+    result = subprocess.run([ffmpeg, "-v", "error", "-nostdin", "-flags2", "+skip_manual", *(["-c:a", decoder] if decoder else []), "-i", str(path),
+                             "-f", "f32le", "-acodec", "pcm_f32le", "-"], capture_output=True)
     if result.returncode != 0 or not result.stdout:
         return None
     return result.stdout
@@ -145,10 +151,11 @@ def main(argv=None):
             problems = []
             notes = []
             reference = minimp3_reference(binary, path, work)
+            layer = reference[3] if reference is not None else None
             if reference is None:
                 notes.append("minimp3 decodes no frames or changes its channels")
             else:
-                raw, channels, skipped = reference
+                raw, channels, skipped, _ = reference
                 if streams[0]["channels"] != channels:
                     problems.append(f"the analyzer decoded {streams[0]['channels']} channels, minimp3 {channels}")
                 else:
@@ -159,7 +166,7 @@ def main(argv=None):
                         only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]
                         if only:
                             notes.append(f"minimp3: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
-            second = ffmpeg_reference(args.ffmpeg, path)
+            second = ffmpeg_reference(args.ffmpeg, path, layer)
             if second is None:
                 notes.append("ffmpeg decodes nothing")
             else:
