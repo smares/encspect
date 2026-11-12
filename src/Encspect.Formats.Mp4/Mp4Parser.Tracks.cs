@@ -45,6 +45,7 @@ public sealed partial class Mp4Parser
         },
         ".mp3" => "mpeg-audio",
         "alac" when entry.DecoderSpecificInfo is not null => "alac",
+        "Opus" when entry.DecoderSpecificInfo is not null => "opus",
         "ac-3" => "ac-3",
         "ec-3" => "e-ac-3",
         "dtsc" or "dtsh" or "dtsl" or "dtse" => "dts",
@@ -123,7 +124,9 @@ public sealed partial class Mp4Parser
                 configuration = new CodecConfiguration(data, state.Findings.Resolve(node)) { IsVbr = IsVbr(state, entry, first), Claims = layout };
             }
 
-            state.Context.ParsePackets(codec, samples, Packets(state, track), configuration);
+            // Opus's identification header is the first packet, as in Matroska (the dOps box holds it, put together as the header).
+            IEnumerable<MappedBytes> packets = codec == "opus" && entry.DecoderSpecificInfo is { } head ? Packets(state, track).Prepend(head) : Packets(state, track);
+            state.Context.ParsePackets(codec, samples, packets, configuration);
             if (codec == "mpeg-audio" && state.Context.Streams.Count == streams)
             {
                 // MPEG audio is read only where its samples lie in one stretch; the track is still a stream, described by its sample entry.
@@ -197,7 +200,7 @@ public sealed partial class Mp4Parser
         int nodes = samples.Children.Count;
         if (isEncrypted && codec is not null && entry.DecoderSpecificInfo is { } data && entry.DecoderSpecificInfoNode is { } node)
         {
-            state.Context.ParsePackets(codec, samples, [], new CodecConfiguration(data, state.Findings.Resolve(node))
+            state.Context.ParsePackets(codec, samples, codec == "opus" ? [data] : [], new CodecConfiguration(data, state.Findings.Resolve(node))
             {
                 AreSamplesEncrypted = true,
                 IsVbr = IsVbr(state, entry, first),

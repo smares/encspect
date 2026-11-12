@@ -64,6 +64,9 @@ public sealed partial class Mp4Parser
             case "dac3" or "dec3" or "ddts":
                 CodecSpecificBox(state, node, f);
                 return true;
+            case "dOps" when state.CurrentEntry is not null:
+                OpusSpecificBox(state, node, f);
+                return true;
             case "alac" when state.CurrentEntry is not null:
                 AlacSpecificBox(state, node, f);
                 return true;
@@ -191,6 +194,60 @@ public sealed partial class Mp4Parser
         else if (data.Length > 0)
         {
             node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
+        }
+    }
+
+    // The Opus specific box of an Opus sample entry (the Opus in ISO base media file format encapsulation, Xiph.Org's "Encapsulation of Opus in ISO Base Media File Format" 4.3.2):
+    // the identification header's fields of RFC 7845 section 5.1, big-endian and without the magic. The codec parser reads them as the identification header, which is
+    // put together from them (the same bytes an Ogg stream or Matroska's CodecPrivate holds).
+    private static void OpusSpecificBox(State state, Node node, BoxFields f)
+    {
+        long start = f.Position;
+        if (!f.Has(11))
+        {
+            return;
+        }
+
+        byte version = f.U8(node, "Version", Explain.OpusVersion);
+        byte channels = f.U8(node, "Output Channel Count", Explain.OpusChannels, "channels");
+        ushort preSkip = f.U16(node, "Pre-skip", Explain.OpusPreSkip, "samples");
+        uint inputRate = f.U32(node, "Input Sample Rate", Explain.OpusInputRate, "Hz");
+        ushort gain = (ushort)f.Field(node, "Output Gain", 2, Explain.OpusOutputGain, v => NodeValue.Integer((short)(ushort)v, "1/256 dB"));
+        byte family = f.U8(node, "Channel Mapping Family", Explain.OpusFamily);
+        byte[] table = [];
+        byte streams = 0;
+        byte coupled = 0;
+        if (family != 0 && f.Has(2 + channels))
+        {
+            streams = f.U8(node, "Stream Count", Explain.OpusStreams, "streams");
+            coupled = f.U8(node, "Coupled Stream Count", Explain.OpusCoupled, "streams");
+            table = f.Bytes(node, "Channel Mapping", channels, Explain.OpusMapping);
+        }
+        else if (family != 0)
+        {
+            return;
+        }
+
+        byte[] head = new byte[family == 0 ? 19 : 21 + channels];
+        "OpusHead"u8.CopyTo(head);
+        head[8] = 1;
+        head[9] = channels;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), preSkip);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), inputRate);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(16), gain);
+        head[18] = family;
+        if (family != 0)
+        {
+            head[19] = streams;
+            head[20] = coupled;
+            table.CopyTo(head.AsSpan(21));
+        }
+
+        _ = version;
+        if (state.CurrentEntry is { DecoderSpecificInfo: null } entry)
+        {
+            entry.DecoderSpecificInfo = MappedBytes.Opaque(head, start, f.Position);
+            entry.DecoderSpecificInfoNode = node;
         }
     }
 

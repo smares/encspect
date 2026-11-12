@@ -416,6 +416,8 @@ internal static class Explain
         "mp4a" => "MPEG-4 audio sample entry: audio coded by an MPEG audio codec, usually AAC, whose configuration its esds box holds (ISO/IEC 14496-14 5.6).",
         "ac-3" => "AC-3 sample entry: Dolby Digital audio, one syncframe per sample, configured by its dac3 box (ETSI TS 102 366 F.3).",
         "ec-3" => "E-AC-3 sample entry: Dolby Digital Plus audio, the syncframes of six blocks of every substream per sample, configured by its dec3 box (ETSI TS 102 366 F.5).",
+        "dOps" => "OpusSpecificBox: the identification header of the Opus stream as RFC 7845 section 5.1 defines it, in big-endian fields and without the magic: the version, the channel count, the pre-skip, the input sample rate, the output gain and the channel mapping (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.2).",
+        "Opus" => "Opus sample entry: Opus audio, one packet per sample, configured by its dOps box (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.1).",
         "dac3" => "AC3SpecificBox: the AC-3 stream's sample rate, version, service, channels and bitrate, as its frames hold them (ETSI TS 102 366 F.4).",
         "dec3" => "EC3SpecificBox: the E-AC-3 stream's data rate and, per independent substream, its sample rate, version, service, channels and dependent substreams (ETSI TS 102 366 F.6).",
         "dtsc" => "DTS sample entry: DTS audio of the formats before DTS-HD, one core frame per sample, configured by its ddts box (ETSI TS 102 114 E.2.2).",
@@ -473,12 +475,22 @@ internal static class Explain
     };
 
     public const string TextItem = "One text of an international text atom: a 16-bit size, a 16-bit language code and the text, in the small atom layout of QuickTime's user data (QuickTime File Format, User data atoms).";
+    public const string OpusVersion = "The version of the box, 0 (the encapsulation names no other).";
+    public const string OpusChannels = "The channels the decoder outputs, as the identification header states them (RFC 7845, section 5.1).";
+    public const string OpusPreSkip = "The samples at 48 kHz a decoder drops from the start of its output (RFC 7845, section 5.1).";
+    public const string OpusInputRate = "The sample rate of the audio the encoder was given, for information; Opus decodes at 48 kHz whatever it is (RFC 7845, section 5.1).";
+    public const string OpusOutputGain = "A gain in 1/256 dB a decoder applies to its output (RFC 7845, section 5.1).";
+    public const string OpusFamily = "The channel mapping family, which says how the coded channels are arranged: 0 mono or stereo, 1 the Vorbis order up to 7.1, 2 and 3 Ambisonics, 255 undefined (RFC 7845, section 5.1.1).";
+    public const string OpusStreams = "The number of Opus streams in each packet (RFC 7845, section 5.1.1.2).";
+    public const string OpusCoupled = "How many of those streams code two channels (RFC 7845, section 5.1.1.2).";
+    public const string OpusMapping = "For each output channel the coded channel it plays, or 255 for silence (RFC 7845, section 5.1.1.2).";
+
     public const string TextItemTrailing = "Bytes at the end of a text atom that are too few for a text item's size and language, or that a text item's size leaves over; they are not read as text.";
 
     // A sample entry of an stsd box, by its coding.
     public static string SampleEntry(string type) => type switch
     {
-        "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
+        "Opus" or "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
         _ => "A sample entry: how the track's samples are coded, named by the four-character code of the coding, such as alac or Opus (ISO/IEC 14496-12 8.5.2.2).",
     };
 
