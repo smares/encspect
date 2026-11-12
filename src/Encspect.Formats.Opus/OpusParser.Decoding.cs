@@ -37,6 +37,7 @@ public sealed partial class OpusParser
         private long _headOffset;
         private bool _isDecodable;
         private bool _areWalkersStale;
+        private bool _isRedundancyOverrun;
         private readonly int _holdFrames = Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1);
 
         // The figures of CELT's frames (docs/formats/opus.md): every frame that was walked.
@@ -106,11 +107,16 @@ public sealed partial class OpusParser
                     _blockUsage.Add([]);
                     _stereoCoding.Add([]);
                     _bounds.Add(NoBound);
-                    if (isOverrun)
+                    if (isOverrun && _isRedundancyOverrun)
+                    {
+                        _findings.Add(Severity.Warning, "opus.redundancy-overrun", () => PacketNode(_records, index), count =>
+                            $"{Count(count, "hybrid frame states", "hybrid frames state")} a redundant frame longer than the frame's data after its SILK part (RFC 6716, section 4.5.1). libopus ignores the redundancy, decodes the SILK part and conceals the CELT part; the analyzer conceals nothing, so the packet is not decoded. The first at 0x{packet.FileStart:X}.");
+                    }
+                    else if (isOverrun)
                     {
                         _rangeOverruns++;
                         _findings.Add(Severity.Warning, "opus.frame-overrun", () => PacketNode(_records, index), count =>
-                            $"{Count(count, "frame needs", "frames need")} more bits than {(count == 1 ? "it holds" : "they hold")}, which libopus refuses with an internal error (RFC 6716, section 4.1.1: a range decoder reads zeros past its data). The first at 0x{packet.FileStart:X}; the packet is not decoded.");
+                            $"{Count(count, "CELT frame needs", "CELT frames need")} more bits than {(count == 1 ? "it holds" : "they hold")}, which libopus refuses with an internal error (RFC 6716, section 4.1.1: a range decoder reads zeros past its data; libopus checks the position after a CELT frame). The first at 0x{packet.FileStart:X}; the packet is not decoded.");
                     }
                 }
                 else if (_session.IsDecoding)
@@ -184,6 +190,7 @@ public sealed partial class OpusParser
                     if (facts.IsOverrun)
                     {
                         isOverrun = true;
+                        _isRedundancyOverrun = facts.IsRedundancyOverrun;
                         return false;
                     }
 

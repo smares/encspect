@@ -7,6 +7,7 @@ internal struct FrameFacts
     public int Bandwidth;
     public bool IsEmpty;
     public bool IsOverrun;
+    public bool IsRedundancyOverrun;
     public bool HasRedundancy;
     public bool IsCeltToSilk;
     public int RedundancyBytes;
@@ -101,6 +102,7 @@ internal sealed class OpusWalker(bool disableInv)
                 if (len * 8 < dec.Tell())
                 {
                     facts.IsOverrun = true;
+                    facts.IsRedundancyOverrun = true;
                     return facts;
                 }
 
