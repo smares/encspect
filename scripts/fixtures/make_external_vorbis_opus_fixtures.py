@@ -105,6 +105,22 @@ FIXTURES = {
 }
 
 
+# The serial number each libvorbis fixture is written with (oggenc -s), so that the generator gives the committed bytes back.
+SERIALS = {
+    "external-libvorbis-1.0-managed": 1329520968,
+    "external-libvorbis-1.0-q5": 1810573053,
+    "external-libvorbis-1.0.1-q10": 1471755011,
+    "external-libvorbis-1.0.1-q5": 723991667,
+    "external-libvorbis-1.1.0-mono": 1616013014,
+    "external-libvorbis-1.1.0-q5": 867278468,
+    "external-libvorbis-1.1.2-q-1": 699633706,
+    "external-libvorbis-1.2.0-managed": 848434487,
+    "external-libvorbis-1.2.0-q5": 1451292698,
+    "external-libvorbis-1.2.2-q10": 1596572388,
+    "external-libvorbis-1.2.3-51": 361063990,
+    "external-libvorbis-1.2.3-q5": 2055767113,
+}
+
 # Checks a tool cannot make on a fixture, with the reason.
 SKIPS = {
     "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0 and 1 only (OP_EIMPL for 255, OP_EBADHEADER otherwise); checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"},
@@ -141,6 +157,7 @@ def version(tool):
 
 
 def encode(name, tool, rate, channels, seconds, arguments, work):
+    arguments = [*arguments, "-s", str(SERIALS[name])] if name in SERIALS else arguments
     target = OUT / (name + extension(name))
     source = work / f"in-{rate}-{channels}-{seconds}.wav"
     source.write_bytes(wav(signal(rate, channels, seconds), rate, channels))
@@ -199,7 +216,8 @@ def manifest(name, encoder, detected, findings):
 
 def main():
     only_manifests = "--manifests-only" in sys.argv
-    # --only PREFIX writes the fixtures whose names start with PREFIX and leaves the others alone: the encoders pick random serials.
+    # --only PREFIX writes the fixtures whose names start with PREFIX and leaves the others alone (the other encoders pick random serials; the
+    # libvorbis fixtures are written with their serials, so rerunning them leaves the files as committed).
     prefix = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else ""
     names = [name for name in FIXTURES if name.startswith(prefix)]
     if not only_manifests:

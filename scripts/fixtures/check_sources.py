@@ -4,7 +4,7 @@ and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_source
 of its copies stops serving it, before the fallback is all that is left. A Wayback Machine address that fails while another address of
 the same file serves its pinned bytes is a warning, not a problem: the Wayback Machine answers 404 now and then for captures
 it lists (BladeEnc 0.92.0, 2026-11-08), and the file is still at hand. A file that no address serves is always a problem. FAAC's releases are pinned by
-the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), and lossyWAV for POSIX by its commit (lossywav_tool.py).
+the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), lossyWAV for POSIX by its commit (lossywav_tool.py), and Xiph's libvorbis releases by the commits of their tags (xiph_tool.py).
 
 Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --list       prints every (name, SHA-256, address, kind) as sorted JSON, without downloading; the LAME svn trees
@@ -58,6 +58,7 @@ import vorbis_tool
 import tak_tool
 import wavpack_tool
 import xing_tool
+import xiph_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARCHIVE_PAUSE = 5
@@ -148,6 +149,8 @@ def entries():
     for faac_tag, commit, _, _ in faac_tool.RELEASES.values():
         for repository in faac_tool.REPOSITORIES:
             yield "tag", faac_tag, f"commit:{commit}", f"{repository} refs/tags/{faac_tag}"
+    for tag, commit in xiph_tool.TAGS.values():
+        yield "tag", tag, f"commit:{commit}", f"{xiph_tool.REPOSITORY} refs/tags/{tag}"
     yield "commit", alac_tool.NAME, f"commit:{alac_tool.COMMIT}", f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
     yield "commit", lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"
 
@@ -278,6 +281,13 @@ def main():
                    if wanted_entry(tag, f"commit:{commit}", f"{repository} refs/tags/{tag}")}
     checked += len(faac_wanted)
     for problem in faac_tool.tag_problems(faac_wanted):
+        problems += 1
+        print(problem)
+    # Xiph's libvorbis releases are pinned the same way, by the commits of their tags.
+    xiph_wanted = {f"{xiph_tool.REPOSITORY} refs/tags/{tag}" for tag, commit in xiph_tool.TAGS.values()
+                   if wanted_entry(tag, f"commit:{commit}", f"{xiph_tool.REPOSITORY} refs/tags/{tag}")}
+    checked += len(xiph_wanted)
+    for problem in xiph_tool.tag_problems(xiph_wanted):
         problems += 1
         print(problem)
     # Apple's ALAC source is pinned by one commit, which the repository must still serve.

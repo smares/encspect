@@ -52,13 +52,39 @@ def checkout(release):
     if not repository.exists():
         CACHE.mkdir(parents=True, exist_ok=True)
         subprocess.run(["git", "clone", "-q", "--no-checkout", REPOSITORY, str(repository)], check=True)
-    directory = CACHE / f"vorbis-xiph-{tag}"
+    git = ["git", "-C", str(repository)]
+    named = subprocess.run([*git, "rev-parse", "-q", "--verify", f"{tag}^{{commit}}"], capture_output=True, text=True).stdout.strip()
+    if not named:
+        # An older clone lacks the tag.
+        subprocess.run([*git, "fetch", "-q", "--tags", "origin"], check=True)
+        named = subprocess.run([*git, "rev-parse", f"{tag}^{{commit}}"], capture_output=True, text=True, check=True).stdout.strip()
+    if named != commit:
+        raise SystemExit(f"The tag {tag} is commit {named}, not the pinned {commit}")
+    directory = CACHE / f"vorbis-xiph-{commit[:12]}"
     if not directory.exists():
-        subprocess.run(["git", "-C", str(repository), "worktree", "add", "-q", "--detach", str(directory), commit], check=True)
-    actual = subprocess.run(["git", "-C", str(directory), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
-    if actual != commit:
-        raise SystemExit(f"{tag} is commit {actual}, not the pinned {commit}")
+        subprocess.run([*git, "worktree", "add", "-q", "--detach", str(directory), commit], check=True)
     return directory
+
+
+def tag_problems(only=None):
+    """For check_sources.py: the repository, if it no longer serves a tag with its pinned commit; only, if given, is a set of addresses."""
+    address = f"{REPOSITORY} refs/tags"
+    if only is not None and not any(a.startswith(address) for a in only):
+        return []
+    result = subprocess.run(["git", "ls-remote", REPOSITORY, "refs/tags/*"], capture_output=True, text=True)
+    if result.returncode != 0:
+        return [f"{REPOSITORY}: {result.stderr.strip().splitlines()[-1] if result.stderr.strip() else f'git exit {result.returncode}'}"]
+    # An annotated tag lists itself and, as tag^{}, its commit; a lightweight tag lists its commit.
+    served = {}
+    for line in result.stdout.splitlines():
+        commit, name = line.split()
+        name = name.removeprefix("refs/tags/")
+        if name.endswith("^{}"):
+            served[name[:-3]] = commit
+        else:
+            served.setdefault(name, commit)
+    return [f"{REPOSITORY} {tag}: names {served.get(tag)}, expected {commit}" for tag, commit in TAGS.values() if served.get(tag) != commit
+            and (only is None or f"{REPOSITORY} refs/tags/{tag}" in only)]
 
 
 def vendor_strings(directory):
@@ -68,7 +94,7 @@ def vendor_strings(directory):
 def build(release):
     """Compiles libvorbis and libvorbisenc of a release into .cache/encoders and returns the
     directory of their shared libraries."""
-    prefix = CACHE / f"xiph-{release}"
+    prefix = CACHE / f"xiph-{release}-{TAGS[release][1][:12]}"
     library = prefix / "lib"
     if (library / "libvorbisenc.so.2").exists():
         return library

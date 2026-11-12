@@ -335,11 +335,11 @@ def check_vorbis(name, manifest, problems, skips):
     if wanted not in text:
         problems.append(f"ogginfo does not print {wanted!r}")
     if "comment" in vorbis:
-        # ogginfo 1.4 appends the release it knows a libvorbis vendor string by ("... 20020717 (1.0)"); that release must be one the analyzer
-        # names the encoder by.
+        # ogginfo 1.4 appends the release it knows a libvorbis vendor string by ("... 20020717 (1.0)"); that release must equal one of the releases the
+        # analyzer's name lists ("libvorbis 1.1.1 or 1.1.2" lists two).
         printed = comments[0][0] if comments else None
         vendor = vorbis["comment"]["vendor"]
-        if printed is not None and printed.startswith(vendor + " (") and printed.endswith(")") and printed[len(vendor) + 2:-1] in info.get("encoder", ""):
+        if printed is not None and printed.startswith(vendor + " (") and printed.endswith(")") and printed[len(vendor) + 2:-1] in info.get("encoder", "").removeprefix("libvorbis ").split(" or "):
             printed = vendor
         if not comments or printed != vendor or comments[0][1] != vorbis["comment"]["comments"]:
             problems.append(f"ogginfo: the vendor and comments {comments[:1]} differ from the manifest's {vorbis['comment']}")
