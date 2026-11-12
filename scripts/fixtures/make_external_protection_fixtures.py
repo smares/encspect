@@ -91,7 +91,7 @@ def mp4box(scheme, options, pssh, name=None, clear=False):
 # The codings whose parsers ffmpeg runs on the samples, so that its packets are no longer the samples.
 REPACKETIZED = {"AC-3", "E-AC-3", "Apple Lossless"}
 # The sample entry's format of the codings no codec parser reads, as the finding names it.
-UNPARSED_FORMAT = {"FLAC": "fLaC", "Opus": "Opus"}
+UNPARSED_FORMAT = {"FLAC": "fLaC"}
 FIXTURES = [
     ffmpeg("ffmpeg-cenc-aac", ".m4a", ["-c:a", "aac", "-b:a", "128k"], "AAC LC", 44100),
     ffmpeg("ffmpeg-cenc-aac-fragmented", ".mp4", ["-c:a", "aac", "-b:a", "128k"], "AAC LC", 44100, fragmented=True),
@@ -100,7 +100,7 @@ FIXTURES = [
     ffmpeg("ffmpeg-cenc-mp3", ".mp4", ["-c:a", "libmp3lame", "-b:a", "128k"], "MPEG-1 audio", 44100),
     ffmpeg("ffmpeg-cenc-alac", ".m4a", ["-c:a", "alac"], "Apple Lossless", 44100),
     ffmpeg("ffmpeg-cenc-flac", ".mp4", ["-c:a", "flac", "-strict", "-2"], "FLAC", 44100, parsed=False),
-    ffmpeg("ffmpeg-cenc-opus", ".mp4", ["-c:a", "libopus", "-b:a", "96k", "-strict", "-2"], "Opus", 48000, parsed=False),
+    ffmpeg("ffmpeg-cenc-opus", ".mp4", ["-c:a", "libopus", "-b:a", "96k", "-strict", "-2"], "Opus", 48000),
     mp4box("cenc", 'IV_size="8"', [(WIDEVINE, 1, bytes.fromhex("08011210" + KID)), (PLAYREADY, 0, b"<WRMHEADER>test</WRMHEADER>")]),
     mp4box("cens", 'IV_size="8" crypt_byte_block="1" skip_byte_block="9"', []),
     mp4box("cbc1", 'IV_size="16"', []),

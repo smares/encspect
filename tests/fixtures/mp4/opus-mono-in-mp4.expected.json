@@ -1,0 +1,192 @@
+{
+ "description": "1 channel of Opus in MP4: the Opus sample entry with its dOps box (pre-skip 312, mapping family 0), 12 packets of external-libopus-mono-silk-60ms-fec.opus in chunks of 10, one packet a sample; the Opus parser reads the header the box holds as the identification header.",
+ "length": 2597,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   596
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   480
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   380
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   295
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   235
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   71
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/Opus",
+   413,
+   55
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/Opus/dOps",
+   449,
+   19
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   468,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   492,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   532,
+   68
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   600,
+   24
+  ],
+  [
+   "mdat",
+   624,
+   1973
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "Opus",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 34248,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   632,
+   148
+  ],
+  [
+   780,
+   265
+  ],
+  [
+   1045,
+   273
+  ],
+  [
+   1318,
+   248
+  ],
+  [
+   1566,
+   231
+  ],
+  [
+   1797,
+   183
+  ],
+  [
+   1980,
+   138
+  ],
+  [
+   2118,
+   194
+  ],
+  [
+   2312,
+   182
+  ],
+  [
+   2494,
+   61
+  ],
+  [
+   2555,
+   21
+  ],
+  [
+   2576,
+   21
+  ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/Opus/dOps/Pre-skip": "312 samples"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only."
+  }
+ }
+}
