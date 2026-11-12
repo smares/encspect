@@ -109,7 +109,7 @@ public sealed partial class OpusParser
                     if (isOverrun)
                     {
                         _rangeOverruns++;
-                        _findings.Add(Severity.Warning, "opus.frame-overrun", PacketNode(_records, index), count =>
+                        _findings.Add(Severity.Warning, "opus.frame-overrun", () => PacketNode(_records, index), count =>
                             $"{Count(count, "frame needs", "frames need")} more bits than {(count == 1 ? "it holds" : "they hold")}, which libopus refuses with an internal error (RFC 6716, section 4.1.1: a range decoder reads zeros past its data). The first at 0x{packet.FileStart:X}; the packet is not decoded.");
                     }
                 }

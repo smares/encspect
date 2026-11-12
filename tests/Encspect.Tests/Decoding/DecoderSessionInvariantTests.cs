@@ -48,6 +48,9 @@ public class DecoderSessionInvariantTests
     private const string NotDescribable = "PcmCoding cannot describe the stream";
     private const string CompandedWidth = "PcmCoding cannot describe the stream: A-law and mu-law have 8 bits, and the file states another width (wav.companded-bits) or none (a 14-byte format chunk)";
 
+    // Excluded files with streams of both kinds: some have a session, the others have a header the decoder refuses.
+    private static readonly HashSet<string> Mixed = new(StringComparer.Ordinal) { "ogg/opus-head-invalid.opus" };
+
     private static readonly Dictionary<string, string> Excluded = new(StringComparer.Ordinal)
     {
         ["wav/built-alaw-16-bits.wav"] = CompandedWidth,
@@ -145,7 +148,7 @@ public class DecoderSessionInvariantTests
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
 
         // An excluded fixture that now has a session would hide a regression in the list: it must still be one the test skips.
-        foreach (string name in Excluded.Keys)
+        foreach (string name in Excluded.Keys.Where(n => !Mixed.Contains(n)))
         {
             Report report = analyzer.AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, name));
             Assert.DoesNotContain(report.Streams, s => DecoderOfCodec.ContainsKey(s.Codec) && s.Verification is not null);

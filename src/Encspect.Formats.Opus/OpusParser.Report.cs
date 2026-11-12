@@ -490,6 +490,18 @@ public sealed partial class OpusParser
             _order.Add(code);
         }
 
+        // For a finding that can come with every packet: the node of the first case is built when there is one.
+        public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
+        {
+            if (_findings.TryGetValue(code, out var existing))
+            {
+                _findings[code] = existing with { Count = existing.Count + 1 };
+                return;
+            }
+
+            Add(severity, code, node(), message);
+        }
+
         public void Flush(AnalysisContext context)
         {
             foreach (string code in _order)
