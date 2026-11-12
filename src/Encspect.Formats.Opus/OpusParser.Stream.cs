@@ -164,6 +164,7 @@ public sealed partial class OpusParser
         // framing: part of _decoded.
         private long _lost;
         private int _lastPacketSamples;
+        private readonly Queue<long> _tail = new();
         private long? _firstOffset;
         private long? _offset;
         private bool _afterGap;
@@ -435,6 +436,15 @@ public sealed partial class OpusParser
 
             bool isMalformed = ReadParts(packet, index);
             _lastPacketSamples = _records.SamplesOf(index);
+            if (_isContained && context.Configuration?.DiscardPadding is > 0)
+            {
+                _tail.Enqueue(_lastPacketSamples);
+                while (_tail.Count > Math.Max(1, context.Configuration.DiscardPaddingFrames ?? 1))
+                {
+                    _tail.Dequeue();
+                }
+            }
+
             _decoded += _lastPacketSamples;
             _wholeDecoded += packet.IsCut ? 0 : _lastPacketSamples;
             if (packet.IsCut || isMalformed)
@@ -682,10 +692,19 @@ public sealed partial class OpusParser
         // What the last granule position cuts from the end: the end trimming.
         private long EndTrimming()
         {
-            // A container that has no granule positions states the padding itself (Matroska's DiscardPadding), capped at the samples the packets hold.
+            // A container that has no granule positions states the padding itself (Matroska's DiscardPadding), capped at the samples of the last block's frames
+            // (ContainerPadding) and at the samples the packets hold after the pre-skip.
             if (_isContained && context.Configuration?.DiscardPadding is { } padding)
             {
-                return Math.Min((long)Math.Floor((padding * Rate) + 0.5), Math.Max(0, _decoded - (_head?.PreSkip ?? 0)));
+                long samples = ContainerPadding.ToSamples(padding, Rate);
+                long held = _tail.Sum();
+                if (samples > held)
+                {
+                    _findings.Add(Severity.Warning, "opus.discard-padding-large", _parent, _ =>
+                        ContainerPadding.LargeMessage(samples, held, Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1)));
+                }
+
+                return Math.Min(Math.Min(samples, held), Math.Max(0, _decoded - (_head?.PreSkip ?? 0)));
             }
 
             if (_lastPosition is not { } position || _offset is not { } offset || !_lastIsEnd)

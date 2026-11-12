@@ -90,7 +90,7 @@ public abstract class TimeGraph : AudioGraph
         {
             // A waveform alone: the columns share the measured samples evenly.
             Origin = measurements.FirstPosition;
-            SamplesPerColumn = Math.Max(1, (measurements.Samples + measurements.InnerSkippedSamples + columns - 1) / Math.Max(1, columns));
+            SamplesPerColumn = Math.Max(1, (measurements.Samples + measurements.InnerSkippedSamples + measurements.InnerTrimmedSamples + columns - 1) / Math.Max(1, columns));
         }
     }
 

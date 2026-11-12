@@ -181,6 +181,12 @@ public abstract class AnalysisContext
             ArgumentOutOfRangeException.ThrowIfLessThan(endPosition, firstPosition);
         }
 
+        public void TrimInner(long firstPosition, long samples)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(firstPosition);
+            ArgumentOutOfRangeException.ThrowIfNegative(samples);
+        }
+
         public StreamVerification Finish(IReadOnlyList<ChecksumTally> stored)
         {
             ArgumentNullException.ThrowIfNull(stored);

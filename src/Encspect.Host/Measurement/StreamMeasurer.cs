@@ -94,6 +94,10 @@ internal sealed class StreamMeasurer
     private long _trimEnd = long.MaxValue;
     private long _trimmedLeading;
     private long _trimmedTrailing;
+    private long _trimmedInner;
+    private long _pendingInner;
+    private readonly List<(long First, long End)> _innerTrims = [];
+    private readonly List<(int From, int To)> _segments = [];
     private readonly long[] _withheld = new long[WithholdReasons.Count];
     private readonly List<Span> _pending = [];
     private readonly List<Span> _leading = [];
@@ -358,6 +362,26 @@ internal sealed class StreamMeasurer
         (_trimStart, _trimEnd) = (_hasStarted ? _trimStart : firstPosition, end);
     }
 
+    // The sink's side: a range inside the stream that its syntax trims (IDecodeSession.TrimInner). Kept until the blocks it lies in arrive; the part
+    // of a block inside it is not measured and is counted as trimmed, inner where measured samples follow it and trailing where none does.
+    public void TrimInner(long firstPosition, long samples)
+    {
+        if (_isStopped || samples <= 0 || firstPosition < 0)
+        {
+            return;
+        }
+
+        long end = firstPosition > long.MaxValue - samples ? long.MaxValue : firstPosition + samples;
+        long floor = _innerTrims.Count > 0 ? _innerTrims[^1].End : long.MinValue;
+        long first = Math.Max(firstPosition, floor);
+        if (first >= end || _innerTrims.Count >= MaxPendingSpans)
+        {
+            return;
+        }
+
+        _innerTrims.Add((first, end));
+    }
+
     // Takes the pending spans' overlap with [from, to) into the totals and returns it; the spans stay.
     private long Overlap(List<Span> spans, long from, long to, long[] byReason)
     {
@@ -471,9 +495,16 @@ internal sealed class StreamMeasurer
             Array.Clear(_overflowBy);
         }
 
+        // The ranges the syntax trims inside the block's kept part cut it into segments; what lies before the first measured sample is leading.
+        int cut = CutInner(block.Position, lead, lead + keep);
+        keep -= cut;
+        int regionEnd = lead + keep + cut;
+        int first = _segments.Count > 0 ? _segments[0].From : regionEnd;
+        int head = first - lead;
         if (keep == 0 && block.Length > 0)
         {
-            _trimmedLeading += lead;
+            _trimmedLeading += lead + (_hasStarted ? 0 : cut);
+            _pendingInner += _hasStarted ? cut : 0;
             _trimmedTrailing += trail;
             _received = blockEnd;
             return;
@@ -481,6 +512,7 @@ internal sealed class StreamMeasurer
 
         if (!_hasStarted)
         {
+            lead = first;
             long startAt = block.Position + lead;
             _hasStarted = true;
             _firstPosition = startAt;
@@ -492,14 +524,18 @@ internal sealed class StreamMeasurer
             _loudness?.Start(startAt);
             _levels?.Start(startAt);
         }
-        else if (isJump)
+        else
         {
-            _next = block.Position;
-            _fill = 0;
-            _bufferStart = block.Position;
-            _levels?.Gap(block.Position);
-            _loudness?.Start(block.Position);
-            _truePeak?.Gap();
+            long pendingBefore = _pendingInner;
+            _trimmedInner += _pendingInner + head;
+            _pendingInner = 0;
+
+            // Measuring continues at the block's first measured sample where the stream jumped, a range cut its start or ranges before it took samples
+            // that nothing measured follows (a block inside a range, a range that ended a block).
+            if (isJump || head > 0 || pendingBefore > 0)
+            {
+                ResumeAt(block.Position + first);
+            }
         }
 
         _trimmedLeading += lead;
@@ -529,8 +565,28 @@ internal sealed class StreamMeasurer
             }
         }
 
-        int from = lead;
-        int to = lead + keep;
+        for (int k = 0; k < _segments.Count; k++)
+        {
+            (int from, int to) = _segments[k];
+            if (k > 0)
+            {
+                _trimmedInner += from - _segments[k - 1].To;
+                ResumeAt(block.Position + from);
+            }
+
+            if (!MeasureSegment(block, from, to))
+            {
+                return;
+            }
+        }
+
+        // What the block's last range trims after the last segment waits for the next measured sample.
+        _pendingInner += regionEnd - _segments[^1].To;
+    }
+
+    // Measures samples [from, to) of the block; false once the measuring has stopped.
+    private bool MeasureSegment(PcmBlock block, int from, int to)
+    {
         if (!_isMeasuringSpectrum)
         {
             for (int done = from; done < to;)
@@ -539,7 +595,7 @@ internal sealed class StreamMeasurer
                 {
                     IsCanceled = true;
                     _isStopped = true;
-                    return;
+                    return false;
                 }
 
                 int count = Math.Min(LevelsMeter.MaxPiece, to - done);
@@ -549,7 +605,7 @@ internal sealed class StreamMeasurer
                 done += count;
             }
 
-            return;
+            return true;
         }
 
         for (int done = from; done < to;)
@@ -558,13 +614,70 @@ internal sealed class StreamMeasurer
             {
                 IsCanceled = true;
                 _isStopped = true;
-                return;
+                return false;
             }
 
             int count = Math.Min(CheckEvery, to - done);
             Append(block, done, count);
             done += count;
         }
+
+        return true;
+    }
+
+    // Measuring continues at position after positions that hold no measured sample: as after a jump, with the frame in progress dropped.
+    private void ResumeAt(long position)
+    {
+        _next = position;
+        _fill = 0;
+        _bufferStart = position;
+        _levels?.Gap(position);
+        _loudness?.Start(position);
+        _truePeak?.Gap();
+    }
+
+    // Fills _segments with the parts of the block's samples [from, to) outside the ranges the syntax trims inside the stream and returns how many
+    // samples the ranges cut. Ranges that end before the block are dropped.
+    private int CutInner(long blockPosition, int from, int to)
+    {
+        _segments.Clear();
+        int drop = 0;
+        while (drop < _innerTrims.Count && _innerTrims[drop].End <= blockPosition + from)
+        {
+            drop++;
+        }
+
+        if (drop > 0)
+        {
+            _innerTrims.RemoveRange(0, drop);
+        }
+
+        int cut = 0;
+        int at = from;
+        foreach ((long first, long end) in _innerTrims)
+        {
+            if (first >= blockPosition + to)
+            {
+                break;
+            }
+
+            int a = (int)Math.Max(at, Math.Clamp(first - blockPosition, from, to));
+            int b = (int)Math.Clamp(end - blockPosition, a, to);
+            if (a > at)
+            {
+                _segments.Add((at, a));
+            }
+
+            cut += b - a;
+            at = b;
+        }
+
+        if (at < to)
+        {
+            _segments.Add((at, to));
+        }
+
+        return cut;
     }
 
     // A jump from the received position to the next block's: the pending spans of withheld output are withheld, the rest is lost.
@@ -1068,7 +1181,8 @@ internal sealed class StreamMeasurer
             TrailingWithheldSamples = trailingWithheld,
             WithheldByReason = WithheldCounts.From(withheld),
             LeadingTrimmedSamples = _trimmedLeading,
-            TrailingTrimmedSamples = _trimmedTrailing,
+            InnerTrimmedSamples = _trimmedInner,
+            TrailingTrimmedSamples = _trimmedTrailing + _pendingInner,
             Gaps = _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0),
             SampleRate = _format.SampleRate,
             ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,

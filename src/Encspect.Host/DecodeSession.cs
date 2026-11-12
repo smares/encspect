@@ -45,6 +45,7 @@ internal sealed class DecodeSession : IDecodeSession
     private long _trimFirst;
     private long _trimEnd;
     private List<(long First, long Samples, WithholdReason Reason)>? _earlyWithheld;
+    private List<(long First, long Samples)>? _earlyInnerTrims;
     private readonly long[] _earlyOverflow = new long[WithholdReasons.Count];
     private long _earlyEnd;
 
@@ -578,6 +579,29 @@ internal sealed class DecodeSession : IDecodeSession
         _sink?.Measurer?.Trim(firstPosition, endPosition);
     }
 
+    public void TrimInner(long firstPosition, long samples)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(firstPosition);
+        ArgumentOutOfRangeException.ThrowIfNegative(samples);
+        if (!IsDecoding || samples == 0)
+        {
+            return;
+        }
+
+        if (_sink is null)
+        {
+            List<(long First, long Samples)> early = _earlyInnerTrims ??= [];
+            if (early.Count < StreamMeasurer.MaxPendingSpans)
+            {
+                early.Add((firstPosition, samples));
+            }
+        }
+        else
+        {
+            _sink.Measurer?.TrimInner(firstPosition, samples);
+        }
+    }
+
     private void AddFromDecoder(Severity severity, string code, string message, Node? node, int count) => Add(severity, code, message, node, count);
 
     private IPcmSink DeclareOutput(PcmFormat format)
@@ -595,6 +619,11 @@ internal sealed class DecodeSession : IDecodeSession
                 measurer.Trim(_trimFirst, _trimEnd);
             }
 
+            foreach ((long first, long samples) in _earlyInnerTrims ?? [])
+            {
+                measurer.TrimInner(first, samples);
+            }
+
             foreach ((long first, long samples, WithholdReason reason) in _earlyWithheld ?? [])
             {
                 measurer.Withhold(first, samples, reason);
@@ -607,6 +636,7 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         _earlyWithheld = null;
+        _earlyInnerTrims = null;
         return _sink;
     }
 

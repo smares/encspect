@@ -25,6 +25,14 @@ public interface IDecodeSession
     // affects blocks written after it. Not calling it trims nothing. Once a block past the end has been written the end can only stay or shrink. Throws ArgumentOutOfRangeException for a negative firstPosition or an endPosition before it, whether or not anything is decoded; that is a parser bug (parse.failed).
     void Trim(long firstPosition, long endPosition);
 
+    // States a range inside the stream that its own syntax trims (Vorbis's granule positions after a gap: Gap Trimming): the positions
+    // [firstPosition, firstPosition + samples), at the coded stage, are Trimmed Samples too where the decoder writes them, counted apart
+    // as the inner ones, and left out of every figure; a measured stretch resumes after the range as after a jump, though no sample is lost.
+    // Positions a decoder withheld or lost stay withheld or lost, trimmed or not. A parser calls it before the Decode of the frame that holds
+    // the range. Ranges must not overlap earlier ones; a range of no samples is ignored; the host keeps at most StreamMeasurer.MaxPendingSpans
+    // ranges that wait for blocks, and measures a range past that. Throws ArgumentOutOfRangeException for a negative argument.
+    void TrimInner(long firstPosition, long samples);
+
     // Ends the session, once. stored lists every checksum the stream stores, of either kind, with Stored set, and for
     // those over coded data what the parser compared. The host fills in the decoder's results for those over decoded
     // audio and returns the verification the parser puts on its StreamInfo. Further calls return the same verification.

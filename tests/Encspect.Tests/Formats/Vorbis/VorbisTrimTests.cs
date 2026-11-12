@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Tests;
 
@@ -74,5 +76,105 @@ public class VorbisTrimTests
         Report report = Fixtures.AnalyzeMpeg("ogg/vorbis-eos-mid-then-more.ogg");
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.granule-inconsistent");
+    }
+
+    private static StreamInfo Measured(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        return Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Single();
+    }
+
+    // Matroska's DiscardPadding of the last block is the end trimming the decoder is told before the last packet (the feed runs one packet behind),
+    // so the measurements leave those samples out as trailing trimmed samples: external-ffmpeg-vorbis states 986 (oggdec and FFmpeg write 66,150 for
+    // the same packets in Ogg and in Matroska); the hand-built files carry 100 and a padding larger than the last packet returns, which is capped.
+    [Theory]
+    [InlineData("matroska/external-ffmpeg-vorbis.mka", 67_136, 986)]
+    [InlineData("matroska/external-ffmpeg-vorbis-webm.webm", 67_136, 986)]
+    [InlineData("matroska/vorbis-discard-padding.mka", -1, 100)]
+    [InlineData("matroska/vorbis-discard-padding-large.mka", -1, -1)]
+    public void The_container_padding_is_trimmed_from_the_measurements(string name, long coded, long trim)
+    {
+        StreamInfo info = Measured(name);
+        StreamMeasurements m = info.Measurements!;
+
+        long codedSamples = coded >= 0 ? coded : m.Samples + m.TrimmedSamples;
+        long expected = trim >= 0 ? trim : codedSamples - info.Samples;
+        Assert.Equal(expected, m.TrailingTrimmedSamples);
+        Assert.Equal((0L, 0L), (m.LeadingTrimmedSamples, m.InnerTrimmedSamples));
+        Assert.Equal(info.Samples, m.Samples);
+        Assert.Equal(info.Samples + expected, codedSamples);
+        Assert.Equal(codedSamples, info.Verification!.DecodedSamples);
+    }
+
+    // The last frame of vorbis-discard-padding-large returns 128 samples; its padding of 2,646 is capped at them, with a finding.
+    [Fact]
+    public void A_padding_larger_than_the_last_packet_is_capped_with_a_finding()
+    {
+        Report report = Fixtures.AnalyzeMpeg("matroska/vorbis-discard-padding-large.mka");
+
+        Assert.Contains(report.Findings, f => f.Code == "vorbis.discard-padding-large");
+        Assert.Equal("128 samples", Find(report.Root, "End Trimming")?.Value?.ToString());
+        Assert.Equal(128, Measured("matroska/vorbis-discard-padding-large.mka").Measurements!.TrailingTrimmedSamples);
+    }
+
+    // RFC 9559 gives the padding per Block: a laced last block of three packets (128 samples in the last one) takes 200 samples from more than one packet, with no
+    // finding, and the decoder is told before the first of them.
+    [Fact]
+    public void A_padding_is_per_block_so_a_laced_last_block_can_hold_more_than_its_last_packet()
+    {
+        const string name = "matroska/vorbis-discard-padding-laced.mka";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo info = Measured(name);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.discard-padding-large");
+        Assert.Equal("200 samples", Find(report.Root, "End Trimming")?.Value?.ToString());
+        Assert.Equal(200, info.Measurements!.TrailingTrimmedSamples);
+        Assert.Equal(info.Samples, info.Measurements.Samples);
+    }
+
+    public static TheoryData<string> VorbisFixtures => VorbisDecoderFixtureTests.Names;
+
+    // What the report states for the stream (its Samples: the coded samples less the start, end and Gap Trimming, cut packets included) is what the measurements keep and
+    // skip: measured + withheld + the lost samples the report counts. The trims are ranges inside the packets that carry them (block.c), so none of the measurements' counts
+    // is left over. Carve-out: missing frames, whose positions the measurer's span counts as lost but a report never contained (FLAC and WavPack frames or block indexes that
+    // jump), are apart from the rule; no Vorbis stream has coded positions that jump, and a cut packet is a counted block, so the sum holds on every fixture.
+    [Theory]
+    [MemberData(nameof(VorbisFixtures))]
+    public void The_measurements_keep_what_the_report_states(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec == "Vorbis"))
+        {
+            if (info.Measurements is { Status: MeasurementStatus.Complete } m)
+            {
+                Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+            }
+        }
+    }
+
+    // Gap Trimming: a position below the samples counted since the count was lost discards the difference at the start of the packet that carries
+    // it (block.c, "trim the beginning"), which the measurements leave out as inner trimmed samples, counted apart from the end trimming.
+    [Fact]
+    public void Gap_trimming_is_an_inner_trimmed_range_of_the_measurements()
+    {
+        const string name = "ogg/vorbis-skip-then-small.ogg";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Assert.Equal("1024 samples", Find(report.Root, "Gap Trimming")?.Value?.ToString());
+
+        StreamInfo info = Measured(name);
+        StreamMeasurements m = info.Measurements!;
+        Assert.Equal((1024L, 0L, 0L), (m.InnerTrimmedSamples, m.LeadingTrimmedSamples, m.TrailingTrimmedSamples));
+        Assert.Equal((info.Samples, 0L, 0L, 0), (m.Samples, m.LostSamples, m.WithheldSamples, m.Gaps));
+
+        // The samples trimmed inside the stream are in the JSON report beside the total.
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report measured = Analyzer.CreateDefault().Analyze("a.ogg", file, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        using var output = new MemoryStream();
+        ReportJsonWriter.Write([measured], output);
+        using JsonDocument json = JsonDocument.Parse(output.ToArray());
+        JsonElement figures = json.RootElement[0].GetProperty("streams")[0].GetProperty("measurements");
+        Assert.Equal((1024, 1024), (figures.GetProperty("trimmedSamples").GetInt64(), figures.GetProperty("innerTrimmedSamples").GetInt64()));
     }
 }

@@ -412,6 +412,38 @@ def _():
     return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=zlib.compress(bytes(private), 9), encodings=enc)]))
 
 
+def vorbis_blocks_with_padding(padding, laced=1):
+    """The first 30 packets of external-ffmpeg-vorbis in an A_VORBIS track (its headers as CodecPrivate), the last in a BlockGroup with the DiscardPadding."""
+    manifest = json.loads((OUT / "external-ffmpeg-vorbis.expected.json").read_text(encoding="utf-8"))
+    data = (OUT / "external-ffmpeg-vorbis.mka").read_bytes()
+    offset, length = manifest["tracks"][0]["private"]
+    sources = [b for b in manifest["blocks"] if b["frames"]][:30]
+    frames = [data[b["frames"][0][0]:b["frames"][0][0] + b["frames"][0][1]] for b in sources]
+    items = [simple_block(1, i * 23, frame, key=True) for i, frame in enumerate(frames[:-laced])]
+    items.append(block_group(1, (30 - laced) * 23, frames[-laced:] if laced > 1 else frames[-1], lacing="xiph" if laced > 1 else "none", discard_padding=padding))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_VORBIS", channels=2, rate=44100.0, private=data[offset:offset + length])]))
+
+
+@fixture("vorbis-discard-padding", "An A_VORBIS track of the first 30 packets of external-ffmpeg-vorbis whose last block is a BlockGroup with a DiscardPadding of 2,267,574 ns, 100 samples at 44.1 kHz "
+         "(RFC 9559 section 5.1.3.5.7): the end trimming the Vorbis decoder is told before the last packet.",
+         findings=[("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)])
+def _():
+    return vorbis_blocks_with_padding(2_267_574)
+
+
+@fixture("vorbis-discard-padding-large", "The same packets with a DiscardPadding of 60 ms (2,646 samples), more than the last frame returns (128 samples): the end trimming is capped at what the frames of the block hold.",
+         findings=[("vorbis.writer-claim-differs", "Lavf60.16.100"), ("vorbis.discard-padding-large", "DiscardPadding")], streams=[("Vorbis", 44100, 2)])
+def _():
+    return vorbis_blocks_with_padding(60_000_000)
+
+
+@fixture("vorbis-discard-padding-laced", "The same packets with the last three in one Xiph-laced BlockGroup whose DiscardPadding is 4,535,147 ns, 200 samples: more than the last packet returns (128) but not "
+         "more than the three hold, so the padding is per block (RFC 9559 section 5.1.3.5.7) and takes samples from more than one packet.",
+         findings=[("vorbis.writer-claim-differs", "Lavf60.16.100")], streams=[("Vorbis", 44100, 2)])
+def _():
+    return vorbis_blocks_with_padding(4_535_147, laced=3)
+
+
 @fixture("five-byte-id-in-block-group", "An EBML Header that allows IDs of five octets (EBMLMaxIDLength 5), and in a BlockGroup an element with such an ID whose size runs past the BlockGroup: it is an "
          "unknown element, and the finding about its size points at the node of the tree that holds it.",
          findings=[("matroska.header-limits", "EBMLMaxIDLength of 5"), ("matroska.element-overruns-parent", "runs past the end of its parent")],

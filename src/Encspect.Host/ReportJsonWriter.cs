@@ -752,6 +752,10 @@ public static class ReportJsonWriter
         if (m.TrimmedSamples > 0)
         {
             writer.WriteNumber("trimmedSamples", m.TrimmedSamples);
+            if (m.InnerTrimmedSamples > 0)
+            {
+                writer.WriteNumber("innerTrimmedSamples", m.InnerTrimmedSamples);
+            }
         }
 
         writer.WriteNumber("gaps", m.Gaps);

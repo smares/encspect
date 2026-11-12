@@ -115,6 +115,159 @@ public class MeasurementWithheldTests
     }
 
     [Fact]
+    public void ARangeTrimmedInsideTheStreamIsLeftOutAndCountedAsInnerTrimmed()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1200, 300);
+        measurer.TrimInner(3000, 100);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        Write(measurer, 2000, 2000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((3600L, 400L, 0L), (m.Samples, m.InnerTrimmedSamples, m.LostSamples));
+        Assert.Equal((0L, 0L, 400L, 0), (m.LeadingTrimmedSamples, m.TrailingTrimmedSamples, m.TrimmedSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void ATrimmedRangeBeforeTheFirstSampleIsLeadingAndOneAfterTheLastIsTrailing()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(0, 100);
+        measurer.TrimInner(900, 100);
+        Write(measurer, 0, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((800L, 100L, 100L, 0L), (m.Samples, m.LeadingTrimmedSamples, m.TrailingTrimmedSamples, m.InnerTrimmedSamples));
+        Assert.Equal(100L, m.FirstPosition);
+    }
+
+    [Fact]
+    public void APositionTrimmedInsideTheStreamThatTheDecoderWithheldStaysWithheld()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1000, 500);
+        Write(measurer, 0, 1000);
+        measurer.Withhold(1000, 500, WithholdReason.AfterGap);
+        Write(measurer, 1500, 500);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1500L, 500L, 0L), (m.Samples, m.WithheldSamples, m.InnerTrimmedSamples));
+    }
+
+    [Fact]
+    public void ARangeTrimmedInsideTheStreamDoesNotChangeWhatTheMeasuredStretchesHold()
+    {
+        StreamMeasurer split = Measurer();
+        split.TrimInner(1000, 1000);
+        Write(split, 0, 3000);
+        StreamMeasurer pieces = Measurer();
+        Write(pieces, 0, 1000);
+        Write(pieces, 2000, 1000);
+        StreamMeasurements a = split.Result(MeasurementStatus.Complete, null);
+        StreamMeasurements b = pieces.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2000L, 1000L), (a.Samples, a.InnerTrimmedSamples));
+        Assert.Equal(b.Samples, a.Samples);
+        Assert.Equal(b.Levels!.Stream.SamplePeakTenths, a.Levels!.Stream.SamplePeakTenths);
+    }
+
+    // The grids, loudness and levels of a stream with a range trimmed inside it equal those of the same samples written with a jump over the range and of
+    // one block cut by the range, however the blocks fall: a range that takes a whole block or ends at a block's end moves nothing.
+    private static string Fingerprint(StreamMeasurements m) =>
+        $"{m.Samples}/{m.FirstPosition}/{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Runtime.InteropServices.MemoryMarshal.AsBytes(m.Waveform!.Minimum.Span)))}"
+        + $"/{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Runtime.InteropServices.MemoryMarshal.AsBytes(m.Waveform!.Maximum.Span)))}"
+        + $"/{Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(m.Spectrogram!.Power.Span))}/{m.Levels!.Stream.SamplePeakTenths}/{m.Loudness?.IntegratedTenths}";
+
+    private static void WriteSecond(StreamMeasurer measurer, long second, int value) => Write(measurer, second * 44100, 44100, value);
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public void ARangeTrimmedInsideTheStreamMovesNothingWhereverTheBlocksFall(int variant)
+    {
+        const long trimFirst = 44100;
+        StreamMeasurer cut = Measurer();
+        cut.TrimInner(trimFirst, 44100);
+        switch (variant)
+        {
+            case 1: // blocks of a second: the range is one whole block
+                WriteSecond(cut, 0, 8000);
+                WriteSecond(cut, 1, 20000);
+                WriteSecond(cut, 2, 9000);
+                break;
+            case 2: // the range spans two blocks
+                Write(cut, 0, 66150, 8000);
+                Write(cut, 66150, 66150, 9000);
+                break;
+            case 4: // the range ends at the end of a block
+                Write(cut, 0, 88200, 8000);
+                Write(cut, 88200, 44100, 9000);
+                break;
+            default: // one block
+                Write(cut, 0, 132300, 8000);
+                break;
+        }
+
+        // The same samples written as blocks with a jump over the range.
+        StreamMeasurer jump = Measurer();
+        Write(jump, 0, 44100, 8000);
+        Write(jump, 88200, 44100, variant == 3 ? 8000 : 9000);
+
+        StreamMeasurements a = cut.Result(MeasurementStatus.Complete, null);
+        StreamMeasurements b = jump.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal(44100L, a.InnerTrimmedSamples);
+        Assert.Equal(Fingerprint(b), Fingerprint(a));
+    }
+
+    [Fact]
+    public void ARangeAcrossBlocksCutsEachPartAndCountsTheWholeRange()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(500, 2000);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        Write(measurer, 2000, 1000);
+        Write(measurer, 3000, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2000L, 2000L, 0L, 0), (m.Samples, m.InnerTrimmedSamples, m.LostSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void ARangeThatTakesAWholeBlockMovesTheNextBlocksPosition()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1000, 1000);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        Write(measurer, 2000, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2000L, 1000L, 0L), (m.Samples, m.InnerTrimmedSamples, m.LostSamples));
+    }
+
+    [Fact]
+    public void ARangeOverlappingTheLeadingAndTheTrailingTrimsCountsOnlyWhatTheyLeaveOut()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(300, 1700);
+        measurer.TrimInner(200, 400);
+        measurer.TrimInner(1500, 400);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        // The trims take [0, 300) and [1700, 2000); [200, 600) goes on from the leading one and [1500, 1900) comes before the trailing one, so the stretch measured
+        // is [600, 1500) and what the ranges take beyond the trims counts with the trim they touch.
+        Assert.Equal((900L, 600L, 600L, 500L), (m.Samples, m.FirstPosition, m.LeadingTrimmedSamples, m.TrailingTrimmedSamples));
+        Assert.Equal(0L, m.InnerTrimmedSamples);
+    }
+
+    [Fact]
     public void ALostBlockInsideTheTrimmedRangeIsStillLost()
     {
         StreamMeasurer measurer = Measurer();
@@ -332,6 +485,11 @@ public class MeasurementWithheldTests
 
         StreamMeasurements trimmed = m with { LeadingTrimmedSamples = 30, TrailingTrimmedSamples = 12, WithheldSamples = 0, WithheldByReason = default };
         Assert.Contains("42 samples trimmed", string.Join('\n', MeasurementText.Lines(trimmed, isLossy: false).Select(l => l.Text)));
+        Assert.DoesNotContain("inside the stream", string.Join('\n', MeasurementText.Lines(trimmed, isLossy: false).Select(l => l.Text)));
+
+        // The samples trimmed inside the stream are told beside the total, in the text and in JSON, only where there are any.
+        StreamMeasurements inner = trimmed with { LeadingTrimmedSamples = 0, TrailingTrimmedSamples = 12, InnerTrimmedSamples = 30 };
+        Assert.Contains("42 samples trimmed (30 inside the stream)", string.Join('\n', MeasurementText.Lines(inner, isLossy: false).Select(l => l.Text)));
     }
 
     [Fact]

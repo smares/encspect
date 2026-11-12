@@ -50,7 +50,11 @@ public sealed record StreamMeasurements
 
     public long TrailingTrimmedSamples { get; init; }
 
-    public long TrimmedSamples => LeadingTrimmedSamples + TrailingTrimmedSamples;
+    // The samples the stream's syntax trims inside the measured span (IDecodeSession.TrimInner), between the first and the last measured sample;
+    // the grids and graphs cover them like inner lost samples.
+    public long InnerTrimmedSamples { get; init; }
+
+    public long TrimmedSamples => LeadingTrimmedSamples + InnerTrimmedSamples + TrailingTrimmedSamples;
 
     // Lost and withheld samples together: the positions of the span the measured blocks cover that hold no measured sample.
     public long SkippedSamples => LostSamples + WithheldSamples;

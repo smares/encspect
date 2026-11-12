@@ -396,6 +396,10 @@ public static class MeasurementText
         if (m.TrimmedSamples > 0)
         {
             text += $"; {Counts.Of(m.TrimmedSamples, "sample", "samples")} trimmed";
+            if (m.InnerTrimmedSamples > 0)
+            {
+                text += $" ({m.InnerTrimmedSamples} inside the stream)";
+            }
         }
 
         return m.Status switch

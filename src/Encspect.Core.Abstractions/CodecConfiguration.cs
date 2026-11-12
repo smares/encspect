@@ -56,4 +56,8 @@ public sealed record CodecConfiguration
     // The padding at the end of the last block that the container states, in seconds (Matroska's DiscardPadding, RFC 9559 section 5.1.3.5.7): what a
     // decoder drops from the end of the decoded audio. Null when it states none or a negative one.
     public double? DiscardPadding { get; init; }
+
+    // The frames (packets) of the block that carries the DiscardPadding: the most samples the padding can take, with the frames before it of the same block (RFC 9559
+    // section 5.1.3.5.7 gives it per Block, and a laced Block holds several frames). Null when it is not known.
+    public int? DiscardPaddingFrames { get; init; }
 }
