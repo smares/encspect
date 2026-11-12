@@ -10,8 +10,7 @@ public class OpusFindingTests
     [Fact]
     public void ACeltFrameThatNeedsMoreBitsThanItHoldsIsAFindingAndNotDecoded()
     {
-        byte[] head = [.. "OpusHead"u8, 1, 1, 0, 0, 0x80, 0xBB, 0, 0, 0, 0, 0];
-        byte[] data = new OggBuilder().Page(6, 0, 2, head).Page(6, 0, 0, [.. "OpusTags"u8, .. OggBuilder.VorbisComment("Encspect")]).Page(6, 960, 4, [0xF8, 0, 0, 0]).Bytes;
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "opus-extreme-frames.bin"));
 
         Report report = Analyzer.CreateDefault().Analyze("overrun.opus", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
 

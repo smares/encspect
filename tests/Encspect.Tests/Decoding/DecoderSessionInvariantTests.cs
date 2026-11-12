@@ -90,6 +90,7 @@ public class DecoderSessionInvariantTests
         ["matroska/same-order-two-compressions.mka"] = "the container hands over no audio packet the Opus session can read (its frames are encrypted or compressed in a way the container does not undo), and the Opus session starts at the first audio packet",
         ["ogg/opus-ambisonics-family-3.opus"] = "mapping family 3 (the demixing matrix), which the decoder does not apply, so the stream is parsed and not decoded",
         ["ogg/opus-head-invalid.opus"] = "an identification header the decoder refuses, so the stream is parsed and not decoded",
+        ["mp4/ffmpeg-cenc-opus.mp4"] = "the samples are encrypted, so the container hands over the header and no audio packet, and the Opus session starts at the first audio packet",
         ["ogg/vorbis-header-layout.ogg"] = "a header libvorbis refuses (the comment header's framing bit), so the stream is parsed and not decoded",
         ["ogg/vorbis-ident-invalid.ogg"] = "an identification header libvorbis refuses, so the stream is parsed and not decoded",
         ["ogg/vorbis-setup-invalid.ogg"] = "a setup header libvorbis refuses, so the stream is parsed and not decoded",
