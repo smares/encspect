@@ -3,7 +3,7 @@
 
 oggenc from Ubuntu's vorbis-tools (1.4.2, libvorbis 1.3.7) encodes at several qualities, with
 managed bitrate, in mono, stereo and 5.1, and also with aoTuV's libraries of beta 5.7, beta 6.03 and
-its 2020 rebuild in their place (aotuv_tool.py); Rarewares' oggenc2.88 builds on aoTuV b6.03 (2020)
+its 2020 rebuild in their place (aotuv_tool.py), and with Xiph's libvorbis releases 1.0 to 1.2.3 built from source (xiph_tool.py); Rarewares' oggenc2.88 builds on aoTuV b6.03 (2020)
 and on Lancer, run under Wine, write their own vendor strings; opusenc from opus-tools (0.2, libopus 1.4) at several
 bitrates, in hard CBR and constrained VBR, mono, stereo and 5.1, with speech tuning and other
 frame sizes; ffmpeg encodes with libvorbis and libopus (also in the ambisonic mapping family 2)
@@ -31,10 +31,13 @@ import aotuv_tool
 import make_ogg_fixtures as hand
 import make_vorbis_opus_fixtures as hand_vo
 import ogg_model as m
+import xiph_tool
 
 OUT = hand.OUT
 
 LIBVORBIS = {"name": "libvorbis 1.3.7", "confidence": "High"}
+OLD_LIBVORBIS = {release: {"name": f"libvorbis {release}", "confidence": "High"} for release in ("1.0", "1.0.1", "1.1.0", "1.2.0", "1.2.2", "1.2.3")}
+OLD_LIBVORBIS["1.1.2"] = {"name": "libvorbis 1.1.1 or 1.1.2", "confidence": "High"}
 # What the analyzer names: the encoder, from the vendor string (libopusenc writes libopus' version into it) or an ENCODER field that is a
 # libavcodec encoder ID (ffmpeg writes "Lavc60.31.102 libvorbis" there when it encodes), and the writer, from the ENCODER field of an
 # application (opusenc) and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor.
@@ -70,6 +73,19 @@ FIXTURES = {
     "external-aotuv-b6.03-2020-managed": ("aotuv:b6.03 (2020)", 44100, 2, 1.5, ["--managed", "-b", "96", "-m", "64", "-M", "128"], AOTUV_2020, []),
     "external-oggenc2-aotuv-rarewares": ("wine:aotuv-rarewares", 44100, 2, 1.5, ["-q", "5"], AOTUV_RAREWARES, []),
     "external-oggenc2-lancer-sse2": ("wine:lancer-sse2", 44100, 2, 1.5, ["-q", "5"], LANCER, []),
+    # Xiph's libvorbis releases before 1.3, built from the tags of xiph/vorbis (xiph_tool.py) under Ubuntu's oggenc.
+    "external-libvorbis-1.0-q5": ("xiph:1.0", 44100, 2, 1.5, ["-q", "5"], OLD_LIBVORBIS["1.0"], []),
+    "external-libvorbis-1.0-managed": ("xiph:1.0", 44100, 2, 1.5, ["--managed", "-b", "96", "-m", "64", "-M", "128"], OLD_LIBVORBIS["1.0"], []),
+    "external-libvorbis-1.0.1-q5": ("xiph:1.0.1", 44100, 2, 1.5, ["-q", "5"], OLD_LIBVORBIS["1.0.1"], []),
+    "external-libvorbis-1.0.1-q10": ("xiph:1.0.1", 48000, 2, 1.0, ["-q", "10"], OLD_LIBVORBIS["1.0.1"], []),
+    "external-libvorbis-1.1.0-q5": ("xiph:1.1.0", 44100, 2, 1.5, ["-q", "5"], OLD_LIBVORBIS["1.1.0"], []),
+    "external-libvorbis-1.1.0-mono": ("xiph:1.1.0", 22050, 1, 1.5, ["-q", "3"], OLD_LIBVORBIS["1.1.0"], []),
+    "external-libvorbis-1.1.2-q-1": ("xiph:1.1.2", 44100, 2, 1.5, ["-q", "-1"], OLD_LIBVORBIS["1.1.2"], []),
+    "external-libvorbis-1.2.0-q5": ("xiph:1.2.0", 44100, 2, 1.5, ["-q", "5"], OLD_LIBVORBIS["1.2.0"], []),
+    "external-libvorbis-1.2.0-managed": ("xiph:1.2.0", 44100, 2, 1.5, ["--managed", "-b", "96", "-m", "64", "-M", "128"], OLD_LIBVORBIS["1.2.0"], []),
+    "external-libvorbis-1.2.2-q10": ("xiph:1.2.2", 48000, 2, 1.0, ["-q", "10"], OLD_LIBVORBIS["1.2.2"], []),
+    "external-libvorbis-1.2.3-q5": ("xiph:1.2.3", 44100, 2, 1.5, ["-q", "5"], OLD_LIBVORBIS["1.2.3"], []),
+    "external-libvorbis-1.2.3-51": ("xiph:1.2.3", 48000, 6, 1.0, ["-q", "4"], OLD_LIBVORBIS["1.2.3"], []),
     "external-ffmpeg-libvorbis": ("ffmpeg", 44100, 2, 1.5, ["-c:a", "libvorbis", "-q:a", "4"], FFMPEG_LIBVORBIS, []),
     "external-ffmpeg-vorbis": ("ffmpeg", 44100, 2, 1.5, ["-strict", "-2", "-c:a", "vorbis"], FFMPEG_VORBIS, []),
     "external-ffmpeg-libvorbis-bitexact": ("ffmpeg", 44100, 2, 1.5, ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libvorbis", "-q:a", "4"],
@@ -89,6 +105,22 @@ FIXTURES = {
 }
 
 
+# The serial number each libvorbis fixture is written with (oggenc -s), so that the generator gives the committed bytes back.
+SERIALS = {
+    "external-libvorbis-1.0-managed": 1329520968,
+    "external-libvorbis-1.0-q5": 1810573053,
+    "external-libvorbis-1.0.1-q10": 1471755011,
+    "external-libvorbis-1.0.1-q5": 723991667,
+    "external-libvorbis-1.1.0-mono": 1616013014,
+    "external-libvorbis-1.1.0-q5": 867278468,
+    "external-libvorbis-1.1.2-q-1": 699633706,
+    "external-libvorbis-1.2.0-managed": 848434487,
+    "external-libvorbis-1.2.0-q5": 1451292698,
+    "external-libvorbis-1.2.2-q10": 1596572388,
+    "external-libvorbis-1.2.3-51": 361063990,
+    "external-libvorbis-1.2.3-q5": 2055767113,
+}
+
 # Checks a tool cannot make on a fixture, with the reason.
 SKIPS = {
     "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0 and 1 only (OP_EIMPL for 255, OP_EBADHEADER otherwise); checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"},
@@ -96,7 +128,7 @@ SKIPS = {
 
 
 def extension(name):
-    return ".ogg" if FIXTURES[name][0].startswith(("oggenc", "aotuv", "wine")) or "vorbis" in name else ".opus"
+    return ".ogg" if FIXTURES[name][0].startswith(("oggenc", "aotuv", "wine", "xiph")) or "vorbis" in name else ".opus"
 
 
 def signal(rate, channels, seconds):
@@ -125,6 +157,7 @@ def version(tool):
 
 
 def encode(name, tool, rate, channels, seconds, arguments, work):
+    arguments = [*arguments, "-s", str(SERIALS[name])] if name in SERIALS else arguments
     target = OUT / (name + extension(name))
     source = work / f"in-{rate}-{channels}-{seconds}.wav"
     source.write_bytes(wav(signal(rate, channels, seconds), rate, channels))
@@ -133,6 +166,10 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     elif tool.startswith("aotuv:"):
         aotuv_tool.oggenc(tool[6:], arguments, source, target)
         return {"tool": f"{version('oggenc')} with aoTuV {tool[6:]}'s libvorbis (aotuv_tool.py)", "arguments": arguments, "rate": rate,
+                "channels": channels, "seconds": seconds}
+    elif tool.startswith("xiph:"):
+        xiph_tool.oggenc(tool[5:], arguments, source, target)
+        return {"tool": f"{version('oggenc')} with libvorbis {tool[5:]} (xiph_tool.py)", "arguments": arguments, "rate": rate,
                 "channels": channels, "seconds": seconds}
     elif tool.startswith("wine:"):
         aotuv_tool.windows(tool[5:], arguments, source, target)
@@ -179,13 +216,20 @@ def manifest(name, encoder, detected, findings):
 
 def main():
     only_manifests = "--manifests-only" in sys.argv
+    # --only PREFIX writes the fixtures whose names start with PREFIX and leaves the others alone (the other encoders pick random serials; the
+    # libvorbis fixtures are written with their serials, so rerunning them leaves the files as committed).
+    prefix = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else ""
+    names = [name for name in FIXTURES if name.startswith(prefix)]
     if not only_manifests:
-        missing = [tool for tool in ("oggenc", "opusenc", "ffmpeg", "wine", "autoreconf") if shutil.which(tool) is None]
+        needed = {"oggenc": ("oggenc",), "opusenc": ("opusenc",), "ffmpeg": ("ffmpeg",), "aotuv": ("oggenc", "autoreconf"), "wine": ("wine",),
+                  "xiph": ("oggenc", "autoreconf", "gcc", "git")}
+        missing = sorted({tool for name in names for tool in needed[FIXTURES[name][0].split(":")[0]] if shutil.which(tool) is None})
         if missing:
             raise SystemExit(f"Missing {', '.join(missing)}; install vorbis-tools, opus-tools, ffmpeg, wine and autoconf, or pass --manifests-only.")
     _ = hand_vo
     with tempfile.TemporaryDirectory() as work:
-        for name, (tool, rate, channels, seconds, arguments, detected, findings) in FIXTURES.items():
+        for name in names:
+            tool, rate, channels, seconds, arguments, detected, findings = FIXTURES[name]
             path = OUT / (name + ".expected.json")
             if only_manifests:
                 encoder = json.loads(path.read_text(encoding="utf-8"))["encoder"]
@@ -193,7 +237,7 @@ def main():
                 encoder = encode(name, tool, rate, channels, seconds, arguments, pathlib.Path(work))
             result = manifest(name, encoder, detected, findings)
             path.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Wrote {len(FIXTURES)} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
+    print(f"Wrote {len(names)} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 
 
 if __name__ == "__main__":
