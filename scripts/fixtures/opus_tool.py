@@ -43,7 +43,7 @@ VECTORS_8251_ADDRESSES = [
 ]
 
 VECTORS_6716_NAME = "opus_testvectors.tar.gz"
-VECTORS_6716_SHA256 = "2d0422d7d922a86fa21c50fb1b293630054bd0c8b1d3d63903c181a47c0ecedd"
+VECTORS_6716_SHA256 = "94ac78ca4f74c4e43bc9fe4ec1ad0aa36f38ab90f45b0727c40dd1e96096e767"
 VECTORS_6716_ADDRESSES = [
     "https://opus-codec.org/static/testvectors/opus_testvectors.tar.gz",
     downloads.archived("https://opus-codec.org/static/testvectors/opus_testvectors.tar.gz", "2026"),
