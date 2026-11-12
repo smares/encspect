@@ -182,7 +182,7 @@ public sealed partial class MpegAudioParser
             }
 
             _share = hasTwoChannels ? new Numeric(count, offsets) : null;
-            _intensityBound = hasJointStereo && Has(r => r.Nodes.IntensityStereoBoundHz) ? new Numeric(count, offsets) : null;
+            _intensityBound = hasJointStereo && Has(r => r.Nodes.IntensityStereoBoundHz) ? new Numeric(count, offsets, keepSeconds: false) : null;
         }
 
         private bool Has(Func<RegionState, Node?> node) => _regions.Any(r => node(r) is not null);
@@ -302,13 +302,16 @@ public sealed partial class MpegAudioParser
     // while every frame has one, and the frames' own once one has none.
     private sealed class Numeric
     {
+        private readonly bool _keepSeconds;
         private readonly double[] _offsets;
         private readonly double[] _values;
         private double[]? _own;
         private readonly List<(double Max, long First, long Both)> _seconds = [];
 
-        public Numeric(int count, double[] offsets)
+        // keepSeconds is false for a series without a per-second form.
+        public Numeric(int count, double[] offsets, bool keepSeconds = true)
         {
+            _keepSeconds = keepSeconds;
             _offsets = offsets;
             _values = new double[count];
         }
@@ -318,7 +321,7 @@ public sealed partial class MpegAudioParser
         // The unit-th frame has the value, or none; first and both are the bits of a share.
         public void Add(int unit, int second, double? value, long first, long both = 0)
         {
-            while (_seconds.Count <= second)
+            while (_keepSeconds && _seconds.Count <= second)
             {
                 _seconds.Add((double.NaN, 0, 0));
             }
@@ -340,8 +343,11 @@ public sealed partial class MpegAudioParser
             }
 
             _values[Count++] = v;
-            (double max, long f, long b) = _seconds[second];
-            _seconds[second] = (double.IsNaN(max) || v > max ? v : max, f + first, b + both);
+            if (_keepSeconds)
+            {
+                (double max, long f, long b) = _seconds[second];
+                _seconds[second] = (double.IsNaN(max) || v > max ? v : max, f + first, b + both);
+            }
         }
 
         public ReadOnlyMemory<double> X => _own is null && Count == _values.Length ? _offsets : (_own ?? _offsets).AsSpan(0, Count).ToArray();
