@@ -526,9 +526,13 @@ internal sealed class StreamMeasurer
         }
         else
         {
+            long pendingBefore = _pendingInner;
             _trimmedInner += _pendingInner + head;
             _pendingInner = 0;
-            if (isJump || head > 0)
+
+            // Measuring continues at the block's first measured sample where the stream jumped, a range cut its start or ranges before it took samples
+            // that nothing measured follows (a block inside a range, a range that ended a block).
+            if (isJump || head > 0 || pendingBefore > 0)
             {
                 ResumeAt(block.Position + first);
             }

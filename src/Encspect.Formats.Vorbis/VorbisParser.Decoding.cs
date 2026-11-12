@@ -12,38 +12,49 @@ public sealed partial class VorbisParser
 
     private sealed partial class StreamState
     {
-        // One audio packet that codes a block (the flags of its record read None).
-        private void Walk(MappedBytes packet, int index, PacketRecord record)
+        // One audio packet that codes a block (the flags of its record read None): the ranges the trims take out of the stream are stated first, then the packet
+        // is walked and handed to the decoder. A packet held back (the last packets of a track with a DiscardPadding) is walked later with its own figures.
+        private void Walk(MappedBytes packet, int index, PacketRecord record, bool isHeld = false, long first = 0, long samples = 0, bool followsGap = false)
         {
-            (long First, long Samples)? gapRange = _gapRange;
-            _gapRange = null;
+            List<(long First, long Samples)>? ranges = null;
+            if (!isHeld)
+            {
+                samples = _lastReturned;
+                first = _decoded - samples;
+                followsGap = _pendingGap;
+                _pendingGap = false;
+                ranges = _ranges.Count > 0 ? [.. _ranges] : null;
+                _ranges.Clear();
+            }
+            else
+            {
+                ranges = _heldRanges;
+                _heldRanges = null;
+            }
+
             if (_walker is null)
             {
-                _records.CodedEnds.Add(NoBandwidth);
+                SetCodedEnd(index, NoBandwidth, isHeld);
                 return;
             }
 
             IDecodeSession session = _session ??= StartSession();
-            long samples = _lastReturned;
-            long first = _decoded - samples;
             bool isDecoding = session.IsDecoding;
             if (packet.IsCut)
             {
                 // The container cut the packet: its block counts and is lost (a gap), and the packet after it follows one.
                 if (isDecoding)
                 {
-                    session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, packet.FileStart), "Packet", first, (int)samples) { IsUnreadable = true, FollowsGap = _pendingGap });
+                    session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, packet.FileStart), "Packet", first, (int)samples) { IsUnreadable = true, FollowsGap = followsGap });
                 }
 
-                _pendingGap = false;
-                _records.CodedEnds.Add(NoBandwidth);
+                SetCodedEnd(index, NoBandwidth, isHeld);
                 return;
             }
 
-            UpdateTrim(session);
-            if (gapRange is { } range)
+            foreach ((long rangeFirst, long rangeSamples) in ranges ?? [])
             {
-                session.TrimInner(range.First, range.Samples);
+                session.TrimInner(rangeFirst, rangeSamples);
             }
 
             SampleBuffers lent = isDecoding ? session.Lend(_walker.MaxInts(record.Mode), 1) : default;
@@ -62,14 +73,26 @@ public sealed partial class VorbisParser
 
             if (isDecoding)
             {
-                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, FollowsGap = _pendingGap });
+                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, FollowsGap = followsGap });
             }
 
-            _pendingGap = false;
             ushort end = (ushort)Math.Min(facts.CodedEnd, ushort.MaxValue - 1);
-            _records.CodedEnds.Add(end);
+            SetCodedEnd(index, end, isHeld);
             _bandwidths.TryGetValue(BandwidthOf(end, _records.BlockSize(record)), out long count);
             _bandwidths[BandwidthOf(end, _records.BlockSize(record))] = count + 1;
+        }
+
+        // A packet walked in its turn adds its record; a held one replaces the placeholder it left.
+        private void SetCodedEnd(int index, ushort end, bool isHeld)
+        {
+            if (isHeld)
+            {
+                _records.CodedEnds.Set(index, end);
+            }
+            else
+            {
+                _records.CodedEnds.Add(end);
+            }
         }
 
         private IDecodeSession StartSession()
@@ -86,25 +109,6 @@ public sealed partial class VorbisParser
                 IsLossy = true,
                 Shared = _model,
             });
-        }
-
-        // The range of positions the granule positions trim the stream to (Opus's pre-skip and end trimming in the same way): the start trimming from the first position, known
-        // when the packet that carries it is read, and the end from an end-of-stream page, known when its last packet is. A trim stated at the first packet after one of them
-        // reaches the decoder before the blocks it applies to (a granule position's page ends with its last packet).
-        private void UpdateTrim(IDecodeSession session)
-        {
-            if (!session.IsDecoding || !HasTime)
-            {
-                return;
-            }
-
-            long leading = _hasAnchor ? StartTrimming(report: false) : 0;
-            long end = _containerEnd >= 0 ? Math.Max(leading, _decoded - _containerEnd) : _endSeen ? Math.Max(leading, _decoded - _endTrim) : long.MaxValue;
-            if (_trim != (leading, end))
-            {
-                _trim = (leading, end);
-                session.Trim(leading, end);
-            }
         }
 
         // The upper edge of the last coded coefficient of a block of that size, in whole hertz.

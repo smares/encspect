@@ -304,6 +304,8 @@ internal sealed partial class FileReader
             {
                 Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
                 DiscardPadding = DiscardOf(segment, track) is > 0 and var padding ? padding : null,
+                DiscardPaddingFrames = DiscardOf(segment, track) > 0 && track.Number is { } discardNumber && segment.DiscardPaddings.TryGetValue((uint)discardNumber, out (long Padding, int Block) carrier)
+                    ? Math.Max(1, (int)segment.Records.Blocks[carrier.Block].Frames) : null,
                 AreSamplesEncrypted = areFramesEncrypted,
                 Duration = seconds > 0 ? seconds : null,
             }

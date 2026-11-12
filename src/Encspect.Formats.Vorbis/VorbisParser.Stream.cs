@@ -127,15 +127,18 @@ public sealed partial class VorbisParser
         private IDecodeSession? _session;
         private bool _pendingGap;
         private bool _isCommentAccepted;
-        private (long First, long End)? _trim;
-        private bool _endSeen;
-        private (MappedBytes Packet, int Index, PacketRecord Record)? _held;
-        private long _containerEnd = -1;
-        private (long First, long Samples)? _gapRange;
-        // Matroska's DiscardPadding is the end trimming of the track's last block, known before the first packet but only meaningful
-        // against the total, so the feed runs one packet behind: the last packet's walk and decode wait for the end of the stream, where the trim
-        // is stated before it.
+        // The ranges the granule positions trim out of the packet being read (the start trimming, Gap Trimming, the end trimming), stated to the decoder before
+        // the packet: libvorbis discards them from that packet's own samples.
+        private readonly List<(long First, long Samples)> _ranges = [];
+
+        // Matroska's DiscardPadding is the end trimming of the track's last block, known before the first packet but only meaningful against the total, so the
+        // feed runs behind by the frames of that block: the last packets are held until the end of the stream, where the trim is stated before the first of them.
         private readonly bool _delaysFeed = context.Configuration?.DiscardPadding is > 0;
+        private readonly int _blockFrames = Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1);
+        private readonly Queue<(MappedBytes Packet, int Index, PacketRecord Record, long First, long Samples, bool FollowsGap)> _held = new();
+        private readonly Queue<long> _tail = new();
+        private List<(long First, long Samples)>? _heldRanges;
+        private long _containerTrim;
         private readonly SortedDictionary<int, long> _bandwidths = [];
 
         private Identification? _identification;
@@ -510,7 +513,6 @@ public sealed partial class VorbisParser
 
         private void AddAudio(MappedBytes packet)
         {
-            FlushHeld();
             int index = _records.Packets.Count;
             PacketRecord record = Read(packet);
             _records.Add(packet.FileStart, record);
@@ -563,16 +565,33 @@ public sealed partial class VorbisParser
                     // libvorbis is given a granule position only with a packet it accepts as audio, so a position on an empty, a
                     // not-audio or an invalid packet is not taken.
                     TrackPosition(packet);
-                    if (_delaysFeed && !packet.IsCut && _walker is not null)
+                    NoteTail(_lastReturned);
+                    if (_delaysFeed && _walker is not null)
                     {
-                        _held = (packet, index, record);
-                        return;
+                        if (packet.IsCut)
+                        {
+                            // A cut packet is lost whatever the padding says: what is held goes first, in order.
+                            FlushHeld();
+                        }
+                        else
+                        {
+                            _held.Enqueue((packet, index, record, _decoded - _lastReturned, _lastReturned, _pendingGap));
+                            _pendingGap = false;
+                            _records.CodedEnds.Add(NoBandwidth);
+                            while (_held.Count > _blockFrames)
+                            {
+                                WalkOldest();
+                            }
+
+                            return;
+                        }
                     }
 
                     Walk(packet, index, record);
                     return;
             }
 
+            NoteTail(0);
             _records.CodedEnds.Add(NoBandwidth);
         }
 
@@ -724,7 +743,6 @@ public sealed partial class VorbisParser
             }
 
             bool isEnd = packet.IsEndOfStream;
-            _endSeen |= isEnd;
 
             // libvorbis loses its count at a gap and at the packet after a refused one, and counts again from the first block after it
             // (the first block of the stream is the same case). The first position taken is then measured by those samples.
@@ -742,6 +760,12 @@ public sealed partial class VorbisParser
                 _hasAnchor = true;
                 _firstPositionField = packet.EndPositionField;
                 _firstPositionPacket = _packets - 1;
+
+                // The start trimming is the first samples of the packet that carries the position, as libvorbis discards them (block.c, "trim the beginning").
+                if (StartTrimming(report: false) is > 0 and long start)
+                {
+                    _ranges.Add((_decoded - _lastReturned, start));
+                }
             }
             else if (lost)
             {
@@ -753,7 +777,7 @@ public sealed partial class VorbisParser
                     _gapTrim += gap;
 
                     // The samples libvorbis discards (block.c, "trim the beginning") are the first ones of this packet's output.
-                    _gapRange = (_decoded - _lastReturned, gap);
+                    _ranges.Add((_decoded - _lastReturned, gap));
                 }
             }
             else if (!isEnd && Expected() != position)
@@ -815,6 +839,11 @@ public sealed partial class VorbisParser
             }
 
             _endTrim += trim > 0 ? (long)trim : 0;
+            if (trim > 0)
+            {
+                // The samples are the last ones of this packet's output (the packet that carries the position is the last of its page).
+                _ranges.Add((_decoded - (long)trim, (long)trim));
+            }
         }
 
         private sealed record EndCut(long Position, Node Field, long Trim, long Limit);
@@ -826,12 +855,14 @@ public sealed partial class VorbisParser
                 return;
             }
 
-            if (_held is not null)
+            _containerTrim = Math.Min(PaddingSamples(), _tail.Sum());
+            if (_held.Count > 0 && _containerTrim > 0)
             {
-                // The padding is capped at what the last packet returns, as the granule positions' end trimming is.
-                _containerEnd = Math.Min(ContainerPadding(), _lastReturned);
-                FlushHeld();
+                // The padding is stated before the first packet that is still held: the last ones, which it takes samples from.
+                _heldRanges = [(_decoded - _containerTrim, _containerTrim)];
             }
+
+            FlushHeld();
 
             StreamVerification? verification = _session?.Finish([]);
 
@@ -947,14 +978,34 @@ public sealed partial class VorbisParser
         }
 
         // The DiscardPadding of the track's last block in samples at the stream's rate, rounded to the nearest, halves up.
-        private long ContainerPadding() => (long)Math.Floor(((context.Configuration?.DiscardPadding ?? 0) * Rate) + 0.5);
+        private long PaddingSamples() => Core.ContainerPadding.ToSamples(context.Configuration?.DiscardPadding ?? 0, (int)Math.Min(Rate, int.MaxValue));
+
+        // The samples of the last frames of the track, the most the block that carries the padding can hold.
+        private void NoteTail(long returned)
+        {
+            if (!_delaysFeed)
+            {
+                return;
+            }
+
+            _tail.Enqueue(returned);
+            while (_tail.Count > _blockFrames)
+            {
+                _tail.Dequeue();
+            }
+        }
+
+        private void WalkOldest()
+        {
+            (MappedBytes packet, int index, PacketRecord record, long first, long samples, bool followsGap) = _held.Dequeue();
+            Walk(packet, index, record, isHeld: true, first, samples, followsGap);
+        }
 
         private void FlushHeld()
         {
-            if (_held is { } held)
+            while (_held.Count > 0)
             {
-                _held = null;
-                Walk(held.Packet, held.Index, held.Record);
+                WalkOldest();
             }
         }
 
@@ -964,14 +1015,15 @@ public sealed partial class VorbisParser
             // A container that has no granule positions states the padding itself (Matroska's DiscardPadding), capped at the samples decoded.
             if (_isContained && context.Configuration?.DiscardPadding is not null)
             {
-                long padding = ContainerPadding();
-                if (padding > _lastReturned)
+                long padding = PaddingSamples();
+                long held = _tail.Sum();
+                if (padding > held)
                 {
-                    _findings.Add(Severity.Warning, "vorbis.end-trimming-large", _parent, _ =>
-                        $"The DiscardPadding of the last block is {Samples(padding)}, more than the {_lastReturned} the last audio packet returns, which a decoder drops at most; the end trimming is taken as {_lastReturned}.");
+                    _findings.Add(Severity.Warning, "vorbis.discard-padding-large", _parent, _ =>
+                        ContainerPadding.LargeMessage(padding, held, _blockFrames));
                 }
 
-                return Math.Min(padding, _lastReturned);
+                return _containerTrim;
             }
 
             if (_beyondPackets is { } beyond)

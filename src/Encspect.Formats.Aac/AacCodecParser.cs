@@ -116,9 +116,18 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         // The padding at the end of the last block that the container states (Matroska's DiscardPadding) is what a decoder drops.
+        // (capped at the samples of that block's frames, as for every codec).
         if (context.Configuration?.DiscardPadding is { } padding && rate > 0)
         {
-            figures.TrimEnd((long)Math.Floor((padding * rate) + 0.5));
+            int frames = Math.Max(1, context.Configuration.DiscardPaddingFrames ?? 1);
+            long samples = ContainerPadding.ToSamples(padding, rate);
+            long held = Math.Min((long)frames * frame, figures.Samples);
+            if (samples > held)
+            {
+                findings.AddNow(Severity.Warning, "aac.discard-padding-large", ContainerPadding.LargeMessage(samples, held, frames), parent);
+            }
+
+            figures.TrimEnd(Math.Min(samples, held));
         }
 
         var leading = new List<Node>();

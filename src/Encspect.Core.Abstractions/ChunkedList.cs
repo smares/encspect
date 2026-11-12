@@ -43,6 +43,12 @@ public sealed class ChunkedList<T>
         Count++;
     }
 
+    public void Set(int index, in T item)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)index, (uint)Count, nameof(index));
+        _blocks[index >> BlockBits][index & (BlockSize - 1)] = item;
+    }
+
     public void SetLast(in T item)
     {
         ArgumentOutOfRangeException.ThrowIfZero(Count);

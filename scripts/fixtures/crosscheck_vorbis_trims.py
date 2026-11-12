@@ -35,14 +35,9 @@ DEFAULT_CLI = "dotnet " + str(ROOT / "src" / "Encspect.Cli" / "bin" / "Release" 
 DIFFERENT = {
     ("vorbis-discard-padding-large.mka", "ffmpeg"): (21504, 21632, "the padding (2,646 samples) is more than the last packet returns (128): the analyzer takes 128, FFmpeg 6.1.1 writes every sample of the packet"),
     ("vorbis-cut-last-packet.ogg", "oggdec"): (39936, 26816, "the file ends inside its last page, whose whole packets the analyzer decodes and libogg drops with the page"),
-    ("vorbis-end-page-repeated.ogg", "oggdec"): (29196, 39436, "OPEN: the packets after the first end-of-stream page lie past the end the decoder was told, so the measurements keep 29,196 where the report's Samples and oggdec give 39,436"),
-    ("vorbis-eos-mid-then-more.ogg", "oggdec"): (18956, 28896, "OPEN: as vorbis-end-page-repeated.ogg (the packets after an end-of-stream page in the middle are not measured)"),
-    ("vorbis-eos-then-eos.ogg", "oggdec"): (18956, 28896, "OPEN: as vorbis-end-page-repeated.ogg"),
-    ("vorbis-first-extreme.ogg", "oggdec"): (29196, 28172, "OPEN: not examined"),
-    ("vorbis-granule-errors.ogg", "oggdec"): (29696, 28672, "OPEN: not examined"),
-    ("vorbis-packet-errors.ogg", "oggdec"): (11264, 8192, "OPEN: not examined (a damaged stream; the packets libvorbis refuses)"),
-    ("vorbis-short-start-trim.ogg", "oggdec"): (26260, 25684, "OPEN: not examined"),
-    ("vorbis-skip-before-first.ogg", "oggdec"): (29696, 28672, "OPEN: not examined (a refused packet before the first position)"),
+    ("vorbis-end-page-repeated.ogg", "oggdec"): (38412, 39436, "oggdec decodes the packet after the repeated end-of-stream page, which the analyzer withholds after a gap (1,024 samples, the same packet crosscheck_vorbis_pcm.py lists): 38,412 kept and 1,024 withheld make the report's 39,436"),
+    ("vorbis-packet-errors.ogg", "oggdec"): (11264, 8192, "oggdec writes 1,024 fewer for each packet that codes no block, a reader behavior (docs/design/official-decoder-crosschecks.md, \"Today\"; docs/formats/ogg.md, \"keep\"): the analyzer agrees with libvorbis fed packet by packet"),
+    ("vorbis-skip-before-first.ogg", "oggdec"): (29696, 28672, "the same difference: oggdec writes 1,024 fewer for the one packet that codes no block"),
 }
 
 

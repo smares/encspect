@@ -107,15 +107,50 @@ public class VorbisTrimTests
         Assert.Equal(codedSamples, info.Verification!.DecodedSamples);
     }
 
-    // The last packet of vorbis-discard-padding-large returns 128 samples; its padding of 2,646 is capped at them, with a finding.
+    // The last frame of vorbis-discard-padding-large returns 128 samples; its padding of 2,646 is capped at them, with a finding.
     [Fact]
     public void A_padding_larger_than_the_last_packet_is_capped_with_a_finding()
     {
         Report report = Fixtures.AnalyzeMpeg("matroska/vorbis-discard-padding-large.mka");
 
-        Assert.Contains(report.Findings, f => f.Code == "vorbis.end-trimming-large");
+        Assert.Contains(report.Findings, f => f.Code == "vorbis.discard-padding-large");
         Assert.Equal("128 samples", Find(report.Root, "End Trimming")?.Value?.ToString());
         Assert.Equal(128, Measured("matroska/vorbis-discard-padding-large.mka").Measurements!.TrailingTrimmedSamples);
+    }
+
+    // RFC 9559 gives the padding per Block: a laced last block of three packets (128 samples in the last one) takes 200 samples from more than one packet, with no
+    // finding, and the decoder is told before the first of them.
+    [Fact]
+    public void A_padding_is_per_block_so_a_laced_last_block_can_hold_more_than_its_last_packet()
+    {
+        const string name = "matroska/vorbis-discard-padding-laced.mka";
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo info = Measured(name);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "vorbis.discard-padding-large");
+        Assert.Equal("200 samples", Find(report.Root, "End Trimming")?.Value?.ToString());
+        Assert.Equal(200, info.Measurements!.TrailingTrimmedSamples);
+        Assert.Equal(info.Samples, info.Measurements.Samples);
+    }
+
+    public static TheoryData<string> VorbisFixtures => VorbisDecoderFixtureTests.Names;
+
+    // What the report states for the stream (its Samples: the coded samples less the start, end and Gap Trimming, lost ones included) is what the measurements keep and
+    // skip: measured + lost + withheld. The trims are ranges inside the packets that carry them (block.c), so none of the measurements' counts is left over. Fixtures
+    // where trimmed positions were also lost or withheld would differ by them; none of the Vorbis fixtures does.
+    [Theory]
+    [MemberData(nameof(VorbisFixtures))]
+    public void The_measurements_keep_what_the_report_states(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec == "Vorbis"))
+        {
+            if (info.Measurements is { Status: MeasurementStatus.Complete } m)
+            {
+                Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+            }
+        }
     }
 
     // Gap Trimming: a position below the samples counted since the count was lost discards the difference at the start of the packet that carries
@@ -131,5 +166,14 @@ public class VorbisTrimTests
         StreamMeasurements m = info.Measurements!;
         Assert.Equal((1024L, 0L, 0L), (m.InnerTrimmedSamples, m.LeadingTrimmedSamples, m.TrailingTrimmedSamples));
         Assert.Equal((info.Samples, 0L, 0L, 0), (m.Samples, m.LostSamples, m.WithheldSamples, m.Gaps));
+
+        // The samples trimmed inside the stream are in the JSON report beside the total.
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report measured = Analyzer.CreateDefault().Analyze("a.ogg", file, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        using var output = new MemoryStream();
+        ReportJsonWriter.Write([measured], output);
+        using JsonDocument json = JsonDocument.Parse(output.ToArray());
+        JsonElement figures = json.RootElement[0].GetProperty("streams")[0].GetProperty("measurements");
+        Assert.Equal((1024, 1024), (figures.GetProperty("trimmedSamples").GetInt64(), figures.GetProperty("innerTrimmedSamples").GetInt64()));
     }
 }
