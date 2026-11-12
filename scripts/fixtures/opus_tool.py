@@ -1,7 +1,7 @@
 """The Opus tools of the cross-checks, and the sources the decoder and the notices refer to.
 
 - opus-1.5.2.tar.gz, pinned by SHA-256: libopus 1.5.2 (BSD-3-Clause, Copyright (c) 2001-2023 Xiph.Org, Skype Limited, Octasic, Jean-Marc Valin, Timothy B. Terriberry,
-  CSIRO, Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo, Microsoft Corporation, Amazon.com, Inc.). The decoder follows its decoding code (the reference
+  CSIRO, Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo, Mozilla, Amazon). The decoder follows its decoding code (the reference
   decoder of RFC 6716 as RFC 8251 updates it, and libopus where the RFC calls its repository current) and takes its tables as format data. The source is not
   redistributed; its COPYING is the text scripts/release/make_notices.py puts in THIRD-PARTY-NOTICES.md (--fetch checks the hash). build_libopus() builds it in a temporary
   directory with the default configuration (float decoding; OSCE, deep PLC and DRED off, as `configure.ac` leaves them) and without the SIMD intrinsics, so that

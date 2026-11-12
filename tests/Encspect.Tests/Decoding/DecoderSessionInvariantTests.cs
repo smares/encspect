@@ -25,6 +25,7 @@ public class DecoderSessionInvariantTests
         ["Dolby TrueHD"] = "truehd",
         ["MLP"] = "mlp",
         ["Vorbis"] = "vorbis",
+        ["Opus"] = "opus",
         ["MPEG-1 Layer I"] = "mpeg-audio",
         ["MPEG-1 Layer II"] = "mpeg-audio",
         ["MPEG-1 Layer III"] = "mpeg-audio",

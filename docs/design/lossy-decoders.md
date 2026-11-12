@@ -727,6 +727,19 @@ What the Vorbis pull request (rollout step 2) did differently from the text abov
 - **Cost:** per packet the decoder charges 22 units a sample and, per coefficient of each channel with a floor, 2 for the floor, 2 for the residue, 2 per bit of the block size's length for the transform and 2 for the window and the overlap (2 alone for a channel with an unused floor), and 1 per coefficient of each coupled channel. `DecoderWorkTests` and `MemoryTests` hold it (figures in [development.md](../development.md#vorbis-decoding)). The declared 2,048 units a byte stands, with the silence covered by the floor of the budget as the table says.
 - **Not built:** the inverse transform of an all-zero spectrum is skipped, but a silent channel's overlap is still charged; the floor figure above; a cut last packet is lost, not trimmed, whatever the padding says, and a track's padding reaches the decoder only for the frames still held (those of the block that carries it). A packet whose records could need more than the 2^24 ints the host lends is not decoded and reports `decode.frame-too-large`; the bound is tight (the records a pass can store).
 
+## As built: Opus
+
+What the Opus pull request (rollout step 3) did differently from the text above, or added to it. The decoder is `src/Encspect.Formats.Opus/Decoding`; the entropy pass (`OpusWalker`, `CeltSyntax`, `SilkSyntax`, `RangeDecoder`) is in the parser's project.
+
+- **The walk** runs in every analysis for every packet whose framing is valid (`OpusParser.Decoding.cs`): each SILK and CELT frame is read to its end with the range decoder, which gives its final range coder state, CELT's transient flag, stereo coding and intensity stereo bound; where the session decodes, the walk also writes the integers the decoder replays (`IntWriter`, lent through the session), so the decoder reads no coded bit. A frame that needs more bits than it holds is `opus.frame-overrun`, as libopus refuses it.
+- **Figures** (the gap wave 3 rows): statistics "Block Usage" and "Stereo Coding" (the value counts the codings, a frame that uses several counts for each) with the category series of the same names, "Frames With Redundancy", and "Intensity Stereo Bound" (lowest and highest hertz, and the numeric series per packet: the same name, unit and axis as the other formats).
+- **Gaps and empty frames (decisions 4 and 5):** the decoder does not conceal them: it starts over and withholds 80 ms (3,840 samples), "after a gap" or "empty frame". The concealment of a mode change that RFC 6716 section 4.5.2 recommends is decoded (decision 6), because the reference decoder's output depends on it.
+- **Trims:** the pre-skip is stated once before the first packet; the end trimming (the last page's granule position or Matroska's DiscardPadding) is stated when the stream ends, with the last packets held back by the feed delay (`DiscardPaddingFrames`, one packet), so `Trim` reaches the decoder before them.
+- **Final range:** the state of every frame equals libopus's on all packets of both sets of test vectors; the packet's state is the exclusive or of its frames' and redundancy's.
+- **Output** is planar floats at 48 kHz, full scale, with the header's output gain; the multistream mappings of families 0, 1, 2 and 255 are applied, family 3 is not decoded.
+- **Determinism and accuracy:** see [development.md](../development.md#opus-decoding); the cross-check builds libopus without SIMD.
+- **Cost:** per frame at least 22 units a sample and channel, plus units for each stage (CELT 22, SILK 18 per sample, provisional until `DecoderWorkTests` is calibrated).
+
 ## Unverified claims and estimates
 
 - **Unverified:**

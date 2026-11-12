@@ -8,6 +8,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
 - **libspeex:** the `COPYING` of libspeex 1.2.1, extracted from `speex-1.2.1.tar.gz`, the archive `scripts/fixtures/speex_tool.py` pins by SHA-256 (`4b44d4f2b38a370a2d98a78329fefc56a0cf93d1c1be70029217baae6628feea`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libspeex.txt`.
 - **libvorbis:** the `COPYING` of libvorbis 1.3.7, extracted from `libvorbis-1.3.7.tar.xz`, the archive `scripts/fixtures/vorbis_tool.py` pins by SHA-256 (`b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libvorbis.txt`.
+- **libopus:** the `COPYING` of libopus 1.5.2, extracted from `opus-1.5.2.tar.gz`, the archive `scripts/fixtures/opus_tool.py` pins by SHA-256 (`65c1d2f78b9f2fb20082c38cbe47c951ad5839345876e46941612ee87f9a7ce1`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libopus.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
@@ -39,6 +40,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 | Apple's ALAC reference implementation (commit c38887c5): the code of Encspect's ALAC parser and decoder derived from it (the magic cookie layout, the syntax of a frame's elements and the adaptive Golomb code of the residuals, which the walk of a frame follows; the adaptive predictor, the undoing of the channel mixing and the placing of the shifted bytes, which the decoder follows) | c38887c5 | Apache License 2.0 | both builds, all platforms |
 | libspeex 1.2.1: the code of Encspect's Speex parser derived from it (the walk over a packet's frames: the narrowband decoder's reading of the submodes, the skip of wideband layers, the in-band handling) and the tables of bits per submode | 1.2.1 | BSD 3-Clause | both builds, all platforms |
 | libvorbis 1.3.7: the code of Encspect's Vorbis decoder and of its entropy pass derived from it (the assignment and decoding of codebook codewords, the reading of the floors and residues and their end-of-packet behavior, the floor 1 and residue reconstruction, the overlap of the blocks) and the table of floor 1 amplitudes (format data, also in the specification) | 1.3.7 | BSD 3-Clause | both builds, all platforms |
+| libopus 1.5.2 and the reference decoder of RFC 6716: the code of Encspect's Opus decoder and of its entropy pass derived from them (the range decoder, the CELT and SILK frame syntax and reconstruction, the redundant frames and mode transitions) and the numeric tables (format data) | 1.5.2 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources, and its reading of the frame headers of stream versions 4 to 7 | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
 | minimp3 (commit ea99364f): the Layer III Huffman tables, scalefactor band tables and polyphase window of Encspect's MPEG audio decoder (format data), and the decoder's stages and the entropy pass, which follow its code operation by operation | ea99364f | CC0 1.0 (public domain dedication) | both builds, all platforms |
@@ -3172,6 +3174,57 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+## libopus
+
+Encspect's Opus decoder and its entropy pass are written from RFC 6716 as RFC 8251 updates it (the reference decoder in its Appendix A is under the Simplified BSD License, with the copyright notice of the RFC), and follow libopus 1.5.2 (https://opus-codec.org/, `celt/`, `silk/`, `src/`) where they follow code closely: the range decoder (`entdec.c`, `entcode.c`), the reading and reconstruction of CELT frames (`celt_decoder.c`, `bands.c`, `quant_bands.c`, `rate.c`, `cwrs.c`, `vq.c`, `modes.c`, `celt.c`, `mdct.c`, `kiss_fft.c`, `pitch.c`, `lpc.c`), the reading and reconstruction of SILK frames (`silk/dec_API.c`, `decode_frame.c`, `decode_indices.c`, `decode_pulses.c`, `decode_core.c`, `decode_parameters.c`, `NLSF_decode.c`, `NLSF2A.c`, `LPC_inv_pred_gain.c`, `bwexpander.c`, `stereo_decode_pred.c`, `stereo_MS_to_LR.c`, `resampler*.c`, `PLC.c`, `CNG.c`) and the frame flow, redundancy and mode transitions of `opus_decoder.c` and `opus_multistream_decoder.c`. The numeric tables (codebooks, band edges, the window, cosine and pulse tables) are format data that libopus is the public source of. The source files that follow it say so (`RangeDecoder.cs`, `CeltSyntax.cs`, `SilkSyntax.cs`, `SilkMath.cs`, `OpusWalker.cs`, `OpusTables.cs`, `Decoding/*.cs`). The `COPYING` of libopus, which names the Xiph.Org Foundation and the other authors:
+
+```
+Copyright 2001-2023 Xiph.Org, Skype Limited, Octasic,
+                    Jean-Marc Valin, Timothy B. Terriberry,
+                    CSIRO, Gregory Maxwell, Mark Borgerding,
+                    Erik de Castro Lopo, Mozilla, Amazon
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+- Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+- Neither the name of Internet Society, IETF or IETF Trust, nor the
+names of specific contributors, may be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Opus is subject to the royalty-free patent licenses which are
+specified at:
+
+Xiph.Org Foundation:
+https://datatracker.ietf.org/ipr/1524/
+
+Microsoft Corporation:
+https://datatracker.ietf.org/ipr/1914/
+
+Broadcom Corporation:
+https://datatracker.ietf.org/ipr/1526/
 ```
 
 ## libmpcdec

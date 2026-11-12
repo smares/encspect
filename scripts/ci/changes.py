@@ -52,8 +52,9 @@ AREAS = {
     "ogg-crosscheck": {
         "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Ogg", "Encspect.Formats.Opus", "Encspect.Formats.Speex", "Encspect.Formats.Vorbis", "Encspect.Tags.VorbisComment"],
         "fixtures": ["matroska", "ogg"],
-        "scripts": ["crosscheck_ogg_fixtures.py", "crosscheck_vorbis_pcm.py", "crosscheck_vorbis_trims.py", "compare_pcm.py", "vorbis_tool.py", "vorbis_tables.py", "vorbis_walk.py", "vorbis_opus_model.py", "make_vorbis_stress_fixtures.py"],
-        "globs": ["scripts/fixtures/make_*ogg*", "scripts/fixtures/make_*vorbis*", "scripts/fixtures/ogg_model.py", "scripts/fixtures/vorbis_pcm.c"],
+        "scripts": ["crosscheck_ogg_fixtures.py", "crosscheck_vorbis_pcm.py", "crosscheck_vorbis_trims.py", "compare_pcm.py", "vorbis_tool.py", "vorbis_tables.py", "vorbis_walk.py", "vorbis_opus_model.py", "make_vorbis_stress_fixtures.py",
+                    "crosscheck_opus_pcm.py", "opus_tool.py", "opus_tables.py"],
+        "globs": ["scripts/fixtures/make_*ogg*", "scripts/fixtures/make_*vorbis*", "scripts/fixtures/ogg_model.py", "scripts/fixtures/vorbis_pcm.c", "scripts/fixtures/opus_pcm.c"],
     },
     "musepack-crosscheck": {
         "projects": ["Encspect.Formats.Musepack", "Encspect.Tags.Ape"],

@@ -37,7 +37,10 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - stereo packets and frame packing;
 - whether every packet has the same size, as CBR writes them ("all n bytes", which opusinfo's "hard-CBR" confirms);
 - frames without data and padding bytes;
-- the bitrates.
+- the bitrates;
+- **Block Usage** (the CELT frames that use one long transform and those that split it into short blocks; series "Block Usage", per packet) and **Stereo Coding** (the stereo CELT frames that code bands with an angle between mid and side, as dual stereo or as intensity stereo; a frame can use several; series "Stereo Coding"), from the entropy pass;
+- **Intensity Stereo Bound** (the lowest and highest hertz from which a CELT frame codes intensity stereo, and the series "Intensity Stereo Bound", per packet: the lowest bound of the packet's frames, 21 bands of 5 ms frames mapped to hertz as 200 Hz per bin);
+- **Frames With Redundancy** (frames that end with a redundant CELT frame that bridges a mode change, RFC 6716 section 4.5.1) and the SILK frames read.
 
 ## Channel layout
 
@@ -55,11 +58,23 @@ From mapping family 0 or 1, in the Vorbis channel order, with the speakers named
 - Pre-skip and end trimming are compared with `opusdec`'s output, the packets' samples with libopus's.
 - The analyzer's counts have not been changed to the reference yet.
 
-## Not yet covered
+## Decoding
 
-- The SILK and CELT layers (planned: entropy pass).
+- **What is decoded:** SILK, CELT and hybrid frames of every stream, the redundant frames and the transitions between modes (RFC 6716 sections 4 and 4.5), the multistream channel mappings of families 0, 1, 2 and 255, and the header's output gain (RFC 7845 section 5.1), to planar floats at 48 kHz and full scale 1.0, unclipped. The decoder follows RFC 6716 as RFC 8251 updates it and libopus 1.5.2. It runs only where a front end asks for the samples or the measurements, since Opus stores no checksum.
+- **Entropy pass:** every audio packet whose framing is valid is walked while the packets are read, with the same code whether or not anything is decoded: the range coded data of each SILK and CELT frame is read to its end, which gives each frame's final range coder state (RFC 6716 section 6; the tests hold it to libopus's on every packet of the test vectors), CELT's transient flag, stereo coding and intensity stereo bound. A frame that needs more bits than it holds, which libopus refuses with an internal error, is `opus.frame-overrun` (Warning, counted) and its packet is not decoded.
+- **Gaps and empty frames:** a frame without data (discontinuous transmission, or lost) and a gap are not concealed: the decoder starts over and withholds 80 ms (the pre-roll of RFC 7845 sections 4.2 and 4.6) with the reasons "after a gap" and "empty frame". The concealment of a mode change that RFC 6716 section 4.5.2 recommends is decoded, so the samples equal the reference decoder's.
+- **Trims:** the pre-skip is the start trimming and the end trimming (the last page's granule position, or Matroska's DiscardPadding) reaches the measurer as a trimmed range, stated before the packet that holds it; the parser keeps the last packet of an unlaced Matroska block back as the other parsers do (the shared feed delay), so the end is known before it. The same ranges as for Vorbis.
+- **Accuracy** ([development.md](../development.md#opus-decoding)): the final range coder state of every packet of RFC 6716's and RFC 8251's test vectors equals the reference's, and the output of all 24 vector decodes agrees with libopus (built without SIMD) to 1.5 x 10^-7 of full scale; the Ogg fixtures to 2 x 10^-6 where mode changes are concealed.
+- **Cost:** per frame the decoder charges at least 22 units a sample and channel plus units for each stage; `DecoderWorkTests` holds the time per unit against the FLAC reference.
+
+## Not covered
+
+- Mapping family 3 (the demixing matrix of Ambisonics) and families this analyzer does not know: the matrix is read and reported, not applied; the decoder runs only where its channel mapping is one it can apply.
+- Packet loss concealment of lost frames and in-band forward error correction (the LBRR frames of SILK are read and dropped): a lost or empty frame resets the decoder instead (see Gaps and empty frames).
+- The deep PLC, OSCE and DRED extensions of libopus 1.5, which are off in its default build, and the fixed-point decoder.
+- After an empty frame or a gap, the decoded state differs from libopus's concealed state for about 1,920 samples, which fall in the withheld 80 ms and a little beyond.
 
 ## Articles
 
-- **Articles:** `opus-modes`, `opus-toc`, `opus-pre-skip`, `opus-channel-mapping`.
-- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`.
+- **Articles:** `opus-modes`, `opus-toc`, `opus-pre-skip`, `opus-channel-mapping`, `opus-celt`, `opus-silk`, `opus-range-coder`, `opus-transitions`.
+- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`, `intensity-stereo`, `block-switching`, `linear-prediction`.

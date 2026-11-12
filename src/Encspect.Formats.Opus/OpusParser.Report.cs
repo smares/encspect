@@ -245,7 +245,7 @@ public sealed partial class OpusParser
                 _blockUsageNode = blocks;
                 if (_stereoCelt > 0)
                 {
-                    Node stereo = Add(node, "Stereo Coding", NodeValue.Integer(_stereoCelt, "stereo CELT frames", "stereo CELT frame"), Explain.CeltStereo, Topics.OpusCelt);
+                    Node stereo = Add(node, "Stereo Coding", NodeValue.Integer(_angleFrames + _dualFrames + _intensityFrames, "stereo codings", "stereo coding"), Explain.CeltStereo, Topics.OpusCelt);
                     Add(stereo, "Mid/Side Stereo", Share(_angleFrames, _stereoCelt, "frame", "frames"), Explain.StereoAngle);
                     Add(stereo, "Dual Stereo", Share(_dualFrames, _stereoCelt, "frame", "frames"), Explain.StereoDual);
                     Add(stereo, "Intensity Stereo", Share(_intensityFrames, _stereoCelt, "frame", "frames"), Explain.StereoIntensity);
