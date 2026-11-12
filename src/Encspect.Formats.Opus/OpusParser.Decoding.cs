@@ -31,10 +31,13 @@ public sealed partial class OpusParser
 
     private sealed partial class StreamState
     {
-        // One packet waiting to be handed to the decoder: its record (null for a packet the decoder cannot read: cut, malformed or too deep) and where it lies.
-        private sealed record HeldPacket(MappedBytes Packet, int[]? Record, long First, int Samples, bool FollowsGap);
+        // One packet waiting to be handed to the decoder: its bytes (the record of the entropy pass is made again when it is fed, so that what a stream holds back is bytes, not
+        // integers: 255 streams of frames of 2.5 ms keep 2,300 packets), whether it can be read (not cut, malformed or too deep), whether the walk restarts before it, and where it lies.
+        private sealed record HeldPacket(MappedBytes Packet, int Index, bool IsReadable, bool RestartsWalk, long First, int Samples, bool FollowsGap);
 
         private readonly IntWriter _writer = new();
+        private readonly IntWriter _feedWriter = new();
+        private OpusWalker[]? _feedWalkers;
         private readonly Queue<HeldPacket> _held = new();
         private OpusWalker[]? _walkers;
         private IDecodeSession? _session;
@@ -91,10 +94,10 @@ public sealed partial class OpusParser
 
             bool unreadable = packet.IsCut || isMalformed || samples == 0;
             bool follows = packet.FollowsGap;
-            int[]? record = null;
+            bool restarts = follows || _areWalkersStale;
             if (!unreadable)
             {
-                if (follows || _areWalkersStale)
+                if (restarts)
                 {
                     foreach (OpusWalker walker in _walkers)
                     {
@@ -103,7 +106,7 @@ public sealed partial class OpusParser
                 }
 
                 _session ??= StartSession();
-                _writer.IsEnabled = _session.IsDecoding;
+                _writer.IsEnabled = false;
                 _writer.Clear();
                 if (!WalkPacket(packet, index, out bool isOverrun))
                 {
@@ -123,10 +126,6 @@ public sealed partial class OpusParser
                             $"{Count(count, "CELT frame needs", "CELT frames need")} more bits than {(count == 1 ? "it holds" : "they hold")}, which libopus refuses with an internal error (RFC 6716, section 4.1.1: a range decoder reads zeros past its data; libopus checks the position after a CELT frame). The first at 0x{packet.FileStart:X}; the packet is not decoded.");
                     }
                 }
-                else if (_session.IsDecoding)
-                {
-                    record = _writer.Written.ToArray();
-                }
             }
             else
             {
@@ -141,7 +140,7 @@ public sealed partial class OpusParser
                 return;
             }
 
-            _held.Enqueue(new HeldPacket(packet, record, first, samples, follows));
+            _held.Enqueue(new HeldPacket(packet, index, !unreadable, restarts, first, samples, follows));
             _heldSamples += samples;
             while (_held.Count > _holdFrames && _heldSamples - _held.Peek().Samples >= HoldSamples)
             {
@@ -269,21 +268,78 @@ public sealed partial class OpusParser
                 _session!.Trim(_head!.PreSkip, long.MaxValue / 4);
             }
 
-            if (held.Record is null)
+            if (!held.IsReadable || !_session!.IsDecoding || !MakeRecord(held))
             {
                 _session!.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, held.Packet.FileStart), "Packet", held.First, held.Samples) { IsUnreadable = true, FollowsGap = held.FollowsGap });
                 return;
             }
 
-            SampleBuffers lent = _session!.Lend(held.Record.Length, 1);
+            ReadOnlySpan<int> record = _feedWriter.Written;
+            SampleBuffers lent = _session.Lend(record.Length, 1);
             if (lent.IsEmpty)
             {
                 _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { FollowsGap = held.FollowsGap });
                 return;
             }
 
-            held.Record.CopyTo(lent.Narrow);
+            record.CopyTo(lent.Narrow);
             _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { IsWalked = true, FollowsGap = held.FollowsGap });
+        }
+
+        // The record of the entropy pass for a packet that is about to be decoded: the walk again, with the walkers of the feeding side, which see the packets in the order the first walk did
+        // and restart where it did.
+        private bool MakeRecord(HeldPacket held)
+        {
+            if (_feedWalkers is null)
+            {
+                _feedWalkers = new OpusWalker[_records.StreamCount];
+                int coupled = _head!.Family == 0 ? (_head.Channels == 2 ? 1 : 0) : _head.Coupled;
+                for (int s = 0; s < _feedWalkers.Length; s++)
+                {
+                    _feedWalkers[s] = new OpusWalker(disableInv: s >= coupled);
+                }
+            }
+
+            if (held.RestartsWalk)
+            {
+                foreach (OpusWalker walker in _feedWalkers)
+                {
+                    walker.Reset();
+                }
+            }
+
+            _feedWriter.IsEnabled = true;
+            _feedWriter.Clear();
+            ReadOnlySpan<byte> data = held.Packet.Span;
+            int streams = _records.StreamCount;
+            _feedWriter.Add(streams);
+            int position = 0;
+            for (int s = 0; s < streams; s++)
+            {
+                PartRecord part = _records.Part(held.Index, s);
+                if (part.Status != PartStatus.Valid)
+                {
+                    return false;
+                }
+
+                int channels = Toc.IsStereo(part.TocByte) ? 2 : 1;
+                int at = position + part.Header;
+                _feedWriter.Add(part.Frames);
+                for (int f = 0; f < part.Frames; f++)
+                {
+                    int length = _records.FrameLengths[part.FirstFrame + f];
+                    FrameFacts facts = _feedWalkers[s].Walk(_feedWriter, data.Slice(at, length), Toc.Mode(part.TocByte), Toc.Bandwidth(part.TocByte), Toc.FrameSamples(part.TocByte), channels);
+                    at += length;
+                    if (facts.IsOverrun)
+                    {
+                        return false;
+                    }
+                }
+
+                position += part.Length;
+            }
+
+            return true;
         }
 
         private bool _hasTrim;

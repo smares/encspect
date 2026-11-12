@@ -210,6 +210,13 @@ public sealed partial class Mp4Parser
             return;
         }
 
+        if (raw[0] != 0)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.opus-version",
+                $"The Opus specific box has version {raw[0]}, where the encapsulation defines version 0 and says a reader must not read another; its fields are not read, so the track is not analyzed.", node);
+            return;
+        }
+
         int channels = raw[1];
         int family = raw[10];
         if (family != 0 && raw.Length < 13 + channels)

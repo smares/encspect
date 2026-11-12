@@ -1148,6 +1148,8 @@ internal sealed class StreamMeasurer
         long trailing = 0;
         long leadingWithheld = 0;
         long trailingWithheld = 0;
+        long leadingTrimmedGap = 0;
+        long trailingTrimmedGap = 0;
         long[] withheld = [.. _withheld];
         if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)
         {
@@ -1155,6 +1157,10 @@ internal sealed class StreamMeasurer
             // the part before the start trimming and the part from the end trimming on.
             long leadingFrom = Math.Max(_codedStart, Math.Min(_trimStart, _firstReceived));
             long trailingTo = Math.Min(_codedEnd, Math.Max(_trimEnd, _received));
+
+            // Those positions no block carried are trimmed samples all the same.
+            leadingTrimmedGap = leadingFrom - _codedStart;
+            trailingTrimmedGap = _codedEnd - trailingTo;
             leading = Math.Max(0, _firstReceived - leadingFrom);
             trailing = Math.Max(0, trailingTo - _received);
             leadingWithheld = leading > 0 ? Math.Min(leading, Overlap(_leading, leadingFrom, _firstReceived, withheld) + _leadingOverflow) : 0;
@@ -1184,9 +1190,9 @@ internal sealed class StreamMeasurer
             LeadingWithheldSamples = leadingWithheld,
             TrailingWithheldSamples = trailingWithheld,
             WithheldByReason = WithheldCounts.From(withheld),
-            LeadingTrimmedSamples = _trimmedLeading,
+            LeadingTrimmedSamples = _trimmedLeading + leadingTrimmedGap,
             InnerTrimmedSamples = _trimmedInner,
-            TrailingTrimmedSamples = _trimmedTrailing + _pendingInner,
+            TrailingTrimmedSamples = _trimmedTrailing + _pendingInner + trailingTrimmedGap,
             Gaps = _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0),
             SampleRate = _format.SampleRate,
             ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,

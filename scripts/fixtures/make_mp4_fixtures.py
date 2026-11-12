@@ -633,9 +633,9 @@ def ogg_opus_packets(name, count):
     return packets[2:2 + count]
 
 
-def dops(channels, pre_skip, rate, gain=0, family=0, streams=0, coupled=0, mapping=()):
+def dops(channels, pre_skip, rate, gain=0, family=0, streams=0, coupled=0, mapping=(), version=0):
     """The Opus specific box (dOps) of the Opus in ISO base media encapsulation: the identification header's fields, big-endian, without the magic."""
-    body = u8(0) + u8(channels) + u16(pre_skip) + u32(rate) + struct.pack(">h", gain) + u8(family)
+    body = u8(version) + u8(channels) + u16(pre_skip) + u32(rate) + struct.pack(">h", gain) + u8(family)
     if family:
         body += u8(streams) + u8(coupled) + bytes(mapping)
     return box(b"dOps", body)
@@ -663,6 +663,40 @@ def opus_in_mp4():
             "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
         }))
     return out
+
+
+def opus_edit_list():
+    """The packets of external-opusenc-96.opus in MP4 with an edit list that starts at the pre-skip and plays 72,000 samples (1.5 s): the track holds 76 packets of 960 samples, 72,960, so
+    the edit leaves 648 samples at the end, which the end trimming takes; the stream's samples are 72,000, as the Ogg file's and as the edit list plays them."""
+    packets = ogg_opus_packets("external-opusenc-96.opus", 1000)
+    durations = [opus_packet_samples(p) for p in packets]
+    entry = mp4a(2, 48000, dops(2, 312, 48000), format=b"Opus")
+    track = Track(1, packets, 48000, 2, entry, durations=durations, chunk=10, edits=[(1500, 312)])
+    data, records, offsets = movie([track])
+    return [("opus-edit-list-in-mp4", data, {
+        "description": "Opus in MP4 with an edit list: pre-skip 312 in the dOps box and the edit's media time, 1.5 s of presentation, so the 648 samples after it are the end trimming (the encapsulation, 4.4).",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [{"codec": "Opus", "sample_rate": 48000, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2], "samples": 72000, "is_vbr": True}],
+        "units": unit_list(offsets[0], packets, 10),
+        "fields": {"MP4/moov/trak/Gapless/Samples (Edit List)": "72000 samples", "MP4/moov/trak/Gapless/Encoder Padding (Edit List)": "648 samples"},
+        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
+    })]
+
+
+def opus_version():
+    """An Opus specific box of version 1, which the encapsulation does not define: the track is not read."""
+    packets = ogg_opus_packets("external-libopus-stereo-silk-20ms-fec.opus", 10)
+    durations = [opus_packet_samples(p) for p in packets]
+    entry = mp4a(2, 48000, dops(2, 312, 48000, version=1), format=b"Opus")
+    track = Track(1, packets, 48000, 2, entry, durations=durations, chunk=10)
+    data, records, offsets = movie([track])
+    return [("opus-dops-version-1-in-mp4", data, {
+        "description": "An Opus specific box of version 1: the encapsulation defines version 0 only, so the analyzer reads none of its fields and does not analyze the track.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [], "units": [], "fields": {},
+        "findings": [["mp4.opus-version", "version 1"], ["mp4.codec-not-analyzed", "holds Opus"]],
+        "crosscheck": {"ffprobe": False, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only.", "ffprobe": "FFmpeg refuses an Opus specific box that is not version 0, so it lists no packet."}},
+    })]
 
 
 def opus_packet_samples(packet):
@@ -1339,7 +1373,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_version() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

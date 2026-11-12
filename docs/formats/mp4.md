@@ -44,7 +44,7 @@ Box by box:
 - **Bitrate mode:** whether the bitrate varies comes from Encoding Params, else from an avgBitrate of 0 (ISO/IEC 14496-1 7.2.6.6.2).
 - **Where the samples node goes:** into the mdat box that holds all the track's samples, or with its ranges into the MP4 node where they span boxes.
 
-Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md), [Apple Lossless](alac.md) or [Opus](opus.md) (the `Opus` sample entry: its `dOps` box holds the identification header's fields, which are put together as the header and handed to the Opus parser as the first packet; each sample is one packet). Other codings, among them FLAC (`fLaC`) and Dolby TrueHD (`mlpa`), are shown as boxes with `mp4.codec-not-analyzed`.
+Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md), [Apple Lossless](alac.md) or [Opus](opus.md) (the `Opus` sample entry: its `dOps` box holds the identification header's fields, which are put together as the header and handed to the Opus parser as the first packet; each sample is one packet; the pre-skip is the box's, and what the track's samples hold after its one media edit is the end trimming, as the encapsulation's section 4.4 has the edit list carry it). Other codings, among them FLAC (`fLaC`) and Dolby TrueHD (`mlpa`), are shown as boxes with `mp4.codec-not-analyzed`.
 
 - **Units counted:** a sample counts when its first byte is in the file; one the file ends inside is handed to the codec parser with the bytes present and flagged as cut (`MappedBytes.IsCut`), so a raw AAC access unit of 1,024 samples counts them and is also reported as lost samples; a sample with no byte in the file or of 0 bytes counts nothing.
 - **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg.packets-not-analyzed`).
@@ -79,7 +79,8 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 - durations that disagree: mdhd's duration against the sum of stts's durations, tkhd's against the edit list or the media (ISO/IEC 14496-12 8.3.2.3);
 - no moov, and moov after mdat (an info: the file does not start playing before it is read to the end);
 - an edit list and iTunSMPB that disagree on the encoder delay or padding, or an iTunSMPB whose total is not the track's duration (Apple Lossless's duration leaves out the padding, which is accepted);
-- a chan or chnl layout that disagrees with the codec's.
+- a chan or chnl layout that disagrees with the codec's;
+- an Opus specific box of a version other than 0 (`mp4.opus-version`): the encapsulation defines no other, so none of its fields is read and the track is not analyzed.
 - a text item of a user data atom that states more bytes than the atom holds (`mp4.text-size-invalid`), and bytes at the end of such an atom that are too few for an item's size and language (`mp4.text-item-truncated`).
 
 ## QuickTime user data text

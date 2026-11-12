@@ -2128,6 +2128,42 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(heldPerPacket < DecodingFrameBound, $"Decoding held {heldPerPacket:F2} more bytes per further packet at the last packet than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // Decoding holds back at least 120 ms of packets for the end trimming (OpusParser.Decoding.cs, HoldSamples), as their bytes: 255 streams of CELT frames of 2.5 ms (family 255, a packet
+    // of 255 self-delimited frames of 3 bytes) are 2,304 packets of about 1.3 KB each. The records of the entropy pass are made when a packet is fed, so the peak stays near the
+    // packets' own bytes plus the report (the design's memory table, "Opus").
+    [Fact]
+    public void HoldingManyStreamsOfShortOpusFramesStaysBounded()
+    {
+        const int packets = 2_600;
+        const int streams = 255;
+        byte[] head = [.. "OpusHead"u8, 1, streams, 0, 0, 0x80, 0xBB, 0, 0, 0, 0, 255, streams, 0, .. Enumerable.Range(0, streams).Select(i => (byte)i)];
+        var builder = new OggBuilder().Page(7, 0, 2, head).Page(7, 0, 0, [.. "OpusTags"u8, .. OggBuilder.VorbisComment("Encspect")]);
+        var packet = new List<byte>();
+        for (int s = 0; s < streams; s++)
+        {
+            packet.Add(0xE0);
+            if (s < streams - 1)
+            {
+                packet.Add(3);
+            }
+
+            packet.AddRange([0x11, 0x22, 0x33]);
+        }
+
+        byte[] bytes = [.. packet];
+        for (int done = 0; done < packets; done += 10)
+        {
+            builder.Page(7, (done + 10) * 120L, done + 10 == packets ? (byte)4 : (byte)0, [.. Enumerable.Repeat(bytes, 10)]);
+        }
+
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } };
+        (Report report, long kept, long peak) = Measure("holding.opus", builder.Bytes, options: options);
+
+        output.WriteLine($"{kept / 1_000_000.0:F1} MB kept and {peak / 1_000_000.0:F1} MB peak for {packets} packets of {bytes.Length} bytes");
+        Assert.True(peak < 60_000_000, $"The live heap grew by {peak / 1_000_000.0:F1} MB.");
+        GC.KeepAlive(report);
+    }
+
     // Mapping family 255 with 255 streams (RFC 7845, section 5.1.1.3) and packets of one byte, whose
     // first stream's self-delimited framing breaks: the streams after it are implied as missing, where
     // each once kept a 20-byte record (about 5 KB per packet of 2 bytes in the file).
