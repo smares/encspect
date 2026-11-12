@@ -1,7 +1,7 @@
 namespace Encspect.Formats.Opus.Decoding;
 
 // The concealment of a CELT frame (celt_decode_lost of celt_decoder.c, with pitch.c and celt_lpc.c of libopus 1.5.2: BSD-3-Clause, notice in THIRD-PARTY-NOTICES.md), which the
-// analyzer runs only for the 5 ms that RFC 6716, section 4.5.2, has a decoder synthesize at a change of mode without redundancy (docs/design/lossy-decoders.md, decision 6).
+// analyzer runs only for the 5 ms that RFC 6716, section 4.5, has a decoder synthesize at a change of mode without redundancy (docs/design/lossy-decoders.md, decision 6).
 // A frame that is lost is a gap and is never concealed.
 internal sealed partial class CeltDecoder
 {

@@ -4,7 +4,7 @@ namespace Encspect.Formats.Opus.Decoding;
 
 // The decoder of one Opus stream: the frame by frame flow of opus_decode_frame (opus_decoder.c of libopus 1.5.2, BSD-3-Clause, notice in THIRD-PARTY-NOTICES.md) over the
 // records of the entropy pass (OpusWalker): the SILK and CELT layers, the redundant frames, and at a change of mode without redundancy the 5 ms of concealment that RFC 6716,
-// section 4.5.2, recommends, cross-faded into the new mode's output (decision 6 of docs/design/lossy-decoders.md). Output is planar floats at 48 kHz, full scale 1.0, with the
+// section 4.5, recommends, cross-faded into the new mode's output (decision 6 of docs/design/lossy-decoders.md). Output is planar floats at 48 kHz, full scale 1.0, with the
 // header's output gain applied. A frame that carries no data is not decoded here: the host's decoder resets the stream (Reset) and withholds what depends on its state.
 internal sealed class OpusStreamDecoder
 {

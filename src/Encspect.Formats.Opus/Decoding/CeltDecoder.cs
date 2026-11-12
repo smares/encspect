@@ -8,7 +8,7 @@ namespace Encspect.Formats.Opus.Decoding;
 // notice in THIRD-PARTY-NOTICES.md) in single precision, in the order of the reference, so that the output is the same on every platform. The decoder holds the state that
 // crosses frames: the history of the output (the overlap and the postfilter's memory), the energies of the frames before (the coarse energy prediction and the
 // anti-collapse), the postfilter's parameters, the random state and the de-emphasis memory. Where the reference conceals a lost frame (celt_decode_lost, PlcLost) the decoder
-// does it only for the 5 ms that RFC 6716, section 4.5.2, recommends at a change of mode.
+// does it only for the 5 ms that RFC 6716, section 4.5, recommends at a change of mode.
 internal sealed partial class CeltDecoder(int channels)
 {
     public const int DecodeBufferSize = 2048;

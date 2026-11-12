@@ -115,7 +115,7 @@ internal sealed class OpusWalker(bool disableInv)
         w.Add(celtToSilk ? 1 : 0);
         w.Add(redundancyBytes);
 
-        // A mode change without redundancy conceals the mode before it for 5 ms (section 4.5.2): a CELT frame after a frame of another mode that did not end with a
+        // A mode change without redundancy conceals the mode before it for 5 ms (section 4.5): a CELT frame after a frame of another mode that did not end with a
         // redundant CELT frame, and a frame of another mode after a CELT frame. The inner call of libopus leaves the mode before it and no redundancy behind.
         bool transition = (transitionToCelt || transitionFromCelt) && !redundancy;
         int pm = previousMode;
