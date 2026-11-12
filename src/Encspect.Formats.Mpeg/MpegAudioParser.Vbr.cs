@@ -690,7 +690,7 @@ public sealed partial class MpegAudioParser
             {
                 // A version at the slice's end is found whole once the next slice follows.
                 Search(final: false);
-                Keep(MaxSignatureLength);
+                Keep(MaxSignatureLength + 1); // one byte of margin: at a bit shift the shifted data is a byte shorter
             }
         }
 

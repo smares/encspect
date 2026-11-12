@@ -1284,7 +1284,7 @@ def check(path, manifest, tools):
     multichannel = manifest.get("encoder", {}).get("multichannel")
     if multichannel:
         # An encoder-written multichannel stream: the decoder derived from the ISO software decodes it, with every multichannel CRC holding, into the channels the
-        # encoder was given, none silent (a tone in each).
+        # encoder was given, not all silent (decode_all reports only whether every channel is).
         errors, silent, channels, multilingual = mctoolamed_tool.decode_all(decoder, path)
         if errors or silent or multilingual or channels != multichannel["decoded_channels"]:
             problems.append(f"mctoolamed reports {errors} multichannel CRC errors, silent {silent}, {multilingual} multilingual channels and writes {channels} channels, "

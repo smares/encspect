@@ -160,8 +160,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - **Philips' multichannel MP2 encoder 2.5** (1999, Rarewares' Windows build, under Wine): a second encoder-written source of MPEG-2 multichannel Layer II beside mctoolame.
    - **LAME before 3.90** (Rarewares' Windows builds of 3.20 to 3.89, under Wine, the releases that change what a stream shows) **and 3.95 to 3.98.4** (built from source as `old_lame_tool.py` builds the others), for the encoder detection of old rips.
    - **A survey** of the encoders Rarewares keeps against what Encspect covers, with their licenses, ranked by value and feasibility; it ends in a list for the lead, not in code.
-
-3. **Encoder-written MPEG audio fixtures** (the lead, 2026-11-11): the multichannel Layer II encoders mctoolame and Philips' encoder 2.5, LAME before 3.90 (Rarewares' Windows builds 3.20 to 3.89b under Wine) and LAME 3.95.1 to 3.98.4 from source, with cross-checks (`make_external_mpeg_fixtures.py`, [development.md](development.md)). The `lame_enc.dll` builds that front ends ship (CDex, Audiograbber, dBpoweramp, Exact Audio Copy, Rarewares' bundles) are checked only where their version string or behavior differs from the releases covered; none is a fixture yet (the checkpoint of this change lists what was looked at and why).
+   - **`lame_enc.dll` builds** (CDex, Audiograbber, dBpoweramp, Exact Audio Copy, Rarewares' bundles; the lead, 2026-11-11), only where their version string or behavior differs from the releases covered: none is a fixture yet. Rarewares' bundles carry the DLL of 3.99.5, 3.100 and 4.0 only, which the branch already has from source, and the front ends' older DLLs have no stable address; a host for the BladeEnc-compatible API (built with mingw, run under Wine) waits for archives the project can pin.
 
 ### 0.4: Free decoders and routes complete
 

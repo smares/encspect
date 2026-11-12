@@ -47,11 +47,6 @@ BUILDS = {
         sha256="9616d728a57ab77d856bd7ad7b46ac2c690c9b1a0a8b30d380887b64a2c9d8b2",
         addresses=["https://www.rarewares.org/rrw/files/lame/lame3.57.zip"], probe=[],
         banner="LAME version 3.57 (www.sulaco.org/mp3)"),
-    "3.62": dict(
-        archive="lame3.62.zip",
-        sha256="a9daaa1583d8d3563718d0de80b9927dff8df137f698ee2fa2ed037dfa293c7b",
-        addresses=["https://www.rarewares.org/rrw/files/lame/lame3.62.zip"], probe=[],
-        banner="LAME version 3.62 (www.sulaco.org/mp3)"),
     "3.70": dict(
         archive="lame3.70.zip",
         sha256="4d3b0bcadaee5a9f7e23e4f69d33138e0384d03aeb052dee0c7c5c78c405346e",

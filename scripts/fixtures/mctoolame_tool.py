@@ -40,6 +40,7 @@ import wave
 import downloads
 
 URL = "https://sourceforge.net/projects/mctoolame/files/mctoolame/mctoolame-01a/mctoolame-01a.tgz/download"
+CACHE = pathlib.Path(__file__).resolve().parents[2] / ".cache" / "encoders"
 SHA256 = "e280e711a1402aaa1c45f8a9739b6f8d0ed5d590110579275c52c50c101ed905"
 ADDRESSES = [URL, "https://downloads.sourceforge.net/project/mctoolame/mctoolame/mctoolame-01a/mctoolame-01a.tgz"]
 
@@ -53,12 +54,16 @@ RATE_FIELD = bytes.fromhex("00800000442c07020028")
 # The site's own sample, five channels, 2003: not redistributable (no license), so it is fetched at its hash.
 SAMPLE_URL = "https://mctoolame.sourceforge.net/test.aiff-mpeg1-192.mp2"
 SAMPLE_SHA256 = "991e17a1f0a7508cb903d7e53b2fe694da11cb4ddad7b6c10030c55f90bb2eae"
-SAMPLE_ADDRESSES = [SAMPLE_URL]
+# The Wayback Machine holds a capture of 2025.
+SAMPLE_ADDRESSES = [SAMPLE_URL, downloads.archived(SAMPLE_URL, 2025)]
 
 
 def build():
     """Builds the encoder and unpacks its tables; returns the directory that holds both."""
-    directory = pathlib.Path(tempfile.mkdtemp(prefix="mctoolame-"))
+    directory = CACHE / "mctoolame"
+    if directory.exists():
+        shutil.rmtree(directory)
+    directory.mkdir(parents=True)
     archive = directory / "mctoolame.tgz"
     downloads.fetch(ADDRESSES, SHA256, archive)
     with tarfile.open(archive) as tar:
