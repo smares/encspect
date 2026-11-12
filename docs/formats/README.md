@@ -83,7 +83,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform and enhanced coupling not read (0.3); the audio blocks at the reduced rates not read (not planned) | no (0.3) | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
 | DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
 | Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |
-| Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Coded Bandwidth (from the TOC bytes), Block Usage, Stereo Coding, Intensity Stereo Bound (CELT) |
+| Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Coded Bandwidth (from the TOC bytes), Block Sizes, Stereo Coding, Intensity Stereo Bound (CELT) |
 | Speex | the coded frame data not read (0.4) | no (0.4) | none |
 | Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | Stereo Coding (SV4 to SV7) |
 | WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding |

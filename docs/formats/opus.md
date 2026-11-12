@@ -38,7 +38,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - whether every packet has the same size, as CBR writes them ("all n bytes", which opusinfo's "hard-CBR" confirms);
 - frames without data and padding bytes;
 - the bitrates;
-- **Block Usage** (the CELT frames that use one long transform and those that split it into short blocks; series "Block Usage", per packet) and **Stereo Coding** (the stereo CELT frames that code bands with an angle between mid and side, as dual stereo or as intensity stereo; a frame can use several; series "Stereo Coding"), from the entropy pass;
+- **Block Sizes** (the CELT frames that use one long transform and those that split it into short blocks, as Vorbis words it: entries "Long" and "Short"; series "Block Sizes", per packet) and **Stereo Coding** (each stereo CELT frame once, as MPEG and AAC name the codings: "Left/right stereo" for dual stereo, "Mid/side stereo", "Intensity stereo" for intensity stereo over left and right, "Mid/side and intensity stereo"; series "Stereo Coding"), from the entropy pass;
 - **Intensity Stereo Bound** (the lowest and highest hertz from which a CELT frame codes intensity stereo, and the series "Intensity Stereo Bound", per packet: the lowest bound of the packet's frames, 21 bands of 5 ms frames mapped to hertz as 200 Hz per bin);
 - **Frames With Redundancy** (frames that end with a redundant CELT frame that bridges a mode change, RFC 6716 section 4.5.1) and the SILK frames read.
 

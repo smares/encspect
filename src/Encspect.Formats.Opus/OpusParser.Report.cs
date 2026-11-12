@@ -239,16 +239,17 @@ public sealed partial class OpusParser
 
             if (_celtFrames > 0)
             {
-                Node blocks = Add(node, "Block Usage", NodeValue.Integer(_celtFrames, "CELT frames", "CELT frame"), Explain.CeltBlocks, Topics.BlockSwitching);
-                Add(blocks, "Long Blocks", Share(_celtFrames - _transientFrames, _celtFrames, "frame", "frames"), Explain.UsageLong);
-                Add(blocks, "Short Blocks", Share(_transientFrames, _celtFrames, "frame", "frames"), Explain.UsageShort);
+                Node blocks = Add(node, "Block Sizes", NodeValue.Integer(_celtFrames, "CELT frames", "CELT frame"), Explain.CeltBlocks, Topics.BlockSwitching);
+                Add(blocks, "Long", Share(_celtFrames - _transientFrames, _celtFrames, "frame", "frames"), Explain.UsageLong);
+                Add(blocks, "Short", Share(_transientFrames, _celtFrames, "frame", "frames"), Explain.UsageShort);
                 _blockUsageNode = blocks;
                 if (_stereoCelt > 0)
                 {
-                    Node stereo = Add(node, "Stereo Coding", NodeValue.Integer(_angleFrames + _dualFrames + _intensityFrames, "stereo codings", "stereo coding"), Explain.CeltStereo, Topics.OpusCelt);
-                    Add(stereo, "Mid/Side Stereo", Share(_angleFrames, _stereoCelt, "frame", "frames"), Explain.StereoAngle);
-                    Add(stereo, "Dual Stereo", Share(_dualFrames, _stereoCelt, "frame", "frames"), Explain.StereoDual);
-                    Add(stereo, "Intensity Stereo", Share(_intensityFrames, _stereoCelt, "frame", "frames"), Explain.StereoIntensity);
+                    Node stereo = Add(node, "Stereo Coding", NodeValue.Integer(_stereoCelt, "stereo CELT frames", "stereo CELT frame"), Explain.CeltStereo, Topics.OpusCelt);
+                    Add(stereo, "Left/right stereo", Share(_stereoFrames[0], _stereoCelt, "frame", "frames"), Explain.StereoDual);
+                    Add(stereo, "Mid/side stereo", Share(_stereoFrames[1], _stereoCelt, "frame", "frames"), Explain.StereoAngle);
+                    Add(stereo, "Intensity stereo", Share(_stereoFrames[2], _stereoCelt, "frame", "frames"), Explain.StereoIntensity);
+                    Add(stereo, "Mid/side and intensity stereo", Share(_stereoFrames[3], _stereoCelt, "frame", "frames"), Explain.StereoAngleIntensity);
                     _stereoCodingNode = stereo;
                 }
 

@@ -11,17 +11,18 @@ public sealed partial class OpusParser
     // A packet that has no intensity stereo bound: no CELT frame with intensity stereo, or one that was not walked.
     private const ushort NoBound = ushort.MaxValue;
 
-    private static readonly Category[] BlockUsageCategories =
+    private static readonly Category[] BlockSizeCategories =
     [
-        new("Long Blocks", Explain.UsageLong) { Topic = Topics.OpusCelt },
-        new("Short Blocks", Explain.UsageShort) { Topic = Topics.OpusCelt },
+        new("Long", Explain.UsageLong) { Topic = Topics.OpusCelt },
+        new("Short", Explain.UsageShort) { Topic = Topics.OpusCelt },
     ];
 
     private static readonly Category[] StereoCategories =
     [
-        new("Mid/Side Stereo", Explain.StereoAngle) { Topic = Topics.OpusCelt },
-        new("Dual Stereo", Explain.StereoDual) { Topic = Topics.OpusCelt },
-        new("Intensity Stereo", Explain.StereoIntensity) { Topic = Topics.IntensityStereo },
+        new("Left/right stereo", Explain.StereoDual) { Topic = Topics.OpusCelt },
+        new("Mid/side stereo", Explain.StereoAngle) { Topic = Topics.MidSideStereo },
+        new("Intensity stereo", Explain.StereoIntensity) { Topic = Topics.IntensityStereo },
+        new("Mid/side and intensity stereo", Explain.StereoAngleIntensity) { Topic = Topics.IntensityStereo },
     ];
 
     private sealed partial class StreamState
@@ -44,13 +45,11 @@ public sealed partial class OpusParser
         private long _celtFrames;
         private long _transientFrames;
         private long _stereoCelt;
-        private long _angleFrames;
-        private long _dualFrames;
-        private long _intensityFrames;
+        private readonly long[] _stereoFrames = new long[4];
         private long _silkFrames;
         private long _redundantFrames;
         private long _rangeOverruns;
-        private readonly CategorySeriesBuilder _blockUsage = new("Block Usage", BlockUsageCategories, "frame", concept: GraphConcept.BlockSwitching);
+        private readonly CategorySeriesBuilder _blockUsage = new("Block Sizes", BlockSizeCategories, "frame", concept: GraphConcept.BlockSwitching);
         private readonly CategorySeriesBuilder _stereoCoding = new("Stereo Coding", StereoCategories, "frame", concept: GraphConcept.StereoCoding);
         private readonly ChunkedList<ushort> _bounds = new();
         private int _boundCount;
@@ -159,9 +158,7 @@ public sealed partial class OpusParser
             long celtFrames = 0;
             long transientFrames = 0;
             long stereoCelt = 0;
-            long angleFrames = 0;
-            long dualFrames = 0;
-            long intensityFrames = 0;
+            Span<long> stereoFrames = stackalloc long[4];
             ushort lowest = NoBound;
             ushort highest = 0;
             int blocks = 0;
@@ -208,22 +205,14 @@ public sealed partial class OpusParser
                         if (facts.Celt.Channels == 2 && !facts.Celt.IsSilence)
                         {
                             stereoCelt++;
-                            if (facts.Celt.AngleBands > 0)
+                            bool hasIntensity = facts.Celt.IntensityBands > 0;
+                            // One entry for each frame, the names of the MPEG and AAC parsers: the bands below the intensity bound are coded as left and right (dual stereo) or as mid and side
+                            // with an angle, the bands from the bound up as intensity stereo.
+                            int code = facts.Celt.DualBands > 0 ? (hasIntensity ? 2 : 0) : facts.Celt.AngleBands > 0 || !hasIntensity ? (hasIntensity ? 3 : 1) : 2;
+                            stereoFrames[code]++;
+                            stereoCodes[Math.Min(stereos++, stereoCodes.Length - 1)] = (byte)code;
+                            if (hasIntensity)
                             {
-                                angleFrames++;
-                                stereoCodes[Math.Min(stereos++, stereoCodes.Length - 1)] = 0;
-                            }
-
-                            if (facts.Celt.DualBands > 0)
-                            {
-                                dualFrames++;
-                                stereoCodes[Math.Min(stereos++, stereoCodes.Length - 1)] = 1;
-                            }
-
-                            if (facts.Celt.IntensityBands > 0)
-                            {
-                                intensityFrames++;
-                                stereoCodes[Math.Min(stereos++, stereoCodes.Length - 1)] = 2;
                                 ushort hertz = (ushort)(CeltTables.EBand5Ms[Math.Min(facts.Celt.Intensity, CeltSyntax.Bands)] * 200);
                                 bound = bound == NoBound ? hertz : Math.Min(bound, hertz);
                                 lowest = lowest == NoBound ? hertz : Math.Min(lowest, hertz);
@@ -241,9 +230,10 @@ public sealed partial class OpusParser
             _celtFrames += celtFrames;
             _transientFrames += transientFrames;
             _stereoCelt += stereoCelt;
-            _angleFrames += angleFrames;
-            _dualFrames += dualFrames;
-            _intensityFrames += intensityFrames;
+            for (int k = 0; k < 4; k++)
+            {
+                _stereoFrames[k] += stereoFrames[k];
+            }
             _lowestBound = lowest == NoBound ? _lowestBound : _lowestBound == NoBound ? lowest : Math.Min(_lowestBound, lowest);
             _highestBound = Math.Max(_highestBound, highest);
             _blockUsage.Add(blockCodes[..blocks]);
