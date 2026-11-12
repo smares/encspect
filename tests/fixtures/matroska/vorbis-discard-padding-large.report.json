@@ -9796,8 +9796,8 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "vorbis.end-trimming-large",
-        "message": "The DiscardPadding of the last block is 2646 samples, more than the 128 the last audio packet returns, which a decoder drops at most; the end trimming is taken as 128.",
+        "code": "vorbis.discard-padding-large",
+        "message": "The DiscardPadding of the last block is 2646 samples, more than the 128 samples its frame holds (RFC 9559, section 5.1.3.5.7); the end trimming is taken as 128.",
         "offset": 146,
         "length": 7301,
         "path": [

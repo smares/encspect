@@ -1,5 +1,5 @@
 {
- "description": "The same packets with a DiscardPadding of 60 ms (2,646 samples), more than the last packet returns (128 samples): the end trimming is capped at what the packet returns, as the granule positions' end trimming is.",
+ "description": "The same packets with a DiscardPadding of 60 ms (2,646 samples), more than the last frame returns (128 samples): the end trimming is capped at what the frames of the block hold.",
  "length": 7454,
  "format": "Matroska",
  "ebml": {
@@ -863,7 +863,7 @@
    "contains": "Lavf60.16.100"
   },
   {
-   "code": "vorbis.end-trimming-large",
+   "code": "vorbis.discard-padding-large",
    "contains": "DiscardPadding"
   }
  ],
