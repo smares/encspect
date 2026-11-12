@@ -27,6 +27,7 @@ Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 """
 
 import argparse
+import array
 import json
 import pathlib
 import shlex
@@ -53,6 +54,8 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 #   converged to libopus's in the 1,920 samples that follow the withheld span before the next frame of no bytes: the largest difference there is 1.9e-3 of full scale.
 EXPECTED = {
     "opus-packets-corrupt.opus": {"analyzer": [], "reference": [[960, 30720]]},
+    "matroska/size-past-parent.mka": {"analyzer": [], "reference": [], "skip": "an element whose size runs past its parent: FFmpeg's demuxer reads other blocks than the analyzer, so the packets differ"},
+    "matroska/block-group-damaged.mka": {"analyzer": [], "reference": [], "skip": "a damaged block group: FFmpeg's demuxer reads other blocks than the analyzer, so the packets differ"},
     "opus-toc-configs.opus": {"analyzer": [], "reference": [[60480, 67200], [69120, 71040]], "exclude": ["67200:69120"]},
 }
 
@@ -112,8 +115,25 @@ def samples_of(packet):
     return size * frames
 
 
+def clipped_spans(manifest_path, stream, block=960):
+    """The position ranges libopus's soft clipping (opus_pcm_soft_clip, which opus_decode_float applies to a packet that reaches |x| > 1 and which carries a memory into the next
+    one) changes, where the analyzer's unclipped floats reach full scale: each block of 960 samples that does, and the block after it, as FIRST:END."""
+    data = array.array("f")
+    data.frombytes((manifest_path.parent / stream["pcm"]).read_bytes())
+    channels = stream["channels"]
+    spans, offset = [], 0
+    for first, count in stream["runs"]:
+        for at in range(0, count, block):
+            size = min(block, count - at)
+            chunk = data[(offset + at) * channels:(offset + at + size) * channels]
+            if chunk and max(abs(x) for x in chunk) >= 1.0:
+                spans.append((first + at, first + at + size + block))
+        offset += count
+    return [f"{a}:{b}" for a, b in spans]
+
+
 def default_files():
-    return sorted(p for p in [*FIXTURES.glob("ogg/*.opus"), *FIXTURES.glob("fuzz/opus-*.bin")])
+    return sorted(FIXTURES.glob("ogg/*.opus"))
 
 
 def ffmpeg_reference(ffmpeg, path):
@@ -144,6 +164,7 @@ def main(argv=None):
     parser.add_argument("--keep", type=pathlib.Path, help="keep the dumps and the references in this folder")
     parser.add_argument("--work", type=pathlib.Path, help="build libopus and keep the downloads in this folder")
     parser.add_argument("--no-vectors", action="store_true")
+    parser.add_argument("--containers", action="store_true", help="also the Opus tracks of the Matroska and MP4 fixtures: FFmpeg copies the first audio track into an Ogg file (the packets stay), which libopus decodes")
     args = parser.parse_args(argv)
     files = [p for p in (args.files or default_files()) if p.read_bytes()[:4] == b"OggS" and b"OpusHead" in p.read_bytes()[:100]]
     work = args.work or pathlib.Path(tempfile.mkdtemp(prefix="opus-"))
@@ -153,14 +174,23 @@ def main(argv=None):
     with tempfile.TemporaryDirectory() as temporary:
         base = args.keep or pathlib.Path(temporary)
         base.mkdir(parents=True, exist_ok=True)
-        inputs = [(p, p.name) for p in files]
+        inputs = [(p, p.name, p) for p in files]
+        if args.containers:
+            for folder_name, patterns in (("matroska", ("*.mka", "*.mkv", "*.webm")), ("mp4", ("*.mp4", "*.m4a"))):
+                for container in sorted(c for pattern in patterns for c in (FIXTURES / folder_name).glob(pattern)):
+                    if b"Opus" not in container.read_bytes() and b"opus" not in container.read_bytes():
+                        continue
+                    remuxed = base / f"remux-{folder_name}-{container.stem}.opus"
+                    result = subprocess.run([args.ffmpeg, "-v", "error", "-nostdin", "-y", "-i", str(container), "-map", "0:a:0", "-c", "copy", "-f", "ogg", str(remuxed)], capture_output=True)
+                    if result.returncode == 0 and remuxed.exists() and b"OpusHead" in remuxed.read_bytes()[:200]:
+                        inputs.append((container, f"{folder_name}/{container.name}", remuxed))
         if not args.files and not args.no_vectors:
             vectors = opus_tool.fetch_vectors(work, "8251")
             for n in range(1, 13):
                 target = base / f"testvector{n:02d}.opus"
                 vector_to_ogg(vectors / f"testvector{n:02d}.bit", 2, target)
-                inputs.append((target, f"testvector{n:02d}.opus"))
-        for number, (path, name) in enumerate(inputs):
+                inputs.append((target, f"testvector{n:02d}.opus", target))
+        for number, (path, name, ogg) in enumerate(inputs):
             dump = base / f"dump{number}"
             result = subprocess.run(shlex.split(args.pcmdump) + [str(dump), str(path)], capture_output=True)
             if result.returncode != 0:
@@ -171,13 +201,18 @@ def main(argv=None):
             streams = json.loads(manifest.read_text())["streams"] if manifest.exists() else []
             folder = base / f"work{number}"
             folder.mkdir(exist_ok=True)
-            reference = opus_tool.decode_pcm(binary, "ogg", [path], folder / "libopus.f32")
+            if EXPECTED.get(name, {}).get("skip"):
+                print(f"ok   {name} (not compared: {EXPECTED[name]['skip']})")
+                continue
+            reference = opus_tool.decode_pcm(binary, "ogg", [ogg], folder / "libopus.f32")
             problems, notes = [], []
             if reference is None:
                 if streams:
                     problems.append("libopus refuses the stream, and the analyzer decodes it")
                 else:
                     notes.append("libopus refuses the stream, and the analyzer decodes nothing")
+            elif not streams and ogg != path:
+                notes.append("the container hands the analyzer no audio it can decode (encrypted or protected frames), which FFmpeg's copy does not show")
             elif not streams:
                 problems.append("the analyzer decodes no stream, libopus decodes one")
             else:
@@ -186,7 +221,7 @@ def main(argv=None):
                     problems.append(f"the analyzer decoded {streams[0]['channels']} channels, libopus {channels}")
                 else:
                     exclude = []
-                    for span in EXPECTED.get(name, {}).get("exclude", []):
+                    for span in EXPECTED.get(name, {}).get("exclude", []) + clipped_spans(manifest, streams[0]):
                         exclude += ["--exclude", span]
                     if not (folder / "libopus.f32").stat().st_size:
                         notes.append("libopus decodes nothing (libogg drops the page the file is cut in), and the analyzer decodes its whole packets")
@@ -197,7 +232,8 @@ def main(argv=None):
                     if outcome is not None:
                         compared += 1
                         pinned = EXPECTED.get(name, {"analyzer": [], "reference": []})
-                        if outcome["notComparedOnlyInAnalyzer"] != pinned["analyzer"] or outcome["notComparedOnlyInReference"] != pinned["reference"]:
+                        # Of a container the packets are the demuxers' reading, which differs for damaged files (FFmpeg drops, joins or keeps blocks another way): only the samples both decode are held.
+                        if ogg == path and (outcome["notComparedOnlyInAnalyzer"] != pinned["analyzer"] or outcome["notComparedOnlyInReference"] != pinned["reference"]):
                             problems.append(f"libopus: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}, expected {pinned}")
                     if channels <= 2 and not problems and name.startswith("testvector"):
                         second = ffmpeg_reference(args.ffmpeg, path)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes the Opus streams that stress the entropy pass and the decoder (malformed frames), into tests/fixtures/fuzz as .bin files that FuzzRegressionTests analyzes within 20 s
-each and crosscheck_opus_pcm.py compares with libopus:
+each (their samples are not compared with libopus: it refuses most of their packets and keeps the state of a refused packet, where the analyzer starts over):
 
 - opus-random-frames-every-config.bin: for each of the 32 configurations and for mono and stereo, frames of seeded random bytes of 1, 2, 7, 60 and 400 bytes (the range
   coder reads what it finds: most frames end in an overrun, which libopus refuses, or in odd symbols);
