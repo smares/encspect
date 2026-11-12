@@ -428,7 +428,9 @@ jobs:
           SHARD_FILTER: ${{ matrix.filter }}
           # OggOfficialDecodersTests, TtaOfficialDecodersTests, AacOfficialDecodersTests and Ac3OfficialDecodersTests list their pending, stale and new entries in the job summary of this one job.
           ENCSPECT_OFFICIAL_SUMMARY: ${{ matrix.shard == 'rest' && matrix.os == 'ubuntu-26.04' && '1' || '' }}
-        run: dotnet test tests/Encspect.Tests --no-build --configuration Release --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
+        # --blame names the test that was running when the test host crashed (Sequence_*.xml next to the results, kept by the artifact below):
+        # without it, the crash of the corrupt-c shard on main (run 43227012361, attempt 1) named no test and did not recur. No dump.
+        run: dotnet test tests/Encspect.Tests --no-build --configuration Release --blame --filter "$SHARD_FILTER" --logger "trx;LogFileName=${{ matrix.shard }}.trx" --results-directory "${{ runner.temp }}/trx"
 
       # The measurements' kernels (the FFT's Vector128 butterflies) must give the same bits on every path, which their determinism and fixture
       # tests hold (docs/design/spectral-analysis.md, "Determinism"). The vector paths of the decoders (FLAC's predictor, Monkey's Audio's filters) have narrower paths for machines without the wider
