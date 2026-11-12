@@ -373,7 +373,7 @@ internal sealed class SilkSyntax
             while (sumPulses[i] == 17)
             {
                 lshifts[i]++;
-                sumPulses[i] = dec.ICdf(SilkTables.PulsesPerBlockICdf.Slice((9 * 18) + (lshifts[i] == 10 ? 1 : 0), 18), 8);
+                sumPulses[i] = dec.ICdf(SilkTables.PulsesPerBlockICdf.Slice((9 * 18) + (lshifts[i] == 10 ? 1 : 0)), 8);
             }
         }
 
