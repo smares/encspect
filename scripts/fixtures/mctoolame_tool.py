@@ -54,8 +54,9 @@ RATE_FIELD = bytes.fromhex("00800000442c07020028")
 # The site's own sample, five channels, 2003: not redistributable (no license), so it is fetched at its hash.
 SAMPLE_URL = "https://mctoolame.sourceforge.net/test.aiff-mpeg1-192.mp2"
 SAMPLE_SHA256 = "991e17a1f0a7508cb903d7e53b2fe694da11cb4ddad7b6c10030c55f90bb2eae"
-# The Wayback Machine holds a capture of 2025.
-SAMPLE_ADDRESSES = [SAMPLE_URL, downloads.archived(SAMPLE_URL, 2025)]
+# The Wayback Machine's availability API lists a capture of 2025-11-21 (status 200). Its bytes were not fetched where this was written (the proxy there
+# closed the tunnel to web.archive.org), so only the SHA-256 would tell whether it is the file.
+SAMPLE_ADDRESSES = [SAMPLE_URL, downloads.archived(SAMPLE_URL, "20251121112252")]
 
 
 def build():

@@ -3793,7 +3793,7 @@
       {
         "severity": "Warning",
         "code": "mpeg.main-data-begin-exceeds-buffer",
-        "message": "2 frames reach back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x600 has a main_data_begin of 250 bytes where at most 192 are allowed. Encoders such as LAME exceed it (Encspect's LAME test files show it in VBR streams from 3.20 to 3.99.5), and decoders accept it.",
+        "message": "2 frames reach back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x600 has a main_data_begin of 250 bytes where at most 192 are allowed. Encoders such as LAME exceed it, and decoders accept it.",
         "offset": 1540,
         "length": 2,
         "path": [

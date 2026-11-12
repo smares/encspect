@@ -62,7 +62,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 - **The decoder buffer** of ISO/IEC 11172-3 holds one frame at the highest bitrate (bitrate_index 14) at the stream's sample rate:
   - so main_data_begin plus the frame's length may not exceed that frame's length, and main_data_begin is 0 at 320 kbps;
   - only MPEG-1 is checked: LAME's `--strictly-enforce-ISO` applies the rule to MPEG-2 with its top bitrate of 160 kbps, but that reading of ISO/IEC 13818-3 has not been confirmed against its text;
-  - breaking it is a warning, which says that encoders such as LAME exceed the limit (Encspect's LAME test files show it in VBR streams from 3.20 to 3.99.5) and that decoders accept it.
+  - breaking it is a warning, which says that encoders such as LAME exceed the limit and that decoders accept it; Encspect's LAME test files show it in VBR and ABR streams of releases from 3.20 to 4.0.
 
 ### Layer II audio data and multichannel
 
