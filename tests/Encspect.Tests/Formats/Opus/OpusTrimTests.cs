@@ -30,4 +30,21 @@ public class OpusTrimTests
             }
         }
     }
+
+    // The end trimming of 500 lies inside the 80 ms withheld after the last frame of no data: those positions are trimmed samples (the pre-skip's 312 and the 500 are 812), and
+    // the withheld samples are the ones outside the trims (7,680 less the 500), so that measured 62,088 + lost 960 + withheld 7,180 is the report's 70,228.
+    [Fact]
+    public void Trimmed_positions_under_a_withheld_span_count_as_trimmed_and_not_as_withheld()
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "ogg/opus-toc-configs.opus"));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        StreamInfo info = Analyzer.CreateDefault().Analyze("opus-toc-configs.opus", stream, options).Streams.Single(s => s.Codec == "Opus");
+
+        StreamMeasurements m = info.Measurements!;
+        Assert.Equal(70_228, info.Samples);
+        Assert.Equal((312L, 500L), (m.LeadingTrimmedSamples, m.TrailingTrimmedSamples));
+        Assert.Equal(812, m.LeadingTrimmedSamples + m.TrailingTrimmedSamples);
+        Assert.Equal((62_088L, 960L, 7_180L), (m.Samples, m.LostSamples, m.WithheldSamples));
+        Assert.Equal(7_180, m.WithheldByReason.EmptyFrame);
+    }
 }
