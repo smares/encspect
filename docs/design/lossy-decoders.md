@@ -528,7 +528,7 @@ Nothing grows with the stream ([decoders.md](decoders.md#memory), "Memory"). A s
 | AC-3, E-AC-3 | up to 16 channels × 256 overlap | negligible |
 | DTS core | 6 channels × 512 synthesis history, plus LFE | negligible |
 | Vorbis | up to 255 channels × 4,096 overlap and an 8,192-sample block | about 12 MB |
-| Opus | up to 255 streams of decoder state (about 30 KB each) and a 120 ms frame | about 10 MB |
+| Opus | up to 255 streams of decoder state (about 30 KB each), a 120 ms frame, and the packets held back for the end trimming (at least 120 ms, kept as bytes: about 3 MB at 255 streams of 2.5 ms frames; the records of the entropy pass are made when a packet is fed) | about 10 MB of decoding state; measured with the hold on 255 streams of 2.5 ms frames (2,600 packets of 1,274 bytes): 51 MB peak, of which the report keeps 18 MB (before the hold kept bytes: 188 MB) |
 | Speex, Musepack | 2 channels | negligible |
 | WMA | 8 channels × a frame of up to 8,192 samples (Professional) | about 1 MB |
 

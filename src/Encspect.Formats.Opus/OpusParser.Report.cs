@@ -125,14 +125,18 @@ public sealed partial class OpusParser
 
             long start = _audioStart;
             long length = _audioEnd - _audioStart;
+            // Packets that lie in several places (MP4's chunks with other data between them): the nodes spread over them as the samples' node does.
+            IReadOnlyList<ByteRange>? spread = _parent.Ranges;
             Node node = _parent.Add(new Node("Statistics", start, length, $"{Count(_packets, "packet", "packets")}, {(samples / (double)Rate).ToString("F3", CultureInfo.InvariantCulture)} s")
             {
+                Ranges = spread,
                 Kind = NodeKind.Statistics,
                 Description = Explain.Statistics,
                 Topic = Topics.OpusModes,
             });
 
-            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
+            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) =>
+                parent.Add(new Node(name, start, length, value) { Ranges = spread, Description = description, Topic = topic });
 
             Add(node, "Packets", NodeValue.Integer(_wholePackets), Explain.Packets);
             Add(node, "Frames", NodeValue.Integer(_frames), Explain.Frames);
@@ -172,7 +176,7 @@ public sealed partial class OpusParser
                 Add(node, "Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add(node, "Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
                 _isVariable = distribution.IsVariable();
-                distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
+                distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Ranges = spread, Description = description }, "Packet", "Packets");
             }
 
             Node sizes = Add(node, "Packet Sizes", _wholePackets == 0 ? "none whole" : _sizesDiffer
@@ -320,6 +324,7 @@ public sealed partial class OpusParser
             Records records = _records;
             return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new BlockedChildren([], records.Count, i => PacketNode(records, i)))
             {
+                Ranges = _parent.Ranges,
                 Kind = NodeKind.Stream,
                 Description = Explain.AudioPackets,
                 Topic = Topics.OpusToc,
