@@ -200,13 +200,65 @@ public class MpegWalkTests
         values[95] = 1;
         byte[] positions = new byte[40];
 
-        Assert.Equal(110, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+        Assert.Equal(110, Layer3Walker.IntensityStart(header, granule, values, positions));
 
         positions[14] = 7;
-        Assert.Equal(134, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+        Assert.Equal(134, Layer3Walker.IntensityStart(header, granule, values, positions));
 
         values[500] = 1;
-        Assert.Equal(-1, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+        Assert.Equal(-1, Layer3Walker.IntensityStart(header, granule, values, positions));
+    }
+
+    // The lower edge in the 576-line scale of a short band's triple of windows is the offset, in the order the data come in, of the triple's first band.
+    [Fact]
+    public void IntensityInShortBlocksStartsAtTheTripleOfTheFirstBandAnyWindowLeavesFree()
+    {
+        // 44,100 Hz short bands are 4, 4, 4, 6, ... lines wide, each once per window (band i, window i % 3). Window 0 codes up to band 2, window 1 and 2 up to band 1:
+        // band 2 of window 1 is the first intensity band (the group of bands 6 to 8 starts at 3 * 4 + 3 * 4 = 24, which is 3 times the band's line 8).
+        var granule = new GranuleSyntax { Bands = BandKind.Short, BandRow = 5, ShortBandCount = 39 };
+        int[] values = new int[576];
+        values[24] = 1;
+        values[16] = 1;
+        values[20] = 1;
+
+        Assert.Equal(24, Layer3Walker.IntensityStart(new MpegHeader(0xFFFB1050), granule, values, new byte[40]));
+    }
+
+    [Fact]
+    public void IntensityInMixedBlocksStartsAtTheLongBandsEndOrTheShortTriple()
+    {
+        var granule = new GranuleSyntax { Bands = BandKind.Mixed, BandRow = 5, LongBandCount = 8, ShortBandCount = 30 };
+        ReadOnlySpan<byte> widths = Layer3Syntax.BandWidths(granule);
+        int longLines = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            longLines += widths[i];
+        }
+
+        // A right channel coded only in the long bands up to band 6 leaves band 7 to intensity stereo.
+        int[] values = new int[576];
+        values[longLines - widths[7] - 2] = 1;
+        Assert.Equal(longLines - widths[7], Layer3Walker.IntensityStart(new MpegHeader(0xFFFB1050), granule, values, new byte[40]));
+
+        // A first short band coded in window 0 puts the first intensity band at window 1 of that band, whose triple starts where the short bands do.
+        values[longLines] = 1;
+        Assert.Equal(longLines, Layer3Walker.IntensityStart(new MpegHeader(0xFFFB1050), granule, values, new byte[40]));
+    }
+
+    [Fact]
+    public void AnIllegalMpeg2PositionIsSkippedAsInMpeg1()
+    {
+        // MPEG-2 at 22,050 Hz: the illegal position is 64 (the largest a band's scalefactor length codes), not 7.
+        var granule = new GranuleSyntax { Bands = BandKind.Long, BandRow = 3, LongBandCount = 22 };
+        ReadOnlySpan<byte> widths = Layer3Syntax.BandWidths(granule);
+        int[] values = new int[576];
+        values[0] = 1;
+        byte[] positions = new byte[40];
+        positions[1] = 64;
+        positions[2] = 7;
+        var header = new MpegHeader(0xFFF31050);
+
+        Assert.Equal(widths[0] + widths[1], Layer3Walker.IntensityStart(header, granule, values, positions));
     }
 
     [Fact]

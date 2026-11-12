@@ -24,26 +24,31 @@ public class AacCodingSeriesTests
             Unit[] units = Units(stream, windows);
             CategorySeries? pairs = Series(stream, "Stereo Coding");
             Series? bandwidth = stream.Series.FirstOrDefault(s => s.Name == "Coded Bandwidth");
+            Series? bound = stream.Series.FirstOrDefault(s => s.Name == "Intensity Stereo Bound");
             Assert.Equal(units.Length, windows.Count);
             Assert.Equal(units.Length, pairs?.Count ?? units.Length);
             int core = CoreRate(report, units);
             bool is960 = FrameLength(report) == 960;
             int point = 0;
+            int boundPoint = 0;
             for (int unit = 0; unit < units.Length; unit++)
             {
                 Node[] blocks = units[unit].Blocks;
                 bool hasPoint = bandwidth is not null && point < bandwidth.X.Length && bandwidth.X.Span[point] == units[unit].Offset;
+                bool hasBoundPoint = bound is not null && boundPoint < bound.X.Length && bound.X.Span[boundPoint] == units[unit].Offset;
 
                 // A block that does not reach its END has nodes up to where it broke, which count a channel stream the tally leaves out.
                 if (blocks.Any(b => b.Children.All(c => c.Name != "END")))
                 {
                     point += hasPoint ? 1 : 0;
+                    boundPoint += hasBoundPoint ? 1 : 0;
                     continue;
                 }
 
                 var expectedWindows = new List<int>();
                 var expectedPairs = new List<int>();
                 int highest = -1;
+                int lowestBound = -1;
                 foreach (Node element in blocks.SelectMany(b => b.Children).Where(c => c.Name is "SCE" or "LFE" or "CPE"))
                 {
                     Node? shared = element.Children.FirstOrDefault(c => c.Name == "ICS Info");
@@ -58,12 +63,29 @@ public class AacCodingSeriesTests
                     if (element.Name == "CPE")
                     {
                         expectedPairs.Add(PairCode(element, shared));
+
+                        // The lowest band of the second channel's intensity stereo bands, at its window's lines.
+                        Node second = element.Children.Single(c => c.Name == "Channel 1");
+                        Node secondInfo = second.Children.FirstOrDefault(c => c.Name == "ICS Info") ?? shared!;
+                        HashSet<(int, int)> intensityBands = Bands(Value(second, "Intensity Stereo Bands") ?? "none");
+                        if (intensityBands.Count > 0)
+                        {
+                            int edge = Hertz(core, is960, LeadingNumber(Value(secondInfo, "Window Sequence")) == 2, intensityBands.Min(b => b.Item2));
+                            lowestBound = lowestBound < 0 ? edge : Math.Min(lowestBound, edge);
+                        }
                     }
                 }
 
                 Assert.True(expectedWindows.SequenceEqual(Values(windows, unit)), $"{name}, unit {unit}: window sequences {string.Join(",", Values(windows, unit))}, the nodes give {string.Join(",", expectedWindows)}");
                 List<int> actualPairs = pairs is null ? [] : Values(pairs, unit);
                 Assert.True(expectedPairs.SequenceEqual(actualPairs), $"{name}, unit {unit}: stereo coding {string.Join(",", actualPairs)}, the nodes give {string.Join(",", expectedPairs)}");
+                Assert.Equal(lowestBound >= 0, hasBoundPoint);
+                if (hasBoundPoint)
+                {
+                    Assert.True(lowestBound == bound!.Values.Span[boundPoint], $"{name}, unit {unit}: intensity stereo bound {bound.Values.Span[boundPoint]} Hz, the nodes give {lowestBound} Hz");
+                    boundPoint++;
+                }
+
                 Assert.Equal(highest >= 0, hasPoint);
                 if (hasPoint)
                 {
@@ -73,6 +95,15 @@ public class AacCodingSeriesTests
             }
 
             Assert.Equal(point, bandwidth?.Values.Length ?? 0);
+            Assert.Equal(boundPoint, bound?.Values.Length ?? 0);
+            if (bound is not null)
+            {
+                Node boundNode = bound.Anchor!;
+                Assert.Equal("Intensity Stereo Bound", boundNode.Name);
+                double[] boundValues = bound.Values.ToArray();
+                Assert.Equal([$"{boundValues.Min():0} Hz", $"{boundValues.Max():0} Hz"], boundNode.Children.Select(c => c.Value!.ToString()!));
+            }
+
             if (bandwidth is not null)
             {
                 // The node's lowest, most common (the lowest of equally common) and highest come from another accumulator than the series.

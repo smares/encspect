@@ -15,6 +15,6 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decodin
 
 **In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1 in faad2 and fdk-aac, where fdk-aac clears the mid/side flags before applying intensity stereo; FFmpeg inverts with ms_mask_present 2 too, and Encspect counts as faad2 and fdk-aac do), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). Those codebooks count in any pair, as FFmpeg 6.1.1 (`decode_cpe`) and faad2 decode them, though fdk-aac applies intensity stereo only with a common window, where its source quotes the specification as allowing them; a pair without one is reported with a warning, and Stereo Coding counts it as intensity stereo.
 
-**What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands; the statistics count both.
+**What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands; the statistics count both. Intensity Stereo Bound, in MPEG audio, AAC and Opus, gives the lowest frequency, in hertz, from which each frame or unit codes intensity stereo.
 
 **In Musepack**, SV4 to SV6 headers carry an intensity stereo flag, which libmpcdec 1.2.6 refuses.

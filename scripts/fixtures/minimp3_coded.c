@@ -4,7 +4,7 @@
  * minimp3 (CC0) is included with its implementation after minimp3_coded.py has patched a copy of its header: L3_huffman records where
  * its loop ends (the line after the last quadruple it decoded, and two more where the loop stops between a quadruple's pairs, the
  * convention the analyzer's walk follows, except that a quadruple that does not fit in the 576 lines is not decoded), the block type and the band table. No other
- * line of minimp3 changes.
+ * line of minimp3 changes besides the record of the first intensity stereo band of each granule (the offset of its band triple), "intensity".
  *
  *     cc -O1 -o minimp3_coded minimp3_coded.c -lm
  */
@@ -33,6 +33,7 @@ int main(int argc, char **argv)
     while (position < size)
     {
         g_coded_n = 0;
+        g_isb_n = 0;
         info.layer = 0;
         mp3dec_decode_frame(&dec, data + position, (int)(size - position), pcm, &info);
         if (!info.frame_bytes)
@@ -48,6 +49,9 @@ int main(int argc, char **argv)
                     printf("%s%d", k ? "," : "", g_coded[i].sfbtab[k]);
                 printf("]}");
             }
+            printf("],\"intensity\":[");
+            for (i = 0; i < g_isb_n; i++)
+                printf("%s%d", i ? "," : "", g_isb[i]);
             printf("]}\n");
         }
         position += info.frame_bytes;

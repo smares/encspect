@@ -134,7 +134,8 @@ internal static class Layer3Kernels
         }
     }
 
-    // The highest band of each window (index modulo 3) in which the right channel has a nonzero pair (minimp3's L3_stereo_top_band).
+    // The highest band of each window (index modulo 3) in which the right channel has a nonzero pair (minimp3's L3_stereo_top_band). The parser's Layer3Walker.IntensityStart
+    // applies the same rule to the quantized values to report the intensity stereo bound; keep the two together.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void TopBands(ReadOnlySpan<float> right, ReadOnlySpan<byte> widths, int bandCount, Span<int> maxBand)
     {

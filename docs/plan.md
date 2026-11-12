@@ -169,7 +169,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - WavPack `built-block-size-too-large`, `-too-small` and `built-block-trailing-byte`: the report says 24,000 samples, the measurements start at 11,025 and hold 12,975; the damaged first block's 11,025 samples are neither decoded nor counted lost, and no finding says so.
    - WavPack `built-set-without-final-limit`: 16,000 samples lost against a report of 3,000, and 2,000 of the report's samples are neither measured nor shown apart.
    - TrueHD `built-parameters-change.thd`: the decoder stops at the stream parameters change (`truehd.stream-parameters-change`); the report says 4,800 samples, the measurements 1,600, and the 3,200 samples after it are counted nowhere, with no finding.
-5. **Small fixes found by the Opus decoder review** (queued with the intensity stereo bound, 2026-11-12):
+5. **Small fixes queued with the intensity stereo bound** (the lead, 2026-11-12; the first from parallel local runs of the tests, the second from the Opus decoder's MP4 route):
    - `MemoryTests`' `SharedPoolGuard` fails `DecodingManyVorbisPacketsHoldsNothingPerPacket`, `ManyEmptyVorbisCommentsStayBounded` and an MP4 memory test in parallel local runs; each passes alone, so the guard sees another test's pool use.
    - Opus in MP4 takes no ©too writer claim from the container, as AC-3 and AAC in MP4 do.
 

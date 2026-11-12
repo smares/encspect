@@ -579,6 +579,19 @@ public class FrameFiguresTests
     }
 
     [Fact]
+    public void A_layer_II_bound_at_or_above_the_highest_subband_of_a_low_rate_table_is_no_figure()
+    {
+        // 64 kbps stereo at 44,100 Hz takes one of the tables of 8 or 12 subbands, so the bound of mode extension 2 (12) lies at or above the last of them
+        // and that of mode extension 0 (4) below it.
+        var atTheTop = new MpegHeader(0xFFFD4060);
+        var below = new MpegHeader(0xFFFD4040);
+        Assert.True(Layer2AudioData.SubbandCount(Layer2AudioData.TableFor(atTheTop)) <= 12);
+
+        Assert.False(FrameFigures.Layer2(new byte[100], atTheTop).HasIntensityBound);
+        Assert.Equal(2756, FrameFigures.Layer2(new byte[100], below).IntensityBound);
+    }
+
+    [Fact]
     public void A_layer_III_intensity_bound_is_the_lower_edge_of_its_line_in_hertz()
     {
         // Line 288 of 576 at 44,100 Hz is 11,025 Hz; line 1 is 38.28 Hz, rounded to 38.
