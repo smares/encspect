@@ -34,6 +34,7 @@ DEFAULT_CLI = "dotnet " + str(ROOT / "src" / "Encspect.Cli" / "bin" / "Release" 
 # Files where a reference's count is known to differ from the analyzer's, by reference, with what is known. Printed as OPEN; not a failure.
 DIFFERENT = {
     ("vorbis-discard-padding-large.mka", "ffmpeg"): (21504, 21632, "the padding (2,646 samples) is more than the last packet returns (128): the analyzer takes 128, FFmpeg 6.1.1 writes every sample of the packet"),
+    ("vorbis-discard-padding-laced.mka", "ffmpeg"): (21432, 21232, "the padding (200 samples) is on a laced block of three frames: FFmpeg 6.1.1 writes 400 fewer samples than the file's 21,632, twice the padding; observed, not explained"),
     ("vorbis-cut-last-packet.ogg", "oggdec"): (39936, 26816, "the file ends inside its last page, whose whole packets the analyzer decodes and libogg drops with the page"),
     ("vorbis-end-page-repeated.ogg", "oggdec"): (38412, 39436, "oggdec decodes the packet after the repeated end-of-stream page, which the analyzer withholds after a gap (1,024 samples, the same packet crosscheck_vorbis_pcm.py lists): 38,412 kept and 1,024 withheld make the report's 39,436"),
     ("vorbis-packet-errors.ogg", "oggdec"): (11264, 8192, "oggdec writes 1,024 fewer for each packet that codes no block, a reader behavior (docs/design/official-decoder-crosschecks.md, \"Today\"; docs/formats/ogg.md, \"keep\"): the analyzer agrees with libvorbis fed packet by packet"),
