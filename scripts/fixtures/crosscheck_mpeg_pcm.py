@@ -49,9 +49,15 @@ EXPLAINED = {
                   "mpg123; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
     "external-lame357w-vbr.mp3": {
-        "ffmpeg": "the references disagree: in the granules at positions 48,596 to 49,710 (frames 42 and 43, LAME 3.57 -v, plain stereo, long blocks) the analyzer equals minimp3 "
-                  "(largest difference 2.4e-7) and mpg123 1.32.5 equals FFmpeg 6.1.1 (1e-6), and the two pairs differ by 0.0084 of full scale, in both channels and only near 22 kHz (the highest "
-                  "spectral lines); the cause is not established; the analyzer keeps minimp3, the reference it follows operation by operation"
+        "ffmpeg": "the references disagree, and the cause is found but not decided (an open item for the lead): at positions 48,596 to 49,710 (frame 42, granule 0, the side channel of this LAME 3.57 -v "
+                  "joint stereo stream) the analyzer equals minimp3 (largest difference 2.4e-7), and FFmpeg 6.1.1, mpg123 1.32.5 and libmad (madplay) equal each other (1e-6), the two groups "
+                  "differing by 0.0084 of full scale, in both channels and only near 22 kHz. The granule has big_values 1 and a count1 region (table A) of 144 quads that ends at line "
+                  "577: after the two big-value lines only 574 lines are left, so its last quad has two lines (574 and 575) inside the spectrum and two outside, and its first two values are "
+                  "both nonzero (the flags of 0xde). minimp3 dequantizes lines 574 and 575 and stops at the second pair (the end of its scalefactor bands); FFmpeg, mpg123 and libmad do not decode "
+                  "a count1 quad that does not fit in 576 lines (lines 574 and 575 stay 0). minimp3 changed to stop before a quad that does not fit equals FFmpeg to 1.1e-6 on this file "
+                  "(an experiment on a copy, not in this repository). The granule's bits fit its part2_3_length (the 144 quads end one bit before it, no overrun), and treating a quad that starts "
+                  "before the limit as decoded changes nothing. Only this granule of the file has nonzero values there (two others end the same way with a quad of zeros). The text of "
+                  "ISO/IEC 11172-3 is not in the repository or its cache; whether it prescribes either reading is not established; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
     "side-info-mono.mp3": {
         "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
