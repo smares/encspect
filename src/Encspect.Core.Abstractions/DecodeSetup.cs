@@ -8,6 +8,10 @@ public sealed record DecodeSetup
 
     public required int Channels { get; init; }
 
+    // State the parser built and its decoder needs again (the Vorbis setup model), which the host passes on unread: an analysis's own object, so that the parser and its decoder
+    // share it without a static cache. Null for a coding that has none.
+    public object? Shared { get; init; }
+
     // The width of a sample in the canonical layout's terms: ceil(BitsPerSample / 8) bytes are what the checksums hash, which
     // sets the per-sample charge (DecodeWork.ForSample) and its floor. For DSD, 8, with one byte of DSD per channel as one sample.
     public required int BitsPerSample { get; init; }

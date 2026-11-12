@@ -52,8 +52,8 @@ AREAS = {
     "ogg-crosscheck": {
         "projects": ["Encspect.Formats.Ogg", "Encspect.Formats.Opus", "Encspect.Formats.Speex", "Encspect.Formats.Vorbis", "Encspect.Tags.VorbisComment"],
         "fixtures": ["ogg"],
-        "scripts": ["crosscheck_ogg_fixtures.py"],
-        "globs": ["scripts/fixtures/make_*ogg*", "scripts/fixtures/make_*vorbis*", "scripts/fixtures/ogg_model.py"],
+        "scripts": ["crosscheck_ogg_fixtures.py", "crosscheck_vorbis_pcm.py", "compare_pcm.py", "vorbis_tool.py", "vorbis_tables.py", "vorbis_walk.py", "vorbis_opus_model.py", "make_vorbis_stress_fixtures.py"],
+        "globs": ["scripts/fixtures/make_*ogg*", "scripts/fixtures/make_*vorbis*", "scripts/fixtures/ogg_model.py", "scripts/fixtures/vorbis_pcm.c"],
     },
     "musepack-crosscheck": {
         "projects": ["Encspect.Formats.Musepack", "Encspect.Tags.Ape"],

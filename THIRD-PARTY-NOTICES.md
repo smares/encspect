@@ -7,6 +7,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **Licensors' own license files:** for the packages that carry only a license expression (`MIT`), the license file of the licensor's repository at the commit the package's nuspec names: Avalonia and Avalonia.Controls.DataGrid (`licence.md`), NWayland (`licence.md`), Tmds.DBus (`COPYING`) and MicroCom (`LICENSE`). The copyright line of the package's nuspec is given as well where the package has one.
 - **libwavpack:** the `COPYING` of libwavpack 5.6.0, extracted from `wavpack-5.6.0.tar.bz2`, the archive `scripts/fixtures/wavpack_tool.py` pins by SHA-256 (`8cbfa15927d29bcf953db35c0cfca7424344ff43ebe4083daf161577fb839cc1`); `scripts/release/make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libwavpack.txt`.
 - **libspeex:** the `COPYING` of libspeex 1.2.1, extracted from `speex-1.2.1.tar.gz`, the archive `scripts/fixtures/speex_tool.py` pins by SHA-256 (`4b44d4f2b38a370a2d98a78329fefc56a0cf93d1c1be70029217baae6628feea`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libspeex.txt`.
+- **libvorbis:** the `COPYING` of libvorbis 1.3.7, extracted from `libvorbis-1.3.7.tar.xz`, the archive `scripts/fixtures/vorbis_tool.py` pins by SHA-256 (`b33cc4934322bcbf6efcbacf49e3ca01aadbea4114ec9589d1b1e9d20f72954b`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/libvorbis.txt`.
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
@@ -37,6 +38,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 | Monkey's Audio SDK 13.44: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders and Rice codes, the predictors of every version, the neural network filters, the frame checksum and the output of the samples) | 13.44 | BSD 3-Clause | both builds, all platforms |
 | Apple's ALAC reference implementation (commit c38887c5): the code of Encspect's ALAC parser and decoder derived from it (the magic cookie layout, the syntax of a frame's elements and the adaptive Golomb code of the residuals, which the walk of a frame follows; the adaptive predictor, the undoing of the channel mixing and the placing of the shifted bytes, which the decoder follows) | c38887c5 | Apache License 2.0 | both builds, all platforms |
 | libspeex 1.2.1: the code of Encspect's Speex parser derived from it (the walk over a packet's frames: the narrowband decoder's reading of the submodes, the skip of wideband layers, the in-band handling) and the tables of bits per submode | 1.2.1 | BSD 3-Clause | both builds, all platforms |
+| libvorbis 1.3.7: the code of Encspect's Vorbis decoder and of its entropy pass derived from it (the assignment and decoding of codebook codewords, the reading of the floors and residues and their end-of-packet behavior, the floor 1 and residue reconstruction, the overlap of the blocks) and the table of floor 1 amplitudes (format data, also in the specification) | 1.3.7 | BSD 3-Clause | both builds, all platforms |
 | libmpcdec 1.2.6 and r495: the Huffman and resolution tables of the Musepack parser, taken from its sources, and its reading of the frame headers of stream versions 4 to 7 | 1.2.6, r495 | BSD 3-Clause | both builds, all platforms |
 | libebur128 v1.2.6: the derivation of the K-weighting filter's coefficients for sample rates other than 48 kHz in Encspect's loudness measurement (the filters' parameters and the bilinear transforms) | v1.2.6 | MIT | both builds, all platforms |
 | minimp3 (commit ea99364f): the Layer III Huffman tables, scalefactor band tables and polyphase window of Encspect's MPEG audio decoder (format data), and the decoder's stages and the entropy pass, which follow its code operation by operation | ea99364f | CC0 1.0 (public domain dedication) | both builds, all platforms |
@@ -3135,6 +3137,41 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
+
+## libvorbis
+
+Encspect's Vorbis decoder is written from the Vorbis I specification, and where the specification leaves details open it follows libvorbis 1.3.7 (https://xiph.org/vorbis/, `lib/`): the assignment of codewords and the refusal of codes that are not complete prefix codes (`sharedbook.c`), the decoding of codewords and what a packet's end does to it (`codebook.c`), the reading of the floors and residues and the end of a packet inside them (`floor1.c`, `floor0.c`, `res0.c`, `mapping0.c`), the setup header's refusals (`info.c`), the unquantization of codebook vectors (`sharedbook.c`) and the overlap of blocks (`block.c`). The source files that follow it say so (`PacketBits.cs`, `Codebook.cs`, `SetupModel.cs`, `PacketWalker.cs`, `Decoding/*.cs`). The `COPYING` of libvorbis, which names the Xiph.org Foundation:
+
+```
+Copyright (c) 2002-2020 Xiph.org Foundation
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+- Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+
+- Neither the name of the Xiph.org Foundation nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 ## libmpcdec

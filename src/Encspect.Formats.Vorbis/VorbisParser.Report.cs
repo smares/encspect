@@ -296,8 +296,19 @@ public sealed partial class VorbisParser
                 }
             }
 
+            if (_bandwidths.Count > 0 && HasTime)
+            {
+                Node bandwidth = node.Add(new Node("Coded Bandwidth", start, length) { Description = Explain.CodedBandwidth, Topic = Topics.CodedBandwidth });
+                bandwidth.Add("Lowest", start, length, NodeValue.Integer(_bandwidths.Keys.First(), "Hz"), Explain.BandwidthLowest);
+                bandwidth.Add("Most Common", start, length, NodeValue.Integer(_bandwidths.MaxBy(b => b.Value).Key, "Hz"), Explain.BandwidthMostCommon);
+                bandwidth.Add("Highest", start, length, NodeValue.Integer(_bandwidths.Keys.Last(), "Hz"), Explain.BandwidthHighest);
+                _bandwidthNode = bandwidth;
+            }
+
             return sizes;
         }
+
+        private Node? _bandwidthNode;
 
         // A packet's bitrate: its bits over the samples its block codes, half the block size, since
         // the transform of a block of n samples gives n/2 coefficients per channel.
@@ -371,6 +382,9 @@ public sealed partial class VorbisParser
             double[] offsets = _records.OffsetsForSeries(context.CancellationToken);
             var bitrates = new double[count];
             var seconds = new List<(long Bits, long Samples)>();
+            var secondBandwidth = new List<double>();
+            var bandwidthX = new List<double>();
+            var bandwidthValues = new List<double>();
             var firstUnits = new List<int>();
             var sizeSeries = new CategorySeriesBuilder("Block Sizes", BlockSizeCategories, "packet", 1, concept: GraphConcept.BlockSwitching);
             long position = 0;
@@ -391,16 +405,28 @@ public sealed partial class VorbisParser
                 sizeSeries.Add(packet.IsLong ? (byte)0 : (byte)1);
                 bitrates[i] = PacketBitrate(packet);
                 int half = _records.BlockSize(packet) / 2;
+                double? bandwidth = _records.CodedEnds[i] == NoBandwidth ? null : BandwidthOf(_records.CodedEnds[i], _records.BlockSize(packet));
+                if (bandwidth is { } hertz)
+                {
+                    bandwidthX.Add(offsets[i]);
+                    bandwidthValues.Add(hertz);
+                }
+
                 if (perSecond)
                 {
                     int second = (int)(position / Rate);
                     while (seconds.Count <= second)
                     {
                         seconds.Add(default);
+                        secondBandwidth.Add(double.NaN);
                         firstUnits.Add(i);
                     }
 
                     seconds[second] = (seconds[second].Bits + (packet.Length * 8L), seconds[second].Samples + half);
+                    if (bandwidth is { } value && (double.IsNaN(secondBandwidth[second]) || value > secondBandwidth[second]))
+                    {
+                        secondBandwidth[second] = value;
+                    }
                 }
 
                 position += half;
@@ -413,6 +439,38 @@ public sealed partial class VorbisParser
             var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
             CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null);
             List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            if (bandwidthValues.Count > 0 && _bandwidthNode is not null)
+            {
+                // Where every packet has a value the series shares the bitrate series' x values.
+                ReadOnlyMemory<double> x = bandwidthValues.Count == count ? offsets : bandwidthX.ToArray();
+                series.Add(new Series("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, x, bandwidthValues.ToArray())
+                {
+                    Description = SeriesText.CodedBandwidth,
+                    Concept = GraphConcept.CodedBandwidth,
+                    Quantity = "Coded Bandwidth",
+                });
+                if (perSecond)
+                {
+                    var secondX = new List<double>();
+                    var secondValues = new List<double>();
+                    for (int second = 0; second < secondBandwidth.Count; second++)
+                    {
+                        if (!double.IsNaN(secondBandwidth[second]))
+                        {
+                            secondX.Add(starts[second]);
+                            secondValues.Add(secondBandwidth[second]);
+                        }
+                    }
+
+                    series.Add(new Series("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, secondX.ToArray(), secondValues.ToArray(), _bandwidthNode)
+                    {
+                        Description = SeriesText.CodedBandwidthOverTime,
+                        Concept = GraphConcept.CodedBandwidth,
+                        Quantity = "Coded Bandwidth",
+                    });
+                }
+            }
+
             return (series, [blockSizes]);
         }
     }

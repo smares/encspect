@@ -4,10 +4,214 @@
   ],
   "added": [
     {
-      "scope": "stream",
-      "key": "verification",
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
       "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Ogg",
+        "Logical Stream",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
       ]
     },
     {
@@ -15,7 +219,108 @@
       "array": "series",
       "name": "Coded Bandwidth",
       "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
+      ],
+      "streams": [
+        0
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json"
+      ],
+      "streams": [
+        0,
+        1
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/ogg/external-aotuv-b5.7-q5.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-managed.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-2020-q3.report.json",
+        "tests/fixtures/ogg/external-aotuv-b6.03-q5.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-libvorbis.report.json",
+        "tests/fixtures/ogg/external-ffmpeg-vorbis.report.json",
+        "tests/fixtures/ogg/external-oggenc-51.report.json",
+        "tests/fixtures/ogg/external-oggenc-managed.report.json",
+        "tests/fixtures/ogg/external-oggenc-mono.report.json",
+        "tests/fixtures/ogg/external-oggenc-q0.report.json",
+        "tests/fixtures/ogg/external-oggenc-q10.report.json",
+        "tests/fixtures/ogg/external-oggenc-q5.report.json",
+        "tests/fixtures/ogg/external-oggenc2-aotuv-rarewares.report.json",
+        "tests/fixtures/ogg/external-oggenc2-lancer-sse2.report.json",
+        "tests/fixtures/ogg/vorbis-cut-last-packet.report.json",
+        "tests/fixtures/ogg/vorbis-empty-carrier.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-fields.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-other-format.report.json",
+        "tests/fixtures/ogg/vorbis-encoder-vendor-wins.report.json",
+        "tests/fixtures/ogg/vorbis-end-page-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-end-trimming-large.report.json",
+        "tests/fixtures/ogg/vorbis-eos-mid-then-more.report.json",
+        "tests/fixtures/ogg/vorbis-eos-then-eos.report.json",
+        "tests/fixtures/ogg/vorbis-first-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-errors.report.json",
+        "tests/fixtures/ogg/vorbis-granule-extreme.report.json",
+        "tests/fixtures/ogg/vorbis-granule-midstream.report.json",
+        "tests/fixtures/ogg/vorbis-minimal-mono.report.json",
+        "tests/fixtures/ogg/vorbis-packet-errors.report.json",
+        "tests/fixtures/ogg/vorbis-packet-repeated.report.json",
+        "tests/fixtures/ogg/vorbis-setup-rich.report.json",
+        "tests/fixtures/ogg/vorbis-short-start-trim.report.json",
+        "tests/fixtures/ogg/vorbis-skip-before-first.report.json",
+        "tests/fixtures/ogg/vorbis-skip-then-small.report.json",
+        "tests/fixtures/ogg/vorbis-start-offset.report.json",
+        "tests/fixtures/ogg/vorbis-start-trimming.report.json",
+        "tests/fixtures/ogg/vorbis-stereo-coupled.report.json",
+        "tests/fixtures/ogg/vorbis-surround-51.report.json",
+        "tests/fixtures/ogg/vorbis-writer-claims-differ.report.json"
       ],
       "streams": [
         0
@@ -26,57 +331,11 @@
       "array": "series",
       "name": "Coded Bandwidth Over Time",
       "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
+        "tests/fixtures/ogg/vorbis-vendor-variants.report.json"
       ],
       "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/ogg/oggs-in-mp3.report.json"
+        0,
+        1
       ]
     }
   ]

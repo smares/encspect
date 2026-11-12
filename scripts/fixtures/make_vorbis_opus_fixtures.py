@@ -19,6 +19,7 @@ import struct
 import make_ogg_fixtures as hand
 import ogg_model as m
 import vorbis_opus_model as v
+import vorbis_walk as w
 
 VENDOR = b"Encspect fixture"
 
@@ -32,6 +33,39 @@ def positions_of(page_ends, first_audio):
         if ends and r["granule"] != -1 and ends[-1] >= first_audio:
             out.append((ends[-1] - first_audio, r["granule"], bool(r["flags"] & m.EOS) and clean))
     return out
+
+
+def comment_accepted(packet):
+    """What libvorbis 1.3.7 checks of the comment header (_vorbis_unpack_comment): the lengths of the vendor string and of each comment lie inside the packet, and a framing bit follows."""
+    if len(packet) < 15 or packet[:7] != b"\x03vorbis":
+        return False
+    body = packet[7:]
+    bits = len(body) * 8
+    position = 0
+    def take(count):
+        nonlocal position
+        value = int.from_bytes(body[position // 8:position // 8 + count // 8], "little")
+        position += count
+        return value
+    vendor = take(32)
+    if vendor > len(body) - 8:
+        return False
+    position += vendor * 8
+    if position + 32 > bits:
+        return False
+    comments = take(32)
+    if comments > (len(body) - position // 8) >> 2:
+        return False
+    for _ in range(comments):
+        if position + 32 > bits:
+            return False
+        length = take(32)
+        if length > len(body) - position // 8:
+            return False
+        position += length * 8
+    if position >= bits:
+        return False
+    return (body[position // 8] >> (position % 8)) & 1 == 1
 
 
 def expect_vorbis(entry, data, packets, page_ends, s):
@@ -49,7 +83,14 @@ def expect_vorbis(entry, data, packets, page_ends, s):
     audio = packets[first_audio:]
     gaps = [i - first_audio for i, p in enumerate(packets) if p["gap"] and i >= first_audio]
     cuts = [i - first_audio for i, p in enumerate(packets) if p["cut"] and i >= first_audio]
-    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts=cuts)
+    # The coded bandwidth is read where libvorbis would accept the three headers: the setup header raises no finding but an info, the identification header is one it decodes
+    # (version 0, framing bit, channels and rate above 0, block sizes 64 to 8192) and the comment header's lengths lie inside the packet and its framing bit is set.
+    hertz = None
+    if setup and not [c for c in setup["problems"] if c != "vorbis.header-extra-data"] and ident[:7] == b"\x01vorbis" and len(ident) >= 30 and ident[11] > 0 and ident[12:16] != bytes(4) \
+            and ident[29] & 1 and int.from_bytes(ident[7:11], "little") == 0 and 6 <= ident[28] & 15 <= ident[28] >> 4 <= 13 and int.from_bytes(ident[12:16], "little") <= 2 ** 31 - 1 \
+            and comment_accepted(packets[1]["data"]):
+        hertz = w.hertz(ident, packets[2]["data"], [p["data"] for p in audio])
+    result = v.vorbis_expectations(ident, setup, [(p["offset"], p["data"], p["ranges"]) for p in audio], positions_of(page_ends, first_audio), gaps, cuts=cuts, hertz=hertz)
     vorbis.update({"packets": result["packets"], "blocks": result["blocks"], "statistics": result["statistics"]})
     if s.get("encoder"):
         vorbis["encoder"] = s["encoder"]

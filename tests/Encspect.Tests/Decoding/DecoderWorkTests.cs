@@ -6,6 +6,7 @@ using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.Mpeg.Decoding;
 using Encspect.Formats.Tta.Decoding;
+using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
@@ -193,6 +194,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
+        _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -208,6 +210,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg-layer2", StringComparison.Ordinal) => ".mp2",
         _ when name.StartsWith("mpeg-layer1", StringComparison.Ordinal) => ".mp1",
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
+        _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -344,6 +347,21 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("mpeg-" + label, () => new Case("mpeg-" + label, MpegCases.Repeated(file)));
+        }
+
+        // Vorbis: stereo and mono music, 5.1, high quality, long blocks of 8,192 samples (the stereo file with its long block size raised, which its floors then do not fit but still
+        // decode) and silence. Each case repeats the audio packets of an encoder's file in one stream.
+        foreach ((string label, string file, int blockExponent) in new[]
+        {
+            ("stereo-music", "external-oggenc-q5.ogg", 0),
+            ("mono-music", "external-oggenc-mono.ogg", 0),
+            ("surround-51", "external-oggenc-51.ogg", 0),
+            ("stereo-q10", "external-oggenc-q10.ogg", 0),
+            ("blocks-of-8192", "external-oggenc-q5.ogg", 13),
+            ("silent", "vorbis-minimal-mono.ogg", 0),
+        })
+        {
+            Add("vorbis-" + label, () => new Case("vorbis-" + label, VorbisCases.Repeated(file, blockExponent)));
         }
 
         // TTA in Matroska without the header (as FFmpeg and mkvmerge store it): the parser counts the last frame's codes, the decoder takes the track's figures.
@@ -808,6 +826,64 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     }
 
     // Files of copies of one frame of a fixture, sized to charge about Target units: a frame decodes by itself, so the copies are a file of as much audio.
+    // The audio packets of a Vorbis fixture repeated in one logical stream until the decoding charges about Target units.
+    internal static class VorbisCases
+    {
+        public static byte[] Repeated(string fixture, int blockExponent, long target = Target)
+        {
+            List<byte[]> packets = VorbisStreams.Packets("ogg/" + fixture);
+            if (blockExponent != 0)
+            {
+                packets[0] = [.. packets[0]];
+                packets[0][28] = (byte)((blockExponent << 4) | (packets[0][28] & 0x0F));
+            }
+
+            long perCopy = Math.Max(1, Units(Build(packets, 1)));
+
+            // At most about 400,000 packets, whatever they cost: a silent stream reaches its figure with the work the budget's floor covers and the packets it can hold.
+            int copies = (int)Math.Clamp(Math.Min(target / perCopy, 400_000 / Math.Max(1, packets.Count - 3)), 2, 1 << 20);
+            return Build(packets, copies);
+        }
+
+        private static byte[] Build(List<byte[]> packets, int copies)
+        {
+            var builder = new OggBuilder().Page(1, 0, 2, packets[0]).Page(1, 0, 0, packets[1], packets[2]);
+            var page = new List<byte[]>();
+            int segments = 0;
+            long total = (long)copies * (packets.Count - 3);
+            long done = 0;
+            for (int copy = 0; copy < copies; copy++)
+            {
+                foreach (byte[] packet in packets.Skip(3))
+                {
+                    int needed = (packet.Length / 255) + 1;
+                    if (segments + needed > 250)
+                    {
+                        builder.Page(1, -1, 0, [.. page]);
+                        page.Clear();
+                        segments = 0;
+                    }
+
+                    page.Add(packet);
+                    segments += needed;
+                    done++;
+                }
+            }
+
+            builder.Page(1, -1, 4, [.. page]);
+            return builder.Bytes;
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new VorbisDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.ogg", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
     // The bytes of an MPEG audio fixture repeated until the decoding charges about Target units.
     internal static class MpegCases
     {

@@ -483,13 +483,14 @@ def vorbis_stated_variable(ident):
     return None
 
 
-def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=True, cuts=()):
+def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=True, cuts=(), hertz=None):
     """What the analyzer reports for a Vorbis stream's audio packets.
 
     ident: the identification header's bytes; setup: read_setup()'s result, or None; packets: the
     audio packets as (offset, bytes, ranges); positions: (audio packet index, granule, is end of
     stream) for each packet that carries a granule position; gaps: the indexes of audio packets
-    that follow packets the container lost; cuts: the indexes of audio packets the container handed over cut, whose blocks' samples are lost."""
+    that follow packets the container lost; cuts: the indexes of audio packets the container handed over cut, whose blocks' samples are lost; hertz: the coded bandwidth of each
+    audio packet (vorbis_walk.hertz), None where the stream is not walked."""
     fields = struct.unpack_from("<IBI", ident, 7) if len(ident) >= 30 else None
     version, channels, rate = fields if fields else (1, 0, 0)
     b0, b1 = (1 << (ident[28] & 15), 1 << (ident[28] >> 4)) if fields else (0, 0)
@@ -661,6 +662,16 @@ def vorbis_expectations(ident, setup, packets, positions, gaps=(), layout_ok=Tru
             statistics["Modes"] = plural(len(mode_counts), "mode used", "modes used")
             for mode in sorted(mode_counts):
                 statistics[f"Modes/Mode {mode} ({'long' if modes[mode] else 'short'} block)"] = m.share(mode_counts[mode], block_count, "packet", "packets")
+        if hertz is not None and has_time:
+            values = [h for i, h in enumerate(hertz) if h is not None and i not in cuts]
+            if values:
+                counts = {}
+                for h in values:
+                    counts[h] = counts.get(h, 0) + 1
+                statistics["Coded Bandwidth"] = None
+                statistics["Coded Bandwidth/Lowest"] = f"{min(values)} Hz"
+                statistics["Coded Bandwidth/Most Common"] = f"{min(h for h in counts if counts[h] == max(counts.values()))} Hz"
+                statistics["Coded Bandwidth/Highest"] = f"{max(values)} Hz"
 
     info = None if fields is None else {
         "codec": "Vorbis", "sample_rate": min(rate, 2 ** 31 - 1), "channels": channels, "channel_layout": VORBIS_SPEAKERS.get(channels, []),
