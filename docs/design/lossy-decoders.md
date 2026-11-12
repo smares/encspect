@@ -738,7 +738,7 @@ What the Opus pull request (rollout step 3) did differently from the text above,
 - **Final range:** the state of every frame equals libopus's on all packets of both sets of test vectors; the packet's state is the exclusive or of its frames' and redundancy's.
 - **Output** is planar floats at 48 kHz, full scale, with the header's output gain; the multistream mappings of families 0, 1, 2 and 255 are applied, family 3 is not decoded.
 - **Determinism and accuracy:** see [development.md](../development.md#opus-decoding); the cross-check builds libopus without SIMD.
-- **Cost:** per frame at least 22 units a sample and channel, plus units for each stage (CELT 22, SILK 18 per sample, provisional until `DecoderWorkTests` is calibrated).
+- **Cost:** per frame at least 22 units a sample and channel, plus 22 (CELT) or 24 (SILK) per sample and channel and 8,000 for each CELT frame, calibrated with `DecoderWorkTests` to at most 1.26 times the FLAC reference's time per unit ([decoders.md](decoders.md#as-built-the-opus-decoders-work-weights)).
 
 ## Unverified claims and estimates
 
