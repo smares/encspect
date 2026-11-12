@@ -14,7 +14,11 @@ internal sealed class FrameDecoder : IFrameDecoder
     // The units a sample of a channel costs on top of the floor of the budget: CELT's dequantization, inverse transform and window about 2 + 2 * log2 of the frame's length + 2,
     // its postfilter and de-emphasis 6; SILK's synthesis (the order and the long-term predictor) and its resampler about 16 per output sample.
     private const int CeltUnits = 22;
-    private const int SilkUnits = 18;
+    private const int SilkUnits = 24;
+
+    // What a CELT frame costs whatever its length (the energy and allocation passes, the band loop, the transform's set-up), measured on the frames of 5 ms, which are the cheapest per
+    // sample to charge (docs/design/decoders.md, "Opus").
+    private const int CeltFrameUnits = 8000;
 
     private readonly DecodeContext _context;
     private readonly int _channels;
@@ -134,7 +138,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 }
                 else
                 {
-                    _context.AddWork((long)size * _streamChannels[s] * (mode == 0 ? SilkUnits : mode == 1 ? SilkUnits + CeltUnits : CeltUnits));
+                    _context.AddWork(((long)size * _streamChannels[s] * (mode == 0 ? SilkUnits : mode == 1 ? SilkUnits + CeltUnits : CeltUnits)) + (mode == 0 ? 0 : CeltFrameUnits));
                     decoder.DecodeFrame(ref r, pcm, position, mode, bandwidth, size);
                 }
 
