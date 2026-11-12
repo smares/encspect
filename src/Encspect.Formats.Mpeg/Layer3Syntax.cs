@@ -491,7 +491,8 @@ internal static class Layer3Syntax
         ReadOnlySpan<byte> count1 = gr.Count1Table != 0 ? Layer3Tables.Count1Table1 : Layer3Tables.Count1Table0;
         // np counts pairs of lines left in the band the quadruples are in; the quadruple loop starts in the band the big-values loop ended in.
         int remaining = 1 - pairsLeft;
-        // A quadruple that does not fit in the 576 lines (the big-values region left a count1 region of 2 mod 4 lines, as LAME 3.57 -v wrote once) is not decoded:
+        // A quadruple that does not fit in the 576 lines (the big-values region left a count1 region of 2 mod 4 lines, which BladeEnc, Fraunhofer, Shine, Gogo
+        // and old LAME write; LAME 3.57 -v once with values in it) is not decoded:
         // libmad, mpg123 and FFmpeg stop at line 572, where minimp3 decodes the two lines of it that lie inside the spectrum.
         for (; dst + 4 <= 576; dst += 4)
         {
