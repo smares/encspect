@@ -162,6 +162,27 @@
                   ]
                 },
                 {
+                  "name": "Intensity Stereo Bound",
+                  "offset": 0,
+                  "length": 1671,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 1671
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 0,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 1671
+                    }
+                  ]
+                },
+                {
                   "name": "Block Usage",
                   "value": 16,
                   "unit": "granules",
@@ -3318,6 +3339,33 @@
             ],
             "values": [
               144
+            ]
+          },
+          {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              208,
+              417,
+              626,
+              835,
+              1044,
+              1253,
+              1462
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
             ]
           },
           {

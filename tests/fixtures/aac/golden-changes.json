@@ -1,94 +1,490 @@
 {
   "goldens": [
-    "tests/fixtures/aac/"
+    "tests/fixtures/aac/adts/intensity-noise.report.json",
+    "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+    "tests/fixtures/aac/adts/stereo-coding-reserved.report.json",
+    "tests/fixtures/aac/adts/stereo-coding.report.json",
+    "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+    "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+    "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+    "tests/fixtures/aac/faac-1.31.1.report.json",
+    "tests/fixtures/aac/faac-1.40-adts.report.json",
+    "tests/fixtures/aac/faac-1.40.report.json",
+    "tests/fixtures/aac/faac-1.50-adts.report.json",
+    "tests/fixtures/aac/faac-1.50.report.json",
+    "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+    "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+    "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+    "tests/fixtures/aac/faac-2.2-adts.report.json",
+    "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+    "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+    "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+    "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+    "tests/fixtures/aac/faac-2.2-he.report.json",
+    "tests/fixtures/aac/faac-2.2-tags.report.json",
+    "tests/fixtures/aac/faac-2.2.report.json",
+    "tests/fixtures/aac/faac-adts.report.json",
+    "tests/fixtures/aac/faac.report.json",
+    "tests/fixtures/aac/fdkaac-he-adts.report.json",
+    "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+    "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+    "tests/fixtures/aac/fdkaac-he.report.json",
+    "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+    "tests/fixtures/aac/fdkaac-lc.report.json",
+    "tests/fixtures/aac/ffmpeg-adts.report.json",
+    "tests/fixtures/aac/ffmpeg-fast.report.json",
+    "tests/fixtures/aac/ffmpeg-fragmented.report.json",
+    "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+    "tests/fixtures/aac/ffmpeg-lc.report.json",
+    "tests/fixtures/aac/ffmpeg-ltp.report.json",
+    "tests/fixtures/aac/ffmpeg-main.report.json",
+    "tests/fixtures/aac/mp4box-mux.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
+    "tests/fixtures/wav/built-iec61937-aac.report.json",
+    "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
   ],
   "added": [
     {
       "scope": "stream",
-      "key": "verification",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
       "array": "series",
-      "name": "Coded Bandwidth",
+      "name": "Intensity Stereo Bound",
       "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth Over Time",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
-      ],
-      "streams": [
-        0
+        "tests/fixtures/aac/adts/intensity-noise.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-reserved.report.json",
+        "tests/fixtures/aac/adts/stereo-coding.report.json",
+        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40-adts.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50-adts.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac-adts.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-he-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-fast.report.json",
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-ltp.report.json",
+        "tests/fixtures/aac/ffmpeg-main.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
+        "File",
+        "ADTS",
         "Statistics"
       ],
-      "name": "Coded Bandwidth",
+      "name": "Intensity Stereo Bound",
       "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+        "tests/fixtures/aac/adts/intensity-noise.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-reserved.report.json",
+        "tests/fixtures/aac/adts/stereo-coding.report.json",
+        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+        "tests/fixtures/aac/faac-1.40-adts.report.json",
+        "tests/fixtures/aac/faac-1.50-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+        "tests/fixtures/aac/faac-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-fast.report.json",
+        "tests/fixtures/aac/ffmpeg-ltp.report.json",
+        "tests/fixtures/aac/ffmpeg-main.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
+        "File",
+        "ADTS",
         "Statistics",
-        "Coded Bandwidth"
+        "Intensity Stereo Bound"
       ],
       "name": "Lowest",
       "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+        "tests/fixtures/aac/adts/intensity-noise.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-reserved.report.json",
+        "tests/fixtures/aac/adts/stereo-coding.report.json",
+        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+        "tests/fixtures/aac/faac-1.40-adts.report.json",
+        "tests/fixtures/aac/faac-1.50-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+        "tests/fixtures/aac/faac-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-fast.report.json",
+        "tests/fixtures/aac/ffmpeg-ltp.report.json",
+        "tests/fixtures/aac/ffmpeg-main.report.json"
       ]
     },
     {
       "scope": "node",
       "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
+        "File",
+        "ADTS",
         "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
+        "Intensity Stereo Bound"
       ],
       "name": "Highest",
       "goldens": [
-        "tests/fixtures/aac/ffmpeg-mp3.report.json"
+        "tests/fixtures/aac/adts/intensity-noise.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-reserved.report.json",
+        "tests/fixtures/aac/adts/stereo-coding.report.json",
+        "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.report.json",
+        "tests/fixtures/aac/faac-1.40-adts.report.json",
+        "tests/fixtures/aac/faac-1.50-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+        "tests/fixtures/aac/faac-adts.report.json",
+        "tests/fixtures/aac/fdkaac-he-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-adts.report.json",
+        "tests/fixtures/aac/ffmpeg-fast.report.json",
+        "tests/fixtures/aac/ffmpeg-ltp.report.json",
+        "tests/fixtures/aac/ffmpeg-main.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Intensity Stereo Bound",
+      "goldens": [
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/faac-1.31.1.report.json",
+        "tests/fixtures/aac/faac-1.40.report.json",
+        "tests/fixtures/aac/faac-1.50.report.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he-24k.report.json",
+        "tests/fixtures/aac/faac-2.2-he.report.json",
+        "tests/fixtures/aac/faac-2.2-tags.report.json",
+        "tests/fixtures/aac/faac-2.2.report.json",
+        "tests/fixtures/aac/faac.report.json",
+        "tests/fixtures/aac/fdkaac-he-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he.report.json",
+        "tests/fixtures/aac/fdkaac-lc-vbr.report.json",
+        "tests/fixtures/aac/fdkaac-lc.report.json",
+        "tests/fixtures/aac/ffmpeg-lc-vbr.report.json",
+        "tests/fixtures/aac/ffmpeg-lc.report.json",
+        "tests/fixtures/aac/mp4box-mux.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Intensity Stereo Bound",
+      "goldens": [
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "MP4",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/aac/ffmpeg-fragmented.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Intensity Stereo Bound",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 1 Frames",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-aac-he.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac-he.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Intensity Stereo Bound",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "Matroska",
+        "Track 2 Frames",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "AAC",
+        "Statistics"
+      ],
+      "name": "Intensity Stereo Bound",
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "File",
+        "RIFF",
+        "Data Chunk",
+        "AAC",
+        "Statistics",
+        "Intensity Stereo Bound"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/wav/built-iec61937-aac.report.json",
+        "tests/fixtures/wav/external-iec61937-aac-stereo-128k.report.json"
       ]
     }
   ]

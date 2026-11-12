@@ -644,6 +644,27 @@
                               ]
                             },
                             {
+                              "name": "Intensity Stereo Bound",
+                              "offset": 36,
+                              "length": 4527,
+                              "children": [
+                                {
+                                  "name": "Lowest",
+                                  "value": 5512,
+                                  "unit": "Hz",
+                                  "offset": 36,
+                                  "length": 4527
+                                },
+                                {
+                                  "name": "Highest",
+                                  "value": 7020,
+                                  "unit": "Hz",
+                                  "offset": 36,
+                                  "length": 4527
+                                }
+                              ]
+                            },
+                            {
                               "name": "Global Gain",
                               "offset": 36,
                               "length": 4527,
@@ -20826,6 +20847,43 @@
             "values": [
               21,
               26
+            ]
+          },
+          {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              36,
+              131,
+              236,
+              331,
+              426,
+              528,
+              629,
+              855,
+              986,
+              1255,
+              1941,
+              4192,
+              4361
+            ],
+            "values": [
+              5512,
+              5943,
+              5943,
+              5943,
+              5943,
+              5943,
+              5943,
+              5943,
+              5943,
+              5943,
+              7020,
+              5943,
+              5943
             ]
           },
           {

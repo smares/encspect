@@ -13902,6 +13902,27 @@
                           ]
                         },
                         {
+                          "name": "Intensity Stereo Bound",
+                          "offset": 5054,
+                          "length": 30829,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 689,
+                              "unit": "Hz",
+                              "offset": 5054,
+                              "length": 30829
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 689,
+                              "unit": "Hz",
+                              "offset": 5054,
+                              "length": 30829
+                            }
+                          ]
+                        },
+                        {
                           "name": "Global Gain",
                           "offset": 5054,
                           "length": 30829,
@@ -69433,6 +69454,19 @@
             "values": [
               115,
               113
+            ]
+          },
+          {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              5054
+            ],
+            "values": [
+              689
             ]
           },
           {
