@@ -293,6 +293,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   - whole, into the padding it drains into ancillary data (`3.98 (beta)`, `3.99 (alpha 12)`, `3.99.5`).
   - The report spells the version out (`LAME 3.98 (beta)`, `LAME 3.99 (alpha 12)`, `LAME 3.99.x` for an `r` without a patch level) and keeps the raw text in the tag's node.
   - Where the two agree on major.minor and marker, the name takes the more specific one and lists both as evidence when the ancillary one carries a marker. Where they disagree, the tag's is shown, and a warning says the frames and the tag may come from different encoders.
+- **LAME before 3.90 has no LAME tag.** Its VBR modes (`-v`, `--r3mix` from 3.88) write a Xing header with the version ("LAME3.20", "LAME3.88 (beta)") in the nine or more bytes after the header's fields, which names the encoder with medium confidence (checked on 3.20 to 3.89b). 3.80 and later also drain the version into the padding (low confidence alone). CBR streams before 3.80 (checked on 3.20, 3.34, 3.57 and 3.70) carry nothing that names the encoder, and the analyzer names none; mp3guessenc says only "dist10 encoder or other encoder". Those builds also leave a truncated last frame (`mpeg.frame-truncated`).
 - **Helix:** the maintained Helix encoder (hmp3 5.2.4) writes a LAME tag whose encoder string is `LAMEH5.24`; it names Helix, not LAME, with the tag's confidence.
 - **mp3PRO and MP3 Surround** name the encoder with medium confidence: Fraunhofer's MP3 Surround encoder, or an mp3PRO encoder, since several licensees wrote those (see "Ancillary data").
 - **The Original File Length block** names Fraunhofer with medium confidence; a VBRI header still decides the encoder, with high confidence.
@@ -304,6 +305,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   - A version that runs to the end of the ancillary data may be cut short there (`LAME3.10`), so a whole one elsewhere is preferred, and a cut one names only LAME.
   - The string starts wherever the main data ends, at any bit position, and can run on into the next frame's data. So it is searched at every bit offset in the ancillary data the bit reservoir split identifies, joined across frames, not in raw frame bytes.
   - Found alone, it is low confidence.
+  - The version may be up to 36 bytes long: 3.87 writes `LAME3.87 (beta 1, Sep 29 2000)`.
 - **TwoLAME** writes zeros.
 - **Gogo-no-coda** (3.12) fills the bits no frame uses with `GOGO` over and over, found at any bit position as two in a row (low confidence alone). In VBR it writes `GOGO` where its Xing header's quality belongs, which names it with medium confidence and is shown as such instead of a number.
 - Which other encoders sign their padding, and how, is established from encoder-written fixtures before it is used.

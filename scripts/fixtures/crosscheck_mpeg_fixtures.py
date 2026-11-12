@@ -1104,7 +1104,12 @@ HELIX_SCALING = ("Gogo (after 3.0)", "short blocks with scfsi and scalefactor sc
                  "Helix without its tag from the copyright and original bits with scfsi and scalefactor scaling")
 HELIX_PLAIN = ("Lame (old) or m3e", "short blocks with scfsi but no scalefactor scaling name old LAME or m3e in EncSpot's guess; the analyzer "
                "knows Helix without its tag from the copyright and original bits with scfsi and scalefactor scaling in other frames")
+PRE_380_CBR = "LAME before 3.80 writes nothing that names it into a CBR stream, so the analyzer names no encoder; EncSpot guesses from the frames' habits"
 ENCSPOT_ENCODER_DIFFERENCES = {
+    "external-lame320w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
+    "external-lame334w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
+    "external-lame357w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
+    "external-lame370w-cbr": ("Lame (old) or m3e", PRE_380_CBR),
     "external-ffmpeg-bitexact": ("Gogo (after 3.0)", "EncSpot's label is the encoder field of ffmpeg's Xing tag, \"Lavf lame\" (the muxer's replacement of the bit-exact "
                                  "\"Lavc libmp3lame\", mp3enc.c:250-252), which names nothing, so it guesses: short blocks with scfsi and scalefactor scaling "
                                  "name Gogo after 3.0; the analyzer reads LAME's version from the ancillary data behind ffmpeg's tag"),

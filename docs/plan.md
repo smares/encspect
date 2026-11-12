@@ -155,6 +155,8 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
    - The step's other items have places of their own: the two level figures and the TTA decoder are in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
 
+3. **Encoder-written MPEG audio fixtures** (the lead, 2026-11-11): the multichannel Layer II encoders mctoolame and Philips' encoder 2.5, LAME before 3.90 (Rarewares' Windows builds 3.20 to 3.89b under Wine) and LAME 3.95.1 to 3.98.4 from source, with cross-checks (`make_external_mpeg_fixtures.py`, [development.md](development.md)). The `lame_enc.dll` builds that front ends ship (CDex, Audiograbber, dBpoweramp, Exact Audio Copy, Rarewares' bundles) are checked only where their version string or behavior differs from the releases covered; none is a fixture yet (the checkpoint of this change lists what was looked at and why).
+
 ### 0.4: Free decoders and routes complete
 
 Every coding with a free source is decoded, the DTS extensions aside, and every codec reaches its parser in the containers that known writers fill.

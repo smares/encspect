@@ -360,6 +360,38 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame3903-alt-insane", ".mp3", 44100, 2, ["lame-win-3.90.3", "--quiet", "--alt-preset", "insane"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=320, info_frame=True, signal="music")),
+    # Rarewares' Windows builds of LAME before 3.90, which write no LAME tag: CBR at 128 kbps (nothing in the stream before 3.80), VBR (-v: a Xing header
+    # with the version after the table of contents) and --r3mix.
+    ("external-lame320w-cbr", ".mp3", 44100, 2, ["lame-win-3.20", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame334w-cbr", ".mp3", 44100, 2, ["lame-win-3.34", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame357w-cbr", ".mp3", 44100, 2, ["lame-win-3.57", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame370w-cbr", ".mp3", 44100, 2, ["lame-win-3.70", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame380w-cbr", ".mp3", 44100, 2, ["lame-win-3.80", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame387w-cbr", ".mp3", 44100, 2, ["lame-win-3.87", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame389w-cbr", ".mp3", 44100, 2, ["lame-win-3.89", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame320w-vbr", ".mp3", 44100, 2, ["lame-win-3.20", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame357w-vbr", ".mp3", 44100, 2, ["lame-win-3.57", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame370w-vbr", ".mp3", 44100, 2, ["lame-win-3.70", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame380w-vbr", ".mp3", 44100, 2, ["lame-win-3.80", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame384w-vbr", ".mp3", 44100, 2, ["lame-win-3.84", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame389w-vbr", ".mp3", 44100, 2, ["lame-win-3.89", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame388w-r3mix", ".mp3", 44100, 2, ["lame-win-3.88", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame389w-r3mix", ".mp3", 44100, 2, ["lame-win-3.89", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame391w-alt-extreme", ".mp3", 44100, 2, ["lame-win-3.91", "--quiet", "--alt-preset", "extreme"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame390-r3mix", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--r3mix"],
@@ -402,6 +434,35 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame398b-cbr", ".mp3", 44100, 2, ["lame-3.98b8", "--quiet", "-b", "128"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    # The releases between the betas: 3.95.1 (its tag says "LAME3.95"), 3.96.1 and 3.98.4 ("LAME3.96r", "LAME3.98r") and 3.97.
+    ("external-lame395-cbr", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame395-preset-standard", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame395-abr", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-cbr", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame396-preset-standard", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-abr", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame397-cbr", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame397-preset-standard", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame397-abr", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-cbr", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame3984-preset-standard", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-abr", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-r3mix", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-r3mix", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame399a-vbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-V", "2"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame399a-cbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-b", "128"],
@@ -840,6 +901,9 @@ def detected_encoder(command, tag, settings, rows, path):
     if command[0].startswith("lame-"):
         lame = tag.get("lame") if tag else None
         string = guessenc_tag_lines(path).get("Encoder string")
+        if lame is None and tag is not None and tag.get("encoder_string", "").startswith("LAME"):
+            # LAME before 3.90 writes its version after the Xing header's fields, with no LAME tag after it.
+            return {"name": vbr_tags.lame_name(tag["encoder_string"]), "confidence": "Medium"}
         if lame is None:
             return {"name": vbr_tags.lame_name(string), "confidence": "Low"} if string and string.startswith("LAME") else None
         # A version cut off in the tag ("LAME3.90.", "LAME3.99r") stands whole in the padding, where mp3guessenc finds it.
@@ -1149,7 +1213,7 @@ def main(names):
         PHILIPS_ENCODER.append(philips_mc_tool.fetch())
     if "mctoolame" in heads:
         MCTOOLAME_ENCODER.append(mctoolame_tool.build())
-    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
+    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.95.1", "3.96.1", "3.97", "3.98.4", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
         if "lame-" + version in heads:
             OLD_LAME[version] = old_lame_tool.build(version)
     for version in lame_win_tool.BUILDS:
