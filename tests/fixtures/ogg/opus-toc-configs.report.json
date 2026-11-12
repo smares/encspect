@@ -538,20 +538,20 @@
                       ]
                     },
                     {
-                      "name": "Block Usage",
+                      "name": "Block Sizes",
                       "value": 100,
                       "unit": "CELT frames",
                       "offset": 176,
                       "length": 5109,
                       "children": [
                         {
-                          "name": "Long Blocks",
+                          "name": "Long",
                           "value": "100 frames (100.0%)",
                           "offset": 176,
                           "length": 5109
                         },
                         {
-                          "name": "Short Blocks",
+                          "name": "Short",
                           "value": "0 frames (0.0%)",
                           "offset": 176,
                           "length": 5109
@@ -561,25 +561,31 @@
                     {
                       "name": "Stereo Coding",
                       "value": 24,
-                      "unit": "stereo codings",
+                      "unit": "stereo CELT frames",
                       "offset": 176,
                       "length": 5109,
                       "children": [
                         {
-                          "name": "Mid/Side Stereo",
+                          "name": "Left/right stereo",
                           "value": "0 frames (0.0%)",
                           "offset": 176,
                           "length": 5109
                         },
                         {
-                          "name": "Dual Stereo",
+                          "name": "Mid/side stereo",
                           "value": "0 frames (0.0%)",
                           "offset": 176,
                           "length": 5109
                         },
                         {
-                          "name": "Intensity Stereo",
+                          "name": "Intensity stereo",
                           "value": "24 frames (100.0%)",
+                          "offset": 176,
+                          "length": 5109
+                        },
+                        {
+                          "name": "Mid/side and intensity stereo",
+                          "value": "0 frames (0.0%)",
                           "offset": 176,
                           "length": 5109
                         }
@@ -5986,16 +5992,16 @@
         ],
         "categorySeries": [
           {
-            "name": "Block Usage",
+            "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",
             "categories": [
               {
-                "name": "Long Blocks",
+                "name": "Long",
                 "count": 100
               },
               {
-                "name": "Short Blocks",
+                "name": "Short",
                 "count": 0
               }
             ],
@@ -6056,16 +6062,20 @@
             "valueLabel": "frame",
             "categories": [
               {
-                "name": "Mid/Side Stereo",
+                "name": "Left/right stereo",
                 "count": 0
               },
               {
-                "name": "Dual Stereo",
+                "name": "Mid/side stereo",
                 "count": 0
               },
               {
-                "name": "Intensity Stereo",
+                "name": "Intensity stereo",
                 "count": 24
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
               }
             ],
             "total": 24,

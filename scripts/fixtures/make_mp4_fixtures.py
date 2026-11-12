@@ -659,7 +659,7 @@ def opus_in_mp4():
             "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
             "streams": [{"codec": "Opus", "sample_rate": 48000, "channels": channels, "channel_mode": mode, "channel_layout": layout, "samples": samples, "is_vbr": True}],
             "units": unit_list(offsets[0], packets, 10),
-            "fields": {"MP4/moov/trak/mdia/minf/stbl/stsd/Opus/dOps/Pre-skip": "312 samples"},
+            "fields": {"MP4/moov/trak/mdia/minf/stbl/stsd/Opus/dOps/Opus Head/Pre-skip": "312 samples"},
             "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
         }))
     return out

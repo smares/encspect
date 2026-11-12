@@ -203,50 +203,42 @@ public sealed partial class Mp4Parser
     private static void OpusSpecificBox(State state, Node node, BoxFields f)
     {
         long start = f.Position;
-        if (!f.Has(11))
+        byte[] raw = f.TakeBytes(f.Remaining);
+        node.Value = NodeValue.Integer(raw.Length, "bytes");
+        if (raw.Length < 11 || raw[1] == 0)
         {
             return;
         }
 
-        byte version = f.U8(node, "Version", Explain.OpusVersion);
-        byte channels = f.U8(node, "Output Channel Count", Explain.OpusChannels, "channels");
-        ushort preSkip = f.U16(node, "Pre-skip", Explain.OpusPreSkip, "samples");
-        uint inputRate = f.U32(node, "Input Sample Rate", Explain.OpusInputRate, "Hz");
-        ushort gain = (ushort)f.Field(node, "Output Gain", 2, Explain.OpusOutputGain, v => NodeValue.Integer((short)(ushort)v, "1/256 dB"));
-        byte family = f.U8(node, "Channel Mapping Family", Explain.OpusFamily);
-        byte[] table = [];
-        byte streams = 0;
-        byte coupled = 0;
-        if (family != 0 && f.Has(2 + channels))
-        {
-            streams = f.U8(node, "Stream Count", Explain.OpusStreams, "streams");
-            coupled = f.U8(node, "Coupled Stream Count", Explain.OpusCoupled, "streams");
-            table = f.Bytes(node, "Channel Mapping", channels, Explain.OpusMapping);
-        }
-        else if (family != 0)
+        int channels = raw[1];
+        int family = raw[10];
+        if (family != 0 && raw.Length < 13 + channels)
         {
             return;
         }
 
+        // The identification header, field by field as RFC 7845 section 5.1 lays it out (little-endian, with the magic), from the box's big-endian fields.
         byte[] head = new byte[family == 0 ? 19 : 21 + channels];
         "OpusHead"u8.CopyTo(head);
         head[8] = 1;
-        head[9] = channels;
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(10), preSkip);
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(12), inputRate);
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(head.AsSpan(16), gain);
-        head[18] = family;
+        head[9] = (byte)channels;
+        head[10] = raw[3];
+        head[11] = raw[2];
+        head[12] = raw[7];
+        head[13] = raw[6];
+        head[14] = raw[5];
+        head[15] = raw[4];
+        head[16] = raw[9];
+        head[17] = raw[8];
+        head[18] = (byte)family;
         if (family != 0)
         {
-            head[19] = streams;
-            head[20] = coupled;
-            table.CopyTo(head.AsSpan(21));
+            raw.AsSpan(11, 2 + channels).CopyTo(head.AsSpan(19));
         }
 
-        _ = version;
         if (state.CurrentEntry is { DecoderSpecificInfo: null } entry)
         {
-            entry.DecoderSpecificInfo = MappedBytes.Opaque(head, start, f.Position);
+            entry.DecoderSpecificInfo = MappedBytes.Opaque(head, start, start + raw.Length);
             entry.DecoderSpecificInfoNode = node;
         }
     }

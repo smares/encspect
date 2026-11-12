@@ -31,7 +31,7 @@ public partial class OggFixtureTests
                 $"{where}: packet {i} has the TOCs {string.Join("; ", parts.Select(OpusToc))}, expected {tocs[i]}");
         }
 
-        CheckStatistics(opus, stream, where);
+        CheckStatistics(opus, stream, where, isOpus: true);
         CheckEncoder(opus, stream);
     }
 

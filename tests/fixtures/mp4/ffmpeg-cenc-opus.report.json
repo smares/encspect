@@ -124,11 +124,63 @@
                   "length": 24773,
                   "children": [
                     {
-                      "name": "Opus",
-                      "kind": "Stream",
-                      "value": "frames not read: encrypted",
-                      "offset": 44,
-                      "length": 24773
+                      "name": "Opus Head",
+                      "value": "2 channels, pre-skip 312",
+                      "offset": 25282,
+                      "length": 11,
+                      "children": [
+                        {
+                          "name": "Magic Signature",
+                          "value": "OpusHead",
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Version",
+                          "value": 1,
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "Stereo: front left, front right",
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Pre-skip",
+                          "value": 312,
+                          "unit": "samples",
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Input Sample Rate",
+                          "value": 48000,
+                          "unit": "Hz",
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Output Gain",
+                          "value": 0,
+                          "unit": "dB",
+                          "offset": 25282,
+                          "length": 11
+                        },
+                        {
+                          "name": "Mapping Family",
+                          "value": "0 (mono or stereo)",
+                          "offset": 25282,
+                          "length": 11
+                        }
+                      ]
                     }
                   ]
                 }
@@ -880,6 +932,7 @@
                                         },
                                         {
                                           "name": "dOps",
+                                          "value": "Opus Specific",
                                           "offset": 25274,
                                           "length": 19,
                                           "children": [
@@ -897,11 +950,44 @@
                                               "length": 4
                                             },
                                             {
-                                              "name": "Data",
-                                              "value": 11,
-                                              "unit": "bytes",
+                                              "name": "Version",
+                                              "value": 0,
                                               "offset": 25282,
-                                              "length": 11
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Output Channel Count",
+                                              "value": 2,
+                                              "unit": "channels",
+                                              "offset": 25283,
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Pre-skip",
+                                              "value": 312,
+                                              "unit": "samples",
+                                              "offset": 25284,
+                                              "length": 2
+                                            },
+                                            {
+                                              "name": "Input Sample Rate",
+                                              "value": 48000,
+                                              "unit": "Hz",
+                                              "offset": 25286,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Output Gain",
+                                              "value": 0,
+                                              "unit": "1/256 dB",
+                                              "offset": 25290,
+                                              "length": 2
+                                            },
+                                            {
+                                              "name": "Channel Mapping Family",
+                                              "value": 0,
+                                              "offset": 25292,
+                                              "length": 1
                                             }
                                           ]
                                         },
@@ -2457,13 +2543,18 @@
           [
             0,
             2,
-            3,
-            0
+            3
           ]
         ],
         "codec": "Opus",
         "sampleRate": 48000,
         "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
         "samples": 72312,
         "duration": 1.5065,
         "averageBitrate": 131.55260537670097,
@@ -2488,24 +2579,6 @@
         "path": [
           0,
           3
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "mp4.codec-not-analyzed",
-        "message": "The audio track 1 holds protected Opus (Opus), whose samples are not analyzed yet.",
-        "offset": 25238,
-        "length": 155,
-        "path": [
-          0,
-          3,
-          3,
-          4,
-          4,
-          4,
-          2,
-          5
         ],
         "count": 1
       },

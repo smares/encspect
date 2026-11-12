@@ -1,0 +1,2728 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-libopus-mono-silk-60ms-fec.opus",
+    "root": {
+      "name": "File",
+      "value": "Ogg",
+      "offset": 0,
+      "length": 5478,
+      "children": [
+        {
+          "name": "Ogg",
+          "value": 4,
+          "unit": "pages",
+          "offset": 0,
+          "length": 5478,
+          "children": [
+            {
+              "name": "Logical Stream",
+              "value": "Opus",
+              "offset": 0,
+              "length": 5478,
+              "children": [
+                {
+                  "name": "Serial Number",
+                  "value": 1330664230,
+                  "offset": 14,
+                  "length": 4
+                },
+                {
+                  "name": "Codec",
+                  "value": "Opus",
+                  "offset": 28,
+                  "length": 8
+                },
+                {
+                  "name": "Chain Link",
+                  "value": 1,
+                  "offset": 5,
+                  "length": 1
+                },
+                {
+                  "name": "Page Count",
+                  "value": 4,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 5478
+                },
+                {
+                  "name": "Verified Page Checksums",
+                  "value": 4,
+                  "unit": "pages",
+                  "offset": 0,
+                  "length": 5478
+                },
+                {
+                  "name": "Packet Count",
+                  "value": 28,
+                  "unit": "packets",
+                  "offset": 0,
+                  "length": 5478
+                },
+                {
+                  "name": "Last Granule Position",
+                  "value": 72312,
+                  "offset": 4306,
+                  "length": 8
+                },
+                {
+                  "name": "HasEndOfStream",
+                  "value": true,
+                  "offset": 4305,
+                  "length": 1
+                },
+                {
+                  "name": "Opus Head",
+                  "value": "1 channel, pre-skip 312",
+                  "offset": 28,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Magic Signature",
+                      "value": "OpusHead",
+                      "offset": 28,
+                      "length": 8
+                    },
+                    {
+                      "name": "Version",
+                      "value": 1,
+                      "offset": 36,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "offset": 37,
+                      "length": 1
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "Mono: front center",
+                      "offset": 37,
+                      "length": 1
+                    },
+                    {
+                      "name": "Pre-skip",
+                      "value": 312,
+                      "unit": "samples",
+                      "offset": 38,
+                      "length": 2
+                    },
+                    {
+                      "name": "Input Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 40,
+                      "length": 4
+                    },
+                    {
+                      "name": "Output Gain",
+                      "value": 0,
+                      "unit": "dB",
+                      "offset": 44,
+                      "length": 2
+                    },
+                    {
+                      "name": "Mapping Family",
+                      "value": "0 (mono or stereo)",
+                      "offset": 46,
+                      "length": 1
+                    }
+                  ]
+                },
+                {
+                  "name": "Magic Signature",
+                  "value": "OpusTags",
+                  "offset": 75,
+                  "length": 8
+                },
+                {
+                  "name": "Vorbis Comment",
+                  "kind": "Tag",
+                  "value": 0,
+                  "unit": "comments",
+                  "offset": 83,
+                  "length": 21,
+                  "children": [
+                    {
+                      "name": "Vendor Length",
+                      "value": 13,
+                      "unit": "bytes",
+                      "offset": 83,
+                      "length": 4
+                    },
+                    {
+                      "name": "Vendor",
+                      "value": "libopus 1.5.2",
+                      "offset": 87,
+                      "length": 13
+                    },
+                    {
+                      "name": "Comment Count",
+                      "value": 0,
+                      "offset": 100,
+                      "length": 4
+                    },
+                    {
+                      "name": "Detection",
+                      "value": "High",
+                      "offset": 83,
+                      "length": 21,
+                      "children": [
+                        {
+                          "name": "Evidence",
+                          "value": "The vendor string and 0 comments fit the data",
+                          "offset": 83,
+                          "length": 21
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Encoder",
+                  "value": "libopus 1.5.2",
+                  "offset": 87,
+                  "length": 13,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Medium",
+                      "offset": 87,
+                      "length": 13
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Vorbis comment vendor string \"libopus 1.5.2\", which names libopus' version",
+                      "offset": 87,
+                      "length": 13
+                    }
+                  ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "value": "26 packets, 1.500 s",
+                  "offset": 158,
+                  "length": 5320,
+                  "children": [
+                    {
+                      "name": "Packets",
+                      "value": 26,
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Frames",
+                      "value": 26,
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Coded Samples",
+                      "value": 74880,
+                      "unit": "samples",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Start Trimming",
+                      "value": 312,
+                      "unit": "samples",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Start Offset",
+                      "value": 0,
+                      "unit": "samples",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "End Trimming",
+                      "value": 2568,
+                      "unit": "samples",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 72000,
+                      "unit": "samples",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 1.5,
+                      "unit": "s",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 27.107692307692307,
+                      "unit": "kbps",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Minimum Bitrate",
+                      "value": 2.8,
+                      "unit": "kbps",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Maximum Bitrate",
+                      "value": 45.6,
+                      "unit": "kbps",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Bitrate Mode",
+                      "value": "variable",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Bitrate Distribution",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "0 to 31 kbps",
+                          "value": "16 packets (61.5%)",
+                          "offset": 158,
+                          "length": 5320
+                        },
+                        {
+                          "name": "32 to 63 kbps",
+                          "value": "10 packets (38.5%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Sizes",
+                      "value": "21 to 342 bytes, 203.3 on average",
+                      "offset": 158,
+                      "length": 5320
+                    },
+                    {
+                      "name": "Modes",
+                      "value": "1 mode",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "SILK-only",
+                          "value": "26 frames (100.0%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bandwidths",
+                      "value": "2 bandwidths",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "Mediumband (6 kHz)",
+                          "value": "7 frames (26.9%)",
+                          "offset": 158,
+                          "length": 5320
+                        },
+                        {
+                          "name": "Wideband (8 kHz)",
+                          "value": "19 frames (73.1%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Coded Bandwidth",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 6000,
+                          "unit": "Hz",
+                          "offset": 158,
+                          "length": 5320
+                        },
+                        {
+                          "name": "Most Common",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 158,
+                          "length": 5320
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frame Sizes",
+                      "value": "1 size",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "60 ms",
+                          "value": "26 frames (100.0%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Channel Coding",
+                      "value": 0,
+                      "unit": "stereo packets",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "Stereo",
+                          "value": "0 packets (0.0%)",
+                          "offset": 158,
+                          "length": 5320
+                        },
+                        {
+                          "name": "Mono",
+                          "value": "26 packets (100.0%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frame Packing",
+                      "value": "1 code",
+                      "offset": 158,
+                      "length": 5320,
+                      "children": [
+                        {
+                          "name": "Code 0 (one frame)",
+                          "value": "26 packets (100.0%)",
+                          "offset": 158,
+                          "length": 5320
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frames With Redundancy",
+                      "value": 2,
+                      "offset": 158,
+                      "length": 5320
+                    }
+                  ]
+                },
+                {
+                  "name": "Audio Packets",
+                  "kind": "Stream",
+                  "value": 26,
+                  "unit": "packets",
+                  "offset": 158,
+                  "length": 5320,
+                  "children": [
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "148 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 158,
+                      "length": 148,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 158,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 158,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 158,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 158,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 147,
+                          "unit": "bytes",
+                          "offset": 159,
+                          "length": 147
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "265 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 306,
+                      "length": 265,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 306,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 306,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 306,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 306,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 264,
+                          "unit": "bytes",
+                          "offset": 307,
+                          "length": 264
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "273 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 571,
+                      "length": 273,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 571,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 571,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 571,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 571,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 272,
+                          "unit": "bytes",
+                          "offset": 572,
+                          "length": 272
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "248 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 844,
+                      "length": 248,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 844,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 844,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 844,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 844,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 247,
+                          "unit": "bytes",
+                          "offset": 845,
+                          "length": 247
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "231 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 1092,
+                      "length": 231,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 1092,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 1092,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 1092,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 1092,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 230,
+                          "unit": "bytes",
+                          "offset": 1093,
+                          "length": 230
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "183 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 1323,
+                      "length": 183,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 1323,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 1323,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 1323,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 1323,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 182,
+                          "unit": "bytes",
+                          "offset": 1324,
+                          "length": 182
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "138 bytes, SILK-only, mediumband, 60 ms, mono, 1 frame",
+                      "offset": 1506,
+                      "length": 138,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, mediumband, 60 ms, mono, code 0",
+                          "offset": 1506,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "7: SILK-only, mediumband, 60 ms",
+                              "offset": 1506,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 1506,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 1506,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 137,
+                          "unit": "bytes",
+                          "offset": 1507,
+                          "length": 137
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "194 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 1644,
+                      "length": 194,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 1644,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 1644,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 1644,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 1644,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 193,
+                          "unit": "bytes",
+                          "offset": 1645,
+                          "length": 193
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "182 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 1838,
+                      "length": 182,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 1838,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 1838,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 1838,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 1838,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 181,
+                          "unit": "bytes",
+                          "offset": 1839,
+                          "length": 181
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "61 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2020,
+                      "length": 61,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2020,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2020,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2020,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2020,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 60,
+                          "unit": "bytes",
+                          "offset": 2021,
+                          "length": 60
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "21 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2081,
+                      "length": 21,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2081,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2081,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2081,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2081,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 2082,
+                          "length": 20
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "21 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2102,
+                      "length": 21,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2102,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2102,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2102,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2102,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 20,
+                          "unit": "bytes",
+                          "offset": 2103,
+                          "length": 20
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "120 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2123,
+                      "length": 120,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2123,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2123,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2123,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2123,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 119,
+                          "unit": "bytes",
+                          "offset": 2124,
+                          "length": 119
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "255 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2243,
+                      "length": 255,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2243,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2243,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2243,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2243,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 254,
+                          "unit": "bytes",
+                          "offset": 2244,
+                          "length": 254
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "281 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2498,
+                      "length": 281,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2498,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2498,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2498,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2498,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 280,
+                          "unit": "bytes",
+                          "offset": 2499,
+                          "length": 280
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "252 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 2779,
+                      "length": 252,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 2779,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 2779,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 2779,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 2779,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 251,
+                          "unit": "bytes",
+                          "offset": 2780,
+                          "length": 251
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "214 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 3031,
+                      "length": 214,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 3031,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 3031,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 3031,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 3031,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 213,
+                          "unit": "bytes",
+                          "offset": 3032,
+                          "length": 213
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "213 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 3245,
+                      "length": 213,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 3245,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 3245,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 3245,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 3245,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 212,
+                          "unit": "bytes",
+                          "offset": 3246,
+                          "length": 212
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "205 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 3458,
+                      "length": 205,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 3458,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 3458,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 3458,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 3458,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 204,
+                          "unit": "bytes",
+                          "offset": 3459,
+                          "length": 204
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "178 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 3663,
+                      "length": 178,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 3663,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 3663,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 3663,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 3663,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 177,
+                          "unit": "bytes",
+                          "offset": 3664,
+                          "length": 177
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "195 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 3841,
+                      "length": 195,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 3841,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 3841,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 3841,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 3841,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 194,
+                          "unit": "bytes",
+                          "offset": 3842,
+                          "length": 194
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "264 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 4036,
+                      "length": 264,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 4036,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 4036,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 4036,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 4036,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 263,
+                          "unit": "bytes",
+                          "offset": 4037,
+                          "length": 263
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "296 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 4334,
+                      "length": 296,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 4334,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 4334,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 4334,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 4334,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 295,
+                          "unit": "bytes",
+                          "offset": 4335,
+                          "length": 295
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "342 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 4630,
+                      "length": 342,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 4630,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 4630,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 4630,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 4630,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 341,
+                          "unit": "bytes",
+                          "offset": 4631,
+                          "length": 341
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "318 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 4972,
+                      "length": 318,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 4972,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 4972,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 4972,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 4972,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 317,
+                          "unit": "bytes",
+                          "offset": 4973,
+                          "length": 317
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet",
+                      "kind": "Frame",
+                      "value": "188 bytes, SILK-only, wideband, 60 ms, mono, 1 frame",
+                      "offset": 5290,
+                      "length": 188,
+                      "children": [
+                        {
+                          "name": "TOC",
+                          "value": "SILK-only, wideband, 60 ms, mono, code 0",
+                          "offset": 5290,
+                          "length": 1,
+                          "children": [
+                            {
+                              "name": "Config",
+                              "value": "11: SILK-only, wideband, 60 ms",
+                              "offset": 5290,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "IsStereo",
+                              "value": false,
+                              "offset": 5290,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Frame Count Code",
+                              "value": "0 (one frame)",
+                              "offset": 5290,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Frame",
+                          "value": 187,
+                          "unit": "bytes",
+                          "offset": 5291,
+                          "length": 187
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1.5065,
+                  "unit": "s",
+                  "offset": 4306,
+                  "length": 8
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 72312,
+                  "unit": "samples",
+                  "offset": 4306,
+                  "length": 8
+                }
+              ]
+            },
+            {
+              "name": "Pages",
+              "kind": "Stream",
+              "value": 4,
+              "unit": "pages",
+              "offset": 0,
+              "length": 5478,
+              "children": [
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x4F505326, sequence 0, granule 0, beginning of stream",
+                  "offset": 0,
+                  "length": 47,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 2,
+                      "offset": 5,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": true,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 5,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 6,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1330664230,
+                      "offset": 14,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 0,
+                      "offset": 18,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3857249075,
+                      "offset": 22,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3857249075,
+                          "offset": 22,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 26,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 27,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 19,
+                          "unit": "bytes",
+                          "offset": 27,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "19 bytes, packet 0",
+                      "offset": 28,
+                      "length": 19
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x4F505326, sequence 1, granule 0",
+                  "offset": 47,
+                  "length": 57,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 47,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 51,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 52,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 52,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 52,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 52,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 0,
+                      "offset": 53,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1330664230,
+                      "offset": 61,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 1,
+                      "offset": 65,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 3053470065,
+                      "offset": 69,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 3053470065,
+                          "offset": 69,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 1,
+                      "offset": 73,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 1,
+                      "unit": "lacing values",
+                      "offset": 74,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 29,
+                          "unit": "bytes",
+                          "offset": 74,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "29 bytes, packet 1",
+                      "offset": 75,
+                      "length": 29
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x4F505326, sequence 2, granule 63360",
+                  "offset": 104,
+                  "length": 4196,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 104,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 108,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 0,
+                      "offset": 109,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 109,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 109,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": false,
+                          "offset": 109,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 63360,
+                      "offset": 110,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1330664230,
+                      "offset": 118,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 2,
+                      "offset": 122,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 2151342011,
+                      "offset": 126,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 2151342011,
+                          "offset": 126,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 27,
+                      "offset": 130,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 27,
+                      "unit": "lacing values",
+                      "offset": 131,
+                      "length": 27,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 148,
+                          "unit": "bytes",
+                          "offset": 131,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 132,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 10,
+                          "unit": "bytes",
+                          "offset": 133,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 134,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 18,
+                          "unit": "bytes",
+                          "offset": 135,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 248,
+                          "unit": "bytes",
+                          "offset": 136,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 231,
+                          "unit": "bytes",
+                          "offset": 137,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 183,
+                          "unit": "bytes",
+                          "offset": 138,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 138,
+                          "unit": "bytes",
+                          "offset": 139,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 194,
+                          "unit": "bytes",
+                          "offset": 140,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 182,
+                          "unit": "bytes",
+                          "offset": 141,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 61,
+                          "unit": "bytes",
+                          "offset": 142,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 21,
+                          "unit": "bytes",
+                          "offset": 143,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 21,
+                          "unit": "bytes",
+                          "offset": 144,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 120,
+                          "unit": "bytes",
+                          "offset": 145,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 146,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 0,
+                          "unit": "bytes",
+                          "offset": 147,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 148,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 26,
+                          "unit": "bytes",
+                          "offset": 149,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 252,
+                          "unit": "bytes",
+                          "offset": 150,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 214,
+                          "unit": "bytes",
+                          "offset": 151,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 213,
+                          "unit": "bytes",
+                          "offset": 152,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 205,
+                          "unit": "bytes",
+                          "offset": 153,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 178,
+                          "unit": "bytes",
+                          "offset": 154,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 195,
+                          "unit": "bytes",
+                          "offset": 155,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 156,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 9,
+                          "unit": "bytes",
+                          "offset": 157,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "148 bytes, packet 2",
+                      "offset": 158,
+                      "length": 148
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "265 bytes, packet 3",
+                      "offset": 306,
+                      "length": 265
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "273 bytes, packet 4",
+                      "offset": 571,
+                      "length": 273
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "248 bytes, packet 5",
+                      "offset": 844,
+                      "length": 248
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "231 bytes, packet 6",
+                      "offset": 1092,
+                      "length": 231
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "183 bytes, packet 7",
+                      "offset": 1323,
+                      "length": 183
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "138 bytes, packet 8",
+                      "offset": 1506,
+                      "length": 138
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "194 bytes, packet 9",
+                      "offset": 1644,
+                      "length": 194
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "182 bytes, packet 10",
+                      "offset": 1838,
+                      "length": 182
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "61 bytes, packet 11",
+                      "offset": 2020,
+                      "length": 61
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "21 bytes, packet 12",
+                      "offset": 2081,
+                      "length": 21
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "21 bytes, packet 13",
+                      "offset": 2102,
+                      "length": 21
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "120 bytes, packet 14",
+                      "offset": 2123,
+                      "length": 120
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "255 bytes, packet 15",
+                      "offset": 2243,
+                      "length": 255
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "281 bytes, packet 16",
+                      "offset": 2498,
+                      "length": 281
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "252 bytes, packet 17",
+                      "offset": 2779,
+                      "length": 252
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "214 bytes, packet 18",
+                      "offset": 3031,
+                      "length": 214
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "213 bytes, packet 19",
+                      "offset": 3245,
+                      "length": 213
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "205 bytes, packet 20",
+                      "offset": 3458,
+                      "length": 205
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "178 bytes, packet 21",
+                      "offset": 3663,
+                      "length": 178
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "195 bytes, packet 22",
+                      "offset": 3841,
+                      "length": 195
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "264 bytes, packet 23",
+                      "offset": 4036,
+                      "length": 264
+                    }
+                  ]
+                },
+                {
+                  "name": "Page",
+                  "kind": "Frame",
+                  "value": "serial 0x4F505326, sequence 3, granule 72312, end of stream",
+                  "offset": 4300,
+                  "length": 1178,
+                  "children": [
+                    {
+                      "name": "Capture Pattern",
+                      "value": "OggS",
+                      "offset": 4300,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 4304,
+                      "length": 1
+                    },
+                    {
+                      "name": "Header Type",
+                      "value": 4,
+                      "offset": 4305,
+                      "length": 1,
+                      "children": [
+                        {
+                          "name": "IsContinued",
+                          "value": false,
+                          "offset": 4305,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsBeginningOfStream",
+                          "value": false,
+                          "offset": 4305,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "IsEndOfStream",
+                          "value": true,
+                          "offset": 4305,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Granule Position",
+                      "value": 72312,
+                      "offset": 4306,
+                      "length": 8
+                    },
+                    {
+                      "name": "Serial Number",
+                      "value": 1330664230,
+                      "offset": 4314,
+                      "length": 4
+                    },
+                    {
+                      "name": "Sequence Number",
+                      "value": 3,
+                      "offset": 4318,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC",
+                      "value": 1367102870,
+                      "offset": 4322,
+                      "length": 4,
+                      "children": [
+                        {
+                          "name": "Computed",
+                          "value": 1367102870,
+                          "offset": 4322,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Segments",
+                      "value": 7,
+                      "offset": 4326,
+                      "length": 1
+                    },
+                    {
+                      "name": "Segment Table",
+                      "value": 7,
+                      "unit": "lacing values",
+                      "offset": 4327,
+                      "length": 7,
+                      "children": [
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 4327,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 41,
+                          "unit": "bytes",
+                          "offset": 4328,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 4329,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 87,
+                          "unit": "bytes",
+                          "offset": 4330,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 255,
+                          "unit": "bytes",
+                          "offset": 4331,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 63,
+                          "unit": "bytes",
+                          "offset": 4332,
+                          "length": 1
+                        },
+                        {
+                          "name": "Lacing Value",
+                          "value": 188,
+                          "unit": "bytes",
+                          "offset": 4333,
+                          "length": 1
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "296 bytes, packet 24",
+                      "offset": 4334,
+                      "length": 296
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "342 bytes, packet 25",
+                      "offset": 4630,
+                      "length": 342
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "318 bytes, packet 26",
+                      "offset": 4972,
+                      "length": 318
+                    },
+                    {
+                      "name": "Packet Data",
+                      "value": "188 bytes, packet 27",
+                      "offset": 5290,
+                      "length": 188
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            0
+          ]
+        ],
+        "codec": "Opus",
+        "sampleRate": 48000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 72000,
+        "duration": 1.5,
+        "averageBitrate": 27.107692307692307,
+        "isVbr": true,
+        "playbackGroup": 1,
+        "encoder": "libopus 1.5.2",
+        "encoderConfidence": "Medium",
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              158,
+              306,
+              571,
+              844,
+              1092,
+              1323,
+              1506,
+              1644,
+              1838,
+              2020,
+              2081,
+              2102,
+              2123,
+              2243,
+              2498,
+              2779,
+              3031,
+              3245,
+              3458,
+              3663,
+              3841,
+              4036,
+              4334,
+              4630,
+              4972,
+              5290
+            ],
+            "values": [
+              19.73333333333333,
+              35.333333333333336,
+              36.4,
+              33.06666666666666,
+              30.8,
+              24.4,
+              18.4,
+              25.866666666666667,
+              24.26666666666667,
+              8.133333333333333,
+              2.8,
+              2.8,
+              16,
+              34,
+              37.46666666666666,
+              33.6,
+              28.53333333333333,
+              28.4,
+              27.333333333333332,
+              23.73333333333333,
+              26,
+              35.2,
+              39.46666666666666,
+              45.6,
+              42.4,
+              25.066666666666666
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              24.2,
+              32.6
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              158,
+              306,
+              571,
+              844,
+              1092,
+              1323,
+              1506,
+              1644,
+              1838,
+              2020,
+              2081,
+              2102,
+              2123,
+              2243,
+              2498,
+              2779,
+              3031,
+              3245,
+              3458,
+              3663,
+              3841,
+              4036,
+              4334,
+              4630,
+              4972,
+              5290
+            ],
+            "values": [
+              6000,
+              6000,
+              6000,
+              6000,
+              6000,
+              6000,
+              6000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              8000,
+              8000
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": []
+  }
+]

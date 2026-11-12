@@ -230,16 +230,19 @@ public sealed partial class OpusParser
         private void AddHead(MappedBytes packet)
         {
             _head = OpusHead.Read(packet.Span);
+
+            // A header the container puts together from its own fields (MP4's dOps box) has no bytes of its own: its nodes go under the box.
+            Node headParent = packet.IsOpaque && context.Configuration is { } configuration ? configuration.Parent : _parent;
             if (_head is not { } head)
             {
-                Node node = _parent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
+                Node node = headParent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
                     topic: Topics.OpusPreSkip));
                 _findings.Add(Severity.Warning, "opus.header-short", node, _ =>
                     $"The identification header holds {Count(packet.Length, "byte", "bytes")}, too few for its fields (RFC 7845, section 5.1); decoders refuse the stream, and its audio packets are read as single-stream packets.");
                 return;
             }
 
-            _headNode = _parent.Add(head.ToNode(packet));
+            _headNode = headParent.Add(head.ToNode(packet));
             CheckHeaderPage(packet, "identification header", requireEnd: true);
             if (head.Length < head.ExpectedLength)
             {

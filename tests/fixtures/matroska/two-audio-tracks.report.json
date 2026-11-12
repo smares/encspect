@@ -1207,20 +1207,20 @@
                       ]
                     },
                     {
-                      "name": "Block Usage",
+                      "name": "Block Sizes",
                       "value": 4,
                       "unit": "CELT frames",
                       "offset": 288,
                       "length": 316,
                       "children": [
                         {
-                          "name": "Long Blocks",
+                          "name": "Long",
                           "value": "4 frames (100.0%)",
                           "offset": 288,
                           "length": 316
                         },
                         {
-                          "name": "Short Blocks",
+                          "name": "Short",
                           "value": "0 frames (0.0%)",
                           "offset": 288,
                           "length": 316
@@ -1229,26 +1229,32 @@
                     },
                     {
                       "name": "Stereo Coding",
-                      "value": 7,
-                      "unit": "stereo codings",
+                      "value": 4,
+                      "unit": "stereo CELT frames",
                       "offset": 288,
                       "length": 316,
                       "children": [
                         {
-                          "name": "Mid/Side Stereo",
+                          "name": "Left/right stereo",
                           "value": "0 frames (0.0%)",
                           "offset": 288,
                           "length": 316
                         },
                         {
-                          "name": "Dual Stereo",
-                          "value": "3 frames (75.0%)",
+                          "name": "Mid/side stereo",
+                          "value": "0 frames (0.0%)",
                           "offset": 288,
                           "length": 316
                         },
                         {
-                          "name": "Intensity Stereo",
+                          "name": "Intensity stereo",
                           "value": "4 frames (100.0%)",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Mid/side and intensity stereo",
+                          "value": "0 frames (0.0%)",
                           "offset": 288,
                           "length": 316
                         }
@@ -1760,20 +1766,20 @@
                       ]
                     },
                     {
-                      "name": "Block Usage",
+                      "name": "Block Sizes",
                       "value": 4,
                       "unit": "CELT frames",
                       "offset": 334,
                       "length": 316,
                       "children": [
                         {
-                          "name": "Long Blocks",
+                          "name": "Long",
                           "value": "4 frames (100.0%)",
                           "offset": 334,
                           "length": 316
                         },
                         {
-                          "name": "Short Blocks",
+                          "name": "Short",
                           "value": "0 frames (0.0%)",
                           "offset": 334,
                           "length": 316
@@ -2111,16 +2117,16 @@
         ],
         "categorySeries": [
           {
-            "name": "Block Usage",
+            "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",
             "categories": [
               {
-                "name": "Long Blocks",
+                "name": "Long",
                 "count": 4
               },
               {
-                "name": "Short Blocks",
+                "name": "Short",
                 "count": 0
               }
             ],
@@ -2145,58 +2151,34 @@
             "valueLabel": "frame",
             "categories": [
               {
-                "name": "Mid/Side Stereo",
+                "name": "Left/right stereo",
                 "count": 0
               },
               {
-                "name": "Dual Stereo",
-                "count": 3
+                "name": "Mid/side stereo",
+                "count": 0
               },
               {
-                "name": "Intensity Stereo",
+                "name": "Intensity stereo",
                 "count": 4
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
               }
             ],
-            "total": 7,
+            "total": 4,
             "xSeries": "Bitrate",
             "valueCounts": [
               [
                 1,
-                1
-              ],
-              [
-                2,
-                3
+                4
               ]
             ],
             "runs": [
               [
                 2,
-                1
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                2,
-                1
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                2,
-                1
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                2,
-                1
+                4
               ]
             ]
           }
@@ -2288,16 +2270,16 @@
         ],
         "categorySeries": [
           {
-            "name": "Block Usage",
+            "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",
             "categories": [
               {
-                "name": "Long Blocks",
+                "name": "Long",
                 "count": 4
               },
               {
-                "name": "Short Blocks",
+                "name": "Short",
                 "count": 0
               }
             ],

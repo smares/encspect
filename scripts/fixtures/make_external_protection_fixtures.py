@@ -164,8 +164,8 @@ def manifest_for(entry, path):
     listed = is_aac and "fragmented" not in entry["name"]
     packets = ffprobe_packets(path) if listed else [[None, size] for size in mp4box_sample_sizes(path)]
     is_clear = entry.get("is_clear", False)
-    # The cookie of Apple Lossless names the channels, as the AAC configuration does; the other codings are not read.
-    has_layout = is_aac or entry["codec"] == "Apple Lossless"
+    # The cookie of Apple Lossless and the dOps box of Opus name the channels, as the AAC configuration does; the other codings are not read.
+    has_layout = is_aac or entry["codec"] in ("Apple Lossless", "Opus")
     stream = {"codec": entry["codec"], "sample_rate": entry["rate"], "channels": 2, "channel_mode": "Stereo" if has_layout else None,
               "channel_layout": ["front left", "front right"] if has_layout else [],
               "samples": duration_samples(fields, entry["rate"]), "is_vbr": False,

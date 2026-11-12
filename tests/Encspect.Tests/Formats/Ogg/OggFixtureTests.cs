@@ -177,7 +177,7 @@ public partial class OggFixtureTests
         return actual;
     }
 
-    private static void CheckStatistics(JsonElement codec, Node stream, string where)
+    private static void CheckStatistics(JsonElement codec, Node stream, string where, bool isOpus = false)
     {
         if (codec.GetProperty("statistics").ValueKind == JsonValueKind.Object)
         {
@@ -190,7 +190,7 @@ public partial class OggFixtureTests
 
             // The figures of Opus's entropy pass are not in the manifests, which a model written apart from the analyzer computes: the range coded syntax has no model but the
             // decoder, so the .report.json goldens pin them and the PCM cross-check (docs/development.md, "Opus decoding") holds them, since a wrong transient flag or stereo coding changes the samples.
-            IEnumerable<Node> counted = statistics.Children.Where(c => c.Name is not ("Block Usage" or "Stereo Coding" or "Intensity Stereo Bound" or "Frames With Redundancy"));
+            IEnumerable<Node> counted = statistics.Children.Where(c => !isOpus || c.Name is not ("Block Sizes" or "Stereo Coding" or "Intensity Stereo Bound" or "Frames With Redundancy"));
             Assert.Equal(codec.GetProperty("statistics").EnumerateObject().Count(), counted.SelectMany(c => c.Children.Count > 0 ? [c, .. c.Children] : new[] { c }).Count());
         }
         else
