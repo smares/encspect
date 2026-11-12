@@ -6,7 +6,7 @@
  *                                            opus_multistream_decode_float alone (no trimming, no pre-skip: the output is at the coded stage), with the header's output gain
  *     opus_pcm bit CHANNELS INPUT.bit OUTPUT.f32   the opus_demo files of RFC 6716's and RFC 8251's test vectors: per packet a big-endian length and the encoder's final range
  *
- * One JSON object per packet on standard output: its number, its size, the samples per channel libopus returned (negative for an error code) and the final range coder state
+ * One JSON object per packet on standard output: its number, its size, the samples per channel libopus returned (negative for an error code, and then the samples the TOC declares are written as silence) and the final range coder state
  * (the exclusive or of the streams' states for a multistream packet; for the bit files also the state the encoder stored). A last line states the channels.
  *
  *     cc -O1 -ffp-contract=off -o opus_pcm opus_pcm.c -lopus -logg -lm
@@ -32,6 +32,17 @@ static int emit(OpusMSDecoder *decoder, FILE *out, long number, const unsigned c
     if (samples > 0)
     {
         fwrite(buffer, sizeof(float), (size_t)samples * channels, out);
+    }
+    else if (samples < 0 && bytes > 0)
+    {
+        /* A packet libopus refuses returns nothing; the samples its TOC declares are written as silence, so that the positions of the packets after it stay those of the coded stage. */
+        int frames = (data[0] & 3) == 0 ? 1 : (data[0] & 3) < 3 ? 2 : (bytes > 1 ? (data[1] & 0x3F) : 0);
+        int declared = opus_packet_get_samples_per_frame(data, 48000) * frames;
+        if (declared > 0 && declared <= MAX_FRAME)
+        {
+            memset(buffer, 0, sizeof(float) * (size_t)declared * channels);
+            fwrite(buffer, sizeof(float), (size_t)declared * channels, out);
+        }
     }
     if (stored >= 0)
     {

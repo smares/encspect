@@ -184,7 +184,6 @@ internal sealed partial class CeltDecoder
             _prefilterAndFold = true;
         }
 
-        if (Environment.GetEnvironmentVariable("OPUS_DBG") != null) Console.WriteLine($"DBGLOST noise={noiseBased} N={n} lossdur={lossDuration} pitch={_lastPitchIndex} out: {string.Join(' ', Enumerable.Range(0, 6).Select(q => _decodeMem[0][outSyn + q].ToString("0.0")))} | {_decodeMem[0][outSyn + n - 2]:0.0} {_decodeMem[0][outSyn + n - 1]:0.0}");
         _lossDuration = Math.Min(10000, lossDuration + (1 << lm));
         Deemphasis(pcm, pcmAt, n);
     }

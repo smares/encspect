@@ -4,7 +4,9 @@
   CSIRO, Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo, Microsoft Corporation, Amazon.com, Inc.). The decoder follows its decoding code (the reference
   decoder of RFC 6716 as RFC 8251 updates it, and libopus where the RFC calls its repository current) and takes its tables as format data. The source is not
   redistributed; its COPYING is the text scripts/release/make_notices.py puts in THIRD-PARTY-NOTICES.md (--fetch checks the hash). build_libopus() builds it in a temporary
-  directory with the default configuration: float decoding, and OSCE, deep PLC and DRED off, as `configure.ac` leaves them.
+  directory with the default configuration (float decoding; OSCE, deep PLC and DRED off, as `configure.ac` leaves them) and without the SIMD intrinsics, so that
+  the reference is the plain C code RFC 6716's decoder is: the intrinsics sum in another order and with fused multiply-adds, which moves the concealment of a mode change (a
+  few 10^-3 of full scale in the 5 ms it covers) and nothing else.
 - rfc6716.txt and rfc8251.txt: the specifications, pinned (the RFC's code is Simplified BSD under its copyright notice).
 - opus_testvectors-rfc8251.tar.gz and opus_testvectors.tar.gz: the test vectors of RFC 8251 and of RFC 6716, downloaded and never committed (their license is unverified,
   docs/design/lossy-decoders.md): per vector the packets with the encoder's final range coder state (testvectorNN.bit, the opus_demo format) and the reference output
@@ -102,7 +104,7 @@ def build_libopus(directory):
     prefix = pathlib.Path(directory) / "libopus-install"
     if not (prefix / "lib" / "libopus.a").exists():
         build.mkdir(exist_ok=True)
-        subprocess.run(["cmake", str(source), "-DCMAKE_BUILD_TYPE=Release", "-DOPUS_BUILD_PROGRAMS=OFF", "-DOPUS_BUILD_TESTING=OFF", "-DCMAKE_C_FLAGS=-ffp-contract=off",
+        subprocess.run(["cmake", str(source), "-DCMAKE_BUILD_TYPE=Release", "-DOPUS_BUILD_PROGRAMS=OFF", "-DOPUS_BUILD_TESTING=OFF", "-DOPUS_DISABLE_INTRINSICS=ON", "-DCMAKE_C_FLAGS=-ffp-contract=off -O2",
                         f"-DCMAKE_INSTALL_PREFIX={prefix}"], cwd=build, check=True, capture_output=True)
         subprocess.run(["cmake", "--build", ".", "-j4"], cwd=build, check=True, capture_output=True)
         subprocess.run(["cmake", "--install", "."], cwd=build, check=True, capture_output=True)
