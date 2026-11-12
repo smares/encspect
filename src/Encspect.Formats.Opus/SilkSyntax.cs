@@ -35,6 +35,7 @@ internal sealed class SilkSyntax
         public int EcPrevSignalType;
         public int EcPrevLagIndex;
         public int[] VadFlags = new int[3];
+        public int LbrrFlag;
         public int[] LbrrFlags = new int[3];
         public int FramesDecoded;
     }
@@ -103,9 +104,14 @@ internal sealed class SilkSyntax
                     _channels[n].VadFlags[i] = dec.BitLogP(1);
                 }
 
+                _channels[n].LbrrFlag = dec.BitLogP(1);
+            }
+
+            // The flags of the frames of each channel come after the flags of every channel (RFC 6716, section 4.2.4; the second loop of silk_Decode).
+            for (int n = 0; n < channelsInternal; n++)
+            {
                 _channels[n].LbrrFlags[0] = _channels[n].LbrrFlags[1] = _channels[n].LbrrFlags[2] = 0;
-                int lbrrFlag = dec.BitLogP(1);
-                if (lbrrFlag != 0)
+                if (_channels[n].LbrrFlag != 0)
                 {
                     if (framesPerPacket == 1)
                     {
