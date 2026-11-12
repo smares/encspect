@@ -135,6 +135,51 @@ public class MpegWalkTests
         Assert.Equal(0, lent[LentLayout.FlagsIndex]);
     }
 
+    // A granule whose big-values region leaves a count1 region of 574 lines (LAME 3.57 -v wrote one: big_values 1 and 144 quadruples) has a last quadruple of which only
+    // two lines lie in the 576. libmad, mpg123 and FFmpeg decode no quadruple that does not fit, so lines 574 and 575 stay 0; where the quadruples fit, the last one is decoded.
+    [Theory]
+    [InlineData(1, 574, 0)]
+    [InlineData(2, 576, 1)]
+    public void ACount1QuadrupleThatDoesNotFitIn576LinesIsNotDecoded(int bigValues, int expectedLines, int expectedAt575)
+    {
+        var bits = new List<bool>();
+        void Put(string text) => bits.AddRange(text.Select(c => c == '1'));
+        for (int i = 0; i < bigValues; i++)
+        {
+            Put("1"); // table 1: the pair (0, 0)
+        }
+
+        int quadruples = (576 - (2 * bigValues) + 3) / 4;
+        for (int i = 0; i < quadruples; i++)
+        {
+            // Table B: the code is the four flags inverted. The last quadruple has the values at its first, second and fourth line.
+            Put(i == quadruples - 1 ? "0010" : "1111");
+            if (i == quadruples - 1)
+            {
+                Put("000");
+            }
+        }
+
+        var data = new byte[(bits.Count + 7) / 8 + 8];
+        for (int i = 0; i < bits.Count; i++)
+        {
+            if (bits[i])
+            {
+                data[i / 8] |= (byte)(0x80 >> (i % 8));
+            }
+        }
+
+        var granule = new GranuleSyntax { Bands = BandKind.Long, BandRow = 5, LongBandCount = 22, BigValues = bigValues, Table0 = 1, Count1Table = 1 };
+        var values = new int[576];
+        var source = new BitSource(data);
+        int lines = Layer3Syntax.ReadSpectrum(ref source, granule, values, data.Length * 8, out bool isOverrun);
+
+        Assert.False(isOverrun);
+        Assert.Equal(expectedLines, lines);
+        Assert.Equal(expectedAt575, values[575]);
+        Assert.Equal(expectedAt575, values[(2 * bigValues) + ((quadruples - 1) * 4)]);
+    }
+
     [Fact]
     public void LongBlocksCodeLinesInFrequencyOrder()
     {

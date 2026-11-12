@@ -417,7 +417,7 @@ internal static class Layer3Syntax
     }
 
     // Reads the Huffman-coded values of one granule and channel into values (576 entries, zero outside what the regions code), following
-    // minimp3's L3_huffman. limit is the bit position where the granule's part2_3_length ends. Returns the number of lines the big-values and
+    // minimp3's L3_huffman, except for a quadruple that does not fit in 576 lines (below). limit is the bit position where the granule's part2_3_length ends. Returns the number of lines the big-values and
     // count1 regions code, in the order the data comes in.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static int ReadSpectrum(ref BitSource source, in GranuleSyntax gr, Span<int> values, int limit, out bool isOverrun)
@@ -491,7 +491,9 @@ internal static class Layer3Syntax
         ReadOnlySpan<byte> count1 = gr.Count1Table != 0 ? Layer3Tables.Count1Table1 : Layer3Tables.Count1Table0;
         // np counts pairs of lines left in the band the quadruples are in; the quadruple loop starts in the band the big-values loop ended in.
         int remaining = 1 - pairsLeft;
-        for (; dst < 576; dst += 4)
+        // A quadruple that does not fit in the 576 lines (the big-values region left a count1 region of 2 mod 4 lines, as LAME 3.57 -v wrote once) is not decoded:
+        // libmad, mpg123 and FFmpeg stop at line 572, where minimp3 decodes the two lines of it that lie inside the spectrum.
+        for (; dst + 4 <= 576; dst += 4)
         {
             bits.Fill();
             int leaf = count1[(int)bits.Peek(4)];
@@ -526,13 +528,6 @@ internal static class Layer3Syntax
                     dst += 2;
                     break;
                 }
-            }
-
-            if (dst + 4 > 576)
-            {
-                // The band table ends at line 576, so the second pair of a quadruple that starts at line 574 has no band: minimp3's reload stops there.
-                dst += 2;
-                break;
             }
 
             Quad(ref bits, values, dst, leaf, 2);
