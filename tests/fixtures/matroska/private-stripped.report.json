@@ -174,7 +174,68 @@
                           "value": 11,
                           "unit": "bytes",
                           "offset": 135,
-                          "length": 14
+                          "length": 14,
+                          "children": [
+                            {
+                              "name": "Opus Head",
+                              "value": "1 channel, pre-skip 312",
+                              "offset": 138,
+                              "length": 11,
+                              "children": [
+                                {
+                                  "name": "Magic Signature",
+                                  "value": "OpusHead",
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Version",
+                                  "value": 1,
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Channels",
+                                  "value": 1,
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Channel Layout",
+                                  "value": "Mono: front center",
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Pre-skip",
+                                  "value": 312,
+                                  "unit": "samples",
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Input Sample Rate",
+                                  "value": 48000,
+                                  "unit": "Hz",
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Output Gain",
+                                  "value": 0,
+                                  "unit": "dB",
+                                  "offset": 138,
+                                  "length": 11
+                                },
+                                {
+                                  "name": "Mapping Family",
+                                  "value": "0 (mono or stereo)",
+                                  "offset": 138,
+                                  "length": 11
+                                }
+                              ]
+                            }
+                          ]
                         },
                         {
                           "name": "CodecDelay",
@@ -526,65 +587,6 @@
               "offset": 138,
               "length": 225,
               "children": [
-                {
-                  "name": "Opus Head",
-                  "value": "1 channel, pre-skip 312",
-                  "offset": 138,
-                  "length": 11,
-                  "children": [
-                    {
-                      "name": "Magic Signature",
-                      "value": "OpusHead",
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Version",
-                      "value": 1,
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Channels",
-                      "value": 1,
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Channel Layout",
-                      "value": "Mono: front center",
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Pre-skip",
-                      "value": 312,
-                      "unit": "samples",
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Input Sample Rate",
-                      "value": 48000,
-                      "unit": "Hz",
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Output Gain",
-                      "value": 0,
-                      "unit": "dB",
-                      "offset": 138,
-                      "length": 11
-                    },
-                    {
-                      "name": "Mapping Family",
-                      "value": "0 (mono or stereo)",
-                      "offset": 138,
-                      "length": 11
-                    }
-                  ]
-                },
                 {
                   "name": "Statistics",
                   "kind": "Statistics",

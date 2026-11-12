@@ -121,68 +121,7 @@
                   "value": 76,
                   "unit": "samples",
                   "offset": 44,
-                  "length": 24773,
-                  "children": [
-                    {
-                      "name": "Opus Head",
-                      "value": "2 channels, pre-skip 312",
-                      "offset": 25282,
-                      "length": 11,
-                      "children": [
-                        {
-                          "name": "Magic Signature",
-                          "value": "OpusHead",
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Version",
-                          "value": 1,
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Channels",
-                          "value": 2,
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Channel Layout",
-                          "value": "Stereo: front left, front right",
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Pre-skip",
-                          "value": 312,
-                          "unit": "samples",
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Input Sample Rate",
-                          "value": 48000,
-                          "unit": "Hz",
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Output Gain",
-                          "value": 0,
-                          "unit": "dB",
-                          "offset": 25282,
-                          "length": 11
-                        },
-                        {
-                          "name": "Mapping Family",
-                          "value": "0 (mono or stereo)",
-                          "offset": 25282,
-                          "length": 11
-                        }
-                      ]
-                    }
-                  ]
+                  "length": 24773
                 }
               ]
             },
@@ -932,7 +871,8 @@
                                         },
                                         {
                                           "name": "dOps",
-                                          "value": "Opus Specific",
+                                          "value": 11,
+                                          "unit": "bytes",
                                           "offset": 25274,
                                           "length": 19,
                                           "children": [
@@ -950,44 +890,63 @@
                                               "length": 4
                                             },
                                             {
-                                              "name": "Version",
-                                              "value": 0,
+                                              "name": "Opus Head",
+                                              "value": "2 channels, pre-skip 312",
                                               "offset": 25282,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Output Channel Count",
-                                              "value": 2,
-                                              "unit": "channels",
-                                              "offset": 25283,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Pre-skip",
-                                              "value": 312,
-                                              "unit": "samples",
-                                              "offset": 25284,
-                                              "length": 2
-                                            },
-                                            {
-                                              "name": "Input Sample Rate",
-                                              "value": 48000,
-                                              "unit": "Hz",
-                                              "offset": 25286,
-                                              "length": 4
-                                            },
-                                            {
-                                              "name": "Output Gain",
-                                              "value": 0,
-                                              "unit": "1/256 dB",
-                                              "offset": 25290,
-                                              "length": 2
-                                            },
-                                            {
-                                              "name": "Channel Mapping Family",
-                                              "value": 0,
-                                              "offset": 25292,
-                                              "length": 1
+                                              "length": 11,
+                                              "children": [
+                                                {
+                                                  "name": "Magic Signature",
+                                                  "value": "OpusHead",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Version",
+                                                  "value": 1,
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Channels",
+                                                  "value": 2,
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Channel Layout",
+                                                  "value": "Stereo: front left, front right",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Pre-skip",
+                                                  "value": 312,
+                                                  "unit": "samples",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Input Sample Rate",
+                                                  "value": 48000,
+                                                  "unit": "Hz",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Output Gain",
+                                                  "value": 0,
+                                                  "unit": "dB",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                },
+                                                {
+                                                  "name": "Mapping Family",
+                                                  "value": "0 (mono or stereo)",
+                                                  "offset": 25282,
+                                                  "length": 11
+                                                }
+                                              ]
                                             }
                                           ]
                                         },

@@ -646,7 +646,7 @@ def opus_in_mp4():
     for name, source, count, channels, family, streams, coupled, mapping, mode, layout in (
             ("opus-stereo-in-mp4", "external-libopus-stereo-silk-20ms-fec.opus", 40, 2, 0, 0, 0, (), "Stereo", SPEAKERS[2]),
             ("opus-mono-in-mp4", "external-libopus-mono-silk-60ms-fec.opus", 12, 1, 0, 0, 0, (), "Mono", SPEAKERS[1]),
-            ("opus-51-in-mp4", "external-opusenc-51.opus", 20, 6, 1, 4, 2, (0, 4, 1, 2, 3, 5), "5.1", SPEAKERS[6])):
+            ("opus-51-in-mp4", "external-opusenc-51.opus", 20, 6, 1, 4, 2, (0, 4, 1, 2, 3, 5), "5.1", ["front left", "front center", "front right", "back left", "back right", "LFE"])):
         packets = ogg_opus_packets(source, count)
         durations = [opus_packet_samples(p) for p in packets]
         entry = mp4a(channels, 48000, dops(channels, 312, 48000, 0, family, streams, coupled, mapping), format=b"Opus")

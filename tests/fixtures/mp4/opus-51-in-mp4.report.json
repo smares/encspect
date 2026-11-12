@@ -729,7 +729,8 @@
                                         },
                                         {
                                           "name": "dOps",
-                                          "value": "Opus Specific",
+                                          "value": 19,
+                                          "unit": "bytes",
                                           "offset": 449,
                                           "length": 27,
                                           "children": [
@@ -747,65 +748,119 @@
                                               "length": 4
                                             },
                                             {
-                                              "name": "Version",
-                                              "value": 0,
+                                              "name": "Opus Head",
+                                              "value": "6 channels, pre-skip 312",
                                               "offset": 457,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Output Channel Count",
-                                              "value": 6,
-                                              "unit": "channels",
-                                              "offset": 458,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Pre-skip",
-                                              "value": 312,
-                                              "unit": "samples",
-                                              "offset": 459,
-                                              "length": 2
-                                            },
-                                            {
-                                              "name": "Input Sample Rate",
-                                              "value": 48000,
-                                              "unit": "Hz",
-                                              "offset": 461,
-                                              "length": 4
-                                            },
-                                            {
-                                              "name": "Output Gain",
-                                              "value": 0,
-                                              "unit": "1/256 dB",
-                                              "offset": 465,
-                                              "length": 2
-                                            },
-                                            {
-                                              "name": "Channel Mapping Family",
-                                              "value": 1,
-                                              "offset": 467,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Stream Count",
-                                              "value": 4,
-                                              "unit": "streams",
-                                              "offset": 468,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Coupled Stream Count",
-                                              "value": 2,
-                                              "unit": "streams",
-                                              "offset": 469,
-                                              "length": 1
-                                            },
-                                            {
-                                              "name": "Channel Mapping",
-                                              "value": 6,
-                                              "unit": "bytes",
-                                              "offset": 470,
-                                              "length": 6
+                                              "length": 19,
+                                              "children": [
+                                                {
+                                                  "name": "Magic Signature",
+                                                  "value": "OpusHead",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Version",
+                                                  "value": 1,
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Channels",
+                                                  "value": 6,
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Channel Layout",
+                                                  "value": "5.1: front left, front center, front right, back left, back right, LFE",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Pre-skip",
+                                                  "value": 312,
+                                                  "unit": "samples",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Input Sample Rate",
+                                                  "value": 48000,
+                                                  "unit": "Hz",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Output Gain",
+                                                  "value": 0,
+                                                  "unit": "dB",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Mapping Family",
+                                                  "value": "1 (Vorbis channel order)",
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Stream Count",
+                                                  "value": 4,
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Coupled Count",
+                                                  "value": 2,
+                                                  "offset": 457,
+                                                  "length": 19
+                                                },
+                                                {
+                                                  "name": "Channel Mapping",
+                                                  "value": "0, 4, 1, 2, 3, 5",
+                                                  "offset": 457,
+                                                  "length": 19,
+                                                  "children": [
+                                                    {
+                                                      "name": "Channel 0",
+                                                      "value": "front left: coupled stream 0, left (0)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    },
+                                                    {
+                                                      "name": "Channel 1",
+                                                      "value": "front center: mono stream 2 (4)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    },
+                                                    {
+                                                      "name": "Channel 2",
+                                                      "value": "front right: coupled stream 0, right (1)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    },
+                                                    {
+                                                      "name": "Channel 3",
+                                                      "value": "back left: coupled stream 1, left (2)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    },
+                                                    {
+                                                      "name": "Channel 4",
+                                                      "value": "back right: coupled stream 1, right (3)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    },
+                                                    {
+                                                      "name": "Channel 5",
+                                                      "value": "LFE: mono stream 3 (5)",
+                                                      "offset": 457,
+                                                      "length": 19
+                                                    }
+                                                  ]
+                                                }
+                                              ]
                                             }
                                           ]
                                         }
@@ -1241,121 +1296,6 @@
                   "offset": 660,
                   "length": 17190,
                   "children": [
-                    {
-                      "name": "Opus Head",
-                      "value": "6 channels, pre-skip 312",
-                      "offset": 457,
-                      "length": 19,
-                      "children": [
-                        {
-                          "name": "Magic Signature",
-                          "value": "OpusHead",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Version",
-                          "value": 1,
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Channels",
-                          "value": 6,
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Channel Layout",
-                          "value": "5.1: front left, front center, front right, back left, back right, LFE",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Pre-skip",
-                          "value": 312,
-                          "unit": "samples",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Input Sample Rate",
-                          "value": 48000,
-                          "unit": "Hz",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Output Gain",
-                          "value": 0,
-                          "unit": "dB",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Mapping Family",
-                          "value": "1 (Vorbis channel order)",
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Stream Count",
-                          "value": 4,
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Coupled Count",
-                          "value": 2,
-                          "offset": 457,
-                          "length": 19
-                        },
-                        {
-                          "name": "Channel Mapping",
-                          "value": "0, 4, 1, 2, 3, 5",
-                          "offset": 457,
-                          "length": 19,
-                          "children": [
-                            {
-                              "name": "Channel 0",
-                              "value": "front left: coupled stream 0, left (0)",
-                              "offset": 457,
-                              "length": 19
-                            },
-                            {
-                              "name": "Channel 1",
-                              "value": "front center: mono stream 2 (4)",
-                              "offset": 457,
-                              "length": 19
-                            },
-                            {
-                              "name": "Channel 2",
-                              "value": "front right: coupled stream 0, right (1)",
-                              "offset": 457,
-                              "length": 19
-                            },
-                            {
-                              "name": "Channel 3",
-                              "value": "back left: coupled stream 1, left (2)",
-                              "offset": 457,
-                              "length": 19
-                            },
-                            {
-                              "name": "Channel 4",
-                              "value": "back right: coupled stream 1, right (3)",
-                              "offset": 457,
-                              "length": 19
-                            },
-                            {
-                              "name": "Channel 5",
-                              "value": "LFE: mono stream 3 (5)",
-                              "offset": 457,
-                              "length": 19
-                            }
-                          ]
-                        }
-                      ]
-                    },
                     {
                       "name": "Statistics",
                       "kind": "Statistics",
