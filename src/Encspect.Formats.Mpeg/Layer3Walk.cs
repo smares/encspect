@@ -37,7 +37,7 @@ internal sealed class Layer3Walker
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public WalkFacts Walk(MpegHeader header, ReadOnlySpan<byte> frame, ReadOnlySpan<byte> mainData, Span<int> planes, int stride, int claimedBytes = -1)
     {
-        var facts = new WalkFacts();
+        var facts = new WalkFacts { IntensityLine = -1 };
         int mainDataBegin = Layer3Syntax.ReadSideInfo(frame, header, _granules, out int count, out int partsTotal);
         if (mainDataBegin < 0)
         {
@@ -87,6 +87,14 @@ internal sealed class Layer3Walker
             }
 
             facts.CodedLines = Math.Max(facts.CodedLines, Top(gr, coded));
+            if (isIntensity && channel == 1)
+            {
+                int line = IntensityStart(header, _granules[index - 1], gr, values, _positions[1]);
+                if (line >= 0)
+                {
+                    facts.IntensityLine = facts.IntensityLine < 0 ? line : Math.Min(facts.IntensityLine, line);
+                }
+            }
         }
 
         plane0Flags(planes, stride, channels, 0);
@@ -99,6 +107,61 @@ internal sealed class Layer3Walker
                 planes[(ch * stride) + LentLayout.FlagsIndex] = flags;
             }
         }
+    }
+
+    // The lowest line, in the 576-line scale, of the bands from which a granule's right channel codes intensity positions, or -1 where it has none: the bands above the
+    // last one in which the right channel has a nonzero pair, whose position is legal (ISO/IEC 11172-3 2.4.3.4.9.3), found as the decoder finds them (minimp3's
+    // L3_stereo_top_band and L3_intensity_stereo). left supplies the band layout, as it does there; positions are the right channel's as coded and are not changed.
+    internal static int IntensityStart(MpegHeader header, in GranuleSyntax left, in GranuleSyntax right, ReadOnlySpan<int> values, ReadOnlySpan<byte> positions)
+    {
+        ReadOnlySpan<byte> widths = Layer3Syntax.BandWidths(left);
+        int bandCount = left.LongBandCount + left.ShortBandCount;
+        int maxBlocks = left.ShortBandCount != 0 ? 3 : 1;
+        Span<int> maxBand = stackalloc int[3];
+        maxBand[0] = maxBand[1] = maxBand[2] = -1;
+        int position = 0;
+        for (int i = 0; i < bandCount && position + widths[i] <= values.Length; i++)
+        {
+            for (int k = 0; k + 1 < widths[i]; k += 2)
+            {
+                if (values[position + k] != 0 || values[position + k + 1] != 0)
+                {
+                    maxBand[i % 3] = i;
+                    break;
+                }
+            }
+
+            position += widths[i];
+        }
+
+        if (left.LongBandCount != 0)
+        {
+            maxBand[0] = maxBand[1] = maxBand[2] = Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]);
+        }
+
+        Span<byte> complete = stackalloc byte[LentLayout.Scalefactors];
+        positions[..LentLayout.Scalefactors].CopyTo(complete);
+        for (int i = 0; i < maxBlocks; i++)
+        {
+            int top = bandCount - maxBlocks + i;
+            int previous = top - maxBlocks;
+            complete[top] = maxBand[i] >= previous ? (byte)(header.IsMpeg1 ? 3 : 0) : complete[previous];
+        }
+
+        uint maxPosition = header.IsMpeg1 ? 7u : 64u;
+        int offset = 0;
+        for (int i = 0; i < LentLayout.Scalefactors && widths[i] != 0; i++)
+        {
+            int groupStart = i >= left.LongBandCount ? offset - ((i - left.LongBandCount) % 3 * widths[i]) : offset;
+            if (i > maxBand[i % 3] && complete[i] < maxPosition)
+            {
+                return groupStart;
+            }
+
+            offset += widths[i];
+        }
+
+        return -1;
     }
 
     // The upper edge, in the 576-line scale of a granule, of the first coded lines in the order the data comes in: where a short block's windows each have 192 lines, the

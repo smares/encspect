@@ -46,6 +46,14 @@ public sealed partial class MpegAudioParser
         region.Nodes.IntensityStereoBounds = AddExtensions("Intensity Stereo Bounds", tally.Bounds, e => BoundCategories[e].Name, Explain.IntensityBounds,
             _ => Explain.IntensityBound, Topics.IntensityStereo);
 
+        if (tally.IntensityBounds > 0)
+        {
+            Node bound = node.Add("Intensity Stereo Bound", start, length, null, Explain.IntensityStereoBound, Topics.IntensityStereo);
+            bound.Add("Lowest", start, length, NodeValue.Integer(tally.LowestIntensityBound, "Hz"), Explain.BoundLowest);
+            bound.Add("Highest", start, length, NodeValue.Integer(tally.HighestIntensityBound, "Hz"), Explain.BoundHighest);
+            region.Nodes.IntensityStereoBoundHz = bound;
+        }
+
         if (tally.Layer3Frames > 0)
         {
             Node blocks = node.Add("Block Usage", start, length, NodeValue.Integer(tally.GranuleChannels, "granules", "granule"), Explain.BlockUsage, Topics.BlockSwitching);
@@ -265,8 +273,22 @@ public sealed partial class MpegAudioParser
             }
         }
 
+        // Joint stereo frames with an intensity stereo bound in Hz, and the lowest and highest of them.
+        public int IntensityBounds { get; private set; }
+
+        public int LowestIntensityBound { get; private set; } = int.MaxValue;
+
+        public int HighestIntensityBound { get; private set; } = -1;
+
         public void AddFigure(FrameFigures.Figure figure)
         {
+            if (figure.HasIntensityBound)
+            {
+                IntensityBounds++;
+                LowestIntensityBound = Math.Min(LowestIntensityBound, figure.IntensityBound);
+                HighestIntensityBound = Math.Max(HighestIntensityBound, figure.IntensityBound);
+            }
+
             if (figure.HasBandwidth)
             {
                 Bandwidths[figure.Bandwidth] = Bandwidths.GetValueOrDefault(figure.Bandwidth) + 1;

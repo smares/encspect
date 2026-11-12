@@ -14,8 +14,11 @@ internal static class FrameFigures
     // Bandwidth in Hz of the highest subband with an allocation (0 where none has; Layer III: of the highest line its entropy pass found coded), or None where
     // the frame has none; the bits of each
     // coded channel's own share of the frame's audio data, or None for a mono frame or a frame without a second channel.
-    public readonly record struct Figure(int Bandwidth, long FirstBits, long SecondBits)
+    // IntensityBound: the lower edge in Hz of the first subband (Layers I and II) or line (Layer III) from which a joint stereo frame codes intensity stereo, or None.
+    public readonly record struct Figure(int Bandwidth, long FirstBits, long SecondBits, int IntensityBound = None)
     {
+        public bool HasIntensityBound => IntensityBound >= 0;
+
         public bool HasShare => FirstBits >= 0 && SecondBits >= 0 && FirstBits + SecondBits > 0;
 
         public bool HasBandwidth => Bandwidth >= 0;
@@ -27,9 +30,10 @@ internal static class FrameFigures
     // scalefactors and the Huffman-coded values, not the header, the side information or the padding.
     // codedLines: the highest coded line of the frame's granules in the 576-line scale (Layer3Walker.Top), or -1 where the frame was not walked; each line is a 576th
     // of half the sample rate wide, so the upper edge of the line is rounded half to even to whole hertz.
-    public static Figure Layer3(ReadOnlySpan<byte> sideInfo, MpegHeader header, int codedLines = -1)
+    public static Figure Layer3(ReadOnlySpan<byte> sideInfo, MpegHeader header, int codedLines = -1, int intensityLine = -1)
     {
         int bandwidth = codedLines < 0 ? None : (int)Rounding.HalfEven((long)codedLines * header.SampleRate, 1152);
+        int bound = intensityLine < 0 ? None : (int)Rounding.HalfEven((long)intensityLine * header.SampleRate, 1152);
         if (header.IsMono)
         {
             return new Figure(bandwidth, None, None);
@@ -43,7 +47,7 @@ internal static class FrameFigures
             second += Bits(sideInfo, GranuleStart(header, gr, 1), 12);
         }
 
-        return new Figure(bandwidth, first, second);
+        return new Figure(bandwidth, first, second, bound);
     }
 
     // The block type of one granule and channel as the index of Blocks in the parser: long (0), start (1), short (2), mixed (3),
@@ -125,7 +129,7 @@ internal static class FrameFigures
             }
         }
 
-        return Result(header, allocation, 32, bits, channels);
+        return Result(header, allocation, 32, bits, channels) with { IntensityBound = header.ChannelModeBits == 1 && bound < 32 ? SubbandEdge(header, bound) : None };
     }
 
     // Layer II (2.4.1.6, 2.4.2.6): an allocation per subband and channel, one per subband above the bound, of the width the
@@ -184,8 +188,11 @@ internal static class FrameFigures
             }
         }
 
-        return Result(header, allocation, subbands, bits, channels);
+        return Result(header, allocation, subbands, bits, channels) with { IntensityBound = header.ChannelModeBits == 1 && bound < subbands ? SubbandEdge(header, bound) : None };
     }
+
+    // The lower edge of a subband: each is a 64th of the sample rate wide, rounded half to even to whole hertz.
+    private static int SubbandEdge(MpegHeader header, int subband) => (int)Rounding.HalfEven((long)subband * header.SampleRate, 64);
 
     private static Figure Result(MpegHeader header, ReadOnlySpan<int> allocation, int subbands, ReadOnlySpan<long> bits, int channels)
     {
@@ -199,7 +206,7 @@ internal static class FrameFigures
         }
 
         // The upper edge of a subband: each is a 64th of the sample rate wide, rounded half to even to whole hertz.
-        int hertz = highest < 0 ? 0 : (int)Rounding.HalfEven((long)(highest + 1) * header.SampleRate, 64);
+        int hertz = highest < 0 ? 0 : SubbandEdge(header, highest + 1);
         return channels == 2 ? new Figure(hertz, bits[0], bits[1]) : new Figure(hertz, None, None);
     }
 

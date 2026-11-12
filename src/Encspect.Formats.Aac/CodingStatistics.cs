@@ -22,6 +22,7 @@ internal static class CodingStatistics
         Node? sizes = null;
         Node? stereo = null;
         Node? bandwidth = null;
+        Node? intensityBound = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -166,6 +167,13 @@ internal static class CodingStatistics
                 bandwidth.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.BandwidthHighest, null));
             }
 
+            if (log.Recorder.IntensityUnits > 0)
+            {
+                intensityBound = statistics.Add(cover("Intensity Stereo Bound", null, Explain.StatIntensityBound, Topics.Intensity));
+                intensityBound.Add(cover("Lowest", NodeValue.Integer(log.Recorder.LowestBound, "Hz"), Explain.BoundLowest, null));
+                intensityBound.Add(cover("Highest", NodeValue.Integer(log.Recorder.HighestBound, "Hz"), Explain.BoundHighest, null));
+            }
+
             Node gain = statistics.Add(cover("Global Gain", null, Explain.StatGlobalGain, null));
             for (int ch = 0; ch < tally.MinimumGain.Count; ch++)
             {
@@ -223,7 +231,7 @@ internal static class CodingStatistics
             statistics.Add(cover("Data Stream Elements", $"{Count(tally.Elements[4], "element")}, {Count(tally.DataStreamBytes, "byte")}", Explain.StatDse, Topics.RawDataBlocks));
         }
 
-        return new CodingNodes(windows, sizes, stereo, bandwidth);
+        return new CodingNodes(windows, sizes, stereo, bandwidth, intensityBound);
     }
 
     private static void AddMaxSfb(Node statistics, string name, long[] counts, Func<string, NodeValue?, string, string?, Node> cover, string description)

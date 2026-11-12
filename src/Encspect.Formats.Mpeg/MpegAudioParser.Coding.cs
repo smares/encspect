@@ -107,6 +107,8 @@ public sealed partial class MpegAudioParser
 
         public Node? IntensityStereoBounds { get; set; }
 
+        public Node? IntensityStereoBoundHz { get; set; }
+
         public Node? BlockUsage { get; set; }
 
         public Node? BlockSizes { get; set; }
@@ -123,7 +125,7 @@ public sealed partial class MpegAudioParser
         switch (frame.DataKind)
         {
             case FrameData.SideInfo:
-                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header, frame.CodedLines);
+                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header, frame.CodedLines, frame.IntensityLine);
             case FrameData.Layer1:
                 return FrameFigures.Layer1(build.Store.Span(frame.Data, frame.DataLength), header);
             case FrameData.Layer2:
@@ -153,6 +155,7 @@ public sealed partial class MpegAudioParser
         private readonly int _channels;
         private readonly Numeric? _bandwidth;
         private readonly Numeric? _share;
+        private readonly Numeric? _intensityBound;
         private int _unit;
 
         public StreamCoding(BuildContext build, double[] offsets, int count, IReadOnlyList<RegionState> regions, MpegHeader header, bool hasTwoChannels, bool hasJointStereo)
@@ -179,6 +182,7 @@ public sealed partial class MpegAudioParser
             }
 
             _share = hasTwoChannels ? new Numeric(count, offsets) : null;
+            _intensityBound = hasJointStereo && Has(r => r.Nodes.IntensityStereoBoundHz) ? new Numeric(count, offsets) : null;
         }
 
         private bool Has(Func<RegionState, Node?> node) => _regions.Any(r => node(r) is not null);
@@ -196,9 +200,10 @@ public sealed partial class MpegAudioParser
                 AddBlocks(frame, header);
             }
 
-            if (_bandwidth is not null || _share is not null)
+            if (_bandwidth is not null || _share is not null || _intensityBound is not null)
             {
                 FrameFigures.Figure figure = FigureOf(_build, frame, header);
+                _intensityBound?.Add(_unit, second, figure.HasIntensityBound ? figure.IntensityBound : null, 0);
                 if (_bandwidth is not null)
                 {
                     _bandwidth.Add(_unit, second, figure.HasBandwidth ? figure.Bandwidth : null, 0);
@@ -253,6 +258,12 @@ public sealed partial class MpegAudioParser
                 CategorySeries usage = _blocks.Build(x, bitrate, Anchor(r => r.Nodes.BlockUsage), SeriesText.BlockUsageSeries, Topics.BlockSwitching, time);
                 categories.Add(usage);
                 categories.Add(usage.Group("Block Sizes", SizeCategories, SizeOfKind, Anchor(r => r.Nodes.BlockSizes), SeriesText.BlockSizesSeries, Topics.BlockSwitching));
+            }
+
+            if (_intensityBound?.Count > 0)
+            {
+                series.Add(_intensityBound.PerFrame("Intensity Stereo Bound", "Hz", SeriesText.IntensityStereoBound, GraphConcept.StereoCoding, "Coded Bandwidth",
+                    Anchor(r => r.Nodes.IntensityStereoBoundHz), _intensityBound.X));
             }
 
             Series? bandwidthSeries = null;

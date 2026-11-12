@@ -389,6 +389,7 @@ internal sealed partial class BlockReader
                 {
                     intensity = true;
                     tally.IntensityBands++;
+                    _recorder?.Intensity(second.WindowSequence == 2, second.Offsets[sfb]);
                     // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign, with ms_mask_present 1 only: faad2 and
                     // fdk-aac (stereo.cpp clears the mid/side flags before intensity stereo) leave mask 2 alone, FFmpeg inverts for it too.
                     if ((book == 14) != (flagged && mask == 1))

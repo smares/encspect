@@ -46,7 +46,7 @@ internal static class CodingCategories
 }
 
 // The statistics nodes the coding series are anchored to.
-internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node? StereoCoding, Node? CodedBandwidth);
+internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node? StereoCoding, Node? CodedBandwidth, Node? IntensityBound = null);
 
 // Records the coding series of a stream while its raw data blocks are read: the window sequence of every channel stream, the
 // stereo coding of every channel pair and the coded bandwidth of every unit (an access unit, an ADTS frame or an ADIF block).
@@ -61,6 +61,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private CategorySeriesBuilder? _pairSeries;
     private readonly ChunkedList<int> _hertz = new();
     private int _unitHertz = -1;
+    private readonly ChunkedList<int> _boundHertz = new();
+    private int _unitBound = -1;
     private int _pairUnits;
 
     // Units ended so far.
@@ -78,6 +80,20 @@ internal sealed class CodingRecorder(StreamSetup setup)
     }
 
     public void Pair(byte code) => _pairs.Add(code);
+
+    // Units that have an intensity stereo bound (the lowest band of codebook 14 or 15 in any pair of the unit), and the lowest and highest of them in Hz.
+    public int IntensityUnits { get; private set; }
+
+    public int LowestBound { get; private set; } = int.MaxValue;
+
+    public int HighestBound { get; private set; } = -1;
+
+    // An intensity stereo band of a pair's second channel, whose lower edge is line of its window.
+    public void Intensity(bool isShort, int line)
+    {
+        int hertz = Hertz(isShort, line);
+        _unitBound = _unitBound < 0 ? hertz : Math.Min(_unitBound, hertz);
+    }
 
     // The top of the line-th line of a window in Hz at the core's sample rate: lines are spaced by half the sample rate over the
     // lines of the window, 1024 or 960 for a long window and an eighth of that for a short one.
@@ -107,6 +123,14 @@ internal sealed class CodingRecorder(StreamSetup setup)
         }
 
         _hertz.Add(_unitHertz);
+        _boundHertz.Add(_unitBound);
+        if (_unitBound >= 0)
+        {
+            IntensityUnits++;
+            LowestBound = Math.Min(LowestBound, _unitBound);
+            HighestBound = Math.Max(HighestBound, _unitBound);
+        }
+
         if (_unitHertz >= 0)
         {
             Bandwidths[_unitHertz] = Bandwidths.GetValueOrDefault(_unitHertz) + 1;
@@ -115,6 +139,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _windows.Clear();
         _pairs.Clear();
         _unitHertz = -1;
+        _unitBound = -1;
         Count++;
     }
 
@@ -146,8 +171,41 @@ internal sealed class CodingRecorder(StreamSetup setup)
             categories.Add(_pairSeries.Build(offsets, shared, pairAnchor, Explain.StereoCodingSeries, Topics.MidSide, time));
         }
 
+        AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
         return categories;
+    }
+
+    // "Intensity Stereo Bound" per unit, at the units that have one.
+    private void AddBound(ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
+    {
+        if (IntensityUnits == 0)
+        {
+            return;
+        }
+
+        var x = new double[IntensityUnits];
+        var values = new double[IntensityUnits];
+        for (int i = 0, n = 0; i < Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (_boundHertz[i] >= 0)
+            {
+                x[n] = offsets.Span[i];
+                values[n++] = _boundHertz[i];
+            }
+        }
+
+        series.Add(new Series("Intensity Stereo Bound", "Hz", SeriesAxis.FrameOffset, x, values, anchor)
+        {
+            Description = Explain.IntensityStereoBoundSeries,
+            Concept = GraphConcept.StereoCoding,
+            Quantity = "Coded Bandwidth",
+        });
     }
 
     // "Coded Bandwidth" per unit, at the units that have a value, and "Coded Bandwidth Over Time", each interval's highest.
