@@ -15,7 +15,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     internal const long MatrixTapUnits = 3;
 
     // Units each sample period of a substream costs besides the work of its channels: the noise generator, the history moves and the lossless check.
-    internal const long PeriodUnits = 48;
+    internal const long PeriodUnits = 72;
 
     // Units a filter tap costs: a 64-bit multiply-accumulate. A channel with a FIR filter is charged for 8 taps and one with an IIR filter for 4,
     // whatever their orders, since the sums run over all of them.
