@@ -170,7 +170,8 @@ def manifest_for(entry, path):
               "channel_layout": ["front left", "front right"] if has_layout else [],
               "samples": duration_samples(fields, entry["rate"]), "is_vbr": False,
               "protection": {"scheme": SCHEMES[entry["scheme"]], "is_encrypted": True, "systems": entry["systems"]}}
-    if has_layout:
+    # The Opus parser takes no writer claim from the container, so its stream has the layout and no writer.
+    if has_layout and entry["codec"] != "Opus":
         # With no frame to read, the only evidence is the writer's own tool atom: a writer claim of low confidence, as in any file whose frames name nothing.
         stream["writer"] = [GPAC_TOOL if entry["command"][0] == "MP4Box" else LAVF, "Low"]
     crosscheck = {"ffprobe": listed, "mp4box": True, "mp4box_samples": not listed, "faad": None,
