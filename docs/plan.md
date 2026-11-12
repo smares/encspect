@@ -215,6 +215,10 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **Fraunhofer's MP3 ACM codecs** (l3codeca 1.9, l3codecp 3.3 and 3.4) driven by nyaochi's acmenc, the source of most Fraunhofer-written MP3s in the wild;
    - **Plugger 0.4, 8hz-MP3 0.2b and M3E 0.99a,** the small encoders whose names EncSpot-style rules already use, as ground truth for those rules.
    - **Fastencc 1.02** is built on code leaked from Fraunhofer, so it is run by hand and nothing it writes is kept; its known stereo coding bug is described from that run only.
+14. **One page of the reference tools' differences** (the lead, 2026-11-12). The cross-check scripts keep, per tool and version, the files where a reference tool reads or decodes differently from the analyzer, each with its evidence and failing once the tool agrees; but the entries are spread over a dozen scripts.
+   - **Generated:** `docs/reference-tool-differences.md`, written by a script from those entries and checked in CI to match them, grouped by tool and version.
+   - **A kind per entry:** the tool breaks a specification (FFmpeg 6.1.1 applying a Matroska block's DiscardPadding to every laced frame, RFC 9559), the tool reads otherwise within what the specification allows (MediaInfo taking the LAME tag's ABR target as the bitrate), or open (the cause not established).
+   - **What it is for:** the starting point for reporting the violations upstream, which stays the lead's decision per report.
 
 ### 0.5: AAC and WMA
 
