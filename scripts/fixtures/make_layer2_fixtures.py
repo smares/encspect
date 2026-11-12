@@ -1091,8 +1091,10 @@ def not_multichannel():
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
-        if not path.name.endswith((".report.json", ".decode.json")) and path.name != "golden-changes.json":
-            path.unlink()
+        # external-* fixtures are written by the encoder tools (mctoolame_tool.py, philips_mc_tool.py), not here.
+        if path.name.startswith("external-") or path.name.endswith((".report.json", ".decode.json")) or path.name == "golden-changes.json":
+            continue
+        path.unlink()
     names = set()
     for build in FIXTURES:
         f = build()
