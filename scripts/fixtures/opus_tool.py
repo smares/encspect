@@ -11,7 +11,7 @@
 - opus_testvectors-rfc8251.tar.gz and opus_testvectors.tar.gz: the test vectors of RFC 8251 and of RFC 6716, downloaded and never committed (their license is unverified,
   docs/design/lossy-decoders.md): per vector the packets with the encoder's final range coder state (testvectorNN.bit, the opus_demo format) and the reference output
   (testvectorNN.dec, and the mono decode testvectorNNm.dec).
-- opus_pcm.c (build_pcm, decode_ogg, decode_bit) is built against that libopus and decodes to floats.
+- opus_pcm.c (build_pcm, decode_ogg, decode_bit) is built against that libopus and decodes to floats; opus_enc.c (build_enc) is built against it and encodes the fixtures of make_external_vorbis_opus_fixtures.py that the other encoders cannot write.
 """
 
 import json
@@ -117,6 +117,18 @@ def build_pcm(directory):
     binary = pathlib.Path(directory) / "opus_pcm"
     if not binary.exists():
         subprocess.run(["cc", "-O1", "-ffp-contract=off", f"-I{prefix / 'include'}", "-o", str(binary), str(PCM_SOURCE), str(prefix / "lib" / "libopus.a"), "-logg", "-lm"], check=True)
+    return binary
+
+
+ENC_SOURCE = pathlib.Path(__file__).resolve().parent / "opus_enc.c"
+
+
+def build_enc(directory):
+    """Compiles opus_enc.c (libopus 1.5.2's encoder, writing Ogg Opus files) and returns the binary."""
+    prefix = build_libopus(directory)
+    binary = pathlib.Path(directory) / "opus_enc"
+    if not binary.exists():
+        subprocess.run(["cc", "-O1", "-ffp-contract=off", f"-I{prefix / 'include'}", "-o", str(binary), str(ENC_SOURCE), str(prefix / "lib" / "libopus.a"), "-logg", "-lm"], check=True)
     return binary
 
 
