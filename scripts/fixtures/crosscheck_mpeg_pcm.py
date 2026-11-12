@@ -48,6 +48,11 @@ EXPLAINED = {
                   "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
                   "mpg123; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
+    "external-lame357w-vbr.mp3": {
+        "ffmpeg": "the references disagree: in the granules at positions 48,596 to 49,710 (frames 42 and 43, LAME 3.57 -v, plain stereo, long blocks) the analyzer equals minimp3 "
+                  "(largest difference 2.4e-7) and mpg123 1.32.5 equals FFmpeg 6.1.1 (1e-6), and the two pairs differ by 0.0084 of full scale, in both channels and only near 22 kHz (the highest "
+                  "spectral lines); the cause is not established; the analyzer keeps minimp3, the reference it follows operation by operation"
+    },
     "side-info-mono.mp3": {
         "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
     },
@@ -162,6 +167,15 @@ ONLY_IN_MINIMP3 = {
     "lame-truncated-last-frame.mp3": [[8064, 9216]],
     "main-data-before-header-frame.mp3": [[0, 2208]],
     "main-data-in-header-frame.mp3": [[0, 2208]],
+    # LAME 3.20 to 3.70 (Rarewares' Windows builds) end every stream with a frame cut short (the finding mpeg.frame-truncated, which each of these manifests lists):
+    # the analyzer decodes whole frames only, as in truncated-last-frame.mp3, and minimp3 outputs the last frame's 1,152 samples.
+    "external-lame320w-cbr.mp3": [[88704, 89856]],
+    "external-lame320w-vbr.mp3": [[88704, 89856]],
+    "external-lame334w-cbr.mp3": [[88704, 89856]],
+    "external-lame357w-cbr.mp3": [[87552, 88704]],
+    "external-lame357w-vbr.mp3": [[87552, 88704]],
+    "external-lame370w-cbr.mp3": [[88704, 89856]],
+    "external-lame370w-vbr.mp3": [[88704, 89856]],
 }
 
 
