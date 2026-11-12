@@ -191,6 +191,25 @@ public class MpegWalkTests
     }
 
     [Fact]
+    public void IntensityStartsAboveTheLastBandTheRightChannelCodesAndSkipsIllegalPositions()
+    {
+        // 44,100 Hz long bands start at 0, 4, 8, ... 90 (band 13), 110 (band 14), 134 (band 15): a nonzero pair in band 13 puts the first intensity band at 14.
+        var granule = new GranuleSyntax { Bands = BandKind.Long, BandRow = 5, LongBandCount = 22 };
+        var header = new MpegHeader(0xFFFB1050);
+        int[] values = new int[576];
+        values[95] = 1;
+        byte[] positions = new byte[40];
+
+        Assert.Equal(110, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+
+        positions[14] = 7;
+        Assert.Equal(134, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+
+        values[500] = 1;
+        Assert.Equal(-1, Layer3Walker.IntensityStart(header, granule, granule, values, positions));
+    }
+
+    [Fact]
     public void ShortBlocksTakeTheFrequencyOfALineFromItsBand()
     {
         // 44,100 Hz short bands start 4, 4, 4, 4, 4, 4, 6, 8, ... lines wide: the coded lines of the first band's three windows (12) top out at 3 * 4 lines of the 576.

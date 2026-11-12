@@ -565,7 +565,27 @@ public class FrameFiguresTests
 
         // Below the bound 4 allocations of 4 bits per channel; the allocation of subband 4 is shared, but each channel keeps a 6-bit
         // scalefactor for it, and its shared samples belong to neither channel. The highest subband is 4: 5 * 44,100 / 64 = 3,445.3 Hz.
-        Assert.Equal(new FrameFigures.Figure(3445, 16 + 6, 16 + 6), figure);
+        // The bound is the lower edge of subband 4: 4 * 44,100 / 64 = 2,756.25 Hz.
+        Assert.Equal(new FrameFigures.Figure(3445, 16 + 6, 16 + 6, 2756), figure);
+    }
+
+    [Fact]
+    public void A_layer_II_joint_stereo_bound_is_a_figure_only_below_the_highest_coded_subband()
+    {
+        // Mode extension 1: bound 8 of 27 subbands at 44,100 Hz, 8 * 44,100 / 64 = 5,512.5 Hz, half to even 5,512.
+        Assert.Equal(5512, FrameFigures.Layer2(new byte[100], new MpegHeader(0xFFFD9050)).IntensityBound);
+        Assert.False(FrameFigures.Layer2(new byte[100], new MpegHeader(0xFFFD9000)).HasIntensityBound);
+        Assert.False(FrameFigures.Layer1(new byte[100], new MpegHeader(0xFFFF1000)).HasIntensityBound);
+    }
+
+    [Fact]
+    public void A_layer_III_intensity_bound_is_the_lower_edge_of_its_line_in_hertz()
+    {
+        // Line 288 of 576 at 44,100 Hz is 11,025 Hz; line 1 is 38.28 Hz, rounded to 38.
+        var header = new MpegHeader(0xFFFB1050);
+        Assert.Equal(11025, FrameFigures.Layer3(new byte[32], header, 576, 288).IntensityBound);
+        Assert.Equal(38, FrameFigures.Layer3(new byte[32], header, 576, 1).IntensityBound);
+        Assert.False(FrameFigures.Layer3(new byte[32], header, 576).HasIntensityBound);
     }
 
     [Fact]
