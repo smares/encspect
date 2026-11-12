@@ -572,11 +572,11 @@ def free_format_layer1_unprotected():
     f = Fixture(
         "mpeg1-layer1-free-format",
         ".mp1",
-        "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and no CRC, which ISO/IEC 11172-3 allows: "
-        "recognized as MPEG audio when nothing else claims the file.",
+        "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and CRC: a Layer I chain of free-format frames "
+        "identifies the file only when a frame holds the CRC its header and bit allocation give.",
         crosscheck="mpg123",
     )
-    f.add_frames([Frame(layer=1, bitrate=None, rate=48000, free_length=1000) for _ in range(6)])
+    f.add_frames([Frame(layer=1, bitrate=None, rate=48000, free_length=1000, protected=True) for _ in range(6)])
     return f.finding("mpeg.free-format", "1000")
 
 
@@ -609,10 +609,10 @@ def free_format_layer1_padded():
     f = Fixture(
         "mpeg1-layer1-free-format-padded",
         ".mp1",
-        "Free-format MPEG-1 Layer I at 44100 Hz with 1000-byte frames, some with the padding slot of 4 bytes (1004 bytes).",
+        "Free-format MPEG-1 Layer I at 44100 Hz with 1000-byte frames and CRC, some with the padding slot of 4 bytes (1004 bytes).",
         crosscheck="mpg123",
     )
-    f.add_frames([Frame(layer=1, bitrate=None, rate=44100, free_length=1000, padding=i % 2) for i in range(6)])
+    f.add_frames([Frame(layer=1, bitrate=None, rate=44100, free_length=1000, padding=i % 2, protected=True) for i in range(6)])
     return f.finding("mpeg.free-format", "1000")
 
 
@@ -641,6 +641,49 @@ def free_format_period():
     f.data += bytes.fromhex("FFFB0000") * 1000
     f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
     return f.finding("format.unrecognized", "No format parser")
+
+
+@fixture
+def free_format_weak_chain():
+    f = Fixture(
+        "free-format-weak-chain",
+        ".mp3",
+        "4,000 bytes of pseudo-random data without 0xFF, then six times the free-format MPEG-1 Layer I header FF FF 00 00 "
+        "at 1,000 bytes' distance, as an installer's binary data can make: the frames hold what random data holds, so the "
+        "chain is not credible and does not identify the file; the finding names it.",
+        crosscheck=False,
+    )
+    f.data += junk(4000, 17)
+    for i in range(6):
+        f.data += bytes.fromhex("FFFF0000") + junk(996, 100 + i)
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    f.finding("format.unrecognized", "No format parser")
+    return f.finding("format.weak-candidate", "6 frames")
+
+
+@fixture
+def protected_weak_chain():
+    f = Fixture(
+        "protected-weak-chain",
+        ".mp3",
+        "300 bytes of pseudo-random data without 0xFF, then six MPEG-1 Layer III frames with CRC none of which holds its "
+        "CRC: a protected chain further in than the start of the data with no checksum that holds does not identify "
+        "the file; the finding names it.",
+        crosscheck=False,
+    )
+    f.data += junk(300, 29)
+    frames = stream(6, mode="Stereo", protected=True)
+    for frame in frames:
+        frame.bad_crc = True
+    start = len(f.data)
+    f.add_frames(frames)
+    f.end_audio()
+    f.regions.clear()
+    f.frames.clear()
+    f.layout.clear()
+    f.regions.append({"name": "Data", "offset": 0, "length": len(f.data)})
+    f.finding("format.unrecognized", "No format parser")
+    return f.finding("format.weak-candidate", f"at 0x{start:X}")
 
 
 # --- Layer I audio data ------------------------------------------------------------------------

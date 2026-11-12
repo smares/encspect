@@ -124,10 +124,11 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 
 - Sniffing gives class 90 for a stream start: a valid header followed by two more frames of the same stream, or whose one or two frames end exactly at the end of the data. It reports where the chain starts, its frames (up to 16) and how many of them pass the CRC their header gives (ISO/IEC 11172-3 2.4.1.4).
 - A chain with a CRC (protection bit 0) further in than the start of the data is class 30, not 90, when none of its frames has the CRC its header gives: another format's frames can hold such a header at a fixed offset (AC-3's 768-byte frames hold a protected MPEG-2.5 Layer I header of 768 bytes). Chains at the start and unprotected chains are class 90.
-- A free-format chain is only a header repeating at one distance, which other formats' data can make too. It is class 90 only when it is credible, and 30 otherwise, below DTS's 50 and every other format's chain:
+- A free-format chain is only a header repeating at one distance, which other formats' data can make too. It is class 90 only when it is credible, and 30 otherwise:
   - its first three frames that fit in the data must be well-formed (audio data or side information that fits the frame, no forbidden Layer I allocation 15);
   - in Layers I and II, one of them must also be protected and have the CRC its header and bit allocation give, as an all-zero frame is valid there.
-- The class only ranks formats. Parsing does not depend on it: a free-format stream without a CRC, or with damaged CRCs, is read as MPEG audio when it is the only candidate or the parser is forced.
+- A class 30 chain never identifies a file (`SniffResult.WeakClass`; the host drops it from the ranking, see [architecture.md](../architecture.md#classes)). Another format's match wins as before. Where nothing else matches, the file is reported as unrecognized, with the info finding `format.weak-candidate` naming the chain, its offset, its frame count and why it is not trusted (`free format` or `protected, no CRC holds`), so a genuine but damaged stream is still pointed out. A free-format stream without a CRC (Layer I or II) or a protected stream whose CRCs all fail is therefore read as MPEG audio only when the parser is forced (`--as`), which parses it as any other chain.
+- Fixtures: `free-format-weak-chain` (random data holding a Layer I free-format header six times, as an installer's binary data can) and `protected-weak-chain` (six protected frames whose CRCs all fail, after 300 bytes of data).
 
 ## Statistics
 

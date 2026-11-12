@@ -277,14 +277,15 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 | 70 | TAK: "tBaK" alone, or followed by something other than a stream info object; OptimFROG: "OFR " or "OFRX" at the start with fields that cannot be a main block's, or cut short; "CORR" alone or with a block that does not fit; TTA: "TTA1" at the start with fields that cannot be a header, or cut short, or "TTA2" with no plausible header; EBML header that does not hold (no DocType, or an invalid field); `DTSHDHDR` at the start with a first chunk whose size is invalid |
 | 60 | Matroska run of top-level elements, or a Cluster with a Timestamp, at the start; Ogg chain further in (within 64 KiB); Musepack versions 4 to 6 with fewer than three units; "MP+" at the start of data whose SV7 header is not consistent; WavPack chain further in; TrueHD or MLP chain further in; Monkey's Audio's signature further in, within the first MiB, with a plausible header |
 | 50 | AC-3, ADTS (with eight frames or frames to the end of the data), DTS and FLAC chain further in |
-| 30 | MPEG audio chain that is not credible: a free-format chain whose frames do not hold what their headers promise, or a protected chain further in than the start of the data none of whose frames passes its CRC |
+| 30 | Never identifies a file (`SniffResult.WeakClass`, see below): MPEG audio chain that is not credible: a free-format chain whose frames do not hold what their headers promise, or a protected chain further in than the start of the data none of whose frames passes its CRC |
 
 - **At the start of the data,** the sync words of AC-3 (0x0B77), DTS and ADTS/MPEG audio (0xFFE, 0xFFF) differ in their first bytes, so no chain is two formats' and the classes only order formats that cannot both match.
 - **Further in,** other formats' frames repeat header-like bytes at a fixed distance. The evidence that keeps those out is in the sniffs, as fields where it can be:
   - ADTS asks eight frames of a chain among junk;
-  - MPEG audio ranks a protected chain whose CRCs all fail at 30;
+  - MPEG audio ranks a protected chain whose CRCs all fail at 30, which identifies nothing;
   - AC-3's chain starts first or, where it does not, its frames pass their CRCs and the look-alike's do not exist.
 - Each format's page says what its sniff checks.
+- **A class of 30 or below never identifies a file.** The host leaves such a candidate out of the ranking, in one place (`Analyzer.Rank`), so it neither wins nor counts as an alternative. Where no other format matches, the file is unrecognized (`format.unrecognized`) and the info finding `format.weak-candidate` names the format, the evidence and the offset; a forced analysis still parses it.
 
 ### Alternatives
 

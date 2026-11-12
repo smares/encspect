@@ -33,9 +33,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // 768 bytes holds the bytes of a protected MPEG-2.5 Layer I header of 768 bytes), which chains from
     // frame to frame: a protected chain further in than the start of the data none of whose frames passes
     // its CRC is class 30, like a free-format chain that is not credible, which is also what data with a
-    // header-like word at a fixed period makes. Both rank below every other format's chain, not out: the
-    // stream may be genuine, but the format that owns the data should win. Junk passes a CRC once in
-    // 65,536 frames.
+    // header-like word at a fixed period makes. Neither identifies a file (SniffResult.WeakClass): the host
+    // reports them in a finding, so a genuine but damaged stream is still pointed out. Junk passes a CRC
+    // once in 65,536 frames.
     public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;

@@ -71,12 +71,13 @@ Later milestones, in this order.
 - **What:** `.shn`.
 - **Specification:** Tony Robinson's technical report (CUED/F-INFENG/TR.156).
 - **Why late:** its reference code is not freely licensed, so it is not followed.
+- **Fixtures:** Shorten 3.6.1 from Rarewares, whose license forbids commercial use; whether its output may be committed is checked when the item starts.
 
 ### 11. Formats whose only detailed public source is FFmpeg
 
 - **What,** in this order:
   - OSQ, WaveLab's lossless format;
-  - ATRAC, ATRAC3 and ATRAC3plus (`.oma`/`.aa3`, `.at3`, and ATRAC in WAV);
+  - ATRAC, ATRAC3 and ATRAC3plus (`.oma`/`.aa3`, `.at3`, and ATRAC in WAV), with fixtures from Sony's command-line at3tool (the PSP and PS3 builds Rarewares keeps);
   - RealAudio: the RealMedia container with Cook, RealAudio 14.4 and 28.8, and RealAudio Lossless;
   - TwinVQ (`.vqf`);
   - QDesign Music, in QuickTime;
@@ -84,6 +85,12 @@ Later milestones, in this order.
 - **Scope:** header and frame level.
 - **How:** each is built clean-room, as TrueHD was: a format description written from FFmpeg first, then an implementation by an agent that has not read FFmpeg's code.
 - **Why last:** FFmpeg's LGPL code is the only detailed source, so each needs the clean-room split.
+
+### 12. mp3HD
+
+- **What:** Fraunhofer's lossless extension of MP3: an ordinary MP3 stream plus a lossless residual in its ID3v2 tag.
+- **Scope:** naming the extension and the residual's size and position; no decoding of the residual.
+- **Fixtures:** Fraunhofer's mp3HD tools 1.5.0, which have a Linux command-line build (Rarewares).
 
 ## Not planned
 

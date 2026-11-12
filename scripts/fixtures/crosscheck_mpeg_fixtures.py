@@ -1442,6 +1442,9 @@ MEDIAINFO_READS_OTHERWISE = {
     "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
     "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
     "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
+    "mpeg/protected-weak-chain": {"format": "observed with MediaInfo 26.01 (CI run 43113298773): it takes the six protected Layer III frames after 300 bytes of data for MPEG Audio "
+                                            "although none of their CRCs holds, where the analyzer leaves a protected chain further in than the start of the data with no CRC that "
+                                            "holds unidentified (SniffResult.WeakClass, format.weak-candidate)"},
     "mpeg/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
     "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
     "mpeg/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
