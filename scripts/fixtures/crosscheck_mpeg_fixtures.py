@@ -1504,7 +1504,8 @@ def lame_encoder(frame, data):
     # MediaInfo's strings end at a NUL byte. It takes the VBR method only from a tag of revision 0
     # to 2 ((Flags&0xF0)<=0x20); None stands for no method.
     flags = data[start + 9]
-    return (text.split(b"\0")[0].decode("latin-1"), flags & 0x0F if flags & 0xF0 <= 0x20 else None) if accepted else None
+    # The tag's bitrate byte (offset 20 of the tag) is the ABR target or the minimum, where it is neither 0 nor 0xFF.
+    return (text.split(b"\0")[0].decode("latin-1"), flags & 0x0F if flags & 0xF0 <= 0x20 else None, data[start + 20]) if accepted else None
 
 
 def check_mediainfo(path, tally):
@@ -1635,7 +1636,16 @@ def check_mediainfo(path, tally):
         # Audio_BitRate_Rounding keeps the exact value where the mode is already VBR, which a
         # LAME tag's VBR or ABR method sets before the bitrate (Header_Encoders_Lame, Lame_BitRate_Mode).
         exact = lame is not None and lame[1] in (2, 3, 4, 5, 6, 9)
-        tally.compare("bitrate", track.get("BitRate"), str(bitrate if exact else rounded_bitrate(bitrate)))
+        expected_bitrate = bitrate if exact else rounded_bitrate(bitrate)
+        # An ABR tag's target (methods 2 and 9, Header_Encoders_Lame: BitRate_Nominal = the tag's bitrate byte * 1000) replaces the bitrate where it lies within
+        # 5 % of it (File__Analyze_Streams.cpp, "BitRate from BitRate_Nominal": nominal > 0.95 * bitrate and < 1.05 * bitrate, a float32 comparison). Seen
+        # with MediaInfo 24.01 and 26.01 on the ABR 128 encodes of LAME 3.95.1 (122919, 128000 reported) and 3.96.1 (127369), not on 3.97 and 3.98.4 (110467 and
+        # 111891 stay), whose bitrates are further off.
+        if lame is not None and lame[1] in (2, 9) and lame[2] not in (0, 0xFF):
+            nominal = lame[2] * 1000
+            if float32(bitrate * 0.95) < nominal < float32(bitrate * 1.05):
+                expected_bitrate = nominal
+        tally.compare("bitrate", track.get("BitRate"), str(expected_bitrate))
     if stream_bytes is not None:
         tally.compare("stream size", track.get("StreamSize"), str(stream_bytes))
 
