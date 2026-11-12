@@ -992,7 +992,13 @@ jobs:
 
       # The analyzer's decoded samples equal libopus's (built without SIMD) and the 12 test vectors of RFC 8251 within the bounds of docs/development.md ("Opus decoding").
       - name: Compare the decoded PCM of the Opus fixtures
-        run: python3 scripts/fixtures/crosscheck_opus_pcm.py --containers
+        run: python3 scripts/fixtures/crosscheck_opus_pcm.py --containers --bits .cache/opus-bits
+
+      # The entropy pass ends every packet of the vectors, the random streams and the encoders' files in the final range coder state libopus ends in (RFC 6716, section 6).
+      - name: Check the final range coder states of the Opus packets
+        env:
+          ENCSPECT_OPUS_VECTORS: ${{ github.workspace }}/.cache/opus-bits
+        run: dotnet test --configuration Release tests/Encspect.Tests --filter "FullyQualifiedName~OpusRangeStateTests"
 
       # The samples the measurements keep (the start and end trimming, Matroska's DiscardPadding, Gap Trimming) equal what FFmpeg writes for the Matroska files and oggdec for the Ogg files.
       - name: Compare the trimmed sample counts of the Vorbis fixtures

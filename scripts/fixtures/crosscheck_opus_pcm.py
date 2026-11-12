@@ -31,6 +31,7 @@ import array
 import json
 import pathlib
 import shlex
+import shutil
 import struct
 import subprocess
 import sys
@@ -101,6 +102,60 @@ def vector_to_ogg(bit, channels, target):
     target.write_bytes(bytes(out))
 
 
+def ogg_packets(path):
+    """The packets of the first logical stream of an Ogg file, whole."""
+    data = path.read_bytes()
+    packets, current, position, serial = [], bytearray(), 0, None
+    while position + 27 <= len(data) and data[position:position + 4] == b"OggS":
+        page_serial = data[position + 14:position + 18]
+        serial = serial or page_serial
+        segments = data[position + 26]
+        body = position + 27 + segments
+        for i in range(segments):
+            length = data[position + 27 + i]
+            if page_serial == serial:
+                current += data[body:body + length]
+                if length < 255:
+                    packets.append(bytes(current))
+                    current = bytearray()
+            body += length
+        position = body
+    return packets
+
+
+def write_bit(target, packets, ranges):
+    """An opus_demo file: per packet its length and the final range coder state, both big-endian."""
+    target.write_bytes(b"".join(struct.pack(">II", len(packet), final) + packet for packet, final in zip(packets, ranges)))
+
+
+def random_streams(binary, folder):
+    """Seeded random packets (SILK, hybrid and CELT frames, mono and stereo, 10 to 60 ms) that libopus accepts, as opus_demo files: (name, channels, path). A packet libopus refuses is dropped, so
+    that both decoders see the same stream; the files hold libopus's final range coder state of each packet."""
+    import random
+    streams = []
+    groups = {"silk": [c for c in range(0, 12)], "silk-long": [2, 3, 6, 7, 10, 11], "hybrid": [12, 13, 14, 15], "celt": list(range(16, 32)), "mixed": list(range(32))}
+    for group, configs in groups.items():
+        for channels in (1, 2):
+            rng = random.Random(f"{group}{channels}")
+            packets = []
+            for _ in range(160):
+                config = rng.choice(configs)
+                stereo = 1 if (channels == 2 and rng.random() < 0.8) else 0
+                length = rng.choice([8, 20, 40, 80, 150, 300])
+                body = bytes(rng.getrandbits(8) for _ in range(length))
+                packets.append(bytes([(config << 3) | (stereo << 2)]) + body)
+            candidate = folder / f"random-{group}-{channels}.candidate.bit"
+            write_bit(candidate, packets, [0] * len(packets))
+            result = opus_tool.decode_pcm(binary, "bit", [channels, candidate], folder / "candidate.f32")
+            kept = [packet for packet, line in zip(packets, result[0]) if line["samples"] > 0] if result else []
+            final = folder / f"random-{group}.c{channels}.bit"
+            write_bit(final, kept, [0] * len(kept))
+            result = opus_tool.decode_pcm(binary, "bit", [channels, final], folder / "candidate.f32")
+            write_bit(final, kept, [line["range"] for line in result[0]])
+            streams.append((f"random-{group}-{channels}", channels, final))
+    return streams
+
+
 def samples_of(packet):
     toc = packet[0]
     config = toc >> 3
@@ -164,6 +219,8 @@ def main(argv=None):
     parser.add_argument("--keep", type=pathlib.Path, help="keep the dumps and the references in this folder")
     parser.add_argument("--work", type=pathlib.Path, help="build libopus and keep the downloads in this folder")
     parser.add_argument("--no-vectors", action="store_true")
+    parser.add_argument("--bits", type=pathlib.Path, help="write the packets of every compared Ogg file with libopus's final range coder states as opus_demo files (name.cN.bit) in this folder, for OpusRangeStateTests")
+    parser.add_argument("--no-random", action="store_true", help="leave out the seeded random streams")
     parser.add_argument("--containers", action="store_true", help="also the Opus tracks of the Matroska and MP4 fixtures: FFmpeg copies the first audio track into an Ogg file (the packets stay), which libopus decodes")
     args = parser.parse_args(argv)
     files = [p for p in (args.files or default_files()) if p.read_bytes()[:4] == b"OggS" and b"OpusHead" in p.read_bytes()[:100]]
@@ -184,11 +241,22 @@ def main(argv=None):
                     result = subprocess.run([args.ffmpeg, "-v", "error", "-nostdin", "-y", "-i", str(container), "-map", "0:a:0", "-c", "copy", "-f", "ogg", str(remuxed)], capture_output=True)
                     if result.returncode == 0 and remuxed.exists() and b"OpusHead" in remuxed.read_bytes()[:200]:
                         inputs.append((container, f"{folder_name}/{container.name}", remuxed))
+        if not args.files and not args.no_random:
+            for random_name, random_channels, random_bit in random_streams(binary, base):
+                target = base / f"{random_name}.opus"
+                vector_to_ogg(random_bit, random_channels, target)
+                if args.bits:
+                    args.bits.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(random_bit, args.bits / random_bit.name)
+                inputs.append((target, f"{random_name}.opus", target))
         if not args.files and not args.no_vectors:
             vectors = opus_tool.fetch_vectors(work, "8251")
             for n in range(1, 13):
                 target = base / f"testvector{n:02d}.opus"
                 vector_to_ogg(vectors / f"testvector{n:02d}.bit", 2, target)
+                if args.bits:
+                    args.bits.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(vectors / f"testvector{n:02d}.bit", args.bits / f"testvector{n:02d}.bit")
                 inputs.append((target, f"testvector{n:02d}.opus", target))
         for number, (path, name, ogg) in enumerate(inputs):
             dump = base / f"dump{number}"
@@ -206,6 +274,12 @@ def main(argv=None):
                 continue
             reference = opus_tool.decode_pcm(binary, "ogg", [ogg], folder / "libopus.f32")
             problems, notes = [], []
+            if args.bits and reference is not None and ogg == path and reference[1]["channels"] <= 2 and not name.startswith("testvector") and not name.startswith("random-"):
+                args.bits.mkdir(parents=True, exist_ok=True)
+                audio = ogg_packets(ogg)
+                states = [line.get("range", 0) for line in reference[0] if "samples" in line][2:]
+                if len(audio) - 2 == len(states) and all(line["samples"] > 0 for line in reference[0][2:] if "samples" in line):
+                    write_bit(args.bits / f"{pathlib.Path(name).stem}.c{reference[1]['channels']}.bit", audio[2:], states)
             if reference is None:
                 if streams:
                     problems.append("libopus refuses the stream, and the analyzer decodes it")
