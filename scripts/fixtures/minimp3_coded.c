@@ -3,7 +3,8 @@
  * Huffman loop leaves them, with the scalefactor band widths it used: an independent reference for the analyzer's "Coded Bandwidth".
  * minimp3 (CC0) is included with its implementation after minimp3_coded.py has patched a copy of its header: L3_huffman records where
  * its loop ends (the line after the last quadruple it decoded, and two more where the loop stops between a quadruple's pairs, the
- * convention the analyzer's walk follows), the block type and the band table. No other line of minimp3 changes.
+ * convention the analyzer's walk follows, except that a quadruple that does not fit in the 576 lines is not decoded), the block type and the band table. No other
+ * line of minimp3 changes.
  *
  *     cc -O1 -o minimp3_coded minimp3_coded.c -lm
  */

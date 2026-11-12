@@ -12,6 +12,7 @@ DECLARATION = ("typedef struct { int end, block_type, n_long_sfb; const uint8_t 
                "static int g_coded_n;\nstatic coded_t g_coded[4];\n")
 HUFFMAN = "static void L3_huffman(float *dst, bs_t *bs, const L3_gr_info_t *gr_info, const float *scf, int layer3gr_limit)\n{\n"
 SECOND_RELOAD = "        DEQ_COUNT1(1);\n        RELOAD_SCALEFACTOR;\n"
+QUAD_LOOP = "    for (np = 1 - big_val_cnt;; dst += 4)\n    {\n"
 END = "    bs->pos = layer3gr_limit;\n}\n"
 
 
@@ -22,6 +23,9 @@ def patched_header(directory):
     body = text[start + len(HUFFMAN):end]
     # The second reload of a quadruple stops after its first pair: two lines of the quadruple were decoded.
     assert body.count(SECOND_RELOAD) == 1
+    # The analyzer, like libmad, mpg123 and FFmpeg, decodes no quadruple that does not fit in the 576 lines (minimp3 decodes the two lines of one that starts at 574).
+    assert body.count(QUAD_LOOP) == 1
+    body = body.replace(QUAD_LOOP, QUAD_LOOP + "        if (dst - dst0 > 572) break;\n")
     body = body.replace(SECOND_RELOAD, "        DEQ_COUNT1(1);\n        if (!--np) { np = *sfb++/2; if (!np) { dst += 2; break; } one = *scf++; }\n")
     recorded = ("    g_coded[g_coded_n].end = (int)(dst - dst0); g_coded[g_coded_n].block_type = gr_info->block_type;\n"
                 "    g_coded[g_coded_n].n_long_sfb = gr_info->n_long_sfb; g_coded[g_coded_n].sfbtab = gr_info->sfbtab; g_coded_n++;\n")
