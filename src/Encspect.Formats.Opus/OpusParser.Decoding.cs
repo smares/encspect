@@ -8,6 +8,10 @@ namespace Encspect.Formats.Opus;
 // the integers the decoder reads. The decoder is handed whole packets, the last of them one packet late so that the end trimming reaches it before them.
 public sealed partial class OpusParser
 {
+    // The samples the parser keeps back before it hands packets to the decoder: the end trimming, known at the last page, can reach back over earlier packets (RFC 7845, section 4.4), and
+    // the largest packet holds 120 ms. A packet of 2.5 ms keeps its record in memory for this long, which bounds what a stream holds (2,304 records of a few hundred integers).
+    private const int HoldSamples = 5760;
+
     // A packet that has no intensity stereo bound: no CELT frame with intensity stereo, or one that was not walked.
     private const ushort NoBound = ushort.MaxValue;
 
@@ -37,6 +41,7 @@ public sealed partial class OpusParser
         private byte[]? _headBytes;
         private long _headOffset;
         private bool _isDecodable;
+        private long _heldSamples;
         private bool _areWalkersStale;
         private bool _isRedundancyOverrun;
         private readonly int _holdFrames = Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1);
@@ -137,7 +142,8 @@ public sealed partial class OpusParser
             }
 
             _held.Enqueue(new HeldPacket(packet, record, first, samples, follows));
-            while (_held.Count > _holdFrames)
+            _heldSamples += samples;
+            while (_held.Count > _holdFrames && _heldSamples - _held.Peek().Samples >= HoldSamples)
             {
                 FeedOldest();
             }
@@ -256,6 +262,7 @@ public sealed partial class OpusParser
         private void FeedOldest()
         {
             HeldPacket held = _held.Dequeue();
+            _heldSamples -= held.Samples;
             if (!_hasTrim)
             {
                 _hasTrim = true;

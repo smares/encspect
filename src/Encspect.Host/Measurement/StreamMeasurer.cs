@@ -1151,10 +1151,14 @@ internal sealed class StreamMeasurer
         long[] withheld = [.. _withheld];
         if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)
         {
-            leading = Math.Max(0, _firstReceived - _codedStart);
-            trailing = Math.Max(0, _codedEnd - _received);
-            leadingWithheld = leading > 0 ? Math.Min(leading, Overlap(_leading, _codedStart, _firstReceived, withheld) + _leadingOverflow) : 0;
-            trailingWithheld = trailing > 0 ? Overlap(_pending, _received, _codedEnd, withheld) : 0;
+            // Positions the syntax trims are not samples of the stream, so a decoder's gap or withheld span that covers them is counted only outside them (docs/design/samples-definition.md):
+            // the part before the start trimming and the part from the end trimming on.
+            long leadingFrom = Math.Max(_codedStart, Math.Min(_trimStart, _firstReceived));
+            long trailingTo = Math.Min(_codedEnd, Math.Max(_trimEnd, _received));
+            leading = Math.Max(0, _firstReceived - leadingFrom);
+            trailing = Math.Max(0, trailingTo - _received);
+            leadingWithheld = leading > 0 ? Math.Min(leading, Overlap(_leading, leadingFrom, _firstReceived, withheld) + _leadingOverflow) : 0;
+            trailingWithheld = trailing > 0 ? Overlap(_pending, _received, trailingTo, withheld) : 0;
         }
 
         if (leading == 0)
