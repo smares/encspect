@@ -242,8 +242,11 @@
    "codec": "Opus",
    "sample_rate": 48000,
    "channels": 2,
-   "channel_mode": null,
-   "channel_layout": [],
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
    "samples": 72312,
    "is_vbr": false,
    "protection": {
@@ -582,10 +585,6 @@
   [
    "mp4.moov-after-mdat",
    "not optimized for streaming"
-  ],
-  [
-   "mp4.codec-not-analyzed",
-   "protected Opus"
   ]
  ],
  "crosscheck": {

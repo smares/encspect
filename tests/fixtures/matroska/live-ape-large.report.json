@@ -1693,6 +1693,27 @@
                           "length": 712
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 15,
+                      "unit": "CELT frames",
+                      "offset": 187,
+                      "length": 712,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "13 frames (86.7%)",
+                          "offset": 187,
+                          "length": 712
+                        },
+                        {
+                          "name": "Short",
+                          "value": "2 frames (13.3%)",
+                          "offset": 187,
+                          "length": 712
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2798,6 +2819,53 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 13
+              },
+              {
+                "name": "Short",
+                "count": 2
+              }
+            ],
+            "total": 15,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ]
             ]
           }
         ]

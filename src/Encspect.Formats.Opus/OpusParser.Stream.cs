@@ -230,16 +230,19 @@ public sealed partial class OpusParser
         private void AddHead(MappedBytes packet)
         {
             _head = OpusHead.Read(packet.Span);
+
+            // A header the container puts together from its own fields (MP4's dOps box) has no bytes of its own: its nodes go under the box.
+            Node headParent = packet.IsOpaque && context.Configuration is { } configuration ? configuration.Parent : _parent;
             if (_head is not { } head)
             {
-                Node node = _parent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
+                Node node = headParent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
                     topic: Topics.OpusPreSkip));
                 _findings.Add(Severity.Warning, "opus.header-short", node, _ =>
                     $"The identification header holds {Count(packet.Length, "byte", "bytes")}, too few for its fields (RFC 7845, section 5.1); decoders refuse the stream, and its audio packets are read as single-stream packets.");
                 return;
             }
 
-            _headNode = _parent.Add(head.ToNode(packet));
+            _headNode = headParent.Add(head.ToNode(packet));
             CheckHeaderPage(packet, "identification header", requireEnd: true);
             if (head.Length < head.ExpectedLength)
             {
@@ -256,6 +259,7 @@ public sealed partial class OpusParser
 
             CheckHead(head);
             _records = new Records(Math.Max(1, head.StreamCount));
+            NoteHead(packet, head);
         }
 
         // RFC 7845, section 5.1 and 5.1.1.
@@ -453,6 +457,7 @@ public sealed partial class OpusParser
             }
 
             TrackPosition(packet);
+            Process(packet, index, isMalformed, _decoded - _lastPacketSamples, _lastPacketSamples);
         }
 
         // Returns whether a part breaks the framing or the streams of the packet differ in duration, which decoders refuse.
@@ -609,6 +614,7 @@ public sealed partial class OpusParser
             CheckPackets();
             CheckStart();
             long trim = EndTrimming();
+            StreamVerification? verification = FinishDecoding(trim);
             int preSkip = _head?.PreSkip ?? 0;
             long samples = Math.Clamp(_decoded - preSkip - trim, 0, _decoded);
             if (HasHead && _packets > 0 && preSkip + trim > _decoded)
@@ -625,6 +631,7 @@ public sealed partial class OpusParser
 
             if (_head is { } head)
             {
+                var built = Series(anchor, packets);
                 context.AddStream(new StreamInfo
                 {
                     Nodes = [_parent],
@@ -643,7 +650,9 @@ public sealed partial class OpusParser
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,
                     WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-                    Series = Series(anchor, packets),
+                    Series = built.Series,
+                    CategorySeries = built.Categories,
+                    Verification = verification,
                 });
             }
 

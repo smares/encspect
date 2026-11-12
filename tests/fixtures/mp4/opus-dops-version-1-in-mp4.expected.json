@@ -1,0 +1,140 @@
+{
+ "description": "An Opus specific box of version 1: the encapsulation defines version 0 only, so the analyzer reads none of its fields and does not analyze the track.",
+ "length": 1706,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   572
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   456
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   356
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   271
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   211
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   71
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/Opus",
+   413,
+   55
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/Opus/dOps",
+   449,
+   19
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   468,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   492,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   520,
+   60
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   580,
+   20
+  ],
+  [
+   "mdat",
+   600,
+   1106
+  ]
+ ],
+ "streams": [],
+ "units": [],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.opus-version",
+   "version 1"
+  ],
+  [
+   "mp4.codec-not-analyzed",
+   "holds Opus"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe": "FFmpeg refuses an Opus specific box that is not version 0, so it lists no packet.",
+   "mp4box": "MP4Box 2.2 cannot read the file (the cross-check job found no box listing for it): the Opus specific box is not version 0, which the encapsulation defines only."
+  }
+ }
+}

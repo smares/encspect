@@ -45,6 +45,7 @@ internal static class BoxNames
         "btrt" => "Bitrate",
         "sbtd" => "Source Bit Depth",
         "dac3" => "AC-3 Specific",
+        "dOps" => "Opus Specific",
         "dec3" => "E-AC-3 Specific",
         "ddts" => "DTS Specific",
         "chan" => "Channel Layout",

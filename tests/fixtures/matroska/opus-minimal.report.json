@@ -886,6 +886,27 @@
                           "length": 228
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 5,
+                      "unit": "CELT frames",
+                      "offset": 200,
+                      "length": 228,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "4 frames (80.0%)",
+                          "offset": 200,
+                          "length": 228
+                        },
+                        {
+                          "name": "Short",
+                          "value": "1 frame (20.0%)",
+                          "offset": 200,
+                          "length": 228
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1245,6 +1266,41 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 4
+              },
+              {
+                "name": "Short",
+                "count": 1
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ]
             ]
           }
         ]

@@ -1,6 +1,6 @@
 # Opus
 
-Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
+Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845), in [Matroska](matroska.md) and in [MP4](mp4.md).
 
 ## What is read
 
@@ -37,7 +37,10 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845).
 - stereo packets and frame packing;
 - whether every packet has the same size, as CBR writes them ("all n bytes", which opusinfo's "hard-CBR" confirms);
 - frames without data and padding bytes;
-- the bitrates.
+- the bitrates;
+- **Block Sizes** (the CELT frames that use one long transform and those that split it into short blocks, as Vorbis words it: entries "Long" and "Short"; series "Block Sizes", per packet) and **Stereo Coding** (each stereo CELT frame once, as MPEG and AAC name the codings: "Left/right stereo" for dual stereo, "Mid/side stereo", "Intensity stereo" for intensity stereo over left and right, "Mid/side and intensity stereo"; series "Stereo Coding"), from the entropy pass;
+- **Intensity Stereo Bound** (the lowest and highest hertz from which a CELT frame codes intensity stereo, and the series "Intensity Stereo Bound", per packet: the lowest bound of the packet's frames, 21 bands of 5 ms frames mapped to hertz as 200 Hz per bin);
+- **Frames With Redundancy** (frames that end with a redundant CELT frame that bridges a mode change, RFC 6716 section 4.5.1) and the SILK frames read.
 
 ## Channel layout
 
@@ -55,11 +58,23 @@ From mapping family 0 or 1, in the Vorbis channel order, with the speakers named
 - Pre-skip and end trimming are compared with `opusdec`'s output, the packets' samples with libopus's.
 - The analyzer's counts have not been changed to the reference yet.
 
-## Not yet covered
+## Decoding
 
-- The SILK and CELT layers (planned: entropy pass).
+- **What is decoded:** SILK, CELT and hybrid frames of every stream, the redundant frames and the transitions between modes (RFC 6716 sections 4 and 4.5), the multistream channel mappings of families 0, 1, 2 and 255, and the header's output gain (RFC 7845 section 5.1), to planar floats at 48 kHz and full scale 1.0, unclipped. The decoder follows RFC 6716 as RFC 8251 updates it and libopus 1.5.2. It runs only where a front end asks for the samples or the measurements, since Opus stores no checksum.
+- **Entropy pass:** every audio packet whose framing is valid is walked while the packets are read, with the same code whether or not anything is decoded: the range coded data of each SILK and CELT frame is read to its end, which gives each frame's final range coder state (RFC 6716 section 6; the tests hold it to libopus's on every packet of the test vectors), CELT's transient flag, stereo coding and intensity stereo bound. A CELT frame that needs more bits than it holds, which libopus refuses with an internal error, is `opus.frame-overrun` (Warning, counted) and its packet is not decoded. A hybrid frame whose redundant frame is longer than its data after the SILK part is `opus.redundancy-overrun` (Warning, counted): libopus ignores the redundancy, decodes the SILK part and conceals the CELT part (`opus_decode_frame`'s sanity check, not normative), which the analyzer does not do, so the packet is not decoded either.
+- **Gaps and empty frames:** a frame without data (discontinuous transmission, or lost) and a gap are not concealed: the decoder starts over and withholds 80 ms (the pre-roll of RFC 7845 sections 4.2 and 4.6) with the reasons "after a gap" and "empty frame". At a change of mode without redundancy, inside a stream that lost nothing, the 5 ms of the mode before it that RFC 6716 section 4.5 recommends (libopus's concealment code, cross-faded over 2.5 ms) is decoded, so the samples equal the reference decoder's; this is never applied to a lost or empty frame.
+- **Trims:** the pre-skip is the start trimming and the end trimming (the last page's granule position, or Matroska's DiscardPadding) reaches the measurer as a trimmed range, stated before the packets that hold it: the parser keeps back at least 120 ms of packets (and the packets of the padding's block) before it hands them to the decoder, so an end trimming that is longer than the last packet reaches back over the ones before it. Trims come first: positions they cover are not samples of the stream, so a span the decoder withholds counts as withheld only outside them, and measured + lost + withheld equals the report's Samples (`OpusTrimTests`). In MP4 the pre-skip is the `dOps` box's and the end trimming is what the track's samples hold after its one media edit (the Opus in ISO base media encapsulation, 4.4): `external-opusenc-96` as `opus-edit-list-in-mp4` is 72,000 samples, as the Ogg file is. FFmpeg 6.1 writes the edit list but does not apply its end, so only the manifest (the edit list's own figures) pins it. A trimmed position counts in the trimmed samples even where a gap lies over it.
+- **Accuracy** ([development.md](../development.md#opus-decoding)): the final range coder state of every packet of RFC 6716's and RFC 8251's test vectors equals the reference's, and the output of all 24 vector decodes agrees with libopus (built without SIMD) to 1.5 x 10^-7 of full scale; the Ogg fixtures to 2 x 10^-6 where mode changes are concealed.
+- **Cost:** per frame the decoder charges at least 22 units a sample and channel plus units for each stage; `DecoderWorkTests` holds the time per unit against the FLAC reference.
+
+## Not covered
+
+- Mapping family 3 (the demixing matrix of Ambisonics) and families this analyzer does not know: the matrix is read and reported, not applied; the decoder runs only where its channel mapping is one it can apply.
+- Packet loss concealment of lost frames and in-band forward error correction (the LBRR frames of SILK are read and dropped): a lost or empty frame resets the decoder instead (see Gaps and empty frames).
+- The deep PLC, OSCE and DRED extensions of libopus 1.5, which are off in its default build, and the fixed-point decoder.
+- After an empty frame or a gap, the decoded state differs from libopus's concealed state for about 1,920 samples, which fall in the withheld 80 ms and a little beyond.
 
 ## Articles
 
-- **Articles:** `opus-modes`, `opus-toc`, `opus-pre-skip`, `opus-channel-mapping`.
-- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`.
+- **Articles:** `opus-modes`, `opus-toc`, `opus-pre-skip`, `opus-channel-mapping`, `opus-celt`, `opus-silk`, `opus-range-coder`, `opus-transitions`.
+- **Shared with other formats:** `vorbis-comments`, `granule-position`, `gapless-playback`, `mid-side-stereo`, `intensity-stereo`, `block-switching`, `linear-prediction`.

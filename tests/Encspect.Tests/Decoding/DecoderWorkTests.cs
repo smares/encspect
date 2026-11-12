@@ -5,6 +5,7 @@ using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.Mpeg.Decoding;
+using Encspect.Formats.Opus.Decoding;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Formats.WavPack.Decoding;
@@ -195,6 +196,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
+        _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -211,6 +213,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg-layer1", StringComparison.Ordinal) => ".mp1",
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
+        _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -362,6 +365,20 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("vorbis-" + label, () => new Case("vorbis-" + label, VorbisCases.Repeated(file, blockExponent)));
+        }
+
+        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid and silence. Each case repeats the audio packets of an encoder's file in one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("speech", "external-opusenc-speech.opus"),
+            ("music", "external-opusenc-96.opus"),
+            ("music-5ms", "external-opusenc-music-5ms.opus"),
+            ("surround-51", "external-opusenc-51.opus"),
+            ("mono-24", "external-opusenc-24-mono.opus"),
+            ("ffmpeg", "external-ffmpeg-libopus.opus"),
+        })
+        {
+            Add("opus-" + label, () => new Case("opus-" + label, OpusCases.Repeated(file)));
         }
 
         // TTA in Matroska without the header (as FFmpeg and mkvmerge store it): the parser counts the last frame's codes, the decoder takes the track's figures.
@@ -880,6 +897,53 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.ogg", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    // The audio packets of an Opus fixture repeated in one logical stream until the decoding charges about Target units.
+    internal static class OpusCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            List<byte[]> packets = VorbisStreams.Packets("ogg/" + fixture);
+            long perCopy = Math.Max(1, Units(Build(packets, 1)));
+            int copies = (int)Math.Clamp(Math.Min(target / perCopy, 400_000 / Math.Max(1, packets.Count - 2)), 2, 1 << 20);
+            return Build(packets, copies);
+        }
+
+        private static byte[] Build(List<byte[]> packets, int copies)
+        {
+            var builder = new OggBuilder().Page(1, 0, 2, packets[0]).Page(1, 0, 0, packets[1]);
+            var page = new List<byte[]>();
+            int segments = 0;
+            for (int copy = 0; copy < copies; copy++)
+            {
+                foreach (byte[] packet in packets.Skip(2))
+                {
+                    int needed = (packet.Length / 255) + 1;
+                    if (segments + needed > 250)
+                    {
+                        builder.Page(1, -1, 0, [.. page]);
+                        page.Clear();
+                        segments = 0;
+                    }
+
+                    page.Add(packet);
+                    segments += needed;
+                }
+            }
+
+            builder.Page(1, -1, 4, [.. page]);
+            return builder.Bytes;
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new OpusDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.opus", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

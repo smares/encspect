@@ -511,6 +511,27 @@
                           "length": 7915
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 76,
+                      "unit": "CELT frames",
+                      "offset": 918,
+                      "length": 7915,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "58 frames (76.3%)",
+                          "offset": 918,
+                          "length": 7915
+                        },
+                        {
+                          "name": "Short",
+                          "value": "18 frames (23.7%)",
+                          "offset": 918,
+                          "length": 7915
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6006,6 +6027,77 @@
             "values": [
               20000,
               8000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 58
+              },
+              {
+                "name": "Short",
+                "count": 18
+              }
+            ],
+            "total": 76,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                76
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                11
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                1,
+                13
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                11
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                1,
+                1
+              ]
             ]
           }
         ]

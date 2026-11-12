@@ -615,6 +615,101 @@ def mp3_in_mp4():
     })]
 
 
+def ogg_opus_packets(name, count):
+    """The first count audio packets of an Ogg Opus fixture (tests/fixtures/ogg), whole."""
+    data = (ROOT / "ogg" / name).read_bytes()
+    packets, current, position = [], bytearray(), 0
+    while position + 27 <= len(data) and data[position:position + 4] == b"OggS":
+        segments = data[position + 26]
+        body = position + 27 + segments
+        for i in range(segments):
+            length = data[position + 27 + i]
+            current += data[body:body + length]
+            if length < 255:
+                packets.append(bytes(current))
+                current = bytearray()
+            body += length
+        position = body
+    return packets[2:2 + count]
+
+
+def dops(channels, pre_skip, rate, gain=0, family=0, streams=0, coupled=0, mapping=(), version=0):
+    """The Opus specific box (dOps) of the Opus in ISO base media encapsulation: the identification header's fields, big-endian, without the magic."""
+    body = u8(version) + u8(channels) + u16(pre_skip) + u32(rate) + struct.pack(">h", gain) + u8(family)
+    if family:
+        body += u8(streams) + u8(coupled) + bytes(mapping)
+    return box(b"dOps", body)
+
+
+def opus_in_mp4():
+    out = []
+    for name, source, count, channels, family, streams, coupled, mapping, mode, layout in (
+            ("opus-stereo-in-mp4", "external-libopus-stereo-silk-20ms-fec.opus", 40, 2, 0, 0, 0, (), "Stereo", SPEAKERS[2]),
+            ("opus-mono-in-mp4", "external-libopus-mono-silk-60ms-fec.opus", 12, 1, 0, 0, 0, (), "Mono", SPEAKERS[1]),
+            ("opus-51-in-mp4", "external-opusenc-51.opus", 20, 6, 1, 4, 2, (0, 4, 1, 2, 3, 5), "5.1", ["front left", "front center", "front right", "back left", "back right", "LFE"])):
+        packets = ogg_opus_packets(source, count)
+        durations = [opus_packet_samples(p) for p in packets]
+        entry = mp4a(channels, 48000, dops(channels, 312, 48000, 0, family, streams, coupled, mapping), format=b"Opus")
+        track = Track(1, packets, 48000, channels, entry, durations=durations, chunk=10)
+        data, records, offsets = movie([track])
+        samples = sum(durations) - 312
+        out.append((name, data, {
+            "description": f"{channels} channel{'s' if channels > 1 else ''} of Opus in MP4: the Opus sample entry with its dOps box (pre-skip 312, mapping family {family}), {len(packets)} packets of "
+                           f"{source} in chunks of 10, one packet a sample; the Opus parser reads the header the box holds as the identification header.",
+            "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+            "streams": [{"codec": "Opus", "sample_rate": 48000, "channels": channels, "channel_mode": mode, "channel_layout": layout, "samples": samples, "is_vbr": True}],
+            "units": unit_list(offsets[0], packets, 10),
+            "fields": {"MP4/moov/trak/mdia/minf/stbl/stsd/Opus/dOps/Opus Head/Pre-skip": "312 samples"},
+            "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
+        }))
+    return out
+
+
+def opus_edit_list():
+    """The packets of external-opusenc-96.opus in MP4 with an edit list that starts at the pre-skip and plays 72,000 samples (1.5 s): the track holds 76 packets of 960 samples, 72,960, so
+    the edit leaves 648 samples at the end, which the end trimming takes; the stream's samples are 72,000, as the Ogg file's and as the edit list plays them."""
+    packets = ogg_opus_packets("external-opusenc-96.opus", 1000)
+    durations = [opus_packet_samples(p) for p in packets]
+    entry = mp4a(2, 48000, dops(2, 312, 48000), format=b"Opus")
+    track = Track(1, packets, 48000, 2, entry, durations=durations, chunk=10, edits=[(1500, 312)])
+    data, records, offsets = movie([track])
+    return [("opus-edit-list-in-mp4", data, {
+        "description": "Opus in MP4 with an edit list: pre-skip 312 in the dOps box and the edit's media time, 1.5 s of presentation, so the 648 samples after it are the end trimming (the encapsulation, 4.4).",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [{"codec": "Opus", "sample_rate": 48000, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2], "samples": 72000, "is_vbr": True}],
+        "units": unit_list(offsets[0], packets, 10),
+        "fields": {"MP4/moov/trak/Gapless/Samples (Edit List)": "72000 samples", "MP4/moov/trak/Gapless/Encoder Padding (Edit List)": "648 samples"},
+        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
+    })]
+
+
+def opus_version():
+    """An Opus specific box of version 1, which the encapsulation does not define: the track is not read."""
+    packets = ogg_opus_packets("external-libopus-stereo-silk-20ms-fec.opus", 10)
+    durations = [opus_packet_samples(p) for p in packets]
+    entry = mp4a(2, 48000, dops(2, 312, 48000, version=1), format=b"Opus")
+    track = Track(1, packets, 48000, 2, entry, durations=durations, chunk=10)
+    data, records, offsets = movie([track])
+    return [("opus-dops-version-1-in-mp4", data, {
+        "description": "An Opus specific box of version 1: the encapsulation defines version 0 only, so the analyzer reads none of its fields and does not analyze the track.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [], "units": [], "fields": {},
+        "findings": [["mp4.opus-version", "version 1"], ["mp4.codec-not-analyzed", "holds Opus"]],
+        "crosscheck": {"ffprobe": False, "mp4box": False, "faad": None, "skip": {"faad": "faad2 reads AAC only.", "ffprobe": "FFmpeg refuses an Opus specific box that is not version 0, so it lists no packet.",
+                                                                              "mp4box": "MP4Box 2.2 cannot read the file (the cross-check job found no box listing for it): the Opus specific box is not version 0, which the encapsulation defines only."}},
+    })]
+
+
+def opus_packet_samples(packet):
+    """The samples at 48 kHz a packet holds (RFC 6716, section 3.1), from its TOC byte and frame count."""
+    toc = packet[0]
+    config = toc >> 3
+    frame = [480, 960, 1920, 2880][config % 4] if config < 12 else [480, 960][config % 2] if config < 16 else [120, 240, 480, 960][config % 4]
+    code = toc & 3
+    frames = 1 if code == 0 else 2 if code in (1, 2) else packet[1] & 0x3F
+    return frame * frames
+
+
 def mp3_gap():
     """The frames of mp3-in-mp4 in two chunks with 16 bytes between them, which the MPEG audio parser does not read as one stretch."""
     frames = mpeg_frames(12)
@@ -1279,7 +1374,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_version() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

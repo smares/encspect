@@ -125,14 +125,18 @@ public sealed partial class OpusParser
 
             long start = _audioStart;
             long length = _audioEnd - _audioStart;
+            // Packets that lie in several places (MP4's chunks with other data between them): the nodes spread over them as the samples' node does.
+            IReadOnlyList<ByteRange>? spread = _parent.Ranges;
             Node node = _parent.Add(new Node("Statistics", start, length, $"{Count(_packets, "packet", "packets")}, {(samples / (double)Rate).ToString("F3", CultureInfo.InvariantCulture)} s")
             {
+                Ranges = spread,
                 Kind = NodeKind.Statistics,
                 Description = Explain.Statistics,
                 Topic = Topics.OpusModes,
             });
 
-            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) => parent.Add(name, start, length, value, description, topic);
+            Node Add(Node parent, string name, NodeValue? value, string description, string? topic = null) =>
+                parent.Add(new Node(name, start, length, value) { Ranges = spread, Description = description, Topic = topic });
 
             Add(node, "Packets", NodeValue.Integer(_wholePackets), Explain.Packets);
             Add(node, "Frames", NodeValue.Integer(_frames), Explain.Frames);
@@ -172,7 +176,7 @@ public sealed partial class OpusParser
                 Add(node, "Minimum Bitrate", NodeValue.Decimal(minimum, 1, "kbps"), Explain.MinimumBitrate);
                 Add(node, "Maximum Bitrate", NodeValue.Decimal(maximum, 1, "kbps"), Explain.MaximumBitrate);
                 _isVariable = distribution.IsVariable();
-                distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Description = description }, "Packet", "Packets");
+                distribution.AddTo(node, (name, value, description) => new Node(name, start, length, value) { Ranges = spread, Description = description }, "Packet", "Packets");
             }
 
             Node sizes = Add(node, "Packet Sizes", _wholePackets == 0 ? "none whole" : _sizesDiffer
@@ -237,6 +241,36 @@ public sealed partial class OpusParser
                 }
             }
 
+            if (_celtFrames > 0)
+            {
+                Node blocks = Add(node, "Block Sizes", NodeValue.Integer(_celtFrames, "CELT frames", "CELT frame"), Explain.CeltBlocks, Topics.BlockSwitching);
+                Add(blocks, "Long", Share(_celtFrames - _transientFrames, _celtFrames, "frame", "frames"), Explain.UsageLong);
+                Add(blocks, "Short", Share(_transientFrames, _celtFrames, "frame", "frames"), Explain.UsageShort);
+                _blockUsageNode = blocks;
+                if (_stereoCelt > 0)
+                {
+                    Node stereo = Add(node, "Stereo Coding", NodeValue.Integer(_stereoCelt, "stereo CELT frames", "stereo CELT frame"), Explain.CeltStereo, Topics.OpusCelt);
+                    Add(stereo, "Left/right stereo", Share(_stereoFrames[0], _stereoCelt, "frame", "frames"), Explain.StereoDual);
+                    Add(stereo, "Mid/side stereo", Share(_stereoFrames[1], _stereoCelt, "frame", "frames"), Explain.StereoAngle);
+                    Add(stereo, "Intensity stereo", Share(_stereoFrames[2], _stereoCelt, "frame", "frames"), Explain.StereoIntensity);
+                    Add(stereo, "Mid/side and intensity stereo", Share(_stereoFrames[3], _stereoCelt, "frame", "frames"), Explain.StereoAngleIntensity);
+                    _stereoCodingNode = stereo;
+                }
+
+                if (_boundCount > 0)
+                {
+                    Node bound = Add(node, "Intensity Stereo Bound", null, Explain.IntensityBound, Topics.IntensityStereo);
+                    Add(bound, "Lowest", NodeValue.Integer(_lowestBound, "Hz"), Explain.BoundLowest);
+                    Add(bound, "Highest", NodeValue.Integer(_highestBound, "Hz"), Explain.BoundHighest);
+                    _boundNode = bound;
+                }
+            }
+
+            if (_redundantFrames > 0)
+            {
+                Add(node, "Frames With Redundancy", NodeValue.Integer(_redundantFrames), Explain.RedundantFrames, Topics.OpusModes);
+            }
+
             if (_emptyFrames > 0)
             {
                 Add(node, "Frames Without Data", NodeValue.Integer(_emptyFrames), Explain.EmptyFrames);
@@ -290,6 +324,7 @@ public sealed partial class OpusParser
             Records records = _records;
             return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new BlockedChildren([], records.Count, i => PacketNode(records, i)))
             {
+                Ranges = _parent.Ranges,
                 Kind = NodeKind.Stream,
                 Description = Explain.AudioPackets,
                 Topic = Topics.OpusToc,
@@ -300,12 +335,15 @@ public sealed partial class OpusParser
         // audio, the bits of the packets that start in it over their duration, rounded half to even
         // to 0.1 kbps.
         private Node? _codedBandwidthNode;
+        private Node? _blockUsageNode;
+        private Node? _stereoCodingNode;
+        private Node? _boundNode;
 
-        private List<Series> Series(Node? anchor, Node? packets)
+        private (List<Series> Series, IReadOnlyList<CategorySeries> Categories) Series(Node? anchor, Node? packets)
         {
             if (_packets == 0 || packets is null || _decoded == 0)
             {
-                return [];
+                return ([], []);
             }
 
             int count = _records.Count;
@@ -364,11 +402,43 @@ public sealed partial class OpusParser
             double[] rates = seconds
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
+            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
             var series = new List<Series>
             {
-                new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate },
+                bitrate,
                 new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
             };
+            var categories = new List<CategorySeries>();
+            if (_celtFrames > 0 && _blockUsageNode is not null)
+            {
+                categories.Add(_blockUsage.Build(offsets, bitrate, _blockUsageNode, SeriesText.BlockUsage, Topics.BlockSwitching));
+                if (_stereoCelt > 0 && _stereoCodingNode is not null)
+                {
+                    categories.Add(_stereoCoding.Build(offsets, bitrate, _stereoCodingNode, SeriesText.StereoCoding, Topics.OpusCelt));
+                }
+            }
+
+            if (_boundCount > 0 && _boundNode is not null)
+            {
+                var boundX = new double[_boundCount];
+                var boundY = new double[_boundCount];
+                for (int i = 0, n = 0; i < count; i++)
+                {
+                    if (_bounds[i] != NoBound)
+                    {
+                        boundX[n] = offsets[i];
+                        boundY[n++] = _bounds[i];
+                    }
+                }
+
+                series.Add(new Series("Intensity Stereo Bound", "Hz", SeriesAxis.FrameOffset, boundX, boundY)
+                {
+                    Description = SeriesText.IntensityStereoBound,
+                    Concept = GraphConcept.StereoCoding,
+                    Quantity = "Coded Bandwidth",
+                });
+            }
+
             if (bandwidthCount > 0)
             {
                 Array.Resize(ref bandwidthX, bandwidthCount);
@@ -404,7 +474,7 @@ public sealed partial class OpusParser
                 });
             }
 
-            return series;
+            return (series, categories);
         }
     }
 
@@ -424,6 +494,18 @@ public sealed partial class OpusParser
 
             _findings[code] = (severity, node, 1, message);
             _order.Add(code);
+        }
+
+        // For a finding that can come with every packet: the node of the first case is built when there is one.
+        public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
+        {
+            if (_findings.TryGetValue(code, out var existing))
+            {
+                _findings[code] = existing with { Count = existing.Count + 1 };
+                return;
+            }
+
+            Add(severity, code, node(), message);
         }
 
         public void Flush(AnalysisContext context)

@@ -56,6 +56,7 @@ import philips_mc_tool
 import musepack_tool
 import old_lame_tool
 import speex_tool
+import opus_tool
 import vorbis_tool
 import tak_tool
 import wavpack_tool
@@ -120,6 +121,7 @@ def sources():
     yield from wavpack_tool.sources()
     yield from speex_tool.sources()
     yield from vorbis_tool.sources()
+    yield from opus_tool.sources()
     yield from monkeys_audio_tool.sources()
     yield from libtta_tool.sources()
     yield from optimfrog_tool.sources()

@@ -64,6 +64,9 @@ public sealed partial class Mp4Parser
             case "dac3" or "dec3" or "ddts":
                 CodecSpecificBox(state, node, f);
                 return true;
+            case "dOps" when state.CurrentEntry is not null:
+                OpusSpecificBox(state, node, f);
+                return true;
             case "alac" when state.CurrentEntry is not null:
                 AlacSpecificBox(state, node, f);
                 return true;
@@ -191,6 +194,59 @@ public sealed partial class Mp4Parser
         else if (data.Length > 0)
         {
             node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
+        }
+    }
+
+    // The Opus specific box of an Opus sample entry (the Opus in ISO base media file format encapsulation, Xiph.Org's "Encapsulation of Opus in ISO Base Media File Format" 4.3.2):
+    // the identification header's fields of RFC 7845 section 5.1, big-endian and without the magic. The codec parser reads them as the identification header, which is
+    // put together from them (the same bytes an Ogg stream or Matroska's CodecPrivate holds).
+    private static void OpusSpecificBox(State state, Node node, BoxFields f)
+    {
+        long start = f.Position;
+        byte[] raw = f.TakeBytes(f.Remaining);
+        node.Value = NodeValue.Integer(raw.Length, "bytes");
+        if (raw.Length < 11 || raw[1] == 0)
+        {
+            return;
+        }
+
+        if (raw[0] != 0)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.opus-version",
+                $"The Opus specific box has version {raw[0]}, where the encapsulation defines version 0 and says a reader must not read another; its fields are not read, so the track is not analyzed.", node);
+            return;
+        }
+
+        int channels = raw[1];
+        int family = raw[10];
+        if (family != 0 && raw.Length < 13 + channels)
+        {
+            return;
+        }
+
+        // The identification header, field by field as RFC 7845 section 5.1 lays it out (little-endian, with the magic), from the box's big-endian fields.
+        byte[] head = new byte[family == 0 ? 19 : 21 + channels];
+        "OpusHead"u8.CopyTo(head);
+        head[8] = 1;
+        head[9] = (byte)channels;
+        head[10] = raw[3];
+        head[11] = raw[2];
+        head[12] = raw[7];
+        head[13] = raw[6];
+        head[14] = raw[5];
+        head[15] = raw[4];
+        head[16] = raw[9];
+        head[17] = raw[8];
+        head[18] = (byte)family;
+        if (family != 0)
+        {
+            raw.AsSpan(11, 2 + channels).CopyTo(head.AsSpan(19));
+        }
+
+        if (state.CurrentEntry is { DecoderSpecificInfo: null } entry)
+        {
+            entry.DecoderSpecificInfo = MappedBytes.Opaque(head, start, start + raw.Length);
+            entry.DecoderSpecificInfoNode = node;
         }
     }
 

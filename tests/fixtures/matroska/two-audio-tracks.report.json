@@ -1205,6 +1205,81 @@
                           "length": 316
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 4,
+                      "unit": "CELT frames",
+                      "offset": 288,
+                      "length": 316,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "4 frames (100.0%)",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Short",
+                          "value": "0 frames (0.0%)",
+                          "offset": 288,
+                          "length": 316
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Stereo Coding",
+                      "value": 4,
+                      "unit": "stereo CELT frames",
+                      "offset": 288,
+                      "length": 316,
+                      "children": [
+                        {
+                          "name": "Left/right stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Mid/side stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Intensity stereo",
+                          "value": "4 frames (100.0%)",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Mid/side and intensity stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 288,
+                          "length": 316
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Intensity Stereo Bound",
+                      "offset": 288,
+                      "length": 316,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 288,
+                          "length": 316
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 2400,
+                          "unit": "Hz",
+                          "offset": 288,
+                          "length": 316
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1689,6 +1764,27 @@
                           "length": 316
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 4,
+                      "unit": "CELT frames",
+                      "offset": 334,
+                      "length": 316,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "4 frames (100.0%)",
+                          "offset": 334,
+                          "length": 316
+                        },
+                        {
+                          "name": "Short",
+                          "value": "0 frames (0.0%)",
+                          "offset": 334,
+                          "length": 316
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1968,6 +2064,25 @@
             ]
           },
           {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              288,
+              380,
+              472,
+              564
+            ],
+            "values": [
+              0,
+              2400,
+              200,
+              800
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -1997,6 +2112,74 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 4
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ]
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 4
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                4
+              ]
             ]
           }
         ]
@@ -2082,6 +2265,37 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 4
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ]
             ]
           }
         ]

@@ -1783,6 +1783,14 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
 - **Memory:** one frame (at most 64 MiB), one chunk of output (at most 65,536 samples over all channels) and a few hundred bytes of state for each channel, whatever the stream's length.
 - **Checked:** `TtaDecoderTests` (the description's worked examples, a test-side encoder's round trips, damage), `TtaDecoderFixtureTests` (the manifests' `decoded_samples` and `decoded_pcm_md5`, the `.decode.json` and `.measure.json` goldens), and `crosscheck_tta_pcm.py` in the `tta-crosscheck` job: PcmDump's output against `tta -d` and FFmpeg, no difference allowed.
 
+## As built: the Opus decoder's work weights
+
+- **Charge:** per frame of each stream, `size * channels * units` with 24 units for SILK, 22 for CELT and 46 for a hybrid frame, plus 8,000 for each CELT or hybrid frame whatever its length, on top of the floor of 22 units a sample and channel.
+- **Measured** (`DecoderWorkTests`, `opus-*` cases, the 5 ms frames' per-frame cost fitted first: 1.65 times the FLAC reference before the 8,000 units): the time per unit against the FLAC reference's on the development machine (linux-x64, shared with other work), at 8,000 and 24:
+  - `opus-surround-51` 1.14, `opus-music-5ms` 1.22, `opus-ffmpeg` 1.26, `opus-music` 1.21, `opus-speech` 1.26, `opus-mono-24` 0.80.
+  - The first run (22 for SILK, no per-frame units) gave 1.06, 1.65, 1.12, 1.26, 1.34 and 1.18 (the same order).
+- **Margin:** the largest ratio is 1.26 against the limit of 2.0; the TrueHD case reached 2.10 on the ARM runner, a platform where a float-heavy decoder may take more per unit than the integer FLAC reference, so the weights are left at the margin rather than lowered; a failure there raises them.
+
 ## Open risks and unverified claims
 
 - **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.

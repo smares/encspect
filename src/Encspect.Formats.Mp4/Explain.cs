@@ -416,6 +416,8 @@ internal static class Explain
         "mp4a" => "MPEG-4 audio sample entry: audio coded by an MPEG audio codec, usually AAC, whose configuration its esds box holds (ISO/IEC 14496-14 5.6).",
         "ac-3" => "AC-3 sample entry: Dolby Digital audio, one syncframe per sample, configured by its dac3 box (ETSI TS 102 366 F.3).",
         "ec-3" => "E-AC-3 sample entry: Dolby Digital Plus audio, the syncframes of six blocks of every substream per sample, configured by its dec3 box (ETSI TS 102 366 F.5).",
+        "dOps" => "OpusSpecificBox: the identification header of the Opus stream as RFC 7845 section 5.1 defines it, in big-endian fields and without the magic: the version, the channel count, the pre-skip, the input sample rate, the output gain and the channel mapping (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.2).",
+        "Opus" => "Opus sample entry: Opus audio, one packet per sample, configured by its dOps box (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.1).",
         "dac3" => "AC3SpecificBox: the AC-3 stream's sample rate, version, service, channels and bitrate, as its frames hold them (ETSI TS 102 366 F.4).",
         "dec3" => "EC3SpecificBox: the E-AC-3 stream's data rate and, per independent substream, its sample rate, version, service, channels and dependent substreams (ETSI TS 102 366 F.6).",
         "dtsc" => "DTS sample entry: DTS audio of the formats before DTS-HD, one core frame per sample, configured by its ddts box (ETSI TS 102 114 E.2.2).",
@@ -478,7 +480,7 @@ internal static class Explain
     // A sample entry of an stsd box, by its coding.
     public static string SampleEntry(string type) => type switch
     {
-        "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
+        "Opus" or "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
         _ => "A sample entry: how the track's samples are coded, named by the four-character code of the coding, such as alac or Opus (ISO/IEC 14496-12 8.5.2.2).",
     };
 

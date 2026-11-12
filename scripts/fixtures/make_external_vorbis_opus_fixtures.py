@@ -31,6 +31,7 @@ import aotuv_tool
 import make_ogg_fixtures as hand
 import make_vorbis_opus_fixtures as hand_vo
 import ogg_model as m
+import opus_tool
 import xiph_tool
 
 OUT = hand.OUT
@@ -43,6 +44,7 @@ OLD_LIBVORBIS["1.1.2"] = {"name": "libvorbis 1.1.1 or 1.1.2", "confidence": "Hig
 # application (opusenc) and a vendor string that is a muxer's version. ffmpeg writes "Lavf60.16.100" as the vendor.
 FFMPEG_WRITER = {"name": "FFmpeg (Lavf60.16.100)", "confidence": "Low"}
 OPUSENC = {"name": "libopus 1.4", "confidence": "Medium", "writer": {"name": "opusenc 0.2", "confidence": "Low"}}
+LIBOPUS_152 = {"name": "libopus 1.5.2", "confidence": "Medium"}
 FFMPEG_LIBVORBIS = {"name": "FFmpeg (Lavc60.31.102 libvorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 FFMPEG_VORBIS = {"name": "FFmpeg (Lavc60.31.102 vorbis)", "confidence": "Medium", "writer": FFMPEG_WRITER}
 FFMPEG_LIBOPUS = {"name": "FFmpeg (Lavc60.31.102 libopus)", "confidence": "Medium", "writer": FFMPEG_WRITER}
@@ -99,6 +101,14 @@ FIXTURES = {
     "external-opusenc-speech": ("opusenc", 16000, 1, 1.5, ["--bitrate", "12", "--speech", "--framesize", "60"], OPUSENC, []),
     "external-opusenc-music-5ms": ("opusenc", 48000, 2, 1.0, ["--bitrate", "128", "--music", "--framesize", "5"], OPUSENC, []),
     "external-opusenc-51": ("opusenc", 48000, 6, 1.0, ["--bitrate", "192"], OPUSENC, []),
+    # libopus 1.5.2's own encoder (opus_enc.c, built by opus_tool.py), for the syntax the others do not write: arguments are application, bitrate, frame length in ms, in-band FEC, the highest
+    # bandwidth and the mode the encoder is forced to. Stereo SILK frames of 40 and 60 ms with FEC read their LBRR flags after both channels' header bits (RFC 6716, section 4.2.4).
+    "external-libopus-stereo-silk-40ms-fec": ("libopus", 48000, 2, 1.5, ["voip", "32000", "40", "1", "wb", "silk"], LIBOPUS_152, []),
+    "external-libopus-stereo-silk-60ms-fec": ("libopus", 48000, 2, 1.5, ["voip", "32000", "60", "1", "wb", "silk"], LIBOPUS_152, []),
+    "external-libopus-stereo-silk-20ms-fec": ("libopus", 48000, 2, 1.5, ["voip", "32000", "20", "1", "wb", "silk"], LIBOPUS_152, []),
+    "external-libopus-mono-silk-60ms-fec": ("libopus", 48000, 1, 1.5, ["voip", "20000", "60", "1", "wb", "silk"], LIBOPUS_152, []),
+    "external-libopus-stereo-hybrid-20ms": ("libopus", 48000, 2, 1.5, ["audio", "40000", "20", "1", "fb", "hybrid"], LIBOPUS_152, []),
+    "external-libopus-stereo-celt-lowdelay": ("libopus", 48000, 2, 1.0, ["lowdelay", "96000", "5", "0", "fb", "celt"], LIBOPUS_152, []),
     "external-ffmpeg-libopus": ("ffmpeg", 48000, 2, 1.5, ["-c:a", "libopus", "-b:a", "96k"], FFMPEG_LIBOPUS, []),
     "external-ffmpeg-libopus-ambisonics": ("ffmpeg", 48000, 4, 0.5, ["-c:a", "libopus", "-mapping_family", "2"], FFMPEG_LIBOPUS, []),
     "external-ffmpeg-opus": ("ffmpeg", 48000, 2, 1.5, ["-strict", "-2", "-c:a", "opus", "-b:a", "96k"], FFMPEG_OPUS, []),
@@ -175,6 +185,10 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
         aotuv_tool.windows(tool[5:], arguments, source, target)
         return {"tool": f"{aotuv_tool.WINDOWS[tool[5:]][0]} (Rarewares) under Wine", "arguments": arguments, "rate": rate, "channels": channels,
                 "seconds": seconds}
+    elif tool == "libopus":
+        serial = 0x4F505300 + list(FIXTURES).index(name)
+        subprocess.run([str(opus_tool.build_enc(work)), str(source), str(target), str(serial), *arguments], check=True)
+        return {"tool": "opus_enc.c (opus_tool.py) with libopus 1.5.2", "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
     elif tool == "opusenc":
         subprocess.run(["opusenc", "--quiet", *arguments, str(source), str(target)], check=True)
     else:
@@ -221,7 +235,7 @@ def main():
     prefix = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else ""
     names = [name for name in FIXTURES if name.startswith(prefix)]
     if not only_manifests:
-        needed = {"oggenc": ("oggenc",), "opusenc": ("opusenc",), "ffmpeg": ("ffmpeg",), "aotuv": ("oggenc", "autoreconf"), "wine": ("wine",),
+        needed = {"libopus": ("cc", "cmake"), "oggenc": ("oggenc",), "opusenc": ("opusenc",), "ffmpeg": ("ffmpeg",), "aotuv": ("oggenc", "autoreconf"), "wine": ("wine",),
                   "xiph": ("oggenc", "autoreconf", "gcc", "git")}
         missing = sorted({tool for name in names for tool in needed[FIXTURES[name][0].split(":")[0]] if shutil.which(tool) is None})
         if missing:

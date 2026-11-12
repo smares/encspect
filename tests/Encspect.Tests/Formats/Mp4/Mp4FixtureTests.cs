@@ -69,7 +69,7 @@ public class Mp4FixtureTests
         }
 
         // Units without an offset (MP4Box lists only sizes) are compared by size.
-        Node[] actualUnits = report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame)).ToArray();
+        Node[] actualUnits = report.Streams.SelectMany(s => s.Nodes).Distinct().SelectMany(n => n.Children.Where(c => c.Kind == NodeKind.Frame).Concat(n.Children.Where(c => c.Name == "Audio Packets").SelectMany(c => c.Children.Where(f => f.Kind == NodeKind.Frame)))).ToArray();
         JsonElement[] expectedUnits = manifest.GetProperty("units").EnumerateArray().ToArray();
         Assert.Equal(expectedUnits.Length, actualUnits.Length);
         Assert.Equal(
