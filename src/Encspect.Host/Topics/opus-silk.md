@@ -11,4 +11,4 @@ references: RFC 6716, section 4.2
 
 **Stereo and rates.** Stereo is coded as a mid and a side channel with a prediction weight for the side from the mid; a frame may code the mid channel alone. SILK always works at 8, 12 or 16 kHz, according to the bandwidth, and the decoder resamples to 48 kHz. A frame can also hold a low-bitrate copy of an earlier frame (LBRR), for the decoder to use if that frame is lost; the analyzer reads and drops it.
 
-**What you see.** The analyzer reads every frame's indices and pulses to the end, which gives the packet's final range coder state. SILK's figures are not in the report; its output is exact integer arithmetic, so every decoder that follows RFC 6716 gives the same samples.
+**What you see.** The analyzer reads every frame's indices and pulses to the end, which gives the packet's final range coder state. SILK's own output, before the resampler, is integer arithmetic that RFC 6716 defines exactly; the resampler to 48 kHz is not normative (section 4.2.9: a decoder can use any method), so the analyzer's samples follow libopus's.

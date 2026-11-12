@@ -74,7 +74,7 @@ internal ref struct IntReader(ReadOnlySpan<int> data)
     {
         if (_position >= _data.Length)
         {
-            throw new InvalidDataException("The decoder read more symbols than the entropy pass stored");
+            throw new InvalidOperationException("The decoder read more symbols than the entropy pass stored");
         }
 
         return _data[_position++];
@@ -86,7 +86,7 @@ internal ref struct IntReader(ReadOnlySpan<int> data)
     {
         if (count < 0 || _position + count > _data.Length)
         {
-            throw new InvalidDataException("The decoder read more symbols than the entropy pass stored");
+            throw new InvalidOperationException("The decoder read more symbols than the entropy pass stored");
         }
 
         ReadOnlySpan<int> slice = _data.Slice(_position, count);

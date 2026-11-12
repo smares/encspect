@@ -27,7 +27,6 @@ Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 """
 
 import argparse
-import array
 import json
 import pathlib
 import shlex
@@ -170,23 +169,6 @@ def samples_of(packet):
     return size * frames
 
 
-def clipped_spans(manifest_path, stream, block=960):
-    """The position ranges libopus's soft clipping (opus_pcm_soft_clip, which opus_decode_float applies to a packet that reaches |x| > 1 and which carries a memory into the next
-    one) changes, where the analyzer's unclipped floats reach full scale: each block of 960 samples that does, and the block after it, as FIRST:END."""
-    data = array.array("f")
-    data.frombytes((manifest_path.parent / stream["pcm"]).read_bytes())
-    channels = stream["channels"]
-    spans, offset = [], 0
-    for first, count in stream["runs"]:
-        for at in range(0, count, block):
-            size = min(block, count - at)
-            chunk = data[(offset + at) * channels:(offset + at + size) * channels]
-            if chunk and max(abs(x) for x in chunk) >= 1.0:
-                spans.append((first + at, first + at + size + block))
-        offset += count
-    return [f"{a}:{b}" for a, b in spans]
-
-
 def default_files():
     return sorted(FIXTURES.glob("ogg/*.opus"))
 
@@ -295,7 +277,7 @@ def main(argv=None):
                     problems.append(f"the analyzer decoded {streams[0]['channels']} channels, libopus {channels}")
                 else:
                     exclude = []
-                    for span in EXPECTED.get(name, {}).get("exclude", []) + clipped_spans(manifest, streams[0]):
+                    for span in EXPECTED.get(name, {}).get("exclude", []):
                         exclude += ["--exclude", span]
                     if not (folder / "libopus.f32").stat().st_size:
                         notes.append("libopus decodes nothing (libogg drops the page the file is cut in), and the analyzer decodes its whole packets")

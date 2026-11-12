@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Opus.Decoding;
@@ -113,12 +114,7 @@ internal sealed class OpusStreamDecoder
         {
             for (int c = 0; c < cc; c++)
             {
-                float[] y = pcm[c];
-                short[] s = _silkPcm[c];
-                for (int i = 0; i < frameSize; i++)
-                {
-                    y[at + i] += (1.0f / 32768.0f) * s[i];
-                }
+                AddSilk(pcm[c], at, _silkPcm[c], frameSize);
             }
         }
 
@@ -198,10 +194,7 @@ internal sealed class OpusStreamDecoder
         {
             for (int c = 0; c < cc; c++)
             {
-                for (int i = 0; i < samples; i++)
-                {
-                    pcm[c][at + i] += (1.0f / 32768.0f) * _silkPcm[c][i];
-                }
+                AddSilk(pcm[c], at, _silkPcm[c], samples);
             }
         }
 
@@ -210,6 +203,17 @@ internal sealed class OpusStreamDecoder
         _previousRedundancy = false;
     }
 
+    // The SILK layer's 16-bit samples added to the output at full scale 1.0.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void AddSilk(float[] output, int at, short[] silk, int samples)
+    {
+        for (int i = 0; i < samples; i++)
+        {
+            output[at + i] += (1.0f / 32768.0f) * silk[i];
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ApplyGain(float[][] pcm, int at, int samples)
     {
         if (_gain == 1.0f)
@@ -227,6 +231,7 @@ internal sealed class OpusStreamDecoder
     }
 
     // smooth_fade: the sum of in1 and in2 weighted by the square of the window.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void SmoothFade(float[] in1, int in1At, float[] in2, int in2At, float[] output, int outAt, int overlap)
     {
         ReadOnlySpan<float> window = CeltTables.Window120;

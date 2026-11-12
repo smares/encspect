@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 namespace Encspect.Formats.Opus.Decoding;
 
 // The concealment of a CELT frame (celt_decode_lost of celt_decoder.c, with pitch.c and celt_lpc.c of libopus 1.5.2: BSD-3-Clause, notice in THIRD-PARTY-NOTICES.md), which the
@@ -14,6 +15,7 @@ internal sealed partial class CeltDecoder
     private readonly float[] _plcX = new float[2 * 960];
 
     // celt_decode_lost followed by the de-emphasis, for a frame of n samples (a multiple of 120 up to 960).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void DecodeLost(int n, float[][] pcm, int pcmAt)
     {
         Flush();
@@ -189,6 +191,7 @@ internal sealed partial class CeltDecoder
     }
 
     // celt_plc_pitch_search: pitch_downsample, pitch_search.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int PlcPitchSearch(int c)
     {
         float[] xLp = _lpPitch;
@@ -197,6 +200,7 @@ internal sealed partial class CeltDecoder
         return PlcPitchLagMax - pitch;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void PitchDownsample(int c, float[] xLp, int len)
     {
         float[] x0 = _decodeMem[0];
@@ -264,6 +268,7 @@ internal sealed partial class CeltDecoder
     }
 
     // pitch_search (pitch.c), float: the reference x_lp is buf from xLpAt and y is buf from 0, len samples of the reference against len + maxPitch of the signal.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void PitchSearch(float[] buf, int xLpAt, int len, int maxPitch, out int pitch)
     {
         int lag = len + maxPitch;
@@ -338,6 +343,7 @@ internal sealed partial class CeltDecoder
         pitch = (2 * best[0]) - offset;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void FindBestPitch(float[] xcorr, float[] y, int len, int maxPitch, Span<int> bestPitch)
     {
         float syy = 1;
@@ -382,6 +388,7 @@ internal sealed partial class CeltDecoder
     }
 
     // _celt_autocorr (celt_lpc.c), float: x from xAt, n values, the first and last overlap of them windowed.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Autocorr(float[] x, int xAt, Span<float> ac, ReadOnlySpan<float> window, int overlap, int lag, int n)
     {
         var xx = new float[n];
@@ -421,6 +428,7 @@ internal sealed partial class CeltDecoder
     }
 
     // _celt_lpc (celt_lpc.c), float: the Levinson-Durbin recursion.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Lpc(Span<float> lpc, ReadOnlySpan<float> ac, int p)
     {
         lpc.Slice(0, p).Clear();
@@ -456,6 +464,7 @@ internal sealed partial class CeltDecoder
     }
 
     // celt_fir (celt_lpc.c), float: y[i] = x[i] + sum of num[k] * x[i - 1 - k], x read from xAt (with the order's samples before it).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Fir(float[] x, int xAt, ReadOnlySpan<float> num, float[] y, int n, int ord)
     {
         for (int i = 0; i < n; i++)
@@ -471,6 +480,7 @@ internal sealed partial class CeltDecoder
     }
 
     // celt_iir (celt_lpc.c), float, in place: the output is x[i] less the filter's taps on the outputs before it; mem holds the last outputs, newest first.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Iir(float[] buf, int at, ReadOnlySpan<float> den, int n, int ord, Span<float> mem)
     {
         for (int i = 0; i < n; i++)
