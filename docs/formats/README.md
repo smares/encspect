@@ -48,7 +48,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | AC-3, E-AC-3 | routed | routed | not planned | planned (AC-3) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | no |
 | DTS | routed | routed | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
-| Opus | planned (FFmpeg) | routed | routed | not planned | not planned | no | yes (measured) |
+| Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |
 | Speex | not planned | not planned | routed | not planned | not planned | no | no |
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
