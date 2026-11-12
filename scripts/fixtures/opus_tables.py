@@ -125,24 +125,36 @@ def strip_comments(text):
     return re.sub(r"//[^\n]*", "", text)
 
 
+def condition(line):
+    """Whether the lines of a conditional block of the default float build are compiled: no macro is defined, so #ifdef and defined() are false and their negations true."""
+    text = line.strip()
+    if text.startswith("#ifndef"):
+        return True
+    if text.startswith("#ifdef"):
+        return False
+    expression = text[3:].strip()
+    expression = re.sub(r"!\s*defined\s*\(\s*\w+\s*\)", " 1 ", expression)
+    expression = re.sub(r"defined\s*\(\s*\w+\s*\)", " 0 ", expression)
+    expression = expression.replace("&&", " and ").replace("||", " or ")
+    try:
+        return bool(eval(expression, {"__builtins__": {}}, {}))  # noqa: S307
+    except Exception:
+        raise SystemExit(f"cannot evaluate the condition {line!r}")
+
+
 def preprocess(text):
-    """Evaluates the conditions of cwrs.c: CUSTOM_MODES is not defined, SMALL_FOOTPRINT is not defined."""
+    """Keeps the lines libopus compiles in its default float build (OPUS_CUSTOM_MODES, FIXED_POINT and every optional feature off)."""
     out, stack = [], []
     for line in text.split("\n"):
         stripped = line.strip()
         if stripped.startswith("#if"):
-            value = True
-            if "defined(CUSTOM_MODES)" in stripped or "defined (CUSTOM_MODES)" in stripped:
-                value = False
-            elif stripped.startswith("#ifndef") or "!defined" in stripped:
-                value = True
-            elif stripped.startswith("#ifdef") or "defined" in stripped or stripped.startswith("#if "):
-                value = False if re.search(r"CUSTOM_MODES|FIXED_POINT|HAVE_|ENABLE_|OPUS_ARM|SMALL_FOOTPRINT|MIPS", stripped) and "!" not in stripped else True
-            stack.append([value, value, True])
+            value = condition(line)
+            stack.append([value, value])
             continue
+        if stripped.startswith("#elif"):
+            raise SystemExit(f"#elif is not handled: {line!r}")
         if stripped.startswith("#else"):
-            top = stack[-1]
-            top[0] = not top[1]
+            stack[-1][0] = not stack[-1][1]
             continue
         if stripped.startswith("#endif"):
             stack.pop()
@@ -199,7 +211,7 @@ def generate(root):
     for cls, cname, path, kind, csname in TABLES:
         if path not in cache:
             text = strip_comments((root / path).read_text(encoding="utf-8", errors="replace"))
-            cache[path] = preprocess(text) if path.endswith("cwrs.c") else text
+            cache[path] = preprocess(text)
         try:
             items = find_table(cache[path], cname)
         except KeyError:

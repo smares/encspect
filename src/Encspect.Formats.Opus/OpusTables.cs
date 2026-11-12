@@ -642,8 +642,8 @@ internal static class CeltTables
     // celt/quant_bands.c, eMeans: 25 values.
     public static ReadOnlySpan<float> EMeans => new float[]
     {
-        103f, 100f, 92f, 85f, 81f, 77f, 72f, 70f, 78f, 75f, 73f, 71f, 78f, 74f, 69f, 72f,
-        70f, 74f, 76f, 71f, 60f, 60f, 60f, 60f, 60f,
+        6.437500f, 6.250000f, 5.750000f, 5.312500f, 5.062500f, 4.812500f, 4.500000f, 4.375000f, 4.875000f, 4.687500f, 4.562500f, 4.437500f, 4.875000f, 4.625000f, 4.312500f, 4.500000f,
+        4.375000f, 4.625000f, 4.750000f, 4.437500f, 3.750000f, 3.750000f, 3.750000f, 3.750000f, 3.750000f,
     };
 
     // celt/celt.c, tf_select_table: 32 values.
