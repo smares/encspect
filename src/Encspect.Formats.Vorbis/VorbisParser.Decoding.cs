@@ -15,6 +15,8 @@ public sealed partial class VorbisParser
         // One audio packet that codes a block (the flags of its record read None).
         private void Walk(MappedBytes packet, int index, PacketRecord record)
         {
+            (long First, long Samples)? gapRange = _gapRange;
+            _gapRange = null;
             if (_walker is null)
             {
                 _records.CodedEnds.Add(NoBandwidth);
@@ -39,6 +41,11 @@ public sealed partial class VorbisParser
             }
 
             UpdateTrim(session);
+            if (gapRange is { } range)
+            {
+                session.TrimInner(range.First, range.Samples);
+            }
+
             SampleBuffers lent = isDecoding ? session.Lend(_walker.MaxInts(record.Mode), 1) : default;
             WalkFacts facts = _walker.Walk(packet.Span, lent.IsEmpty ? default : lent.Narrow);
             if (facts.IsCapped)
@@ -92,7 +99,7 @@ public sealed partial class VorbisParser
             }
 
             long leading = _hasAnchor ? StartTrimming(report: false) : 0;
-            long end = _endSeen ? Math.Max(leading, _decoded - _endTrim) : long.MaxValue;
+            long end = _containerEnd >= 0 ? Math.Max(leading, _decoded - _containerEnd) : _endSeen ? Math.Max(leading, _decoded - _endTrim) : long.MaxValue;
             if (_trim != (leading, end))
             {
                 _trim = (leading, end);

@@ -115,6 +115,64 @@ public class MeasurementWithheldTests
     }
 
     [Fact]
+    public void ARangeTrimmedInsideTheStreamIsLeftOutAndCountedAsInnerTrimmed()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1200, 300);
+        measurer.TrimInner(3000, 100);
+        Write(measurer, 0, 1000);
+        Write(measurer, 1000, 1000);
+        Write(measurer, 2000, 2000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((3600L, 400L, 0L), (m.Samples, m.InnerTrimmedSamples, m.LostSamples));
+        Assert.Equal((0L, 0L, 400L, 0), (m.LeadingTrimmedSamples, m.TrailingTrimmedSamples, m.TrimmedSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void ATrimmedRangeBeforeTheFirstSampleIsLeadingAndOneAfterTheLastIsTrailing()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(0, 100);
+        measurer.TrimInner(900, 100);
+        Write(measurer, 0, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((800L, 100L, 100L, 0L), (m.Samples, m.LeadingTrimmedSamples, m.TrailingTrimmedSamples, m.InnerTrimmedSamples));
+        Assert.Equal(100L, m.FirstPosition);
+    }
+
+    [Fact]
+    public void APositionTrimmedInsideTheStreamThatTheDecoderWithheldStaysWithheld()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1000, 500);
+        Write(measurer, 0, 1000);
+        measurer.Withhold(1000, 500, WithholdReason.AfterGap);
+        Write(measurer, 1500, 500);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1500L, 500L, 0L), (m.Samples, m.WithheldSamples, m.InnerTrimmedSamples));
+    }
+
+    [Fact]
+    public void ARangeTrimmedInsideTheStreamDoesNotChangeWhatTheMeasuredStretchesHold()
+    {
+        StreamMeasurer split = Measurer();
+        split.TrimInner(1000, 1000);
+        Write(split, 0, 3000);
+        StreamMeasurer pieces = Measurer();
+        Write(pieces, 0, 1000);
+        Write(pieces, 2000, 1000);
+        StreamMeasurements a = split.Result(MeasurementStatus.Complete, null);
+        StreamMeasurements b = pieces.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2000L, 1000L), (a.Samples, a.InnerTrimmedSamples));
+        Assert.Equal(b.Samples, a.Samples);
+        Assert.Equal(b.Levels!.Stream.SamplePeakTenths, a.Levels!.Stream.SamplePeakTenths);
+    }
+
+    [Fact]
     public void ALostBlockInsideTheTrimmedRangeIsStillLost()
     {
         StreamMeasurer measurer = Measurer();

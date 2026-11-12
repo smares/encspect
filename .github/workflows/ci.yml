@@ -967,6 +967,9 @@ jobs:
       - name: Build the PCM dump tool
         run: dotnet build --configuration Release tests/Encspect.PcmDump
 
+      - name: Build the command line tool
+        run: dotnet build --configuration Release src/Encspect.Cli
+
       # The floor 1 table of the decoder equals the Vorbis I specification's (section 10.1).
       - name: Check the generated Vorbis tables
         run: python3 scripts/fixtures/vorbis_tables.py --check
@@ -978,6 +981,10 @@ jobs:
       # The analyzer's decoded samples equal libvorbis's and FFmpeg's within the bounds of docs/development.md ("Vorbis decoding"), fixture by fixture.
       - name: Compare the decoded PCM of the Vorbis fixtures
         run: python3 scripts/fixtures/crosscheck_vorbis_pcm.py
+
+      # The samples the measurements keep (the start and end trimming, Matroska's DiscardPadding, Gap Trimming) equal what FFmpeg writes for the Matroska files and oggdec for the Ogg files.
+      - name: Compare the trimmed sample counts of the Vorbis fixtures
+        run: python3 scripts/fixtures/crosscheck_vorbis_trims.py
 
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID

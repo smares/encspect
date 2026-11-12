@@ -58,7 +58,7 @@ Status: approved by the project lead on 2026-11-02, after three independent revi
 
 - **`samples` is the trimmed stage** where the codec's syntax or normative mapping states a trim, as today:
   - Opus: pre-skip (RFC 7845 sections 4.2 and 5.1) and end trimming (section 4.4);
-  - Vorbis and Speex: the granule positions' start and end trimming;
+  - Vorbis and Speex: the granule positions' start and end trimming (Vorbis also Gap Trimming, and in Matroska the DiscardPadding of the last block, capped at the last packet's samples);
   - Musepack: the delay of 481 and the end of the last frame, capped by the header's count;
   - WMA Professional and Lossless: the frames' trims; Professional follows Microsoft's decoder (below);
   - TrueHD: the samples an end of stream marker drops.
