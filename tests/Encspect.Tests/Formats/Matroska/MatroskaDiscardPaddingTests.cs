@@ -73,14 +73,17 @@ public class MatroskaDiscardPaddingTests
     }
 
     [Fact]
-    public void The_last_padding_wins_and_the_trimming_cannot_exceed_what_the_packets_hold()
+    public void The_last_padding_wins_and_the_trimming_cannot_exceed_what_the_last_block_holds()
     {
         Report last = Opus(Block(0).Concat(Padding(5_000_000)).ToArray(), Block(20), Block(40).Concat(Padding(10_000_000)).ToArray());
         Report huge = Opus(Block(0), Block(20), Block(40).Concat(Padding(9_000_000_000)).ToArray());
 
         Assert.Equal(2568 - 480, Assert.Single(last.Streams).Samples);
-        Assert.Equal(0, Assert.Single(huge.Streams).Samples);
-        Assert.Equal("2568 samples", Named(huge.Root, "End Trimming").Value!.ToString());
+
+        // The padding is per block (RFC 9559, section 5.1.3.5.7): the last block holds one packet of 960 samples, so 9 s is cut to them, with a finding.
+        Assert.Equal(2568 - 960, Assert.Single(huge.Streams).Samples);
+        Assert.Equal("960 samples", Named(huge.Root, "End Trimming").Value!.ToString());
+        Assert.Contains(huge.Findings, f => f.Code == "opus.discard-padding-large");
     }
 
     // The padding of the other codecs is applied by the container to the stream and to the statistics together.

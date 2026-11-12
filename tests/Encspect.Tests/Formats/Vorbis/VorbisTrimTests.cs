@@ -135,9 +135,10 @@ public class VorbisTrimTests
 
     public static TheoryData<string> VorbisFixtures => VorbisDecoderFixtureTests.Names;
 
-    // What the report states for the stream (its Samples: the coded samples less the start, end and Gap Trimming, lost ones included) is what the measurements keep and
-    // skip: measured + lost + withheld. The trims are ranges inside the packets that carry them (block.c), so none of the measurements' counts is left over. Fixtures
-    // where trimmed positions were also lost or withheld would differ by them; none of the Vorbis fixtures does.
+    // What the report states for the stream (its Samples: the coded samples less the start, end and Gap Trimming, cut packets included) is what the measurements keep and
+    // skip: measured + withheld + the lost samples the report counts. The trims are ranges inside the packets that carry them (block.c), so none of the measurements' counts
+    // is left over. Carve-out: missing frames, whose positions the measurer's span counts as lost but a report never contained (FLAC and WavPack frames or block indexes that
+    // jump), are apart from the rule; no Vorbis stream has coded positions that jump, and a cut packet is a counted block, so the sum holds on every fixture.
     [Theory]
     [MemberData(nameof(VorbisFixtures))]
     public void The_measurements_keep_what_the_report_states(string name)
