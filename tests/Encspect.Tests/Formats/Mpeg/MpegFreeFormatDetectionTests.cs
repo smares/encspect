@@ -4,8 +4,8 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// A free-format stream is MPEG audio wherever the parser is asked to read it, with or without a CRC; only the detection score of a chain
-// that data other than MPEG audio could make is low, so that the format owning that data wins.
+// A free-format stream is read as MPEG audio wherever the parser is asked to, with or without a CRC. A chain that data other than MPEG
+// audio could make has a low score and never identifies a file: it is reported as unrecognized, with the weak-candidate finding.
 public class MpegFreeFormatDetectionTests
 {
     private static byte[] Bytes(string directory, string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, directory, name));
@@ -14,8 +14,7 @@ public class MpegFreeFormatDetectionTests
 
     public static TheoryData<string, string, int, string, int> Streams() => new()
     {
-        { "mpeg/layer2", "free-format-48000-unprotected.mp2", 6, "Layer II", 30 },
-        { "mpeg", "mpeg1-layer1-free-format.mp1", 6, "Layer I", 30 },
+        { "mpeg", "mpeg1-layer1-free-format.mp1", 6, "Layer I", 90 },
         { "mpeg/layer2", "free-format-44100-crc-mismatch.mp2", 6, "Layer II", 90 },
         { "mpeg/layer2", "free-format-44100.mp2", 6, "Layer II", 90 },
     };
@@ -55,6 +54,40 @@ public class MpegFreeFormatDetectionTests
 
         byte[] zeroLayer2 = [.. Enumerable.Range(0, 6).SelectMany(_ => new byte[] { 0xFF, 0xFD, 0x04, 0x00 }.Concat(new byte[236]))];
         Assert.Equal(30, Sniff(zeroLayer2));
-        Assert.Equal("MPEG Audio", Analyzer.CreateDefault().Analyze("zero.mp2", new MemoryStream(zeroLayer2)).Root.Value?.ToString());
+    }
+
+    // An unprotected free-format Layer II chain holds nothing but the frames themselves; it is no file's format, and the finding names it.
+    [Fact]
+    public void AWeakChainDoesNotIdentifyTheFileButIsNamedAndReadWhenForced()
+    {
+        byte[] zeroLayer2 = [.. Enumerable.Range(0, 6).SelectMany(_ => new byte[] { 0xFF, 0xFD, 0x04, 0x00 }.Concat(new byte[236]))];
+        foreach (var analyzer in new[] { Analyzer.CreateDefault(), new Analyzer([new MpegAudioParser()]) })
+        {
+            Report report = analyzer.Analyze("zero.mp2", new MemoryStream(zeroLayer2));
+            Assert.Empty(report.Streams);
+            Assert.Null(report.Detection);
+            Assert.NotEqual("MPEG Audio", report.Root.Value?.ToString());
+            Assert.Equal(["format.unrecognized", "format.weak-candidate"], report.Findings.Select(f => f.Code));
+            Finding weak = report.Findings[1];
+            Assert.Equal(Severity.Info, weak.Severity);
+            Assert.Contains("MPEG Audio", weak.Message);
+            Assert.Contains("at 0x0", weak.Message);
+            Assert.Contains("6 frames", weak.Message);
+        }
+
+        Report forced = Analyzer.CreateDefault().Analyze("zero.mp2", new MemoryStream(zeroLayer2), new AnalysisOptions { ForcedFormat = "mpeg" });
+        Assert.Equal("MPEG Audio", forced.Root.Value?.ToString());
+        Assert.Equal(6 * 1152, Assert.Single(forced.Streams).Samples);
+    }
+
+    // Binary data with a header-like word at a fixed distance is not MPEG audio, whatever else claims it.
+    [Fact]
+    public void AWeakChainLosesToAnotherFormatsClaimWithoutDisturbingIt()
+    {
+        byte[] wave = File.ReadAllBytes(Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "wav"), "*.wav").Order(StringComparer.Ordinal).First());
+        byte[] chain = Bytes("mpeg", "free-format-weak-chain.mp3");
+        Report report = Analyzer.CreateDefault().Analyze("both.wav", new MemoryStream([.. wave, .. chain]));
+        Assert.Equal("WAV", report.Root.Value?.ToString());
+        Assert.DoesNotContain(report.Findings, f => f.Code is "format.weak-candidate" or "format.unrecognized");
     }
 }

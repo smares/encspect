@@ -1,0 +1,25 @@
+{
+ "description": "300 bytes of pseudo-random data without 0xFF, then six MPEG-1 Layer III frames with CRC none of which holds its CRC: a protected chain further in than the start of the data with no checksum that holds does not identify the file; the finding names it.",
+ "length": 2807,
+ "crosscheck": false,
+ "regions": [
+  {
+   "name": "Data",
+   "offset": 0,
+   "length": 2807
+  }
+ ],
+ "frames": [],
+ "gaps": [],
+ "streams": [],
+ "findings": [
+  {
+   "code": "format.unrecognized",
+   "contains": "No format parser"
+  },
+  {
+   "code": "format.weak-candidate",
+   "contains": "at 0x12C"
+  }
+ ]
+}

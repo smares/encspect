@@ -27,6 +27,24 @@ public class FormatDetectionTests
     private static Report Analyze(params IFormatParser[] parsers) => new Analyzer(parsers).Analyze("sample.bin", new MemoryStream(new byte[64]));
 
     [Fact]
+    public void AWeakClassNeverIdentifiesAFileAndIsNamedWhereNothingElseMatches()
+    {
+        var weak = new Scripted("weak", new(SniffResult.WeakClass, 0x20, 6, 0, "free format"));
+        Report report = Analyze(weak);
+        Assert.Equal(0, weak.ParseCalls);
+        Assert.Null(report.Root.Value);
+        Assert.Equal(["format.unrecognized", "format.weak-candidate"], report.Findings.Select(f => f.Code));
+        Assert.Contains("weak", report.Findings[1].Message);
+        Assert.Contains("0x20", report.Findings[1].Message);
+        Assert.Contains("6 frames", report.Findings[1].Message);
+        Assert.Contains("(free format)", report.Findings[1].Message);
+
+        Report other = Analyze(weak, new Scripted("other", new(31, 40)));
+        Assert.Equal("other", other.Root.Value);
+        Assert.Empty(other.Findings);
+    }
+
+    [Fact]
     public void TheClassComesFirstThenTheEarlierStart()
     {
         Assert.Equal("high", Analyze(new Scripted("early", new(50, 0, 16, 16)), new Scripted("high", new(60, 40))).Root.Value);

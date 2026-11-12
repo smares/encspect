@@ -857,7 +857,7 @@ public sealed class Analyzer
         List<Finding> findings, List<Failure> failures, IFormatParser? forced, DecodeRun? decoding)
     {
         ByteReader window = sniff.Reader;
-        List<Ranked> ranked = Rank(sniff, failures);
+        List<Ranked> ranked = Rank(sniff, failures, out List<Ranked> weak);
         IFormatParser? parser = forced ?? ranked.FirstOrDefault()?.Parser;
         if (parser is null)
         {
@@ -876,6 +876,15 @@ public sealed class Analyzer
             }
 
             findings.Add(new Finding(Severity.Info, "format.unrecognized", "No format parser recognized this file.", first ?? root));
+            foreach (Ranked candidate in weak)
+            {
+                findings.Add(new Finding(
+                    Severity.Info,
+                    "format.weak-candidate",
+                    $"{candidate.Parser.Name} found a possible chain of {Counts.Of(candidate.Result.Frames, "frame", "frames")} at 0x{candidate.Result.Offset:X}{(candidate.Result.Note is null ? string.Empty : $" ({candidate.Result.Note})")}, which is too weak to take the file for that format: other data can make it, and so can a damaged stream. Forcing the format reads it anyway.",
+                    first ?? root));
+            }
+
             return ([], null);
         }
 
@@ -967,15 +976,16 @@ public sealed class Analyzer
         candidate.Class == best.Class
         || (candidate.Class > SniffResult.WeakClass && (candidate.VerifiedFrames > 0 || candidate.Frames >= AlternativeFrames));
 
-    private IFormatParser? FindParser(SniffContext context, List<Failure> failures) => Rank(context, failures).FirstOrDefault()?.Parser;
+    private IFormatParser? FindParser(SniffContext context, List<Failure> failures) => Rank(context, failures, out _).FirstOrDefault()?.Parser;
 
     // Every format that matches, the winner first and then the others by class, the earlier start of
     // the matched structure, more checksum-verified frames and more consistent frames. The winner is
     // the first of those, unless a candidate of the same class that overlaps it has more verified
     // frames (SniffResult.Best). Candidates that tie on all of it stay in the host's list order, so the
     // sniffs of the parsers are what decides, and the order of the list only breaks a tie the evidence
-    // cannot.
-    private List<Ranked> Rank(SniffContext context, List<Failure> failures)
+    // cannot. A candidate of SniffResult.WeakClass or below never identifies a file: it is left out of
+    // the list and returned in weak, for the finding that names it where nothing else matches.
+    private List<Ranked> Rank(SniffContext context, List<Failure> failures, out List<Ranked> weak)
     {
         ByteReader reader = context.Reader;
         var matches = new List<Ranked>();
@@ -993,6 +1003,8 @@ public sealed class Analyzer
         }
 
         reader.Position = reader.Start;
+        weak = matches.Where(m => m.Result.Class <= SniffResult.WeakClass).ToList();
+        matches.RemoveAll(m => m.Result.Class <= SniffResult.WeakClass);
         List<Ranked> sorted = [.. matches.OrderBy(m => m.Result, Comparer<SniffResult>.Create(SniffResult.CompareByStart)).ThenBy(m => m.Order)];
         if (sorted.Count > 1)
         {

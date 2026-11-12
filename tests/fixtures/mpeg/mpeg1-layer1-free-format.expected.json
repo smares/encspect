@@ -1,5 +1,5 @@
 {
- "description": "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and no CRC, which ISO/IEC 11172-3 allows: recognized as MPEG audio when nothing else claims the file.",
+ "description": "Free-format MPEG-1 Layer I stereo at 48000 Hz with 1000-byte frames and CRC: a Layer I chain of free-format frames identifies the file only when a frame holds the CRC its header and bit allocation give.",
  "length": 6000,
  "crosscheck": "mpg123",
  "regions": [
@@ -29,11 +29,11 @@
     "Statistics/Channel Bit Share/Lowest": "50.0 %",
     "Statistics/Channel Bit Share/Overall": "50.0 %",
     "Statistics/Channel Bit Share/Highest": "50.0 %",
-    "Statistics/Ancillary Data": "5868 bytes",
-    "Statistics/Ancillary Data/Share": "97.8 %",
-    "Statistics/Ancillary Data/Data Rate": "978.0 kbps",
-    "Statistics/Ancillary Data/Smallest Nonzero Amount": "978 bytes",
-    "Statistics/Ancillary Data/Largest Amount": "978 bytes",
+    "Statistics/Ancillary Data": "5856 bytes",
+    "Statistics/Ancillary Data/Share": "97.6 %",
+    "Statistics/Ancillary Data/Data Rate": "976.0 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "976 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "976 bytes",
     "Statistics/UsesPadding": "false"
    }
   }
@@ -49,8 +49,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   },
   {
@@ -63,8 +65,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   },
   {
@@ -77,8 +81,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   },
   {
@@ -91,8 +97,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   },
   {
@@ -105,8 +113,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   },
   {
@@ -119,8 +129,10 @@
     "Header/Sample Rate": "48000 Hz",
     "Header/Channel Mode": "Joint stereo",
     "Header/HasPadding": "false",
-    "Header/IsProtected": "false",
-    "Header/Mode Extension": "Bands 4 to 31"
+    "Header/IsProtected": "true",
+    "Header/Mode Extension": "Bands 4 to 31",
+    "CRC": "0x5B23",
+    "CRC/Computed": "0x5B23"
    }
   }
  ],

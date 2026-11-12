@@ -229,7 +229,7 @@ Format detection:
   Also matches: MPEG Audio (class 90, starting at 0x0, 16 consistent units, 0 checksum-verified)
 ```
 
-Findings: `format.forced` (info) for a forced analysis, and `format.ambiguous` (info) when two formats match with exactly the same evidence, in which case the one the host lists first is taken.
+Findings: `format.forced` (info) for a forced analysis, and `format.ambiguous` (info) when two formats match with exactly the same evidence, in which case the one the host lists first is taken. An unrecognized file may carry `format.weak-candidate` (info): a format's sniff found a chain it distrusts, which is too little to take the file for that format, and the finding names its offset and frame count.
 
 ## JSON reports
 

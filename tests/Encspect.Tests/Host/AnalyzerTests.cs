@@ -164,7 +164,7 @@ public class AnalyzerTests
     public void SniffExceptionBecomesParseFailedAndNoMatch()
     {
         var buggy = new FakeParser("buggy", _ => throw new NullReferenceException("bug"));
-        var other = new FakeParser("other", _ => 10);
+        var other = new FakeParser("other", _ => 50);
 
         Report report = new Analyzer([buggy, other]).Analyze("sample.bin", CreateStream(8));
 
