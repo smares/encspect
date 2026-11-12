@@ -530,6 +530,27 @@
                           "length": 22670
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Usage",
+                      "value": 104,
+                      "unit": "CELT frames",
+                      "offset": 271,
+                      "length": 22670,
+                      "children": [
+                        {
+                          "name": "Long Blocks",
+                          "value": "92 frames (88.5%)",
+                          "offset": 271,
+                          "length": 22670
+                        },
+                        {
+                          "name": "Short Blocks",
+                          "value": "12 frames (11.5%)",
+                          "offset": 271,
+                          "length": 22670
+                        }
+                      ]
                     }
                   ]
                 },
@@ -7520,6 +7541,53 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long Blocks",
+                "count": 92
+              },
+              {
+                "name": "Short Blocks",
+                "count": 12
+              }
+            ],
+            "total": 104,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                4,
+                26
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                44
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                48
+              ],
+              [
+                1,
+                4
+              ]
             ]
           }
         ]

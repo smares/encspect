@@ -2307,6 +2307,27 @@
                           "length": 1082
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Usage",
+                      "value": 22,
+                      "unit": "CELT frames",
+                      "offset": 157,
+                      "length": 1082,
+                      "children": [
+                        {
+                          "name": "Long Blocks",
+                          "value": "20 frames (90.9%)",
+                          "offset": 157,
+                          "length": 1082
+                        },
+                        {
+                          "name": "Short Blocks",
+                          "value": "2 frames (9.1%)",
+                          "offset": 157,
+                          "length": 1082
+                        }
+                      ]
                     }
                   ]
                 },
@@ -3601,6 +3622,61 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long Blocks",
+                "count": 20
+              },
+              {
+                "name": "Short Blocks",
+                "count": 2
+              }
+            ],
+            "total": 22,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                20
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                6
+              ]
             ]
           }
         ]

@@ -454,6 +454,27 @@
                           "length": 1360
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Usage",
+                      "value": 60,
+                      "unit": "CELT frames",
+                      "offset": 181,
+                      "length": 1360,
+                      "children": [
+                        {
+                          "name": "Long Blocks",
+                          "value": "60 frames (100.0%)",
+                          "offset": 181,
+                          "length": 1360
+                        },
+                        {
+                          "name": "Short Blocks",
+                          "value": "0 frames (0.0%)",
+                          "offset": 181,
+                          "length": 1360
+                        }
+                      ]
                     }
                   ]
                 },
@@ -4463,6 +4484,37 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long Blocks",
+                "count": 60
+              },
+              {
+                "name": "Short Blocks",
+                "count": 0
+              }
+            ],
+            "total": 60,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                3,
+                20
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                60
+              ]
             ]
           }
         ]

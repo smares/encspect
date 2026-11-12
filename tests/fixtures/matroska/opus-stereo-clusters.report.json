@@ -1388,6 +1388,75 @@
                           "length": 527
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Usage",
+                      "value": 11,
+                      "unit": "CELT frames",
+                      "offset": 200,
+                      "length": 527,
+                      "children": [
+                        {
+                          "name": "Long Blocks",
+                          "value": "10 frames (90.9%)",
+                          "offset": 200,
+                          "length": 527
+                        },
+                        {
+                          "name": "Short Blocks",
+                          "value": "1 frame (9.1%)",
+                          "offset": 200,
+                          "length": 527
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Stereo Coding",
+                      "value": 21,
+                      "unit": "stereo codings",
+                      "offset": 200,
+                      "length": 527,
+                      "children": [
+                        {
+                          "name": "Mid/Side Stereo",
+                          "value": "5 frames (45.5%)",
+                          "offset": 200,
+                          "length": 527
+                        },
+                        {
+                          "name": "Dual Stereo",
+                          "value": "5 frames (45.5%)",
+                          "offset": 200,
+                          "length": 527
+                        },
+                        {
+                          "name": "Intensity Stereo",
+                          "value": "11 frames (100.0%)",
+                          "offset": 200,
+                          "length": 527
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Intensity Stereo Bound",
+                      "offset": 200,
+                      "length": 527,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 200,
+                          "length": 527
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 2400,
+                          "unit": "Hz",
+                          "offset": 200,
+                          "length": 527
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2017,6 +2086,39 @@
             ]
           },
           {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              200,
+              246,
+              293,
+              341,
+              396,
+              442,
+              489,
+              537,
+              592,
+              638,
+              685
+            ],
+            "values": [
+              0,
+              2400,
+              200,
+              800,
+              800,
+              600,
+              200,
+              1200,
+              1000,
+              600,
+              400
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -2060,6 +2162,162 @@
             ],
             "values": [
               20000
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long Blocks",
+                "count": 10
+              },
+              {
+                "name": "Short Blocks",
+                "count": 1
+              }
+            ],
+            "total": 11,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                11
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                6
+              ]
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Mid/Side Stereo",
+                "count": 5
+              },
+              {
+                "name": "Dual Stereo",
+                "count": 5
+              },
+              {
+                "name": "Intensity Stereo",
+                "count": 11
+              }
+            ],
+            "total": 21,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ]
             ]
           }
         ]
