@@ -49,8 +49,9 @@ internal sealed class Codebook
 
     // Reads one codebook (section 3.2.1) at the bits' position, or returns null where libvorbis refuses it: the sync pattern, a book of more than 24 bits
     // of ilog(dimensions) + ilog(entries), codeword lengths that are not a complete prefix code, a lookup type other than 0 to 2, or the end of the packet.
-    public static Codebook? Read(ref PacketBits bits, long entryBudget, CancellationToken cancellationToken)
+    public static Codebook? Read(ref PacketBits bits, long entryBudget, CancellationToken cancellationToken, out bool exceedsBudget)
     {
+        exceedsBudget = false;
         if (bits.Read(24) != 0x564342)
         {
             return null;
@@ -58,8 +59,14 @@ internal sealed class Codebook
 
         long dimensions = bits.Read(16);
         long entries = bits.Read(24);
-        if (dimensions < 0 || entries < 0 || ILog(dimensions) + ILog(entries) > 24 || entries > entryBudget)
+        if (dimensions < 0 || entries < 0 || ILog(dimensions) + ILog(entries) > 24)
         {
+            return null;
+        }
+
+        if (entries > entryBudget)
+        {
+            exceedsBudget = true;
             return null;
         }
 

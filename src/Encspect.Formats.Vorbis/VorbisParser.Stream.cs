@@ -485,13 +485,19 @@ public sealed partial class VorbisParser
             }
 
             // A setup libvorbis refuses (a warning of the walk) is not decoded; one it accepts gives the walker the packets are read with.
+            bool exceeds = false;
             if (_identificationBytes is not null && _isCommentAccepted && !packet.IsCut && _setup.Problems.All(p => p.Severity != Severity.Warning)
-                && SetupModel.Read(packet.Span, _identification!.Channels, context.CancellationToken) is { } model)
+                && SetupModel.Read(packet.Span, _identification!.Channels, context.CancellationToken, out exceeds) is { } model)
             {
                 _model = model;
                 _walker = new PacketWalker(model, _identification.Blocksize0, _identification.Blocksize1);
                 _setupBytes = packet.Span.ToArray();
                 _setupOffset = packet.FileStart;
+            }
+            else if (exceeds)
+            {
+                _findings.Add(Severity.Info, "vorbis.setup-too-large", _setup.Node, _ =>
+                    "The setup header states more codebook entries than the analyzer takes for its size (4,096 and 64 for each byte of the header, at most 4 Mi in all), which libvorbis accepts; the stream's packets are not walked, so it has no Coded Bandwidth, and its audio is not decoded.");
             }
         }
 

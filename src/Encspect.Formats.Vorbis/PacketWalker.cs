@@ -38,7 +38,7 @@ internal static class LentLayout
 }
 
 // What the walk of a packet found.
-internal readonly record struct WalkFacts(bool IsAudio, int Mode, bool IsLong, bool IsBadMode, int CodedEnd, int Used);
+internal readonly record struct WalkFacts(bool IsAudio, int Mode, bool IsLong, bool IsBadMode, int CodedEnd, int Used, bool IsCapped = false);
 
 internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSize1)
 {
@@ -51,6 +51,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
     // The partition visits one packet may still make: 1,024 and 16 for each bit of the packet. A class word of one bit can name 65,535 partitions and eight passes visit each,
     // so the work a packet costs is bounded by what its bits pay for; a packet that outruns it is read as ended there (libvorbis would go on).
     private long _budget;
+    private bool _isCapped;
 
     // The classifications of the partitions read so far, a row of the residue's decode map for each class word; kept between packets (a walker serves one stream on one thread).
     private int[][] _classRows = [];
@@ -166,6 +167,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
         int channels = setup.Channels;
         bool stores = !dest.IsEmpty;
         _budget = 1024 + (16L * packet.Length * 8);
+        _isCapped = false;
         int count = LentLayout.Floors;
         if (stores)
         {
@@ -269,7 +271,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
             dest[LentLayout.Used] = count;
         }
 
-        return new WalkFacts(true, (int)mode, isLong, false, codedEnd, count);
+        return new WalkFacts(true, (int)mode, isLong, false, codedEnd, count, _isCapped);
     }
 
     // floor1_inverse1: the amplitude of the first two posts, then the other posts by partition, each wrapped around its prediction from the posts before it.
@@ -487,6 +489,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                     _budget -= used.Length;
                     if (_budget < 0)
                     {
+                        _isCapped = true;
                         return coded;
                     }
 
@@ -622,6 +625,7 @@ internal sealed class PacketWalker(SetupModel setup, int blockSize0, int blockSi
                     Visits++;
                     if (--_budget < 0)
                     {
+                        _isCapped = true;
                         return coded;
                     }
 

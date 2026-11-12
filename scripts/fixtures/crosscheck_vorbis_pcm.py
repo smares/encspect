@@ -73,9 +73,10 @@ PENDING = {
 STRESS = ["vorbis-residue-book-without-dimensions.bin", "vorbis-two-mappings-different-muxes.bin"]
 
 # A setup with a floor 0 on one channel. libvorbis's floor 0 gain is not clamped and overflows to infinity near the roots of the envelope, where the analyzer limits the exponent
-# to a float's range: the samples where either side is not finite are set to 0 on both sides, the rest are compared relative to their peak.
+# to a float's range: the the analyzer's samples must all be finite; samples whose magnitude is beyond 1000 on either side, or not finite in libvorbis's output, are set to 0 on both sides (and counted in the output), and the rest are compared within 10^-5 of their peak (at least the fixtures' bounds).
 FLOOR0 = "vorbis-setup-rich.ogg"
 FLOOR0_FILES = 3
+FLOOR0_LIMIT = 1e3
 
 
 RANDOMIZED = ["external-oggenc-q5.ogg", "external-oggenc-mono.ogg", "external-oggenc-51.ogg", "external-ffmpeg-vorbis.ogg", "external-oggenc-q10.ogg", "external-oggenc-q0.ogg"]
@@ -171,6 +172,7 @@ def check_file(args, binary, base, path, kind):
         print(f"FAIL {name}: libvorbis or the analyzer does not decode the stream")
         return 1
     extra = []
+    note = ""
     if kind == "floor0":
         reference_file = base / "check.f32"
         values = array.array("f")
@@ -178,13 +180,22 @@ def check_file(args, binary, base, path, kind):
         analyzer_file = dump / streams[0]["pcm"]
         mine = array.array("f")
         mine.frombytes(analyzer_file.read_bytes())
+        if not all(math.isfinite(x) for x in mine):
+            print(f"FAIL {name}: the analyzer wrote samples that are not finite")
+            return 1
+        excluded = 0
         for i, value in enumerate(values):
-            if not math.isfinite(value) or (i < len(mine) and not math.isfinite(mine[i])):
+            if not math.isfinite(value) or abs(value) > FLOOR0_LIMIT or abs(mine[i]) > FLOOR0_LIMIT:
                 values[i] = 0.0
                 mine[i] = 0.0
+                excluded += 1
+        if excluded > 0.9 * len(values):
+            print(f"FAIL {name}: {excluded} of {len(values)} samples are beyond {FLOOR0_LIMIT:g} or not finite in libvorbis's output, too few to compare")
+            return 1
+        kind = "relative"
+        note = f", {excluded} of {len(values)} samples beyond {FLOOR0_LIMIT:g} or non-finite left out"
         reference_file.write_bytes(values.tobytes())
         analyzer_file.write_bytes(mine.tobytes())
-        kind = "relative"
     if kind == "relative":
         values = array.array("f")
         values.frombytes((base / "check.f32").read_bytes())
@@ -193,7 +204,7 @@ def check_file(args, binary, base, path, kind):
     outcome, found = compare(manifest, (base / "check.f32").read_bytes(), reference[1]["channels"], "libvorbis", extra)
     if outcome is not None and outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]:
         found = found or [f"libvorbis: positions only one side has: {outcome}"]
-    print(("FAIL " if found else "ok   ") + name + ("; " + "; ".join(found) if found else f" ({kind})"))
+    print(("FAIL " if found else "ok   ") + name + ("; " + "; ".join(found) if found else f" ({kind}{note})"))
     return 1 if found else 0
 
 

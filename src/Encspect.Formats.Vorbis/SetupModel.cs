@@ -149,16 +149,14 @@ internal sealed class SetupModel
 
     // Reads the setup header packet (type 5, "vorbis", and the bits) for a stream of that many channels, or returns null where libvorbis refuses it. A
     // setup of more than 4 Mi codebook entries in all is refused too, to bound the memory a stream can ask for (libvorbis accepts up to 8 Mi in each of 256 books).
-    // The models the parser built, by the configuration array it handed the session, so that the decoder opened for that session takes the same model instead of reading the
-    // header again (a configuration is one identification header and one setup packet).
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<byte[], SetupModel> Models = [];
+    // The parser hands the model to its decoder through DecodeSetup.Shared, so that the header is read once per stream. The decoder reads only what BuildTables leaves
+    // alone (lengths, entries, lookups): the parser's walk is the one that builds a codebook's tables, on the same thread.
+    public static SetupModel? Read(ReadOnlySpan<byte> packet, int channels, CancellationToken cancellationToken) => Read(packet, channels, cancellationToken, out _);
 
-    public static void Share(byte[] configuration, SetupModel model) => Models.AddOrUpdate(configuration, model);
-
-    public static SetupModel? SharedFor(byte[] configuration) => Models.TryGetValue(configuration, out SetupModel? model) ? model : null;
-
-    public static SetupModel? Read(ReadOnlySpan<byte> packet, int channels, CancellationToken cancellationToken)
+    // exceedsBudget: the header was refused for stating more codebook entries than its size allows (EntriesPerByte), not because libvorbis refuses it.
+    public static SetupModel? Read(ReadOnlySpan<byte> packet, int channels, CancellationToken cancellationToken, out bool exceedsBudget)
     {
+        exceedsBudget = false;
         if (packet.Length < 8 || packet[0] != 5 || !packet.Slice(1, 6).SequenceEqual("vorbis"u8) || channels < 1)
         {
             return null;
@@ -177,9 +175,10 @@ internal sealed class SetupModel
         for (int i = 0; i < books.Length; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Codebook? book = Codebook.Read(ref bits, budget - entries, cancellationToken);
+            Codebook? book = Codebook.Read(ref bits, budget - entries, cancellationToken, out bool tooLarge);
             if (book is null)
             {
+                exceedsBudget = tooLarge;
                 return null;
             }
 

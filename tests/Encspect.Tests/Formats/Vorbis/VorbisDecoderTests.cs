@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Formats.Vorbis;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Host;
 
@@ -146,6 +147,64 @@ public class VorbisDecoderTests
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.frame-invalid" or "decode.frame-too-large");
         Assert.True(sink.Samples > 0);
+    }
+
+    // The decoder never writes NaN or infinity, though libvorbis's floor 0 gain is not limited and overflows: random packets over the setup that has a floor 0 (a channel of
+    // vorbis-setup-rich.ogg) decode to finite samples for every seed.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    public void Random_packets_over_a_floor_0_setup_decode_to_finite_samples(int seed)
+    {
+        List<byte[]> source = VorbisStreams.Packets("ogg/vorbis-setup-rich.ogg");
+        Identification id = Identification.Read(source[0])!;
+        SetupModel setup = SetupModel.Read(source[2], id.Channels, CancellationToken.None)!;
+        var random = new Random(seed);
+        var packets = new List<byte[]> { source[0], source[1], source[2] };
+        for (int i = 0; i < 120; i++)
+        {
+            int mode = random.Next(setup.ModeIsLong.Length);
+            var bits = new VorbisStreams.Bits().Put(0, 1).Put(mode, setup.ModeBits);
+            if (setup.ModeIsLong[mode])
+            {
+                bits.Put(random.Next(2), 1).Put(random.Next(2), 1);
+            }
+
+            byte[] head = bits.Bytes();
+            byte[] body = new byte[Math.Max(head.Length, random.Next(1, 700))];
+            random.NextBytes(body);
+            int headBits = 1 + setup.ModeBits + (setup.ModeIsLong[mode] ? 2 : 0);
+            for (int b = 0; b < head.Length; b++)
+            {
+                int mask = (1 << Math.Min(8, headBits - (8 * b))) - 1;
+                body[b] = (byte)((body[b] & ~mask) | (head[b] & mask));
+            }
+
+            packets.Add(body);
+        }
+
+        (Report report, VorbisStreams.RecordingSink sink) = VorbisStreams.Decode(VorbisStreams.Ogg(packets, new long[packets.Count - 3]));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed");
+        Assert.True(sink.Samples > 0);
+        Assert.All(sink.Blocks, block => Assert.All(block.Channels, channel => Assert.All(channel, value => Assert.True(float.IsFinite(value)))));
+    }
+
+    // Where the analyzer's own bounds change what is read, the report says so: a packet that outruns its budget, and a setup that states more codebook entries than its size allows.
+    [Fact]
+    public void A_packet_cut_at_the_walk_budget_and_a_setup_past_the_entry_bound_are_reported()
+    {
+        Report capped = Analyzer.CreateDefault().Analyze("capped.ogg", new MemoryStream(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "vorbis-partitions-without-books-255-channels.bin"))));
+        Report large = Analyzer.CreateDefault().Analyze("large.ogg", new MemoryStream(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "vorbis-setup-states-millions-of-entries-chained.bin"))));
+
+        Finding walk = Assert.Single(capped.Findings, f => f.Code == "vorbis.walk-capped");
+        Assert.True(walk.Count > 1 && walk.Path is not null);
+        Assert.Equal(64, large.Findings.Count(f => f.Code == "vorbis.setup-too-large"));
+        Assert.All(large.Findings.Where(f => f.Code == "vorbis.setup-too-large"), f => Assert.NotNull(f.Path));
+        Assert.DoesNotContain(large.Streams, s => s.Verification is not null);
     }
 
     // A packet that names more partitions than its bits can pay for is read as ended where the budget runs out, so its walk costs what its bytes allow.

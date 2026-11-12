@@ -41,6 +41,12 @@ public sealed partial class VorbisParser
             UpdateTrim(session);
             SampleBuffers lent = isDecoding ? session.Lend(_walker.MaxInts(record.Mode), 1) : default;
             WalkFacts facts = _walker.Walk(packet.Span, lent.IsEmpty ? default : lent.Narrow);
+            if (facts.IsCapped)
+            {
+                _findings.Add(Severity.Warning, "vorbis.walk-capped", PacketNode(_records, index), count =>
+                    $"{Count(count, "audio packet names", "audio packets name")} more partitions than {(count == 1 ? "its" : "their")} bits can pay for (a class word of one bit can name 65,535 partitions, and the passes visit each); the analyzer reads {(count == 1 ? "it" : "them")} as ended where its budget of 1,024 visits and 16 for each bit runs out, so {(count == 1 ? "its" : "their")} coded bandwidth and decoded samples may differ from libvorbis's. The first at 0x{packet.FileStart:X}.");
+            }
+
             if (_walker.Visits > 1 << 20)
             {
                 _walker.Visits = 0;
@@ -64,7 +70,6 @@ public sealed partial class VorbisParser
             var configuration = new byte[_identificationBytes!.Length + _setupBytes!.Length];
             _identificationBytes.CopyTo(configuration, 0);
             _setupBytes.CopyTo(configuration, _identificationBytes.Length);
-            SetupModel.Share(configuration, _model!);
             return context.StartDecoding(CodecId, new DecodeSetup
             {
                 Stream = _parent,
@@ -72,6 +77,7 @@ public sealed partial class VorbisParser
                 BitsPerSample = 32,
                 Configuration = new MappedBytes(configuration, _setupOffset),
                 IsLossy = true,
+                Shared = _model,
             });
         }
 

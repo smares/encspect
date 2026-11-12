@@ -157,13 +157,19 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
             // The exponent is limited where a float would overflow (a gain is clamped to the range of its representation).
             double exponent = Math.Clamp(((amplitude / Math.Sqrt(Math.Max(p + q, 1e-300))) - model.AmplitudeOffset) * 0.11512925, -87.0, 87.0);
             float value = (float)DetMath.Exp(exponent);
-            spectrum[index] *= value;
+            spectrum[index] = Limit(spectrum[index] * value);
             while (++index < half && map[index] == k)
             {
-                spectrum[index] *= value;
+                spectrum[index] = Limit(spectrum[index] * value);
             }
         }
     }
+
+    // A coefficient of the spectrum is limited to 1e30, so that the transform's sums (up to 4,096 of them, and the overlap) stay finite: libvorbis's floor 0 gain is not limited, and
+    // its products and sums overflow to infinity and NaN where the envelope peaks, which a decoder here never writes.
+    private const float SpectrumLimit = 1e30f;
+
+    private static float Limit(float value) => float.IsNaN(value) ? 0f : Math.Clamp(value, -SpectrumLimit, SpectrumLimit);
 
     private double[]? _cosines;
     private double[]? _coefficients;
