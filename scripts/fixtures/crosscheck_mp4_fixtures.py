@@ -631,6 +631,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/eld-ld-sbr-13": {"channel layout": "MediaInfo 26.01 names the pair after the front left and right of channel configuration 13 \"Lw Rw\" (File_Aac_Main.cpp, Aac_ChannelLayout: CH_M_L060 and CH_M_R060), and the top, bottom and second LFE channels (CH_U_*, CH_T_000, CH_L_*, CH_LFE2), which mediainfo_tool does not map to speakers; the analyzer takes the pairs as ffmpeg's decoder maps them"},
     "adts/streams-limited": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a new one at each change of the sample rate (64 of them, then the frames are in no stream)"),
     "adts/stream-change": dict.fromkeys(["streams", "access units"], "MediaInfo reports an ADTS file as one stream (File_Aac.cpp), where the analyzer starts a second one where the sample rate changes"),
+    "mp4/opus-dops-version-1-in-mp4": {"streams": ALAC_TRACK},
     "mp4/samples-overlap-chunks": {"streams": ALAC_TRACK},
     "mp4/samples-overlap-fragments": {"streams": ALAC_TRACK},
     "mp4/too-data-type-0": {"encoding tool": "MediaInfo shows a data atom of the implicit type 0 that it does not decode as \"(Binary)\" (File_Mpeg4_Elements.cpp, moov_meta_ilst_xxxx_data: case 0x00, default branch, lines 3849-3851); the analyzer shows the bytes as hexadecimal text"},
@@ -793,7 +794,8 @@ def check_mediainfo(path, tally, check=None):
                           ("1", f"{duration / 1000:.3f}", str(math.floor(bitrate * duration / 8000 + 0.5))) if duration else ("1", None, None))
             continue
         statistics = mi.child(node, "Statistics")
-        units = mi.value(statistics, "Access Units") or mi.value(statistics, "Frames")
+        # An Opus MP4 sample is one packet, which holds the frames of every stream of a multistream file: the packets are the access units, not the frames.
+        units = mi.value(statistics, "Access Units") or (mi.value(statistics, "Packets") if codec == "Opus" else None) or mi.value(statistics, "Frames")
         tally.compare("access units", track.get("Source_FrameCount", track.get("FrameCount")), str(units))
         tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
         if node["name"] == "ADTS":

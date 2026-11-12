@@ -695,7 +695,8 @@ def opus_version():
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
         "streams": [], "units": [], "fields": {},
         "findings": [["mp4.opus-version", "version 1"], ["mp4.codec-not-analyzed", "holds Opus"]],
-        "crosscheck": {"ffprobe": False, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only.", "ffprobe": "FFmpeg refuses an Opus specific box that is not version 0, so it lists no packet."}},
+        "crosscheck": {"ffprobe": False, "mp4box": False, "faad": None, "skip": {"faad": "faad2 reads AAC only.", "ffprobe": "FFmpeg refuses an Opus specific box that is not version 0, so it lists no packet.",
+                                                                              "mp4box": "MP4Box 2.2 cannot read the file (the cross-check job found no box listing for it): the Opus specific box is not version 0, which the encapsulation defines only."}},
     })]
 
 
