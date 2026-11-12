@@ -113,7 +113,7 @@ def samples_of(packet):
 
 
 def default_files():
-    return sorted(p for p in FIXTURES.glob("ogg/*.opus"))
+    return sorted(p for p in [*FIXTURES.glob("ogg/*.opus"), *FIXTURES.glob("fuzz/opus-*.bin")])
 
 
 def ffmpeg_reference(ffmpeg, path):

@@ -982,6 +982,10 @@ jobs:
       - name: Compare the decoded PCM of the Vorbis fixtures
         run: python3 scripts/fixtures/crosscheck_vorbis_pcm.py
 
+      # The stress streams of the Opus decoder equal what the script writes.
+      - name: Check the Opus stress fixtures
+        run: python3 scripts/fixtures/make_opus_stress_fixtures.py --check
+
       # The tables of the Opus decoder equal libopus 1.5.2's.
       - name: Check the generated Opus tables
         run: python3 scripts/fixtures/opus_tables.py --check
