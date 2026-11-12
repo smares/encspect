@@ -48,6 +48,17 @@ EXPLAINED = {
                   "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
                   "mpg123; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
+    "external-lame357w-vbr.mp3": {
+        "ffmpeg": "the references disagree, and the cause is found but not decided (an open item for the lead): at positions 48,596 to 49,710 (frame 42, granule 0, the side channel of this LAME 3.57 -v "
+                  "joint stereo stream) the analyzer equals minimp3 (largest difference 2.4e-7), and FFmpeg 6.1.1, mpg123 1.32.5 and libmad (madplay) equal each other (1e-6), the two groups "
+                  "differing by 0.0084 of full scale, in both channels and only near 22 kHz. The granule has big_values 1 and a count1 region (table A) of 144 quads that ends at line "
+                  "577: after the two big-value lines only 574 lines are left, so its last quad has two lines (574 and 575) inside the spectrum and two outside, and its first two values are "
+                  "both nonzero (the flags of 0xde). minimp3 dequantizes lines 574 and 575 and stops at the second pair (the end of its scalefactor bands); FFmpeg, mpg123 and libmad do not decode "
+                  "a count1 quad that does not fit in 576 lines (lines 574 and 575 stay 0). minimp3 changed to stop before a quad that does not fit equals FFmpeg to 1.1e-6 on this file "
+                  "(an experiment on a copy, not in this repository). The granule's bits fit its part2_3_length (the 144 quads end one bit before it, no overrun), and treating a quad that starts "
+                  "before the limit as decoded changes nothing. Only this granule of the file has nonzero values there (two others end the same way with a quad of zeros). The text of "
+                  "ISO/IEC 11172-3 is not in the repository or its cache; whether it prescribes either reading is not established; the analyzer keeps minimp3, the reference it follows operation by operation"
+    },
     "side-info-mono.mp3": {
         "minimp3": "the private bits of this hand-built mono stream are set, and minimp3 reads them as scfsi bits that its decoder uses; the analyzer reads the side info as the specification lays it out"
     },
@@ -162,6 +173,15 @@ ONLY_IN_MINIMP3 = {
     "lame-truncated-last-frame.mp3": [[8064, 9216]],
     "main-data-before-header-frame.mp3": [[0, 2208]],
     "main-data-in-header-frame.mp3": [[0, 2208]],
+    # LAME 3.20 to 3.70 (Rarewares' Windows builds) end every stream with a frame cut short (the finding mpeg.frame-truncated, which each of these manifests lists):
+    # the analyzer decodes whole frames only, as in truncated-last-frame.mp3, and minimp3 outputs the last frame's 1,152 samples.
+    "external-lame320w-cbr.mp3": [[88704, 89856]],
+    "external-lame320w-vbr.mp3": [[88704, 89856]],
+    "external-lame334w-cbr.mp3": [[88704, 89856]],
+    "external-lame357w-cbr.mp3": [[87552, 88704]],
+    "external-lame357w-vbr.mp3": [[87552, 88704]],
+    "external-lame370w-cbr.mp3": [[88704, 89856]],
+    "external-lame370w-vbr.mp3": [[88704, 89856]],
 }
 
 

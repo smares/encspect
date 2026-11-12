@@ -10,6 +10,9 @@ public sealed partial class MpegAudioParser
 
     private static readonly byte[] LameSignature = "LAME"u8.ToArray();
 
+    // "LAME3.87 (beta 1, Sep 29 2000)", the longest version string seen, is 30 bytes; 3.100 and later write nine.
+    private const int MaxSignatureLength = 36;
+
     // Gogo-no-coda fills the bits no frame uses with "GOGO" over and over; two in a row rule out chance.
     private static readonly byte[] GogoSignature = "GOGOGOGO"u8.ToArray();
 
@@ -687,7 +690,7 @@ public sealed partial class MpegAudioParser
             {
                 // A version at the slice's end is found whole once the next slice follows.
                 Search(final: false);
-                Keep(LameSignature.Length + 20);
+                Keep(MaxSignatureLength + 1); // one byte of margin: at a bit shift the shifted data is a byte shorter
             }
         }
 
@@ -774,7 +777,7 @@ public sealed partial class MpegAudioParser
                 // The version runs to the first byte that is not printable, another "L", or LAME's
                 // alternating fill, 0x55 or 0xAA (as mp3guessenc reads it).
                 int end = start + LameSignature.Length;
-                while (end < shifted.Length && end - start < 20 && shifted[end] is >= 32 and < 127 and not (byte)'L' and not 0x55)
+                while (end < shifted.Length && end - start < MaxSignatureLength && shifted[end] is >= 32 and < 127 and not (byte)'L' and not 0x55)
                 {
                     end++;
                 }

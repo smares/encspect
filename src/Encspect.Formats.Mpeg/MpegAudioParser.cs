@@ -1054,7 +1054,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             findings.Add(Severity.Warning, "mpeg.main-data-begin-exceeds-buffer",
                 Layer3SideInfo.Span("Main Data Begin", offset, info.MainDataBegin.Bit, info.MainDataBegin.Bit + info.MainDataBegin.Length), count =>
-                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} {Counts.Agree(Math.Max(buffer - frameLength, 0), "is", "are")} allowed. LAME has not enforced this limit by default since 3.81, and decoders accept it.");
+                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x{position:X} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} {Counts.Agree(Math.Max(buffer - frameLength, 0), "is", "are")} allowed. Encoders such as LAME exceed it, and decoders accept it.");
         }
     }
 

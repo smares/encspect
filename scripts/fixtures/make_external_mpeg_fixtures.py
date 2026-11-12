@@ -88,11 +88,14 @@ import fhg_tool
 import gogo_tool
 import lame_win_tool
 import helix_tool
+import mctoolame_tool
 import minimp3_tool
 import old_lame_tool
+import philips_mc_tool
 import stream_stats
 import vbr_tags
 import xing_tool
+from conformance_mpeg_audio import guessenc as guessenc_multichannel
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
                                       guessenc_tag_lines)
 
@@ -131,7 +134,7 @@ def write_tone(path, rate, channels, seconds=0.5, signal="tone"):
         for i in range(frames):
             t = i / rate if loop is None else (i / rate) % loop
             for channel in range(channels):
-                frequency = SURROUND_FREQUENCIES[channel] if channels == 6 else 440 if channel == 0 else 660
+                frequency = SURROUND_FREQUENCIES[channel] if channels > 2 else 440 if channel == 0 else 660
                 sample = 12000 * math.sin(2 * math.pi * frequency * i / rate)
                 if signal == "clicks":
                     sample = sample / 20 + (24000 if i % (rate // 20) < 8 else 0)
@@ -357,6 +360,38 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame3903-alt-insane", ".mp3", 44100, 2, ["lame-win-3.90.3", "--quiet", "--alt-preset", "insane"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=320, info_frame=True, signal="music")),
+    # Rarewares' Windows builds of LAME before 3.90, which write no LAME tag: CBR at 128 kbps (nothing in the stream before 3.80), VBR (-v: a Xing header
+    # with the version after the table of contents) and --r3mix.
+    ("external-lame320w-cbr", ".mp3", 44100, 2, ["lame-win-3.20", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame334w-cbr", ".mp3", 44100, 2, ["lame-win-3.34", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame357w-cbr", ".mp3", 44100, 2, ["lame-win-3.57", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame370w-cbr", ".mp3", 44100, 2, ["lame-win-3.70", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame380w-cbr", ".mp3", 44100, 2, ["lame-win-3.80", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame387w-cbr", ".mp3", 44100, 2, ["lame-win-3.87", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame389w-cbr", ".mp3", 44100, 2, ["lame-win-3.89", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-lame320w-vbr", ".mp3", 44100, 2, ["lame-win-3.20", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame357w-vbr", ".mp3", 44100, 2, ["lame-win-3.57", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame370w-vbr", ".mp3", 44100, 2, ["lame-win-3.70", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame380w-vbr", ".mp3", 44100, 2, ["lame-win-3.80", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame384w-vbr", ".mp3", 44100, 2, ["lame-win-3.84", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame389w-vbr", ".mp3", 44100, 2, ["lame-win-3.89", "-v"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame388w-r3mix", ".mp3", 44100, 2, ["lame-win-3.88", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame389w-r3mix", ".mp3", 44100, 2, ["lame-win-3.89", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame391w-alt-extreme", ".mp3", 44100, 2, ["lame-win-3.91", "--quiet", "--alt-preset", "extreme"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame390-r3mix", ".mp3", 44100, 2, ["lame-3.90.1", "--quiet", "--r3mix"],
@@ -399,6 +434,35 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame398b-cbr", ".mp3", 44100, 2, ["lame-3.98b8", "--quiet", "-b", "128"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    # The releases between the betas: 3.95.1 (its tag says "LAME3.95"), 3.96.1 and 3.98.4 ("LAME3.96r", "LAME3.98r") and 3.97.
+    ("external-lame395-cbr", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame395-preset-standard", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame395-abr", ".mp3", 44100, 2, ["lame-3.95.1", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-cbr", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame396-preset-standard", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-abr", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame397-cbr", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame397-preset-standard", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame397-abr", ".mp3", 44100, 2, ["lame-3.97", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-cbr", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-lame3984-preset-standard", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--preset", "standard"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-abr", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--abr", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame396-r3mix", ".mp3", 44100, 2, ["lame-3.96.1", "--quiet", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-lame3984-r3mix", ".mp3", 44100, 2, ["lame-3.98.4", "--quiet", "--r3mix"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame399a-vbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-V", "2"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-lame399a-cbr", ".mp3", 44100, 2, ["lame-3.99a12", "--quiet", "-b", "128"],
@@ -445,6 +509,102 @@ FIXTURES = [
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=256, protected=True, info_frame=False)),
     ("external-twolame-mpeg2-mono", ".mp2", 24000, 1, ["twolame", "--quiet", "-b", "64", "-m", "m"],
      dict(version="2", layer=2, sample_rate=24000, channel_mode="Mono", bitrate=64, info_frame=False)),
+    ("layer2/external-mctoolame-5-1", ".mp2", 44100, 6, ["mctoolame", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-0", ".mp2", 44100, 5, ["mctoolame", "-C", "320"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=False, decoded_channels=5))),
+    ("layer2/external-mctoolame-4-1", ".mp2", 44100, 5, ["mctoolame", "-C", "310", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=True, decoded_channels=5))),
+    ("layer2/external-mctoolame-4-0", ".mp2", 44100, 4, ["mctoolame", "-C", "310"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-mctoolame-2-2", ".mp2", 44100, 4, ["mctoolame", "-C", "220"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="2/2", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-mctoolame-2-1", ".mp2", 44100, 3, ["mctoolame", "-C", "210"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="2/1", has_lfe=False, decoded_channels=3))),
+    ("layer2/external-mctoolame-2-0-lfe", ".mp2", 44100, 3, ["mctoolame", "-C", "200", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="2/0", has_lfe=True, decoded_channels=3))),
+    ("layer2/external-mctoolame-5-1-128", ".mp2", 44100, 6, ["mctoolame", "-L", "-b", "128"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-1-flags", ".mp2", 44100, 6, ["mctoolame", "-L", "-e", "-c", "-o", "-d", "5"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), protected=True, copyright=True, original=True, emphasis="50/15 µs")),
+    ("layer2/external-mctoolame-5-1-matrix", ".mp2", 44100, 6, ["mctoolame", "-L", "-x", "3"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-1-crosstalk", ".mp2", 44100, 6, ["mctoolame", "-L", "-y", "1"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-1-prediction", ".mp2", 44100, 6, ["mctoolame", "-L", "-P"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-1-phantom", ".mp2", 44100, 6, ["mctoolame", "-L", "-w"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2 (phantom center)", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-mctoolame-5-1-music", ".mp2", 44100, 6, ["mctoolame", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
+    ("layer2/external-philips-5-1", ".mp2", 48000, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-44100", ".mp2", 44100, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-32000", ".mp2", 32000, 6, ["pub_enc", "-L", "-b", "192"],
+     dict(version="1", layer=2, sample_rate=32000, channel_mode="Stereo", bitrate=192, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-256", ".mp2", 48000, 6, ["pub_enc", "-L", "-b", "256"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=256, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-0", ".mp2", 48000, 5, ["pub_enc", "-C", "320"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=False, decoded_channels=5))),
+    ("layer2/external-philips-4-1", ".mp2", 48000, 5, ["pub_enc", "-C", "310", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=True, decoded_channels=5))),
+    ("layer2/external-philips-4-0", ".mp2", 48000, 4, ["pub_enc", "-C", "310"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/1", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-philips-2-2", ".mp2", 48000, 4, ["pub_enc", "-C", "220"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/2", has_lfe=False, decoded_channels=4))),
+    ("layer2/external-philips-2-1", ".mp2", 48000, 3, ["pub_enc", "-C", "210"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/1", has_lfe=False, decoded_channels=3))),
+    ("layer2/external-philips-2-0-lfe", ".mp2", 48000, 3, ["pub_enc", "-C", "200", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="2/0", has_lfe=True, decoded_channels=3))),
+    ("layer2/external-philips-5-1-dual", ".mp2", 48000, 6, ["pub_enc", "-L", "-m", "d"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Dual channel", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-flags", ".mp2", 48000, 6, ["pub_enc", "-L", "-e", "-c", "-o", "-d", "5"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), protected=True, copyright=True, original=True, emphasis="50/15 µs")),
+    ("layer2/external-philips-5-1-matrix", ".mp2", 48000, 6, ["pub_enc", "-L", "-x", "3"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-crosstalk", ".mp2", 48000, 6, ["pub_enc", "-L", "-y", "1"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-prediction", ".mp2", 48000, 6, ["pub_enc", "-L", "-P"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-phantom", ".mp2", 48000, 6, ["pub_enc", "-L", "-w"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2 (phantom center)", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-psychoacoustic-3", ".mp2", 48000, 6, ["pub_enc", "-L", "-p", "3"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    ("layer2/external-philips-5-1-music", ".mp2", 48000, 6, ["pub_enc", "-L"],
+     dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
 ]
 
 
@@ -741,6 +901,9 @@ def detected_encoder(command, tag, settings, rows, path):
     if command[0].startswith("lame-"):
         lame = tag.get("lame") if tag else None
         string = guessenc_tag_lines(path).get("Encoder string")
+        if lame is None and tag is not None and tag.get("encoder_string", "").startswith("LAME"):
+            # LAME before 3.90 writes its version after the Xing header's fields, with no LAME tag after it.
+            return {"name": vbr_tags.lame_name(tag["encoder_string"]), "confidence": "Medium"}
         if lame is None:
             return {"name": vbr_tags.lame_name(string), "confidence": "Low"} if string and string.startswith("LAME") else None
         # A version cut off in the tag ("LAME3.90.", "LAME3.99r") stands whole in the padding, where mp3guessenc finds it.
@@ -763,6 +926,8 @@ def detected_encoder(command, tag, settings, rows, path):
                 and ancillary[0] == last_frame_ancillary(path, ffprobe_packets(path))):
             return {"name": "BladeEnc", "confidence": "Low"}
         return None
+    if command[0] in ("mctoolame", "pub_enc"):
+        return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "shineenc":
         return {"name": "Shine", "confidence": "Low"}
     if command[0] == "ffmpeg" and "libshine" in command:
@@ -918,6 +1083,12 @@ def encode(command, source, path, temp):
     if command[0] == "gogo":
         gogo_tool.encode(GOGO_ENCODER[0], command[1:], source, path)
         return
+    if command[0] == "pub_enc":
+        philips_mc_tool.encode(PHILIPS_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "mctoolame":
+        mctoolame_tool.encode(MCTOOLAME_ENCODER[0], command[1:], source, path)
+        return
     if command[0].startswith("lame-win-"):
         lame_win_tool.encode(WIN_LAME[command[0][len("lame-win-"):]], command[1:], source, path)
         return
@@ -948,6 +1119,8 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
               "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
     if channels == 6:
         signal = f"0.5 s of a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
+    elif channels > 2:
+        signal = f"0.5 s of tones of {'/'.join(map(str, SURROUND_FREQUENCIES[:channels]))} Hz, one in each channel"
     manifest = {
         "description": f"{' '.join(command)} on {signal}, {rate} Hz, {channels} channels.",
         "crosscheck": True,
@@ -977,6 +1150,8 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     describe_tag(path, command, manifest)
     manifest["mp3guessenc_stream"] = guessenc_stream(path)
     manifest["mp3guessenc_guess"] = guessenc_guess(path)
+    if settings.get("multichannel"):
+        manifest["mp3guessenc_multichannel"] = guessenc_multichannel(path)
     manifest["enhancement"] = settings.get("enhancement")
     ofl = guessenc_ofl(path)
     if ofl is not None:
@@ -995,6 +1170,8 @@ HELIX_R11_ENCODER = []
 XING_ENCODER = []
 BLADE_ENCODERS = {}
 GOGO_ENCODER = []
+MCTOOLAME_ENCODER = []
+PHILIPS_ENCODER = []
 OLD_LAME = {}
 WIN_LAME = {}
 
@@ -1032,7 +1209,11 @@ def main(names):
             BLADE_ENCODERS[version] = blade_tool.build(version)
     if "gogo" in heads:
         GOGO_ENCODER.append(gogo_tool.fetch())
-    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
+    if "pub_enc" in heads:
+        PHILIPS_ENCODER.append(philips_mc_tool.fetch())
+    if "mctoolame" in heads:
+        MCTOOLAME_ENCODER.append(mctoolame_tool.build())
+    for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.95.1", "3.96.1", "3.97", "3.98.4", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
         if "lame-" + version in heads:
             OLD_LAME[version] = old_lame_tool.build(version)
     for version in lame_win_tool.BUILDS:
@@ -1040,9 +1221,10 @@ def main(names):
             WIN_LAME[version] = lame_win_tool.fetch(version)
     with tempfile.TemporaryDirectory() as temp:
         for name, extension, rate, channels, command, settings in fixtures:
-            source = pathlib.Path(temp) / f"{name}.wav"
+            source = pathlib.Path(temp) / f"{name.replace('/', '-')}.wav"
             write_tone(source, rate, channels, signal=settings.get("signal", "tone"))
             path = OUT / f"{name}{extension}"
+            path.parent.mkdir(parents=True, exist_ok=True)
             encode(command, source, path, temp)
             write_manifest(name, path, rate, channels, command, settings, dumper)
 

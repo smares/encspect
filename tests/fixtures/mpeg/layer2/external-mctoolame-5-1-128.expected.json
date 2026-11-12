@@ -1,0 +1,5322 @@
+{
+ "description": "mctoolame -L -b 128 on 0.5 s of a 5.1 tone of 440/660/550/60/330/880 Hz, 44100 Hz, 6 channels.",
+ "crosscheck": true,
+ "encoder": {
+  "command": [
+   "mctoolame",
+   "-L",
+   "-b",
+   "128"
+  ],
+  "version": "1",
+  "layer": 2,
+  "sample_rate": 44100,
+  "channel_mode": "Stereo",
+  "bitrate": 128,
+  "info_frame": false,
+  "multichannel": {
+   "configuration": "3/2",
+   "has_lfe": true,
+   "decoded_channels": 6
+  }
+ },
+ "ffprobe_packets": [
+  [
+   0,
+   418
+  ],
+  [
+   418,
+   418
+  ],
+  [
+   836,
+   418
+  ],
+  [
+   1254,
+   418
+  ],
+  [
+   1672,
+   418
+  ],
+  [
+   2090,
+   418
+  ],
+  [
+   2508,
+   418
+  ],
+  [
+   2926,
+   418
+  ],
+  [
+   3344,
+   418
+  ],
+  [
+   3762,
+   418
+  ],
+  [
+   4180,
+   418
+  ],
+  [
+   4598,
+   418
+  ],
+  [
+   5016,
+   418
+  ],
+  [
+   5434,
+   418
+  ],
+  [
+   5852,
+   418
+  ],
+  [
+   6270,
+   418
+  ],
+  [
+   6688,
+   418
+  ],
+  [
+   7106,
+   418
+  ],
+  [
+   7524,
+   418
+  ],
+  [
+   7942,
+   418
+  ]
+ ],
+ "findings": [],
+ "minimp3_side_info": [
+  {
+   "offset": 0,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 504,
+   "subbands": [
+    [
+     {
+      "class": 4,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.b1776p-6",
+       "0x1.b1776p-6",
+       "0x1.b1776p-6"
+      ]
+     },
+     {
+      "class": 4,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.111112p-6",
+       "0x1.111112p-6",
+       "0x1.111112p-6"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 3,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.24924ap-7",
+       "0x1.709deep-9",
+       "0x1.709deep-9"
+      ]
+     },
+     {
+      "class": 4,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.b1776p-7",
+       "0x1.b1776p-7",
+       "0x1.b1776p-7"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-9",
+       "0x1.555556p-15",
+       "0x1.555556p-19"
+      ]
+     },
+     {
+      "class": 3,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.709deep-9",
+       "0x1.d06d9ep-16",
+       "0x1.24924ap-20"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 18,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.99999ap-10",
+       "0x1.020826p-18",
+       "0x1.451988p-20"
+      ]
+     },
+     {
+      "class": 18,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.451988p-9",
+       "0x1.99999ap-18",
+       "0x1.020826p-20"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-11",
+       "0x1.555556p-17",
+       "0x1.ae0d96p-20"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-10",
+       "0x1.0eea9cp-16",
+       "0x1.ae0d96p-20"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.0eea9cp-10",
+       "0x1.0eea9cp-19",
+       "0x1.0eea9cp-20"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-10",
+       "0x1.0eea9cp-18",
+       "0x1.555556p-20"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-12",
+       "0x1.ae0d96p-18",
+       "0x1.555556p-20"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-11",
+       "0x1.0eea9cp-17",
+       "0x1.555556p-19"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.555556p-11",
+       "0x1.555556p-19",
+       "0x1.555556p-19"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.0eea9cp-10",
+       "0x1.ae0d96p-19",
+       "0x1.ae0d96p-19"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.ae0d96p-12",
+       "0x1.555556p-19",
+       "0x1.555556p-19"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-11",
+       "0x1.ae0d96p-19",
+       "0x1.ae0d96p-20"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.0eea9cp-12",
+       "0x1.555556p-19",
+       "0x1.555556p-19"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 3,
+      "scalefactors": [
+       "0x1.ae0d96p-12",
+       "0x1.ae0d96p-19",
+       "0x1.ae0d96p-19"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 418,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 836,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 1254,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 1672,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 2090,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 2508,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 2926,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 3344,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 3762,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 4180,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 4598,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 5016,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 5434,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 5852,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 6270,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 6688,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.020408p-9",
+       "0x1.020408p-9",
+       "0x1.020408p-9"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 7106,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 7524,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 208,
+   "subbands": [
+    [
+     {
+      "class": 10,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12",
+       "0x1.96c59cp-12"
+      ]
+     },
+     {
+      "class": 11,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.002004p-13",
+       "0x1.002004p-13",
+       "0x1.002004p-13"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 5,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11",
+       "0x1.4cf1bep-11"
+      ]
+     },
+     {
+      "class": 7,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.99931p-10",
+       "0x1.99931p-10",
+       "0x1.99931p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  },
+  {
+   "offset": 7942,
+   "layer": 2,
+   "bands": 27,
+   "bound": 27,
+   "scale_info_bits": 492,
+   "subbands": [
+    [
+     {
+      "class": 4,
+      "scfsi": 1,
+      "scalefactors": [
+       "0x1.580adep-6",
+       "0x1.580adep-6",
+       "0x1.580adep-24"
+      ]
+     },
+     {
+      "class": 4,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.111112p-6",
+       "0x1.111112p-6",
+       "0x1.111112p-6"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 3,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.709deep-7",
+       "0x1.709deep-7",
+       "0x1.709deep-7"
+      ]
+     },
+     {
+      "class": 3,
+      "scfsi": 1,
+      "scalefactors": [
+       "0x1.d06d9ep-6",
+       "0x1.d06d9ep-6",
+       "0x1.709deep-23"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.ae0d96p-9",
+       "0x1.ae0d96p-9",
+       "0x1.ae0d96p-9"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.ae0d96p-8",
+       "0x1.ae0d96p-8",
+       "0x1.ae0d96p-8"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 18,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.99999ap-13",
+       "0x1.99999ap-10",
+       "0x1.020826p-22"
+      ]
+     },
+     {
+      "class": 18,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.451988p-12",
+       "0x1.451988p-9",
+       "0x1.020826p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.ae0d96p-11",
+       "0x1.ae0d96p-11",
+       "0x1.ae0d96p-11"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 2,
+      "scalefactors": [
+       "0x1.555556p-10",
+       "0x1.555556p-10",
+       "0x1.555556p-10"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.0eea9cp-12",
+       "0x1.ae0d96p-11",
+       "0x1.ae0d96p-22"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-12",
+       "0x1.555556p-10",
+       "0x1.ae0d96p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-13",
+       "0x1.555556p-11",
+       "0x1.ae0d96p-22"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-12",
+       "0x1.0eea9cp-10",
+       "0x1.ae0d96p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-15",
+       "0x1.0eea9cp-11",
+       "0x1.ae0d96p-22"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-14",
+       "0x1.ae0d96p-11",
+       "0x1.ae0d96p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.555556p-14",
+       "0x1.0eea9cp-12",
+       "0x1.ae0d96p-22"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.0eea9cp-13",
+       "0x1.ae0d96p-12",
+       "0x1.ae0d96p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.0eea9cp-14",
+       "0x1.ae0d96p-13",
+       "0x1.ae0d96p-22"
+      ]
+     },
+     {
+      "class": 17,
+      "scfsi": 0,
+      "scalefactors": [
+       "0x1.ae0d96p-14",
+       "0x1.555556p-12",
+       "0x1.ae0d96p-22"
+      ]
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ],
+    [
+     {
+      "class": 0
+     },
+     {
+      "class": 0
+     }
+    ]
+   ]
+  }
+ ],
+ "vbr_header": null,
+ "detected_encoder": null,
+ "mp3guessenc_encoder_string": null,
+ "mp3guessenc_stream": {
+  "histogram": {
+   "128": [
+    20,
+    "100.0"
+   ]
+  },
+  "Length": "0:00:00.522",
+  "Data rate": "128.0 kbps",
+  "Number of frames": "20"
+ },
+ "mp3guessenc_guess": null,
+ "mp3guessenc_multichannel": {
+  "extension": "no",
+  "lfe": "yes",
+  "channels": "3",
+  "ml": "0",
+  "config": "3/2"
+ },
+ "enhancement": null,
+ "statistics": {
+  "Statistics/Channel Modes": "1 mode",
+  "Statistics/Channel Modes/Stereo": "20 frames (100.0%)",
+  "Statistics/Stereo Coding": "20 frames",
+  "Statistics/Stereo Coding/Left/right stereo": "20 frames (100.0%)",
+  "Statistics/Bitrate Distribution/128 kbps/Padded": "20 frames of 418 bytes",
+  "Statistics/Coded Bandwidth/Lowest": "1378 Hz",
+  "Statistics/Coded Bandwidth/Most Common": "1378 Hz",
+  "Statistics/Coded Bandwidth/Highest": "8269 Hz",
+  "Statistics/Channel Bit Share/Lowest": "46.1 %",
+  "Statistics/Channel Bit Share/Overall": "46.5 %",
+  "Statistics/Channel Bit Share/Highest": "50.0 %",
+  "Statistics/Ancillary Data": "4596 bytes",
+  "Statistics/Ancillary Data/Share": "55.0 %",
+  "Statistics/Ancillary Data/Data Rate": "70.4 kbps",
+  "Statistics/Ancillary Data/Smallest Nonzero Amount": "150 bytes",
+  "Statistics/Ancillary Data/Largest Amount": "238 bytes",
+  "Statistics/UsesPadding": "true"
+ }
+}

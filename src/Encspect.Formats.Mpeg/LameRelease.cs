@@ -9,7 +9,7 @@ namespace Encspect.Formats.Mpeg;
 //   otherwise, then the patch level where it fits ("LAME3.98b", "LAME3.99r", "LAME3.91 "). 3.99
 //   alphas wrote "L3.99a12"; "LAME3.100" and later fill the bytes before any marker, and
 //   HydrogenAudio's 3.90.3 wrote "LAME3.90." with its patch level cut off;
-// - the ancillary data, get_lame_short_version after "LAME": "3.94 (beta)", "3.98 (beta 8)",
+// - the ancillary data, get_lame_short_version after "LAME": "3.94 (beta)", "3.87 (beta 1, Sep 29 2000)", "3.98 (beta 8)",
 //   "3.99 (alpha 12)", "3.99.5", "3.100".
 internal sealed partial class LameRelease
 {
@@ -47,7 +47,7 @@ internal sealed partial class LameRelease
     [GeneratedRegex(@"^(?:LAME|L(?=\d))(\d+)\.(\d+)(.*)$")]
     private static partial Regex Version();
 
-    [GeneratedRegex(@"^(?:(?<release>\.(?<patch>\d*)|r(?<patch>\d*))|(?<alpha>a(?<patch>\d*)| \(alpha(?: (?<patch>\d+))?\))|(?<beta>b(?<patch>\d*)| \(beta(?: (?<patch>\d+))?\)))$")]
+    [GeneratedRegex(@"^(?:(?<release>\.(?<patch>\d*)|r(?<patch>\d*))|(?<alpha>a(?<patch>\d*)| \(alpha(?: (?<patch>\d+))?\))|(?<beta>b(?<patch>\d*)| \(beta(?: (?<patch>\d+))?(?:, [A-Z][a-z]{2} [ \d]\d \d{4})?\)))$")]
     private static partial Regex Marker();
 
     public static LameRelease? Parse(string text)

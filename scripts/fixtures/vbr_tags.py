@@ -468,7 +468,7 @@ def lame_release(text):
     major, minor, tail = match.groups()
     if not tail:
         return {"major": major, "minor": minor, "kind": "plain", "patch": None, "full": len(raw) >= 9 and not raw.endswith(" ")}
-    for kind, pattern in [("release", r"\.(\d*)|r(\d*)"), ("alpha", r"a(\d*)| \(alpha(?: (\d+))?\)"), ("beta", r"b(\d*)| \(beta(?: (\d+))?\)")]:
+    for kind, pattern in [("release", r"\.(\d*)|r(\d*)"), ("alpha", r"a(\d*)| \(alpha(?: (\d+))?\)"), ("beta", r"b(\d*)| \(beta(?: (\d+))?(?:, [A-Z][a-z]{2} [ \d]\d \d{4})?\)")]:
         marker = re.fullmatch(pattern, tail)
         if marker:
             digits = next((g for g in marker.groups() if g), "")

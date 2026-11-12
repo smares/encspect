@@ -290,6 +290,18 @@ public class MpegFixtureTests
             audioFrames.Select(f => Fixtures.Resolve(f, "Header/Channel Mode").FirstOrDefault()?.Value?.ToString()).Distinct().Count() > 1,
             report.Findings.Any(f => f.Code == "mpeg.channel-mode-changed"));
 
+        // An encoder-written multichannel stream: the configuration and the LFE flag of the encoder's settings are the ones every frame's multichannel node
+        // reads, and the stream has as many channels as the decoder derived from the ISO software writes.
+        if (encoder.TryGetProperty("multichannel", out JsonElement multichannel))
+        {
+            string configuration = multichannel.GetProperty("configuration").GetString()! + (multichannel.GetProperty("has_lfe").GetBoolean() ? " + LFE" : "");
+            Assert.Equal(multichannel.GetProperty("decoded_channels").GetInt32(), report.Streams.Single().Channels);
+            foreach (Node frame in audioFrames)
+            {
+                Assert.Equal(configuration, frame.Children.Single(c => c.Name == "Multichannel").Value?.ToString());
+            }
+        }
+
         foreach (Node frame in audioFrames)
         {
             foreach ((string path, string value) in expected)

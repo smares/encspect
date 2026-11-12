@@ -19,6 +19,10 @@ version twice, into the LAME tag (libmp3lame/version.c, get_lame_very_short_vers
 padding it drains into ancillary data (get_lame_short_version): "LAME3.98b" and "3.98 (beta)",
 "L3.99a12" and "3.99 (alpha 12)", "LAME3.99r" and "3.99.5".
 
+LAME 3.95.1, 3.96.1, 3.97 and 3.98.4 come from their release tarballs, built with their configure scripts: the releases between the betas above, which
+differ in what the LAME tag says (3.95.1 calls itself "LAME3.95", 3.96.1 and 3.98.4 "LAME3.96r" and "LAME3.98r", with a patch level the nine bytes
+cannot hold) and in the ReplayGain figures, and the last 3.98 release, whose -V presets the later 3.99 releases changed.
+
 LAME 3.101 and 4.0 (July 2026) come from their release tarballs too. 3.101 has no room left for the
 release marker in the tag's nine bytes of version, "LAME3.101"; 4.0 bumped the major version to
 make room and writes "LAME4.0 " and a NUL byte. Both compute the tag's CRCs with a new
@@ -44,10 +48,14 @@ RELEASES = {
     "3.91": "55c54edd5d819699dad68949e6080358a2c6e390a118c0f2b57c09950d63050f",
     "3.92": "303c1e5bffa2f3358629d5022e910cb48e9691d6b8d923ad7d649a41c7df8100",
     "3.93.1": "cc19feb74b7b194667719af438f7cef361acc24f9c3f7c348f12e08d071fa65d",
+    "3.95.1": "4c3f9a4214448fadeb46edf8d4342076817c0b3003ff913927cf71af565f5c28",
+    "3.96.1": "f4f093e371c999a2a079607b74582a8ef5c1c3c9b322e3e997a47c1ea2afe2a5",
+    "3.97": "0a2334a6d11085298a9a3c46d5d310cca012f2e61d6efae90840a76a364dbe17",
+    "3.98.4": "ac3144c76617223a9be4aaa3e28a66b51bcab28141050c3af04cb06836f772c8",
     "3.101": "7578af6eebd578b2bd64e468fac4ae1f03670a7e028166e67f855674b9b6aeac",
     "4.0": "3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb",
 }
-BANNERS = {"3.90.1": "LAME version 3.90 ", "3.91": "LAME version 3.91 ", "3.92": "LAME version 3.92 ", "3.93.1": "LAME version 3.93 ", "3.94b1": "LAME version 3.94 (beta 1",
+BANNERS = {"3.90.1": "LAME version 3.90 ", "3.91": "LAME version 3.91 ", "3.92": "LAME version 3.92 ", "3.93.1": "LAME version 3.93 ", "3.95.1": "LAME version 3.95 ", "3.96.1": "LAME version 3.96.1 ", "3.97": "version 3.97 (", "3.98.4": "version 3.98.4 (", "3.94b1": "LAME version 3.94 (beta 1",
            "3.98b8": "version 3.98 (beta 8,", "3.99a12": "version 3.99 (alpha 12,", "3.99.5": "version 3.99.5 (",
            "3.101": "version 3.101 (", "4.0": "version 4.0 ("}
 
@@ -63,6 +71,9 @@ CFLAGS = "-O2 -w -fcommon -std=gnu89"
 
 # The releases after 3.100, built with their own configure scripts.
 CONFIGURED = ("3.101", "4.0")
+
+# 3.95.1 to 3.98.4, which have configure scripts too and need nothing the machine lacks; 3.95.1 calls itself 3.95.
+CONFIGURED_OLD = ("3.95.1", "3.96.1", "3.97", "3.98.4")
 
 
 def addresses(version):
@@ -135,6 +146,10 @@ def build(version):
         if version in CONFIGURED:
             # Their decoder needs libmpg123, which encoding does not.
             subprocess.run(["./configure", "--disable-shared", "--disable-decoder"], cwd=source, check=True, capture_output=True)
+            subprocess.run(["make", "-j8"], cwd=source, check=True, capture_output=True)
+        elif version in CONFIGURED_OLD:
+            subprocess.run(["./configure", "--disable-shared", "--enable-static", "--disable-gtktest", "--without-vorbis", f"CFLAGS={CFLAGS}"],
+                           cwd=source, check=True, capture_output=True)
             subprocess.run(["make", "-j8"], cwd=source, check=True, capture_output=True)
         else:
             if version == "3.92":
