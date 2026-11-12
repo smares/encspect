@@ -5,6 +5,7 @@ each (their samples are not compared with libopus: it refuses most of their pack
 - opus-random-frames-every-config.bin: for each of the 32 configurations and for mono and stereo, frames of seeded random bytes of 1, 2, 7, 60 and 400 bytes (the range
   coder reads what it finds: most frames end in an overrun, which libopus refuses, or in odd symbols);
 - opus-extreme-frames.bin: frames of 0xFF and of 0x00 bytes of every length from 1 to 20 and of 1,275, in the configurations of each mode (large pulses, gains and spreads);
+- opus-hybrid-redundancy-overrun.bin: see redundancy_overrun;
 - opus-random-frames-51.bin: six channels in mapping family 1 (two coupled and two single streams) of random frames in the self-delimited framing the streams but the last use.
 
     make_opus_stress_fixtures.py [--check]
@@ -65,10 +66,23 @@ def surround():
     return stream(6, packets, family=1, streams=4, coupled=2, mapping=[0, 4, 1, 2, 3, 5])
 
 
+def redundancy_overrun():
+    """Hybrid frames of seeded random bytes, 40 of them, among which one (the 17th) states a redundant frame longer than the data after its SILK part: libopus ignores the
+    redundancy and conceals the CELT part, which the analyzer does not (opus.redundancy-overrun)."""
+    rng = random.Random(30)
+    packets = []
+    for _ in range(40):
+        config = rng.choice([12, 13, 14, 15])
+        length = rng.choice([40, 60, 100, 200])
+        packets.append(bytes([config << 3]) + bytes(rng.getrandbits(8) for _ in range(length)))
+    return stream(1, packets)
+
+
 FILES = {
     "opus-random-frames-every-config.bin": random_frames,
     "opus-extreme-frames.bin": extreme_frames,
     "opus-random-frames-51.bin": surround,
+    "opus-hybrid-redundancy-overrun.bin": redundancy_overrun,
 }
 
 
