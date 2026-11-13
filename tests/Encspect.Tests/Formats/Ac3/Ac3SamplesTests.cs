@@ -20,7 +20,9 @@ public class Ac3SamplesTests
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
         foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec == "AC-3" && s.Verification is not null))
         {
-            Assert.True(info.Measurements is { Status: MeasurementStatus.Complete }, $"{name}: the stream decodes and its measurements are {info.Measurements?.Status.ToString() ?? "missing"}");
+            // A frame the parser counts lost (cut, broken) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
+            MeasurementStatus expected = info.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
+            Assert.True(info.Measurements is { } measured && measured.Status == expected, $"{name}: the stream decodes and its measurements are {info.Measurements?.Status.ToString() ?? "missing"}, not {expected}");
             StreamMeasurements m = info.Measurements!;
             Assert.Equal(0, m.LeadingTrimmedSamples + m.TrailingTrimmedSamples + m.InnerTrimmedSamples);
             Assert.True(info.Samples == m.Samples + m.LostSamples + m.WithheldSamples, $"{name}: the report states {info.Samples}, the measurements keep {m.Samples} + lost {m.LostSamples} + withheld {m.WithheldSamples}");

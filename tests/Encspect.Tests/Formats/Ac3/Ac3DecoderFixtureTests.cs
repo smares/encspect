@@ -34,7 +34,7 @@ public class Ac3DecoderFixtureTests
         }
     }
 
-    private static bool IsMedia(string path) => Path.GetExtension(path) is ".ac3" or ".eac3" or ".ec3" or ".mka" or ".mkv" or ".webm" or ".m4a" or ".mp4" or ".asf" or ".wma" or ".wav";
+    private static bool IsMedia(string path) => Path.GetExtension(path) is ".ac3" or ".eac3" or ".ec3" or ".mka" or ".mkv" or ".webm" or ".m4a" or ".mp4" or ".asf" or ".wma" or ".wav" or ".w64" or ".rf64";
 
     private static bool HasAc3(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec == "AC-3" && s.Verification is not null);
 
@@ -103,6 +103,35 @@ public class Ac3DecoderFixtureTests
         }
 
         Assert.Equal(report.Streams.Sum(s => s.Verification?.DecodedSamples ?? 0), sinks.Sum(s => s.Samples));
+    }
+
+    // The measurements of a few files, which pin what the decoder's samples give the measurer: the channels' loudness weights (5.1 has the LFE left out), the levels and the cutoff.
+    public static TheoryData<string> MeasuredNames => new()
+    {
+        "ac3/external-ffmpeg-5.1-448k.ac3",
+        "ac3/external-ffmpeg-stereo-192k.ac3",
+        "ac3/external-ffmpeg-mono-96k.ac3",
+        "ac3/coding-ac3-dual-mono.ac3",
+        "ac3/ac3-signal-phase-flags.ac3",
+    };
+
+    [Theory]
+    [MemberData(nameof(MeasuredNames))]
+    public void MeasuringAddsWhatTheMeasureGoldenHolds(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options);
+        string actual = Encspect.Tests.Measurement.MeasurementFixtureTests.Golden(report, Path.GetFileNameWithoutExtension(name));
+        string path = Fixtures.MpegCompanion(name, ".measure.json");
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
     [Theory]

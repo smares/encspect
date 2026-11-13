@@ -1171,6 +1171,14 @@ internal sealed partial class FrameSyntax
         {
             Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 11-level mantissa value is above 120 (check 20)");
         }
+
+        // The codes of the 7 and 15 level quantizers that Tables 7.21 and 7.23 have no value for (not among the numbered checks of 7.10.2).
+        if ((_groupFaults & 24) != 0 && !Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, (_groupFaults & 8) != 0
+                ? "a mantissa code of the 7-level quantizer is 7, for which Table 7.21 has no value"
+                : "a mantissa code of the 15-level quantizer is 15, for which Table 7.23 has no value");
+        }
     }
 
     // The bits of a mantissa of each bap, apart from the grouped ones (1, 2 and 4), which take their bits at the first value of a group (7.3, Table 7.18).
@@ -1230,6 +1238,15 @@ internal sealed partial class FrameSyntax
                 }
                 else
                 {
+                    if (pointer == 3)
+                    {
+                        _groupFaults |= _b.Peek(bit, 3) > 6 ? 8 : 0;
+                    }
+                    else if (pointer == 5)
+                    {
+                        _groupFaults |= _b.Peek(bit, 4) > 14 ? 16 : 0;
+                    }
+
                     bit += FixedWidth[pointer];
                 }
             }
@@ -1311,11 +1328,13 @@ internal sealed partial class FrameSyntax
                 _mantissaBit += width;
                 if (pointer == 3)
                 {
+                    _groupFaults |= bits > 6 ? 8 : 0;
                     return Math.Min(bits, 6);
                 }
 
                 if (pointer == 5)
                 {
+                    _groupFaults |= bits > 14 ? 16 : 0;
                     return Math.Min(bits, 14);
                 }
 
