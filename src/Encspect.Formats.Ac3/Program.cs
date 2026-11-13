@@ -28,6 +28,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     public int FirstFrame => firstFrame;
 
+    // The decoder's feed, for an AC-3 program that has one.
+    public DecodeFeed? Feed { get; set; }
+
     public HashSet<Ac3Analysis.Region> Regions { get; } = [];
 
     public StreamFigures Figures { get; } = new(key.SampleRate);

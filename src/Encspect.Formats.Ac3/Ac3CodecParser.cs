@@ -20,7 +20,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
     public void Parse(CodecContext context)
     {
         Node parent = context.Parent;
-        var analysis = new Ac3Analysis(context, RecordMismatch);
+        var analysis = new Ac3Analysis(context, RecordMismatch, parent);
         var region = new Ac3Analysis.Region(0);
         analysis.Regions.Add(region);
         var observed = new Observed();
@@ -111,6 +111,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 }
 
                 analysis.Frames.Add(Ac3Analysis.Frame.Gap(offset, bytes.Length - position));
+                analysis.NoteGap();
                 return;
             }
 

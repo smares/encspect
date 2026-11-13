@@ -89,7 +89,7 @@ public sealed class Ac3Parser : IFormatParser
 
     public void Parse(ParseContext context)
     {
-        var analysis = new Ac3Analysis(context, RecordMismatch);
+        var analysis = new Ac3Analysis(context, RecordMismatch, context.Root);
         var cache = new BlockCache(context.Reader);
         long position = context.Reader.Start;
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))

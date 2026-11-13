@@ -29,6 +29,23 @@ internal sealed partial class FrameSyntax
     private bool _blockDelta;
     private readonly int[] _blockStrategies = new int[4];
 
+    // What the decoder is lent (the block records of docs/design/lossy-decoders.md, "Lending for lossy frames"): set by the analysis for a frame whose session decodes.
+    private IntWriter? _lent;
+    private int _blkswMask;
+    private int _dithMask;
+    private int _phsflg;
+
+    // The coupling coordinates in force per channel and band as sent: exponent, mantissa and master coordinate packed as exp | mant << 4 | master << 8.
+    private readonly int[][] _cplco = [.. Enumerable.Range(0, 5).Select(_ => new int[18])];
+
+    public IntWriter? Lent
+    {
+        get => _lent;
+        set => _lent = value;
+    }
+
+    private bool IsLending => _lent is { IsEnabled: true } && !_b.IsBuildingNodes;
+
     private void Blocks()
     {
         _cplInUse = false;
@@ -52,6 +69,18 @@ internal sealed partial class FrameSyntax
         Array.Clear(_count4);
         Array.Clear(_fixedBits);
         Array.Fill(_deltbae, 2);
+        _phsflg = 0;
+        foreach (int[] bands in _cplco)
+        {
+            Array.Clear(bands);
+        }
+
+        if (IsLending)
+        {
+            _lent!.Add(_acmod);
+            _lent.Add(_lfeon ? 1 : 0);
+            _lent.Add(_blocks);
+        }
 
         // A block may keep the band structure of an earlier block of the frame; bands no block of
         // this frame set start from the defaults, not from the frame read before, so the frame's
@@ -114,20 +143,30 @@ internal sealed partial class FrameSyntax
     {
         // Block switch and dither flags (5.4.3.1, 5.4.3.2).
         bool switched = false;
+        _blkswMask = 0;
         if (!_eac3 || _blkswe)
         {
             for (int ch = 0; ch < _nfchans; ch++)
             {
-                switched |= FC("IsBlockSwitched", ch, 1, Explain.Blksw, BooleanValue, Topics.AudioBlocks) != 0;
+                if (FC("IsBlockSwitched", ch, 1, Explain.Blksw, BooleanValue, Topics.AudioBlocks) != 0)
+                {
+                    switched = true;
+                    _blkswMask |= 1 << ch;
+                }
             }
         }
 
         _blockSwitched = switched;
+        _dithMask = (1 << _nfchans) - 1;
         if (!_eac3 || _dithflage)
         {
+            _dithMask = 0;
             for (int ch = 0; ch < _nfchans; ch++)
             {
-                FC("IsDithered", ch, 1, Explain.Dithflag, BooleanValue);
+                if (FC("IsDithered", ch, 1, Explain.Dithflag, BooleanValue) != 0)
+                {
+                    _dithMask |= 1 << ch;
+                }
             }
         }
 
@@ -562,11 +601,12 @@ internal sealed partial class FrameSyntax
             {
                 any |= ch < 2;
                 OpenChannel("Coupling Coordinates", ch, Explain.CouplingCoordinates, Topics.Coupling);
-                F("Master Coupling Coordinate", 2, Explain.Mstrcplco, v => $"{v} (x 2^-{3 * v})");
+                int master = F("Master Coupling Coordinate", 2, Explain.Mstrcplco, v => $"{v} (x 2^-{3 * v})");
                 for (int band = 0; band < _ncplbnd; band++)
                 {
-                    F("Coupling Coordinate Exponent", 4, Explain.Cplcoexp);
-                    F("Coupling Coordinate Mantissa", 4, Explain.Cplcomant);
+                    int exponent = F("Coupling Coordinate Exponent", 4, Explain.Cplcoexp);
+                    int mantissa = F("Coupling Coordinate Mantissa", 4, Explain.Cplcomant);
+                    _cplco[ch][band] = exponent | (mantissa << 4) | (master << 8);
                 }
 
                 Close(NodeValue.Integer(_ncplbnd, "bands", "band"));
@@ -575,7 +615,7 @@ internal sealed partial class FrameSyntax
 
         if (_acmod == 2 && _phsflginu && any)
         {
-            F("Phase Flags", _ncplbnd, Explain.Phsflg, v => BandStructureText(v, _ncplbnd), Topics.Coupling);
+            _phsflg = F("Phase Flags", _ncplbnd, Explain.Phsflg, v => BandStructureText(v, _ncplbnd), Topics.Coupling);
         }
 
         return true;
@@ -1020,10 +1060,208 @@ internal sealed partial class FrameSyntax
             return false;
         }
 
+        if (!_b.IsBuildingNodes)
+        {
+            WriteBlock(start);
+        }
+
         _b.Skip(bits);
         _t?.Field("Mantissas", start, _b.Position, NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.AudioBlocks);
         _r.MantissaBits += bits;
         return true;
+    }
+
+    // The grouped mantissas the block has left: the codes of the group in progress, by quantizer (7.3.5).
+    private int _groupLeft1;
+    private int _groupLeft2;
+    private int _groupLeft4;
+    private readonly int[] _group1 = new int[3];
+    private readonly int[] _group2 = new int[3];
+    private readonly int[] _group4 = new int[2];
+    private int _mantissaBit;
+    private int _groupFaults;
+
+    // The block's record for the decoder, whose layout is, in integers:
+    //   the frame's first block: acmod, lfeon, the number of blocks;
+    //   every block: the block switching flags and the dither flags (a bit per channel), the coupling flag and, with coupling, cplbegf, cplendf, the channels in coupling
+    //   (a bit each), the sub-bands combined with the band below (a bit each, from cplbegf), the phase flags (a bit per band), and for every coupled channel in order its
+    //   coordinates per band (exp | mant << 4 | master << 8); with acmod 2 the number of rematrixing bands and their flags (the first band in the highest bit);
+    //   then, for every full bandwidth channel in order, the coupling channel where coupling is in use and the LFE channel where there is one, the number of bins and per bin
+    //   exp | bap << 5 | code << 9, where the code is the quantizer's index for bap 1 to 5 and the two's complement mantissa for bap 6 to 15 (sign extended).
+    // It also reads the mantissa codes, which is where checks 18 to 20 of 7.10.2 are made.
+    private void WriteBlock(int start)
+    {
+        bool lend = IsLending;
+        IntWriter? w = lend ? _lent : null;
+        if (lend)
+        {
+            w!.Add(_blkswMask);
+            w.Add(_dithMask);
+            w.Add(_cplInUse ? 1 : 0);
+            if (_cplInUse)
+            {
+                int chincpl = 0;
+                for (int ch = 0; ch < _nfchans; ch++)
+                {
+                    chincpl |= _chincpl[ch] ? 1 << ch : 0;
+                }
+
+                int combined = 0;
+                for (int sub = 1; sub < _ncplsubnd; sub++)
+                {
+                    combined |= _cplbndstrcAbsolute[_cplbegf + sub] << sub;
+                }
+
+                w.Add(_cplbegf);
+                w.Add(_cplendf);
+                w.Add(chincpl);
+                w.Add(combined);
+                w.Add(_phsflg);
+                for (int ch = 0; ch < _nfchans; ch++)
+                {
+                    if (_chincpl[ch])
+                    {
+                        for (int band = 0; band < _ncplbnd; band++)
+                        {
+                            w.Add(_cplco[ch][band]);
+                        }
+                    }
+                }
+            }
+
+            if (_acmod == 2)
+            {
+                w.Add(_nrematbd);
+                w.Add(_rematflg);
+            }
+        }
+
+        _mantissaBit = start;
+        _groupLeft1 = _groupLeft2 = _groupLeft4 = 0;
+        _groupFaults = 0;
+        bool gotCoupling = false;
+        for (int ch = 0; ch < _nfchans; ch++)
+        {
+            ReadChannelMantissas(ch, 0, _endMant[ch], w);
+            if (_cplInUse && _chincpl[ch] && !gotCoupling)
+            {
+                ReadChannelMantissas(Cpl, _startMant[Cpl], _endMant[Cpl], w);
+                gotCoupling = true;
+            }
+        }
+
+        if (_lfeon)
+        {
+            ReadChannelMantissas(Lfe, 0, 7, w);
+        }
+
+        if ((_groupFaults & 1) != 0 && !Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 3-level mantissa value is above 26 (check 18)");
+        }
+
+        if ((_groupFaults & 2) != 0 && !Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 5-level mantissa value is above 124 (check 19)");
+        }
+
+        if ((_groupFaults & 4) != 0 && !Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 11-level mantissa value is above 120 (check 20)");
+        }
+    }
+
+    private void ReadChannelMantissas(int ch, int start, int end, IntWriter? w)
+    {
+        if (w is not null)
+        {
+            w.Add(Math.Max(0, end - start));
+        }
+
+        byte[] exp = _exp[ch];
+        byte[] bap = _bap[ch];
+        for (int bin = start; bin < end; bin++)
+        {
+            int pointer = bap[bin];
+            int code = 0;
+            if (pointer != 0)
+            {
+                code = ReadCode(pointer, w is not null);
+            }
+
+            w?.Add(exp[bin] | (pointer << 5) | (code << 9));
+        }
+    }
+
+    // The mantissa code of one bin read at _mantissaBit (7.3.2, 7.3.3, 7.3.5); a code the quantizer does not have is limited to its highest and noted for the checks.
+    private int ReadCode(int pointer, bool wanted)
+    {
+        switch (pointer)
+        {
+            case 1:
+                if (_groupLeft1 == 0)
+                {
+                    int group = _b.Peek(_mantissaBit, 5);
+                    _mantissaBit += 5;
+                    if (group > 26)
+                    {
+                        _groupFaults |= 1;
+                        group = 26;
+                    }
+
+                    (_group1[0], _group1[1], _group1[2]) = (group / 9, group % 9 / 3, group % 3);
+                    _groupLeft1 = 3;
+                }
+
+                return _group1[3 - _groupLeft1--];
+            case 2:
+                if (_groupLeft2 == 0)
+                {
+                    int group = _b.Peek(_mantissaBit, 7);
+                    _mantissaBit += 7;
+                    if (group > 124)
+                    {
+                        _groupFaults |= 2;
+                        group = 124;
+                    }
+
+                    (_group2[0], _group2[1], _group2[2]) = (group / 25, group % 25 / 5, group % 5);
+                    _groupLeft2 = 3;
+                }
+
+                return _group2[3 - _groupLeft2--];
+            case 4:
+                if (_groupLeft4 == 0)
+                {
+                    int group = _b.Peek(_mantissaBit, 7);
+                    _mantissaBit += 7;
+                    if (group > 120)
+                    {
+                        _groupFaults |= 4;
+                        group = 120;
+                    }
+
+                    (_group4[0], _group4[1]) = (group / 11, group % 11);
+                    _groupLeft4 = 2;
+                }
+
+                return _group4[2 - _groupLeft4--];
+            default:
+                int width = pointer switch { 3 => 3, 5 => 4, 14 => 14, 15 => 16, _ => pointer - 1 };
+                int bits = wanted ? _b.Peek(_mantissaBit, width) : 0;
+                _mantissaBit += width;
+                if (pointer == 3)
+                {
+                    return Math.Min(bits, 6);
+                }
+
+                if (pointer == 5)
+                {
+                    return Math.Min(bits, 14);
+                }
+
+                return (bits << (32 - width)) >> (32 - width);
+        }
     }
 
     // Recomputes the bit allocation pointers of the channels whose inputs changed, and counts their

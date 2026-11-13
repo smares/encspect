@@ -200,6 +200,7 @@ internal sealed partial class FrameSyntax
         _blocks = header.Blocks;
         _frameWords = header.FrameSizeWords;
         _r.Reset(_blocks);
+        _lent?.Clear();
         string part = "the bit stream information";
         try
         {
