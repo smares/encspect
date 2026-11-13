@@ -153,7 +153,43 @@ def block_errors(ours, reference, channels, first, count=5):
     return rows[:count]
 
 
-def attempt(dump, raw, channels, work, tag, extra):
+def clicks_source(rate=48000, channels=2):
+    """The signal make_external_ac3_fixtures.py encoded for the block switching file (half a second of quiet tones with clicks of 96 samples), as the 16-bit values it wrote, in full scale."""
+    import math
+    out, seed = [], 12345
+    for i in range(rate // 2):
+        t = i / rate
+        for ch in range(channels):
+            seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+            value = 0.05 * math.sin(2 * math.pi * (440 + 110 * ch) * t) + (0.9 if (i + ch * 3000) % 12000 < 96 else 0)
+            out.append(int(max(-1.0, min(1.0, value)) * 32000) / 32768)
+    return out
+
+
+SOURCES = {"external-aften-stereo-192k-blocksw": clicks_source}
+
+
+def source_errors(ours, reference, channels, blocks, name):
+    """For the blocks that miss, the largest error of the analyzer and of the reference against the signal the encoder was given (the codec's own error at a click is large, so only
+    which of the two is closer says anything): [(block, channel, analyzer error, reference error)]."""
+    if name not in SOURCES:
+        return []
+    source = SOURCES[name]()
+    rows = []
+    for block, worst in blocks:
+        for c in range(channels):
+            a = r = 0.0
+            for n in range(256):
+                k = (block - 1) * 256 + n  # the encoder's delay is one block: the output at position p is the source at p - 256, and the reference starts at 256
+                if k < 0 or (k * channels + c) >= len(source) or ((k + 256) * channels + c) >= len(ours) or (k * channels + c) >= len(reference):
+                    break
+                a = max(a, abs(ours[(k + 256) * channels + c] - source[k * channels + c]))
+                r = max(r, abs(reference[k * channels + c] - source[k * channels + c]))
+            rows.append((block, c, a, r))
+    return rows
+
+
+def attempt(dump, raw, channels, work, tag, extra, name=""):
     """The comparison at the fixed alignment; where it fails the lines also say where the signals are and which blocks and bands miss."""
     sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
     ours = floats((dump.parent / sample["pcm"]).read_bytes())
@@ -169,8 +205,11 @@ def attempt(dump, raw, channels, work, tag, extra):
         for line in correlations(ours, reference, channels, FIRST_POSITION):
             results.append((f"channel correlations (analyzer rows, reference columns) {line}", ["not a comparison"]))
         if "--no-sample-bounds" not in extra:
-            for block, worst in block_errors(ours, reference, channels, FIRST_POSITION):
+            missing = block_errors(ours, reference, channels, FIRST_POSITION)
+            for block, worst in missing:
                 results.append((f"block {block} (a file of 96 blocks repeats): largest errors per channel {' '.join(f'{w:.4g}' for w in worst)}", ["not a comparison"]))
+            for block, c, a, r in source_errors(ours, reference, channels, missing, name):
+                results.append((f"block {block} channel {c} against the encoder's input: analyzer {a:.4f}, Core Audio {r:.4f}", ["not a comparison"]))
         elif result and "bands" in result:
             for number, channel in enumerate(result["bands"]["channels"]):
                 for band in channel["bands"]:
@@ -214,7 +253,7 @@ def check_file(args, path, work):
             lines.append(f"  {variant}: Core Audio does not decode the file: {info}")
             holds = False
             continue
-        label, detail = first_passing(attempt(dump, raw, info["channels"], work, f"ca-{variant}", extra))
+        label, detail = first_passing(attempt(dump, raw, info["channels"], work, f"ca-{variant}", extra, path.stem))
         lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
         if label is None:
             lines += detail
