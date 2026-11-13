@@ -59,6 +59,38 @@ def reorder(raw, channels, order):
     return out.tobytes()
 
 
+# AudioToolbox's kAudioChannelLabel_* values, as the names the analyzer's layouts use (docs/formats/ac3.md, "Channel layout").
+APPLE_LABELS = {1: "front left", 2: "front right", 3: "front center", 4: "LFE", 5: "side left", 6: "side right", 7: "front left of center", 8: "front right of center",
+                9: "back center", 10: "side left direct", 11: "side right direct", 12: "top center", 13: "top front left", 14: "top front center", 15: "top front right",
+                16: "top back left", 17: "top back center", 18: "top back right", 33: "back left", 34: "back right", 35: "front wide left", 36: "front wide right", 37: "LFE2"}
+
+
+def map_reference(raw, info, dump):
+    """Core Audio's channels placed by speaker, where its channel count is not the analyzer's: the reference's channels that the analyzer's stream names, in the analyzer's order,
+    with the lines that print the labels Core Audio gives, and what the channels the analyzer's stream does not have carry. None where a speaker is not found."""
+    names = json.loads(dump.read_text(encoding="utf-8"))["streams"][0].get("channelLayout") or []
+    labels = info.get("labels") or []
+    lines = [f"  Core Audio's channels ({info.get('layoutName') or 'no name'}, tag {info.get('layoutTag')}): " + (", ".join(f"{label} = {APPLE_LABELS.get(label, 'unknown')}" for label in labels) or "no labels"),
+             f"  the analyzer's channels: {', '.join(names) or 'no layout'}"]
+    reference_names = [APPLE_LABELS.get(label, f"label {label}") for label in labels]
+    if not names or len(reference_names) != info["channels"] or any(name not in reference_names for name in names):
+        lines.append("  no mapping by speaker: a speaker of the analyzer's stream is not among Core Audio's labels")
+        return None, lines
+    picks = [reference_names.index(name) for name in names]
+    values = floats(raw)
+    count = info["channels"]
+    reduced = array.array("f")
+    for n in range(len(values) // count):
+        for pick in picks:
+            reduced.append(values[n * count + pick])
+    for j in range(count):
+        if j not in picks:
+            column = values[j::count]
+            rms = (sum(v * v for v in column) / max(1, len(column))) ** 0.5
+            lines.append(f"  Core Audio's {reference_names[j]} (channel {j}) is not in the analyzer's stream: RMS {rms:.3g} of full scale")
+    return reduced.tobytes(), lines
+
+
 def first_passing(attempts):
     """attempts: [(label, problems)] in order. Returns (label of the first with no problems or None, the report lines of all)."""
     lines = []
@@ -227,7 +259,8 @@ def attempt(dump, raw, channels, work, tag, extra, name=""):
             for number, channel in enumerate(result["bands"]["channels"]):
                 for band in channel["bands"]:
                     if band["status"] == "outside":
-                        results.append((f"channel {number} band {band['band']} ({x.BANDS.split(',')[band['band']]} Hz up): {band['differenceDb']} dB over {band['windowFrames']} frames", ["outside"]))
+                        sign = f", reference {band['signedDifferenceDb']:+} dB (analyzer {band['analyzerDb']} dB, Core Audio {band['referenceDb']} dB)" if "signedDifferenceDb" in band else ""
+                        results.append((f"channel {number} band {band['band']} ({x.BANDS.split(',')[band['band']]} Hz up): {band['differenceDb']} dB over {band['windowFrames']} frames{sign}", ["outside"]))
     return results
 
 
@@ -287,12 +320,20 @@ def check_file(args, path, work):
             lines.append(f"  {variant}: Core Audio does not decode the file: {info}")
             holds = False
             continue
+        reference_channels = info["channels"]
         sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
+        if sample["channels"] != reference_channels:
+            mapped, mapping_lines = map_reference(raw, info, dump)
+            lines += mapping_lines
+            if mapped is None:
+                holds = False
+                continue
+            raw, reference_channels = mapped, sample["channels"]
         peak = max((abs(v) for v in floats((dump.parent / sample["pcm"]).read_bytes())), default=0.0)
         if peak > 1.0:
             # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
             lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
-        label, detail = first_passing(attempt(dump, raw, info["channels"], work, f"ca-{variant}", extra, path.stem))
+        label, detail = first_passing(attempt(dump, raw, reference_channels, work, f"ca-{variant}", extra, path.stem))
         lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
         if label is None:
             lines += detail

@@ -306,6 +306,7 @@ def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, toler
                 inconclusive += 1
             else:
                 worst = 0.0
+                signed = analyzer_level = reference_level = None
                 low = False
                 for w in range(windows):
                     lo, hi = w * count // windows, (w + 1) * count // windows
@@ -314,12 +315,19 @@ def compare_bands(analyzer, reference, fmt, positions, rate, frame, edges, toler
                     if ea < floor or er < floor:
                         low = True
                         continue
+                    if abs(ea - er) >= worst:
+                        signed, analyzer_level, reference_level = er - ea, ea, er
                     worst = max(worst, abs(ea - er))
                 if low and worst == 0.0:
                     entry["status"] = "below the floor"
                 else:
                     entry["status"] = "outside" if worst > tolerance else "ok"
                     entry["differenceDb"] = round(worst, 3)
+                    if signed is not None:
+                        # In the window that differs most: the reference's level minus the analyzer's (positive where the reference is louder), and both levels in dB of full scale.
+                        entry["signedDifferenceDb"] = round(signed, 3)
+                        entry["analyzerDb"] = round(analyzer_level, 2)
+                        entry["referenceDb"] = round(reference_level, 2)
                     compared += 1
                     largest = max(largest, worst)
                     outside += worst > tolerance

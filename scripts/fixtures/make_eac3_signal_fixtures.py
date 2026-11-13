@@ -47,7 +47,7 @@ def allocate_hebap(exp, end, snr=SNR):
 
 def d15(rng, end, low, high):
     """The first exponent and the 7-bit groups of a D15 exponent set of bins 0..end-1, exponents wandering between low and high; exp indexed by bin."""
-    previous = rng.randrange(low, high)
+    previous = rng.randrange(low, min(high, 16))  # the first exponent has 4 bits
     first, groups, exp = previous, [], {0: previous}
     bin_ = 1
     for _ in range((end - 1) // 3):
@@ -64,7 +64,7 @@ def d15(rng, end, low, high):
 
 def d45(rng, start, end, low, high, coupling=False):
     """A D45 exponent set of bins start..end-1: the first value and the groups of 4 bins; for the coupling channel the absolute exponent is doubled (A/52 5.4.3.25)."""
-    first = rng.randrange(low // 2 + 1, high // 2) if coupling else rng.randrange(low, high)
+    first = rng.randrange(low // 2 + 1, min(high // 2, 16)) if coupling else rng.randrange(low, min(high, 16))
     previous = first * 2 if coupling else first
     exp, groups = {}, []
     bin_ = start
@@ -155,6 +155,9 @@ def finish(b):
     return m.fix_crc2(b.bytes())
 
 
+AHT_SHIFT, SPX_SHIFT, TRANSIENT_SHIFT, ECPL_SHIFT = 7, 7, 6, 3
+
+
 def aht_frame(seed, mode, csnr=CSNR, narrow=False):
     """One frame; seeds whose exponents give a bin the pointer 4 are skipped, whose vectors FFmpeg 6.1.1 reads from the next row of Table E.3.4 (docs/development.md, "E-AC-3 decoding")."""
     while True:
@@ -192,7 +195,7 @@ def aht_frame_of(seed, mode, csnr, narrow):
                 b.put(w, 6)
             for ch in range(2):
                 end = 37 + 3 * (widths[ch] + 12)
-                first, groups, exp = d15(rng, end, 0, 16)
+                first, groups, exp = d15(rng, end, AHT_SHIFT, 16 + AHT_SHIFT)
                 b.put(first, 4)
                 for g in groups:
                     b.put(g, 7)
@@ -208,7 +211,8 @@ def aht_frame_of(seed, mode, csnr, narrow):
     return finish(b)
 
 
-def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None, transients=None):
+def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None, transients=None, shift=None):
+    shift = SPX_SHIFT if shift is None else shift
     rng = random.Random(seed)
     b = Bits()
     bsi(b, strmtyp, chanmap)
@@ -260,7 +264,7 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
             b.put(0, 1)
         if block == 0:
             for ch in range(2):
-                first, groups, exp = d45(rng, 0, end, 2, 12)
+                first, groups, exp = d45(rng, 0, end, 2 + shift, 12 + shift)
                 b.put(first, 4)
                 for g in groups:
                     b.put(g, 7)
@@ -331,13 +335,13 @@ def ecpl_frame(seed, explicit_structure, new_parameters):
         else:
             b.put(0, 1)
         if block == 0:
-            first, groups, exp = d45(rng, low, high, 4, 14, coupling=True)
+            first, groups, exp = d45(rng, low, high, 4 + ECPL_SHIFT, 14 + ECPL_SHIFT, coupling=True)
             b.put(first, 4)
             for g in groups:
                 b.put(g, 7)
             sets["cpl"] = exp
             for ch in range(2):
-                first, groups, exp = d45(rng, 0, low, 2, 12)
+                first, groups, exp = d45(rng, 0, low, 2 + ECPL_SHIFT, 12 + ECPL_SHIFT)
                 b.put(first, 4)
                 for g in groups:
                     b.put(g, 7)
@@ -366,7 +370,7 @@ FILES = {
     "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
     "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
                                                     for i in range(FRAMES)),
-    "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i)) for i in range(FRAMES)),
+    "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i), shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
 }
