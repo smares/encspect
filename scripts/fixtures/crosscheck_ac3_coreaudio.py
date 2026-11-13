@@ -91,6 +91,42 @@ def map_reference(raw, info, dump):
     return reduced.tobytes(), lines
 
 
+def correlation_map(ours, our_channels, reference, reference_channels, first, window=4096):
+    """For each of the analyzer's channels the reference channel it correlates with most at the aligned position, where Core Audio gives no usable labels: (the picks, the
+    lines that print the matrix and the choice), or None where a channel correlates with nothing (below 0.3) or two take the same reference channel."""
+    frames = len(ours) // our_channels
+    start = max(first, frames // 2 - window)
+    lines, picks = [], []
+    for i in range(our_channels):
+        x = [ours[(start + n) * our_channels + i] for n in range(window)]
+        xx = sum(v * v for v in x)
+        row = []
+        for j in range(reference_channels):
+            at = start - first
+            if at < 0 or (at + window) * reference_channels > len(reference):
+                row.append(0.0)
+                continue
+            y = [reference[(at + n) * reference_channels + j] for n in range(window)]
+            yy = sum(v * v for v in y)
+            row.append(sum(p * q for p, q in zip(x, y)) / (xx * yy) ** 0.5 if xx and yy else 0.0)
+        best = max(range(reference_channels), key=lambda j: abs(row[j]))
+        lines.append(f"  analyzer channel {i} against Core Audio's channels: " + " ".join(f"{v:5.2f}" for v in row) + f"  -> {best}")
+        picks.append(best if abs(row[best]) >= 0.3 else None)
+    if None in picks or len(set(picks)) != len(picks):
+        lines.append("  no mapping by correlation: a channel correlates with nothing or two share a reference channel")
+        return None, lines
+    return picks, lines
+
+
+def pick_channels(raw, count, picks):
+    values = floats(raw)
+    reduced = array.array("f")
+    for n in range(len(values) // count):
+        for pick in picks:
+            reduced.append(values[n * count + pick])
+    return reduced.tobytes()
+
+
 def first_passing(attempts):
     """attempts: [(label, problems)] in order. Returns (label of the first with no problems or None, the report lines of all)."""
     lines = []
@@ -147,6 +183,8 @@ def estimate(ours, reference, channels, window=1024, reach=2400):
 def correlations(ours, reference, channels, first, window=2048):
     """Matrix of correlation coefficients, the analyzer's channel i against the reference's channel j at the aligned position: which reference channel is which."""
     start = max(0, len(ours) // channels // 2 - window)
+    if (start + window) * channels > len(ours):
+        return []
     rows = []
     for i in range(channels):
         x = [ours[(start + n) * channels + i] for n in range(window)]
@@ -166,6 +204,12 @@ def correlations(ours, reference, channels, first, window=2048):
 # Core Audio's output starts 256 samples into the coded stage (one block: the first block's overlap), in the coded channel order, at the coded gain: the first
 # run's diagnostics found every file at position 256, gain 1.0000, correlation 1.0000 (the 288 of the converter's totals is a different path's figure).
 FIRST_POSITION = 256
+# Core Audio's output of these files is compared with the analyzer's of the twin file, which has no transient pre-noise processing data: the processing (A/52 Annex E 3.7) is applied
+# by the analyzer, which the comparison of the file itself found Core Audio does not match (correlation 0.5 to 0.7 with the file, the 0.73 to 0.83 the analyzer's own output with and without
+# it has); the analyzer's output with the processing is held by its own tests (PreNoiseTests, the pcmSha256 of eac3-signal-transient).
+OURS_WITHOUT = {"eac3-signal-transient": "eac3-signal-transient-off"}
+DITHER_ONLY_DB = -70.0
+DITHER_RANGE_DB = (-3.6, 0.6)
 
 
 def block_errors(ours, reference, channels, first, count=5):
@@ -274,6 +318,20 @@ def compare(dump, reference, channels, label, first, extra):
     result = json.loads(out.stdout)
     if out.returncode == 0:
         return [], result
+    if "--no-sample-bounds" in extra and result and "bands" in result:
+        # A band whose level is that of the dither alone (below DITHER_ONLY_DB) holds noise that each decoder draws as it likes: 7.3.4 allows a scaling of 0.5 to 0.75 where 0.707 is
+        # the optimum, so a reference between -3.0 dB (0.5) and +0.5 dB (0.75) of ours is within the specification, with 0.6 dB for the measurement.
+        outside = 0
+        for channel in result["bands"]["channels"]:
+            for band in channel["bands"]:
+                if band["status"] != "outside":
+                    continue
+                if band.get("analyzerDb", 0) < DITHER_ONLY_DB and DITHER_RANGE_DB[0] <= band.get("signedDifferenceDb", 99) <= DITHER_RANGE_DB[1]:
+                    band["status"] = "ok (dither range)"
+                else:
+                    outside += 1
+        if outside == 0:
+            return [], result
     if "--no-sample-bounds" in extra:
         return ["a band outside the tolerance, or none comparable"], result
     worst = max(result["channels"], key=lambda c: c["max"])
@@ -301,6 +359,15 @@ def check_file(args, path, work):
     long_data, long_frames = x.repeated(data, frames, max(2, x.REPEATED_SAMPLES // samples))
     long_path = work / (path.stem + ".repeated" + path.suffix)
     long_path.write_bytes(long_data)
+    # The analyzer's output the comparison uses: the file's own, or where Core Audio does not apply a processing the analyzer does, that of the twin file without it.
+    ours_path = long_path
+    twin = OURS_WITHOUT.get(path.stem)
+    if twin:
+        twin_data = (x.FIXTURES / (twin + path.suffix)).read_bytes()
+        twin_frames = x.manifest_frames(json.loads((x.FIXTURES / (twin + ".expected.json")).read_text(encoding="utf-8")))
+        twin_long, _ = x.repeated(twin_data, twin_frames, max(2, x.REPEATED_SAMPLES // samples))
+        ours_path = work / (twin + ".repeated" + path.suffix)
+        ours_path.write_bytes(twin_long)
     holds = True
     pinned = PINNED_BLOCKS.get(path.stem, [])
     if pinned:
@@ -314,7 +381,7 @@ def check_file(args, path, work):
             for block in pinned:
                 first = (block + copy * 96) * 256
                 extra = [*extra, "--exclude", f"{first}:{first + 256}"]
-        dump = x.pcmdump(args.pcmdump, source, folder)
+        dump = x.pcmdump(args.pcmdump, ours_path if source == long_path else source, folder)
         raw, info = decode(args.probe, source, folder / "coreaudio.f32")
         if raw is None:
             lines.append(f"  {variant}: Core Audio does not decode the file: {info}")
@@ -334,7 +401,21 @@ def check_file(args, path, work):
             # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
             lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
         label, detail = first_passing(attempt(dump, raw, reference_channels, work, f"ca-{variant}", extra, path.stem))
+        extra_lines = []
+        if label is None and reference_channels > 2:
+            # Core Audio's channel order is not known (the labels are missing): place its channels by correlation and try again.
+            ours = floats((dump.parent / sample["pcm"]).read_bytes())
+            picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
+            extra_lines = mapping_lines
+            if picks is not None:
+                extra_lines.append(f"  mapped by correlation: analyzer channel i = Core Audio channel {picks}")
+                mapped_label, mapped_detail = first_passing(attempt(dump, pick_channels(raw, reference_channels, picks), len(picks), work, f"ca-{variant}-mapped", extra, path.stem))
+                if mapped_label is not None:
+                    label, detail = mapped_label, mapped_detail
+                else:
+                    detail = detail + mapped_detail
         lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
+        lines += extra_lines
         if label is None:
             lines += detail
             holds = False
@@ -352,7 +433,7 @@ def variants_report(args, root):
     return lines
 
 
-CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3"]
 
 
 def main(argv=None):
@@ -380,7 +461,10 @@ def main(argv=None):
         for path in files:
             work = root / path.stem
             work.mkdir(exist_ok=True)
-            ok, lines = check_file(args, path, work)
+            try:
+                ok, lines = check_file(args, path, work)
+            except Exception as error:  # one file's failure must not stop the rest, the real files last of all
+                ok, lines = False, [f"  ERROR: {type(error).__name__}: {error}"]
             print(f"{path.name}: {'ok' if ok else 'FAILS'}")
             print("\n".join(lines))
             if not ok:

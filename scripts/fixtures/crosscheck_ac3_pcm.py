@@ -186,7 +186,7 @@ def default_files():
 
 
 # The E-AC-3 files compared with FFmpeg's decoder by the energy of bands (see above).
-EAC3_FILES = ["external-ffmpeg-eac3-mono-48k.eac3", "external-ffmpeg-eac3-stereo-96k.eac3", "external-ffmpeg-eac3-5.1-256k.eac3", "eac3-signal-aht.eac3", "eac3-signal-spx.eac3"]
+EAC3_FILES = ["external-ffmpeg-eac3-mono-48k.eac3", "external-ffmpeg-eac3-stereo-96k.eac3", "external-ffmpeg-eac3-5.1-256k.eac3", "eac3-signal-aht.eac3", "eac3-signal-spx.eac3", "eac3-signal-transient-off.eac3"]
 
 # Hand-built files without noise, compared sample by sample as the AC-3 files are (the dither flags are 0 in them).
 EAC3_STRICT = {"eac3-signal-spx.eac3"}

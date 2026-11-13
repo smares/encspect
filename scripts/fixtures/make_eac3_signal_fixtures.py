@@ -383,6 +383,7 @@ FILES = {
     "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
                                                     for i in range(FRAMES)),
     "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i), shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
+    "eac3-signal-transient-off.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
 }
@@ -399,6 +400,7 @@ DESCRIPTIONS = {
                                   "a program of four channels, which decoders that read dependent substreams give in the order front left, front right, back left, back right (A/52 Annex E 3.8).",
     "eac3-signal-transient.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz like the spectral extension ones, with transient pre-noise processing data for the left channel of every frame and the right channel of every second one, "
                                   "some transients in the next frame (A/52 Annex E 3.7).",
+    "eac3-signal-transient-off.eac3": "The frames of eac3-signal-transient without the transient pre-noise processing data (the same audio otherwise), so that a decoder that applies the processing can be compared with one that does not.",
     "eac3-signal-spx-noise.eac3": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
     "eac3-signal-ecpl.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with enhanced coupling from bin 61 to 133, the default band structure or an explicit one, new amplitudes, angles and chaos "
                              "values in block 3 of some frames, and mantissas in every bin (A/52 Annex E 3.5).",
@@ -419,7 +421,7 @@ def manifest(name, data):
         h = m.header(data, at)
         frames.append([at, h["length"]])
         at += h["length"]
-    decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3")
+    decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3", "eac3-signal-transient-off.eac3")
     if name == "eac3-signal-dependent.eac3":
         independent = [f for f in frames if m.header(data, f[0])["strmtyp"] == 0]
         return {
