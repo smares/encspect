@@ -27,6 +27,7 @@ public class DecoderSessionInvariantTests
         ["Vorbis"] = "vorbis",
         ["Opus"] = "opus",
         ["AC-3"] = "ac-3",
+        ["E-AC-3"] = "e-ac-3",
         ["MPEG-1 Layer I"] = "mpeg-audio",
         ["MPEG-1 Layer II"] = "mpeg-audio",
         ["MPEG-1 Layer III"] = "mpeg-audio",
@@ -54,6 +55,9 @@ public class DecoderSessionInvariantTests
 
     private static readonly Dictionary<string, string> Excluded = new(StringComparer.Ordinal)
     {
+        ["mp4/cenc-eac3.m4a"] = "the samples are encrypted, so the container hands over no E-AC-3 frame",
+        ["mp4/ffmpeg-cenc-eac3.mp4"] = "the samples are encrypted, so the container hands over no E-AC-3 frame",
+        ["ac3/reduced-rate.eac3"] = "E-AC-3 at a reduced sample rate (fscod2) has a bit allocation A/52 does not specify, so it is not decoded",
         ["wav/built-alaw-16-bits.wav"] = CompandedWidth,
         ["wav/built-format-14-bytes-alaw.wav"] = CompandedWidth,
         ["wav/built-block-align-mismatch.wav"] = NotDescribable,

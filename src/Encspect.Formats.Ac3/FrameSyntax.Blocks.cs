@@ -1081,23 +1081,23 @@ internal sealed partial class FrameSyntax
             }
             else
             {
-            int grouped1 = 0;
-            int grouped2 = 0;
-            int grouped4 = 0;
-            long total = 0;
-            for (int ch = 0; ch < Channels; ch++)
-            {
-                if (ch < _nfchans || (ch == Cpl && _cplInUse) || (ch == Lfe && _lfeon))
+                int grouped1 = 0;
+                int grouped2 = 0;
+                int grouped4 = 0;
+                long total = 0;
+                for (int ch = 0; ch < Channels; ch++)
                 {
-                    grouped1 += _count1[ch];
-                    grouped2 += _count2[ch];
-                    grouped4 += _count4[ch];
-                    total += _fixedBits[ch];
+                    if (ch < _nfchans || (ch == Cpl && _cplInUse) || (ch == Lfe && _lfeon))
+                    {
+                        grouped1 += _count1[ch];
+                        grouped2 += _count2[ch];
+                        grouped4 += _count4[ch];
+                        total += _fixedBits[ch];
+                    }
                 }
-            }
 
-            total += ((grouped1 + 2) / 3 * 5) + ((grouped2 + 2) / 3 * 7) + ((grouped4 + 1) / 2 * 7);
-            bits = (int)Math.Min(total, 0xFFFF);
+                total += ((grouped1 + 2) / 3 * 5) + ((grouped2 + 2) / 3 * 7) + ((grouped4 + 1) / 2 * 7);
+                bits = (int)Math.Min(total, 0xFFFF);
             }
         }
 
