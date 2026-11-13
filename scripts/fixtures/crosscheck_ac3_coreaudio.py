@@ -201,6 +201,13 @@ def partial_map(ours, our_channels, reference, reference_channels, first, window
         if best >= 0.3 and best_j not in chosen:
             keep.append(i)
             chosen.append(best_j)
+    if not keep and 0 < reference_channels < our_channels:
+        # Content that is mostly dither (the coding-* files) correlates with nothing, so no channel can be found by correlation. A program with dependent substreams lists the independent
+        # substream's channels first in coded order and the dependents add to them (A/52 Annex E 3.8.2: the channel map names the channels a dependent substream carries), so the first
+        # channels of the analyzer's are the ones Core Audio, which does not decode the dependents, gives.
+        keep = list(range(reference_channels))
+        chosen = list(range(reference_channels))
+        lines = lines + [f"  nothing correlates (dither-dominated content): Core Audio's {reference_channels} channels are taken as the first {reference_channels} of the analyzer's, the independent substream's, in coded order"]
     if not keep or len(keep) == our_channels:
         return None
     left = [i for i in range(our_channels) if i not in keep]

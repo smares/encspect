@@ -8,6 +8,15 @@ import crosscheck_ac3_coreaudio as c  # noqa: E402
 
 
 class ComparisonLogic(unittest.TestCase):
+    def test_partial_map_takes_the_independent_channels_where_nothing_correlates(self):
+        import random
+        rng = random.Random(1)
+        ours = array.array("f", (rng.uniform(-1, 1) for _ in range(4 * 20000)))
+        reference = array.array("f", (rng.uniform(-1, 1) for _ in range(2 * 20000)))
+        keep, chosen, lines = c.partial_map(ours, 4, reference, 2, 0)
+        self.assertEqual((keep, chosen), ([0, 1], [0, 1]))
+        self.assertTrue(any("independent substream" in line for line in lines))
+
     def test_reorder_moves_smpte_5_1_into_the_coded_order(self):
         # frame of reference channels L R C LFE Ls Rs = 0..5; coded order L C R Ls Rs LFE
         raw = array.array("f", [0, 1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15]).tobytes()
