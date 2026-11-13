@@ -19,6 +19,7 @@ Exit status 0 where every file passes, 1 where one fails, 2 for a usage error.
 import argparse
 import array
 import json
+import os
 import math
 import pathlib
 import shlex
@@ -412,6 +413,54 @@ def compare(dump, reference, channels, label, first, extra):
     return [f"largest {worst['max']:.3g}, RMS {worst['rms']:.3g}"], result
 
 
+def dump_with_dither(command, path, folder, scale):
+    """The analyzer's PCM of a file with its dither at scale (the test-only hook of tests/Encspect.PcmDump)."""
+    environment = {**os.environ, "ENCSPECT_DITHER_SCALE": str(scale)}
+    subprocess.run([*shlex.split(command), str(folder), str(path)], check=True, capture_output=True, env=environment)
+    return sorted(folder.glob("*.pcm.json"))[0]
+
+
+def judge(dump, raw, info, work, variant, extra, name):
+    """One comparison of the analyzer's PCM with Core Audio's, by the channel mapping that fits: (the label that passed or None, the lines of the misses, the lines that say how the
+    channels were placed)."""
+    lines = []
+    reference_channels = info["channels"]
+    sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
+    if sample["channels"] != reference_channels:
+        mapped, mapping_lines = map_reference(raw, info, dump)
+        lines += mapping_lines
+        if mapped is not None:
+            raw, reference_channels = mapped, sample["channels"]
+        elif info.get("labels"):
+            common = common_speakers(raw, info, dump)
+            if common is not None:
+                dump, raw, common_lines = common
+                lines += common_lines
+                sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
+                reference_channels = sample["channels"]
+    peak = max((abs(v) for v in floats((dump.parent / sample["pcm"]).read_bytes())), default=0.0)
+    if peak > 1.0:
+        # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
+        lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
+    label, detail = first_passing(attempt(dump, raw, reference_channels, work, f"ca-{variant}", extra, name))
+    if label is None and reference_channels > 2:
+        # Core Audio's channel order is not known (the labels are missing): place its channels by correlation and try again.
+        ours = floats((dump.parent / sample["pcm"]).read_bytes())
+        picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
+        if picks is None and name in DITHER_ONLY_FILES:
+            picks, level_lines = energy_map(ours, sample["channels"], floats(raw), reference_channels)
+            mapping_lines += level_lines
+        lines += mapping_lines
+        if picks is not None:
+            lines.append(f"  mapped by correlation: analyzer channel i = Core Audio channel {picks}")
+            mapped_label, mapped_detail = first_passing(attempt(dump, pick_channels(raw, reference_channels, picks), len(picks), work, f"ca-{variant}-mapped", extra, name))
+            if mapped_label is not None:
+                label, detail = mapped_label, mapped_detail
+            else:
+                detail = detail + mapped_detail
+    return label, detail, lines
+
+
 def check_file(args, path, work):
     data = path.read_bytes()
     manifest_path = x.FIXTURES / (path.stem + ".expected.json")
@@ -473,43 +522,23 @@ def check_file(args, path, work):
                 continue
             holds = False
             continue
-        reference_channels = info["channels"]
-        sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
-        if sample["channels"] != reference_channels:
-            mapped, mapping_lines = map_reference(raw, info, dump)
-            lines += mapping_lines
-            if mapped is not None:
-                raw, reference_channels = mapped, sample["channels"]
-            elif info.get("labels"):
-                common = common_speakers(raw, info, dump)
-                if common is not None:
-                    dump, raw, common_lines = common
-                    lines += common_lines
-                    sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
-                    reference_channels = sample["channels"]
-        peak = max((abs(v) for v in floats((dump.parent / sample["pcm"]).read_bytes())), default=0.0)
-        if peak > 1.0:
-            # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
-            lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
-        label, detail = first_passing(attempt(dump, raw, reference_channels, work, f"ca-{variant}", extra, path.stem))
-        extra_lines = []
-        if label is None and reference_channels > 2:
-            # Core Audio's channel order is not known (the labels are missing): place its channels by correlation and try again.
-            ours = floats((dump.parent / sample["pcm"]).read_bytes())
-            picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
-            if picks is None and path.stem in DITHER_ONLY_FILES:
-                picks, level_lines = energy_map(ours, sample["channels"], floats(raw), reference_channels)
-                mapping_lines += level_lines
-            extra_lines = mapping_lines
-            if picks is not None:
-                extra_lines.append(f"  mapped by correlation: analyzer channel i = Core Audio channel {picks}")
-                mapped_label, mapped_detail = first_passing(attempt(dump, pick_channels(raw, reference_channels, picks), len(picks), work, f"ca-{variant}-mapped", extra, path.stem))
-                if mapped_label is not None:
-                    label, detail = mapped_label, mapped_detail
-                else:
-                    detail = detail + mapped_detail
-        lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
-        lines += extra_lines
+        label, detail, pre = judge(dump, raw, info, work, variant, extra, path.stem)
+        lines += pre
+        status = ""
+        if label is None:
+            # Core Audio's dither may be scaled 0.5, which 7.3.4 allows as well as the optimum 0.707 the analyzer uses: the same comparison against the analyzer's output with its
+            # dither at 0.5 (a test-only hook of the PCM dump, ENCSPECT_DITHER_SCALE) says whether that is all that differs.
+            folder05 = folder / "dither05"
+            folder05.mkdir()
+            dump05 = dump_with_dither(args.pcmdump, ours_path if source == long_path else source, folder05, 0.5)
+            label05, detail05, pre05 = judge(dump05, raw, info, work, variant + "-d05", extra, path.stem)
+            status = f"; with the analyzer's dither at 0.5 (7.3.4, also acceptable): {'ok' if label05 else 'still outside'}"
+            if label05 is not None:
+                label = label05
+                status += " (the file passes only against that output)"
+            else:
+                detail = detail + ["    with the analyzer's dither at 0.5:"] + detail05
+        lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')}){status}")
         if label is None:
             lines += detail
             holds = False
@@ -563,6 +592,20 @@ def split_streams(path, work):
     return paths
 
 
+def save_decodes(args, path, folder):
+    """Core Audio's decode of the file itself (not repeated) and the analyzer's, with the analyzer's at the dither 0.5 as well, kept for analysis off the runner."""
+    folder.mkdir(parents=True, exist_ok=True)
+    raw, info = decode(args.probe, path, folder / "coreaudio.f32")
+    (folder / "coreaudio.json").write_text(json.dumps(info), encoding="utf-8")
+    for tag, scale in (("analyzer", None), ("analyzer-dither05", 0.5)):
+        target = folder / tag
+        target.mkdir(exist_ok=True)
+        if scale is None:
+            x.pcmdump(args.pcmdump, path, target)
+        else:
+            dump_with_dither(args.pcmdump, path, target, scale)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("files", nargs="*", type=pathlib.Path)
@@ -570,6 +613,7 @@ def main(argv=None):
     parser.add_argument("--pcmdump", default=x.DEFAULT_PCMDUMP)
     parser.add_argument("--encspect", default=x.DEFAULT_ENCSPECT)
     parser.add_argument("--keep", type=pathlib.Path)
+    parser.add_argument("--save", type=pathlib.Path, help="a directory: Core Audio's decode (float32) of each E-AC-3 file as it is, the probe's line and the analyzer's PCM with its manifest, for analysis off the runner")
     parser.add_argument("--real-samples", type=pathlib.Path, help="a cache directory: the real E-AC-3 files of tests/conformance/eac3-samples.json are fetched into it and compared as well")
     args = parser.parse_args(argv)
     # The AC-3 files with a liba52 reference and the encoder-written E-AC-3 files, and the hand-built E-AC-3 files that use what FFmpeg does not decode or decodes differently
@@ -588,6 +632,11 @@ def main(argv=None):
         for path in files:
             work = root / path.stem
             work.mkdir(exist_ok=True)
+            if args.save and path.suffix == ".eac3":
+                try:
+                    save_decodes(args, path, args.save / path.stem)
+                except Exception as error:  # the saved files are for looking at, not part of the verdict
+                    print(f"{path.name}: not saved: {type(error).__name__}: {error}")
             try:
                 if path.stem in SEQUENTIAL_STREAMS:
                     ok, lines = True, []

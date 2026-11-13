@@ -203,7 +203,16 @@ jobs:
           dotnet build --configuration Release tests/Encspect.PcmDump
 
       - name: Compare the AC-3 decoder's PCM with Core Audio's
-        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect --real-samples build/eac3-samples
+        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect --real-samples build/eac3-samples --save out-ac3-coreaudio
+
+      # Core Audio's decode of each E-AC-3 file and the analyzer's (at its dither of 0.707 and of 0.5), to look at the spectra of the files that miss off the runner.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ac3-coreaudio-pcm
+          path: out-ac3-coreaudio
+          retention-days: 14
+          if-no-files-found: ignore
 
   windows:
     name: Media Foundation on windows-2025
