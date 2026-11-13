@@ -68,14 +68,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _context.CancellationToken.ThrowIfCancellationRequested();
-        if (frame.FollowsGap || _lostBefore)
-        {
-            _lostBefore = false;
-            Reset();
-            _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
-            _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + BlockSamples);
-        }
-
         var r = new IntReader(lent.Narrow);
         int acmod = r.Next();
         bool lfe = r.Next() != 0;
@@ -83,6 +75,14 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (acmod != _acmod || lfe != _hasLfe || blocks * BlockSamples != frame.Samples)
         {
             throw new InvalidDataException("The frame's configuration differs from the stream's");
+        }
+
+        if (frame.FollowsGap || _lostBefore)
+        {
+            _lostBefore = false;
+            Reset();
+            _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
+            _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + BlockSamples);
         }
 
         int samples = frame.Samples;
@@ -103,7 +103,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             return 0;
         }
 
-        _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 32, SampleFormat.Float32));
+        _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 32, SampleFormat.Float32) { ChannelLayout = Program.LayoutOf(_acmod, _hasLfe) });
         _sink.Write(new PcmBlock(first, count, _channels, _stride, _planar.AsSpan(skip)));
         return count;
     }
@@ -171,9 +171,10 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         bool gotCoupling = false;
+        Span<int> ends = stackalloc int[5];
         for (int ch = 0; ch < _fullChannels; ch++)
         {
-            Channel(ref r, _spectrum[ch], 0, ((dither >> ch) & 1) != 0);
+            ends[ch] = Channel(ref r, _spectrum[ch], 0, ((dither >> ch) & 1) != 0);
             if (coupled && ((chincpl >> ch) & 1) != 0 && !gotCoupling)
             {
                 CouplingChannel(ref r, 37 + (12 * cplbegf));
@@ -188,7 +189,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         if (_acmod == 2 && rematBands > 0)
         {
-            Rematrix(_spectrum[0], _spectrum[1], rematBands, rematFlags, coupled ? cplbegf : -1);
+            Rematrix(_spectrum[0], _spectrum[1], rematBands, rematFlags, coupled ? cplbegf : -1, Math.Min(ends[0], ends[1]));
         }
 
         if (coupled)
@@ -251,7 +252,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // The coefficients of a channel's own bins, dequantized (7.3), with the dither of its zero-bit mantissas where the channel's flag is set.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void Channel(ref IntReader r, float[] spectrum, int start, bool dither)
+    private int Channel(ref IntReader r, float[] spectrum, int start, bool dither)
     {
         int count = r.Next();
         ReadOnlySpan<int> bins = r.Take(count);
@@ -269,6 +270,8 @@ internal sealed class FrameDecoder : IFrameDecoder
                 spectrum[start + i] = Dequantize(packed);
             }
         }
+
+        return count;
     }
 
     // The coupling channel's bins from the first bin it codes: the values of the coded ones, and for each zero-bit one the shift of its exponent, since every coupled channel
@@ -319,7 +322,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // 7.5.4: the bands the flags name hold sum and difference, from the table of the coupling state (Tables 7.25 to 7.28).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Rematrix(float[] left, float[] right, int bands, int flags, int cplbegf)
+    private static void Rematrix(float[] left, float[] right, int bands, int flags, int cplbegf, int limit)
     {
         for (int band = 0; band < bands; band++)
         {
@@ -330,7 +333,8 @@ internal sealed class FrameDecoder : IFrameDecoder
 
             int low = band switch { 0 => 13, 1 => 25, 2 => 37, _ => 61 };
             int high = band switch { 0 => 24, 1 => 36, 2 => cplbegf is 1 or 2 ? 36 + (cplbegf * 12) : 60, _ => cplbegf > 2 ? 36 + (cplbegf * 12) : 252 };
-            for (int bin = low; bin <= high; bin++)
+            // Without coupling the channels may have different bandwidths, and rematrixing is only applied up to the lower one (A/52 7.5.4).
+            for (int bin = low; bin <= Math.Min(high, limit - 1); bin++)
             {
                 float l = left[bin];
                 float rr = right[bin];

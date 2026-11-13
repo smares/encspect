@@ -49,6 +49,10 @@ internal sealed class Ac3Analysis
         _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)), Lent = _writer };
     }
 
+    // Makes the node of a region that has none when its stream starts a session: the session's stream node must be the one StreamInfo.Nodes names first, or the host
+    // finds no measurements for the stream (a container's region node is otherwise made after its frames are read).
+    public Func<SyncFrame, Node>? RegionNodeFactory { get; set; }
+
     public ChunkedList<Frame> Frames { get; } = new();
 
     public ByteStore Store { get; } = new();
@@ -205,6 +209,7 @@ internal sealed class Ac3Analysis
         }
         else if (_programs.Count < MaxStreams && header.Bsid <= 8)
         {
+            region.Node ??= RegionNodeFactory?.Invoke(header);
             feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset);
         }
         else

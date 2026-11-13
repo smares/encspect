@@ -1,0 +1,81 @@
+{
+ "description": "Twelve 2/0 frames at 48 kHz with coupling, phase flags in use in two coupling ranges and not in use in a third (phsflginu 0 after a block that had flags), mantissas in every bin (A/52 7.4.1).",
+ "length": 27648,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   2304
+  ],
+  [
+   2304,
+   2304
+  ],
+  [
+   4608,
+   2304
+  ],
+  [
+   6912,
+   2304
+  ],
+  [
+   9216,
+   2304
+  ],
+  [
+   11520,
+   2304
+  ],
+  [
+   13824,
+   2304
+  ],
+  [
+   16128,
+   2304
+  ],
+  [
+   18432,
+   2304
+  ],
+  [
+   20736,
+   2304
+  ],
+  [
+   23040,
+   2304
+  ],
+  [
+   25344,
+   2304
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
+  }
+ }
+}

@@ -24,6 +24,18 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         var region = new Ac3Analysis.Region(0);
         analysis.Regions.Add(region);
         var observed = new Observed();
+        int count = 0;
+        FrameRecords records = analysis.Records;
+        bool isEncrypted = context.Configuration is { AreSamplesEncrypted: true };
+        Node MakeNode(bool encrypted, bool hasEac3) => parent.Add(new Node(hasEac3 || (encrypted && id == Eac3) ? "E-AC-3" : "AC-3", parent.Offset, parent.Length, null,
+            () => new BlockedChildren(region.Leading, count, i => records.FrameNode(i)))
+        {
+            Kind = NodeKind.Stream,
+            Ranges = parent.Ranges,
+            Description = Explain.Stream,
+            Topic = Topics.FramesAndBsi,
+        });
+        analysis.RegionNodeFactory = header => MakeNode(isEncrypted, header.IsEac3);
         if (context.Payload is { } payload)
         {
             ReadPayload(analysis, region, payload, observed);
@@ -44,18 +56,10 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
         observed.StartSample();
         region.End = analysis.Frames.Count;
-        int count = region.End.Value;
-        FrameRecords records = analysis.Records;
+        count = region.End.Value;
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
-        region.Node = parent.Add(new Node(observed.HasEac3 || (encrypted && id == Eac3) ? "E-AC-3" : "AC-3", parent.Offset, parent.Length,
-            encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
-            () => new BlockedChildren(region.Leading, count, i => records.FrameNode(i)))
-        {
-            Kind = NodeKind.Stream,
-            Ranges = parent.Ranges,
-            Description = Explain.Stream,
-            Topic = Topics.FramesAndBsi,
-        });
+        region.Node ??= MakeNode(encrypted, observed.HasEac3);
+        region.Node.Value = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame");
 
         if (context.Configuration is { } configuration)
         {
