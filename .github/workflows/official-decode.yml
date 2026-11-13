@@ -203,7 +203,7 @@ jobs:
           dotnet build --configuration Release tests/Encspect.PcmDump
 
       - name: Compare the AC-3 decoder's PCM with Core Audio's
-        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect
+        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect --real-samples build/eac3-samples
 
   windows:
     name: Media Foundation on windows-2025

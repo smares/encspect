@@ -248,10 +248,18 @@ def compare(dump, reference, channels, label, first, extra):
 
 
 def check_file(args, path, work):
-    manifest = json.loads((x.FIXTURES / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
-    frames = x.manifest_frames(manifest)
-    is_eac3 = path.suffix == ".eac3"
     data = path.read_bytes()
+    manifest_path = x.FIXTURES / (path.stem + ".expected.json")
+    if manifest_path.exists():
+        frames = x.manifest_frames(json.loads(manifest_path.read_text(encoding="utf-8")))
+    else:
+        # A real file from check_eac3_samples.py has no manifest here: its frames are those the headers give, from the start of the file.
+        frames, at = [], 0
+        while at + 8 <= len(data):
+            length = x.m.header(data, at)["length"]
+            frames.append([at, length])
+            at += length
+    is_eac3 = path.suffix == ".eac3"
     samples = sum(x.m.header(data, offset)["blocks"] * 256 for offset, _ in frames) if is_eac3 else 6 * 256 * len(frames)
     stripped = work / (path.stem + ".nodither.ac3")
     if not is_eac3:
@@ -279,6 +287,11 @@ def check_file(args, path, work):
             lines.append(f"  {variant}: Core Audio does not decode the file: {info}")
             holds = False
             continue
+        sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
+        peak = max((abs(v) for v in floats((dump.parent / sample["pcm"]).read_bytes())), default=0.0)
+        if peak > 1.0:
+            # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
+            lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
         label, detail = first_passing(attempt(dump, raw, info["channels"], work, f"ca-{variant}", extra, path.stem))
         lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
         if label is None:
@@ -308,11 +321,17 @@ def main(argv=None):
     parser.add_argument("--pcmdump", default=x.DEFAULT_PCMDUMP)
     parser.add_argument("--encspect", default=x.DEFAULT_ENCSPECT)
     parser.add_argument("--keep", type=pathlib.Path)
+    parser.add_argument("--real-samples", type=pathlib.Path, help="a cache directory: the real E-AC-3 files of tests/conformance/eac3-samples.json are fetched into it and compared as well")
     args = parser.parse_args(argv)
     # The AC-3 files with a liba52 reference and the encoder-written E-AC-3 files, and the hand-built E-AC-3 files that use what FFmpeg does not decode or decodes differently
     # (the adaptive hybrid transform with hebap 4, enhanced coupling, spectral extension, transient pre-noise processing, dependent substreams): Core Audio is the independent decoder
     # that can say who is right. The three real files of check_eac3_samples.py can be given on the command line.
     files = args.files or [p for p in x.default_files() if p.name.startswith("external-")] + [x.FIXTURES / name for name in CORE_AUDIO_SIGNAL_FILES]
+    if args.real_samples and not args.files:
+        import check_eac3_samples
+        manifest = json.loads(check_eac3_samples.MANIFEST.read_text(encoding="utf-8"))
+        check_eac3_samples.fetch(manifest, args.real_samples)
+        files = [*files, *[args.real_samples / s["file"] for s in manifest["samples"] if (args.real_samples / s["file"]).suffix == ".eac3"]]
     failures = []
     with tempfile.TemporaryDirectory() as temporary:
         root = args.keep or pathlib.Path(temporary)
