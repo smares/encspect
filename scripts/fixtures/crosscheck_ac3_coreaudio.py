@@ -433,7 +433,40 @@ def variants_report(args, root):
     return lines
 
 
-CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3"]
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
+
+
+# Files whose analyzer streams follow one another (a program frame with dependent frames, one without): each stream is cut out as a file of its own and compared with Core Audio's
+# decode of that file, since one run of Core Audio over a file that changes its configuration says nothing about which of the streams a figure belongs to. (The streams of
+# substreams.eac3 play at the same time and are not split.)
+SEQUENTIAL_STREAMS = {"coding-ac3-core-dependent"}
+
+
+def split_streams(path, work):
+    """The files of the streams of a file whose streams follow one another: the program frames (an independent frame and its dependent frames) that share a configuration."""
+    data = path.read_bytes()
+    manifest = json.loads((x.FIXTURES / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
+    units, current = [], None
+    for offset, length in x.manifest_frames(manifest):
+        header = x.m.header(data, offset)
+        if header.get("strmtyp") != 1 or current is None:
+            current = {"frames": [], "key": [(header.get("bsid"), header.get("fscod"), header["acmod"], header["lfeon"])]}
+            units.append(current)
+        else:
+            current["key"].append((header.get("substream"), header["acmod"], header["lfeon"]))
+        current["frames"].append((offset, length))
+    segments = []
+    for unit in units:
+        if segments and segments[-1]["key"] == unit["key"]:
+            segments[-1]["frames"] += unit["frames"]
+        else:
+            segments.append({"key": unit["key"], "frames": list(unit["frames"])})
+    paths = []
+    for number, segment in enumerate(segments, 1):
+        target = work / f"{path.stem}.s{number}{path.suffix}"
+        target.write_bytes(b"".join(data[o:o + n] for o, n in segment["frames"]))
+        paths.append(target)
+    return paths
 
 
 def main(argv=None):
@@ -462,7 +495,16 @@ def main(argv=None):
             work = root / path.stem
             work.mkdir(exist_ok=True)
             try:
-                ok, lines = check_file(args, path, work)
+                if path.stem in SEQUENTIAL_STREAMS:
+                    ok, lines = True, []
+                    for number, part in enumerate(split_streams(path, work), 1):
+                        part_work = work / f"s{number}"
+                        part_work.mkdir(exist_ok=True)
+                        part_ok, part_lines = check_file(args, part, part_work)
+                        lines += [f"  stream {number} (frames of {part.name}): {'ok' if part_ok else 'FAILS'}", *part_lines]
+                        ok = ok and part_ok
+                else:
+                    ok, lines = check_file(args, path, work)
             except Exception as error:  # one file's failure must not stop the rest, the real files last of all
                 ok, lines = False, [f"  ERROR: {type(error).__name__}: {error}"]
             print(f"{path.name}: {'ok' if ok else 'FAILS'}")
