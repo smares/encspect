@@ -36,6 +36,8 @@ internal sealed class DecodeFeed
 
     public IDecodeSession Session { get; }
 
+    public bool IsEac3 => _isEac3;
+
     // Set where the data between two frames is no frame (a gap, which the next frame follows).
     public bool PendingGap { get; set; }
 
@@ -47,11 +49,15 @@ internal sealed class DecodeFeed
 
     public static int ChannelCount(SyncFrame header) => Acmod[header.Acmod] + (header.Lfeon ? 1 : 0);
 
+    public static int ChannelOf(int acmod) => Acmod[acmod];
+
     private static readonly int[] Acmod = [2, 1, 2, 3, 3, 4, 4, 5];
 
-    // One independent frame of the program: its bytes as far as the data holds them, the walk's records in written, and how it ended.
+    // One independent frame of the program: its bytes as far as the data holds them, the walk's records in written, and how it ended. An E-AC-3 program frame is the independent
+    // frame and the dependent frames after it, so its unit is handed to the session when the next independent frame comes, or at the end (FlushUnit).
     public void Feed(IntWriter written, long offset, ReadOnlyMemory<byte> frame, SyncFrame header, bool isReadable, Ac3Analysis.CrcState crc1, Ac3Analysis.CrcState crc2)
     {
+        FlushUnit();
         long first = _position;
         int samples = header.Samples;
         _position += samples;
@@ -77,23 +83,104 @@ internal sealed class DecodeFeed
             return;
         }
 
+        bool damaged = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
+        if (_isEac3)
+        {
+            _unit = new Unit(offset, first, samples, followsGap, damaged, isReadable, frame.ToArray());
+            _unit.Substreams.Add(new Substream(0, Program.TokensOf(header, new FrameResult()), written.Written.ToArray()));
+            return;
+        }
+
+        Send(offset, first, samples, followsGap, damaged, isReadable, frame, written.Written);
+    }
+
+    // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end adds no channels.
+    public void AddDependent(IntWriter written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable)
+    {
+        if (_unit is not { } unit)
+        {
+            return;
+        }
+
+        unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
+        if (isReadable)
+        {
+            unit.Substreams.Add(new Substream(1 + header.SubstreamId, Program.TokensOf(header, result), written.Written.ToArray()));
+        }
+    }
+
+    private Unit? _unit;
+    private List<Program.Token>? _layout;
+
+    private sealed class Unit(long offset, long first, int samples, bool followsGap, bool isDamaged, bool isReadable, byte[] bytes)
+    {
+        public long Offset { get; } = offset;
+        public long First { get; } = first;
+        public int Samples { get; } = samples;
+        public bool FollowsGap { get; } = followsGap;
+        public bool IsDamaged { get; } = isDamaged;
+        public bool IsReadable { get; } = isReadable;
+        public byte[] Bytes { get; set; } = bytes;
+        public List<Substream> Substreams { get; } = [];
+    }
+
+    private sealed record Substream(int Id, List<Program.Token> Tokens, int[] Records);
+
+    // Hands the E-AC-3 program frame in hand to the session: the program's layout (that of the first frame, as the report gives it), then each substream's id, the output channel of each of
+    // its coded channels (-1 where the layout has none) and its records.
+    public void FlushUnit()
+    {
+        if (_unit is not { } unit)
+        {
+            return;
+        }
+
+        _unit = null;
+        if (!unit.IsReadable)
+        {
+            Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.IsDamaged, false, unit.Bytes, []);
+            return;
+        }
+
+        _layout ??= Program.Merge(unit.Substreams[0].Tokens, unit.Substreams.Skip(1).SelectMany(s => s.Tokens));
+        var ints = new List<int> { _layout.Count };
+        ints.AddRange(_layout.Select(t => (int)t));
+        ints.Add(unit.Substreams.Count);
+        foreach (Substream sub in unit.Substreams)
+        {
+            ints.Add(sub.Id);
+            ints.Add(sub.Tokens.Count);
+            ints.AddRange(sub.Tokens.Select(t => _layout.IndexOf(t)));
+            ints.AddRange(sub.Records);
+        }
+
+        Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.IsDamaged, true, unit.Bytes, ints.ToArray());
+    }
+
+    private void Send(long offset, long first, int samples, bool followsGap, bool isDamaged, bool isReadable, ReadOnlyMemory<byte> frame, ReadOnlySpan<int> written)
+    {
+        if (!Session.IsDecoding)
+        {
+            return;
+        }
+
         if (!isReadable)
         {
             Session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", first, samples) { IsUnreadable = true });
             return;
         }
 
-        SampleBuffers lent = Session.Lend(written.Count, 1);
+        SampleBuffers lent = Session.Lend(written.Length, 1);
         bool isWalked = !lent.IsEmpty;
         if (isWalked)
         {
-            written.Written.CopyTo(lent.Narrow);
+            written.CopyTo(lent.Narrow);
         }
 
         Session.Decode(new CodedFrame(new MappedBytes(frame, offset), "Frame", first, samples)
         {
             IsWalked = isWalked,
-            IsDamaged = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch,
+            IsDamaged = isDamaged,
             FollowsGap = followsGap,
         });
     }
@@ -101,6 +188,7 @@ internal sealed class DecodeFeed
     // Ends the session with the checksums the program stores. crc2 covers the whole frame, so with every frame there and none lost it vouches for all of the program's audio.
     public StreamVerification Finish(long lostSamples)
     {
+        FlushUnit();
         bool coversAll = lostSamples == 0 && !HadGap;
         if (_isEac3)
         {

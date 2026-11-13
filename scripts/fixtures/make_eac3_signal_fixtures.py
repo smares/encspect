@@ -132,9 +132,13 @@ def write_aht_channel(b, rng, hebap, end, mode):
     return gains
 
 
-def bsi(b):
-    b.put(m.SYNC, 16).put(0, 2).put(0, 3).put(WORDS - 1, 11).put(0, 2).put(3, 2).put(2, 3).put(0, 1).put(16, 5)
+def bsi(b, strmtyp=0, chanmap=None):
+    b.put(m.SYNC, 16).put(strmtyp, 2).put(0, 3).put(WORDS - 1, 11).put(0, 2).put(3, 2).put(2, 3).put(0, 1).put(16, 5)
     b.put(27, 5).put(0, 1)  # dialnorm, compre
+    if strmtyp == 1:
+        b.put(chanmap is not None, 1)  # chanmape
+        if chanmap is not None:
+            b.put(chanmap, 16)
     b.put(0, 1).put(0, 1)  # mixmdate, infomdate
     b.put(0, 1)  # addbsie (strmtyp 0 with six blocks has no convsync)
 
@@ -204,10 +208,10 @@ def aht_frame_of(seed, mode, csnr, narrow):
     return finish(b)
 
 
-def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None):
+def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None):
     rng = random.Random(seed)
     b = Bits()
-    bsi(b)
+    bsi(b, strmtyp, chanmap)
     audfrm_head(b, spxattene=1)
     b.put(0, 1)
     for _ in range(5):
@@ -215,8 +219,9 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
     for block in range(6):
         for _ in range(2):
             b.put(3 if block == 0 else 0, 2)  # D45 in block 0
-    for _ in range(2):
-        b.put(0, 5)
+    if strmtyp == 0:
+        for _ in range(2):
+            b.put(0, 5)
     b.put(CSNR, 6).put(FSNR, 4)
     b.put(0, 1).put(1, 1).put(attenuation, 5)  # chinspxatten of channel 0 off and of channel 1 on, with its code
     b.put(0, 1)  # blkstrtinfoe
@@ -256,7 +261,8 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
                     b.put(g, 7)
                 b.put(0, 2)
                 sets.append(exp)
-        b.put(0, 1)  # convsnroffste
+        if strmtyp == 0:
+            b.put(0, 1)  # convsnroffste
         channels = [(range(end), sig.allocate_full(exp, end, SNR)) for exp in sets]
         sig.write_mantissas(b, rng, channels)
     return finish(b)
@@ -347,6 +353,8 @@ def ecpl_frame(seed, explicit_structure, new_parameters):
 FILES = {
     "eac3-signal-aht.eac3": lambda: b"".join(aht_frame(300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3) for i in range(FRAMES)),
     "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
+    "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
+                                                    for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
 }
@@ -357,6 +365,10 @@ DESCRIPTIONS = {
     "eac3-signal-spx.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with spectral extension from bin 73 to 157 in both channels, the default band structure or an explicit one, new coordinates in "
                             "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin and the blend 31, so that "
                             "only the copy and its filter and scaling remain and the decoded samples are comparable one by one (A/52 Annex E 3.6).",
+    "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
+                                                    for i in range(FRAMES)),
+    "eac3-signal-dependent.eac3": "Twelve access units of a 2/0 independent substream (spectral extension, no noise) and a dependent substream with the channel map of the back left and back right pair, also 2/0: "
+                                  "a program of four channels, which decoders that read dependent substreams give in the order front left, front right, back left, back right (A/52 Annex E 3.8).",
     "eac3-signal-spx-noise.eac3": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
     "eac3-signal-ecpl.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with enhanced coupling from bin 61 to 133, the default band structure or an explicit one, new amplitudes, angles and chaos "
                              "values in block 3 of some frames, and mantissas in every bin (A/52 Annex E 3.5).",
@@ -365,6 +377,8 @@ DESCRIPTIONS = {
 
 NO_REFERENCE = {
     "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
+                                                    for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": "The noise of spectral extension comes from a generator of each decoder, so the samples differ; the level of the noise equals FFmpeg's (docs/development.md, \"E-AC-3 decoding\").",
 }
 
@@ -376,6 +390,18 @@ def manifest(name, data):
         frames.append([at, h["length"]])
         at += h["length"]
     decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3")
+    if name == "eac3-signal-dependent.eac3":
+        independent = [f for f in frames if m.header(data, f[0])["strmtyp"] == 0]
+        return {
+            "description": DESCRIPTIONS[name], "length": len(data), "format": "AC-3", "frames": frames, "gaps": [],
+            "streams": [{"codec": "E-AC-3", "sample_rate": 48000, "channels": 4, "channel_mode": "2/0", "channel_layout": ["front left", "front right", "back left", "back right"],
+                         "samples": 1536 * len(independent), "is_vbr": False}],
+            "fields": {}, "findings": [],
+            "crosscheck": {"ffprobe": True, "ffprobe_fields": "channels", "ffprobe_bitrate": False, "decode": False, "skip_insertion": False,
+                           "skip": {"decode": "FFmpeg decodes the independent substream only (its 2 channels); Core Audio's output is the reference for the four (macOS job).",
+                                    "ffprobe_fields": "FFmpeg reports the independent substream's channels.", "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode.",
+                                    "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."}},
+        }
     return {
         "description": DESCRIPTIONS[name], "length": len(data), "format": "AC-3", "frames": frames, "gaps": [],
         "streams": [{"codec": "E-AC-3", "sample_rate": 48000, "channels": 2, "channel_mode": "2/0", "channel_layout": ["front left", "front right"],
