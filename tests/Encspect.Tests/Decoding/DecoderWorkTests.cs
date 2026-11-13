@@ -199,6 +199,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
+        _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -217,6 +218,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
         _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
+        _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -384,6 +386,21 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("ac3-" + label, () => new Case("ac3-" + label, Ac3Cases.Repeated(file)));
+        }
+
+        // E-AC-3: 5.1 and stereo from FFmpeg's encoder (no tools beyond coupling), and the hand-built files with the adaptive hybrid transform, spectral extension and enhanced
+        // coupling, whose bins all carry mantissa bits (so the transforms and the tools run in full). Each case repeats the whole file as one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("surround-51-ffmpeg", "external-ffmpeg-eac3-5.1-256k.eac3"),
+            ("stereo-ffmpeg", "external-ffmpeg-eac3-stereo-96k.eac3"),
+            ("aht", "eac3-signal-aht.eac3"),
+            ("spectral-extension", "eac3-signal-spx.eac3"),
+            ("enhanced-coupling", "eac3-signal-ecpl.eac3"),
+            ("silent", "coupling.eac3"),
+        })
+        {
+            Add("eac3-" + label, () => new Case("eac3-" + label, Ac3Cases.Repeated(file)));
         }
 
         // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid and silence. Each case repeats the audio packets of an encoder's file in one stream.
@@ -973,14 +990,14 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         public static byte[] Repeated(string fixture, long target = Target)
         {
             byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", fixture));
-            long perCopy = Math.Max(1, Units(one));
+            long perCopy = Math.Max(1, Units(one, fixture.Contains("eac3", StringComparison.Ordinal)));
             int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
             return Unpooled.Repeat(one, copies);
         }
 
-        public static long Units(byte[] file)
+        public static long Units(byte[] file, bool isEac3 = false)
         {
-            var counting = new CountingDecoder(new Ac3Decoder());
+            var counting = new CountingDecoder(isEac3 ? new Eac3Decoder() : new Ac3Decoder());
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.ac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });

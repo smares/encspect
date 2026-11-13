@@ -1074,7 +1074,9 @@ internal sealed partial class FrameSyntax
                 }
                 catch (EndOfStreamException)
                 {
-                    bits = 0xFFFF;
+                    // The file's end cuts the frame inside the values: they would fit the frame (a truncated frame), or they reach past it (an overrun).
+                    int frameEnd = (_frameWords * 16) - 18;
+                    bits = _b.FrameBitCount < frameEnd ? Math.Max(0, frameEnd - start) : 0xFFFF;
                 }
             }
             else
