@@ -4,12 +4,13 @@ variants (docs/formats/ac3.md, "Decoding"):
 
 - eac3-signal-aht.eac3: the adaptive hybrid transform in both channels, with the four gain adaptive quantization modes in turn, vector quantization (hebap 1 to 7) and gain adaptive
   quantization with the gains 1, 2 and 4 (hebap 8 to 19), tags and large values (ATSC A/52:2018 Annex E 3.4);
-- eac3-signal-spx.eac3: spectral extension with an explicit band structure in half of the frames and the default one in the others, new coordinates in some blocks, the attenuation
-  filter in one channel, and rematrixing below the extension (Annex E 3.6);
+- eac3-signal-spx.eac3 and eac3-signal-spx-noise.eac3: spectral extension with an explicit band structure in half of the frames and the default one in the others, new coordinates
+  in some blocks, the attenuation filter in one channel, and rematrixing below the extension (Annex E 3.6); the first with the blend 31 (no noise, so that it is comparable sample by
+  sample), the second with random blends;
 - eac3-signal-ecpl.eac3: enhanced coupling with amplitudes, angles and chaos values, an explicit band structure in half of the frames and new parameters in some blocks (Annex E 3.5).
 
 The bit allocation of A/52 7.2.2 is run here, with the high efficiency table of Annex E for the adaptive hybrid transform; the codes are seeded random values of their quantizers,
-the dither flags are 0. FFmpeg decodes the first two (it does not decode enhanced coupling), and crosscheck_ac3_pcm.py compares them with it.
+the dither flags are 0. FFmpeg decodes all but the last (it does not decode enhanced coupling), and crosscheck_ac3_pcm.py compares the first two with it.
 
     make_eac3_signal_fixtures.py [--check]
 """
@@ -203,7 +204,7 @@ def aht_frame_of(seed, mode, csnr, narrow):
     return finish(b)
 
 
-def spx_frame(seed, explicit_structure, attenuation, new_coordinates):
+def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None):
     rng = random.Random(seed)
     b = Bits()
     bsi(b)
@@ -240,7 +241,7 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates):
             if block != 0:
                 b.put(fresh, 1)
             if fresh:
-                b.put(rng.randrange(0, 20), 5).put(rng.randrange(0, 3), 2)
+                b.put(rng.randrange(0, 20) if blend is None else blend, 5).put(rng.randrange(0, 3), 2)
                 for _ in range(bands):
                     b.put(rng.randrange(1, 12), 4).put(rng.randrange(4), 2)
         if block == 0:
@@ -345,7 +346,8 @@ def ecpl_frame(seed, explicit_structure, new_parameters):
 
 FILES = {
     "eac3-signal-aht.eac3": lambda: b"".join(aht_frame(300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3) for i in range(FRAMES)),
-    "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
+    "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
+    "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
 }
 
@@ -353,9 +355,17 @@ DESCRIPTIONS = {
     "eac3-signal-aht.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz whose two channels use the adaptive hybrid transform with every gain adaptive quantization mode in turn, vector quantization, "
                             "gains of 1, 2 and 4, tags and large values, and mantissas in every bin (A/52 Annex E 3.4).",
     "eac3-signal-spx.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with spectral extension from bin 73 to 157 in both channels, the default band structure or an explicit one, new coordinates in "
-                            "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin (A/52 Annex E 3.6).",
+                            "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin and the blend 31, so that "
+                            "only the copy and its filter and scaling remain and the decoded samples are comparable one by one (A/52 Annex E 3.6).",
+    "eac3-signal-spx-noise.eac3": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
     "eac3-signal-ecpl.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with enhanced coupling from bin 61 to 133, the default band structure or an explicit one, new amplitudes, angles and chaos "
                              "values in block 3 of some frames, and mantissas in every bin (A/52 Annex E 3.5).",
+}
+
+
+NO_REFERENCE = {
+    "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-spx-noise.eac3": "The noise of spectral extension comes from a generator of each decoder, so the samples differ; the level of the noise equals FFmpeg's (docs/development.md, \"E-AC-3 decoding\").",
 }
 
 
@@ -365,15 +375,16 @@ def manifest(name, data):
         h = m.header(data, at)
         frames.append([at, h["length"]])
         at += h["length"]
-    decodes = name != "eac3-signal-ecpl.eac3"
+    decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3")
     return {
         "description": DESCRIPTIONS[name], "length": len(data), "format": "AC-3", "frames": frames, "gaps": [],
         "streams": [{"codec": "E-AC-3", "sample_rate": 48000, "channels": 2, "channel_mode": "2/0", "channel_layout": ["front left", "front right"],
                      "samples": 1536 * len(frames), "is_vbr": False}],
         "fields": {}, "findings": [],
-        "crosscheck": {"ffprobe": True, "ffprobe_bitrate": decodes, "decode": decodes, "skip_insertion": False,
+        "crosscheck": {"ffprobe": True, "ffprobe_bitrate": name != "eac3-signal-ecpl.eac3", "decode": decodes, "skip_insertion": False,
                        "skip": {"skip_insertion": "The check rewrites E-AC-3 frames with skip fields.",
-                                **({} if decodes else {"decode": "FFmpeg does not decode enhanced coupling.", "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode."})}},
+                                **({} if decodes else {"decode": NO_REFERENCE[name]}),
+                                **({"ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode."} if name == "eac3-signal-ecpl.eac3" else {})}},
     }
 
 

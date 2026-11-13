@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compares the PCM that Encspect's AC-3 decoder delivers with liba52's and FFmpeg's, by position
+"""Compares the PCM that Encspect's AC-3 and E-AC-3 decoders deliver with liba52's and FFmpeg's, by position
 (docs/formats/ac3.md, "Decoding"; docs/design/lossy-decoders.md, "The PCM cross-checks"; docs/development.md, "AC-3 decoding").
 
     crosscheck_ac3_pcm.py [--pcmdump CMD] [--encspect CMD] [--ffmpeg PATH] [--keep DIR] [FILE ...]
@@ -20,6 +20,10 @@ For each file:
 - FFmpeg's float decoder (its ac3 decoder, dynamic range control off with -drc_scale 0) is the second reference, in the same two ways, its channels moved into the coded order.
   The one known difference: a block in which a channel is block switched and the channel it is rematrixed with is not (external-aften-stereo-192k-blocksw.ac3), where FFmpeg
   6.1.1 decodes the long channel differently from liba52 and the analyzer (FFMPEG_DIFFERS pins it).
+- E-AC-3 files (the encoder-written `external-ffmpeg-eac3-*` and the hand-built `eac3-signal-aht` and `eac3-signal-spx`) have FFmpeg only: liba52 does not decode E-AC-3. They are compared by the
+  energy of bands on the file repeated (E-AC-3's dither flags are often absent, so the flags cannot be cleared for a strict pass, and spectral extension blends noise). Two things of
+  FFmpeg 6.1.1 keep a strict pass of the adaptive hybrid transform out (docs/development.md, "E-AC-3 decoding"): it reads a hebap 4 vector from the next row of Table E.3.4, and it
+  fills the zero-bit bins of such a channel with noise whatever the dither flags say. `eac3-signal-ecpl.eac3` has no reference: FFmpeg does not decode enhanced coupling.
 - Positions only one side has are listed and compared by compare_pcm.py's rules; a file outside its bound fails the run.
 
 Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
@@ -177,7 +181,15 @@ def default_files():
         manifest = FIXTURES / (path.stem + ".expected.json")
         if manifest.exists() and json.loads(manifest.read_text(encoding="utf-8")).get("crosscheck", {}).get("liba52") is True:
             files.append(path)
+    files += [FIXTURES / name for name in EAC3_FILES]
     return files
+
+
+# The E-AC-3 files compared with FFmpeg's decoder by the energy of bands (see above).
+EAC3_FILES = ["external-ffmpeg-eac3-mono-48k.eac3", "external-ffmpeg-eac3-stereo-96k.eac3", "external-ffmpeg-eac3-5.1-256k.eac3", "eac3-signal-aht.eac3", "eac3-signal-spx.eac3"]
+
+# Hand-built files without noise, compared sample by sample as the AC-3 files are (the dither flags are 0 in them).
+EAC3_STRICT = {"eac3-signal-spx.eac3"}
 
 
 # The samples a file is repeated to for the comparison of dithered bands: the energy of a band is compared as a mean over frames, and the estimate of noise needs many.
@@ -200,7 +212,38 @@ def repeated(data, frames, count):
     return bytes(out), places
 
 
+def check_eac3(args, path, work):
+    """An E-AC-3 file against FFmpeg's decoder: the file repeated to a million samples, compared by the energy of bands."""
+    manifest = json.loads((FIXTURES / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
+    frames = manifest_frames(manifest)
+    samples = sum(m.header(path.read_bytes(), offset)["blocks"] * 256 for offset, _ in frames)
+    data, _ = repeated(path.read_bytes(), frames, max(2, REPEATED_SAMPLES // samples))
+    long_path = work / (path.stem + ".repeated.eac3")
+    long_path.write_bytes(data)
+    folder = work / path.stem
+    folder.mkdir()
+    dump = pcmdump(args.pcmdump, long_path, folder)
+    streams = json.loads(dump.read_text(encoding="utf-8"))["streams"]
+    if len(streams) != 1:
+        return [], [f"  not compared: {len(streams)} decoded streams (one stream of one configuration is compared)"]
+    channels = streams[0]["channels"]
+    ffmpeg = ffmpeg_pcm(args.ffmpeg, long_path, channels)
+    if ffmpeg is None:
+        return [], ["  ffmpeg: no output"]
+    if path.name in EAC3_STRICT:
+        once = work / (path.stem + ".once")
+        once.mkdir()
+        dump = pcmdump(args.pcmdump, path, once)
+        ffmpeg = ffmpeg_pcm(args.ffmpeg, path, channels)
+        found, result = compare(dump, ffmpeg, channels, "ffmpeg-strict")
+        return found, [f"  ffmpeg strict: {'ok' if not found else 'OUTSIDE THE BOUND'}{band_summary(result)}"]
+    found, result = compare(dump, ffmpeg, channels, "ffmpeg-dithered", ["--bands", BANDS, "--no-sample-bounds"])
+    return found, [f"  ffmpeg bands: {'ok' if not found else 'OUTSIDE THE BOUND'}{band_summary(result)}"]
+
+
 def check(args, lib, path, work):
+    if path.suffix == ".eac3":
+        return check_eac3(args, path, work)
     if path.name in EXCLUDED:
         return [], [f"  not compared: {EXCLUDED[path.name]}"]
     manifest = json.loads((FIXTURES / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
@@ -263,8 +306,11 @@ def main(argv=None):
     try:
         lib = load_liba52()
     except OSError as error:
-        print(f"liba52 is not installed: {error}", file=sys.stderr)
-        return 2
+        if args.files and all(f.suffix == ".eac3" for f in args.files):
+            lib = None
+        else:
+            print(f"liba52 is not installed: {error}", file=sys.stderr)
+            return 2
     files = args.files or default_files()
     failures = []
     with tempfile.TemporaryDirectory() as temporary:

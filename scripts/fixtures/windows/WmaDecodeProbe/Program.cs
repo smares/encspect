@@ -4,6 +4,7 @@
 //   wma-decode-probe --format aac --units <folder of unit lists> --out <dir> [--timeout <seconds>] <file or folder>...
 //   wma-decode-probe inventory --out <dir>
 //   wma-decode-probe ac3-pcm <file.ac3> <units.tsv> <out.f32>   (Dolby's decoder MFT, run by hand: Ac3Mft.cs)
+//   wma-decode-probe eac3-pcm <file.eac3> <units.tsv> <out.f32>   (the same MFT with E-AC-3)
 //
 // Each file is handled by three child processes of this program (Source Reader, decoder DMO, and the
 // DMO again without timestamps), so that a decoder that crashes on a damaged file is recorded and the
@@ -36,6 +37,11 @@ public static class Program
         if (args.Length == 4 && args[0] == "ac3-pcm")
         {
             return Ac3Mft.Run(args[1], args[2], args[3]);
+        }
+
+        if (args.Length == 4 && args[0] == "eac3-pcm")
+        {
+            return Ac3Mft.Run(args[1], args[2], args[3], isEac3: true);
         }
 
         if (args.Length >= 5 && args[0] == "--child")

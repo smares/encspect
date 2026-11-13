@@ -3,6 +3,11 @@
 // output is written as raw interleaved 32-bit floats for scripts/fixtures/compare_pcm.py; one JSON line on standard output says what happened.
 //
 //   wma-decode-probe ac3-pcm <file.ac3> <units.tsv> <out.f32>
+//   wma-decode-probe eac3-pcm <file.eac3> <units.tsv> <out.f32>
+//
+// The eac3-pcm mode feeds E-AC-3 the same way: its input type is a WAVEFORMATEXTENSIBLE with the subtype KSDATAFORMAT_SUBTYPE_DOLBY_DDPLUS
+// ({A7FB87AF-2D02-42FB-A4D4-05CD93843BDD}), which MFInitMediaTypeFromWaveFormatEx turns into MFAudioFormat_Dolby_DDPlus; the rate, the channel count and the lfe flag are those of the
+// first unit's independent frame (Annex E 2.2.2). Not run when written either; the first run's setInput and offeredOutputs lines say what the MFT accepts.
 //
 // Not run when written: the input type below (the AC-3 WAVE tag 0x2000 with the first frame's rate and channels) and the output types the MFT offers are the first run's
 // findings. If SetInputType refuses, the line says so with the HRESULT and the types the MFT offers as input. The decoder is a black box; nothing of it is linked into Encspect.
@@ -17,15 +22,17 @@ public static class Ac3Mft
     private const uint ProvidesSamples = 0x100;
     private static readonly Guid Clsid = new("177c0afe-900b-48d4-9e4c-57add250b3d4");
 
-    public static int Run(string path, string unitsPath, string outPath)
+    public static int Run(string path, string unitsPath, string outPath, bool isEac3 = false)
     {
-        var record = new Dictionary<string, object?> { ["type"] = "ac3-pcm", ["file"] = Path.GetFileName(path) };
-        int code = Decode(path, unitsPath, outPath, record);
+        var record = new Dictionary<string, object?> { ["type"] = isEac3 ? "eac3-pcm" : "ac3-pcm", ["file"] = Path.GetFileName(path) };
+        int code = Decode(path, unitsPath, outPath, record, isEac3);
         Console.WriteLine(JsonSerializer.Serialize(record));
         return code;
     }
 
-    private static int Decode(string path, string unitsPath, string outPath, Dictionary<string, object?> record)
+    private static readonly byte[] DdPlusSubtype = new Guid("a7fb87af-2d02-42fb-a4d4-05cd93843bdd").ToByteArray();
+
+    private static int Decode(string path, string unitsPath, string outPath, Dictionary<string, object?> record, bool isEac3)
     {
         var list = UnitFile.Read(unitsPath);
         if (list.Units.Count == 0)
@@ -36,16 +43,28 @@ public static class Ac3Mft
 
         var data = File.ReadAllBytes(path);
         long first = list.Units[0].Offset;
-        int acmod = (data[first + 6] >> 5) & 7;
-        int bits = (data[first + 6] << 8) | data[first + 7];
-        int at = 15 - 3;
-        if ((acmod & 1) != 0 && acmod != 1) at -= 2;
-        if ((acmod & 4) != 0) at -= 2;
-        if (acmod == 2) at -= 2;
-        int lfe = (bits >> at) & 1;
+        int acmod, lfe, rate;
+        if (isEac3)
+        {
+            // E-AC-3 (Annex E 2.2.2): after the sync word strmtyp, substreamid and frmsiz fill two bytes, then fscod (2 bits), numblkscod (2), acmod (3) and lfeon (1).
+            acmod = (data[first + 4] >> 1) & 7;
+            lfe = data[first + 4] & 1;
+            rate = new[] { 48000, 44100, 32000, 0 }[data[first + 4] >> 6];
+        }
+        else
+        {
+            acmod = (data[first + 6] >> 5) & 7;
+            int bits = (data[first + 6] << 8) | data[first + 7];
+            int at = 15 - 3;
+            if ((acmod & 1) != 0 && acmod != 1) at -= 2;
+            if ((acmod & 4) != 0) at -= 2;
+            if (acmod == 2) at -= 2;
+            lfe = (bits >> at) & 1;
+            rate = new[] { 48000, 44100, 32000 }[data[first + 4] >> 6];
+        }
+
         int[] counts = [2, 1, 2, 3, 3, 4, 4, 5];
         int channels = counts[acmod] + lfe;
-        int rate = new[] { 48000, 44100, 32000 }[data[first + 4] >> 6];
         record["input"] = new { rate, channels, acmod, lfe };
         if (Native.MFStartup(Native.MfVersion, 0) < 0)
         {
@@ -56,12 +75,31 @@ public static class Ac3Mft
         try
         {
             var mft = (IMFTransform)Activator.CreateInstance(Type.GetTypeFromCLSID(Clsid, true)!)!;
-            var wfx = new byte[18];
-            BitConverter.GetBytes((ushort)0x2000).CopyTo(wfx, 0);
-            BitConverter.GetBytes((ushort)channels).CopyTo(wfx, 2);
-            BitConverter.GetBytes((uint)rate).CopyTo(wfx, 4);
-            BitConverter.GetBytes((uint)(list.Units[0].Received * rate / 1536)).CopyTo(wfx, 8);
-            BitConverter.GetBytes((ushort)1).CopyTo(wfx, 12);
+            byte[] wfx;
+            if (isEac3)
+            {
+                // WAVEFORMATEXTENSIBLE: tag 0xFFFE, cbSize 22, valid bits 16, the channel mask 0 and the subtype of Dolby Digital Plus.
+                wfx = new byte[40];
+                BitConverter.GetBytes((ushort)0xFFFE).CopyTo(wfx, 0);
+                BitConverter.GetBytes((ushort)channels).CopyTo(wfx, 2);
+                BitConverter.GetBytes((uint)rate).CopyTo(wfx, 4);
+                BitConverter.GetBytes((uint)(list.Units[0].Received * rate / 1536)).CopyTo(wfx, 8);
+                BitConverter.GetBytes((ushort)1).CopyTo(wfx, 12);
+                BitConverter.GetBytes((ushort)16).CopyTo(wfx, 14);
+                BitConverter.GetBytes((ushort)22).CopyTo(wfx, 16);
+                BitConverter.GetBytes((ushort)16).CopyTo(wfx, 18);
+                DdPlusSubtype.CopyTo(wfx, 24);
+            }
+            else
+            {
+                wfx = new byte[18];
+                BitConverter.GetBytes((ushort)0x2000).CopyTo(wfx, 0);
+                BitConverter.GetBytes((ushort)channels).CopyTo(wfx, 2);
+                BitConverter.GetBytes((uint)rate).CopyTo(wfx, 4);
+                BitConverter.GetBytes((uint)(list.Units[0].Received * rate / 1536)).CopyTo(wfx, 8);
+                BitConverter.GetBytes((ushort)1).CopyTo(wfx, 12);
+            }
+
             Native.MFCreateMediaType(out var type);
             Native.MFInitMediaTypeFromWaveFormatEx(type, wfx, (uint)wfx.Length);
             int hr = mft.SetInputType(0, type, 0);

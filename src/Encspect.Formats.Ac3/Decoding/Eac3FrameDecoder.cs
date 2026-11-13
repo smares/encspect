@@ -14,6 +14,13 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     // The units a sample of a channel costs on top of the floor of the budget, measured with DecoderWorkTests (docs/design/decoders.md, "As built: the E-AC-3 decoder's work weights").
     private const int ExtraUnits = 22;
 
+    // Charged on top of the floor where a block uses a tool that costs more than the dequantization and transform of a sample: an adaptive hybrid transform channel's inverse DCT and
+    // table lookups (units a bin, over its six blocks), and enhanced coupling's transform, complex transform and the sines and cosines of each coupled channel's bins (a fixed part
+    // for the block and units a bin of a coupled channel), measured with DecoderWorkTests.
+    private const int AhtUnitsPerBin = 40;
+    private const int EnhancedBlockUnits = 8192;
+    private const int EnhancedUnitsPerBin = 192;
+
     // The seeds of the generators, at the start of the stream and after each gap (docs/design/lossy-decoders.md, "Random noise").
     private const uint NoiseSeed = 0x2545F491;
     private const uint SpxSeed = 0x6C8E9CF5;
@@ -354,6 +361,9 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             Span<float> previous = block > 0 ? (_states[block - 1].Mode == 2 ? CouplingTransform(_states[block - 1]) : default) : _hasPreviousX ? _previousX : default;
             Span<float> next = block + 1 < blocks && _states[block + 1].Mode == 2 ? CouplingTransform(_states[block + 1]) : default;
             Span<float> current = CouplingTransform(state);
+            int coupled = System.Numerics.BitOperations.PopCount((uint)state.EcplChannels);
+            int bins = Tables.EnhancedCouplingSubBandStart[state.EcplEnd] - Tables.EnhancedCouplingSubBandStart[state.EcplBegin];
+            _context.AddWork(EnhancedBlockUnits + ((long)EnhancedUnitsPerBin * bins * coupled));
             _enhanced.Analyze(previous, current, next);
             int first = System.Numerics.BitOperations.TrailingZeroCount(state.EcplChannels);
             for (int ch = 0; ch < _fullChannels; ch++)
@@ -468,6 +478,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         if (kind == 1)
         {
+            _context.AddWork((long)AhtUnitsPerBin * count);
             float[][] six = _aht[slot];
             float[] shift = _ahtShift[slot];
             Span<float> x = stackalloc float[6];

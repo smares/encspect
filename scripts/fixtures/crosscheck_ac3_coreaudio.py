@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compares the PCM that Encspect's AC-3 decoder delivers with Core Audio's, on macOS (docs/development.md, "AC-3 decoding"; rollout step 5 of
+"""Compares the PCM that Encspect's AC-3 and E-AC-3 decoders deliver with Core Audio's, on macOS (docs/development.md, "AC-3 decoding"; rollout step 5 of
 docs/design/official-decoder-crosschecks.md), and decodes the damage variants of derive_variants.py ac3 with it.
 
     crosscheck_ac3_coreaudio.py --probe BUILD/audiotoolbox_probe [--pcmdump CMD] [--encspect CMD] [--keep DIR] [FILE ...]
@@ -9,7 +9,9 @@ compare_pcm.py: sample by sample on a copy with its dither flags cleared (the de
 (whatever Core Audio's dither is, bands of noise are compared by energy). The first run found Core Audio's output at the coded stage's position 256, in the coded channel order
 at gain 1, so that alignment is fixed (FIRST_POSITION) and both passes must hold; where one fails, the lines add the correlation diagnostics, the blocks that miss most (strict) or the
 bands (dithered), so that a difference at one block, such as FFmpeg's in block 47 of the block switching file, shows as that block's errors. A file is ok only if every pass holds. The variants (cut, flipped, dropped, repeated frames) are only decoded and their frame counts
-listed beside the analyzer's: Core Audio conceals damage, the analyzer does not, so no bound applies (the lead's rule of 2026-11-01).
+listed beside the analyzer's: Core Audio conceals damage, the analyzer does not, so no bound applies (the lead's rule of 2026-11-01). The encoder-written E-AC-3 files (`external-*.eac3`) are
+compared by the energy of bands on the file repeated only (their dither flags are mostly absent, so there is no strict pass); the first run records what Core Audio does with them, as the AC-3
+run did (its alignment, channel order and gain).
 
 Exit status 0 where every file passes, 1 where one fails, 2 for a usage error.
 """
@@ -248,20 +250,25 @@ def compare(dump, reference, channels, label, first, extra):
 def check_file(args, path, work):
     manifest = json.loads((x.FIXTURES / (path.stem + ".expected.json")).read_text(encoding="utf-8"))
     frames = x.manifest_frames(manifest)
+    is_eac3 = path.suffix == ".eac3"
+    data = path.read_bytes()
+    samples = sum(x.m.header(data, offset)["blocks"] * 256 for offset, _ in frames) if is_eac3 else 6 * 256 * len(frames)
     stripped = work / (path.stem + ".nodither.ac3")
-    x.clear_dither(args.encspect, path, frames, stripped)
+    if not is_eac3:
+        x.clear_dither(args.encspect, path, frames, stripped)
     lines = []
-    long_data, long_frames = x.repeated(path.read_bytes(), frames, max(2, x.REPEATED_SAMPLES // (6 * 256 * len(frames))))
-    long_path = work / (path.stem + ".repeated.ac3")
+    long_data, long_frames = x.repeated(data, frames, max(2, x.REPEATED_SAMPLES // samples))
+    long_path = work / (path.stem + ".repeated" + path.suffix)
     long_path.write_bytes(long_data)
     holds = True
     pinned = PINNED_BLOCKS.get(path.stem, [])
     if pinned:
         lines.append(f"  pinned, left out of both passes: blocks {pinned} (see PINNED_BLOCKS)")
-    for variant, source, extra in (("strict", stripped, []), ("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"])):
+    passes = (("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"]),) if is_eac3 else (("strict", stripped, []), ("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"]))
+    for variant, source, extra in passes:
         folder = work / variant
         folder.mkdir()
-        copies = 1 if variant == "strict" else max(2, x.REPEATED_SAMPLES // (6 * 256 * len(frames)))
+        copies = 1 if variant == "strict" else max(2, x.REPEATED_SAMPLES // samples)
         for copy in range(copies):
             for block in pinned:
                 first = (block + copy * 96) * 256
@@ -299,7 +306,7 @@ def main(argv=None):
     parser.add_argument("--encspect", default=x.DEFAULT_ENCSPECT)
     parser.add_argument("--keep", type=pathlib.Path)
     args = parser.parse_args(argv)
-    files = args.files or [p for p in x.default_files() if p.name.startswith("external-")]
+    files = args.files or [p for p in x.default_files() if p.name.startswith("external-")]  # the AC-3 files with a liba52 reference and the encoder-written E-AC-3 files
     failures = []
     with tempfile.TemporaryDirectory() as temporary:
         root = args.keep or pathlib.Path(temporary)
