@@ -170,6 +170,27 @@ internal static class Tables
 
     public static readonly byte[] DefaultCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1];
 
+    // Annex E Table E.1.13: the default enhanced coupling band structure, by sub-band.
+    public static readonly byte[] DefaultEnhancedCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1];
+
+    // Annex E Table E.2.9: the first bin of each enhanced coupling sub-band, and the bin after the last (index 22).
+    public static readonly byte[] EnhancedCouplingSubBandStart = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253];
+
+    // Annex E Table E.2.1: the high efficiency bit allocation pointer of each address (psd - mask) >> 5.
+    public static readonly byte[] HebapTab =
+    [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 9, 9, 9, 10,
+        10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 13, 13, 14,
+        14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 17, 17, 18,
+        18, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+    ];
+
+    // Annex E Table E.2.2: the mantissa bits of a gain adaptive quantizer by hebap 8 to 19 (index hebap - 8), and of a vector quantizer's index by hebap 1 to 7 (index hebap - 1) for the
+    // six mantissas it stands for.
+    public static readonly byte[] GainAdaptiveBits = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16];
+
+    public static readonly byte[] VectorBits = [2, 3, 4, 5, 7, 8, 9];
+
     // The gains dynrng and compr stand for, in hundredths of a dB, per code (A/52 7.7.1.2 and 7.7.2.2):
     // dynrng's three high bits X are a signed integer and its five low bits Y a fraction 0.1Y in
     // binary, a gain of 2^(X + 1) * 0.1Y; compr has four bits for each. Computed once with

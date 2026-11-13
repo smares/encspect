@@ -17,12 +17,6 @@ internal enum StopReason : byte
     // E-AC-3 at a reduced sample rate (fscod2), whose bit allocation A/52 does not specify.
     ReducedRate,
 
-    // E-AC-3's adaptive hybrid transform codes mantissas the analyzer does not step over.
-    Aht,
-
-    // E-AC-3's enhanced coupling, whose parameters the analyzer does not step over.
-    EnhancedCoupling,
-
     // A value that makes the rest of the frame unreadable: chbwcod above 60, a coupling or spectral
     // extension range that is empty, exponents outside 0 to 24, a reserved delta bit allocation or
     // SNR offset strategy.

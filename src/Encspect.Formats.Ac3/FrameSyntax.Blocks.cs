@@ -17,6 +17,7 @@ internal sealed partial class FrameSyntax
     private bool _spxUsedInFrame;
     private int _rematflg;
     private bool _allocationStarted;
+    private int _blockIndex;
 
     // What the block being read chose; Blocks counts it with the frame's tallies and records it for the coding series only once
     // the block is read, so that every tally is over the blocks read and equals its series.
@@ -38,6 +39,26 @@ internal sealed partial class FrameSyntax
     // The coupling coordinates in force per channel and band as sent: exponent, mantissa and master coordinate packed as exp | mant << 4 | master << 8.
     private readonly int[][] _cplco = [.. Enumerable.Range(0, 5).Select(_ => new int[18])];
 
+    // Spectral extension coordinates in force per channel: the blend, the master coordinate, and per band exp | mant << 4 (E.1.3.3.10 to E.1.3.3.13).
+    private readonly int[] _spxblnd = new int[5];
+    private readonly int[] _mstrspxco = new int[5];
+    private readonly int[][] _spxco = [.. Enumerable.Range(0, 5).Select(_ => new int[17])];
+    private int _spxstrtf;
+
+    // Enhanced coupling (E.1.3.3.14 to E.1.3.3.22): the sub-band range, the band structure by sub-band, the amplitudes in force per channel and band (the 5 bit ecplamp).
+    private int _ecplBegin;
+    private int _ecplEnd;
+    private int _necplbnd;
+    private readonly int[] _ecplbndstrc = new int[22];
+    private readonly int[][] _ecplamp = [.. Enumerable.Range(0, 5).Select(_ => new int[22])];
+    private bool _previousEcplinu;
+    private int _ecplbegf;
+    private bool _ecplUsedInFrame;
+    private bool _ecplangleintrp;
+    private readonly int[][] _ecplangle = [.. Enumerable.Range(0, 5).Select(_ => new int[22])];
+    private readonly int[][] _ecplchaos = [.. Enumerable.Range(0, 5).Select(_ => new int[22])];
+    private readonly bool[] _ecpltrans = new bool[5];
+
     public IntWriter? Lent
     {
         get => _lent;
@@ -54,8 +75,10 @@ internal sealed partial class FrameSyntax
         _previousCplEnd = -1;
         _couplingUsedInFrame = false;
         _spxUsedInFrame = false;
+        _ecplUsedInFrame = false;
         _spxinu = false;
         _ecplinu = false;
+        _previousEcplinu = false;
         _nrematbd = 0;
         _rematflg = 0;
         _allocationStarted = false;
@@ -226,7 +249,7 @@ internal sealed partial class FrameSyntax
             strategy[Lfe] = _lfeon ? _lfeexpstr[blk] : 0;
         }
 
-        bool cplChanged = _cplInUse && (!_previousCplInUse || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd);
+        bool cplChanged = _cplInUse && (!_previousCplInUse || _ecplinu != _previousEcplinu || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd);
         if (_cplInUse && strategy[Cpl] == 0 && (blk == 0 || cplChanged || !_hasExponents[Cpl]))
         {
             Inconsistent("the coupling channel reuses exponents where it has none to reuse (checks 6 and 7)");
@@ -243,7 +266,7 @@ internal sealed partial class FrameSyntax
             int end;
             if (_chincpl[ch])
             {
-                end = 37 + (12 * _cplbegf);
+                end = _ecplinu ? Tables.EnhancedCouplingSubBandStart[_ecplBegin] : 37 + (12 * _cplbegf);
             }
             else if (_eac3 && _chinspx[ch])
             {
@@ -283,8 +306,8 @@ internal sealed partial class FrameSyntax
 
         if (_cplInUse)
         {
-            _startMant[Cpl] = 37 + (12 * _cplbegf);
-            _endMant[Cpl] = 37 + (12 * (_cplendf + 3));
+            _startMant[Cpl] = _ecplinu ? Tables.EnhancedCouplingSubBandStart[_ecplBegin] : 37 + (12 * _cplbegf);
+            _endMant[Cpl] = _ecplinu ? Tables.EnhancedCouplingSubBandStart[_ecplEnd] : 37 + (12 * (_cplendf + 3));
         }
 
         _startMant[Lfe] = 0;
@@ -346,13 +369,8 @@ internal sealed partial class FrameSyntax
             _r.SkipBytes += length;
         }
 
-        if (_eac3 && _ahte && (_chahtinu.AsSpan(0, _nfchans).Contains(true) || (_cplahtinu && _cplInUse) || (_lfeahtinu && _lfeon)))
-        {
-            Stop(StopReason.Aht, Issue.Aht);
-            return false;
-        }
-
-        return Mantissas();
+        _blockIndex = blk;
+        return Mantissas(blk);
     }
 
     // Spectral extension strategy and coordinates (Annex E 2.2.4, 2.3.3.1 to 2.3.3.13).
@@ -370,6 +388,7 @@ internal sealed partial class FrameSyntax
                 }
 
                 int copyStart = F("Spectral Extension Copy Start Code", 2, Explain.Spxstrtf, v => $"{v} (from bin {(v * 12) + 25})", Topics.SpectralExtension);
+                _spxstrtf = copyStart;
                 _spxbegf = F("Spectral Extension Begin Code", 3, Explain.Spxbegf, v => $"{v} (sub-band {(v < 6 ? v + 2 : (v * 2) - 3)})", Topics.SpectralExtension);
                 int endCode = F("Spectral Extension End Code", 3, Explain.Spxendf, v => $"{v} (to sub-band {(v < 3 ? v + 5 : (v * 2) + 3)})", Topics.SpectralExtension);
                 _spxBeginBand = _spxbegf < 6 ? _spxbegf + 2 : (_spxbegf * 2) - 3;
@@ -436,12 +455,13 @@ internal sealed partial class FrameSyntax
             if (coordinates)
             {
                 OpenChannel("Spectral Extension Coordinates", ch, Explain.SpxCoordinates, Topics.SpectralExtension);
-                F("Spectral Extension Blend", 5, Explain.Spxblnd);
-                F("Master Spectral Extension Coordinate", 2, Explain.Mstrspxco);
+                _spxblnd[ch] = F("Spectral Extension Blend", 5, Explain.Spxblnd);
+                _mstrspxco[ch] = F("Master Spectral Extension Coordinate", 2, Explain.Mstrspxco);
                 for (int band = 0; band < bands; band++)
                 {
-                    F("Spectral Extension Coordinate Exponent", 4, Explain.Spxcoexp);
-                    F("Spectral Extension Coordinate Mantissa", 2, Explain.Spxcomant);
+                    int exponent = F("Spectral Extension Coordinate Exponent", 4, Explain.Spxcoexp);
+                    int mantissa = F("Spectral Extension Coordinate Mantissa", 2, Explain.Spxcomant);
+                    _spxco[ch][band] = exponent | (mantissa << 4);
                 }
 
                 Close(NodeValue.Integer(bands, "bands", "band"));
@@ -455,6 +475,7 @@ internal sealed partial class FrameSyntax
     private bool CouplingStrategy(int blk)
     {
         _previousCplInUse = _cplInUse;
+        _previousEcplinu = _cplInUse && _ecplinu;
         _previousCplBegin = _cplInUse ? _cplbegf : -1;
         _previousCplEnd = _cplInUse ? _cplendf : -1;
         Array.Copy(_chincpl, _previousChincpl, 5);
@@ -496,8 +517,17 @@ internal sealed partial class FrameSyntax
 
         if (_ecplinu)
         {
-            Stop(StopReason.EnhancedCoupling, Issue.EnhancedCoupling);
-            return false;
+            _phsflginu = false;
+            if (!EnhancedCouplingStrategy(coupled))
+            {
+                return false;
+            }
+
+            _cplInUse = true;
+            _couplingUsedInFrame = true;
+            _ecplUsedInFrame = true;
+            _realloc[Cpl] = true;
+            return true;
         }
 
         if (_acmod == 2)
@@ -574,7 +604,13 @@ internal sealed partial class FrameSyntax
             return true;
         }
 
-        bool changed = !_previousCplInUse || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd || _cplBandsChanged;
+        if (_ecplinu)
+        {
+            EnhancedCouplingParameters();
+            return true;
+        }
+
+        bool changed = !_previousCplInUse || _previousEcplinu || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd || _cplBandsChanged;
         bool any = false;
         for (int ch = 0; ch < _nfchans; ch++)
         {
@@ -631,7 +667,10 @@ internal sealed partial class FrameSyntax
             return;
         }
 
-        int bands = _cplInUse ? (_cplbegf == 0 ? 2 : _cplbegf < 3 ? 3 : 4) : _spxinu ? (_spxbegf < 2 ? 3 : 4) : 4;
+        // Annex E 3.3.2.
+        int bands = _cplInUse
+            ? _ecplinu ? (_ecplbegf == 0 ? 0 : _ecplbegf < 3 ? _ecplbegf : _ecplbegf < 5 ? 3 : 4) : _cplbegf == 0 ? 2 : _cplbegf < 3 ? 3 : 4
+            : _spxinu ? (_spxbegf < 2 ? 3 : 4) : 4;
         bool strategy = (_eac3 && blk == 0) || Flag("HasRematrixing", Explain.Rematstr, Topics.Rematrixing);
         if (!_eac3 && blk == 0 && !strategy)
         {
@@ -1000,7 +1039,7 @@ internal sealed partial class FrameSyntax
     {
         bool cplDeltaActive = (active & (1 << Cpl)) != 0;
         bool cplNew = delta && _deltbae[Cpl] != 0;
-        if (_cplInUse && _previousCplInUse && (_cplbegf != _previousCplBegin || _cplendf != _previousCplEnd) && cplDeltaActive && !cplNew)
+        if (_cplInUse && _previousCplInUse && (_ecplinu != _previousEcplinu || _cplbegf != _previousCplBegin || _cplendf != _previousCplEnd) && cplDeltaActive && !cplNew)
         {
             Inconsistent("the coupling range changed but the coupling delta bit allocation is kept (check 27)");
         }
@@ -1017,12 +1056,29 @@ internal sealed partial class FrameSyntax
 
     // The mantissas (5.4.3.61 to 5.4.3.63): their length follows from the bit allocation pointers
     // (7.2.2.7, Table 7.17), with the 3, 5 and 11 level quantizers grouped across the block (7.3.5).
-    private bool Mantissas()
+    private bool Mantissas(int blk)
     {
         int bits = 0;
+        int start = _b.Position;
+        bool walked = false;
         if (!_b.IsBuildingNodes)
         {
             Allocate();
+            if (HasAhtInBlock0(blk))
+            {
+                // The length of gain adaptive quantization's values depends on the values (their tags), so the block is read to find it.
+                walked = true;
+                try
+                {
+                    bits = Math.Min(WriteBlock(start, blk), 0xFFFF);
+                }
+                catch (EndOfStreamException)
+                {
+                    bits = 0xFFFF;
+                }
+            }
+            else
+            {
             int grouped1 = 0;
             int grouped2 = 0;
             int grouped4 = 0;
@@ -1040,10 +1096,10 @@ internal sealed partial class FrameSyntax
 
             total += ((grouped1 + 2) / 3 * 5) + ((grouped2 + 2) / 3 * 7) + ((grouped4 + 1) / 2 * 7);
             bits = (int)Math.Min(total, 0xFFFF);
+            }
         }
 
         bits = _b.Derived(16, bits);
-        int start = _b.Position;
         int blocksEnd = (_frameWords * 16) - 18;
         if (start + bits > _b.Limit)
         {
@@ -1062,9 +1118,9 @@ internal sealed partial class FrameSyntax
             return false;
         }
 
-        if (!_b.IsBuildingNodes)
+        if (!_b.IsBuildingNodes && !walked)
         {
-            WriteBlock(start);
+            WriteBlock(start, blk);
         }
 
         _b.Skip(bits);
@@ -1091,8 +1147,13 @@ internal sealed partial class FrameSyntax
     //   then, for every full bandwidth channel in order, the coupling channel where coupling is in use and the LFE channel where there is one, the number of bins and per bin
     //   exp | bap << 5 | code << 9, where the code is the quantizer's index for bap 1 to 5 and the two's complement mantissa for bap 6 to 15 (sign extended).
     // It also reads the mantissa codes, which is where checks 18 to 20 of 7.10.2 are made.
-    private void WriteBlock(int start)
+    private int WriteBlock(int start, int blk)
     {
+        if (_eac3 && (IsLending || HasAhtInBlock0(blk)))
+        {
+            return WriteBlockEac3(start, blk);
+        }
+
         bool lend = IsLending;
         IntWriter? w = lend ? _lent : null;
         if (lend)
@@ -1144,19 +1205,33 @@ internal sealed partial class FrameSyntax
         bool gotCoupling = false;
         for (int ch = 0; ch < _nfchans; ch++)
         {
-            ReadChannelMantissas(ch, 0, _endMant[ch], w);
+            if (!IsAht(ch))
+            {
+                ReadChannelMantissas(ch, 0, _endMant[ch], w);
+            }
+
             if (_cplInUse && _chincpl[ch] && !gotCoupling)
             {
-                ReadChannelMantissas(Cpl, _startMant[Cpl], _endMant[Cpl], w);
+                if (!IsAht(Cpl))
+                {
+                    ReadChannelMantissas(Cpl, _startMant[Cpl], _endMant[Cpl], w);
+                }
+
                 gotCoupling = true;
             }
         }
 
-        if (_lfeon)
+        if (_lfeon && !IsAht(Lfe))
         {
             ReadChannelMantissas(Lfe, 0, 7, w);
         }
 
+        ReportMantissaFaults(start);
+        return _mantissaBit - start;
+    }
+
+    private void ReportMantissaFaults(int start)
+    {
         if ((_groupFaults & 1) != 0 && !Counted(Issue.BlockInconsistent))
         {
             Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 3-level mantissa value is above 26 (check 18)");
@@ -1178,6 +1253,11 @@ internal sealed partial class FrameSyntax
             Report(Issue.MantissaNoValue, "Mantissas", start, _mantissaBit, (_groupFaults & 8) != 0
                 ? "the code 7 of the 7-level quantizer, which Table 7.21 (A/52 7.3.3) has no value for"
                 : "the code 15 of the 15-level quantizer, which Table 7.23 (A/52 7.3.3) has no value for");
+        }
+
+        if ((_groupFaults & 32) != 0 && !Counted(Issue.BlockInconsistent))
+        {
+            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded gain word of the adaptive hybrid transform is above 26, which holds three gains of at most 2 each (A/52 Annex E 3.4.4)");
         }
     }
 
@@ -1364,6 +1444,14 @@ internal sealed partial class FrameSyntax
             }
 
             _realloc[ch] = false;
+            bool aht = IsAht(ch);
+            if (aht && _blockIndex != 0)
+            {
+                // The adaptive hybrid transform's mantissas of all six blocks are coded in block 0.
+                _count1[ch] = _count2[ch] = _count4[ch] = _fixedBits[ch] = 0;
+                continue;
+            }
+
             int start = ch == Cpl ? _startMant[Cpl] : 0;
             int end = _endMant[ch];
             byte[] bap = _bap[ch];
@@ -1390,7 +1478,14 @@ internal sealed partial class FrameSyntax
                     SampleRateCode = _fscod,
                 };
                 bool hasDelta = ch < Lfe && _deltbae[ch] is 0 or 1;
-                BitAllocation.Compute(_exp[ch], start, end, parameters, hasDelta ? _deltas[ch] : [], bap);
+                BitAllocation.Compute(_exp[ch], start, end, parameters, hasDelta ? _deltas[ch] : [], bap, aht);
+            }
+
+            if (aht)
+            {
+                // Annex E 3.4.3: the pointers are the high efficiency ones; their mantissas are read from the bits (ReadAht), not counted.
+                _count1[ch] = _count2[ch] = _count4[ch] = _fixedBits[ch] = 0;
+                continue;
             }
 
             int count1 = 0;

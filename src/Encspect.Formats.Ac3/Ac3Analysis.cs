@@ -260,8 +260,6 @@ internal sealed class Ac3Analysis
         Issue.HeaderOverrun => "ac3.header-overrun",
         Issue.UndefinedBsid => "ac3.bsid-undefined",
         Issue.ReducedRate => "ac3.reduced-rate-not-read",
-        Issue.Aht => "ac3.aht-not-read",
-        Issue.EnhancedCoupling => "ac3.enhanced-coupling-not-read",
         Issue.MixDataOverrun => "ac3.mix-data-overrun",
         Issue.ChannelMapCount => "ac3.channel-map-count",
         Issue.EmdfTruncated => "ac3.emdf-truncated",
@@ -320,14 +318,6 @@ internal sealed class Ac3Analysis
             case Issue.ReducedRate:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"The frame is coded at a reduced sample rate (fscod2), for which A/52 does not specify the bit allocation, so its audio blocks are not read. First in {at} ({Times(count)}).");
-                break;
-            case Issue.Aht:
-                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"The frame codes channels with the adaptive hybrid transform (A/52 Annex E 3.4), whose mantissas the analyzer does not step over, so its audio blocks are read up to the first of them. First in {at} ({Times(count)}).");
-                break;
-            case Issue.EnhancedCoupling:
-                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"The frame uses enhanced coupling (A/52 Annex E 3.5), whose parameters the analyzer does not read, so its audio blocks are read up to there. First in {at} ({Times(count)}).");
                 break;
             case Issue.MixDataOverrun:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>

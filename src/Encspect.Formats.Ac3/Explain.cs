@@ -11,6 +11,8 @@ internal static class Topics
     public const string DialogueNormalization = "dialogue-normalization";
     public const string Eac3Substreams = "eac3-substreams";
     public const string SpectralExtension = "eac3-spectral-extension";
+    public const string EnhancedCoupling = "eac3-enhanced-coupling";
+    public const string AdaptiveHybridTransform = "eac3-adaptive-hybrid-transform";
     public const string ChannelLayouts = "channel-layouts";
     public const string Crc = "crc";
     public const string BitrateModes = "bitrate-modes";
@@ -180,6 +182,18 @@ internal static partial class Explain
     public const string Cplstre = "cplstre: whether new coupling information follows; otherwise the previous block's holds (A/52 5.4.3.7).";
     public const string Cplinu = "cplinu: whether coupling codes the high frequencies of several channels as one (A/52 5.4.3.8, 7.4).";
     public const string Ecplinu = "ecplinu: whether enhanced coupling is in use instead of standard coupling (A/52 Annex E 2.3.3.14, 3.5).";
+    public const string Ecplbegf = "ecplbegf: the first sub-band of enhanced coupling, where coupled channels stop coding their own coefficients (A/52 Annex E 2.3.3.16, Table E3.8).";
+    public const string Ecplendf = "ecplendf: the sub-band after the last one of enhanced coupling, minus 7 (A/52 Annex E 2.3.3.17, Table E3.8).";
+    public const string Ecplbndstrce = "ecplbndstrce: whether an enhanced coupling band structure follows; otherwise the default or the previous one holds (A/52 Annex E 2.3.3.18, Table E1.13).";
+    public const string Ecplbndstrc = "ecplbndstrc: for each enhanced coupling sub-band from the ninth on, 1 joins it to the band before, so one set of parameters covers both (A/52 Annex E 2.3.3.19).";
+    public const string EnhancedCouplingParameters = "Enhanced coupling parameters of a channel: per band an amplitude, an angle and a chaos value, which place the channel's copy of the coupling channel (A/52 Annex E 2.3.3.20 to 2.3.3.26, 3.5.4).";
+    public const string Ecplangleintrp = "ecplangleintrp: whether the decoder interpolates the angles between the bands' centers instead of holding each band's angle (A/52 Annex E 2.3.3.20).";
+    public const string Ecplparam1e = "ecplparam1e: whether new amplitudes follow for this channel; otherwise the previous ones hold (A/52 Annex E 2.3.3.21).";
+    public const string Ecplparam2e = "ecplparam2e: whether new angles and chaos values follow for this channel; otherwise the previous ones hold (A/52 Annex E 2.3.3.22).";
+    public const string Ecplamp = "ecplamp: the amplitude of a band, 0 to 30 for 0 dB down to -45 dB in steps of about 1.5 dB, 31 for none (A/52 Annex E 2.3.3.23, Table E3.10).";
+    public const string Ecplangle = "ecplangle: the phase angle of a band in steps of 2 pi / 64 radians (A/52 Annex E 2.3.3.24, Table E3.11).";
+    public const string Ecplchaos = "ecplchaos: how much random phase the decoder adds to the angle of a band, in steps of 1/7 (A/52 Annex E 2.3.3.25, Table E3.12).";
+    public const string Ecpltrans = "ecpltrans: whether a transient is present in this channel, so the decoder draws new random angles for each block (A/52 Annex E 2.3.3.26).";
     public const string Chincpl = "chincpl: whether this channel is in coupling, so its high frequencies come from the coupling channel (A/52 5.4.3.9).";
     public const string Phsflginu = "phsflginu: whether phase flags follow with the coupling coordinates of a 2/0 program (A/52 5.4.3.10).";
     public const string Cplbegf = "cplbegf: the sub-band where coupling begins, which is where coupled channels stop coding their own coefficients (A/52 5.4.3.11, Table 7.24).";

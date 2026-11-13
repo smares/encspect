@@ -15,8 +15,6 @@ internal enum Issue : byte
     HeaderOverrun,
     UndefinedBsid,
     ReducedRate,
-    Aht,
-    EnhancedCoupling,
     MixDataOverrun,
     ChannelMapCount,
     AuxiliaryLength,
@@ -89,6 +87,7 @@ internal sealed partial class FrameSyntax
     private readonly bool[] _chahtinu = new bool[5];
     private bool _cplahtinu;
     private bool _lfeahtinu;
+    private readonly int[] _spxattencod = new int[5];
     private int _frmcsnroffst;
     private int _frmfsnroffst;
 
@@ -1007,13 +1006,14 @@ internal sealed partial class FrameSyntax
             }
         }
 
+        Array.Fill(_spxattencod, -1);
         if (spxattene)
         {
             for (int ch = 0; ch < _nfchans; ch++)
             {
                 if (FC("IsInSpectralExtensionAttenuation", ch, 1, Explain.Chinspxatten, BooleanValue, Topics.SpectralExtension) != 0)
                 {
-                    F("Spectral Extension Attenuation Code", 5, Explain.Spxattencod, topic: Topics.SpectralExtension);
+                    _spxattencod[ch] = F("Spectral Extension Attenuation Code", 5, Explain.Spxattencod, topic: Topics.SpectralExtension);
                 }
             }
         }

@@ -28,8 +28,8 @@ internal static class BitAllocation
     }
 
     // Writes bap[start..end) from exp[start..end). deltaBands is the delta bit allocation per band
-    // (the masking curve's offsets, 50 of them), or empty for none.
-    public static void Compute(ReadOnlySpan<byte> exp, int start, int end, in Parameters p, ReadOnlySpan<int> deltaBands, Span<byte> bap)
+    // (the masking curve's offsets, 50 of them), or empty for none. With highEfficiency the pointers are the high efficiency ones of the adaptive hybrid transform (Annex E 3.4.3).
+    public static void Compute(ReadOnlySpan<byte> exp, int start, int end, in Parameters p, ReadOnlySpan<int> deltaBands, Span<byte> bap, bool highEfficiency = false)
     {
         Span<int> psd = stackalloc int[256];
         Span<int> bandPsd = stackalloc int[Bands];
@@ -166,7 +166,7 @@ internal static class BitAllocation
             for (; i2 < lastBin; i2++)
             {
                 int address = Math.Clamp((psd[i2] - m) >> 5, 0, 63);
-                bap[i2] = Tables.BapTab[address];
+                bap[i2] = highEfficiency ? Tables.HebapTab[address] : Tables.BapTab[address];
             }
 
             j2++;
